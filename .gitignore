@@ -1,0 +1,44 @@
+### Python template
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+build/*
+dist/*
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyCharm and other IntelliJ-based IDE-s and editors' folder:
+.idea
+# vim swap files
+.*.swp
+
+# Unit test / coverage reports
+htmlcov/*
+.coverage
+.coverage.*
+.cache
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Environments
+.env
+.venv
+env/
+venv/
+
+# OSX template
+.DS_Store
+.AppleDouble
+.LSOverride
+
+logs/
+staticfiles/
