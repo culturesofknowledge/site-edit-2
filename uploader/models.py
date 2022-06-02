@@ -5,6 +5,15 @@ from django.db import models
 
 # Create your models here.
 
+'''
+def current_user():
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT current_user()")
+        row = cursor.fetchone()
+
+    return row
+'''
+
 
 class CofkCollectStatus(models.Model):
     class Meta:
@@ -29,6 +38,7 @@ class CofkCollectToolUser(models.Model):
     tool_user_pw = models.CharField(max_length=100, null=False)
 
 
+'''
 class CofkHelpPage(models.Model):
     class Meta:
         db_table = 'cofk_help_pages'
@@ -38,6 +48,7 @@ class CofkHelpPage(models.Model):
     custom_url = models.CharField(max_length=500)
     published_text = models.TextField(null=False, default='Sorry, no help currently available.')
     draft_text = models.TextField()
+'''
 
 
 class CofkLookupCatalogue(models.Model):
@@ -51,6 +62,7 @@ class CofkLookupCatalogue(models.Model):
     publish_status = models.IntegerField(null=False, default=0)
 
 
+'''
 class CofkLookupDocumentType(models.Model):
     class Meta:
         db_table = 'cofk_lookup_document_type'
@@ -72,6 +84,7 @@ class CofkMenu(models.Model):
     menu_item_id = models.AutoField(primary_key=True)
     menu_item_name = models.TextField(null=False)
     # menu_order = models.AutoField()
+    # meno_order = models.ForeignKey('uploader.CofkMenu', on_delete=models.DO_NOTHING)
     # parent_id = Column(ForeignKey('cofk_menu.menu_item_id'))
     parent_id = models.ForeignKey("uploader.CofkMenu", on_delete=models.DO_NOTHING)
     has_children = models.IntegerField(null=False, default=0)
@@ -83,6 +96,7 @@ class CofkMenu(models.Model):
     collection = models.CharField(max_length=20, null=False, default='')
 
     # parent = relationship('CofkMenu', remote_side=[menu_item_id])
+'''
 
 
 class CofkReportGroup(models.Model):
@@ -96,6 +110,8 @@ class CofkReportGroup(models.Model):
     report_group_code = models.CharField(max_length=100)
 
 
+# Assuming this table contain report formats, can perhaps be stored
+# elsewhere, not in a db table
 # t_cofk_report_outputs = Table(
 #    'cofk_report_outputs', metadata,
 #    Column('output_id', String(250), null=False, default=''),
@@ -104,6 +120,10 @@ class CofkReportGroup(models.Model):
 # )
 
 
+# TODO
+# CofkRole is system user role, not role for subject persons
+# This will probably be handled by Django's user groups
+'''
 class CofkRole(models.Model):
     class Meta:
         db_table = 'cofk_roles'
@@ -113,6 +133,7 @@ class CofkRole(models.Model):
     role_name = models.TextField(null=False, unique=True, default='')
 
     # cofk_users = relationship('CofkUser', secondary='cofk_user_roles')
+'''
 
 
 class CofkUnionAuditLiteral(models.Model):
@@ -121,7 +142,7 @@ class CofkUnionAuditLiteral(models.Model):
 
     audit_id = models.AutoField(primary_key=True)
     change_timestamp = models.DateTimeField(auto_now=True)
-    # change_user = models.CharField(max_length=50, null=False, index=True, default=text("\"current_user\"()"))
+    # change_user = models.CharField(max_length=50, null=False, default=current_user)
     change_type = models.CharField(max_length=3, null=False)
     table_name = models.CharField(max_length=100, null=False)
     key_value_text = models.CharField(max_length=100, null=False)
@@ -132,13 +153,15 @@ class CofkUnionAuditLiteral(models.Model):
     old_column_value = models.TextField()
 
 
+# Optimization possible down the road? Is this a heavy handed way of
+# creating table relationships?
 class CofkUnionAuditRelationship(models.Model):
     class Meta:
         db_table = 'cofk_union_audit_relationship'
 
     audit_id = models.AutoField(primary_key=True)
     change_timestamp = models.DateTimeField(auto_now=True)
-    # change_user = models.CharField(max_length=50, null=False, default=text("\"current_user\"()"))
+    # change_user = models.CharField(max_length=50, null=False, default=current_user)
     change_type = models.CharField(max_length=3, null=False)
     left_table_name = models.CharField(max_length=100, null=False)
     left_id_value_new = models.CharField(max_length=100, null=False, default='')
@@ -162,9 +185,9 @@ class CofkUnionComment(models.Model):
     comment_id = models.AutoField(primary_key=True)
     comment = models.TextField()
     creation_timestamp = models.DateTimeField(auto_now=True)
-    # creation_user = models.CharField(max_length=50, null=False, default=text("\"current_user\"()"))
+    # creation_user = models.CharField(max_length=50, null=False, default=current_user)
     change_timestamp = models.DateTimeField(auto_now=True)
-    # change_user = models.CharField(max_length=50, null=False, default=text("\"current_user\"()"))
+    # change_user = models.CharField(max_length=50, null=False, default=current_user)
     uuid = models.UUIDField(default=uuid.uuid4)
 
 
@@ -175,9 +198,9 @@ class CofkUnionImage(models.Model):
     image_id = models.AutoField(primary_key=True)
     image_filename = models.TextField()
     creation_timestamp = models.DateTimeField(auto_now=True)
-    # creation_user = models.CharField(max_length=50, null=False, default=text("\"current_user\"()"))
+    # creation_user = models.CharField(max_length=50, null=False, default=current_user)
     change_timestamp = models.DateTimeField(auto_now=True)
-    # change_user = models.CharField(max_length=50, null=False, default=text("\"current_user\"()"))
+    # change_user = models.CharField(max_length=50, null=False, default=current_user)
     thumbnail = models.TextField()
     can_be_displayed = models.CharField(max_length=1, null=False, default='Y')
     display_order = models.IntegerField(null=False, default=1)
@@ -199,9 +222,9 @@ class CofkUnionInstitution(models.Model):
     institution_country = models.TextField(null=False, default='')
     institution_country_synonyms = models.TextField(null=False, default='')
     creation_timestamp = models.DateTimeField(auto_now=True)
-    # creation_user = models.CharField(max_length=50, null=False, default=text("\"current_user\"()"))
+    # creation_user = models.CharField(max_length=50, null=False, default=current_user)
     change_timestamp = models.DateTimeField(auto_now=True)
-    # change_user = models.CharField(max_length=50, null=False, default=text("\"current_user\"()"))
+    # change_user = models.CharField(max_length=50, null=False, default=current_user)
     editors_notes = models.TextField()
     uuid = models.UUIDField(default=uuid.uuid4)
     address = models.TextField()
@@ -218,9 +241,9 @@ class CofkUnionLocation(models.Model):
     latitude = models.CharField(max_length=20)
     longitude = models.CharField(max_length=20)
     creation_timestamp = models.DateTimeField(auto_now=True)
-    # creation_user = models.CharField(max_length=50, null=False, default=text("\"current_user\"()"))
+    # creation_user = models.CharField(max_length=50, null=False, default=current_user)
     change_timestamp = models.DateTimeField(auto_now=True)
-    # change_user = models.CharField(max_length=50, null=False, default=text("\"current_user\"()"))
+    # change_user = models.CharField(max_length=50, null=False, default=current_user)
     location_synonyms = models.TextField()
     editors_notes = models.TextField()
     element_1_eg_room = models.CharField(max_length=100, null=False, default='')
@@ -242,6 +265,9 @@ class CofkUnionManifestation(models.Model):
     #    CheckConstraint('(manifestation_creation_date_inferred = 0) OR (manifestation_creation_date_inferred = 1)'),
     #    CheckConstraint('(manifestation_creation_date_uncertain = 0) OR (manifestation_creation_date_uncertain = 1)')
     # )
+
+    # TODO
+    # Above fields should be boolean fields
 
     manifestation_id = models.CharField(max_length=100, primary_key=True)
     manifestation_type = models.CharField(max_length=3, null=False, default='')
@@ -271,14 +297,19 @@ class CofkUnionManifestation(models.Model):
     manifestation_excipit = models.TextField()
     manifestation_ps = models.TextField()
     creation_timestamp = models.DateTimeField(auto_now=True)
-    # creation_user = models.CharField(max_length=50, null=False, default=text("\"current_user\"()"))
+    # TODO
+    # All user references in tables seem to refer to database user and NOT
+    # system users. This has to be fixed
+    # creation_user = models.CharField(max_length=50, null=False, default=current_user)
     change_timestamp = models.DateTimeField(auto_now=True)
-    # change_user = models.CharField(max_length=50, null=False, default=text("\"current_user\"()"))
+    # change_user = models.CharField(max_length=50, null=False, default=current_user)
     manifestation_creation_date2_year = models.IntegerField()
     manifestation_creation_date2_month = models.IntegerField()
     manifestation_creation_date2_day = models.IntegerField()
     manifestation_creation_date_is_range = models.SmallIntegerField(null=False, default=0)
     manifestation_creation_date_as_marked = models.CharField(max_length=250)
+    # Enumerated values?
+    # TODO
     opened = models.CharField(max_length=3, null=False, default='o')
     uuid = models.UUIDField(default=uuid.uuid4)
     routing_mark_stamp = models.TextField()
@@ -289,6 +320,8 @@ class CofkUnionManifestation(models.Model):
     postage_costs = models.CharField(max_length=500)
     non_delivery_reason = models.CharField(max_length=500)
     date_of_receipt_as_marked = models.CharField(max_length=500)
+    # Enumerated values?
+    # TODO
     manifestation_receipt_calendar = models.CharField(max_length=2, null=False, default='U')
     manifestation_receipt_date = models.DateField()
     manifestation_receipt_date_gregorian = models.DateField()
@@ -305,12 +338,14 @@ class CofkUnionManifestation(models.Model):
     accompaniments = models.TextField()
 
 
+'''
 class CofkUnionNationality(models.Model):
     class Meta:
         db_table = 'cofk_union_nationality'
 
     nationality_id = models.AutoField(primary_key=True)
     nationality_desc = models.CharField(max_length=100, null=False, default='')
+'''
 
 
 class CofkUnionOrgType(models.Model):
@@ -328,7 +363,7 @@ class CofkUnionPublication(models.Model):
     publication_id = models.AutoField(primary_key=True)
     publication_details = models.TextField(null=False, default='')
     change_timestamp = models.DateTimeField(auto_now=True)
-    # change_user = models.CharField(max_length=50, null=False, default=text("\"current_user\"()"))
+    # change_user = models.CharField(max_length=50, null=False, default=current_user)
     abbrev = models.CharField(max_length=50, null=False, default='')
 
 
@@ -340,9 +375,9 @@ class CofkUnionRelationshipType(models.Model):
     desc_left_to_right = models.CharField(max_length=200, null=False, default='')
     desc_right_to_left = models.CharField(max_length=200, null=False, default='')
     creation_timestamp = models.DateTimeField(auto_now=True)
-    # creation_user = models.CharField(max_length=50, null=False, default=text("\"current_user\"()"))
+    # creation_user = models.CharField(max_length=50, null=False, default=current_user)
     change_timestamp = models.DateTimeField(auto_now=True)
-    # change_user = models.CharField(max_length=50), null=False, default=text("\"current_user\"()"))
+    # change_user = models.CharField(max_length=50, null=False, default=current_user)
 
 
 class CofkUnionResource(models.Model):
@@ -354,9 +389,9 @@ class CofkUnionResource(models.Model):
     resource_details = models.TextField(null=False, default='')
     resource_url = models.TextField(null=False, default='')
     creation_timestamp = models.DateTimeField(auto_now=True)
-    # creation_user = models.CharField(max_length=50, null=False, default=text("\"current_user\"()"))
+    # creation_user = models.CharField(max_length=50, null=False, default=current_user)
     change_timestamp = models.DateTimeField(auto_now=True)
-    # change_user = models.CharField(max_length=50, null=False, default=text("\"current_user\"()"))
+    # change_user = models.CharField(max_length=50, null=False, default=current_user)
     uuid = models.UUIDField(default=uuid.uuid4)
 
 
@@ -368,6 +403,7 @@ class CofkUnionRoleCategory(models.Model):
     role_category_desc = models.CharField(max_length=100, null=False, default='')
 
 
+'''
 class CofkUnionSpeedEntryText(models.Model):
     class Meta:
         db_table = 'cofk_union_speed_entry_text'
@@ -375,6 +411,7 @@ class CofkUnionSpeedEntryText(models.Model):
     speed_entry_text_id = models.AutoField(primary_key=True)
     object_type = models.CharField(max_length=30, null=False, default='All')
     speed_entry_text = models.CharField(max_length=200, null=False, default='')
+'''
 
 
 class CofkUnionSubject(models.Model):
@@ -389,21 +426,20 @@ class CofkUser(models.Model):
     class Meta:
         db_table = 'cofk_users'
 
-    # __table_args__ = (
-    #    CheckConstraint('(active = 0) OR (active = 1)'),
-    #    CheckConstraint("pw > ''::text")
-    # )
-
     username = models.CharField(max_length=30, primary_key=True)
-    pw = models.TextField(null=False)
+    # pw changed from Textfield
+    pw = models.CharField(max_length=100, null=False)
     surname = models.CharField(max_length=30, null=False, default='')
     forename = models.CharField(max_length=30, null=False, default='')
     failed_logins = models.IntegerField(null=False, default=0)
-    login_time = models.DateTimeField()
-    prev_login = models.DateTimeField()
-    active = models.SmallIntegerField(null=False, default=1)
+    login_time = models.DateTimeField(null=True)
+    prev_login = models.DateTimeField(null=True)
+    # Active changed to boolean
+    # active = models.SmallIntegerField(null=False, default=1)
+    active = models.BooleanField(default=True, null=False)
     # Can be changed to email field
-    email = models.TextField()
+    # email = models.TextField()
+    email = models.EmailField(null=True)
 
 
 class Iso639LanguageCode(models.Model):
@@ -415,7 +451,11 @@ class Iso639LanguageCode(models.Model):
     language_name = models.CharField(max_length=100, null=False, default='')
     language_id = models.AutoField(primary_key=True)
 
+    # TODO
+    # Add favorite to config file or favorite field to above table?
 
+
+'''
 class CofkUnionFavouriteLanguage(Iso639LanguageCode):
     class Meta:
         db_table = 'cofk_union_favourite_language'
@@ -447,9 +487,9 @@ class ProActivity(models.Model):
     notes_used = models.TextField()
     additional_notes = models.TextField()
     creation_timestamp = models.DateTimeField(auto_now=True)
-    creation_user = models.TextField()
+    # creation_user = models.TextField()
     change_timestamp = models.DateTimeField(auto_now=True)
-    change_user = models.TextField()
+    # change_user = models.TextField()
     event_label = models.TextField()
 
 
@@ -546,9 +586,9 @@ class ProTextualSource(models.Model):
     edition = models.TextField()
     reprintFacsimile = models.TextField()
     repository = models.TextField()
-    creation_user = models.TextField()
+    # creation_user = models.TextField()
     creation_timestamp = models.DateTimeField(auto_now=True)
-    change_user = models.TextField()
+    # change_user = models.TextField()
     change_timestamp = models.DateTimeField(auto_now=True)
 
 
@@ -565,6 +605,7 @@ class CofkCollectToolSession(models.Model):
     username = models.OneToOneField("uploader.CofkCollectToolUser", on_delete=models.CASCADE)
 
     # cofk_collect_tool_user = relationship('CofkCollectToolUser')
+'''
 
 
 class CofkCollectUpload(models.Model):
@@ -575,7 +616,8 @@ class CofkCollectUpload(models.Model):
     upload_username = models.CharField(max_length=100, null=False)
     upload_description = models.TextField()
     # upload_status = Column(ForeignKey('cofk_collect_status.status_id'), null=False, default=text("1"))
-    upload_status = models.ForeignKey("uploader.CofkCollectStatus", null=False, default="1", on_delete=models.DO_NOTHING)
+    upload_status = models.ForeignKey("uploader.CofkCollectStatus", null=False, default="1",
+                                      on_delete=models.DO_NOTHING)
     upload_timestamp = models.DateTimeField(auto_now=True)
     total_works = models.IntegerField(null=False, default=0)
     works_accepted = models.IntegerField(null=False, default=0)
@@ -587,6 +629,7 @@ class CofkCollectUpload(models.Model):
     # cofk_collect_statu = relationship('CofkCollectStatus')
 
 
+'''
 class CofkHelpOption(models.Model):
     class Meta:
         db_table = 'cofk_help_options'
@@ -606,6 +649,7 @@ class CofkHelpOption(models.Model):
 
     # help_page = relationship('CofkHelpPage')
     # menu_item = relationship('CofkMenu')
+'''
 
 
 class CofkReport(models.Model):
@@ -619,9 +663,11 @@ class CofkReport(models.Model):
     # report_group_id = Column(ForeignKey('cofk_report_groups.report_group_id'))
     report_group_id = models.ForeignKey("uploader.CofkReportGroup", on_delete=models.DO_NOTHING)
     # menu_item_id = Column(ForeignKey('cofk_menu.menu_item_id'))
-    menu_item_id = models.ForeignKey("uploader.CofkMenu", on_delete=models.DO_NOTHING)
-    has_csv_option = models.IntegerField(null=False, default=0)
-    is_dummy_option = models.IntegerField(null=False, default=0)
+    # menu_item_id = models.ForeignKey("uploader.CofkMenu", on_delete=models.DO_NOTHING)
+    # has_csv_option = models.IntegerField(null=False, default=0)
+    has_csv_option = models.BooleanField(null=False, default=False)
+    # is_dummy_option = models.IntegerField(null=False, default=0)
+    is_dummy_option = models.BooleanField(null=False, default=False)
     report_code = models.CharField(max_length=100)
     parm_list = models.TextField()
     parm_titles = models.TextField()
@@ -634,6 +680,7 @@ class CofkReport(models.Model):
     # report_group = relationship('CofkReportGroup')
 
 
+'''
 class CofkSession(models.Model):
     class Meta:
         db_table = 'cofk_sessions'
@@ -645,7 +692,11 @@ class CofkSession(models.Model):
     username = models.ForeignKey("uploader.CofkUser", on_delete=models.DO_NOTHING)
 
     # cofk_user = relationship('CofkUser')
+'''
 
+
+# TODO
+# Composite primary keys
 
 class CofkUnionLanguageOfManifestation(models.Model):
     class Meta:
@@ -679,6 +730,9 @@ class CofkUnionPerson(models.Model):
     #    CheckConstraint('(flourished_is_range = 0) OR (flourished_is_range = 1)')
     # )
 
+    # TODO
+    # Switch above to boolean fields
+
     person_id = models.CharField(max_length=100, primary_key=True)
     foaf_name = models.CharField(max_length=200, null=False)
     skos_altlabel = models.TextField()
@@ -698,13 +752,17 @@ class CofkUnionPerson(models.Model):
     date_of_death_inferred = models.SmallIntegerField(null=False, default=0)
     date_of_death_uncertain = models.SmallIntegerField(null=False, default=0)
     date_of_death_approx = models.SmallIntegerField(null=False, default=0)
+    # TODO
+    # Enumerated value?
     gender = models.CharField(max_length=1, null=False, default='')
+    # TODO
+    # Boolean field
     is_organisation = models.CharField(max_length=1, null=False, default='')
     # iperson_id = models.IntegerField(null=False, unique=True, default=text("nextval('cofk_union_person_iperson_id_seq'::regclass)"))
     creation_timestamp = models.DateTimeField(auto_now=True)
-    # creation_user = models.CharField(max_length=50, null=False, default=text("\"current_user\"()"))
+    # creation_user = models.CharField(max_length=50, null=False, default=current_user)
     change_timestamp = models.DateTimeField(auto_now=True)
-    # change_user = models.CharField(max_length=50), null=False, default=text("\"current_user\"()"))
+    # change_user = models.CharField(max_length=50, null=False, default=current_user)
     editors_notes = models.TextField()
     further_reading = models.TextField()
     # organisation_type = Column(ForeignKey('cofk_union_org_type.org_type_id'))
@@ -729,6 +787,8 @@ class CofkUnionPerson(models.Model):
     flourished2_month = models.IntegerField()
     flourished2_day = models.IntegerField()
     uuid = models.UUIDField(default=uuid.uuid4)
+    # TODO
+    # Boolean fields below
     flourished_inferred = models.SmallIntegerField(null=False, default=0)
     flourished_uncertain = models.SmallIntegerField(null=False, default=0)
     flourished_approx = models.SmallIntegerField(null=False, default=0)
@@ -736,6 +796,7 @@ class CofkUnionPerson(models.Model):
     # cofk_union_org_type = relationship('CofkUnionOrgType')
 
 
+'''
 class CofkUnionPersonSummary(CofkUnionPerson):
     class Meta:
         db_table = 'cofk_union_person_summary'
@@ -749,7 +810,12 @@ class CofkUnionPersonSummary(CofkUnionPerson):
     mentioned = models.IntegerField(null=False, default=0)
     role_categories = models.TextField()
     images = models.TextField()
+'''
 
+
+# TODO
+# The table below seems to map relationships manually between entities
+# Can this be optimised?
 
 class CofkUnionRelationship(models.Model):
     class Meta:
@@ -770,9 +836,9 @@ class CofkUnionRelationship(models.Model):
     relationship_valid_from = models.DateTimeField()
     relationship_valid_till = models.DateTimeField()
     creation_timestamp = models.DateTimeField(auto_now=True)
-    # creation_user = models.CharField(max_length=50, null=False, default=text("\"current_user\"()"))
+    # creation_user = models.CharField(max_length=50, null=False, default=current_user)
     change_timestamp = models.DateTimeField(auto_now=True)
-    # change_user = models.CharField(max_length=50), null=False, default=text("\"current_user\"()"))
+    # change_user = models.CharField(max_length=50, null=False, default=current_user)
 
     # cofk_union_relationship_type = relationship('CofkUnionRelationshipType')
 
@@ -810,6 +876,8 @@ class CofkUnionWork(models.Model):
     date_of_work2_std_year = models.IntegerField()
     date_of_work2_std_month = models.IntegerField()
     date_of_work2_std_day = models.IntegerField()
+    # TODO
+    # A lot of boolean field below
     date_of_work_std_is_range = models.SmallIntegerField(null=False, default=0)
     date_of_work_inferred = models.SmallIntegerField(null=False, default=0)
     date_of_work_uncertain = models.SmallIntegerField(null=False, default=0)
@@ -833,23 +901,33 @@ class CofkUnionWork(models.Model):
     incipit = models.TextField()
     explicit = models.TextField()
     ps = models.TextField()
+    # TODO on update
     # original_catalogue = Column(ForeignKey('cofk_lookup_catalogue.catalogue_code', onupdate='CASCADE'), null=False, default='')
     # missing onupdate
-    original_catalogue = models.ForeignKey("uploader.CofkLookupCatalogue", null=False, default='', on_delete=models.DO_NOTHING)
+    original_catalogue = models.ForeignKey("uploader.CofkLookupCatalogue", null=False, default='',
+                                           on_delete=models.DO_NOTHING)
     accession_code = models.CharField(max_length=1000)
     work_to_be_deleted = models.SmallIntegerField(null=False, default=0)
     iwork_id = models.AutoField(primary_key=True, null=False, unique=True)
     editors_notes = models.TextField()
+    # TODO
+    # Enumarated field?
     edit_status = models.CharField(max_length=3, null=False, default='')
+    # TODO
+    # Boolean field
     relevant_to_cofk = models.CharField(max_length=3, null=False, default='Y')
     creation_timestamp = models.DateTimeField(auto_now=True)
-    # creation_user = models.CharField(max_length=50, null=False, default=text("\"current_user\"()"))
+    # creation_user = models.CharField(max_length=50, null=False, default=current_user)
     change_timestamp = models.DateTimeField(auto_now=True)
-    # change_user = models.CharField(max_length=50), null=False, default=text("\"current_user\"()"))
+    # change_user = models.CharField(max_length=50, null=False, default=current_user)
     uuid = models.UUIDField(default=uuid.uuid4)
 
     # cofk_lookup_catalogue = relationship('CofkLookupCatalogue')
 
+
+# TODO
+# The below table could be optimized. In addition, do favorite or popular queries
+# have to be saved in the database?
 
 class CofkUserSavedQuery(models.Model):
     class Meta:
@@ -877,7 +955,7 @@ class CofkCollectInstitution(models.Model):
     # upload_id = Column(ForeignKey('cofk_collect_upload.upload_id'), primary_key=True, null=False)
     # upload_id = models.ForeignKey("uploader.CofkCollectUpload", primary_key=True, null=False, on_delete=models.DO_NOTHING)
     upload_id = models.OneToOneField("uploader.CofkCollectUpload", null=False, on_delete=models.DO_NOTHING)
-    # institution_id = models.AutoField(primary_key=True)
+    institution_id = models.AutoField(primary_key=True)
     # union_institution_id = Column(ForeignKey('cofk_union_institution.institution_id', ondelete='SET NULL'))
     # union_institution_id = models.ForeignKey("uploader.CofkUnionInstitution", on_delete=models.SET_NULL)
     union_institution_id = models.OneToOneField("uploader.CofkUnionInstitution", on_delete=models.DO_NOTHING)
@@ -933,18 +1011,28 @@ class CofkCollectPerson(models.Model):
     upload_id = models.OneToOneField("uploader.CofkCollectUpload", null=False, on_delete=models.DO_NOTHING)
     # iperson_id = models.AutoField(primary_key=True)
     # union_iperson_id = Column(ForeignKey('cofk_union_person.iperson_id', ondelete='SET NULL'))
+    # TODO
+    # Union iperson id necessary?
     # union_iperson_id = models.ForeignKey(CofkUnionPerson.i)
     # person_id = Column(ForeignKey('cofk_union_person.person_id', ondelete='SET NULL'))
     person_id = models.OneToOneField("uploader.CofkUnionPerson", on_delete=models.DO_NOTHING)
     primary_name = models.CharField(max_length=200, null=False)
     alternative_names = models.TextField()
     roles_or_titles = models.TextField()
+    # TODO
+    # Enumerate type?
     gender = models.CharField(max_length=1, null=False, default='')
+    # TODO
+    # Boolean field
     is_organisation = models.CharField(max_length=1, null=False, default='')
+    # TODO
+    # Enumerate type?
     organisation_type = models.IntegerField()
     date_of_birth_year = models.IntegerField()
     date_of_birth_month = models.IntegerField()
     date_of_birth_day = models.IntegerField()
+    # TODO
+    # Boolean types below?
     date_of_birth_is_range = models.SmallIntegerField(null=False, default=0)
     date_of_birth2_year = models.IntegerField()
     date_of_birth2_month = models.IntegerField()
@@ -971,6 +1059,8 @@ class CofkCollectPerson(models.Model):
     flourished2_day = models.IntegerField()
     notes_on_person = models.TextField()
     editors_notes = models.TextField()
+    # TODO
+    # What does upload name refer to here?
     upload_name = models.CharField(max_length=254)
     _id = models.CharField(max_length=32)
 
@@ -982,6 +1072,9 @@ class CofkCollectPerson(models.Model):
 class CofkUnionLanguageOfWork(models.Model):
     class Meta:
         db_table = 'cofk_union_language_of_work'
+
+    # TODO
+    # Composite primary keys
 
     # work_id = Column(ForeignKey('cofk_union_work.work_id', ondelete='CASCADE'), primary_key=True, null=False)
     # work_id = models.ForeignKey("uploader.CofkUnionWork", on_delete=models.CASCADE, primary_key=True, null=False)
@@ -995,6 +1088,7 @@ class CofkUnionLanguageOfWork(models.Model):
     # work = relationship('CofkUnionWork')
 
 
+'''
 class CofkUnionQueryableWork(models.Model):
     class Meta:
         db_table = 'cofk_union_queryable_work'
@@ -1009,6 +1103,8 @@ class CofkUnionQueryableWork(models.Model):
     date_of_work_std_month = models.IntegerField()
     date_of_work_std_day = models.IntegerField()
     date_of_work_as_marked = models.CharField(max_length=250)
+    # TODO
+    # Boo
     date_of_work_inferred = models.SmallIntegerField(null=False, default=0)
     date_of_work_uncertain = models.SmallIntegerField(null=False, default=0)
     date_of_work_approx = models.SmallIntegerField(null=False, default=0)
@@ -1049,7 +1145,7 @@ class CofkUnionQueryableWork(models.Model):
     accession_code = models.CharField(max_length=1000)
     work_to_be_deleted = models.SmallIntegerField(null=False, default=0)
     change_timestamp = models.DateTimeField(auto_now=True)
-    # change_user = models.CharField(max_length=50, null=False, default=text("\"current_user\"()"))
+    # change_user = models.CharField(max_length=50, null=False, default=current_user)
     drawer = models.CharField(max_length=50)
     editors_notes = models.TextField()
     manifestation_type = models.CharField(max_length=50)
@@ -1074,6 +1170,7 @@ class CofkUserSavedQuerySelection(models.Model):
     column_value2 = models.CharField(max_length=500, null=False, default='')
 
     # query = relationship('CofkUserSavedQuery')
+'''
 
 
 class CofkCollectInstitutionResource(models.Model):
@@ -1177,6 +1274,8 @@ class CofkCollectWork(models.Model):
     # union_iwork_id = Column(ForeignKey('cofk_union_work.iwork_id', ondelete='SET NULL'))
     # work_id = Column(ForeignKey('cofk_union_work.work_id', ondelete='SET NULL'))
     # work_id = models.ForeignKey("uploader.CofkUnionWork", on_delete=models.SET_NULL)
+    # TODO
+    # Missing work_id
     date_of_work_as_marked = models.CharField(max_length=250)
     original_calendar = models.CharField(max_length=2, null=False, default='')
     date_of_work_std_year = models.IntegerField()
@@ -1185,6 +1284,8 @@ class CofkCollectWork(models.Model):
     date_of_work2_std_year = models.IntegerField()
     date_of_work2_std_month = models.IntegerField()
     date_of_work2_std_day = models.IntegerField()
+    # TODO
+    # Booleans below
     date_of_work_std_is_range = models.SmallIntegerField(null=False, default=0)
     date_of_work_inferred = models.SmallIntegerField(null=False, default=0)
     date_of_work_uncertain = models.SmallIntegerField(null=False, default=0)
@@ -1215,7 +1316,8 @@ class CofkCollectWork(models.Model):
     notes_on_letter = models.TextField()
     notes_on_people_mentioned = models.TextField()
     # upload_status = Column(ForeignKey('cofk_collect_status.status_id'), null=False, default=text("1"))
-    upload_status = models.ForeignKey("uploader.CofkCollectStatus", null=False, default="1", on_delete=models.DO_NOTHING)
+    upload_status = models.ForeignKey("uploader.CofkCollectStatus", null=False, default="1",
+                                      on_delete=models.DO_NOTHING)
     editors_notes = models.TextField()
     _id = models.CharField(max_length=32)
     date_of_work2_approx = models.SmallIntegerField(null=False, default=0)
@@ -1241,6 +1343,7 @@ class CofkCollectWork(models.Model):
     # work = relationship('CofkUnionWork', primaryjoin='CofkCollectWork.work_id == CofkUnionWork.work_id')
 
 
+'''
 class CofkCollectWorkSummary(CofkCollectWork):
     class Meta:
         db_table = 'cofk_collect_work_summary'
@@ -1291,21 +1394,24 @@ class CofkCollectWorkSummary(CofkCollectWork):
     manifestations = models.TextField()
     related_resources = models.TextField()
     # editors_notes = models.TextField()
+'''
 
 
 class CofkCollectAddresseeOfWork(models.Model):
     class Meta:
         db_table = 'cofk_collect_addressee_of_work'
 
-    __table_args__ = (
-        # ForeignKeyConstraint(['upload_id', 'iperson_id'], ['cofk_collect_person.upload_id', 'cofk_collect_person.iperson_id']),
-        # ForeignKeyConstraint(['upload_id', 'iwork_id'], ['cofk_collect_work.upload_id', 'cofk_collect_work.iwork_id'])
-    )
+    # __table_args__ = (
+    # ForeignKeyConstraint(['upload_id', 'iperson_id'], ['cofk_collect_person.upload_id', 'cofk_collect_person.iperson_id']),
+    # ForeignKeyConstraint(['upload_id', 'iwork_id'], ['cofk_collect_work.upload_id', 'cofk_collect_work.iwork_id'])
+    # )
 
     # upload_id = Column(ForeignKey('cofk_collect_upload.upload_id'), primary_key=True, null=False)
     # upload_id = models.ForeignKey("uploader.CofkCollectUpload", primary_key=True, null=False, on_delete=models.DO_NOTHING)
     upload_id = models.OneToOneField("uploader.CofkCollectUpload", on_delete=models.DO_NOTHING)
     addressee_id = models.AutoField(primary_key=True)
+    # TODO
+    # Fix missing columns below
     # iperson_id = models.IntegerField(null=False)
     # iwork_id = models.AutoField(primary_key=True)
     notes_on_addressee = models.TextField()
@@ -1320,16 +1426,18 @@ class CofkCollectAuthorOfWork(models.Model):
     class Meta:
         db_table = 'cofk_collect_author_of_work'
 
-    __table_args__ = (
-        # ForeignKeyConstraint(['upload_id', 'iperson_id'], ['cofk_collect_person.upload_id', 'cofk_collect_person.iperson_id']),
-        # ForeignKeyConstraint(['upload_id', 'iwork_id'], ['cofk_collect_work.upload_id', 'cofk_collect_work.iwork_id'])
-    )
+    # __table_args__ = (
+    # ForeignKeyConstraint(['upload_id', 'iperson_id'], ['cofk_collect_person.upload_id', 'cofk_collect_person.iperson_id']),
+    # ForeignKeyConstraint(['upload_id', 'iwork_id'], ['cofk_collect_work.upload_id', 'cofk_collect_work.iwork_id'])
+    # )
 
     # upload_id = Column(ForeignKey('cofk_collect_upload.upload_id'), primary_key=True, null=False)
     # upload_id = models.ForeignKey("uploader.CofkCollectUpload", primary_key=True, null=False, on_delete=models.DO_NOTHING)
     upload_id = models.OneToOneField("uploader.CofkCollectUpload", on_delete=models.DO_NOTHING)
     author_id = models.AutoField(primary_key=True)
     iperson_id = models.IntegerField(null=False)
+    # TODO
+    # missing iwork_id
     # iwork_id = models.AutoField(primary_key=True)
     notes_on_author = models.TextField()
     _id = models.CharField(max_length=32)
@@ -1353,6 +1461,8 @@ class CofkCollectDestinationOfWork(models.Model):
     upload_id = models.OneToOneField("uploader.CofkCollectUpload", on_delete=models.DO_NOTHING)
     destination_id = models.AutoField(primary_key=True)
     location_id = models.IntegerField(null=False)
+    # TODO
+    # missing iwork_id
     # iwork_id = models.AutoField(primary_key=True)
     notes_on_destination = models.TextField()
     _id = models.CharField(max_length=32)
@@ -1374,6 +1484,8 @@ class CofkCollectLanguageOfWork(models.Model):
     # upload_id = models.ForeignKey("uploader.CofkCollectUpload", primary_key=True, null=False, on_delete=models.DO_NOTHING)
     upload_id = models.OneToOneField("uploader.CofkCollectUpload", on_delete=models.DO_NOTHING)
     language_of_work_id = models.AutoField(primary_key=True)
+    # TODO
+    # missing iwork_id
     # iwork_id = models.AutoField(primary_key=True)
     # language_code = Column(ForeignKey('iso_639_language_codes.code_639_3'), null=False)
     language_code = models.ForeignKey("uploader.Iso639LanguageCode", null=False, on_delete=models.DO_NOTHING)
@@ -1397,15 +1509,21 @@ class CofkCollectManifestation(models.Model):
     # upload_id = models.ForeignKey("uploader.CofkCollectUpload", primary_key=True, null=False, on_delete=models.DO_NOTHING)
     upload_id = models.OneToOneField("uploader.CofkCollectUpload", on_delete=models.DO_NOTHING)
     manifestation_id = models.AutoField(primary_key=True)
+    # TODO
+    # missing iwork_id
     # iwork_id = models.AutoField(primary_key=True)
     # union_manifestation_id = Column(ForeignKey('cofk_union_manifestation.manifestation_id', ondelete='SET NULL'))
     # union_manifestation_id = models.ForeignKey("uploader.CofkUnionManifestation", on_delete=models.SET_NULL)
     union_manifestation_id = models.OneToOneField("uploader.CofkUnionManifestation", on_delete=models.DO_NOTHING)
+    # TODO
+    # Enumerate field?
     manifestation_type = models.CharField(max_length=3, null=False, default='')
     repository_id = models.IntegerField()
     id_number_or_shelfmark = models.CharField(max_length=500)
     printed_edition_details = models.TextField()
     manifestation_notes = models.TextField()
+    # TODO
+    # Appropriate free text fields below?
     image_filenames = models.TextField()
     upload_name = models.CharField(max_length=254)
     _id = models.CharField(max_length=32)
@@ -1430,6 +1548,8 @@ class CofkCollectOriginOfWork(models.Model):
     upload_id = models.OneToOneField("uploader.CofkCollectUpload", on_delete=models.DO_NOTHING)
     origin_id = models.AutoField(primary_key=True)
     location_id = models.IntegerField(null=False)
+    # TODO
+    # missing iwork_id
     # iwork_id = models.AutoField(primary_key=True)
     notes_on_origin = models.TextField()
     _id = models.CharField(max_length=32)
@@ -1453,6 +1573,8 @@ class CofkCollectPersonMentionedInWork(models.Model):
     upload_id = models.OneToOneField("uploader.CofkCollectUpload", null=False, on_delete=models.DO_NOTHING)
     # mention_id = models.AutoField(primary_key=True)
     iperson_id = models.IntegerField(null=False)
+    # TODO
+    # missing iwork_id
     # iwork_id = models.AutoField(primary_key=True)
     notes_on_person_mentioned = models.TextField()
     _id = models.CharField(max_length=32)
@@ -1467,12 +1589,13 @@ class CofkCollectPlaceMentionedInWork(models.Model):
         db_table = 'cofk_collect_place_mentioned_in_work'
 
     __table_args__ = (
-        # ForeignKeyConstraint(['upload_id', 'iwork_id'], ['cofk_collect_work.upload_id', 'cofk_collect_work.iwork_id']),
-        # ForeignKeyConstraint(['upload_id', 'location_id'], ['cofk_collect_location.upload_id', 'cofk_collect_location.location_id'])
+        # ForeignKeyConstraint(['upload_id', 'iwork_id'], ['cofk_collect_work.upload_id',
+        # 'cofk_collect_work.iwork_id']), ForeignKeyConstraint(['upload_id', 'location_id'],
+        # ['cofk_collect_location.upload_id', 'cofk_collect_location.location_id'])
     )
 
-    # upload_id = Column(ForeignKey('cofk_collect_upload.upload_id'), primary_key=True, null=False)
-    # upload_id = models.ForeignKey("uploader.CofkCollectUpload", primary_key=True, null=False, on_delete=models.DO_NOTHING)
+    # upload_id = Column(ForeignKey('cofk_collect_upload.upload_id'), primary_key=True, null=False) upload_id =
+    # models.ForeignKey("uploader.CofkCollectUpload", primary_key=True, null=False, on_delete=models.DO_NOTHING)
     upload_id = models.OneToOneField("uploader.CofkCollectUpload", null=False, on_delete=models.DO_NOTHING)
     # mention_id = models.AutoField(primary_key=True)
     location_id = models.IntegerField(null=False)
