@@ -1,6 +1,177 @@
-<h2>Log In</h2>
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Log In</button>
-</form>
+{% load static %}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="Content-Language" content="en-gb">
+    <title>Union Catalogue Editing Interface</title>
+    <link rel="icon" type="image/png" href="{% static 'login/CofK_Favicon.ico'  %}">
+
+    <style>
+        html {
+            background-color: #5c7ea7;
+            margin: 0;
+        }
+
+        body {
+            font-family: georgia, 'times new roman', times, serif;
+            font-size: 11pt;
+            color: black;
+            background: white;
+            width: auto;
+        }
+
+        div.innerbody {
+            margin-left: 10px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            padding-top: 10px;
+        }
+
+        .banner {
+            color: #002147;
+            background-color: #d3d3de;
+        }
+
+        .banner h1 {
+            color: #002147;
+        }
+
+        .banner h1, .printbanner h1 {
+            font-style: italic;
+            font-size: 22pt;
+            margin-top: 5px;
+            padding-top: 20px;
+        }
+
+        .banner h2 {
+            color: #002147;
+            margin-left: 15px;
+            font-variant-caps: petite-caps;
+            padding-top: 10px;
+        }
+
+        .banner a:link, .banner a:visited {
+            font-weight: bold;
+            text-decoration: none;
+            color: #002147;
+        }
+
+        .banner a:active, .banner a:hover {
+            font-weight: bold;
+            text-decoration: none;
+            color: #800000;
+        }
+
+        .banner br, .printbanner br {
+            line-height: 15px;
+            clear: left;
+        }
+
+        img.bannerlogo, img.printbannerlogo {
+            border-style: solid;
+            border-top-width: 0px;
+            border-left-width: 15px;
+            border-right-width: 25px;
+            border-bottom-width: 15px;
+            float: left;
+            clear: left;
+            height: 90px;
+        }
+
+        img.bannerlogo {
+            border-color: #d3d3de;
+        }
+
+        img.printbannerlogo {
+            border-color: white;
+        }
+
+
+        .footimgs img {
+            vertical-align: middle;
+        }
+
+        .footerlinks {
+            color: #002147;
+            background-color: #f2f2f2;
+            border-top: solid 2px #434871;
+        }
+
+        .footerlinks a:link, .footerlinks a:visited {
+            font-weight: bold;
+            text-decoration: none;
+            color: #002147;
+        }
+
+        .footerlinks a:active, .footerlinks a:hover {
+            font-weight: bold;
+            text-decoration: none;
+            color: #800000;
+        }
+
+        .footnotes {
+            background-color: #f2f2f2;
+            color: #002147;
+        }
+
+        a.footimg img {
+            border: none;
+            margin-top: 15px;
+            margin-right: 15px;
+        }
+
+        a.footimg {
+            text-decoration: none;
+        }
+
+    </style>
+
+
+</head>
+
+<body>
+
+<div class="innerbody">
+
+
+    <div class="banner" id="pagebanner">
+        <img src="{% static 'login/CofKLogo.png' %}" alt="EMLO Edit" class="bannerlogo">
+        <h1>Union Catalogue Editing Interface</h1><br/>
+        <h2 style=" margin:13px 10px 0px 40px; border-top: 1px solid #aaa; margin-right: 56px; padding-top: 10px;">
+            User Login
+        </h2>
+        <br/>
+    </div>
+
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Log In</button>
+    </form>
+
+
+    <br/><br/><br/>
+    <div class="footimgs">
+
+        <a href="http://www.ox.ac.uk/" title="University of Oxford" target="_blank" class="footimg">
+            <img src="{% static 'login/ox_brand3_pos_rect.gif' %}" alt="University of Oxford logo">
+        </a>
+        <a href="http://www.bodleian.ox.ac.uk/"
+           title="Bodleian Libraries"
+           target="_blank" class="footimg">
+            <img src="{% static 'login/bod-libraries-140.png' %}" alt="Bodleian Libraries logo">
+        </a>
+
+        <a href="http://www.mellon.org" title="The Andrew W. Mellon Foundation" target="_blank" class="footimg">
+            <img src="{% static 'login/CofKDatabaseMellonLogo.jpg' %}" alt="The Andrew W. Mellon Foundation">
+        </a>
+
+    </div>
+
+</div>
+</body>
+
+</html>
