@@ -422,25 +422,25 @@ class CofkUnionSubject(models.Model):
     subject_desc = models.CharField(max_length=100, null=False, default='')
 
 
-# class CofkUser(models.Model):
-#     class Meta:
-#         db_table = 'cofk_users'
-#
-#     username = models.CharField(max_length=30, primary_key=True)
-#     # pw changed from Textfield
-#     pw = models.CharField(max_length=100, null=False)
-#     surname = models.CharField(max_length=30, null=False, default='')
-#     forename = models.CharField(max_length=30, null=False, default='')
-#     failed_logins = models.IntegerField(null=False, default=0)
-#     login_time = models.DateTimeField(null=True)
-#     prev_login = models.DateTimeField(null=True)
-#     # Active changed to boolean
-#     # active = models.SmallIntegerField(null=False, default=1)
-#     active = models.BooleanField(default=True, null=False)
-#     # Can be changed to email field
-#     # email = models.TextField()
-#     email = models.EmailField(null=True)
-#
+class CofkUser(models.Model):
+    class Meta:
+        db_table = 'cofk_users'
+
+    username = models.CharField(max_length=30, primary_key=True)
+    # pw changed from Textfield
+    pw = models.CharField(max_length=100, null=False)
+    surname = models.CharField(max_length=30, null=False, default='')
+    forename = models.CharField(max_length=30, null=False, default='')
+    failed_logins = models.IntegerField(null=False, default=0)
+    login_time = models.DateTimeField(null=True)
+    prev_login = models.DateTimeField(null=True)
+    # Active changed to boolean
+    # active = models.SmallIntegerField(null=False, default=1)
+    active = models.BooleanField(default=True, null=False)
+    # Can be changed to email field
+    # email = models.TextField()
+    email = models.EmailField(null=True)
+
 
 class Iso639LanguageCode(models.Model):
     class Meta:
