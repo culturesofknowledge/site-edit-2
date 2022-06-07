@@ -6,8 +6,9 @@ from django.shortcuts import render
 
 # Create your views here.
 
-@login_required(login_url='/login/login_page')
+@login_required
 def example_dashboard(request):
+    # TOBEREMOVE this is for debugging
     # return HttpResponse("It is example dashboard page.")
     return render(request, 'login/dashboard.html')
 
