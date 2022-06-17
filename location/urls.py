@@ -4,5 +4,5 @@ from . import views
 
 app_name = 'location'
 urlpatterns = [
-    path('form', views.form, name='form'),
+    path('get-location', views.get_location, name='get_location'),
 ]
