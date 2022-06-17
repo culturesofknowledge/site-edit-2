@@ -12,10 +12,16 @@ class CofkCollectLocation(models.Model):
 
     # upload_id = Column(ForeignKey('cofk_collect_upload.upload_id'), primary_key=True, null=False)
     # upload_id = models.ForeignKey("uploader.CofkCollectUpload", primary_key=True, null=False, on_delete=models.DO_NOTHING)
-    upload_id = models.OneToOneField("uploader.CofkCollectUpload", null=False, on_delete=models.DO_NOTHING)
+
+    # KTODO why upload_id in database become upload_id_id, should I change field name to upload instead
+    # KTODO change null=True for draft version
+    upload_id = models.OneToOneField("uploader.CofkCollectUpload", null=True, on_delete=models.DO_NOTHING)
+
     location_id = models.AutoField(primary_key=True)
     # union_location_id = Column(ForeignKey('cofk_union_location.location_id', ondelete='SET NULL'))
-    union_location_id = models.ForeignKey("location.CofkUnionLocation", on_delete=models.DO_NOTHING)
+
+    # KTODO what is usage of UnionLocation
+    # union_location_id = models.ForeignKey("location.CofkUnionLocation", on_delete=models.DO_NOTHING)
     location_name = models.CharField(max_length=500, null=False, default='')
     element_1_eg_room = models.CharField(max_length=100, null=False, default='')
     element_2_eg_building = models.CharField(max_length=100, null=False, default='')
