@@ -18,6 +18,8 @@ services:
       - "should be used by pycharm"
     environment:
       - DJANGO_SETTINGS_MODULE=siteedit2.settings.tests
+    ports:
+      - "8010:8010"
 
   chrome:
     image: selenium/standalone-chrome:3.141
