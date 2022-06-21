@@ -33,7 +33,7 @@ class CofkCollectLocation(models.Model):
     notes_on_place = models.TextField()
     editors_notes = models.TextField()
     upload_name = models.CharField(max_length=254)
-    _id = models.CharField(max_length=32)
+    _id = models.CharField(max_length=32)    # KTODO what is this _id, should be remove??
     location_synonyms = models.TextField()
     latitude = models.CharField(max_length=20)
     longitude = models.CharField(max_length=20)
