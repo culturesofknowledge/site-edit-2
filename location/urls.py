@@ -4,5 +4,7 @@ from . import views
 
 app_name = 'location'
 urlpatterns = [
-    path('get-location', views.get_location, name='get_location'),
+    path('form', views.form, name='form'),
+    path('form/<int:location_id>', views.form, name='form_by_id'),
+    path('search', views.search, name='search'),
 ]

@@ -1,0 +1,16 @@
+{% extends "emlo_base.html" %}
+
+{% block content %}
+
+    <ul>
+        {% for loc in locations %}
+            <li>
+                <a href="{% url 'location:form_by_id' loc.location_id %}">
+                    {{ loc.location_id }} | {{ loc.location_name }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+
+
+{% endblock %}
