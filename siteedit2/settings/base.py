@@ -13,6 +13,8 @@ import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+from siteedit2.utils import log_utils
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
@@ -101,6 +103,40 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+# Logging
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+        'detailed_web': {
+            'format': log_utils.detailed_web_fmt,
+            'datefmt': '%Y%m%d %H%M%S',
+            'class': 'siteedit2.utils.log_utils.ColorFormatter',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'detailed_web',
+            # 'formatter': 'verbose',
+            'level': 'DEBUG',
+        }
+    },
+    'root': {
+        'level': 'DEBUG',
+        'handlers': ['console']
+    },
+    # 'loggers': { }
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
