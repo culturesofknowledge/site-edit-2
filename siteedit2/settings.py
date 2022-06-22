@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'login',
     'uploader'
 ]
 
@@ -133,3 +134,11 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+AUTH_USER_MODEL = 'login.CofkUser'
+
+
+# #### Login setting
+LOGIN_URL = '/login/login_page'
+LOGIN_REDIRECT_URL = '/login/dashboard'  # KTODO this value to be update
