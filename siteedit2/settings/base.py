@@ -131,11 +131,13 @@ LOGGING = {
             'level': 'DEBUG',
         }
     },
-    'root': {
-        'level': 'DEBUG',
-        'handlers': ['console']
-    },
-    # 'loggers': { }
+    'loggers': {
+        'location': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+            'propagate': True,
+        }
+    }
 }
 
 # Internationalization
