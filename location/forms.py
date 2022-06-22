@@ -5,7 +5,7 @@ from location.models import CofkCollectLocation
 
 class LocationForm(ModelForm):
     # location_name = forms.CharField(label='Location name', max_length=100)
-    location_id = IntegerField()
+    location_id = IntegerField(required=False)
     location_id.widget = HiddenInput()
 
     class Meta:
