@@ -1,4 +1,6 @@
 # Create your tests here.
+
+from django.urls import reverse
 from selenium.webdriver.common.by import By
 
 from location.models import CofkCollectLocation
@@ -10,7 +12,8 @@ class LocationFormTests(EmloSeleniumTestCase):
     def test_create_location(self):
         from django.conf import settings
         self.assertIn('pycharm-py', settings.ALLOWED_HOSTS)
-        url = self.live_server_url + '/location/get-location'
+
+        url = self.live_server_url + reverse('location:form')
         self.selenium.get(url)
 
         id_text_dict = dict(
