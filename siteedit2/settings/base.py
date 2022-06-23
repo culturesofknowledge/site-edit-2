@@ -164,5 +164,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'login.CofkUser'
 
 # #### Login setting
-LOGIN_URL = '/login/login_page'
+LOGIN_URL = '/login/gate'
 LOGIN_REDIRECT_URL = '/login/dashboard'  # KTODO this value to be update

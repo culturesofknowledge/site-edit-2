@@ -3,9 +3,16 @@
 {% block content %}
     <h1>It is example dashboard page.</h1>
 
-    <h1>Dashboard</h1>
+
+    <h1> Login </h1>
     <ul>
-        <li><a href="{% url 'login:example dashboard' %}">Dashboard</a></li>
+        <li><a href="{% url 'login:gate' %}">Login page</a></li>
+    </ul>
+
+
+    <h1>Admin</h1>
+    <ul>
+        <li><a href="{% url 'admin:index' %}">Admin</a></li>
     </ul>
 
     <h1> Location </h1>
