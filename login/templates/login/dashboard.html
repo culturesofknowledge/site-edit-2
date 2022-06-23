@@ -1,11 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "emlo_base.html" %}
+
+{% block content %}
     <h1>It is example dashboard page.</h1>
 
-</body>
-</html>
+    <h1>Dashboard</h1>
+    <ul>
+        <li><a href="{% url 'login:example dashboard' %}">Dashboard</a></li>
+    </ul>
+
+    <h1> Location </h1>
+    <ul>
+        <li><a href="{% url 'location:form' %}">Create</a></li>
+        <li><a href="{% url 'location:search' %}">List</a></li>
+    </ul>
+{% endblock %}

@@ -1,0 +1,34 @@
+# extending docker-compose.yml
+
+version: '3.3'
+services:
+  pycharm-py:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/code
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - chrome
+    command:
+      - echo
+      - "should be used by pycharm"
+    environment:
+      - DJANGO_SETTINGS_MODULE=siteedit2.settings.tests
+    ports:
+      - "8010:8010"
+
+  chrome:
+    image: selenium/standalone-chrome:3.141
+    logging:
+      driver: none
+    volumes:
+      - /dev/shm:/dev/shm
+    shm_size: 2G
+    ports:
+      - "4444:4444"
+      - "5959:5900"
+
