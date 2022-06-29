@@ -1,4 +1,5 @@
 {% load static %}
+{% load sass_tags %}
 <!DOCTYPE html>
 <html>
 
@@ -6,7 +7,9 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta http-equiv="Content-Language" content="en-gb">
     <title>Union Catalogue Editing Interface</title>
-    <link rel="icon" type="image/png" href="{% static 'login/CofK_Favicon.ico'  %}">
+    <link rel="icon" type="image/png" href="{% static 'login/img/CofK_Favicon.ico'  %}">
+
+    <link href="{% sass_src 'login/scss/main.scss' %}" rel="stylesheet" type="type/css"  >
 
     <style>
         html {
@@ -137,7 +140,7 @@
 
 
     <div class="banner" id="pagebanner">
-        <img src="{% static 'login/CofKLogo.png' %}" alt="EMLO Edit" class="bannerlogo">
+        <img src="{% static 'login/img/CofKLogo.png' %}" alt="EMLO Edit" class="bannerlogo">
         <h1>Union Catalogue Editing Interface</h1><br/>
         <h2 style=" margin:13px 10px 0px 40px; border-top: 1px solid #aaa; margin-right: 56px; padding-top: 10px;">
             User Login
@@ -157,16 +160,16 @@
     <div class="footimgs">
 
         <a href="https://www.ox.ac.uk/" title="University of Oxford" target="_blank" class="footimg">
-            <img src="{% static 'login/ox_brand3_pos_rect.gif' %}" alt="University of Oxford logo">
+            <img src="{% static 'login/img/ox_brand3_pos_rect.gif' %}" alt="University of Oxford logo">
         </a>
         <a href="https://www.bodleian.ox.ac.uk/"
            title="Bodleian Libraries"
            target="_blank" class="footimg">
-            <img src="{% static 'login/bod-libraries-140.png' %}" alt="Bodleian Libraries logo">
+            <img src="{% static 'login/img/bod-libraries-140.png' %}" alt="Bodleian Libraries logo">
         </a>
 
         <a href="https://www.mellon.org" title="The Andrew W. Mellon Foundation" target="_blank" class="footimg">
-            <img src="{% static 'login/CofKDatabaseMellonLogo.jpg' %}" alt="The Andrew W. Mellon Foundation">
+            <img src="{% static 'login/img/CofKDatabaseMellonLogo.jpg' %}" alt="The Andrew W. Mellon Foundation">
         </a>
 
     </div>

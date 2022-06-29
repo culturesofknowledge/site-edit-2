@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'sass_processor',
     'login',
     'uploader',
     'location',
@@ -69,6 +70,20 @@ TEMPLATES = [
         },
     },
 ]
+
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    'sass_processor.finders.CssFinder',
+]
+
+SASS_PROCESSOR_INCLUDE_DIRS = [
+    # KTODO update path for @import of scss
+    #  os.path.join(PROJECT_PATH, 'extra-styles/scss'),
+    #  os.path.join(PROJECT_PATH, 'node_modules'),
+]
+
+SASS_PROCESSOR_ROOT = 'static/'
 
 WSGI_APPLICATION = 'siteedit2.wsgi.application'
 
