@@ -1,0 +1,6 @@
+# extending docker-compose.yml
+
+version: '3.3'
+services:
+  pycharm-py:
+    entrypoint: /code/docker-entrypoint-unittest.sh
