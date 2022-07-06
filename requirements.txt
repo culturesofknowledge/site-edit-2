@@ -6,4 +6,7 @@ pandas==1.4.3
 psycopg2==2.9.3
 pycountry==22.3.5
 sqlparse==0.4.2
-selenium==4.3.0
+selenium~=4.3.0
+django-compressor~=4.0
+django-sass-processor~=1.2.1
+libsass~=0.21.0

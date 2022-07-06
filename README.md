@@ -21,3 +21,9 @@ Dependencies:
 Redesigned in isolation, as a modular piece that would integrate with the "old" code and accessible
 [here](https://github.com/J4bbi/emlo_uploader), the code for this is now integrated into the repository as an
 [app](https://docs.djangoproject.com/en/4.0/intro/tutorial01/#creating-the-polls-app).
+
+
+
+Reference
+----------------------
+* django-sass-processor -- https://github.com/jrief/django-sass-processor
