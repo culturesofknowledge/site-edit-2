@@ -13,7 +13,7 @@ class LocationFormTests(EmloSeleniumTestCase):
         from django.conf import settings
         self.assertIn('pycharm-py', settings.ALLOWED_HOSTS)
 
-        url = self.live_server_url + reverse('location:form')
+        url = self.live_server_url + reverse('location:init_form')
         self.selenium.get(url)
 
         id_text_dict = dict(

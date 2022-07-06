@@ -5,7 +5,7 @@
     <ul>
         {% for loc in locations %}
             <li>
-                <a href="{% url 'location:form_by_id' loc.location_id %}">
+                <a href="{% url 'location:full_form' loc.location_id %}">
                     {{ loc.location_id }} | {{ loc.location_name }}
                 </a>
             </li>
