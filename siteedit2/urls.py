@@ -17,9 +17,13 @@ from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
 
+from uploader import views
+
 urlpatterns = [
     path('', RedirectView.as_view(url='/login/dashboard')),
     path('login/', include('login.urls')),
     path('admin/', admin.site.urls),
     path('location/', include('location.urls')),
+    path('upload/', views.upload_view, name='upload')
+
 ]
