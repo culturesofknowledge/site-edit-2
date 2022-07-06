@@ -40,6 +40,10 @@ INSTALLED_APPS = [
     'login',
     'uploader',
     'location',
+    'work',
+    'institution',
+    'manifestation',
+    'person',
 ]
 
 MIDDLEWARE = [
@@ -136,6 +140,11 @@ LOGGING = {
             'level': 'DEBUG',
             'handlers': ['console'],
             'propagate': True,
+        },
+        'uploader': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+            'propagate': True,
         }
     }
 }
@@ -166,3 +175,5 @@ AUTH_USER_MODEL = 'login.CofkUser'
 # #### Login setting
 LOGIN_URL = '/login/login_page'
 LOGIN_REDIRECT_URL = '/login/dashboard'  # KTODO this value to be update
+
+MEDIA_ROOT = '/code/files/' # TODO this needs to be updated
