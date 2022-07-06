@@ -47,8 +47,8 @@ class CofkRepositories:
             log.info("Repository created.")
 
     def already_exists(self) -> bool:
-        return CofkCollectInstitution.objects\
-            .filter(institution_id=self.__institution_id, upload_id=self.upload)\
+        return CofkCollectInstitution.objects \
+            .filter(institution_id=self.__institution_id, upload_id=self.upload) \
             .exists()
 
 
@@ -107,7 +107,7 @@ class CofkPeople:
         self.__person_id = str(person_data['iperson_id'])
 
         log.info("Processing person, iperson_id #{}, upload_id #{}".format(
-           self.__person_id, self.upload_id))
+            self.__person_id, self.upload_id))
 
         if not self.already_exists():
             person = CofkCollectPerson(**self.__person_data)
@@ -237,9 +237,9 @@ class CofkWork:
 
         for p in authors:
             author = CofkCollectAuthorOfWork(
-                #author_id=author_id,
+                # author_id=author_id,
                 upload_id=self.upload_id,
-                #iwork_id=self.iwork_id,
+                # iwork_id=self.iwork_id,
                 iperson_id=p)
 
             author.save()
@@ -252,9 +252,9 @@ class CofkWork:
 
         for p in addressees:
             addressee = CofkCollectAddresseeOfWork(
-                #addressee_id=addressee_id,
+                # addressee_id=addressee_id,
                 upload_id=self.upload_id,
-                #iwork_id=self.iwork_id,
+                # iwork_id=self.iwork_id,
                 iperson_id=p)
 
             addressee.save()
@@ -459,7 +459,6 @@ class CofkWork:
             resource_details=resource_details)
         resource.save()
 
-
         log.info("Resource created #{} iwork_id #{}, upload_id #{}".format(resource.id,
                                                                            self.iwork_id, self.upload_id))
 
@@ -490,13 +489,13 @@ class CofkUploadExcelFile:
             self.wb = pd.read_excel(filename, sheet_name=None, usecols=lambda c: not c.startswith('Unnamed:'))
         except ValueError:
             ExcelFile._engines['openpyxl_wo_formatting'] = OpenpyxlReaderWOFormatting
-            self.workbook = pd.read_excel(filename, None, header=1,
-                                          usecols=lambda c: not c.startswith('Unnamed:'),
-                                          engine='openpyxl_wo_formatting')
+            self.wb = pd.read_excel(filename, None, header=1,
+                                    usecols=lambda c: not c.startswith('Unnamed:'),
+                                    engine='openpyxl_wo_formatting')
 
         self.check_sheets()
 
-        #self.validate_data()
+        # self.validate_data()
 
         # self.upload = self.create_upload()
 

@@ -4,9 +4,16 @@ from django.db import models
 # KTODO Researchers' notes for front-end display
 # KTODO Related resources
 
+
 class CofkCollectLocation(models.Model):
+    # KTODO why upload_id in database become upload_id_id, should I change field name to upload instead
+    # KTODO change null=True for draft version
     upload = models.ForeignKey("uploader.CofkCollectUpload", null=True, on_delete=models.CASCADE)
     location_id = models.AutoField(primary_key=True)
+    # union_location_id = Column(ForeignKey('cofk_union_location.location_id', ondelete='SET NULL'))
+
+    # KTODO what is usage of UnionLocation
+    # union_location_id = models.ForeignKey("location.CofkUnionLocation", on_delete=models.DO_NOTHING)
     location_name = models.CharField(max_length=500, null=False, default='')
     element_1_eg_room = models.CharField(max_length=100, null=False, default='')
     element_2_eg_building = models.CharField(max_length=100, null=False, default='')

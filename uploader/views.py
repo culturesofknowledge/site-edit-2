@@ -37,12 +37,9 @@ def upload_view(request, **kwargs):
                 context['errors'] += cefe.errors
                 log.error(cefe.msg)
                 log.error(cefe.errors)
-            except FileNotFoundError as fnfe:
-                context['errors'].append(fnfe)
-                log.error(fnfe)
-            except ValueError as ve:
-                context['errors'].append(ve)
-                log.error(ve)
+            except (FileNotFoundError, ValueError) as e:
+                context['errors'].append(e)
+                log.error(e)
 
             if not cuef:
                 new_upload.delete()
