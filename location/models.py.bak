@@ -1,14 +1,24 @@
 import uuid
 from django.db import models
 
+
+# Create your models here.
+
 # KTODO Researchers' notes for front-end display
 # KTODO Related resources
 
-
 class CofkCollectLocation(models.Model):
+    #class Meta:
+    #    db_table = 'cofk_collect_location'
+
+    # upload_id = Column(ForeignKey('cofk_collect_upload.upload_id'), primary_key=True, null=False)
+    # upload_id = models.ForeignKey("uploader.CofkCollectUpload", primary_key=True, null=False, on_delete=models.DO_NOTHING)
+
     # KTODO why upload_id in database become upload_id_id, should I change field name to upload instead
     # KTODO change null=True for draft version
+    # upload = models.OneToOneField("uploader.CofkCollectUpload", null=True, on_delete=models.DO_NOTHING)
     upload = models.ForeignKey("uploader.CofkCollectUpload", null=True, on_delete=models.CASCADE)
+
     location_id = models.AutoField(primary_key=True)
     # union_location_id = Column(ForeignKey('cofk_union_location.location_id', ondelete='SET NULL'))
 
@@ -30,16 +40,23 @@ class CofkCollectLocation(models.Model):
     latitude = models.CharField(max_length=20)
     longitude = models.CharField(max_length=20)
 
+    # union_location = relationship('CofkUnionLocation')
+    # upload = relationship('CofkCollectUpload') # KTODO how to bind upload record
+
 
 class CofkUnionLocation(models.Model):
     # KTODO who use this models ???
+    #class Meta:
+    #    db_table = 'cofk_union_location'
 
     location_id = models.AutoField(primary_key=True)
     location_name = models.CharField(max_length=500, null=False, default='')
     latitude = models.CharField(max_length=20)
     longitude = models.CharField(max_length=20)
     creation_timestamp = models.DateTimeField(auto_now=True)
+    # creation_user = models.CharField(max_length=50, null=False, default=current_user)
     change_timestamp = models.DateTimeField(auto_now=True)
+    # change_user = models.CharField(max_length=50, null=False, default=current_user)
     location_synonyms = models.TextField()
     editors_notes = models.TextField()
     element_1_eg_room = models.CharField(max_length=100, null=False, default='')
@@ -53,10 +70,21 @@ class CofkUnionLocation(models.Model):
 
 
 class CofkCollectLocationResource(models.Model):
-    # KTODO not sure when to use / assign value of `upload` field
-    upload = models.OneToOneField("uploader.CofkCollectUpload", null=True, on_delete=models.DO_NOTHING)
+    #class Meta:
+    #    db_table = 'cofk_collect_location_resource'
+
+    # __table_args__ = (
+    #    ForeignKeyConstraint(['upload_id', 'location_id'], ['cofk_collect_location.upload_id', 'cofk_collect_location.location_id']),
+    # )
+
+    # upload_id = Column(ForeignKey('cofk_collect_upload.upload_id'), primary_key=True, null=False)
+    # upload_id = models.ForeignKey("uploader.CofkCollectUpload", primary_key=True, null=False, on_delete=models.DO_NOTHING)
+    upload_id = models.OneToOneField("uploader.CofkCollectUpload", null=False, on_delete=models.DO_NOTHING)
     resource_id = models.AutoField(primary_key=True)
-    location = models.ForeignKey(CofkCollectLocation, on_delete=models.CASCADE, related_name='resources')
+    location_id = models.IntegerField(null=False)
     resource_name = models.TextField(null=False, default='')
     resource_details = models.TextField(null=False, default='')
     resource_url = models.TextField(null=False, default='')
+
+    # upload = relationship('CofkCollectLocation')
+    # upload1 = relationship('CofkCollectUpload')
