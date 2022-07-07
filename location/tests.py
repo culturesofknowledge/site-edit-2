@@ -1,9 +1,9 @@
 # Create your tests here.
 
-from django.urls import reverse
 from selenium.webdriver.common.by import By
 
-from location.models import CofkCollectLocation
+from location import fixtures
+from location.models import CofkCollectLocation, CofkCollectLocationResource
 from siteedit2.utils.test_utils import EmloSeleniumTestCase
 
 
@@ -13,32 +13,40 @@ class LocationFormTests(EmloSeleniumTestCase):
         from django.conf import settings
         self.assertIn('pycharm-py', settings.ALLOWED_HOSTS)
 
-        url = self.live_server_url + reverse('location:init_form')
-        self.selenium.get(url)
+        self.selenium.get(self.get_url_by_viewname('location:init_form'))
 
-        id_text_dict = dict(
-            id_location_name='id_location_name value',
-            id_element_1_eg_room='id_element_1_eg_room value',
-            id_element_2_eg_building='id_element_2_eg_building value',
-            id_element_3_eg_parish='id_element_3_eg_parish value',
-            id_element_4_eg_city='id_element_4_eg_city value',
-            id_element_5_eg_county='id_element_5_eg_county value',
-            id_element_6_eg_country='id_element_6_eg_country value',
-            id_element_7_eg_empire='id_element_7_eg_empire value',
-            id_notes_on_place='id_notes_on_place value',
-            id_editors_notes='id_editors_notes value',
-            id_upload_name='id_upload_name value',
-            id_location_synonyms='id_location_synonyms value',
-            id_latitude='id_latitude value',
-            id_longitude='id_longitude value',
-        )
-        for ele_id, text in id_text_dict.items():
-            ele = self.selenium.find_element(value=ele_id)
-            ele.send_keys(text)
+        self.fill_val_by_selector_list((f'#id_{k}', v)
+                                       for k, v in fixtures.location_dict_a.items())
 
         org_location_size = CofkCollectLocation.objects.count()
 
         submit_btn = self.selenium.find_element(By.CSS_SELECTOR, 'input[type=submit]')
         submit_btn.click()
 
+        # check new location should be created in db
         self.assertGreater(CofkCollectLocation.objects.count(), org_location_size)
+
+    def test_edit_location(self):
+        loc_a = fixtures.create_location_a()
+        loc_a.save()
+        n_res = loc_a.resources.count()
+
+        # check before update
+        self.assertEqual(n_res, 0)
+
+        # update web page
+        url = self.get_url_by_viewname('location:full_form',
+                                       kwargs={'location_id': loc_a.location_id})
+        self.selenium.get(url)
+
+        self.fill_val_by_selector_list((f'#id_loc_res-{n_res}-{k}', v)
+                                       for k, v in fixtures.loc_res_dict_a.items())
+
+        self.selenium.find_element(By.CSS_SELECTOR, 'input[type=submit]').click()
+
+        # assert result after form submit
+        loc_a.refresh_from_db()
+
+        self.assertEqual(loc_a.resources.count(), 1)
+        loc_res: CofkCollectLocationResource = loc_a.resources.first()
+        self.assertEqual(loc_res.resource_name, fixtures.loc_res_dict_a['resource_name'])
