@@ -8,16 +8,16 @@ class Command(BaseCommand):
     help = 'playground for try some python code'
 
     def handle(self, *args, **options):
-        main2()
+        main1()
 
 
 def main1():
     print('yyyyyy')
 
-    coll_location: CofkCollectLocation = CofkCollectLocation.objects.first()
-    a = coll_location.resources
-    print(coll_location)
-    print(a)
+    # coll_location: CofkCollectLocation = CofkCollectLocation.objects.first()
+    # a = coll_location.resources
+    # print(coll_location)
+    # print(a)
 
 
 
