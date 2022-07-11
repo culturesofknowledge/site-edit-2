@@ -4,7 +4,7 @@ from django.db import models
 class CofkCollectStatus(models.Model):
     status_id = models.IntegerField(primary_key=True)
     status_desc = models.CharField(max_length=100)
-    editable = models.SmallIntegerField()
+    editable = models.IntegerField(null=False, default=1)  # TODO schema changed for current system
 
 
 class CofkCollectToolUser(models.Model):
@@ -105,10 +105,10 @@ class CofkUnionSubject(models.Model):
 
 
 class Iso639LanguageCode(models.Model):
-    code_639_3 = models.CharField(primary_key=True, max_length=3)
+    code_639_3 = models.CharField(max_length=3)
     code_639_1 = models.CharField(max_length=2)
     language_name = models.CharField(max_length=100)
-    language_id = models.AutoField()
+    language_id = models.AutoField(primary_key=True)
 
 
 def user_directory_path(instance, filename):
@@ -127,6 +127,7 @@ class CofkCollectUpload(models.Model):
     uploader_email = models.CharField(max_length=250)
     _id = models.CharField(max_length=32, blank=True, null=True)
     upload_name = models.CharField(max_length=254, blank=True, null=True)
+    upload_file = models.FileField(upload_to=user_directory_path)  # TODO schema changed for current system
 
 
 class CofkReport(models.Model):
@@ -149,7 +150,7 @@ class CofkReport(models.Model):
 
 class CofkUserSavedQuery(models.Model):
     query_id = models.AutoField(primary_key=True)
-    username = models.ForeignKey('login.CofkUsers', models.DO_NOTHING, db_column='username')
+    username = models.ForeignKey('login.CofkUser', models.DO_NOTHING, db_column='username')
     query_class = models.CharField(max_length=100)
     query_method = models.CharField(max_length=100)
     query_title = models.TextField()
@@ -172,3 +173,16 @@ class CofkUserSavedQuerySelection(models.Model):
 
     class Meta:
         db_table = 'cofk_user_saved_query_selection'
+
+
+class CofkCollectToolSession(models.Model):
+    session_id = models.AutoField(primary_key=True)
+    session_timestamp = models.DateTimeField()
+    session_code = models.TextField(unique=True, blank=True, null=True)
+    username = models.ForeignKey(CofkCollectToolUser, models.DO_NOTHING, db_column='username', blank=True,
+                                 null=True)
+
+
+class CofkUnionFavouriteLanguage(models.Model):
+    language_code = models.OneToOneField(Iso639LanguageCode, models.DO_NOTHING, db_column='language_code',
+                                         primary_key=True)

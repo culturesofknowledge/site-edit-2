@@ -41,7 +41,7 @@ class CofkUnionWork(models.Model):
                                            db_column='original_catalogue')
     accession_code = models.CharField(max_length=1000, blank=True, null=True)
     work_to_be_deleted = models.SmallIntegerField()
-    iwork_id = models.AutoField(unique=True)
+    iwork_id = models.IntegerField()
     editors_notes = models.TextField(blank=True, null=True)
     edit_status = models.CharField(max_length=3)
     relevant_to_cofk = models.CharField(max_length=3)
@@ -55,8 +55,8 @@ class CofkUnionWork(models.Model):
 class CofkCollectWork(models.Model):
     upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
     iwork_id = models.IntegerField()
-    union_iwork = models.ForeignKey(CofkUnionWork, models.DO_NOTHING, blank=True, null=True)
-    work = models.ForeignKey(CofkUnionWork, models.DO_NOTHING, blank=True, null=True)
+    union_iwork = models.ForeignKey(CofkUnionWork, models.DO_NOTHING, blank=True, null=True, related_name='union_collect_works')
+    work = models.ForeignKey(CofkUnionWork, models.DO_NOTHING, blank=True, null=True, related_name='collect_works')
     date_of_work_as_marked = models.CharField(max_length=250, blank=True, null=True)
     original_calendar = models.CharField(max_length=2)
     date_of_work_std_year = models.IntegerField(blank=True, null=True)
@@ -211,7 +211,7 @@ class CofkCollectSubjectOfWork(models.Model):
     upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
     subject_of_work_id = models.IntegerField()
     iwork_id = models.IntegerField()
-    subject = models.ForeignKey('CofkUnionSubject', models.DO_NOTHING)
+    subject = models.ForeignKey('uploader.CofkUnionSubject', models.DO_NOTHING)
 
     class Meta:
         db_table = 'cofk_collect_subject_of_work'

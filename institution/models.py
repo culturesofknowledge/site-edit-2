@@ -2,7 +2,7 @@ from django.db import models
 
 
 class CofkCollectInstitution(models.Model):
-    upload_id = models.ForeignKey("uploader.CofkCollectUpload", null=False, on_delete=models.CASCADE)
+    upload = models.ForeignKey("uploader.CofkCollectUpload", null=False, on_delete=models.CASCADE)
     institution_id = models.AutoField(primary_key=True)
     # TODO under what circumstances is this populated? it is clearly not populated when spreadsheet is uploaded
     union_institution = models.ForeignKey('CofkUnionInstitution', models.DO_NOTHING, blank=True, null=True)

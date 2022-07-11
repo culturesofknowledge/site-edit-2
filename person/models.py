@@ -4,8 +4,9 @@ from django.db import models
 class CofkCollectPerson(models.Model):
     upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
     iperson_id = models.IntegerField()
-    union_iperson = models.ForeignKey('CofkUnionPerson', models.DO_NOTHING, blank=True, null=True)
-    person = models.ForeignKey('CofkUnionPerson', models.DO_NOTHING, blank=True, null=True)
+    # KTODO temporary related_name
+    union_iperson = models.ForeignKey('CofkUnionPerson', models.DO_NOTHING, blank=True, null=True, related_name='union_collect_persons')
+    person = models.ForeignKey('CofkUnionPerson', models.DO_NOTHING, blank=True, null=True, related_name='collect_persons')
     primary_name = models.CharField(max_length=200)
     alternative_names = models.TextField(blank=True, null=True)
     roles_or_titles = models.TextField(blank=True, null=True)
@@ -71,7 +72,7 @@ class CofkUnionPerson(models.Model):
     date_of_death_approx = models.SmallIntegerField()
     gender = models.CharField(max_length=1)
     is_organisation = models.CharField(max_length=1)
-    iperson_id = models.AutoField(unique=True)
+    iperson_id = models.IntegerField()
     creation_timestamp = models.DateTimeField(blank=True, null=True)
     creation_user = models.CharField(max_length=50)
     change_timestamp = models.DateTimeField(blank=True, null=True)
@@ -109,7 +110,7 @@ class CofkCollectOccupationOfPerson(models.Model):
     upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
     occupation_of_person_id = models.IntegerField()
     iperson_id = models.IntegerField()
-    occupation = models.ForeignKey('CofkUnionRoleCategory', models.DO_NOTHING)
+    occupation = models.ForeignKey('uploader.CofkUnionRoleCategory', models.DO_NOTHING)
 
     class Meta:
         db_table = 'cofk_collect_occupation_of_person'
