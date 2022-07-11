@@ -5,7 +5,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 
 # Create your views here.
 from location.forms import LocationForm, LocationResourceForm
-from location.models import CofkCollectLocation, CofkCollectLocationResource
+from location.models import CofkCollectLocation, CofkCollectLocationResource, CofkUnionLocation
 
 log = logging.getLogger(__name__)
 
@@ -17,7 +17,8 @@ def init_form(request):
             if loc_form.has_changed():
                 log.info(f'location have been saved')
                 _new_loc = loc_form.save()
-                return redirect('location:full_form', _new_loc.location_id)
+                return redirect('location:search')
+                # return redirect('location:full_form', _new_loc.location_id) # KTODO to be fix
             else:
                 log.debug('form have no change, skip record save')
             return redirect('location:search')
@@ -65,6 +66,6 @@ def full_form(request, location_id):
 
 
 def search(request):
-    locations = CofkCollectLocation.objects.iterator()
+    locations = CofkUnionLocation.objects.iterator()
     return render(request, 'location/search.html',
                   {'locations': locations})

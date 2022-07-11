@@ -10,10 +10,9 @@ class CofkCollectLocation(models.Model):
     # KTODO change null=True for draft version
     upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING, null=True)
     location_id = models.IntegerField()
+    # KTODO what is usage of UnionLocation
     union_location = models.ForeignKey('CofkUnionLocation', models.DO_NOTHING, blank=True, null=True)
 
-    # KTODO what is usage of UnionLocation
-    # union_location_id = models.ForeignKey("location.CofkUnionLocation", on_delete=models.DO_NOTHING)
     location_name = models.CharField(max_length=500)
     element_1_eg_room = models.CharField(max_length=100)
     element_2_eg_building = models.CharField(max_length=100)

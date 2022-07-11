@@ -1,6 +1,6 @@
 from django.forms import ModelForm, HiddenInput, IntegerField
 
-from location.models import CofkCollectLocation, CofkCollectLocationResource
+from location.models import CofkUnionLocation, CofkCollectLocationResource
 
 
 class LocationForm(ModelForm):
@@ -8,7 +8,7 @@ class LocationForm(ModelForm):
     location_id.widget = HiddenInput()
 
     class Meta:
-        model = CofkCollectLocation
+        model = CofkUnionLocation
         fields = (
             'location_id',
             'editors_notes',
@@ -18,8 +18,6 @@ class LocationForm(ModelForm):
             'location_name',
             'location_synonyms',
             'latitude', 'longitude',
-            'notes_on_place',
-            'upload_name',
         )
         labels = {
             'element_1_eg_room': '1. E.g. room',
