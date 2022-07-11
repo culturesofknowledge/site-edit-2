@@ -1,5 +1,3 @@
-from django.contrib.auth.base_user import AbstractBaseUser
-from django.contrib.auth.models import PermissionsMixin, UserManager
 from django.db import models
 
 
@@ -18,17 +16,11 @@ class CofkUsers(models.Model):
     active = models.SmallIntegerField()
     email = models.TextField(blank=True, null=True)
 
-    class Meta:
-        db_table = 'cofk_users'
-
 
 class CofkRoles(models.Model):
     role_id = models.AutoField(primary_key=True)
     role_code = models.CharField(unique=True, max_length=20)
     role_name = models.TextField(unique=True)
-
-    class Meta:
-        db_table = 'cofk_roles'
 
 
 class CofkSessions(models.Model):
@@ -36,9 +28,6 @@ class CofkSessions(models.Model):
     session_timestamp = models.DateTimeField()
     session_code = models.TextField(unique=True, blank=True, null=True)
     username = models.ForeignKey('CofkUsers', models.DO_NOTHING, db_column='username', blank=True, null=True)
-
-    class Meta:
-        db_table = 'cofk_sessions'
 
 
 class CofkUserRoles(models.Model):

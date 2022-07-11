@@ -53,7 +53,7 @@ class CofkUnionWork(models.Model):
 
 
 class CofkCollectWork(models.Model):
-    upload = models.OneToOneField("uploader.CofkCollectUpload", models.DO_NOTHING, primary_key=True)
+    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
     iwork_id = models.IntegerField()
     union_iwork = models.ForeignKey(CofkUnionWork, models.DO_NOTHING, blank=True, null=True)
     work = models.ForeignKey(CofkUnionWork, models.DO_NOTHING, blank=True, null=True)
@@ -118,12 +118,12 @@ class CofkCollectWork(models.Model):
 
 
 class CofkCollectAddresseeOfWork(models.Model):
-    upload = models.ForeignKey("uploader.CofkCollectUpload", on_delete=models.CASCADE, null=False)
-    addressee_id = models.IntegerField(null=False)
-    iperson_id = models.IntegerField(null=False)
-    iwork_id = models.IntegerField(null=False)
+    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
+    addressee_id = models.IntegerField()
+    iperson_id = models.IntegerField()
+    iwork_id = models.IntegerField()
     notes_on_addressee = models.TextField(blank=True, null=True)
-    _id = models.CharField(max_length=32)
+    _id = models.CharField(max_length=32, blank=True, null=True)
 
     class Meta:
         db_table = 'cofk_collect_addressee_of_work'
@@ -131,12 +131,12 @@ class CofkCollectAddresseeOfWork(models.Model):
 
 
 class CofkCollectAuthorOfWork(models.Model):
-    upload_ = models.ForeignKey("uploader.CofkCollectUpload", null=False, on_delete=models.CASCADE)
-    author_id = models.IntegerField(null=False)
-    iperson_id = models.IntegerField(null=False)
-    iwork_id = models.IntegerField(null=False)
+    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
+    author_id = models.IntegerField()
+    iperson_id = models.IntegerField()
+    iwork_id = models.IntegerField()
     notes_on_author = models.TextField(blank=True, null=True)
-    _id = models.CharField(max_length=32)
+    _id = models.CharField(max_length=32, blank=True, null=True)
 
     class Meta:
         db_table = 'cofk_collect_author_of_work'
@@ -144,12 +144,12 @@ class CofkCollectAuthorOfWork(models.Model):
 
 
 class CofkCollectDestinationOfWork(models.Model):
-    upload_ = models.ForeignKey("uploader.CofkCollectUpload", null=False, on_delete=models.CASCADE)
-    destination_id = models.IntegerField(null=False)
-    location_id = models.IntegerField(null=False)
-    iwork_id = models.IntegerField(null=False)
+    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
+    destination_id = models.IntegerField()
+    location_id = models.IntegerField()
+    iwork_id = models.IntegerField()
     notes_on_destination = models.TextField(blank=True, null=True)
-    _id = models.CharField(max_length=32)
+    _id = models.CharField(max_length=32, blank=True, null=True)
 
     class Meta:
         db_table = 'cofk_collect_destination_of_work'
@@ -157,11 +157,11 @@ class CofkCollectDestinationOfWork(models.Model):
 
 
 class CofkCollectLanguageOfWork(models.Model):
-    upload = models.ForeignKey("uploader.CofkCollectUpload", null=False, on_delete=models.CASCADE)
+    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
     language_of_work_id = models.IntegerField()
     iwork_id = models.IntegerField()
-    language_code = models.ForeignKey('Iso639LanguageCodes', models.DO_NOTHING, db_column='language_code')
-    _id = models.CharField(max_length=32)
+    language_code = models.ForeignKey('uploader.Iso639LanguageCode', models.DO_NOTHING, db_column='language_code')
+    _id = models.CharField(max_length=32, blank=True, null=True)
 
     class Meta:
         db_table = 'cofk_collect_language_of_work'
@@ -169,12 +169,12 @@ class CofkCollectLanguageOfWork(models.Model):
 
 
 class CofkCollectOriginOfWork(models.Model):
-    upload = models.ForeignKey("uploader.CofkCollectUpload", null=False, on_delete=models.CASCADE)
+    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
     origin_id = models.IntegerField()
     location_id = models.IntegerField()
     iwork_id = models.IntegerField()
     notes_on_origin = models.TextField(blank=True, null=True)
-    _id = models.CharField(max_length=32)
+    _id = models.CharField(max_length=32, blank=True, null=True)
 
     class Meta:
         db_table = 'cofk_collect_origin_of_work'
@@ -195,12 +195,12 @@ class CofkCollectPersonMentionedInWork(models.Model):
 
 
 class CofkCollectPlaceMentionedInWork(models.Model):
-    upload = models.ForeignKey("uploader.CofkCollectUpload", null=False, on_delete=models.CASCADE)
+    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
     mention_id = models.IntegerField()
     location_id = models.IntegerField()
     iwork_id = models.IntegerField()
     notes_on_place_mentioned = models.TextField(blank=True, null=True)
-    _id = models.CharField(max_length=32)
+    _id = models.CharField(max_length=32, blank=True, null=True)
 
     class Meta:
         db_table = 'cofk_collect_place_mentioned_in_work'
@@ -208,7 +208,7 @@ class CofkCollectPlaceMentionedInWork(models.Model):
 
 
 class CofkCollectSubjectOfWork(models.Model):
-    upload = models.ForeignKey("uploader.CofkCollectUpload", null=False, on_delete=models.CASCADE)
+    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
     subject_of_work_id = models.IntegerField()
     iwork_id = models.IntegerField()
     subject = models.ForeignKey('CofkUnionSubject', models.DO_NOTHING)
@@ -219,13 +219,13 @@ class CofkCollectSubjectOfWork(models.Model):
 
 
 class CofkCollectWorkResource(models.Model):
-    upload = models.ForeignKey("uploader.CofkCollectUpload", null=False, on_delete=models.CASCADE)
+    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
     resource_id = models.IntegerField()
     iwork_id = models.IntegerField()
     resource_name = models.TextField()
     resource_details = models.TextField()
     resource_url = models.TextField()
-    _id = models.CharField(max_length=32)
+    _id = models.CharField(max_length=32, blank=True, null=True)
 
     class Meta:
         db_table = 'cofk_collect_work_resource'
@@ -234,7 +234,7 @@ class CofkCollectWorkResource(models.Model):
 
 class CofkUnionLanguageOfWork(models.Model):
     work = models.OneToOneField('CofkUnionWork', models.DO_NOTHING, primary_key=True)
-    language_code = models.ForeignKey('Iso639LanguageCodes', models.DO_NOTHING, db_column='language_code')
+    language_code = models.ForeignKey('uploader.Iso639LanguageCode', models.DO_NOTHING, db_column='language_code')
     notes = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
@@ -298,9 +298,6 @@ class CofkUnionQueryableWork(models.Model):
     original_notes = models.TextField(blank=True, null=True)
     relevant_to_cofk = models.CharField(max_length=1)
     subjects = models.TextField(blank=True, null=True)
-
-    class Meta:
-        db_table = 'cofk_union_queryable_work'
 
 
 class CofkCollectWorkSummary(models.Model):

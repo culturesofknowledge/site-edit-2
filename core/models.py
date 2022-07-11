@@ -9,14 +9,12 @@ from django.db import models
 
 
 class CofkCollectImageOfManif(models.Model):
-    upload = models.ForeignKey('CofkCollectUpload', models.DO_NOTHING)
+    upload = models.ForeignKey('uploader.CofkCollectUpload', models.DO_NOTHING)
     manifestation_id = models.IntegerField()
     image_filename = models.CharField(max_length=2000)
-    _id = models.CharField(max_length=32)
+    _id = models.CharField(max_length=32, blank=True, null=True)
     iwork_id = models.IntegerField(blank=True, null=True)
 
-    class Meta:
-        db_table = 'cofk_collect_image_of_manif'
 
 
 class CofkCollectToolSession(models.Model):
@@ -25,9 +23,7 @@ class CofkCollectToolSession(models.Model):
     session_code = models.TextField(unique=True, blank=True, null=True)
     username = models.ForeignKey('CofkCollectToolUser', models.DO_NOTHING, db_column='username', blank=True, null=True)
 
-    class Meta:
-        db_table = 'cofk_collect_tool_session'
-
+    
 
 class CofkHelpOptions(models.Model):
     option_id = models.AutoField(primary_key=True)
@@ -49,18 +45,14 @@ class CofkHelpPages(models.Model):
     published_text = models.TextField()
     draft_text = models.TextField(blank=True, null=True)
 
-    class Meta:
-        db_table = 'cofk_help_pages'
-
+    
 
 class CofkLookupDocumentType(models.Model):
     document_type_id = models.AutoField(primary_key=True)
     document_type_code = models.CharField(unique=True, max_length=3)
     document_type_desc = models.CharField(max_length=100)
 
-    class Meta:
-        db_table = 'cofk_lookup_document_type'
-
+    
 
 class CofkMenu(models.Model):
     menu_item_id = models.AutoField(primary_key=True)
@@ -75,29 +67,14 @@ class CofkMenu(models.Model):
     called_as_popup = models.IntegerField()
     collection = models.CharField(max_length=20)
 
-    class Meta:
-        db_table = 'cofk_menu'
-
-
-class CofkReportGroups(models.Model):
-    report_group_id = models.AutoField(primary_key=True)
-    report_group_title = models.TextField(blank=True, null=True)
-    report_group_order = models.IntegerField()
-    on_main_reports_menu = models.IntegerField()
-    report_group_code = models.CharField(max_length=100, blank=True, null=True)
-
-    class Meta:
-        db_table = 'cofk_report_groups'
-
+    
 
 class CofkReportOutputs(models.Model):
     output_id = models.CharField(max_length=250)
     line_number = models.IntegerField()
     line_text = models.TextField(blank=True, null=True)
 
-    class Meta:
-        db_table = 'cofk_report_outputs'
-
+    
 
 class CofkUnionComment(models.Model):
     comment_id = models.AutoField(primary_key=True)
@@ -108,25 +85,19 @@ class CofkUnionComment(models.Model):
     change_user = models.CharField(max_length=50)
     uuid = models.UUIDField(blank=True, null=True)
 
-    class Meta:
-        db_table = 'cofk_union_comment'
-
+    
 
 class CofkUnionFavouriteLanguage(models.Model):
     language_code = models.OneToOneField('Iso639LanguageCodes', models.DO_NOTHING, db_column='language_code',
                                          primary_key=True)
 
-    class Meta:
-        db_table = 'cofk_union_favourite_language'
-
+    
 
 class CofkUnionNationality(models.Model):
     nationality_id = models.AutoField(primary_key=True)
     nationality_desc = models.CharField(max_length=100)
 
-    class Meta:
-        db_table = 'cofk_union_nationality'
-
+    
 
 class CofkUnionRelationship(models.Model):
     relationship_id = models.AutoField(primary_key=True)
@@ -142,9 +113,7 @@ class CofkUnionRelationship(models.Model):
     change_timestamp = models.DateTimeField(blank=True, null=True)
     change_user = models.CharField(max_length=50)
 
-    class Meta:
-        db_table = 'cofk_union_relationship'
-
+    
 
 class CofkUnionRelationshipType(models.Model):
     relationship_code = models.CharField(primary_key=True, max_length=50)
@@ -155,9 +124,7 @@ class CofkUnionRelationshipType(models.Model):
     change_timestamp = models.DateTimeField(blank=True, null=True)
     change_user = models.CharField(max_length=50)
 
-    class Meta:
-        db_table = 'cofk_union_relationship_type'
-
+    
 
 class CofkUnionResource(models.Model):
     resource_id = models.AutoField(primary_key=True)
@@ -170,31 +137,14 @@ class CofkUnionResource(models.Model):
     change_user = models.CharField(max_length=50)
     uuid = models.UUIDField(blank=True, null=True)
 
-    class Meta:
-        db_table = 'cofk_union_resource'
-
+    
 
 class CofkUnionSpeedEntryText(models.Model):
     speed_entry_text_id = models.AutoField(primary_key=True)
     object_type = models.CharField(max_length=30)
     speed_entry_text = models.CharField(max_length=200)
 
-    class Meta:
-        db_table = 'cofk_union_speed_entry_text'
-
-
-class CofkUserSavedQuerySelection(models.Model):
-    selection_id = models.AutoField(primary_key=True)
-    query = models.ForeignKey(CofkUserSavedQueries, models.DO_NOTHING)
-    column_name = models.CharField(max_length=100)
-    column_value = models.CharField(max_length=500)
-    op_name = models.CharField(max_length=100)
-    op_value = models.CharField(max_length=100)
-    column_value2 = models.CharField(max_length=500)
-
-    class Meta:
-        db_table = 'cofk_user_saved_query_selection'
-
+    
 
 class CopyCofkUnionQueryableWork(models.Model):
     iwork_id = models.IntegerField(blank=True, null=True)
@@ -253,9 +203,7 @@ class CopyCofkUnionQueryableWork(models.Model):
     relevant_to_cofk = models.CharField(max_length=1, blank=True, null=True)
     subjects = models.TextField(blank=True, null=True)
 
-    class Meta:
-        db_table = 'copy_cofk_union_queryable_work'
-
+    
 
 class ProActivity(models.Model):
     activity_type_id = models.TextField(blank=True, null=True)
@@ -278,9 +226,7 @@ class ProActivity(models.Model):
     change_user = models.TextField(blank=True, null=True)
     event_label = models.TextField(blank=True, null=True)
 
-    class Meta:
-        db_table = 'pro_activity'
-
+    
 
 class ProActivityRelation(models.Model):
     meta_activity_id = models.IntegerField(blank=True, null=True)
@@ -288,9 +234,7 @@ class ProActivityRelation(models.Model):
     spreadsheet_row = models.IntegerField()
     combined_spreadsheet_row = models.IntegerField()
 
-    class Meta:
-        db_table = 'pro_activity_relation'
-
+    
 
 class ProAssertion(models.Model):
     assertion_type = models.TextField(blank=True, null=True)
@@ -299,9 +243,7 @@ class ProAssertion(models.Model):
     source_description = models.TextField(blank=True, null=True)
     change_timestamp = models.DateTimeField(blank=True, null=True)
 
-    class Meta:
-        db_table = 'pro_assertion'
-
+    
 
 class ProIngestMapV2(models.Model):
     relationship = models.TextField(blank=True, null=True)
@@ -313,9 +255,7 @@ class ProIngestMapV2(models.Model):
     p_event_type = models.TextField(blank=True, null=True)
     p_role = models.TextField(blank=True, null=True)
 
-    class Meta:
-        db_table = 'pro_ingest_map_v2'
-
+    
 
 class ProIngestV8(models.Model):
     event_category = models.TextField(blank=True, null=True)
@@ -352,9 +292,7 @@ class ProIngestV8(models.Model):
     spreadsheet_row_id = models.TextField(blank=True, null=True)
     combined_csv_row_id = models.TextField(blank=True, null=True)
 
-    class Meta:
-        db_table = 'pro_ingest_v8'
-
+    
 
 class ProIngestV8Toreview(models.Model):
     event_category = models.TextField(blank=True, null=True)
@@ -391,35 +329,27 @@ class ProIngestV8Toreview(models.Model):
     spreadsheet_row_id = models.TextField(blank=True, null=True)
     combined_csv_row_id = models.TextField(blank=True, null=True)
 
-    class Meta:
-        db_table = 'pro_ingest_v8_toreview'
-
+    
 
 class ProLocation(models.Model):
     location_id = models.TextField(blank=True, null=True)
     change_timestamp = models.DateTimeField(blank=True, null=True)
     activity_id = models.IntegerField(blank=True, null=True)
 
-    class Meta:
-        db_table = 'pro_location'
-
+    
 
 class ProPeopleCheck(models.Model):
     person_name = models.TextField(blank=True, null=True)
     iperson_id = models.TextField(blank=True, null=True)
 
-    class Meta:
-        db_table = 'pro_people_check'
-
+    
 
 class ProPrimaryPerson(models.Model):
     person_id = models.TextField(blank=True, null=True)
     change_timestamp = models.DateTimeField(blank=True, null=True)
     activity_id = models.IntegerField(blank=True, null=True)
 
-    class Meta:
-        db_table = 'pro_primary_person'
-
+    
 
 class ProRelationship(models.Model):
     subject_id = models.TextField(blank=True, null=True)
@@ -432,9 +362,7 @@ class ProRelationship(models.Model):
     change_timestamp = models.DateTimeField(blank=True, null=True)
     activity_id = models.IntegerField(blank=True, null=True)
 
-    class Meta:
-        db_table = 'pro_relationship'
-
+    
 
 class ProRoleInActivity(models.Model):
     entity_type = models.TextField(blank=True, null=True)
@@ -443,9 +371,7 @@ class ProRoleInActivity(models.Model):
     change_timestamp = models.DateTimeField(blank=True, null=True)
     activity_id = models.IntegerField(blank=True, null=True)
 
-    class Meta:
-        db_table = 'pro_role_in_activity'
-
+    
 
 class ProTextualSource(models.Model):
     author = models.TextField(blank=True, null=True)

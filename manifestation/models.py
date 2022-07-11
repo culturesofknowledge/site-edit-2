@@ -1,4 +1,3 @@
-import uuid as uuid
 from django.db import models
 
 
@@ -66,10 +65,10 @@ class CofkUnionManifestation(models.Model):
 
 
 class CofkCollectManifestation(models.Model):
-    upload = models.OneToOneField('CofkCollectUpload', models.DO_NOTHING, primary_key=True)
+    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
     manifestation_id = models.IntegerField()
     iwork_id = models.IntegerField()
-    union_manifestation = models.ForeignKey('CofkUnionManifestation', models.DO_NOTHING, blank=True, null=True)
+    union_manifestation = models.ForeignKey(CofkUnionManifestation, models.DO_NOTHING, blank=True, null=True)
     manifestation_type = models.CharField(max_length=3)
     repository_id = models.IntegerField(blank=True, null=True)
     id_number_or_shelfmark = models.CharField(max_length=500, blank=True, null=True)
@@ -77,7 +76,7 @@ class CofkCollectManifestation(models.Model):
     manifestation_notes = models.TextField(blank=True, null=True)
     image_filenames = models.TextField(blank=True, null=True)
     upload_name = models.CharField(max_length=254, blank=True, null=True)
-    _id = models.CharField(max_length=32)
+    _id = models.CharField(max_length=32, blank=True, null=True)
 
     class Meta:
         db_table = 'cofk_collect_manifestation'
@@ -85,8 +84,8 @@ class CofkCollectManifestation(models.Model):
 
 
 class CofkUnionLanguageOfManifestation(models.Model):
-    manifestation = models.OneToOneField('CofkUnionManifestation', models.DO_NOTHING, primary_key=True)
-    language_code = models.ForeignKey('Iso639LanguageCodes', models.DO_NOTHING, db_column='language_code')
+    manifestation = models.OneToOneField(CofkUnionManifestation, models.DO_NOTHING, primary_key=True)
+    language_code = models.ForeignKey('uploader.Iso639LanguageCode', models.DO_NOTHING, db_column='language_code')
     notes = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:

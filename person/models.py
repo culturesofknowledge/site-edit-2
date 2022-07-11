@@ -2,7 +2,7 @@ from django.db import models
 
 
 class CofkCollectPerson(models.Model):
-    upload = models.OneToOneField('CofkCollectUpload', models.DO_NOTHING, primary_key=True)
+    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
     iperson_id = models.IntegerField()
     union_iperson = models.ForeignKey('CofkUnionPerson', models.DO_NOTHING, blank=True, null=True)
     person = models.ForeignKey('CofkUnionPerson', models.DO_NOTHING, blank=True, null=True)
@@ -42,7 +42,7 @@ class CofkCollectPerson(models.Model):
     notes_on_person = models.TextField(blank=True, null=True)
     editors_notes = models.TextField(blank=True, null=True)
     upload_name = models.CharField(max_length=254, blank=True, null=True)
-    _id = models.CharField(max_length=32)
+    _id = models.CharField(max_length=32, blank=True, null=True)
 
     class Meta:
         db_table = 'cofk_collect_person'
@@ -78,7 +78,7 @@ class CofkUnionPerson(models.Model):
     change_user = models.CharField(max_length=50)
     editors_notes = models.TextField(blank=True, null=True)
     further_reading = models.TextField(blank=True, null=True)
-    organisation_type = models.ForeignKey("uploader.CofkUnionOrgType", models.DO_NOTHING, db_column='organisation_type',
+    organisation_type = models.ForeignKey('uploader.CofkUnionOrgType', models.DO_NOTHING, db_column='organisation_type',
                                           blank=True, null=True)
     date_of_birth_calendar = models.CharField(max_length=2)
     date_of_birth_is_range = models.SmallIntegerField()
@@ -106,7 +106,7 @@ class CofkUnionPerson(models.Model):
 
 
 class CofkCollectOccupationOfPerson(models.Model):
-    upload = models.OneToOneField('CofkCollectUpload', models.DO_NOTHING, primary_key=True)
+    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
     occupation_of_person_id = models.IntegerField()
     iperson_id = models.IntegerField()
     occupation = models.ForeignKey('CofkUnionRoleCategory', models.DO_NOTHING)
@@ -116,9 +116,8 @@ class CofkCollectOccupationOfPerson(models.Model):
         unique_together = (('upload', 'occupation_of_person_id'),)
 
 
-
 class CofkCollectPersonResource(models.Model):
-    upload = models.OneToOneField('CofkCollectUpload', models.DO_NOTHING, primary_key=True)
+    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
     resource_id = models.IntegerField()
     iperson_id = models.IntegerField()
     resource_name = models.TextField()

@@ -1,4 +1,3 @@
-import uuid as uuid
 from django.db import models
 
 
@@ -11,7 +10,7 @@ class CofkCollectInstitution(models.Model):
     institution_city = models.TextField()
     institution_country = models.TextField()
     upload_name = models.CharField(max_length=254, blank=True, null=True)
-    _id = models.CharField(max_length=32)
+    _id = models.CharField(max_length=32, blank=True, null=True)
     institution_synonyms = models.TextField(blank=True, null=True)
     institution_city_synonyms = models.TextField(blank=True, null=True)
     institution_country_synonyms = models.TextField(blank=True, null=True)
@@ -41,7 +40,7 @@ class CofkUnionInstitution(models.Model):
 
 
 class CofkCollectInstitutionResource(models.Model):
-    upload = models.OneToOneField('CofkCollectUpload', models.DO_NOTHING)
+    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
     resource_id = models.IntegerField()
     institution_id = models.IntegerField()
     resource_name = models.TextField()
