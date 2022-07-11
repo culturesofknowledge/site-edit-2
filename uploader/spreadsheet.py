@@ -262,7 +262,7 @@ class CofkWork:
     def preprocess_data(self):
         # Isolating data relevant to a work
         non_work_keys = list(set(self.work_data.keys()) - set([c for c in CofkCollectWork.__dict__.keys()]))
-        log.debug(self.work_data)
+        # log.debug(self.work_data)
 
         # Removing non-work data so that variable work_data_raw can be used to pass parameters
         # to create a CofkCollectWork object
@@ -270,7 +270,7 @@ class CofkWork:
             self.non_work_data[m] = self.work_data[m]
             del self.work_data[m]
 
-        log.debug(self.non_work_data)
+        # log.debug(self.non_work_data)
 
     def process_work(self, work_data):
         """
@@ -478,6 +478,7 @@ class CofkUploadExcelFile:
         self.locations = []
         self.people = []
         self.manifestations = []
+        self.report = {}
 
         """
         Setting sheet_name to None returns a dict with sheet name as key and data frame as value
@@ -513,6 +514,10 @@ class CofkUploadExcelFile:
 
         # The last sheet is manifestations
         self.process_manifestations()
+
+        self.report = { 'manifestations': len(self.manifestations),
+                        'people': len(self.people),
+                        'repositories': len(self.repositories)}
 
     def check_sheets(self):
         # Verify all required sheets are present

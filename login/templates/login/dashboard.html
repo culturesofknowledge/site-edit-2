@@ -1,14 +1,11 @@
 {% extends "core/emlo_logined.html" %}
 
 {% block content %}
-    <h1>It is example dashboard page.</h1>
-
 
     <h1> Login </h1>
     <ul>
         <li><a href="{% url 'login:gate' %}">Login page</a></li>
     </ul>
-
 
     <h1>Admin</h1>
     <ul>
@@ -19,5 +16,10 @@
     <ul>
         <li><a href="{% url 'location:init_form' %}">Create</a></li>
         <li><a href="{% url 'location:search' %}">Search</a></li>
+    </ul>
+
+    <h1>Uploader</h1>
+    <ul>
+        <li><a href="{% url 'uploader:upload_form' %}">Upload form</a></li>
     </ul>
 {% endblock %}

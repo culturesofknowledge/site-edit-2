@@ -1,5 +1,6 @@
 import logging
 
+from django.contrib.auth.decorators import login_required
 from django.core.files.storage import default_storage
 from django.shortcuts import render
 
@@ -14,6 +15,7 @@ from uploader.validation import CofkExcelFileError
 log = logging.getLogger(__name__)
 
 
+@login_required
 def upload_view(request, **kwargs):
     template_url = 'form.html'
     form = CofkCollectUploadForm
@@ -43,5 +45,7 @@ def upload_view(request, **kwargs):
 
             if not cuef:
                 new_upload.delete()
+            else:
+                context['report'] = cuef.report
 
     return render(request, template_url, context)

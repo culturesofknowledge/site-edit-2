@@ -27,7 +27,8 @@ urlpatterns = [
     path('login/', include('login.urls')),
     path('admin/', admin.site.urls),
     path('location/', include('location.urls')),
-    path('upload/', views.upload_view, name='upload'),
+    path('upload/', include('uploader.urls'))
+
 ]
 
 urlpatterns += static(settings.MEDIA_URL + 'img',
