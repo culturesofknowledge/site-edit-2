@@ -32,6 +32,8 @@ class CofkCollectLocation(models.Model):
 
 
 class CofkUnionLocation(models.Model):
+    # KTODO who use this models ???
+
     location_id = models.AutoField(primary_key=True)
     location_name = models.CharField(max_length=500, null=False, default='')
     latitude = models.CharField(max_length=20)
@@ -51,9 +53,10 @@ class CofkUnionLocation(models.Model):
 
 
 class CofkCollectLocationResource(models.Model):
-    upload_id = models.OneToOneField("uploader.CofkCollectUpload", null=False, on_delete=models.DO_NOTHING)
+    # KTODO not sure when to use / assign value of `upload` field
+    upload = models.OneToOneField("uploader.CofkCollectUpload", null=True, on_delete=models.DO_NOTHING)
     resource_id = models.AutoField(primary_key=True)
-    location_id = models.IntegerField(null=False)
+    location = models.ForeignKey(CofkCollectLocation, on_delete=models.CASCADE, related_name='resources')
     resource_name = models.TextField(null=False, default='')
     resource_details = models.TextField(null=False, default='')
     resource_url = models.TextField(null=False, default='')

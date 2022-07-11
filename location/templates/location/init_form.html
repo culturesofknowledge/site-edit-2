@@ -1,9 +1,12 @@
 {% extends "emlo_base.html" %}
 
 {% block content %}
-    <form action="{% url 'location:form' %}" method="post">
+    <form action="{% url 'location:init_form' %}" method="post">
         {% csrf_token %}
-        {{ form.as_ul }}
+        {{ loc_form.as_ul }}
+
+
         <input type="submit" value="Submit">
+
     </form>
 {% endblock %}

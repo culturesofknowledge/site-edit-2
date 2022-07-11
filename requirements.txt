@@ -10,3 +10,4 @@ selenium~=4.3.0
 django-compressor~=4.0
 django-sass-processor~=1.2.1
 libsass~=0.21.0
+more-itertools~=8.13.0

@@ -1,6 +1,10 @@
+from typing import Iterable
+
 from django.test import LiveServerTestCase
+from django.urls import reverse
 from selenium import webdriver
 from selenium.webdriver import DesiredCapabilities
+from selenium.webdriver.common.by import By
 
 
 class EmloSeleniumTestCase(LiveServerTestCase):
@@ -25,3 +29,11 @@ class EmloSeleniumTestCase(LiveServerTestCase):
     def tearDownClass(cls):
         cls.selenium.quit()
         super().tearDownClass()
+
+    def get_url_by_viewname(self, viewname, **kwargs):
+        return self.live_server_url + reverse(viewname, **kwargs)
+
+    def fill_val_by_selector_list(self, selector_list: Iterable[tuple]):
+        for selector, val in selector_list:
+            ele = self.selenium.find_element(by=By.CSS_SELECTOR, value=selector)
+            ele.send_keys(val)

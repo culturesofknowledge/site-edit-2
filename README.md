@@ -24,6 +24,14 @@ Redesigned in isolation, as a modular piece that would integrate with the "old" 
 
 
 
+How to run all unitest with docker 
+------------------------------------
+```
+docker-compose -f $EMLO_CODE_HOME/docker-compose.yml -f $EMLO_CODE_HOME/docker-compose-pycharm.yml -f $EMLO_CODE_HOME/docker-compose-unittest.yml up pycharm-py
+```
+
+
+
 Reference
 ----------------------
 * django-sass-processor -- https://github.com/jrief/django-sass-processor

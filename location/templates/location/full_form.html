@@ -1,0 +1,28 @@
+{% extends "emlo_base.html" %}
+
+{% block content %}
+    <form action="{% url 'location:full_form' loc_id %}" method="post">
+        {% csrf_token %}
+        <h1>Location </h1>
+        <table>
+            {{ loc_form }}
+        </table>
+
+        <h1>Location Resource </h1>
+        {{ loc_res_formset.management_form }}
+        {% for form in loc_res_formset %}
+            <h2>
+                {% if forloop.first %}
+                    Add a new resource
+                {% else %}
+                    Resource no. {{ forloop.counter0 }}. {{ form.resource_name.value }}
+                {% endif %}
+            </h2>
+            <table>
+                {{ form }}
+            </table>
+        {% endfor %}
+
+        <input type="submit" value="Submit">
+    </form>
+{% endblock %}
