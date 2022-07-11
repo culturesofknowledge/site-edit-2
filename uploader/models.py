@@ -51,6 +51,7 @@ class CofkUnionAuditLiteral(models.Model):
 
     audit_id = models.AutoField(primary_key=True)
     change_timestamp = models.DateTimeField(auto_now=True)
+    change_user = models.CharField(max_length=50)
     change_type = models.CharField(max_length=3, null=False)
     table_name = models.CharField(max_length=100, null=False)
     key_value_text = models.CharField(max_length=100, null=False)
@@ -67,6 +68,7 @@ class CofkUnionAuditRelationship(models.Model):
 
     audit_id = models.AutoField(primary_key=True)
     change_timestamp = models.DateTimeField(auto_now=True)
+    change_user = models.CharField(max_length=50)
     change_type = models.CharField(max_length=3, null=False)
     left_table_name = models.CharField(max_length=100, null=False)
     left_id_value_new = models.CharField(max_length=100, null=False, default='')
@@ -90,7 +92,9 @@ class CofkUnionImage(models.Model):
     image_id = models.AutoField(primary_key=True)
     image_filename = models.TextField()
     creation_timestamp = models.DateTimeField(auto_now=True)
+    creation_user = models.CharField(max_length=50)
     change_timestamp = models.DateTimeField(auto_now=True)
+    change_user = models.CharField(max_length=50)
     thumbnail = models.TextField()
     can_be_displayed = models.CharField(max_length=1, null=False, default='Y')
     display_order = models.IntegerField(null=False, default=1)
@@ -115,6 +119,7 @@ class CofkUnionPublication(models.Model):
     publication_id = models.AutoField(primary_key=True)
     publication_details = models.TextField(null=False, default='')
     change_timestamp = models.DateTimeField(auto_now=True)
+    change_user = models.CharField(max_length=50)
     abbrev = models.CharField(max_length=50, null=False, default='')
 
 
@@ -173,6 +178,7 @@ class CofkReport(models.Model):
     class_name = models.CharField(max_length=40)
     method_name = models.CharField(max_length=40)
     report_group_id = models.ForeignKey("uploader.CofkReportGroup", on_delete=models.DO_NOTHING)
+    menu_item = models.ForeignKey('core.CofkMenu', models.DO_NOTHING, blank=True, null=True)
     has_csv_option = models.BooleanField(null=False, default=False)
     is_dummy_option = models.BooleanField(null=False, default=False)
     report_code = models.CharField(max_length=100)
@@ -189,6 +195,7 @@ class CofkUserSavedQuery(models.Model):
         db_table = 'cofk_user_saved_queries'
 
     query_id = models.AutoField(primary_key=True)
+    username = models.ForeignKey('login.CofkUsers', models.DO_NOTHING, db_column='username')
     query_class = models.CharField(max_length=100, null=False)
     query_method = models.CharField(max_length=100, null=False)
     query_title = models.TextField(null=False, default='')
