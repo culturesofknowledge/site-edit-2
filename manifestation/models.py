@@ -91,3 +91,11 @@ class CofkUnionLanguageOfManifestation(models.Model):
     class Meta:
         db_table = 'cofk_union_language_of_manifestation'
         unique_together = (('manifestation', 'language_code'),)
+
+
+class CofkCollectImageOfManif(models.Model):
+    upload = models.ForeignKey('uploader.CofkCollectUpload', models.DO_NOTHING)
+    manifestation_id = models.IntegerField()
+    image_filename = models.CharField(max_length=2000)
+    _id = models.CharField(max_length=32, blank=True, null=True)
+    iwork_id = models.IntegerField(blank=True, null=True)
