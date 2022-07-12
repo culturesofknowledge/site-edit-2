@@ -1,5 +1,7 @@
 from django.db import models
 
+from core.helper.model_utils import RecordTracker
+
 
 class CofkCollectPerson(models.Model):
     upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
@@ -50,7 +52,7 @@ class CofkCollectPerson(models.Model):
         unique_together = (('upload', 'iperson_id'),)
 
 
-class CofkUnionPerson(models.Model):
+class CofkUnionPerson(models.Model, RecordTracker):
     person_id = models.CharField(primary_key=True, max_length=100)
     foaf_name = models.CharField(max_length=200)
     skos_altlabel = models.TextField(blank=True, null=True)

@@ -1,7 +1,9 @@
 from django.db import models
 
+from core.helper.model_utils import RecordTracker
 
-class CofkUnionManifestation(models.Model):
+
+class CofkUnionManifestation(models.Model, RecordTracker):
     manifestation_id = models.CharField(primary_key=True, max_length=100)
     manifestation_type = models.CharField(max_length=3)
     id_number_or_shelfmark = models.CharField(max_length=500, blank=True, null=True)

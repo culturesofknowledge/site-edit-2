@@ -1,5 +1,7 @@
 from django.db import models
 
+from core.helper.model_utils import RecordTracker
+
 
 class CofkCollectStatus(models.Model):
     status_id = models.IntegerField(primary_key=True)
@@ -65,7 +67,7 @@ class CofkUnionAuditRelationship(models.Model):
     right_id_decode_old = models.TextField()
 
 
-class CofkUnionImage(models.Model):
+class CofkUnionImage(models.Model, RecordTracker):
     image_id = models.AutoField(primary_key=True)
     image_filename = models.TextField(blank=True, null=True)
     creation_timestamp = models.DateTimeField(blank=True, null=True)

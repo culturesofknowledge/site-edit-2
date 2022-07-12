@@ -3,6 +3,7 @@ from django.db import models
 
 # KTODO Researchers' notes for front-end display
 # KTODO Related resources
+from core.helper.model_utils import RecordTracker
 
 
 class CofkCollectLocation(models.Model):
@@ -34,7 +35,7 @@ class CofkCollectLocation(models.Model):
         unique_together = (('upload', 'location_id'),)
 
 
-class CofkUnionLocation(models.Model):
+class CofkUnionLocation(models.Model, RecordTracker):
     location_id = models.AutoField(primary_key=True)
     location_name = models.CharField(max_length=500)
     latitude = models.CharField(max_length=20, blank=True, null=True)

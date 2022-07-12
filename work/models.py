@@ -1,7 +1,9 @@
 from django.db import models
 
+from core.helper.model_utils import RecordTracker
 
-class CofkUnionWork(models.Model):
+
+class CofkUnionWork(models.Model, RecordTracker):
     work_id = models.CharField(primary_key=True, max_length=100)
     description = models.TextField(blank=True, null=True)
     date_of_work_as_marked = models.CharField(max_length=250, blank=True, null=True)

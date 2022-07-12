@@ -1,5 +1,7 @@
 from django.db import models
 
+from core.helper.model_utils import RecordTracker
+
 
 class CofkCollectInstitution(models.Model):
     upload = models.ForeignKey("uploader.CofkCollectUpload", null=False, on_delete=models.CASCADE)
@@ -20,7 +22,7 @@ class CofkCollectInstitution(models.Model):
         unique_together = (('upload', 'institution_id'),)
 
 
-class CofkUnionInstitution(models.Model):
+class CofkUnionInstitution(models.Model, RecordTracker):
     institution_id = models.AutoField(primary_key=True)
     institution_name = models.TextField()
     institution_synonyms = models.TextField()
