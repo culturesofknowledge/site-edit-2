@@ -109,6 +109,7 @@ def full_form(request, location_id):
         loc = get_object_or_404(CofkUnionLocation, pk=location_id)
 
     loc_form = LocationForm(request.POST or None, instance=loc)
+    # KTODO how to handle upload image
 
     res_formset = create_formset(LocationResourceForm, post_data=request.POST,
                                  prefix='loc_res', many_related_manager=loc.resources)

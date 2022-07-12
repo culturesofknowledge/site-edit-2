@@ -1,5 +1,3 @@
-# Create your tests here.
-
 from selenium.webdriver.common.by import By
 
 from location import fixtures
