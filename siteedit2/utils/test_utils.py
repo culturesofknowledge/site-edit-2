@@ -37,3 +37,7 @@ class EmloSeleniumTestCase(LiveServerTestCase):
         for selector, val in selector_list:
             ele = self.selenium.find_element(by=By.CSS_SELECTOR, value=selector)
             ele.send_keys(val)
+
+    def fill_formset_by_dict(self, data: dict, formset_prefix, form_idx=0):
+        self.fill_val_by_selector_list((f'#id_{formset_prefix}-{form_idx}-{k}', v)
+                                       for k, v in data.items())

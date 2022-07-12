@@ -3,9 +3,9 @@
 {% block content %}
     <form action="{% url 'location:init_form' %}" method="post">
         {% csrf_token %}
-        {{ loc_form.as_ul }}
-
-
+        <table>
+            {{ loc_form }}
+        </table>
         <input type="submit" value="Submit">
 
     </form>
