@@ -1,5 +1,6 @@
 from django.forms import ModelForm, HiddenInput, IntegerField
 
+from core.models import CofkUnionResource
 from location.models import CofkUnionLocation, CofkCollectLocationResource
 
 
@@ -39,7 +40,7 @@ class LocationResourceForm(ModelForm):
     resource_id.widget = HiddenInput()
 
     class Meta:
-        model = CofkCollectLocationResource
+        model = CofkUnionResource
         fields = (
             # upload_id = models.OneToOneField("uploader.CofkCollectUpload", null=False, on_delete=models.DO_NOTHING)
             'resource_id',

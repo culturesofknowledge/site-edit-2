@@ -1,4 +1,4 @@
-from location.models import CofkCollectLocation
+from location.models import CofkUnionLocation
 
 location_dict_a = dict(
     location_name='location_name value',
@@ -23,4 +23,4 @@ loc_res_dict_a = {
 
 
 def create_location_a():
-    return CofkCollectLocation(**location_dict_a)
+    return CofkUnionLocation(**location_dict_a)

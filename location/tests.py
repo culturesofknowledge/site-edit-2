@@ -1,10 +1,10 @@
 # Create your tests here.
-import unittest
 
 from selenium.webdriver.common.by import By
 
+from core.models import CofkUnionResource
 from location import fixtures
-from location.models import CofkCollectLocation, CofkCollectLocationResource, CofkUnionLocation
+from location.models import CofkUnionLocation
 from siteedit2.utils.test_utils import EmloSeleniumTestCase
 
 
@@ -27,7 +27,6 @@ class LocationFormTests(EmloSeleniumTestCase):
         # check new location should be created in db
         self.assertGreater(CofkUnionLocation.objects.count(), org_location_size)
 
-    @unittest.skip  # KTODO to be fix
     def test_edit_location(self):
         loc_a = fixtures.create_location_a()
         loc_a.save()
@@ -50,5 +49,5 @@ class LocationFormTests(EmloSeleniumTestCase):
         loc_a.refresh_from_db()
 
         self.assertEqual(loc_a.resources.count(), 1)
-        loc_res: CofkCollectLocationResource = loc_a.resources.first()
+        loc_res: CofkUnionResource = loc_a.resources.first()
         self.assertEqual(loc_res.resource_name, fixtures.loc_res_dict_a['resource_name'])

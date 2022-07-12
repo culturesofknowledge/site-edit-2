@@ -54,6 +54,8 @@ class CofkUnionLocation(models.Model):
     element_7_eg_empire = models.CharField(max_length=100)
     uuid = models.UUIDField(blank=True, null=True)
 
+    resources = models.ManyToManyField('core.CofkUnionResource')
+
 
 class CofkCollectLocationResource(models.Model):
     # KTODO not sure when to use / assign value of `upload` field

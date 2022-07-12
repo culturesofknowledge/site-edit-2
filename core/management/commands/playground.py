@@ -1,7 +1,8 @@
 from django.core.management import BaseCommand
 
+from core.models import CofkUnionResource
 from location import fixtures
-from location.models import CofkCollectLocation
+from location.models import CofkUnionLocation
 
 
 class Command(BaseCommand):
@@ -13,12 +14,36 @@ class Command(BaseCommand):
 
 def main1():
     print('yyyyyy')
+    res: CofkUnionResource = CofkUnionResource(
+        # resource_id = models.AutoField(primary_key=True)
+        resource_name='resource_name val',
+        resource_details='resource_details val',
+        resource_url='resource_url val',
+        # creation_timestamp = models.DateTimeField(blank=True, null=True)
+        creation_user='creation_user val',
+        # change_timestamp = models.DateTimeField(blank=True, null=True)
+        change_user='change_user val',
+        # uuid = models.UUIDField(blank=True, null=True)
+    )
+    res.save()
+
+    loc: CofkUnionLocation = CofkUnionLocation.objects.first()
+    l = list(loc.resources.iterator())
+    print(l)
+    loc.resources.add(l[0])
+    # loc.resources.add(res)
+    # loc.save()
+
+    loc.refresh_from_db()
+
+    print(list(loc.resources.iterator()))
+    # x = loc.resources.a
+    # print(x)
 
     # coll_location: CofkCollectLocation = CofkCollectLocation.objects.first()
     # a = coll_location.resources
     # print(coll_location)
     # print(a)
-
 
 
 def main2():
