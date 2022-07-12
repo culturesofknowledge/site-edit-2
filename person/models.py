@@ -4,7 +4,7 @@ from core.helper.model_utils import RecordTracker
 
 
 class CofkCollectPerson(models.Model):
-    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
+    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     iperson_id = models.IntegerField()
     # KTODO temporary related_name
     union_iperson = models.ForeignKey('CofkUnionPerson', models.DO_NOTHING, blank=True, null=True,

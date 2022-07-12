@@ -8,7 +8,7 @@ from core.helper.model_utils import RecordTracker
 class CofkCollectLocation(models.Model):
     # KTODO why upload_id in database become upload_id_id, should I change field name to upload instead
     # KTODO change null=True for draft version
-    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING, null=True)
+    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE, null=True)
     location_id = models.IntegerField()
     # KTODO what is usage of UnionLocation
     union_location = models.ForeignKey('CofkUnionLocation', models.DO_NOTHING, blank=True, null=True)

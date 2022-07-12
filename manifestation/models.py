@@ -70,7 +70,7 @@ class CofkUnionManifestation(models.Model, RecordTracker):
 
 
 class CofkCollectManifestation(models.Model):
-    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
+    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     manifestation_id = models.IntegerField()
     iwork_id = models.IntegerField()
     union_manifestation = models.ForeignKey(CofkUnionManifestation, models.DO_NOTHING, blank=True, null=True)

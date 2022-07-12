@@ -10,7 +10,7 @@ from manifestation.models import CofkCollectManifestation
 from person.models import CofkCollectPerson
 from uploader import OpenpyxlReaderWOFormatting
 from uploader.constants import mandatory_sheets
-from uploader.models import CofkCollectUpload, Iso639LanguageCode
+from uploader.models import CofkCollectUpload, Iso639LanguageCode, CofkCollectStatus
 from uploader.validation import validate_work, validate_manifestation, CofkExcelFileError
 from work.models import CofkCollectAuthorOfWork, CofkCollectAddresseeOfWork, CofkCollectWork, \
     CofkCollectPersonMentionedInWork, CofkCollectLanguageOfWork, CofkCollectWorkResource
@@ -34,7 +34,7 @@ class CofkRepositories:
 
     def process_repository(self, repository_data):
         self.__repository_data = repository_data
-        self.__repository_data['upload_id'] = self.upload
+        self.__repository_data['upload_id'] = self.upload.upload_id
         self.__institution_id = repository_data['institution_id']
 
         log.info("Processing repository, institution_id #{}, upload_id #{}".format(
@@ -77,6 +77,14 @@ class CofkLocations:
         if not self.already_exists():
             # Name, city and country are required
             location = CofkCollectLocation(**self.__location_data)
+            location.location_id = 1
+            location.element_1_eg_room = 0
+            location.element_2_eg_building = 0
+            location.element_3_eg_parish = 0
+            location.element_4_eg_city = 0
+            location.element_5_eg_county = 0
+            location.element_6_eg_country = 0
+            location.element_7_eg_empire = 0
             location.save()
             self.ids.append(self.__location_id)
             log.info("Location created.")
@@ -88,8 +96,8 @@ class CofkLocations:
 
 
 class CofkPeople:
-    def __init__(self, upload_id: CofkCollectUpload, sheet_data: pd.DataFrame, limit=None):
-        self.upload_id = upload_id
+    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame, limit=None):
+        self.upload_id = upload.upload_id
 
         self.__person_id = None
         self.sheet = sheet_data
@@ -102,29 +110,45 @@ class CofkPeople:
             self.process_people({k: v for k, v in self.sheet.iloc[i].to_dict().items() if v is not None})
 
     def process_people(self, person_data):
-        self.__person_data = person_data
-        self.__person_data['upload_id'] = self.upload_id
-        self.__person_id = str(person_data['iperson_id'])
+        person_list = zip([person_data['primary_name']], [person_data['iperson_id']])
+        if isinstance(person_data['iperson_id'], str):
+            person_list = zip(person_data['primary_name'].split(';'), person_data['iperson_id'].split(';'))
 
-        log.info("Processing person, iperson_id #{}, upload_id #{}".format(
-            self.__person_id, self.upload_id))
+        for p in person_list:
+            self.__person_data = {'primary_name': p[0], 'iperson_id': p[1], 'upload_id': self.upload_id}
+            self.__person_id = str(p[1])
 
-        if not self.already_exists():
-            person = CofkCollectPerson(**self.__person_data)
-            person.save()
-            self.ids.append(self.__person_id)
-            log.info("Person created.")
+            log.info("Processing person, iperson_id #{}, upload_id #{}".format(
+                self.__person_id, self.upload_id))
+
+            if not self.already_exists():
+                person = CofkCollectPerson(**self.__person_data)
+                person.date_of_birth_is_range = 0
+                person.date_of_birth_inferred = 0
+                person.date_of_birth_uncertain = 0
+                person.date_of_birth_approx = 0
+                person.date_of_birth_inferred = 0
+                person.date_of_death_is_range = 0
+                person.date_of_death_inferred = 0
+                person.date_of_death_uncertain = 0
+                person.date_of_death_approx = 0
+                person.flourished_is_range = 0
+                # person.date_of_death_is_range = 0
+
+                person.save()
+                self.ids.append(self.__person_id)
+                log.info("Person created.")
 
     def already_exists(self) -> bool:
         return CofkCollectPerson.objects \
-            .filter(person_id=self.__person_id, upload_id=self.upload_id) \
+            .filter(iperson_id=self.__person_id, upload_id=self.upload_id) \
             .exists()
 
 
 class CofkManifestations:
 
-    def __init__(self, upload_id: CofkCollectUpload, sheet_data: pd.DataFrame, limit=None):
-        self.upload_id = upload_id
+    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame, limit=None):
+        self.upload = upload
 
         self.__manifestation_id = None
         self.sheet = sheet_data
@@ -154,11 +178,11 @@ class CofkManifestations:
         self.__manifestation_data = manifestation_data
         self.preprocess_data()
 
-        self.__manifestation_data['upload_id'] = self.upload_id
+        self.__manifestation_data['upload'] = self.upload
         self.__manifestation_id = str(manifestation_data['manifestation_id'])
 
         log.info("Processing manifestation, manifestation_id #{}, upload_id #{}".format(
-            self.__manifestation_id, self.upload_id))
+            self.__manifestation_id, self.upload.upload_id))
 
         if not self.already_exists():
             manifestation = CofkCollectManifestation(**self.__manifestation_data)
@@ -169,13 +193,13 @@ class CofkManifestations:
 
     def already_exists(self) -> bool:
         return CofkCollectManifestation.objects \
-            .filter(manifestation_id=self.__manifestation_id, upload_id=self.upload_id) \
+            .filter(manifestation_id=self.__manifestation_id, upload_id=self.upload) \
             .exists()
 
 
 class CofkWork:
 
-    def __init__(self, upload_id: CofkCollectUpload, sheet_data: pd.DataFrame,
+    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame,
                  limit=None):
         """
         non_work_data will contain any raw data about:
@@ -189,7 +213,7 @@ class CofkWork:
         :param upload_id:
         """
         # log = logger
-        self.upload_id = upload_id
+        self.upload = upload
 
         self.iwork_id = None
         self.sheet = sheet_data
@@ -226,7 +250,7 @@ class CofkWork:
 
         if len(work_languages):
             log.info("Foreign language in iwork_id #{}, upload_id #{}".format(
-                self.iwork_id, self.upload_id))
+                self.iwork_id, self.upload.upload_id))
             self.process_languages(work_languages)
 
     def process_authors(self, author_ids, author_names):
@@ -234,13 +258,19 @@ class CofkWork:
         author_names = str(self.non_work_data[author_names])
 
         authors = self.process_people(author_ids, author_names)
+        try:
+            a_id = CofkCollectAuthorOfWork.objects.order_by('-author_id').first().author_id
+        except AttributeError:
+            a_id = 0
 
         for p in authors:
             author = CofkCollectAuthorOfWork(
-                # author_id=author_id,
-                upload_id=self.upload_id,
-                # iwork_id=self.iwork_id,
+                author_id=a_id,
+                upload_id=self.upload.upload_id,
+                iwork_id=self.iwork_id,
                 iperson_id=p)
+
+            a_id = a_id + 1
 
             author.save()
 
@@ -250,14 +280,20 @@ class CofkWork:
 
         addressees = self.process_people(addressee_ids, addressee_names)
 
+        try:
+            a_id = CofkCollectAddresseeOfWork.objects.order_by('-addressee_id').first().addressee_id
+        except AttributeError:
+            a_id = 0
+
         for p in addressees:
             addressee = CofkCollectAddresseeOfWork(
-                # addressee_id=addressee_id,
-                upload_id=self.upload_id,
-                # iwork_id=self.iwork_id,
+                addressee_id=a_id,
+                upload_id=self.upload.upload_id,
+                iwork_id=self.iwork_id,
                 iperson_id=p)
 
             addressee.save()
+            a_id = a_id + 1
 
     def preprocess_data(self):
         # Isolating data relevant to a work
@@ -281,11 +317,11 @@ class CofkWork:
         """
         self.work_data = work_data
 
-        self.work_data['upload_id'] = self.upload_id
+        self.work_data['upload_id'] = self.upload.upload_id
         self.iwork_id = work_data['iwork_id']
 
         log.info("Processing work, iwork_id #{}, upload_id #{}".format(
-            self.iwork_id, self.upload_id))
+            self.iwork_id, self.upload.upload_id))
 
         self.preprocess_data()
 
@@ -305,11 +341,16 @@ class CofkWork:
 
         # Creating the work itself
         work = CofkCollectWork(**work_data)
+        work.mentioned_inferred = 0
+        work.mentioned_uncertain = 0
+        work.place_mentioned_inferred = 0
+        work.place_mentioned_uncertain = 0
+        work.upload_status = CofkCollectStatus.objects.filter(status_id=1).first()
         work.save()
         self.ids.append(self.iwork_id)
 
         log.info("Work created iwork_id #{}, upload_id #{}".format(
-            self.iwork_id, self.upload_id))
+            self.iwork_id, self.upload.upload_id))
 
         # Processing people mentioned in work
         if 'emlo_mention_id' in self.work_data and 'mention_id' in self.work_data:
@@ -360,17 +401,19 @@ class CofkWork:
         loc_id = int(loc_id)
 
         location_id = CofkCollectLocation.objects.filter(location_id=loc_id,
-                                                         upload_id=self.upload_id).exists()
+                                                         upload_id=self.upload.upload_id).exists()
 
         if not location_id:
+            location_id = CofkCollectLocation.objects.order_by('-location_id').first().location_id + 1
+            print(location_id)
             loc = CofkCollectLocation(
-                upload_id=self.upload_id.upload_id,
-                # location_id=location_id,
+                upload_id=self.upload.upload_id,
+                location_id=location_id,
                 location_name=name)
             loc.save()
 
             log.info("Created location {}, upload_id #{}".format(
-                name, self.upload_id))
+                name, self.upload.upload_id))
             return loc.location_id
 
         return location_id
@@ -432,35 +475,41 @@ class CofkWork:
             lan = Iso639LanguageCode.objects.filter(code_639_3=language).first()
 
             if lan is not None:
+                l_id = CofkCollectLanguageOfWork.objects.order_by('-language_of_work_id').first().language_of_work_id
                 lang = CofkCollectLanguageOfWork(
-                    # language_of_work_id=language_id,
-                    upload_id=self.upload_id,
-                    # iwork_id=self.iwork_id,
+                    language_of_work_id=l_id + 1,
+                    upload_id=self.upload.upload_id,
+                    iwork_id=self.iwork_id,
                     language_code=lan)
 
                 lang.save()
             else:
-                log.debug(f'Upload {self.upload_id.upload_id}: Submitted {language} not a valid ISO639 language')
+                log.debug(f'Upload {self.upload.upload_id}: Submitted {language} not a valid ISO639 language')
 
     def process_resource(self):
-        resource_name = self.non_work_data['resource_name'] if 'resource_name' in self.non_work_data else None
-        resource_url = self.non_work_data['resource_url'] if 'resource_url' in self.non_work_data else None
-        resource_details = self.non_work_data['resource_details'] if 'resource_details' in self.non_work_data else None
+        resource_name = self.non_work_data['resource_name'] if 'resource_name' in self.non_work_data else ''
+        resource_url = self.non_work_data['resource_url'] if 'resource_url' in self.non_work_data else ''
+        resource_details = self.non_work_data['resource_details'] if 'resource_details' in self.non_work_data else ''
 
         log.info("Processing resource , iwork_id #{}, upload_id #{}".format(
-            self.iwork_id, self.upload_id))
+            self.iwork_id, self.upload.upload_id))
+
+        try:
+            r_id = CofkCollectWorkResource.objects.order_by('-resource_id').first().resource_id
+        except AttributeError:
+            r_id = 0
 
         resource = CofkCollectWorkResource(
-            upload_id=self.upload_id,
-            # iwork_id=self.iwork_id,
-            # resource_id=resource_id,
+            upload_id=self.upload.upload_id,
+            iwork_id=self.iwork_id,
+            resource_id=r_id + 1,
             resource_name=resource_name,
             resource_url=resource_url,
             resource_details=resource_details)
         resource.save()
 
         log.info("Resource created #{} iwork_id #{}, upload_id #{}".format(resource.id,
-                                                                           self.iwork_id, self.upload_id))
+                                                                           self.iwork_id, self.upload.upload_id))
 
 
 class CofkUploadExcelFile:
@@ -515,9 +564,11 @@ class CofkUploadExcelFile:
         # The last sheet is manifestations
         self.process_manifestations()
 
-        self.report = { 'manifestations': len(self.manifestations),
-                        'people': len(self.people),
-                        'repositories': len(self.repositories)}
+        self.report = {'manifestations': len(self.manifestations),
+                       'people': len(self.people),
+                       'repositories': len(self.repositories),
+                       'locations': len(self.locations),
+                       'works': len(self.works)}
 
     def check_sheets(self):
         # Verify all required sheets are present
@@ -547,18 +598,18 @@ class CofkUploadExcelFile:
         self.locations = locations.ids
 
     def process_people(self):
-        people = CofkPeople(upload_id=self.upload,
+        people = CofkPeople(upload=self.upload,
                             sheet_data=self.wb['People'].where(pd.notnull(self.wb['People']), None))
         self.people = people.ids
 
     def process_manifestations(self):
-        manifestation = CofkManifestations(upload_id=self.upload,
+        manifestation = CofkManifestations(upload=self.upload,
                                            sheet_data=self.wb['Manifestation'].where(
                                                pd.notnull(self.wb['Manifestation']), None))
         self.manifestations = manifestation.ids
 
     def process_work(self):
-        works = CofkWork(upload_id=self.upload,
+        works = CofkWork(upload=self.upload,
                          sheet_data=self.wb['Work'].where(pd.notnull(self.wb['Work']), None))
         self.works = works.ids
         self.upload.total_works = len(works.ids)

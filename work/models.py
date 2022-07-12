@@ -58,9 +58,10 @@ class CofkUnionWork(models.Model, RecordTracker):
 
 
 class CofkCollectWork(models.Model):
-    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
+    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     iwork_id = models.IntegerField()
-    union_iwork = models.ForeignKey(CofkUnionWork, models.DO_NOTHING, blank=True, null=True, related_name='union_collect_works')
+    union_iwork = models.ForeignKey(CofkUnionWork, models.DO_NOTHING, blank=True,
+                                    null=True, related_name='union_collect_works')
     work = models.ForeignKey(CofkUnionWork, models.DO_NOTHING, blank=True, null=True, related_name='collect_works')
     date_of_work_as_marked = models.CharField(max_length=250, blank=True, null=True)
     original_calendar = models.CharField(max_length=2)
@@ -123,7 +124,7 @@ class CofkCollectWork(models.Model):
 
 
 class CofkCollectAddresseeOfWork(models.Model):
-    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
+    upload = models.ForeignKey('uploader.CofkCollectUpload', models.DO_NOTHING)
     addressee_id = models.IntegerField()
     iperson_id = models.IntegerField()
     iwork_id = models.IntegerField()
@@ -136,7 +137,7 @@ class CofkCollectAddresseeOfWork(models.Model):
 
 
 class CofkCollectAuthorOfWork(models.Model):
-    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
+    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     author_id = models.IntegerField()
     iperson_id = models.IntegerField()
     iwork_id = models.IntegerField()
@@ -149,7 +150,7 @@ class CofkCollectAuthorOfWork(models.Model):
 
 
 class CofkCollectDestinationOfWork(models.Model):
-    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
+    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     destination_id = models.IntegerField()
     location_id = models.IntegerField()
     iwork_id = models.IntegerField()
@@ -162,7 +163,7 @@ class CofkCollectDestinationOfWork(models.Model):
 
 
 class CofkCollectLanguageOfWork(models.Model):
-    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
+    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     language_of_work_id = models.IntegerField()
     iwork_id = models.IntegerField()
     language_code = models.ForeignKey('uploader.Iso639LanguageCode', models.DO_NOTHING, db_column='language_code')
@@ -174,7 +175,7 @@ class CofkCollectLanguageOfWork(models.Model):
 
 
 class CofkCollectOriginOfWork(models.Model):
-    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
+    upload = models.OneToOneField('uploader.CofkCollectUpload', models.CASCADE)
     origin_id = models.IntegerField()
     location_id = models.IntegerField()
     iwork_id = models.IntegerField()
@@ -200,7 +201,7 @@ class CofkCollectPersonMentionedInWork(models.Model):
 
 
 class CofkCollectPlaceMentionedInWork(models.Model):
-    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
+    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     mention_id = models.IntegerField()
     location_id = models.IntegerField()
     iwork_id = models.IntegerField()
@@ -213,7 +214,7 @@ class CofkCollectPlaceMentionedInWork(models.Model):
 
 
 class CofkCollectSubjectOfWork(models.Model):
-    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
+    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     subject_of_work_id = models.IntegerField()
     iwork_id = models.IntegerField()
     subject = models.ForeignKey('uploader.CofkUnionSubject', models.DO_NOTHING)
@@ -224,7 +225,7 @@ class CofkCollectSubjectOfWork(models.Model):
 
 
 class CofkCollectWorkResource(models.Model):
-    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
+    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     resource_id = models.IntegerField()
     iwork_id = models.IntegerField()
     resource_name = models.TextField()
