@@ -26,7 +26,20 @@ class LocationFormTests(EmloSeleniumTestCase):
         # check new location should be created in db
         self.assertGreater(CofkUnionLocation.objects.count(), org_location_size)
 
-    def test_edit_location(self):
+    def test_full_form__GET(self):
+        loc_a = fixtures.create_location_a()
+        loc_a.save()
+
+        # update web page
+        url = self.get_url_by_viewname('location:full_form',
+                                       kwargs={'location_id': loc_a.location_id})
+        self.selenium.get(url)
+
+        for field_name in ['editors_notes', 'element_1_eg_room', 'element_4_eg_city', 'latitude']:
+            self.assertEqual(self.selenium.find_element(By.ID, f'id_{field_name}').get_attribute('value'),
+                             getattr(loc_a, field_name))
+
+    def test_full_form__POST(self):
         loc_a = fixtures.create_location_a()
         loc_a.save()
         n_res = loc_a.resources.count()
@@ -42,12 +55,10 @@ class LocationFormTests(EmloSeleniumTestCase):
         self.selenium.get(url)
 
         # fill resource
-        self.fill_val_by_selector_list((f'#id_loc_res-{n_res}-{k}', v)
-                                       for k, v in fixtures.loc_res_dict_a.items())
+        self.fill_formset_by_dict(fixtures.loc_res_dict_a, 'loc_res')
 
         # fill comment
-        self.fill_val_by_selector_list((f'#id_loc_comment-{n_comment}-{k}', v)
-                                       for k, v in fixtures.loc_comment_dict_a.items())
+        self.fill_formset_by_dict(fixtures.loc_comment_dict_a, 'loc_comment')
 
         self.selenium.find_element(By.CSS_SELECTOR, 'input[type=submit]').click()
 
