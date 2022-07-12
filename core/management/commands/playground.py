@@ -1,6 +1,6 @@
 from django.core.management import BaseCommand
 
-from core.models import CofkUnionResource
+from core.models import CofkUnionResource, CofkUnionComment
 from location import fixtures
 from location.models import CofkUnionLocation
 
@@ -9,7 +9,7 @@ class Command(BaseCommand):
     help = 'playground for try some python code'
 
     def handle(self, *args, **options):
-        main1()
+        main3()
 
 
 def main1():
@@ -51,3 +51,10 @@ def main2():
     print(loc_a.location_id)
     loc_a.save()
     print(loc_a.location_id)
+
+
+
+def main3():
+    c = CofkUnionComment()
+    c.update_current_user_timestamp('aaa')
+    print(c.__dict__)

@@ -4,13 +4,26 @@
     <form action="{% url 'location:full_form' loc_id %}" method="post">
         {% csrf_token %}
         <h1>Location </h1>
+        <h1>Core fields and editors' notes:</h1>
         <table>
             {{ loc_form }}
         </table>
 
-        <h1>Location Resource </h1>
-        {{ loc_res_formset.management_form }}
-        {% for form in loc_res_formset %}
+
+        <!-- Comment section -->
+        <h1>Researcher' notes for front-end display</h1>
+        {{ comment_formset.management_form }}
+        {% for form in comment_formset %}
+            <table>
+                {{ form }}
+            </table>
+        {% endfor %}
+
+
+        <!-- Resource section -->
+        <h1>Related resource: </h1>
+        {{ res_formset.management_form }}
+        {% for form in res_formset %}
             <h2>
                 {% if forloop.first %}
                     Add a new resource
@@ -22,6 +35,10 @@
                 {{ form }}
             </table>
         {% endfor %}
+
+
+
+        <!--  KTODO Images  -->
 
         <input type="submit" value="Submit">
     </form>

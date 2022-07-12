@@ -56,10 +56,10 @@ class CofkUnionLocation(models.Model, RecordTracker):
     uuid = models.UUIDField(blank=True, null=True)
 
     resources = models.ManyToManyField('core.CofkUnionResource')
+    comments = models.ManyToManyField('core.CofkUnionComment')
 
 
 class CofkCollectLocationResource(models.Model):
-    # KTODO not sure when to use / assign value of `upload` field
     upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
     resource_id = models.IntegerField()
     location_id = models.IntegerField()

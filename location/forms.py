@@ -1,7 +1,7 @@
 from django.forms import ModelForm, HiddenInput, IntegerField
 
-from core.models import CofkUnionResource
-from location.models import CofkUnionLocation, CofkCollectLocationResource
+from core.models import CofkUnionResource, CofkUnionComment
+from location.models import CofkUnionLocation
 
 
 class LocationForm(ModelForm):
@@ -52,4 +52,19 @@ class LocationResourceForm(ModelForm):
             'resource_name': 'Title or brief description',
             'resource_url': 'URL',
             'resource_details': 'Further details of resource',
+        }
+
+
+class LocationCommentForm(ModelForm):
+    comment_id = IntegerField(required=False)
+    comment_id.widget = HiddenInput()
+
+    class Meta:
+        model = CofkUnionComment
+        fields = (
+            'comment_id',
+            'comment',
+        )
+        labels = {
+            'comment': 'Note',
         }

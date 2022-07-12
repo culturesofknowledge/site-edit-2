@@ -21,6 +21,10 @@ loc_res_dict_a = {
     'resource_details': 'resource_details a',
 }
 
+loc_comment_dict_a = {
+    'comment': 'yooooooooooooooooooo',
+}
+
 
 def create_location_a():
     return CofkUnionLocation(**location_dict_a)
