@@ -1,3 +1,4 @@
+from django.contrib.auth.views import logout_then_login
 from django.urls import path
 
 from . import views
@@ -7,5 +8,5 @@ app_name = 'login'
 urlpatterns = [
     path('dashboard', views.example_dashboard, name='example dashboard'),
     path('gate', EmloLoginView.as_view(), name='gate'),
-    path('logout', views.logout_then_login, name='logout'),
+    path('logout', logout_then_login, name='logout'),
 ]
