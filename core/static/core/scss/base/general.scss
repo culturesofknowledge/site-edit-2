@@ -1,0 +1,187 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  color: $black;
+  //background: rgba($midnight-15, 0.25);
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+}
+
+article {
+  display: block;
+}
+
+aside {
+  font-size: smaller;
+}
+
+ul, ol {
+  margin-bottom: $space-sm;
+}
+
+dt {
+  margin-bottom: $space-xxs;
+  color: $mid-grey;
+}
+
+figure {
+  margin: 0;
+}
+
+figcaption {
+  padding: $space-xs;
+  margin-top: calc(#{$space-md} * -1.5);
+}
+
+iframe {
+  width: 100%;
+  border: 0;
+}
+
+a {
+  text-decoration: none;
+  color: $black-85;
+
+  &:hover, &:focus, &:active {
+    color: $midnight;
+  }
+}
+
+em, i {
+  font-style: italic;
+  font-variation-settings: 'slnt' -1;
+}
+
+strong, b {
+  font-weight: 600;
+  font-variation-settings: 'wght' 600;
+}
+
+blockquote {
+  margin: 0 0 $space-sm 0;
+}
+
+cite {
+  font-style: normal;
+}
+
+img {
+  display: block;
+  width: 100%;
+  max-width:  100%;
+  height: auto;
+}
+
+hr {
+  border: 1px solid;
+  width: 50vw;
+}
+
+summary {
+  cursor: pointer;
+}
+
+// Form styles
+fieldset {
+  padding: $space-sm;
+  margin-bottom: $space-md;
+  border: 1px solid $black-15;
+
+  legend {
+    color: $dark-grey;
+    text-transform: uppercase;
+    font-size: $typescale-6;
+    letter-spacing: 0.075em;
+  }
+}
+
+label, input, button {
+  display: block;
+  margin-bottom: $space-xs;
+}
+
+label {
+  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+}
+
+input, select {
+  -webkit-appearance: none;
+  margin-bottom: $space-sm;
+  padding: $space-xs;
+  width: 100%;
+  background-color: $white;
+  border-radius: 0;
+  border: 1px solid;
+  font-size: $typescale-6;
+  font-family: $sans-serif;
+}
+
+label + input {
+  display: block;
+}
+
+button {
+  padding: $space-xs $space-sm;
+  cursor: pointer;
+  border: 1px solid $black;
+  background-color: $black;
+  color: $white;
+  font-family: $sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.045em;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  display: none;
+
+  + label {
+    line-height: 1;
+  }
+
+  + label::before {
+    content: '\a0';
+    display: inline-block;
+    margin: 0 $space-xxs 0 0;
+    width: $space-sm;
+    height: $space-sm;
+    line-height: 1.25;
+    transition: all 0.35s;
+    border: 1px solid $black;
+  }
+
+  &:checked + label {
+    color: $midnight;
+
+    &::before {
+      content: '\a0';
+      background: $midnight;
+      border: 1px solid $white;
+      box-shadow: inset 0 0 0 1px $white, 0 0 0 1px $midnight;
+    }
+  }
+}
+
+input[type="radio"] + label {
+  display: inline-block;
+  margin: 0 $space-xs $space-xs 0;
+
+  &::before {
+    border-radius: 50%;
+  }
+}
+
+::placeholder {
+  font-style: italic;
+  color: $mid-grey;
+}
