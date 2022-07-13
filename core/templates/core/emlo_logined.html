@@ -12,7 +12,7 @@
                 <a href="/people/">People</a>
             </li>
             <li>
-                <a href="/places/">Places</a>
+                <a href="{% url 'location:search' %}">Places</a>
             </li>
             <li>
                 <a href="/repositories/">Repositories</a>
@@ -26,7 +26,7 @@
                 <a href="/audit/">Audit</a>
             </li>
             <li>
-                <a href="/">Logout</a>
+                <a href="{% url 'login:logout' %}">Logout</a>
             </li>
         </ul>
     </nav>
