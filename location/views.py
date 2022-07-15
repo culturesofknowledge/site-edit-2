@@ -1,6 +1,6 @@
 import itertools
 import logging
-from typing import Iterable, Union, Callable
+from typing import Iterable, Union, Callable, List, Tuple
 
 from django.forms import formset_factory, BaseForm, BaseFormSet
 from django.shortcuts import render, get_object_or_404, redirect
@@ -150,13 +150,6 @@ def full_form(request, location_id):
     return _render_full_form()
 
 
-def simple_list(request):
-    # TOBEREMOVE
-    locations = CofkUnionLocation.objects.iterator()
-    return render(request, 'location/simple-list.html',
-                  {'locations': locations})
-
-
 class LocationSearchResultRenderer(SearchResultRenderer):
 
     @property
@@ -173,10 +166,22 @@ class LocationSearchView(BasicSearchView):
 
     @property
     def query_fieldset_list(self) -> Iterable:
-        return [GeneralSearchFieldset(self.request.POST)]
+        return [GeneralSearchFieldset(self.request.GET)]
+
+    @property
+    def sort_by_choices(self) -> List[Tuple[str, str]]:
+        return [
+            ('-change_timestamp', 'Change Timestamp desc',),
+            ('change_timestamp', 'Change Timestamp asc',),
+            ('-location_name', 'Location Name desc',),
+            ('location_name', 'Location Name asc',),
+        ]
 
     def get_queryset(self):
-        return CofkUnionLocation.objects.all()
+        queryset = CofkUnionLocation.objects
+        if sort_by := self.request.GET.get('sort_by'):
+            queryset = queryset.order_by(sort_by)
+        return queryset.all()
 
     @property
     def title(self) -> str:
