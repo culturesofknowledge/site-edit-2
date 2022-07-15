@@ -1,0 +1,18 @@
+.search-result {
+  padding: $space-sm $space-sm 0 $space-sm;
+  margin-bottom: $space-md;
+  border-radius: $space-xxs;
+  background-color: $white-75;
+  font-size: $typescale-6;
+  box-shadow: $black-15 0px 1px 2px 0px, $black-15 0px 2px 6px 2px;
+}
+
+.search-result__date {
+  time + time {
+    color: $black-75;
+  }
+}
+
+.search-results__abstract {
+  color: $black-75;
+}

@@ -1,0 +1,18 @@
+{% extends "core/emlo_logined.html" %}
+
+<!-- TOBEREMOVE -->
+
+{% block content %}
+
+    <ul>
+        {% for loc in locations %}
+            <li>
+                <a href="{% url 'location:full_form' loc.location_id %}">
+                    {{ loc.location_id }} | {{ loc.location_name }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+
+
+{% endblock %}

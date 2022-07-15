@@ -1,12 +1,13 @@
 import itertools
 import logging
-from typing import Iterable, Union
+from typing import Iterable, Union, Callable
 
 from django.forms import formset_factory, BaseForm, BaseFormSet
 from django.shortcuts import render, get_object_or_404, redirect
 
 from core.helper.model_utils import RecordTracker
-from location.forms import LocationForm, LocationResourceForm, LocationCommentForm
+from core.helper.view_utils import SearchResultRenderer, BasicSearchView
+from location.forms import LocationForm, LocationResourceForm, LocationCommentForm, GeneralSearchFieldset
 from location.models import CofkUnionLocation
 
 log = logging.getLogger(__name__)
@@ -68,6 +69,7 @@ def create_formset(form_class, post_data=None, prefix=None, many_related_manager
         post_data or None,
         prefix=prefix,
         initial=initial
+        # KTODO try queryset=
     )
 
 
@@ -148,7 +150,34 @@ def full_form(request, location_id):
     return _render_full_form()
 
 
-def search(request):
+def simple_list(request):
+    # TOBEREMOVE
     locations = CofkUnionLocation.objects.iterator()
-    return render(request, 'location/search.html',
+    return render(request, 'location/simple-list.html',
                   {'locations': locations})
+
+
+class LocationSearchResultRenderer(SearchResultRenderer):
+
+    @property
+    def template_name(self):
+        return 'location/search_result.html'
+
+
+class LocationSearchView(BasicSearchView):
+    paginate_by = 4
+
+    @property
+    def record_renderer(self) -> Callable:
+        return LocationSearchResultRenderer
+
+    @property
+    def query_fieldset_list(self) -> Iterable:
+        return [GeneralSearchFieldset(self.request.POST)]
+
+    def get_queryset(self):
+        return CofkUnionLocation.objects.all()
+
+    @property
+    def title(self) -> str:
+        return 'Location'

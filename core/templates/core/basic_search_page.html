@@ -1,0 +1,65 @@
+{% extends "core/emlo_logined.html" %}
+
+{% block content %}
+
+    <h1> {{ title }} </h1>
+
+    <form method="post">
+        {% csrf_token %}
+
+
+        <div class="row">
+
+
+            <aside class="col col--1of3">
+                <h3 class="sr-only">Search</h3>
+                {% for query_fieldset in query_fieldset_list %}
+                    {{ query_fieldset }}
+                {% endfor %}
+                <div class="flex-col sticky-bottom">
+                    <button>Search</button>
+                </div>
+            </aside>
+
+
+            <div class="col col--2of3">
+                <h2>{{ total_record }} {{ title }}s found</h2>
+
+                {{ search_components }}
+
+                <ol class="unstyled-list">
+
+                    {% for r in records %}
+                        <li class="search-result">
+                            {{ r }}
+                        </li>
+                    {% endfor %}
+                </ol>
+
+
+            </div>
+
+
+        </div>
+
+
+    </form>
+
+    <!-- KTODO fix query condition -->
+    <div class="pagination">
+    <span class="page-links">
+        {% if page_obj.has_previous %}
+            <a href="{{ request.path }}?page={{ page_obj.previous_page_number }}">
+                previous
+            </a>
+        {% endif %}
+        <span class="page-current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+        {% if page_obj.has_next %}
+            <a href="{{ request.path }}?page={{ page_obj.next_page_number }}">next</a>
+        {% endif %}
+    </span>
+    </div>
+
+{% endblock %}
