@@ -9,6 +9,7 @@
 
         <div class="row">
 
+            <!-- Query fieldsets -->
             <aside class="col col--1of3">
                 <h3 class="sr-only">Search</h3>
                 {% for query_fieldset in query_fieldset_list %}
@@ -23,22 +24,26 @@
             <div class="col col--2of3">
                 <h2>{{ total_record }} {{ title }}s found</h2>
 
+                <!-- Search components -->
                 {{ search_components }}
 
-                <ol class="unstyled-list">
 
+                <!-- Search result -->
+                <ol class="unstyled-list">
                     {% for r in records %}
                         <li class="search-result">
                             {{ r }}
                         </li>
                     {% endfor %}
                 </ol>
+
             </div>
 
         </div>
 
     </form>
 
+    <!-- Pagination -->
     <div class="pagination">
     <span class="page-links">
         {% if page_obj.has_previous %}

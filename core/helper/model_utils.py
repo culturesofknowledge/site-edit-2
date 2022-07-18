@@ -1,4 +1,8 @@
 import datetime
+import functools
+from typing import Iterable
+
+from django.db.models import Q
 
 
 class RecordTracker:
@@ -16,3 +20,19 @@ class RecordTracker:
 
         if hasattr(self, 'change_user'):
             self.change_user = user
+
+
+def create_lookup_query(field, lookup, value) -> Q:
+    return Q(**{f'{field}__{lookup}': value})
+
+
+def create_contains_query(field, value) -> Q:
+    return create_lookup_query(field, 'contains', value)
+
+
+def create_eq_query(field, value):
+    return Q(**{field: value})
+
+
+def any_queries(queries: Iterable[Q]):
+    return functools.reduce(lambda a, b: a | b, queries, Q())

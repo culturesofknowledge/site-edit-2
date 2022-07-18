@@ -82,6 +82,7 @@ class GeneralSearchFieldset(ModelForm):
                               widget=forms.TextInput(attrs={'placeholder': 'xxxx'}))
 
     class Meta:
+        # KTODO to be cleanup
         model = CofkUnionLocation
         fields = (
             'location_id',
@@ -91,7 +92,7 @@ class GeneralSearchFieldset(ModelForm):
             # 'element_6_eg_country', 'element_7_eg_empire',
             'location_name',
             'location_synonyms',
-            'latitude', 'longitude',
+            # 'latitude', 'longitude',
         )
         labels = {
             # 'element_1_eg_room': '1. E.g. room',
@@ -104,6 +105,6 @@ class GeneralSearchFieldset(ModelForm):
             'location_id': 'Location id',
             'location_name': 'Full name of location',
             'location_synonyms': 'Alternative names for location',
-            'latitude': 'Latitude',
-            'longitude': 'Longitude',
+            # 'latitude': 'Latitude',
+            # 'longitude': 'Longitude',
         }

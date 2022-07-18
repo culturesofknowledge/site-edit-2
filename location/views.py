@@ -5,6 +5,7 @@ from typing import Iterable, Union, Callable, List, Tuple
 from django.forms import formset_factory, BaseForm, BaseFormSet
 from django.shortcuts import render, get_object_or_404, redirect
 
+from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 from core.helper.view_utils import SearchResultRenderer, BasicSearchView
 from location.forms import LocationForm, LocationResourceForm, LocationCommentForm, GeneralSearchFieldset
@@ -166,7 +167,7 @@ class LocationSearchView(BasicSearchView):
 
     @property
     def query_fieldset_list(self) -> Iterable:
-        return [GeneralSearchFieldset(self.request.GET)]
+        return [GeneralSearchFieldset(self.request_data)]
 
     @property
     def sort_by_choices(self) -> List[Tuple[str, str]]:
@@ -178,10 +179,26 @@ class LocationSearchView(BasicSearchView):
         ]
 
     def get_queryset(self):
-        queryset = CofkUnionLocation.objects
-        if sort_by := self.request.GET.get('sort_by'):
+        queryset = CofkUnionLocation.objects.all()
+
+        # queries for like_fields
+        field_fn_maps = {
+            'editors_notes': model_utils.create_contains_query,
+            'location_name': model_utils.create_contains_query,
+            'location_synonyms': model_utils.create_contains_query,
+            'location_id': model_utils.create_eq_query,
+        }
+
+        query_field_values = ((f, self.request_data.get(f)) for f in field_fn_maps.keys())
+        query_field_values = ((f, v) for f, v in query_field_values if v)
+        queries = [field_fn_maps[f](f, v) for f, v in query_field_values]
+
+        if queries:
+            queryset = queryset.filter(model_utils.any_queries(queries))
+
+        if sort_by := self.request_data.get('sort_by'):
             queryset = queryset.order_by(sort_by)
-        return queryset.all()
+        return queryset
 
     @property
     def title(self) -> str:

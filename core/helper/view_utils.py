@@ -53,6 +53,11 @@ class BasicSearchView(ListView):
     def sort_by_choices(self) -> List[Tuple[str, str]]:
         raise NotImplementedError()
 
+    @property
+    def request_data(self):
+        """ by default requests data would be GET  """
+        return self.request.GET
+
     def get_records(self):
         return map(self.record_renderer, self.get_queryset().iterator())
 
@@ -62,7 +67,7 @@ class BasicSearchView(ListView):
         search_components_factory = build_search_components(self.sort_by_choices)
         new_records = map(self.record_renderer, context[self.context_object_name])
         context.update({'query_fieldset_list': self.query_fieldset_list,
-                        'search_components': search_components_factory(self.request.GET),
+                        'search_components': search_components_factory(self.request_data),
                         self.context_object_name: new_records,
                         'total_record': self.get_queryset().count(),  # KTODO test with some condition
                         'title': self.title or '',
