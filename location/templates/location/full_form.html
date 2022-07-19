@@ -1,4 +1,15 @@
 {% extends "core/emlo_logined.html" %}
+{% load static %}
+
+
+{% block head %}
+    <script src="{% static 'location/js/init_loc_form.js' %}" defer></script>
+    <script defer>
+        document.addEventListener('DOMContentLoaded', (e)=>{
+            setup_location_form_listener()
+        });
+    </script>
+{% endblock %}
 
 {% block content %}
     <form action="{% url 'location:full_form' loc_id %}" method="post">

@@ -9,6 +9,9 @@ class LocationForm(ModelForm):
     location_id = IntegerField(required=False)
     location_id.widget = HiddenInput()
 
+    location_name = CharField(required=True,
+                              widget=forms.TextInput(dict(readonly=True)))
+
     class Meta:
         model = CofkUnionLocation
         fields = (

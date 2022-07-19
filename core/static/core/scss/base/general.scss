@@ -108,6 +108,10 @@ label, input, button {
   margin-bottom: $space-xs;
 }
 
+input[readonly] {
+  background: gainsboro;
+}
+
 label {
   font-weight: 600;
   font-weight: 700;
