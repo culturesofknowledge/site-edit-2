@@ -7,6 +7,8 @@
 # Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
 
+from core.helper.model_utils import RecordTracker
+
 
 class CofkHelpOptions(models.Model):
     option_id = models.AutoField(primary_key=True)
@@ -55,7 +57,7 @@ class CofkReportOutputs(models.Model):
     line_text = models.TextField(blank=True, null=True)
 
 
-class CofkUnionComment(models.Model):
+class CofkUnionComment(models.Model, RecordTracker):
     comment_id = models.AutoField(primary_key=True)
     comment = models.TextField(blank=True, null=True)
     creation_timestamp = models.DateTimeField(blank=True, null=True)
@@ -70,7 +72,7 @@ class CofkUnionNationality(models.Model):
     nationality_desc = models.CharField(max_length=100)
 
 
-class CofkUnionRelationship(models.Model):
+class CofkUnionRelationship(models.Model, RecordTracker):
     relationship_id = models.AutoField(primary_key=True)
     left_table_name = models.CharField(max_length=100)
     left_id_value = models.CharField(max_length=100)
@@ -85,7 +87,7 @@ class CofkUnionRelationship(models.Model):
     change_user = models.CharField(max_length=50)
 
 
-class CofkUnionRelationshipType(models.Model):
+class CofkUnionRelationshipType(models.Model, RecordTracker):
     relationship_code = models.CharField(primary_key=True, max_length=50)
     desc_left_to_right = models.CharField(max_length=200)
     desc_right_to_left = models.CharField(max_length=200)
@@ -95,7 +97,7 @@ class CofkUnionRelationshipType(models.Model):
     change_user = models.CharField(max_length=50)
 
 
-class CofkUnionResource(models.Model):
+class CofkUnionResource(models.Model, RecordTracker):
     resource_id = models.AutoField(primary_key=True)
     resource_name = models.TextField()
     resource_details = models.TextField()
@@ -171,7 +173,7 @@ class CopyCofkUnionQueryableWork(models.Model):
     subjects = models.TextField(blank=True, null=True)
 
 
-class ProActivity(models.Model):
+class ProActivity(models.Model, RecordTracker):
     activity_type_id = models.TextField(blank=True, null=True)
     activity_name = models.TextField(blank=True, null=True)
     activity_description = models.TextField(blank=True, null=True)
@@ -328,7 +330,7 @@ class ProRoleInActivity(models.Model):
     activity_id = models.IntegerField(blank=True, null=True)
 
 
-class ProTextualSource(models.Model):
+class ProTextualSource(models.Model, RecordTracker):
     author = models.TextField(blank=True, null=True)
     title = models.TextField(blank=True, null=True)
     chapterarticletitle = models.TextField(db_column='chapterArticleTitle', blank=True,

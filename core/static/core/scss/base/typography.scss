@@ -1,0 +1,67 @@
+html {
+	font-size: 14px;
+  font-family: $sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.015em;
+}
+
+@media only screen and (min-width: 768px) {
+  html {
+    font-size: 18px;
+  }
+}
+
+@media only screen and (min-width: 2560px) {
+  html {
+    font-size: 20px;
+  }
+}
+
+body {
+	line-height: 1.45;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	margin: 0 0 $space-xs 0;
+  font-family: $serif;
+	font-weight: 400;
+	line-height: 1.15;
+  letter-spacing: -0.015em;
+}
+
+/* Typescale in minor third */
+
+h1 {
+  margin-top: 0;
+	font-size: $typescale-1;
+}
+
+h2 {
+	font-size: $typescale-2;
+}
+
+h3 {
+	font-size: $typescale-3;
+}
+
+h4 {
+	font-size: $typescale-4;
+}
+
+h5 {
+	font-size: $typescale-5;
+}
+
+h6, small {
+	font-size: $typescale-6;
+}
+
+p, dd, dl, details {
+  margin: 0 0 $space-sm 0;
+}
+
+summary {
+  margin-bottom: $space-xxs;
+}

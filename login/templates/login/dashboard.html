@@ -1,4 +1,4 @@
-{% extends "emlo_base.html" %}
+{% extends "core/emlo_logined.html" %}
 
 {% block content %}
     <h1>It is example dashboard page.</h1>
@@ -18,6 +18,6 @@
     <h1> Location </h1>
     <ul>
         <li><a href="{% url 'location:init_form' %}">Create</a></li>
-        <li><a href="{% url 'location:search' %}">List</a></li>
+        <li><a href="{% url 'location:search' %}">Search</a></li>
     </ul>
 {% endblock %}

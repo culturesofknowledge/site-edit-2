@@ -1,0 +1,88 @@
+{% extends "core/emlo_logined.html" %}
+
+{% block content %}
+
+    <h1> {{ title }} </h1>
+
+    <form id="search_form" method="get">
+        {% csrf_token %}
+
+        <div class="row">
+
+            <!-- Query fieldsets -->
+            <aside class="col col--1of3">
+                <h3 class="sr-only">Search</h3>
+                {% for query_fieldset in query_fieldset_list %}
+                    {{ query_fieldset }}
+                {% endfor %}
+                <div class="flex-col sticky-bottom">
+                    <button type="submit">Search</button>
+                </div>
+            </aside>
+
+
+            <div class="col col--2of3">
+                <h2>{{ total_record }} {{ title }}s found</h2>
+
+                <!-- Search components -->
+                {{ search_components }}
+
+
+                <!-- Search result -->
+                <ol class="unstyled-list">
+                    {% for r in records %}
+                        <li class="search-result">
+                            {{ r }}
+                        </li>
+                    {% endfor %}
+                </ol>
+
+            </div>
+
+        </div>
+
+    </form>
+
+    <!-- Pagination -->
+    <div class="pagination">
+    <span class="page-links">
+        {% if page_obj.has_previous %}
+            <a id="id_previous_page" href="#!" page="{{ page_obj.previous_page_number }}"> previous </a>
+        {% endif %}
+        <span class="page-current">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+        {% if page_obj.has_next %}
+            <a id="id_next_page" href="#!" page="{{ page_obj.next_page_number }}">next</a>
+        {% endif %}
+    </span>
+    </div>
+
+    <script>
+        function submit_page(target_page_num) {
+            if (target_page_num) {
+                let page_ele = document.getElementById('id_page')
+                page_ele.setAttribute('value', target_page_num)
+            }
+
+            document.getElementById('search_form').submit()
+        }
+
+        ['id_next_page', 'id_previous_page'].forEach((target_id) => {
+            let ele = document.getElementById(target_id);
+            if (ele) {
+                ele.addEventListener('click', () => {
+                    submit_page(ele.getAttribute('page'))
+                });
+            }
+        });
+
+        ['id_sort_by', 'id_num_record'].forEach((target_id) => {
+            document.getElementById(target_id).addEventListener('change', () => {
+                submit_page()
+            });
+        });
+
+    </script>
+
+{% endblock %}

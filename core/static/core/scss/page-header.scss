@@ -1,0 +1,16 @@
+.page-header {
+  margin: 0 $gutter-negative $space-md;
+  padding: $space-xs 0;
+
+  a {
+    font-size: $typescale-6;
+    
+    &:hover, &:focus, &:active {
+      color: $gold;
+    }
+  }
+}
+
+.page-header__heading {
+  margin: 0;
+}
