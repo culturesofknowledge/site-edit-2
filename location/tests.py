@@ -8,15 +8,15 @@ from siteedit2.utils.test_utils import EmloSeleniumTestCase
 
 
 class LocationFormTests(EmloSeleniumTestCase):
+    # KTODO test validate fail
+    # KTODO test upload images
 
     def test_create_location(self):
-        from django.conf import settings
-        self.assertIn('pycharm-py', settings.ALLOWED_HOSTS)
-
         self.selenium.get(self.get_url_by_viewname('location:init_form'))
 
-        self.fill_val_by_selector_list((f'#id_{k}', v)
-                                       for k, v in fixtures.location_dict_a.items())
+        loc_key_values = fixtures.location_dict_a.items()
+        loc_key_values = ((k, v) for k, v in loc_key_values if k not in ['location_name'])
+        self.fill_val_by_selector_list((f'#id_{k}', v) for k, v in loc_key_values)
 
         org_location_size = CofkUnionLocation.objects.count()
 
@@ -25,6 +25,12 @@ class LocationFormTests(EmloSeleniumTestCase):
 
         # check new location should be created in db
         self.assertGreater(CofkUnionLocation.objects.count(), org_location_size)
+
+        new_loc_id = re.findall(r'.+/(\d+)', self.selenium.current_url)[0]
+        new_loc_id = int(new_loc_id)
+
+        loc = CofkUnionLocation.objects.get(location_id=new_loc_id)
+        self.assertEqual(loc.element_1_eg_room, fixtures.location_dict_a.get('element_1_eg_room'))
 
     def test_full_form__GET(self):
         loc_a = fixtures.create_location_a()

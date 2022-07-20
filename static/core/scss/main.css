@@ -602,4 +602,7 @@ summary {
   margin-top: calc(2.5 * 1.5rem);
   padding-bottom: calc(2 * 1.5rem); }
 
+input.formtext {
+  width: 300px; }
+
 /*# sourceMappingURL=main.css.map */

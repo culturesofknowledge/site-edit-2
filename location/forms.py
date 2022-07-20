@@ -5,12 +5,27 @@ from core.models import CofkUnionResource, CofkUnionComment
 from location.models import CofkUnionLocation
 
 
-class LocationForm(ModelForm):
-    location_id = IntegerField(required=False)
-    location_id.widget = HiddenInput()
+def create_common_text_input(**attrs):
+    _attrs = {'class': 'formtext'} | (attrs or {})
+    return forms.TextInput(_attrs)
 
-    location_name = CharField(required=True,
-                              widget=forms.TextInput(dict(readonly=True)))
+
+class LocationForm(ModelForm):
+    location_id = IntegerField(required=False, widget=HiddenInput())
+    location_name = CharField(required=False,
+                              widget=create_common_text_input(readonly=True))
+    editors_notes = CharField(required=False,
+                              widget=forms.Textarea())
+    element_1_eg_room = CharField(required=False, widget=create_common_text_input())
+    element_2_eg_building = CharField(required=False, widget=create_common_text_input())
+    element_3_eg_parish = CharField(required=False, widget=create_common_text_input())
+    element_4_eg_city = CharField(required=True, widget=create_common_text_input())
+    element_5_eg_county = CharField(required=False, widget=create_common_text_input())
+    element_6_eg_country = CharField(required=False, widget=create_common_text_input())
+    element_7_eg_empire = CharField(required=False, widget=create_common_text_input())
+    location_synonyms = CharField(required=False, widget=create_common_text_input())
+    latitude = CharField(required=False, widget=create_common_text_input())
+    longitude = CharField(required=False, widget=create_common_text_input())
 
     class Meta:
         model = CofkUnionLocation
