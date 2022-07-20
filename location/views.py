@@ -202,7 +202,7 @@ class LocationSearchView(BasicSearchView):
         if queries:
             queryset = queryset.filter(model_utils.any_queries(queries))
 
-        if sort_by := self.request_data.get('sort_by'):
+        if sort_by := self.get_sort_by():
             queryset = queryset.order_by(sort_by)
         return queryset
 
