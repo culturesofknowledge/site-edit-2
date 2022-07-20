@@ -87,6 +87,8 @@ class CofkCollectManifestation(models.Model):
         db_table = 'cofk_collect_manifestation'
         unique_together = (('upload', 'iwork_id', 'manifestation_id'),)
 
+    def __str__(self):
+        return f'Manifestation #{self.manifestation_id}'
 
 class CofkUnionLanguageOfManifestation(models.Model):
     manifestation = models.OneToOneField(CofkUnionManifestation, models.DO_NOTHING, primary_key=True)

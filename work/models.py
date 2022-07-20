@@ -122,6 +122,9 @@ class CofkCollectWork(models.Model):
         db_table = 'cofk_collect_work'
         unique_together = (('upload', 'iwork_id'),)
 
+    def __str__(self):
+        return f'Work #{self.iwork_id}'
+
 
 class CofkCollectAddresseeOfWork(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.DO_NOTHING)

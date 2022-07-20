@@ -21,6 +21,9 @@ class CofkCollectInstitution(models.Model):
         db_table = 'cofk_collect_institution'
         unique_together = (('upload', 'institution_id'),)
 
+    def __str__(self):
+        return f'{self.institution_name} (#{self.institution_id})'
+
 
 class CofkUnionInstitution(models.Model, RecordTracker):
     institution_id = models.AutoField(primary_key=True)

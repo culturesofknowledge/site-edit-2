@@ -33,6 +33,9 @@ class CofkCollectLocation(models.Model):
         db_table = 'cofk_collect_location'
         unique_together = (('upload', 'location_id'),)
 
+    def __str__(self):
+        return f'{self.location_name} (#{self.location_id})'
+
 
 class CofkUnionLocation(models.Model, RecordTracker):
     location_id = models.AutoField(primary_key=True)

@@ -2,6 +2,8 @@ import datetime
 import pandas
 
 
+# TODO, Establish what columns are mandatory and check for them
+
 class CofkValueException(Exception):
     def __init__(self, msg, col):
         self.col = col
@@ -10,9 +12,8 @@ class CofkValueException(Exception):
 
 
 class CofkExcelFileError(Exception):
-    def __init__(self, filename, errors):
-        self.errors = errors
-        self.msg = f'{filename} contains {sum(len(e["errors"]) for e in self.errors)} errors'
+    def __init__(self, msg):
+        self.msg = msg
 
 
 class CofkValue:

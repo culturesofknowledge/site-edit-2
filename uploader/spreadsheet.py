@@ -8,7 +8,7 @@ from institution.models import CofkCollectInstitution
 from location.models import CofkCollectLocation
 from manifestation.models import CofkCollectManifestation
 from person.models import CofkCollectPerson
-from uploader import OpenpyxlReaderWOFormatting
+from uploader.OpenpyxlReaderWOFormatting import OpenpyxlReaderWOFormatting
 from uploader.constants import mandatory_sheets
 from uploader.models import CofkCollectUpload, Iso639LanguageCode, CofkCollectStatus
 from uploader.validation import validate_work, validate_manifestation, CofkExcelFileError
@@ -18,19 +18,25 @@ from work.models import CofkCollectAuthorOfWork, CofkCollectAddresseeOfWork, Cof
 log = logging.getLogger(__name__)
 
 
-class CofkRepositories:
-    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame, limit=None):
+class CofkEntity:
+    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame):
         self.upload = upload
+        self.sheet_data = sheet_data
+
+
+class CofkRepositories(CofkEntity):
+    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame, limit=None):
+        super().__init__(upload, sheet_data)
 
         self.__institution_id = None
-        self.sheet = sheet_data
         self.__repository_data = {}
-        limit = limit if limit else len(self.sheet.index)
+        limit = limit if limit else len(self.sheet_data.index)
         self.ids = []
+        self.first_three = []
 
         # Process each row in turn, using a dict comprehension to filter out empty values
         for i in range(1, limit):
-            self.process_repository({k: v for k, v in self.sheet.iloc[i].to_dict().items() if v is not None})
+            self.process_repository({k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None})
 
     def process_repository(self, repository_data):
         self.__repository_data = repository_data
@@ -44,6 +50,10 @@ class CofkRepositories:
             repository = CofkCollectInstitution(**self.__repository_data)
             repository.save()
             self.ids.append(self.__institution_id)
+
+            if len(self.first_three) < 3:
+                self.first_three.append(repository)
+
             log.info("Repository created.")
 
     def already_exists(self) -> bool:
@@ -52,19 +62,19 @@ class CofkRepositories:
             .exists()
 
 
-class CofkLocations:
+class CofkLocations(CofkEntity):
     def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame, limit=None):
-        self.upload = upload
+        super().__init__(upload, sheet_data)
 
         self.__location_id = None
-        self.sheet = sheet_data
         self.__location_data = {}
-        limit = limit if limit else len(self.sheet.index)
+        limit = limit if limit else len(self.sheet_data.index)
         self.ids = []
+        self.first_three = []
 
         # Process each row in turn, using a dict comprehension to filter out empty values
         for i in range(1, limit):
-            self.process_location({k: v for k, v in self.sheet.iloc[i].to_dict().items() if v is not None})
+            self.process_location({k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None})
 
     def process_location(self, repository_data):
         self.__location_data = repository_data
@@ -87,6 +97,10 @@ class CofkLocations:
             location.element_7_eg_empire = 0
             location.save()
             self.ids.append(self.__location_id)
+
+            if len(self.first_three) < 3:
+                self.first_three.append(location)
+
             log.info("Location created.")
 
     def already_exists(self) -> bool:
@@ -95,19 +109,20 @@ class CofkLocations:
             .exists()
 
 
-class CofkPeople:
+class CofkPeople(CofkEntity):
     def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame, limit=None):
+        super().__init__(upload, sheet_data)
         self.upload_id = upload.upload_id
 
         self.__person_id = None
-        self.sheet = sheet_data
         self.__person_data = {}
-        limit = limit if limit else len(self.sheet.index)
+        limit = limit if limit else len(self.sheet_data.index)
         self.ids = []
+        self.first_three = []
 
         # Process each row in turn, using a dict comprehension to filter out empty values
         for i in range(1, limit):
-            self.process_people({k: v for k, v in self.sheet.iloc[i].to_dict().items() if v is not None})
+            self.process_people({k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None})
 
     def process_people(self, person_data):
         person_list = zip([person_data['primary_name']], [person_data['iperson_id']])
@@ -137,6 +152,10 @@ class CofkPeople:
 
                 person.save()
                 self.ids.append(self.__person_id)
+
+                if len(self.first_three) < 3:
+                    self.first_three.append(person)
+
                 log.info("Person created.")
 
     def already_exists(self) -> bool:
@@ -145,21 +164,21 @@ class CofkPeople:
             .exists()
 
 
-class CofkManifestations:
+class CofkManifestations(CofkEntity):
 
     def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame, limit=None):
-        self.upload = upload
+        super().__init__(upload, sheet_data)
 
         self.__manifestation_id = None
-        self.sheet = sheet_data
         self.__non_manifestation_data = {}
         self.__manifestation_data = {}
-        limit = limit if limit else len(self.sheet.index)
+        limit = limit if limit else len(self.sheet_data.index)
         self.ids = []
+        self.first_three = []
 
         # Process each row in turn, using a dict comprehension to filter out empty values
         for i in range(1, limit):
-            self.process_manifestation({k: v for k, v in self.sheet.iloc[i].to_dict().items() if v is not None})
+            self.process_manifestation({k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None})
 
     def preprocess_data(self):
         self.__manifestation_data = {k.replace(' ', '_'): v for k, v in self.__manifestation_data.items()}
@@ -189,6 +208,10 @@ class CofkManifestations:
             manifestation.save()
 
             self.ids.append(self.__manifestation_id)
+
+            if len(self.first_three) < 3:
+                self.first_three.append(manifestation)
+
             log.info("Manifestation created.")
 
     def already_exists(self) -> bool:
@@ -197,7 +220,7 @@ class CofkManifestations:
             .exists()
 
 
-class CofkWork:
+class CofkWork(CofkEntity):
 
     def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame,
                  limit=None):
@@ -213,19 +236,19 @@ class CofkWork:
         :param upload_id:
         """
         # log = logger
-        self.upload = upload
+        super().__init__(upload, sheet_data)
 
         self.iwork_id = None
-        self.sheet = sheet_data
         self.work_data = {}
         self.non_work_data = {}
         self.ids = []
+        self.first_three = []
 
-        limit = limit if limit else len(self.sheet.index)
+        limit = limit if limit else len(self.sheet_data.index)
 
         # Process each row in turn, using a dict comprehension to filter out empty values
         for i in range(1, limit):
-            self.process_work({k: v for k, v in self.sheet.iloc[i].to_dict().items() if v is not None})
+            self.process_work({k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None})
 
     def preprocess_languages(self):
         '''
@@ -349,6 +372,9 @@ class CofkWork:
         work.save()
         self.ids.append(self.iwork_id)
 
+        if len(self.first_three) < 3:
+            self.first_three.append(work)
+
         log.info("Work created iwork_id #{}, upload_id #{}".format(
             self.iwork_id, self.upload.upload_id))
 
@@ -372,7 +398,7 @@ class CofkWork:
         mention_ids = str(self.non_work_data[mention_ids])
 
         log.info("Processing people mentioned , iwork_id #{}, upload_id #{}".format(
-            self.iwork_id, self.upload_id))
+            self.iwork_id, self.upload.upload_id))
 
         # Before mentions can be registered the people mentioned need
         # to be created
@@ -382,7 +408,7 @@ class CofkWork:
         for p in people_mentioned:
             person_mention = CofkCollectPersonMentionedInWork(
                 # mention_id=mention_id,
-                upload_id=self.upload_id,
+                upload_id=self.upload.upload_id,
                 iwork_id=self.iwork_id,
                 iperson_id=p)
 
@@ -443,7 +469,7 @@ class CofkWork:
 
             for name in new_names:
                 new_person = CofkCollectPerson(
-                    upload_id=self.upload_id,
+                    upload_id=self.upload.upload_id,
                     # iperson_id=last_person_id,
                     primary_name=name)
 
@@ -458,7 +484,7 @@ class CofkWork:
                 log.info("Creating new person {}-{}".format(person[0], person[1]))
                 # Person does not exist, so we need to create it
                 new_person = CofkCollectPerson(
-                    upload_id=self.upload_id,
+                    upload_id=self.upload.upload_id,
                     iperson_id=person[0],
                     primary_name=person[1])
 
@@ -475,7 +501,14 @@ class CofkWork:
             lan = Iso639LanguageCode.objects.filter(code_639_3=language).first()
 
             if lan is not None:
-                l_id = CofkCollectLanguageOfWork.objects.order_by('-language_of_work_id').first().language_of_work_id
+                first_language = CofkCollectLanguageOfWork.objects.order_by('-language_of_work_id').first()
+
+                if first_language:
+                    l_id = CofkCollectLanguageOfWork.objects.order_by('-language_of_work_id').first()\
+                        .language_of_work_id
+                else:
+                    l_id = 0
+
                 lang = CofkCollectLanguageOfWork(
                     language_of_work_id=l_id + 1,
                     upload_id=self.upload.upload_id,
@@ -508,7 +541,7 @@ class CofkWork:
             resource_details=resource_details)
         resource.save()
 
-        log.info("Resource created #{} iwork_id #{}, upload_id #{}".format(resource.id,
+        log.info("Resource created #{} iwork_id #{}, upload_id #{}".format(resource.resource_id,
                                                                            self.iwork_id, self.upload.upload_id))
 
 
@@ -519,6 +552,8 @@ class CofkUploadExcelFile:
         :param logger:
         :param filename:
         """
+        self.manifestation_errors = None
+        self.work_errors = None
         self.errors = []
         self.works = None
         self.upload = upload
@@ -527,7 +562,7 @@ class CofkUploadExcelFile:
         self.locations = []
         self.people = []
         self.manifestations = []
-        self.report = {}
+        self.summary = {}
 
         """
         Setting sheet_name to None returns a dict with sheet name as key and data frame as value
@@ -539,36 +574,49 @@ class CofkUploadExcelFile:
             self.wb = pd.read_excel(filename, sheet_name=None, usecols=lambda c: not c.startswith('Unnamed:'))
         except ValueError:
             ExcelFile._engines['openpyxl_wo_formatting'] = OpenpyxlReaderWOFormatting
-            self.wb = pd.read_excel(filename, None, header=1,
+            self.wb = pd.read_excel(filename, sheet_name=None,
                                     usecols=lambda c: not c.startswith('Unnamed:'),
                                     engine='openpyxl_wo_formatting')
 
         self.check_sheets()
 
-        # self.validate_data()
+        work_data = self.get_sheet_data('Work')
+        manifestation_data = self.get_sheet_data('Manifestation')
 
-        # self.upload = self.create_upload()
+        self.summary = {'work': {'errors': [], },
+                        'manifestations': {'errors': []}, }
+
+        self.validate_data(work_data, manifestation_data)
+
+        for entity in ['work', 'manifestations']:
+            self.summary[entity]['total'] = len(self.summary[entity]['errors'])
+
+        self.summary['total_errors'] = sum([self.summary[e]['total'] for e in self.summary])
+
+        if self.summary['total_errors']:
+            return
 
         # It's best to process the sheets in reverse order, starting with repositories/institutions
-        self.process_repositories()
+        self.repositories = CofkRepositories(upload=self.upload,
+                                             sheet_data=self.get_sheet_data('Repositories'))
 
         # The next sheet is places/locations
-        self.process_locations()
+        self.locations = CofkLocations(upload=self.upload,
+                                       sheet_data=self.get_sheet_data('Places'))
 
         # The next sheet is people
-        self.process_people()
+        self.people = CofkPeople(upload=self.upload,
+                                 sheet_data=self.get_sheet_data('People'))
 
         # Second last but not least, the works themselves
-        self.process_work()
+        self.works = CofkWork(upload=self.upload, sheet_data=work_data)
+        self.upload.total_works = len(self.works.ids)
 
         # The last sheet is manifestations
-        self.process_manifestations()
+        self.manifestations = CofkManifestations(upload=self.upload, sheet_data=manifestation_data)
 
-        self.report = {'manifestations': len(self.manifestations),
-                       'people': len(self.people),
-                       'repositories': len(self.repositories),
-                       'locations': len(self.locations),
-                       'works': len(self.works)}
+    def get_sheet_data(self, sheet_name: str) -> pd.DataFrame:
+        return self.wb[sheet_name].where(pd.notnull(self.wb[sheet_name]), None)
 
     def check_sheets(self):
         # Verify all required sheets are present
@@ -586,40 +634,12 @@ class CofkUploadExcelFile:
             log.error(msg)
             raise ValueError(msg)
 
-    def process_repositories(self):
-        repositories = CofkRepositories(upload=self.upload,
-                                        sheet_data=self.wb['Repositories'].where(pd.notnull(self.wb['Repositories']),
-                                                                                 None))
-        self.repositories = repositories.ids
+    def validate_data(self, work_data, manifestation_data):
+        self.summary = {'work': {'errors': validate_work(work_data)},
+                        'manifestations': {'errors': validate_manifestation(manifestation_data)}, }
 
-    def process_locations(self):
-        locations = CofkLocations(upload=self.upload,
-                                  sheet_data=self.wb['Places'].where(pd.notnull(self.wb['Places']), None))
-        self.locations = locations.ids
+        self.summary['total_errors'] = len(self.summary['work']['errors']) + len(self.summary['manifestations']['errors'])
 
-    def process_people(self):
-        people = CofkPeople(upload=self.upload,
-                            sheet_data=self.wb['People'].where(pd.notnull(self.wb['People']), None))
-        self.people = people.ids
-
-    def process_manifestations(self):
-        manifestation = CofkManifestations(upload=self.upload,
-                                           sheet_data=self.wb['Manifestation'].where(
-                                               pd.notnull(self.wb['Manifestation']), None))
-        self.manifestations = manifestation.ids
-
-    def process_work(self):
-        works = CofkWork(upload=self.upload,
-                         sheet_data=self.wb['Work'].where(pd.notnull(self.wb['Work']), None))
-        self.works = works.ids
-        self.upload.total_works = len(works.ids)
-
-    def validate_data(self):
-        work_errors = validate_work(self.wb['Work'].where(pd.notnull(self.wb['Work']), None))
-
-        manifestation_errors = validate_manifestation(
-            self.wb['Manifestation'].where(pd.notnull(self.wb['Manifestation']), None))
-
-        if work_errors or manifestation_errors:
-            raise CofkExcelFileError(filename=self.filename,
-                                     errors=work_errors + manifestation_errors)
+        if self.summary['total_errors']:
+            pass
+            # raise CofkExcelFileError(msg=f'{self.filename} contains {self.summary["total_errors"]} errors')

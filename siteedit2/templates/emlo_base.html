@@ -1,14 +1,22 @@
+{% load static %}
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>EMLO - mockup page</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'uploader/style.css' %}">
+    <style>
+
+    </style>
 </head>
+
 <body>
 
-    <h1>EMLO</h1>
+{% include "header.html" %}
 
-{% block content %}
-{% endblock %}
-
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
 </body>
 </html>

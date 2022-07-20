@@ -53,6 +53,9 @@ class CofkCollectPerson(models.Model):
         db_table = 'cofk_collect_person'
         unique_together = (('upload', 'iperson_id'),)
 
+    def __str__(self):
+        return f'{self.primary_name} (#{self.iperson_id})'
+
 
 class CofkUnionPerson(models.Model, RecordTracker):
     person_id = models.CharField(primary_key=True, max_length=100)

@@ -44,7 +44,11 @@ logs/
 staticfiles/
 data/
 files/
+<<<<<<< HEAD
 
 
 # dev environment file
 siteedit2/settings/local_dev.py
+=======
+# */migrations
+>>>>>>> fb599c0 (Various)

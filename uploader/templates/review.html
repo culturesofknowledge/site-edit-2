@@ -2,18 +2,9 @@
 
 {% block content %}
 
-<form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
+{% if errors %}
 
-    {{ form.as_p }}
-
-    <input type="submit">
-</form>
-
-
-{% if error %}
-
-<p id="error">ERROR: {{ error }}</p>
+{{ errors }}
 
 {% endif %}
 
@@ -98,35 +89,5 @@
         </li>
 </ol>
 {% endif %}
-<table border="1" class="uploads">
-    <tr>
-        <th>ID</th>
-        <th>Date/time</th>
-        <th>Source of data</th>
-        <th>Contact email</th>
-        <th>Works uploaded</th>
-        <th>Accepted</th>
-        <th>Rejected</th>
-        <th>Status</th>
-        <td></td>
-        <td></td>
-    </tr>
-{% for upload in uploads %}
-    <tr>
-
-        <td>{{ upload.upload_id }}</td>
-        <td>{{ upload.upload_timestamp }}</td>
-        <td>{{ upload.upload_name }}</td>
-        <td>{{ upload.uploader_email }}</td>
-        <td>{{ upload.total_works }}</td>
-        <td>{{ upload.works_accepted }}</td>
-        <td>{{ upload.works_rejected }}</td>
-        <td>{{ upload.upload_status }}</td>
-        <td><form action="/upload/{{ upload.upload_id }}"><input type="submit" value="Review"></form></td>
-        <td><input type="button" value="Export"></td>
-
-    </tr>
-{% endfor %}
-</table>
 
 {% endblock %}
