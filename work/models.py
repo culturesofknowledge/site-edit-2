@@ -1,6 +1,11 @@
 from django.db import models
 
+<<<<<<< HEAD
 from core.helper.model_utils import RecordTracker
+=======
+from uploader.models import CofkCollectUpload, CofkCollectStatus
+
+>>>>>>> 26f1f1c (Conform to generated legacy schema)
 
 
 class CofkUnionWork(models.Model, RecordTracker):
@@ -58,11 +63,11 @@ class CofkUnionWork(models.Model, RecordTracker):
 
 
 class CofkCollectWork(models.Model):
-    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
+    upload = models.ForeignKey(CofkCollectUpload, models.DO_NOTHING, primary_key=True)
     iwork_id = models.IntegerField()
-    union_iwork = models.ForeignKey(CofkUnionWork, models.DO_NOTHING, blank=True,
-                                    null=True, related_name='union_collect_works')
-    work = models.ForeignKey(CofkUnionWork, models.DO_NOTHING, blank=True, null=True, related_name='collect_works')
+    union_iwork = models.ForeignKey('CofkUnionWork', models.DO_NOTHING, blank=True, null=True
+                                    , related_name='union_collect_works')
+    work = models.ForeignKey('CofkUnionWork', models.DO_NOTHING, blank=True, null=True, related_name='collect_works')
     date_of_work_as_marked = models.CharField(max_length=250, blank=True, null=True)
     original_calendar = models.CharField(max_length=2)
     date_of_work_std_year = models.IntegerField(blank=True, null=True)
@@ -100,9 +105,9 @@ class CofkCollectWork(models.Model):
     accession_code = models.CharField(max_length=250, blank=True, null=True)
     notes_on_letter = models.TextField(blank=True, null=True)
     notes_on_people_mentioned = models.TextField(blank=True, null=True)
-    upload_status = models.ForeignKey("uploader.CofkCollectStatus", models.DO_NOTHING, db_column='upload_status')
+    upload_status = models.ForeignKey(CofkCollectStatus, models.DO_NOTHING, db_column='upload_status')
     editors_notes = models.TextField(blank=True, null=True)
-    _id = models.CharField(max_length=32)
+    _id = models.CharField(db_column='_id', max_length=32, blank=True, null=True)  # Field renamed because it started with '_'.
     date_of_work2_approx = models.SmallIntegerField()
     date_of_work2_inferred = models.SmallIntegerField()
     date_of_work2_uncertain = models.SmallIntegerField()
