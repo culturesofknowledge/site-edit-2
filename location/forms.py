@@ -3,6 +3,7 @@ from django.forms import ModelForm, HiddenInput, IntegerField, CharField
 
 from core.models import CofkUnionResource, CofkUnionComment
 from location.models import CofkUnionLocation
+from uploader.models import CofkUnionImage
 
 
 def create_common_text_input(**attrs):
@@ -10,20 +11,34 @@ def create_common_text_input(**attrs):
     return forms.TextInput(_attrs)
 
 
+def create_common_checkbox(**attrs):
+    _attrs = {'class': 'elcheckbox'} | (attrs or {})
+    return forms.CheckboxInput(_attrs)
+
+
 class LocationForm(ModelForm):
     location_id = IntegerField(required=False, widget=HiddenInput())
     location_name = CharField(required=False,
-                              widget=create_common_text_input(readonly=True))
+                              widget=create_common_text_input(readonly=True),
+                              label='Full name of location')
     editors_notes = CharField(required=False,
                               widget=forms.Textarea())
-    element_1_eg_room = CharField(required=False, widget=create_common_text_input())
-    element_2_eg_building = CharField(required=False, widget=create_common_text_input())
-    element_3_eg_parish = CharField(required=False, widget=create_common_text_input())
-    element_4_eg_city = CharField(required=True, widget=create_common_text_input())
-    element_5_eg_county = CharField(required=False, widget=create_common_text_input())
-    element_6_eg_country = CharField(required=False, widget=create_common_text_input())
-    element_7_eg_empire = CharField(required=False, widget=create_common_text_input())
-    location_synonyms = CharField(required=False, widget=create_common_text_input())
+    element_1_eg_room = CharField(required=False, widget=create_common_text_input(),
+                                  label='1. E.g. room')
+    element_2_eg_building = CharField(required=False, widget=create_common_text_input(),
+                                      label='2. E.g. building')
+    element_3_eg_parish = CharField(required=False, widget=create_common_text_input(),
+                                    label='3. E.g. parish')
+    element_4_eg_city = CharField(required=True, widget=create_common_text_input(),
+                                  label='4. E.g. city')
+    element_5_eg_county = CharField(required=False, widget=create_common_text_input(),
+                                    label='5. E.g. county')
+    element_6_eg_country = CharField(required=False, widget=create_common_text_input(),
+                                     label='6. E.g. country')
+    element_7_eg_empire = CharField(required=False, widget=create_common_text_input(),
+                                    label='7. E.g. empire')
+    location_synonyms = CharField(required=False, widget=create_common_text_input(),
+                                  label='Alternative names for location')
     latitude = CharField(required=False, widget=create_common_text_input())
     longitude = CharField(required=False, widget=create_common_text_input())
 
@@ -39,24 +54,10 @@ class LocationForm(ModelForm):
             'location_synonyms',
             'latitude', 'longitude',
         )
-        labels = {
-            'element_1_eg_room': '1. E.g. room',
-            'element_2_eg_building': '2. E.g. building',
-            'element_3_eg_parish': '3. E.g. parish',
-            'element_4_eg_city': '4. E.g. city',
-            'element_5_eg_county': '5. E.g. county',
-            'element_6_eg_country': '6. E.g. country',
-            'element_7_eg_empire': '7. E.g. empire',
-            'location_name': 'Full name of location',
-            'location_synonyms': 'Alternative names for location',
-            'latitude': 'Latitude',
-            'longitude': 'Longitude',
-        }
 
 
 class LocationResourceForm(ModelForm):
-    resource_id = IntegerField(required=False)
-    resource_id.widget = HiddenInput()
+    resource_id = IntegerField(required=False, widget=HiddenInput())
 
     class Meta:
         model = CofkUnionResource
@@ -87,6 +88,42 @@ class LocationCommentForm(ModelForm):
         labels = {
             'comment': 'Note',
         }
+
+
+class LocationImageForm(ModelForm):
+    image_id = IntegerField(required=False, widget=HiddenInput())
+    image_filename = forms.CharField(required=False, widget=create_common_text_input(),
+                                     label='URL for full-size image')
+    thumbnail = forms.CharField(required=False, widget=create_common_text_input(),
+                                label='URL for thumbnail (if any)')
+    credits = forms.CharField(required=False, widget=create_common_text_input(),
+                              label="Credits for 'front end' display*")
+    licence_details = forms.CharField(required=False, widget=forms.Textarea(),
+                                      label='Either: full text of licence*')
+    licence_url = forms.CharField(required=False, widget=create_common_text_input(
+        value='http://cofk2.bodleian.ox.ac.uk/culturesofknowledge/licence/terms_of_use.html'),
+                                  label='licence URL*')
+
+    # KTODO
+    # can_be_displayed = forms.BooleanField(required=False,
+    #                                       label='Can be displayed to public',
+    #                                       widget=create_common_checkbox(),
+    #                                       initial=True,
+    #                                       )
+    display_order = forms.IntegerField(required=False, label='Order for display in front end')
+
+    class Meta:
+        model = CofkUnionImage
+        fields = (
+            'image_id',
+            'image_filename',
+            'thumbnail',
+            'credits',
+            'licence_details',
+            'licence_url',
+            # 'can_be_displayed',
+            'display_order',
+        )
 
 
 class GeneralSearchFieldset(ModelForm):

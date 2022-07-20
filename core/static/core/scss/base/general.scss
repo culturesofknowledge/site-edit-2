@@ -76,7 +76,7 @@ cite {
 img {
   display: block;
   width: 100%;
-  max-width:  100%;
+  max-width: 100%;
   height: auto;
 }
 
@@ -147,7 +147,7 @@ button {
 
 input[type="checkbox"],
 input[type="radio"] {
-  display: none;
+  display: none; // KTODO should we remove this general css
 
   + label {
     line-height: 1;

@@ -57,6 +57,7 @@ class CofkUnionLocation(models.Model, RecordTracker):
 
     resources = models.ManyToManyField('core.CofkUnionResource')
     comments = models.ManyToManyField('core.CofkUnionComment')
+    images = models.ManyToManyField('uploader.CofkUnionImage')
 
 
 class CofkCollectLocationResource(models.Model):

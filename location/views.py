@@ -2,13 +2,14 @@ import itertools
 import logging
 from typing import Iterable, Union, Callable, List, Tuple
 
-from django.forms import formset_factory, BaseForm, BaseFormSet
+from django.forms import formset_factory, BaseForm, BaseFormSet, ModelForm
 from django.shortcuts import render, get_object_or_404, redirect
 
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 from core.helper.view_utils import SearchResultRenderer, BasicSearchView
-from location.forms import LocationForm, LocationResourceForm, LocationCommentForm, GeneralSearchFieldset
+from location.forms import LocationForm, LocationResourceForm, LocationCommentForm, GeneralSearchFieldset, \
+    LocationImageForm
 from location.models import CofkUnionLocation
 
 log = logging.getLogger(__name__)
@@ -54,9 +55,10 @@ def flat_changed_forms(form_formsets: Iterable[FormOrFormSet]):
 
 def update_current_user_timestamp(user, form_formsets: Iterable[FormOrFormSet]):
     forms = flat_changed_forms(form_formsets)
-    forms = (f for f in forms if isinstance(f, RecordTracker))
-    for f in forms:
-        f.update_current_user_timestamp(user)
+    forms = (f for f in forms if isinstance(f, ModelForm))
+    records = (f.instance for f in forms if isinstance(f.instance, RecordTracker))
+    for r in records:
+        r.update_current_user_timestamp(user)
 
 
 def save_changed_forms(form_formsets: Iterable[FormOrFormSet]):
@@ -74,20 +76,19 @@ def create_formset(form_class, post_data=None, prefix=None, many_related_manager
     )
 
 
-def save_formset(formset: BaseFormSet,
+def save_formset(forms: Iterable[ModelForm],
                  many_related_manager=None,
                  model_id_name=None,
                  form_id_name=None):
-    _forms = (f for f in formset if f.has_changed())
+    _forms = (f for f in forms if f.has_changed())
     for form in _forms:
         log.debug(f'form has changed : {form.changed_data}')
 
-        # set mode_id
+        # set id value to instead by mode_id
         if model_id_name:
             if hasattr(form.instance, model_id_name):
                 form_id_name = form_id_name or model_id_name
-                if not hasattr(form, 'cleaned_data'):
-                    breakpoint()  # KTODO is this happen??
+                form.is_valid()  # make sure cleaned_data exist
                 if form_id_name in form.cleaned_data:
                     setattr(form.instance, model_id_name,
                             form.cleaned_data.get(form_id_name))
@@ -118,19 +119,22 @@ def full_form(request, location_id):
                                  prefix='loc_res', many_related_manager=loc.resources)
     comment_formset = create_formset(LocationCommentForm, post_data=request.POST,
                                      prefix='loc_comment', many_related_manager=loc.comments)
+    images_formset = create_formset(LocationImageForm, post_data=request.POST,
+                                    prefix='loc_image', many_related_manager=loc.images)
 
     def _render_full_form():
         res_formset.forms = list(reversed(res_formset.forms))
+        images_formset.forms = list(reversed(images_formset.forms))
         return render(request, 'location/full_form.html',
                       {'loc_form': loc_form,
                        'res_formset': res_formset,
                        'comment_formset': comment_formset,
+                       'images_formset': images_formset,
                        'loc_id': location_id,
                        })
 
     if request.method == 'POST':
-        form_formsets = [loc_form, res_formset, comment_formset]
-        print([f.is_valid() for f in form_formsets])
+        form_formsets = [loc_form, res_formset, comment_formset, images_formset]
 
         if not all(f.is_valid() for f in form_formsets):
             log.warning(f'something invalid {loc_form.is_valid()} / {res_formset.is_valid()}')
@@ -138,11 +142,13 @@ def full_form(request, location_id):
 
         update_current_user_timestamp(request.user.username, form_formsets)
 
-        # update res instead
+        # save formset
         save_formset(res_formset, loc.resources, model_id_name='resource_id')
-
-        # update comment instead
         save_formset(comment_formset, loc.comments, model_id_name='comment_id')
+
+        images_formset = (f for f in images_formset if f.is_valid())
+        images_formset = (f for f in images_formset if f.cleaned_data.get('image_filename'))
+        save_formset(images_formset, loc.images, model_id_name='image_id')
 
         loc_form.save()
         log.info(f'location [{location_id}] have been saved')

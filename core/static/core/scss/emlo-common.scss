@@ -1,3 +1,16 @@
 input.formtext {
-  width: 300px;
+  width: 500px;
+}
+
+input.elcheckbox {
+  display: block;
+  -webkit-appearance: checkbox;
+}
+
+
+.section-a {
+  border-width: medium;
+  border-style: groove;
+  padding: 5px;
+  margin: 5px;
 }

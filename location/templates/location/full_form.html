@@ -5,7 +5,7 @@
 {% block head %}
     <script src="{% static 'location/js/init_loc_form.js' %}" defer></script>
     <script defer>
-        document.addEventListener('DOMContentLoaded', (e)=>{
+        document.addEventListener('DOMContentLoaded', (e) => {
             setup_location_form_listener()
         });
     </script>
@@ -49,7 +49,44 @@
 
 
 
-        <!--  KTODO Images  -->
+        <div>
+            <h1>Images: </h1>
+            <div>
+                Copyright law must be respected at all times. You must ensure that all necessary permissions have been
+                obtained before uploading or attempting to display images.
+            </div>
+            <div>
+                You can associate images with a location in two different ways:
+                <ol>
+                    <li>
+                        Upload them if you have a copy on your own personal computer
+                    </li>
+                    <li>
+                        Link to them by typing in, or copying and pasting in, the URL of an image on this or another
+                        repository's server.
+                    </li>
+                </ol>
+                <span>
+                    In both cases, credits and licence details must be supplied before the image can be displayed to the public.
+                </span>
+            </div>
+
+            {{ images_formset.management_form }}
+            {% for form in images_formset %}
+                {% if forloop.first %}
+                    <strong> Upload image files from your own computer: </strong>
+                    <button>Upload</button>
+                    <div>Or:</div>
+
+                    <strong> Enter or change links to images by typing in the URL: </strong>
+                    <div> Enter new image details:</div>
+
+                {% endif %}
+                <table class="section-a">
+                    {{ form }}
+                </table>
+            {% endfor %}
+        </div>
 
         <input type="submit" value="Submit">
     </form>
