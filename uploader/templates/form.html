@@ -29,11 +29,7 @@
                 </small>
               </p>
               <h3>
-              {% if not report.errors and not report.summary.total_errors %}
-                <span style="color: #0f0;">&#x2713;</span> {{ report.file }}
-              {% else %}
                 <span style="color: #f00;">&#x2717;</span> {{ report.file }}
-              {% endif %}
               </h3>
               <p class="fw-700 search-result__date">
                 <small>
@@ -51,46 +47,27 @@
                 </small>
               </p>
 
-                {% if report.summary %}
+                {% for entity, properties in report.errors.items %}
 
-                {% for entity, properties in report.summary.items %}
-                    {% if entity != 'total_errors' %}
                   <details class="search-results__abstract">
                     <summary class="fw-700">{{ entity }} ({{ properties.total }})</summary>
-                     {% if not report.summary.total_errors %}
-                        <ol>
+                                             <ul>
+                             {% for row in properties.errors %}
 
+                                <li>Row: {{ row.row }}<br/>
 
-                            {% for item in properties.first_three %}
-                                <li>{{ item }}</li>
-                            {% endfor %}
-                        </ol>
-                         {% else %}
-                        <ul>
-                             {% for error in properties.errors %}
-
-                                <li>Row: {{ error.row }}<br/>
-                                    {% for row_error in error.errors %}
-                                        <i>{{ row_error.col }}</i>: {{ row_error }}<br/>
+                                    <ul>
+                                    {% for row_error in row.errors %}
+                                        <li>{{ row_error }}</li>
                                     {% endfor %}
+                                    </ul>
+
                                 </li>
 
                             {% endfor %}
                         </ul>
-                         {% endif %}
                   </details>
-                    {% endif %}
                 {% endfor %}
-
-                {% else %}
-
-                <ul>
-                    {% for error in errors %}
-                        <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-
-                {% endif %}
 
             </div>
 
@@ -98,6 +75,7 @@
         </li>
 </ol>
 {% endif %}
+
 <table border="1" class="uploads">
     <tr>
         <th>ID</th>

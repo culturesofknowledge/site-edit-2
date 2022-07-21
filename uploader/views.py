@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import time
@@ -36,6 +37,10 @@ def handle_upload(request, context):
         file = default_storage.open(new_upload.upload_file.name, 'rb')
 
         cuef = None
+        context['report'] = {'file': request.FILES['upload_file']._name,
+                             'time': new_upload.upload_timestamp,
+                             'size': os.path.getsize(settings.MEDIA_ROOT + new_upload.upload_file.name) >> 10,
+                             'upload_id': new_upload.upload_id, }
 
         try:
             cuef = CofkUploadExcelFile(new_upload, file)
@@ -47,36 +52,36 @@ def handle_upload(request, context):
             else:
                 elapsed = f'{elapsed + 1} seconds'
 
-            context['report'] = {'file': request.FILES['upload_file']._name,
-                                 'time': new_upload.upload_timestamp,
-                                 'size': os.path.getsize(settings.MEDIA_ROOT + new_upload.upload_file.name) >> 10,
-                                 'elapsed': elapsed,
-                                 'summary': cuef.summary,
-                                 'upload_id': new_upload.upload_id, }
+            context['report']['elapsed'] = elapsed
+
         except ValidationError as ve:
-            context['error'] = str(ve)[1:-1]
+            context['report']['errors'] = str(ve)[1:-1]
             log.error(ve)
-        except KeyError as ke:
-            context['error'] = f'Column "{ke.args[0]}" missing'
-            log.error(context['error'])
+        #except KeyError as ke:
+        #    context['error'] = f'Column "{ke.args[0]}" missing'
+        #    log.error(context['error'])
         except ValueError as ve:
-            context['error'] = ve.args[0]
+            context['report']['errors'] = ve.args[0]
             log.error(vars(ve))
         except (FileNotFoundError, BadZipFile, OptionError, OSError) as e:
-            context['error'] = 'Could not read the Excel file.'
+            context['report']['errors'] = 'Could not read the Excel file.'
             log.error(e)
         #except Exception as e:
         #    context['error'] = 'Indeterminate error.'
         #    log.error(e)
 
-        if not cuef:
+        if cuef and cuef.errors:
             new_upload.delete()
+            # TODO delete uploaded file
+            context['report']['errors'] = cuef.errors
         else:
             new_upload.upload_name = request.FILES['upload_file']._name + ' ' + str(new_upload.upload_timestamp)
             new_upload.uploader_email = request.user.email
             new_upload.save()
+    else:
+        context['report'] = {'errors': 'Form invalid'}
 
-        return context
+    return context
 
 
 @login_required
@@ -88,11 +93,13 @@ def upload_view(request, **kwargs):
     if request.method == 'POST':
         context = handle_upload(request, context)
 
-        if 'report' in context and context['report']['total_errors'] == 0:
+        # If workbook upload is successful we redirect to review view
+        if 'report' not in context:  # and context['report']['total_errors'] == 0:
             return redirect(f'/upload/{context["report"]["upload_id"]}')
 
-    else:
-        context['uploads'] = CofkCollectUpload.objects.all()
+        print(context)
+
+    context['uploads'] = CofkCollectUpload.objects.all()
 
     return render(request, template_url, context)
 

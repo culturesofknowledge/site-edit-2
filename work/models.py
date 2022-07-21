@@ -1,3 +1,6 @@
+from datetime import datetime
+
+from django.core.exceptions import ValidationError
 from django.db import models
 
 <<<<<<< HEAD
@@ -63,7 +66,7 @@ class CofkUnionWork(models.Model, RecordTracker):
 
 
 class CofkCollectWork(models.Model):
-    upload = models.ForeignKey(CofkCollectUpload, models.DO_NOTHING, primary_key=True)
+    upload = models.ForeignKey(CofkCollectUpload, models.CASCADE)
     iwork_id = models.IntegerField()
     union_iwork = models.ForeignKey('CofkUnionWork', models.DO_NOTHING, blank=True, null=True
                                     , related_name='union_collect_works')
@@ -107,7 +110,8 @@ class CofkCollectWork(models.Model):
     notes_on_people_mentioned = models.TextField(blank=True, null=True)
     upload_status = models.ForeignKey(CofkCollectStatus, models.DO_NOTHING, db_column='upload_status')
     editors_notes = models.TextField(blank=True, null=True)
-    _id = models.CharField(db_column='_id', max_length=32, blank=True, null=True)  # Field renamed because it started with '_'.
+    _id = models.CharField(db_column='_id', max_length=32, blank=True,
+                           null=True)  # Field renamed because it started with '_'.
     date_of_work2_approx = models.SmallIntegerField()
     date_of_work2_inferred = models.SmallIntegerField()
     date_of_work2_uncertain = models.SmallIntegerField()
@@ -123,6 +127,8 @@ class CofkCollectWork(models.Model):
     upload_name = models.CharField(max_length=254, blank=True, null=True)
     explicit = models.TextField(blank=True, null=True)
 
+    errors = []
+
     class Meta:
         db_table = 'cofk_collect_work'
         unique_together = (('upload', 'iwork_id'),)
@@ -130,9 +136,96 @@ class CofkCollectWork(models.Model):
     def __str__(self):
         return f'Work #{self.iwork_id}'
 
+    def clean_year(self, year, field_name):
+        max_year = 1900
+        min_year = 1500
+
+        if not max_year >= year >= min_year:
+            self.add_error('%(field)s: is %(value)s but must be between %(min_year)s and %(max_year)s',
+                           {'field': field_name, 'value': year, 'min_year': min_year, 'max_year': max_year})
+
+    def clean_month(self, month, field_name):
+        min_month = 1
+        max_month = 12
+
+        if not min_month <= month <= max_month:
+            self.add_error('%(field)s: is %(value)s but must be between %(min_month)s and %(max_month)s',
+                           {'field': field_name, 'value': month, 'min_month': min_month, 'max_month': max_month})
+
+    def clean_date(self, field, field_name, month):
+        if field < 1:
+            self.add_error('%(field)s: can not be less than 1', {'field': field_name})
+        elif field > 31:
+            self.add_error('%(field)s: can not be greater than 31', {'field': field_name})
+        # If month is April, June, September or November then day must be not more than 30
+        elif month in [4, 6, 9, 11] and field > 30:
+            self.add_error('%(field)s: can not be more than 30 for April, June, September or November',
+                           {'field': field_name})
+        # For February not more than 29
+        elif month == 2 and field > 29:
+            self.add_error('%(field)s: can not be more than 29 for February', {'field': field_name})
+
+    def clean_range(self):
+        if self.date_of_work_std_is_range == 1:
+            if self.date_of_work2_std_year is None:
+                self.add_error('%(field)s: can not be empty when %(field2)s is 1',
+                               {'field': 'date_of_work2_std_year', 'field2': 'date_of_work_std_is_range'})
+
+            self.clean_date(self.date_of_work2_std_day, 'date_of_work2_std_day', self.date_of_work2_std_month)
+
+            first_date = datetime(self.date_of_work_std_year,
+                                           self.date_of_work_std_month, self.date_of_work_std_day)
+            second_date = datetime(self.date_of_work2_std_year,
+                                            self.date_of_work2_std_month, self.date_of_work2_std_day)
+            if first_date >= second_date:
+                self.add_error('%(field1)s-%(field2)s: The start date in a date range can not be after the end date',
+                               {'field1': 'date_of_work', 'field2': 'date_of_work2'})
+
+    def clean_date_notes(self):
+        if self.notes_on_date_of_work is not None and self.notes_on_date_of_work[0].islower():
+            self.add_error('%(field)s: Notes with dates have to start with an upper case letter',
+                           {'field': 'notes_on_date_of_work'})
+
+        if self.notes_on_date_of_work is not None and self.notes_on_date_of_work[-1] != '.':
+            self.add_error('%(field)s: Notes with dates have to end with a full stop',
+                           {'field': 'notes_on_date_of_work'})
+
+    def clean(self):
+        # Reset error count
+        self.errors = []
+        # Clean year values
+        self.clean_year(self.date_of_work_std_year, 'date_of_work_std_year')
+        self.clean_year(self.date_of_work2_std_year, 'date_of_work2_std_year')
+
+        # Clean month values
+        self.clean_month(self.date_of_work_std_month, 'date_of_work_std_month')
+        self.clean_month(self.date_of_work2_std_month, 'date_of_work2_std_month')
+
+        # Clean date values
+        self.clean_date(self.date_of_work_std_day, 'date_of_work_std_day', self.date_of_work_std_month)
+
+        # Clean date range
+        self.clean_range()
+
+        # Clean notes on date
+        self.clean_date_notes()
+
+        # Clean locations
+
+
+        if self.errors:
+            raise ValidationError(self.errors)
+
+    def add_error(self, msg, params):
+        self.errors.append(ValidationError(msg, params=params))
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
 
 class CofkCollectAddresseeOfWork(models.Model):
-    upload = models.ForeignKey('uploader.CofkCollectUpload', models.DO_NOTHING)
+    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     addressee_id = models.IntegerField()
     iperson_id = models.IntegerField()
     iwork_id = models.IntegerField()
