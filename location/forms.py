@@ -7,8 +7,13 @@ from siteedit2 import settings
 from uploader.models import CofkUnionImage
 
 
-def create_common_text_input(**attrs):
-    _attrs = {'class': 'formtext'} | (attrs or {})
+def create_common_text_input(_class=None, **attrs):
+    class_str = 'formtext'
+    if _class:
+        class_str += f" {_class}"
+
+    default_attrs = {'class': class_str}
+    _attrs = default_attrs | (attrs or {})
     return forms.TextInput(_attrs)
 
 
@@ -59,6 +64,9 @@ class LocationForm(ModelForm):
 
 class LocationResourceForm(ModelForm):
     resource_id = IntegerField(required=False, widget=HiddenInput())
+    resource_url = forms.CharField(required=False,
+                                   widget=create_common_text_input(_class='url_checker'),
+                                   label='URL')
 
     class Meta:
         model = CofkUnionResource
@@ -71,7 +79,6 @@ class LocationResourceForm(ModelForm):
         )
         labels = {
             'resource_name': 'Title or brief description',
-            'resource_url': 'URL',
             'resource_details': 'Further details of resource',
         }
 
@@ -97,7 +104,8 @@ class LocUploadImageForm(Form):
 
 class LocationImageForm(ModelForm):
     image_id = IntegerField(required=False, widget=HiddenInput())
-    image_filename = forms.CharField(required=False, widget=create_common_text_input(),
+    image_filename = forms.CharField(required=False,
+                                     widget=create_common_text_input(_class='url_checker'),
                                      label='URL for full-size image')
     thumbnail = forms.CharField(required=False, widget=create_common_text_input(),
                                 label='URL for thumbnail (if any)')
@@ -106,9 +114,11 @@ class LocationImageForm(ModelForm):
     licence_details = forms.CharField(required=False, widget=forms.Textarea(),
                                       label='Either: full text of licence*')
     licence_url = forms.CharField(required=False,
+                                  widget=create_common_text_input(
+                                      _class='url_checker',
+                                      value=settings.DEFAULT_IMG_LICENCE_URL,
+                                  ),
                                   label='licence URL*')
-    licence_url.widget.attrs.update({'class': 'formtext url_checker',
-                                     'value': settings.DEFAULT_IMG_LICENCE_URL})
 
     # KTODO
     # can_be_displayed = forms.BooleanField(required=False,
