@@ -12,7 +12,8 @@
 {% endblock %}
 
 {% block content %}
-    <form action="{% url 'location:full_form' loc_id %}" method="post">
+    <form action="{% url 'location:full_form' loc_id %}" method="post"
+          enctype="multipart/form-data">
         {% csrf_token %}
         <h1>Location </h1>
         <h1>Core fields and editors' notes:</h1>
@@ -75,7 +76,7 @@
             {% for form in images_formset %}
                 {% if forloop.first %}
                     <strong> Upload image files from your own computer: </strong>
-                    <button>Upload</button>
+                    {{ img_form }}
                     <div>Or:</div>
 
                     <strong> Enter or change links to images by typing in the URL: </strong>

@@ -8,9 +8,12 @@ from django.shortcuts import render, get_object_or_404, redirect
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 from core.helper.view_utils import SearchResultRenderer, BasicSearchView
+from core.services import media_service
 from location.forms import LocationForm, LocationResourceForm, LocationCommentForm, GeneralSearchFieldset, \
-    LocationImageForm
+    LocationImageForm, LocUploadImageForm
 from location.models import CofkUnionLocation
+from siteedit2 import settings
+from uploader.models import CofkUnionImage
 
 log = logging.getLogger(__name__)
 
@@ -113,7 +116,6 @@ def full_form(request, location_id):
         loc = get_object_or_404(CofkUnionLocation, pk=location_id)
 
     loc_form = LocationForm(request.POST or None, instance=loc)
-    # KTODO how to handle upload image
 
     res_formset = create_formset(LocationResourceForm, post_data=request.POST,
                                  prefix='loc_res', many_related_manager=loc.resources)
@@ -121,6 +123,7 @@ def full_form(request, location_id):
                                      prefix='loc_comment', many_related_manager=loc.comments)
     images_formset = create_formset(LocationImageForm, post_data=request.POST,
                                     prefix='loc_image', many_related_manager=loc.images)
+    img_form = LocUploadImageForm(request.POST or None, request.FILES)
 
     def _render_full_form():
         res_formset.forms = list(reversed(res_formset.forms))
@@ -131,10 +134,11 @@ def full_form(request, location_id):
                        'comment_formset': comment_formset,
                        'images_formset': images_formset,
                        'loc_id': location_id,
+                       'img_form': img_form,
                        })
 
     if request.method == 'POST':
-        form_formsets = [loc_form, res_formset, comment_formset, images_formset]
+        form_formsets = [loc_form, res_formset, comment_formset, images_formset, img_form]
 
         if not all(f.is_valid() for f in form_formsets):
             log.warning(f'something invalid {loc_form.is_valid()} / {res_formset.is_valid()}')
@@ -145,10 +149,20 @@ def full_form(request, location_id):
         # save formset
         save_formset(res_formset, loc.resources, model_id_name='resource_id')
         save_formset(comment_formset, loc.comments, model_id_name='comment_id')
-
         images_formset = (f for f in images_formset if f.is_valid())
         images_formset = (f for f in images_formset if f.cleaned_data.get('image_filename'))
         save_formset(images_formset, loc.images, model_id_name='image_id')
+
+        # save if user uploaded an image
+        if uploaded_img_file := img_form.cleaned_data.get('image'):
+            file_path = media_service.save_uploaded_img(uploaded_img_file)
+            file_url = media_service.get_img_url_by_file_path(file_path)
+            img_obj = CofkUnionImage(image_filename=file_url, display_order=0,
+                                     licence_details='', credits='',
+                                     licence_url=settings.DEFAULT_IMG_LICENCE_URL)
+            img_obj.update_current_user_timestamp(request.user.username)
+            img_obj.save()
+            loc.images.add(img_obj)
 
         loc_form.save()
         log.info(f'location [{location_id}] have been saved')

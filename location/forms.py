@@ -1,8 +1,9 @@
 from django import forms
-from django.forms import ModelForm, HiddenInput, IntegerField, CharField
+from django.forms import ModelForm, HiddenInput, IntegerField, CharField, Form
 
 from core.models import CofkUnionResource, CofkUnionComment
 from location.models import CofkUnionLocation
+from siteedit2 import settings
 from uploader.models import CofkUnionImage
 
 
@@ -90,6 +91,10 @@ class LocationCommentForm(ModelForm):
         }
 
 
+class LocUploadImageForm(Form):
+    image = forms.ImageField()
+
+
 class LocationImageForm(ModelForm):
     image_id = IntegerField(required=False, widget=HiddenInput())
     image_filename = forms.CharField(required=False, widget=create_common_text_input(),
@@ -100,8 +105,8 @@ class LocationImageForm(ModelForm):
                               label="Credits for 'front end' display*")
     licence_details = forms.CharField(required=False, widget=forms.Textarea(),
                                       label='Either: full text of licence*')
-    licence_url = forms.CharField(required=False, widget=create_common_text_input(
-        value='http://cofk2.bodleian.ox.ac.uk/culturesofknowledge/licence/terms_of_use.html'),
+    licence_url = forms.CharField(required=False,
+                                  widget=create_common_text_input(value=settings.DEFAULT_IMG_LICENCE_URL),
                                   label='licence URL*')
 
     # KTODO

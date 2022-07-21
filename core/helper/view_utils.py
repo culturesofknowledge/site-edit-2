@@ -51,6 +51,17 @@ class BasicSearchView(ListView):
 
     @property
     def sort_by_choices(self) -> List[Tuple[str, str]]:
+        """
+        return list of tuple for "django field value" and "Label"
+        Example :
+        return [
+            ('-change_timestamp', 'Change Timestamp desc',),
+            ('change_timestamp', 'Change Timestamp asc',),
+            ('-location_name', 'Location Name desc',),
+            ('location_name', 'Location Name asc',),
+        ]
+
+        """
         raise NotImplementedError()
 
     @property
