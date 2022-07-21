@@ -92,7 +92,7 @@ class LocationCommentForm(ModelForm):
 
 
 class LocUploadImageForm(Form):
-    image = forms.ImageField()
+    image = forms.ImageField(required=False)
 
 
 class LocationImageForm(ModelForm):
