@@ -14,34 +14,54 @@
                 </dd>
             {% endif %}
 
-            {% if work.languages and work.images %}
+            {% if record.location_synonyms %}
+                <dt>Location synonyms <span data-feather="globe" aria-hidden="true"></span></dt>
+                <dd class="display-inline-block">{{ record.location_synonyms }}</dd>
+            {% endif %}
+
+            {% if record.latitude or record.longitude %}
                 <div class="row">
-                <div class="col col--1of2">
-            {% endif %}
-
-            {% if work.languages %}
-                <dt>Languages <span data-feather="globe" aria-hidden="true"></span></dt>
-                {% for lang in work.languages %}
-                    <dd class="display-inline-block">{{ lang.name }}{% if not loop.last %}, {% endif %}</dd>
-                {% endfor %}
-            {% endif %}
-
-            {% if work.languages and work.images %}
-                </div>
-                <div class="col col--1of2">
-            {% endif %}
-
-            {% if work.images %}
-                <dt>Images <span data-feather="image" aria-hidden="true"></span></dt>
-                {% for img in work.images %}
-                    <dd class="display-inline-block"> [<a href="/{{ img.url }}">View</a>]</dd>
-                {% endfor %}
-            {% endif %}
-
-            {% if work.languages and work.images %}
-                </div>
+                    <div class="col col--1of2">
+                        <dt>Latitude</dt>
+                        <dd class="display-inline-block">{{ record.latitude }}</dd>
+                    </div>
+                    <div class="col col--1of2">
+                        <dt>Longitude</dt>
+                        <dd class="display-inline-block">{{ record.longitude }}</dd>
+                    </div>
                 </div>
             {% endif %}
+
+
+            <!-- TOBEREMOVE following comment -->
+{#            {% if work.languages and work.images %}#}
+{#                <div class="row">#}
+{#                <div class="col col--1of2">#}
+{#            {% endif %}#}
+
+{#            {% if work.languages %}#}
+{#                <dt>Languages <span data-feather="globe" aria-hidden="true"></span></dt>#}
+{#                {% for lang in work.languages %}#}
+{#                    <dd class="display-inline-block">{{ lang.name }}{% if not loop.last %}, {% endif %}</dd>#}
+{#                {% endfor %}#}
+{#            {% endif %}#}
+
+{#            {% if work.languages and work.images %}#}
+{#                </div>#}
+{#                <div class="col col--1of2">#}
+{#            {% endif %}#}
+
+{#            {% if work.images %}#}
+{#                <dt>Images <span data-feather="image" aria-hidden="true"></span></dt>#}
+{#                {% for img in work.images %}#}
+{#                    <dd class="display-inline-block"> [<a href="/{{ img.url }}">View</a>]</dd>#}
+{#                {% endfor %}#}
+{#            {% endif %}#}
+
+{#            {% if work.languages and work.images %}#}
+{#                </div>#}
+{#                </div>#}
+{#            {% endif %}#}
 
         </dl>
         <p><small><a href="">Delete record</a></small></p>
