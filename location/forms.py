@@ -106,8 +106,9 @@ class LocationImageForm(ModelForm):
     licence_details = forms.CharField(required=False, widget=forms.Textarea(),
                                       label='Either: full text of licence*')
     licence_url = forms.CharField(required=False,
-                                  widget=create_common_text_input(value=settings.DEFAULT_IMG_LICENCE_URL),
                                   label='licence URL*')
+    licence_url.widget.attrs.update({'class': 'formtext url_checker',
+                                     'value': settings.DEFAULT_IMG_LICENCE_URL})
 
     # KTODO
     # can_be_displayed = forms.BooleanField(required=False,

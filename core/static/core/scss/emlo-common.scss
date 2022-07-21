@@ -14,3 +14,22 @@ input.elcheckbox {
   padding: 5px;
   margin: 5px;
 }
+
+
+.url_checker_div {
+  display: flex;
+
+  button {
+    background-color: black;
+  }
+
+  button.valid {
+    background-color: green;
+  }
+
+  button.invalid {
+    background-color: red;
+  }
+
+
+}

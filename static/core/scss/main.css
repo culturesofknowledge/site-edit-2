@@ -615,4 +615,13 @@ input.elcheckbox {
   padding: 5px;
   margin: 5px; }
 
+.url_checker_div {
+  display: flex; }
+  .url_checker_div button {
+    background-color: black; }
+  .url_checker_div button.valid {
+    background-color: green; }
+  .url_checker_div button.invalid {
+    background-color: red; }
+
 /*# sourceMappingURL=main.css.map */
