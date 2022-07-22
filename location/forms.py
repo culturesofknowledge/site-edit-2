@@ -13,6 +13,8 @@ def create_common_checkbox(**attrs):
 
 
 class LocationForm(ModelForm):
+    form_title__ = 'Core fields and editors\' notes:'
+
     location_id = IntegerField(required=False, widget=HiddenInput())
     location_name = CharField(required=False,
                               widget=forms.TextInput(attrs=dict(readonly=True)),

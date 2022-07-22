@@ -126,8 +126,10 @@ def full_form(request, location_id):
     img_form = LocUploadImageForm(request.POST or None, request.FILES)
 
     def _render_full_form():
-        res_formset.forms = list(reversed(res_formset.forms))
-        images_formset.forms = list(reversed(images_formset.forms))
+
+        for fs in [res_formset, images_formset, comment_formset]:
+            fs.forms = list(reversed(fs.forms))
+
         return render(request, 'location/full_form.html',
                       {'loc_form': loc_form,
                        'res_formset': res_formset,
@@ -135,6 +137,7 @@ def full_form(request, location_id):
                        'images_formset': images_formset,
                        'loc_id': location_id,
                        'img_form': img_form,
+                       'total_images': loc.images.count(),
                        })
 
     if request.method == 'POST':
