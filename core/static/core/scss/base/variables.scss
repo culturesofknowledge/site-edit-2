@@ -14,7 +14,8 @@ $gutter:           1.5vw;
 $gutter-negative:  -1.5vw;
 
 // Spacing: for use in margins, paddings...
-$space-unit:       1.5rem;
+$space-unit:       1rem;
+$space-xxxs:       calc(.05 * #{$space-unit});
 $space-xxs:        calc(.25 * #{$space-unit});
 $space-xs:         calc(.5 * #{$space-unit});
 $space-sm:         calc(.75 * #{$space-unit});

@@ -20,6 +20,10 @@
   font-family: $sans-serif;
 }
 
+.font-mono {
+  font-family: monospace;
+}
+
 .fw-200 {
   font-weight: 200;
   letter-spacing: -.025em;
@@ -125,10 +129,16 @@
 
 .bg-white-15 {
   background-color: $white-15;
+  color: $white;
 }
 
 .bg-white-75 {
   background-color: $white-75;
+}
+
+.bg-black-15 {
+  background-color: $black-15;
+  color: $black;
 }
 
 .bg-black-85 {
@@ -236,6 +246,10 @@
   margin-bottom: $space-md;
   padding-left: 0;
   list-style: none;
+
+  &:last-of-type {
+    margin-bottom: 0;
+  }
 }
 
 .unstyled-list li:before {

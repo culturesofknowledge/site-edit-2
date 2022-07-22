@@ -1,12 +1,19 @@
+// @import rules for all SCSS files: base styles, component styles, layout styles.
+// This must be done in the following order to be displayed properly
+// Only create components if necessary, when basic semantic HTML tags don’t serve a specific purposes
+// ** @import is soon to be deprecated with SASS/SCSS **
 
-@import "base/variables";
-@import "base/grid";
-@import "base/utilities";
-@import "base/general";
-@import "base/typography";
+@import 'base/variables.scss';
+@import 'base/utilities.scss';
+@import 'base/grid.scss';
+@import 'base/typography.scss';
+@import 'base/general.scss';
 
+@import 'components/button.scss';
+@import 'components/dropdown.scss';
 @import 'components/feather.scss';
 @import 'components/label.scss';
+@import 'components/tag.scss';
 @import 'components/tooltip.scss';
 @import 'components/search-result.scss';
 

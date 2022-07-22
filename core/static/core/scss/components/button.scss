@@ -1,0 +1,21 @@
+.btn {
+  padding: $space-xxs $space-xs;
+  border: 1px solid;
+  border-radius: $space-xxs;
+  transition: 200ms all ease-in-out;
+
+  &:hover, &:focus, &:active {
+    background-color: $black-15;
+    border-color: $black-15;
+  }
+}
+
+.btn--primary {
+  background-color: $midnight;
+  color: $white;
+
+  &:hover, &:focus, &:active {
+    background-color: $black;
+    color: $white;
+  }
+}
