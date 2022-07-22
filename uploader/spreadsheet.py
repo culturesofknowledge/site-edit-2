@@ -35,28 +35,35 @@ class CofkEntity:
         self.errors[self.row].append(error)
 
     def get_total_errors(self) -> int:
-        return sum([len(v[0].error_dict['__all__']) for k, v in self.errors.items()])
+        try:
+            return sum([len(v[0].error_dict['__all__']) for k, v in self.errors.items()])
+        except AttributeError:
+            return sum([len(v) for k, v in self.errors.items()])
+        # if hasattr(v[0], 'error_dict') and '__all__' in v[0].error_dict])
 
     def format_errors_for_template(self):
         errors = []
         for k, v in self.errors.items():
-            errors.append({'row': k,
-                           'errors': [str(e)[2:-2] for e in v[0].error_dict['__all__']]})
+            try:
+                errors.append({'row': k,
+                               'errors': [str(e)[2:-2] for e in v[0].error_dict['__all__']]})
+            except AttributeError:
+                errors.append({'row': k,
+                               'errors': [str(e)[2:-2] for e in v]})
 
         return errors
 
 
 class CofkRepositories(CofkEntity):
-    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame, limit=None):
+    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame):
         super().__init__(upload, sheet_data)
 
         self.__institution_id = None
         self.__repository_data = {}
-        limit = limit if limit else len(self.sheet_data.index)
         self.ids = []
 
         # Process each row in turn, using a dict comprehension to filter out empty values
-        for i in range(1, limit):
+        for i in range(1, len(self.sheet_data.index)):
             self.process_repository({k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None})
 
     def process_repository(self, repository_data):
@@ -83,7 +90,6 @@ class CofkRepositories(CofkEntity):
 class CofkLocations(CofkEntity):
     def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame, limit=None):
         super().__init__(upload, sheet_data)
-        print(sheet_data)
         self.__location_id = None
         self.__location_data = {}
         limit = limit if limit else len(self.sheet_data.index)
@@ -131,26 +137,39 @@ class CofkLocations(CofkEntity):
 
 class CofkPeople(CofkEntity):
     def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame,
-                 work_data: pd.DataFrame, limit=None):
+                 work_data: pd.DataFrame):
         super().__init__(upload, sheet_data)
         self.upload_id = upload.upload_id
         self.work_data = work_data
 
-        limit = limit if limit else len(self.sheet_data.index)
         self.ids = []
 
         sheet_people = []
         work_people = []
 
-        for i in range(1, limit):
+        # Get all people from people spreadsheet
+        for i in range(1, len(self.sheet_data.index)):
             row = self.sheet_data.iloc[i].to_dict()
+            # TODO handle multiple people in same row
+            # if ';' not in row['primary_name'] and isinstance(row['iperson_id'], int):
             work_people.append((row['primary_name'], row['iperson_id']))
 
+        # Get all people from references in Work spreadsheet
         for i in range(1, len(work_data.index)):
             row = work_data.iloc[i].to_dict()
-            sheet_people.append((row['author_names'], row['author_ids']))
-            sheet_people.append((row['addressee_names'], row['addressee_ids']))
-            sheet_people.append((row['mention_id'], row['emlo_mention_id']))
+            # TODO handle multiple people in same row
+            # if 'author_names' in row and 'author_ids' in row and\
+            #        ';' not in row['author_names'] and isinstance(row['author_ids'], int):
+            if row['author_names']:
+                sheet_people.append((row['author_names'], row['author_ids']))
+            # if 'addressee_names' in row and 'addressee_ids' in row and\
+            #        ';' not in row['addressee_names'] and isinstance(row['addressee_ids'], int):
+            if row['addressee_names']:
+                sheet_people.append((row['addressee_names'], row['addressee_ids']))
+            # if 'mention_id' in row and 'emlo_mention_id' in row and row['mention_id']
+            # is not None and';' not in row['mention_id'] and isinstance(row['emlo_mention_id'], int):
+            if row['mention_id']:
+                sheet_people.append((row['mention_id'], row['emlo_mention_id']))
 
         unique_sheet_people = set(sheet_people)
         unique_work_people = set(work_people)
@@ -308,7 +327,7 @@ class CofkWork(CofkEntity):
                 self.iwork_id, self.upload.upload_id))
             self.process_languages(work_languages)
 
-    def process_authors(self, author_ids, author_names):
+    '''def process_authors(self, author_ids, author_names):
         author_ids = str(self.non_work_data[author_ids])
         author_names = str(self.non_work_data[author_names])
 
@@ -355,7 +374,7 @@ class CofkWork(CofkEntity):
             except IntegrityError as ie:
                 log.error(ie)
 
-            a_id = a_id + 1
+            a_id = a_id + 1'''
 
     def preprocess_data(self):
         # Isolating data relevant to a work
@@ -410,6 +429,19 @@ class CofkWork(CofkEntity):
         work.date_of_work2_approx = 0
         work.date_of_work2_inferred = 0
         work.date_of_work2_uncertain = 0
+        work.date_of_work_std_is_range = 0
+        work.date_of_work_inferred = 0
+        work.date_of_work_uncertain = 0
+        work.date_of_work_approx = 0
+        work.authors_inferred = 0
+        work.authors_uncertain = 0
+        work.addressees_inferred = 0
+        work.addressees_uncertain = 0
+        work.destination_inferred = 0
+        work.destination_uncertain = 0
+        work.origin_inferred = 0
+        work.origin_uncertain = 0
+
         work.upload_status = CofkCollectStatus.objects.filter(status_id=1).first()
 
         try:
@@ -424,8 +456,8 @@ class CofkWork(CofkEntity):
             self.iwork_id, self.upload.upload_id))
 
         # Processing people mentioned in work
-        if 'emlo_mention_id' in self.work_data and 'mention_id' in self.work_data:
-            self.process_mentions('emlo_mention_id', 'mention_id')
+        # if 'emlo_mention_id' in self.work_data and 'mention_id' in self.work_data:
+        # self.process_mentions('emlo_mention_id', 'mention_id')
 
         # Processing languages used in work
         self.preprocess_languages()
@@ -434,11 +466,11 @@ class CofkWork(CofkEntity):
         if 'resource_name' in self.non_work_data or 'resource_url' in self.non_work_data:
             self.process_resource()
 
-        self.process_authors('author_ids', 'author_names')
+        # self.process_authors('author_ids', 'author_names')
 
-        self.process_addressees('addressee_ids', 'addressee_names')
+        # self.process_addressees('addressee_ids', 'addressee_names')
 
-    def process_mentions(self, emlo_mention_ids: str, mention_ids: str):
+    '''def process_mentions(self, emlo_mention_ids: str, mention_ids: str):
         emlo_mention_ids = str(self.non_work_data[emlo_mention_ids])
         mention_ids = str(self.non_work_data[mention_ids])
 
@@ -457,7 +489,7 @@ class CofkWork(CofkEntity):
                 iwork_id=self.iwork_id,
                 iperson_id=p)
 
-            person_mention.save()
+            person_mention.save()'''
 
     def process_location(self, loc_id, name) -> int:
         """
@@ -488,6 +520,7 @@ class CofkWork(CofkEntity):
 
         return location_id
 
+    '''
     def process_people(self, ids: str, names: str) -> List[int]:
         """
         This method assumes that the data holds correct information on persons.
@@ -538,7 +571,7 @@ class CofkWork(CofkEntity):
             else:
                 people.append(person_id[0])
 
-        return people
+        return people'''
 
     def process_languages(self, has_language: List[str]):
         for language in has_language:
@@ -604,6 +637,7 @@ class CofkUploadExcelFile:
         self.locations = None
         self.people = None
         self.manifestations = None
+        self.total_errors = 0
 
         """
         Setting sheet_name to None returns a dict with sheet name as key and data frame as value
@@ -632,7 +666,6 @@ class CofkUploadExcelFile:
                                        sheet_data=self.get_sheet_data('Places'))
 
         # The next sheet is people
-
         self.people = CofkPeople(upload=self.upload,
                                  sheet_data=self.get_sheet_data('People'),
                                  work_data=work_data)
@@ -653,10 +686,12 @@ class CofkUploadExcelFile:
         if self.works.errors:
             self.errors['work'] = {'total': self.works.get_total_errors(),
                                    'errors': self.works.format_errors_for_template()}
+            self.total_errors += self.errors['work']['total']
 
         if self.people.errors:
             self.errors['people'] = {'total': self.people.get_total_errors(),
-                                     'errors': self.people.errors}
+                                     'errors': self.people.format_errors_for_template()}
+            self.total_errors += self.errors['people']['total']
 
     def get_sheet_data(self, sheet_name: str) -> pd.DataFrame:
         return self.wb[sheet_name].where(pd.notnull(self.wb[sheet_name]), None)

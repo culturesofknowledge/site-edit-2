@@ -11,11 +11,17 @@ from django.shortcuts import render, redirect
 from django.utils import timezone
 from pandas._config.config import OptionError
 
+from institution.models import CofkCollectInstitution
+from location.models import CofkCollectLocation
+from manifestation.models import CofkCollectManifestation
+from person.models import CofkCollectPerson
 from uploader.forms import CofkCollectUploadForm
 from django.conf import settings
 
 from uploader.models import CofkCollectStatus, CofkCollectUpload
 from uploader.spreadsheet import CofkUploadExcelFile
+from work.forms import CofkCollectWorkForm
+from work.models import CofkCollectWork
 
 log = logging.getLogger(__name__)
 
@@ -55,18 +61,23 @@ def handle_upload(request, context):
             context['report']['elapsed'] = elapsed
 
         except ValidationError as ve:
-            context['report']['errors'] = str(ve)[1:-1]
+            context['report']['total_errors'] = 1
+            context['report']['errors'] = {'file': {'total': 1, 'error': str(ve)[1:-1]}}
             log.error(ve)
-        #except KeyError as ke:
-        #    context['error'] = f'Column "{ke.args[0]}" missing'
-        #    log.error(context['error'])
+        except KeyError as ke:
+            context['report']['total_errors'] = 1
+            context['report']['errors'] = {'file': {'total': 1, 'error': f'Column "{ke.args[0]}" missing'}}
+            log.error(context['report']['error'])
         except ValueError as ve:
-            context['report']['errors'] = ve.args[0]
+            context['report']['total_errors'] = 1
+            context['report']['errors'] = {'file': {'total': 1, 'error': ve.args[0]}}
             log.error(vars(ve))
         except (FileNotFoundError, BadZipFile, OptionError, OSError) as e:
-            context['report']['errors'] = 'Could not read the Excel file.'
+            context['report']['total_errors'] = 1
+            context['report']['errors'] = {'file': {'total': 1, 'error': 'Could not read the Excel file.'}}
             log.error(e)
         #except Exception as e:
+        #    context['report']['total_errors'] = 1
         #    context['error'] = 'Indeterminate error.'
         #    log.error(e)
 
@@ -74,9 +85,13 @@ def handle_upload(request, context):
             new_upload.delete()
             # TODO delete uploaded file
             context['report']['errors'] = cuef.errors
+            context['report']['total_errors'] = cuef.total_errors
+        elif context['report']['total_errors']:
+            new_upload.delete()
         else:
             new_upload.upload_name = request.FILES['upload_file']._name + ' ' + str(new_upload.upload_timestamp)
             new_upload.uploader_email = request.user.email
+            new_upload.upload_username = f'{request.user.forename} {request.user.surname}'
             new_upload.save()
     else:
         context['report'] = {'errors': 'Form invalid'}
@@ -94,10 +109,9 @@ def upload_view(request, **kwargs):
         context = handle_upload(request, context)
 
         # If workbook upload is successful we redirect to review view
-        if 'report' not in context:  # and context['report']['total_errors'] == 0:
+        if 'report' in context and 'total_errors' not in context['report']:
+            print(context['report'])
             return redirect(f'/upload/{context["report"]["upload_id"]}')
-
-        print(context)
 
     context['uploads'] = CofkCollectUpload.objects.all()
 
@@ -105,8 +119,17 @@ def upload_view(request, **kwargs):
 
 
 @login_required
-def upload_review(request, **kwargs):
+def upload_review(request, upload_id, **kwargs):
     template_url = 'review.html'
-    context = {}
+    upload = CofkCollectUpload.objects.filter(upload_id=upload_id).first()
+    # works = [CofkCollectWorkForm(instance=w) for w in CofkCollectWork.objects.filter(upload=upload)]
+    work_form = 0 # CofkCollectWorkForm(instance=works[0])
+
+    context = {'upload': upload,
+               'works': CofkCollectWork.objects.filter(upload=upload),
+               'people': CofkCollectPerson.objects.filter(upload=upload),
+               'places': CofkCollectLocation.objects.filter(upload=upload),
+               'institutions': CofkCollectInstitution.objects.filter(upload=upload),}
+               #'manifestations': CofkCollectManifestation.objects.filter(upload=upload)}
 
     return render(request, template_url, context)

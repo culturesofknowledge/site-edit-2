@@ -73,7 +73,7 @@ main {
     margin-bottom: 2.25rem;
     padding-left: 0;
     list-style: none;
-    font-size: larger;
+    font-size: large;
 }
 .search-result {
     padding: 1.125rem;
@@ -105,4 +105,14 @@ td  {
 #error {
     font-size: larger;
     color: #f00;
+}
+
+.review td {
+    text-align: left;
+    font-size: medium;
+    line-height: 2em;
+}
+
+button {
+    font-size: medium;
 }

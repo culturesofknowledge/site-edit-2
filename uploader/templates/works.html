@@ -1,0 +1,44 @@
+
+<div id="works">
+    <h1>Works</h1>
+    {% if works|length == 1 %}
+    <p>Details of {{ works| length }} new work was uploaded in this contribution. </p>
+    You can export details of the work in this contribution to a spreadsheet <button>Export</button>
+    {% else %}
+    <p>Details of {{ works | length }} new works were uploaded in this contribution. </p>
+    You can export details of the works in this contribution to a spreadsheet <button>Export</button>
+    {% endif %}
+
+</div>
+
+    <hr>
+
+{% for work in works %}
+    <p style="font-weight: bold; font-size: larger;">Work {{ forloop.counter }} of {{ works | length }}</p>
+
+    <div style="margin: 1em;">
+        <a href="#works">Works</a> - <a href="#people">People</a>
+    </div>
+    <table cellspacing="0" cellpadding="14" border="1" class="review">
+        <tr>
+            <td>Status and possible actions</td>
+            <td><strong>{{ work.upload_status }}</strong> (Collect ID: {{ work.iwork_id}})<br/>
+                <button>Accept</button> <button>Reject</button><br/>
+                Note: confirmation will be required before Accept/Reject of work</td>
+        </tr>
+        <tr>
+            <td>Date of work</td>
+            <td>{{ work.date_of_work_std_day }}-{{ work.date_of_work_std_month }}-{{ work.date_of_work_std_year }}</td>
+        </tr>
+        <tr>
+            <td>Origin</td>
+            <td>{{ work.origin_id }}</td>
+        </tr>
+        <tr>
+            <td>Repositories and versions</td>
+            <td></td>
+        </tr>
+    </table>
+    <hr/>
+
+{% endfor %}

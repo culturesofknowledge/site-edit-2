@@ -10,13 +10,6 @@
     <input type="submit">
 </form>
 
-
-{% if error %}
-
-<p id="error">ERROR: {{ error }}</p>
-
-{% endif %}
-
 {% if report %}
 <ol class="unstyled-list">
 
@@ -31,23 +24,29 @@
               <h3>
                 <span style="color: #f00;">&#x2717;</span> {{ report.file }}
               </h3>
-              <p class="fw-700 search-result__date">
+              {% if report.elapsed %}
+                <p class="fw-700 search-result__date">
                 <small>
                   Processing time: {{ report.elapsed }}
                 </small>
               </p>
+                {% endif %}
               <p class="fw-700 search-result__date">
                 <small>
                   File size: {{ report.size }} kb
                 </small>
               </p>
+                {% if report.total_errors > 1 %}
                 <p class="fw-700 search-result__date">
                 <small>
-                  Errors: {{ report.summary.total_errors }}
+                  Errors: {{ report.total_errors }}
                 </small>
               </p>
+                {% endif %}
 
                 {% for entity, properties in report.errors.items %}
+
+                    {% if entity != 'file' %}
 
                   <details class="search-results__abstract">
                     <summary class="fw-700">{{ entity }} ({{ properties.total }})</summary>
@@ -67,6 +66,9 @@
                             {% endfor %}
                         </ul>
                   </details>
+                    {% else %}
+                    <span style="color: #f00;">{{ properties.error }}</span>
+                    {% endif %}
                 {% endfor %}
 
             </div>

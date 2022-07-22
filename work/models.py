@@ -195,14 +195,19 @@ class CofkCollectWork(models.Model):
         self.errors = []
         # Clean year values
         self.clean_year(self.date_of_work_std_year, 'date_of_work_std_year')
-        self.clean_year(self.date_of_work2_std_year, 'date_of_work2_std_year')
+
+        if self.date_of_work2_std_year:
+            self.clean_year(self.date_of_work2_std_year, 'date_of_work2_std_year')
 
         # Clean month values
         self.clean_month(self.date_of_work_std_month, 'date_of_work_std_month')
-        self.clean_month(self.date_of_work2_std_month, 'date_of_work2_std_month')
+
+        if self.date_of_work2_std_month:
+            self.clean_month(self.date_of_work2_std_month, 'date_of_work2_std_month')
 
         # Clean date values
-        self.clean_date(self.date_of_work_std_day, 'date_of_work_std_day', self.date_of_work_std_month)
+        if self.date_of_work_std_day:
+            self.clean_date(self.date_of_work_std_day, 'date_of_work_std_day', self.date_of_work_std_month)
 
         # Clean date range
         self.clean_range()
@@ -211,7 +216,6 @@ class CofkCollectWork(models.Model):
         self.clean_date_notes()
 
         # Clean locations
-
 
         if self.errors:
             raise ValidationError(self.errors)
