@@ -673,9 +673,6 @@ input[type="radio"] + label {
   margin-top: calc(2.5 * 1rem);
   padding-bottom: calc(2 * 1rem); }
 
-input.formtext {
-  width: 500px; }
-
 input.elcheckbox {
   display: block;
   -webkit-appearance: checkbox; }

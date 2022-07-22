@@ -7,16 +7,6 @@ from siteedit2 import settings
 from uploader.models import CofkUnionImage
 
 
-def create_common_text_input(_class=None, **attrs):
-    class_str = 'formtext'
-    if _class:
-        class_str += f" {_class}"
-
-    default_attrs = {'class': class_str}
-    _attrs = default_attrs | (attrs or {})
-    return forms.TextInput(_attrs)
-
-
 def create_common_checkbox(**attrs):
     _attrs = {'class': 'elcheckbox'} | (attrs or {})
     return forms.CheckboxInput(_attrs)
@@ -25,28 +15,28 @@ def create_common_checkbox(**attrs):
 class LocationForm(ModelForm):
     location_id = IntegerField(required=False, widget=HiddenInput())
     location_name = CharField(required=False,
-                              widget=create_common_text_input(readonly=True),
+                              widget=forms.TextInput(attrs=dict(readonly=True)),
                               label='Full name of location')
     editors_notes = CharField(required=False,
                               widget=forms.Textarea())
-    element_1_eg_room = CharField(required=False, widget=create_common_text_input(),
+    element_1_eg_room = CharField(required=False,
                                   label='1. E.g. room')
-    element_2_eg_building = CharField(required=False, widget=create_common_text_input(),
+    element_2_eg_building = CharField(required=False,
                                       label='2. E.g. building')
-    element_3_eg_parish = CharField(required=False, widget=create_common_text_input(),
+    element_3_eg_parish = CharField(required=False,
                                     label='3. E.g. parish')
-    element_4_eg_city = CharField(required=True, widget=create_common_text_input(),
+    element_4_eg_city = CharField(required=True,
                                   label='4. E.g. city')
-    element_5_eg_county = CharField(required=False, widget=create_common_text_input(),
+    element_5_eg_county = CharField(required=False,
                                     label='5. E.g. county')
-    element_6_eg_country = CharField(required=False, widget=create_common_text_input(),
+    element_6_eg_country = CharField(required=False,
                                      label='6. E.g. country')
-    element_7_eg_empire = CharField(required=False, widget=create_common_text_input(),
+    element_7_eg_empire = CharField(required=False,
                                     label='7. E.g. empire')
-    location_synonyms = CharField(required=False, widget=create_common_text_input(),
+    location_synonyms = CharField(required=False,
                                   label='Alternative names for location')
-    latitude = CharField(required=False, widget=create_common_text_input())
-    longitude = CharField(required=False, widget=create_common_text_input())
+    latitude = CharField(required=False)
+    longitude = CharField(required=False)
 
     class Meta:
         model = CofkUnionLocation
@@ -65,8 +55,8 @@ class LocationForm(ModelForm):
 class LocationResourceForm(ModelForm):
     resource_id = IntegerField(required=False, widget=HiddenInput())
     resource_url = forms.CharField(required=False,
-                                   widget=create_common_text_input(_class='url_checker'),
                                    label='URL')
+    resource_url.widget.attrs.update({'class': 'url_checker'})
 
     class Meta:
         model = CofkUnionResource
@@ -105,20 +95,19 @@ class LocUploadImageForm(Form):
 class LocationImageForm(ModelForm):
     image_id = IntegerField(required=False, widget=HiddenInput())
     image_filename = forms.CharField(required=False,
-                                     widget=create_common_text_input(_class='url_checker'),
                                      label='URL for full-size image')
-    thumbnail = forms.CharField(required=False, widget=create_common_text_input(),
+    image_filename.widget.attrs.update({'class': 'url_checker'})
+
+    thumbnail = forms.CharField(required=False,
                                 label='URL for thumbnail (if any)')
-    credits = forms.CharField(required=False, widget=create_common_text_input(),
+    credits = forms.CharField(required=False,
                               label="Credits for 'front end' display*")
     licence_details = forms.CharField(required=False, widget=forms.Textarea(),
                                       label='Either: full text of licence*')
+
     licence_url = forms.CharField(required=False,
-                                  widget=create_common_text_input(
-                                      _class='url_checker',
-                                      value=settings.DEFAULT_IMG_LICENCE_URL,
-                                  ),
                                   label='licence URL*')
+    licence_url.widget.attrs.update({'class': 'url_checker', 'value': settings.DEFAULT_IMG_LICENCE_URL})
 
     # KTODO
     # can_be_displayed = forms.BooleanField(required=False,
