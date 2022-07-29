@@ -1,3 +1,5 @@
+import re
+
 from selenium.webdriver.common.by import By
 
 from location import fixtures
@@ -72,3 +74,48 @@ class LocationFormTests(EmloSeleniumTestCase):
         self.assertEqual(loc_a.comments.count(), 1)
         self.assertEqual(loc_a.comments.first().comment,
                          fixtures.loc_comment_dict_a['comment'])
+
+
+class LocationSearchTests(EmloSeleniumTestCase):
+
+    def find_result_elements(self):
+        return self.selenium.find_elements(By.CSS_SELECTOR, 'li.search-result')
+
+    def assert_search_page(self, num_row_show, num_total):
+        # assert
+        self.assertEqual(len(self.find_result_elements()), num_row_show, )
+
+        size_titles = (e.text for e in self.selenium.find_elements(By.CSS_SELECTOR, 'h2'))
+        size_titles = (re.findall(r'(\d+) Locations found', t) for t in size_titles)
+        size_titles = (s for s in size_titles if s)
+        size_titles = list(size_titles)
+        self.assertEqual(len(size_titles), 1)
+        self.assertEqual(size_titles[0][0], f'{num_total}')
+
+    def test_search_page(self):
+        #  prepare data
+        loc_list = [CofkUnionLocation(**loc_dict)
+                    for loc_dict in (fixtures.location_dict_a, fixtures.location_dict_b,)]
+        CofkUnionLocation.objects.bulk_create(loc_list)
+
+        # go to search page
+        url = self.get_url_by_viewname('location:search')
+        self.selenium.get(url)
+
+        self.assert_search_page(len(loc_list), len(loc_list))
+
+        target_loc = loc_list[1]
+
+        # search by name
+        ele = self.selenium.find_element(By.ID, 'id_location_name')
+        ele.send_keys(target_loc.location_name)
+
+        self.selenium.find_element(By.CSS_SELECTOR, 'button[type=submit]').click()
+
+        # only have one record match
+        self.assert_search_page(1, 1)
+
+        # check location name in record result
+        result_ele = self.find_result_elements()[0]
+        location_name = result_ele.find_element(By.CSS_SELECTOR, 'div h3 a[href]').text
+        self.assertEqual(location_name, target_loc.location_name)

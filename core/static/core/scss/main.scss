@@ -5,6 +5,10 @@
 @import "base/general";
 @import "base/typography";
 
+@import 'components/feather.scss';
+@import 'components/label.scss';
+@import 'components/tooltip.scss';
+@import 'components/search-result.scss';
 
 @import "page-header";
 @import "page-footer";
