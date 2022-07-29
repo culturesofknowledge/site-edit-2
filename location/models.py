@@ -3,6 +3,7 @@ from django.db import models
 
 # KTODO Researchers' notes for front-end display
 # KTODO Related resources
+from core.helper.model_utils import RecordTracker
 
 
 class CofkCollectLocation(models.Model):
@@ -10,10 +11,9 @@ class CofkCollectLocation(models.Model):
     # KTODO change null=True for draft version
     upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING, null=True)
     location_id = models.IntegerField()
+    # KTODO what is usage of UnionLocation
     union_location = models.ForeignKey('CofkUnionLocation', models.DO_NOTHING, blank=True, null=True)
 
-    # KTODO what is usage of UnionLocation
-    # union_location_id = models.ForeignKey("location.CofkUnionLocation", on_delete=models.DO_NOTHING)
     location_name = models.CharField(max_length=500)
     element_1_eg_room = models.CharField(max_length=100)
     element_2_eg_building = models.CharField(max_length=100)
@@ -35,7 +35,7 @@ class CofkCollectLocation(models.Model):
         unique_together = (('upload', 'location_id'),)
 
 
-class CofkUnionLocation(models.Model):
+class CofkUnionLocation(models.Model, RecordTracker):
     location_id = models.AutoField(primary_key=True)
     location_name = models.CharField(max_length=500)
     latitude = models.CharField(max_length=20, blank=True, null=True)
@@ -55,9 +55,11 @@ class CofkUnionLocation(models.Model):
     element_7_eg_empire = models.CharField(max_length=100)
     uuid = models.UUIDField(blank=True, null=True)
 
+    resources = models.ManyToManyField('core.CofkUnionResource')
+    comments = models.ManyToManyField('core.CofkUnionComment')
+
 
 class CofkCollectLocationResource(models.Model):
-    # KTODO not sure when to use / assign value of `upload` field
     upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
     resource_id = models.IntegerField()
     location_id = models.IntegerField()

@@ -1,4 +1,4 @@
-from location.models import CofkCollectLocation
+from location.models import CofkUnionLocation
 
 location_dict_a = dict(
     location_name='location_name value',
@@ -9,9 +9,7 @@ location_dict_a = dict(
     element_5_eg_county='element_5_eg_county value',
     element_6_eg_country='element_6_eg_country value',
     element_7_eg_empire='element_7_eg_empire value',
-    notes_on_place='notes_on_place value',
     editors_notes='editors_notes value',
-    upload_name='upload_name value',
     location_synonyms='location_synonyms value',
     latitude='latitude value',
     longitude='longitude value',
@@ -23,6 +21,10 @@ loc_res_dict_a = {
     'resource_details': 'resource_details a',
 }
 
+loc_comment_dict_a = {
+    'comment': 'yooooooooooooooooooo',
+}
+
 
 def create_location_a():
-    return CofkCollectLocation(**location_dict_a)
+    return CofkUnionLocation(**location_dict_a)

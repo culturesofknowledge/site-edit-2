@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Order of apps matters, uploader first as table there is referenced by other apps
-apps=('uploader' 'institution' 'location' 'login' 'manifestation' 'person' 'work')
+apps=('core' 'uploader' 'institution' 'location' 'login' 'manifestation' 'person' 'work')
 
 for app in "${apps[@]}"
 do

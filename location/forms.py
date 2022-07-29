@@ -1,6 +1,7 @@
 from django.forms import ModelForm, HiddenInput, IntegerField
 
-from location.models import CofkCollectLocation, CofkCollectLocationResource
+from core.models import CofkUnionResource, CofkUnionComment
+from location.models import CofkUnionLocation
 
 
 class LocationForm(ModelForm):
@@ -8,7 +9,7 @@ class LocationForm(ModelForm):
     location_id.widget = HiddenInput()
 
     class Meta:
-        model = CofkCollectLocation
+        model = CofkUnionLocation
         fields = (
             'location_id',
             'editors_notes',
@@ -18,8 +19,6 @@ class LocationForm(ModelForm):
             'location_name',
             'location_synonyms',
             'latitude', 'longitude',
-            'notes_on_place',
-            'upload_name',
         )
         labels = {
             'element_1_eg_room': '1. E.g. room',
@@ -41,7 +40,7 @@ class LocationResourceForm(ModelForm):
     resource_id.widget = HiddenInput()
 
     class Meta:
-        model = CofkCollectLocationResource
+        model = CofkUnionResource
         fields = (
             # upload_id = models.OneToOneField("uploader.CofkCollectUpload", null=False, on_delete=models.DO_NOTHING)
             'resource_id',
@@ -53,4 +52,19 @@ class LocationResourceForm(ModelForm):
             'resource_name': 'Title or brief description',
             'resource_url': 'URL',
             'resource_details': 'Further details of resource',
+        }
+
+
+class LocationCommentForm(ModelForm):
+    comment_id = IntegerField(required=False)
+    comment_id.widget = HiddenInput()
+
+    class Meta:
+        model = CofkUnionComment
+        fields = (
+            'comment_id',
+            'comment',
+        )
+        labels = {
+            'comment': 'Note',
         }
