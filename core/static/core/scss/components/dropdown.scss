@@ -1,0 +1,22 @@
+.dropdown {
+}
+
+.tippy-box[data-theme~='dropdown'] {
+  border-radius: 0;
+
+  .tippy-content {
+    padding: 0;
+  }
+
+  li a {
+    display: block;
+    padding: $space-sm;
+    background-color: $midnight;
+    color: $white;
+
+    &:hover, &:active, &:focus {
+      background-color: $gold;
+      color: $black;
+    }
+  }
+}

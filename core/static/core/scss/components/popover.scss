@@ -1,17 +1,16 @@
-.tippy-box {
-  background-color: $black-85;
-  color: #fff;
-  font-weight: normal;
-  line-height: 1.5;
-  text-transform: none;
+.tippy-box[data-theme~='popover'] {
+  padding: $space-sm;
+  background-color: $midnight;
+  color: $white;
+  text-align: center;
   --tw-drop-shadow: drop-shadow(0 10px 8px rgb(0 0 0 / 0.04)) drop-shadow(0 4px 3px rgb(0 0 0 / 0.1));
   filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
-}
 
-.tippy-arrow {
-  color: $black-85;
-}
+  .tippy-content {
+    padding: 0;
+  }
 
-[data-tippy-content], sup > svg {
-  cursor: pointer;
+  aside {
+    margin-top: $space-xs;
+  }
 }

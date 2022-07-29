@@ -1,0 +1,10 @@
+.tag {
+  display: inline-block;
+  padding: $space-xxxs $space-xs;
+  border-radius: 99999px;
+
+  &:hover, &:focus, &:active {
+    background-color: $black-15;
+    border-color: $black-15;
+  }
+}

@@ -1,12 +1,38 @@
 {% extends "core/emlo_logined.html" %}
+{% load static %}
+
+{% block head %}
+    <script src="{% static 'location/js/init_loc_form.js' %}" defer></script>
+    <script defer>
+        document.addEventListener('DOMContentLoaded', (e) => {
+            setup_location_form_listener()
+        });
+    </script>
+{% endblock %}
 
 {% block content %}
-    <form action="{% url 'location:init_form' %}" method="post">
-        {% csrf_token %}
-        <table>
-            {{ loc_form }}
-        </table>
-        <input type="submit" value="Submit">
 
-    </form>
+    <div class="row row--centered">
+        <div class="col col--1of2">
+            <h1 class="align-center">Location</h1>
+
+            <form action="{% url 'location:init_form' %}" method="post">
+                {% csrf_token %}
+
+                <fieldset>
+                    <legend>{{ form.form_title__ }}</legend>
+                    {{ loc_form }}
+                </fieldset>
+
+                <div class="flex-col sticky-bottom">
+                    <input type="submit" value="Submit">
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+
+
+
 {% endblock %}

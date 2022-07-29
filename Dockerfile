@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # https://docs.docker.com/samples/django/
-FROM python:3.8
+FROM python:3.10
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 WORKDIR /code

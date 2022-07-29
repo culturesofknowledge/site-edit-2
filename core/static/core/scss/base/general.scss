@@ -85,6 +85,48 @@ hr {
   width: 50vw;
 }
 
+table {
+  width: 100%;
+  font-size: small;
+  border-collapse: collapse;
+}
+
+thead tr {
+  th {
+    font-weight: normal;
+  }
+
+  + tr {
+    border-bottom: 1px solid $black-25;
+
+    th {
+      font-weight: 700;
+    }
+  }
+}
+
+tr {
+  text-align: left;
+}
+
+tbody {
+  color: $dark-grey;
+
+  tr {
+    border-bottom: 1px solid $black-25;
+  }
+}
+
+th, td {
+  padding: $space-sm $space-unit $space-sm 0;
+  border-collapse: collapse;
+  vertical-align: top;
+
+  &:last-of-type {
+    padding-right: 0;
+  }
+}
+
 summary {
   cursor: pointer;
 }
@@ -106,6 +148,10 @@ fieldset {
 label, input, button {
   display: block;
   margin-bottom: $space-xs;
+}
+
+input[readonly] {
+  background: gainsboro;
 }
 
 label {
@@ -143,7 +189,7 @@ button {
 
 input[type="checkbox"],
 input[type="radio"] {
-  display: none;
+  display: none; // KTODO should we remove this general css
 
   + label {
     line-height: 1;
