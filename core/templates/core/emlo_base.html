@@ -1,0 +1,30 @@
+{% load static %}
+{% load sass_tags %}
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <link href="{% sass_src 'core/scss/main.scss' %}" rel="stylesheet" type="text/css" />
+    {% block head %}
+    {% endblock %}
+
+</head>
+<body>
+
+<header class="bg-midnight sticky page-header">
+    <div class="col">
+        {% block header %}
+        {% endblock %}
+    </div>
+</header>
+
+{% block content %}
+{% endblock %}
+
+
+{% include "core/footer.html" %}
+
+</body>
+</html>
