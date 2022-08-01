@@ -42,6 +42,12 @@
                             {% endif %}
                         </label>
                         {{ form.comment }}
+                        {{ form.comment_id }}
+                        {{ form.creation_timestamp  }}
+                        {{ form.creation_user  }}
+                        {{ form.change_timestamp  }}
+                        {{ form.change_user  }}
+                        {{ form.record_tracker_label }}
                     {% endfor %}
                 </fieldset>
 
@@ -60,6 +66,8 @@
                             {% endif %}
                         </legend>
                         {{ form }}
+                        {{ form.record_tracker_label }}
+
                     </fieldset>
                 {% endfor %}
 

@@ -1,6 +1,7 @@
 from django import forms
 from django.forms import ModelForm, HiddenInput, IntegerField, CharField, Form
 
+from core.helper import form_utils
 from core.models import CofkUnionResource, CofkUnionComment
 from location.models import CofkUnionLocation
 from siteedit2 import settings
@@ -72,6 +73,14 @@ class LocationResourceForm(ModelForm):
                                            {'class': 'res_standtext'}
                                        ), )
 
+    creation_timestamp = forms.DateTimeField(required=False, widget=HiddenInput())
+    creation_user = forms.CharField(required=False, widget=HiddenInput())
+    change_timestamp = forms.DateTimeField(required=False, widget=HiddenInput())
+    change_user = forms.CharField(required=False, widget=HiddenInput())
+
+    record_tracker_label = form_utils.record_tracker_label_fn_factory('Entry')
+
+
     class Meta:
         model = CofkUnionResource
         fields = (
@@ -80,18 +89,32 @@ class LocationResourceForm(ModelForm):
             'resource_name',
             'resource_url',
             'resource_details',
+            'creation_timestamp',
+            'creation_user',
+            'change_timestamp',
+            'change_user',
         )
 
 
 class LocationCommentForm(ModelForm):
-    comment_id = IntegerField(required=False)
-    comment_id.widget = HiddenInput()
+    comment_id = IntegerField(required=False, widget=HiddenInput())
+
+    creation_timestamp = forms.DateTimeField(required=False, widget=HiddenInput())
+    creation_user = forms.CharField(required=False, widget=HiddenInput())
+    change_timestamp = forms.DateTimeField(required=False, widget=HiddenInput())
+    change_user = forms.CharField(required=False, widget=HiddenInput())
+
+    record_tracker_label = form_utils.record_tracker_label_fn_factory('Note')
 
     class Meta:
         model = CofkUnionComment
         fields = (
             'comment_id',
             'comment',
+            'creation_timestamp',
+            'creation_user',
+            'change_timestamp',
+            'change_user',
         )
         labels = {
             'comment': 'Note',
