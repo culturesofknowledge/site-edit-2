@@ -58,7 +58,19 @@ class LocationResourceForm(ModelForm):
     resource_id = IntegerField(required=False, widget=HiddenInput())
     resource_url = forms.CharField(required=False,
                                    label='URL')
+
     resource_url.widget.attrs.update({'class': 'url_checker'})
+    resource_name = forms.CharField(required=True,
+                                    label='Title or brief description',
+                                    widget=forms.Textarea(
+                                        {'class': 'res_standtext'}
+                                    ), )
+
+    resource_details = forms.CharField(required=True,
+                                       label='Further details of resource',
+                                       widget=forms.Textarea(
+                                           {'class': 'res_standtext'}
+                                       ), )
 
     class Meta:
         model = CofkUnionResource
@@ -69,10 +81,6 @@ class LocationResourceForm(ModelForm):
             'resource_url',
             'resource_details',
         )
-        labels = {
-            'resource_name': 'Title or brief description',
-            'resource_details': 'Further details of resource',
-        }
 
 
 class LocationCommentForm(ModelForm):

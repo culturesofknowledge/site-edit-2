@@ -5,9 +5,11 @@
 {% block head %}
     <script src="{% static 'location/js/init_loc_form.js' %}" defer></script>
     <script defer>
+
         $(function () {
             setup_location_form_listener()
             setup_url_checker()
+            setup_standtext()
         })
     </script>
 {% endblock %}
@@ -121,10 +123,10 @@
             </form>
             <div class="flex-col fixed-right-bottom">
                 <h4>Table of content</h4>
-                <a href="#header_location" >Location</a>
-                <a href="#header_researcher_note" >Researcher' note</a>
-                <a href="#header_resource" >Resource</a>
-                <a href="#header_image" >Image</a>
+                <a href="#header_location">Location</a>
+                <a href="#header_researcher_note">Researcher' note</a>
+                <a href="#header_resource">Resource</a>
+                <a href="#header_image">Image</a>
             </div>
         </div>
     </div>
