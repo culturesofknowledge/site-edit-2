@@ -15,7 +15,7 @@
 {% block content %}
     <div class="row row--centered">
         <div class="col col--1of2">
-            <h1 class="align-center">Location</h1>
+            <h1 class="align-center" id="header_location">Location</h1>
             <form action="{% url 'location:full_form' loc_id %}" method="post"
                   enctype="multipart/form-data">
                 {% csrf_token %}
@@ -27,7 +27,7 @@
 
 
                 <!-- Comment section -->
-                <h1>Researcher' notes for front-end display</h1>
+                <h1 id="header_researcher_note">Researcher' notes for front-end display</h1>
                 {{ comment_formset.management_form }}
                 <fieldset>
                     <legend>Notes</legend>
@@ -46,7 +46,7 @@
 
                 <!-- Resource section -->
 
-                <h1>Related resource: </h1>
+                <h1 id="header_resource">Related resource: </h1>
                 {{ res_formset.management_form }}
                 {% for form in res_formset %}
                     <fieldset>
@@ -63,7 +63,7 @@
 
 
                 <div>
-                    <h1>Images: </h1>
+                    <h1 id="header_image">Images: </h1>
                     <div>
                         Copyright law must be respected at all times. You must ensure that all necessary permissions
                         have been
@@ -119,6 +119,13 @@
                     <input type="submit" value="Submit">
                 </div>
             </form>
+            <div class="flex-col fixed-right-bottom">
+                <h4>Table of content</h4>
+                <a href="#header_location" >Location</a>
+                <a href="#header_researcher_note" >Researcher' note</a>
+                <a href="#header_resource" >Resource</a>
+                <a href="#header_image" >Image</a>
+            </div>
         </div>
     </div>
 {% endblock %}

@@ -222,6 +222,11 @@
     position: sticky;
     bottom: 0; } }
 
+.fixed-right-bottom {
+  position: fixed;
+  bottom: 0;
+  right: 20px; }
+
 /* Grid: to be used for general layout only */
 body {
   padding: 0 1.5vw;
@@ -676,12 +681,6 @@ input[type="radio"] + label {
 input.elcheckbox {
   display: block;
   -webkit-appearance: checkbox; }
-
-.section-a {
-  border-width: medium;
-  border-style: groove;
-  padding: 5px;
-  margin: 5px; }
 
 .url_checker_div {
   display: flex; }
