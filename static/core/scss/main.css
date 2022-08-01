@@ -512,7 +512,7 @@ label {
   font-weight: 700;
   letter-spacing: 0.045em; }
 
-input, select {
+input, select, textarea {
   -webkit-appearance: none;
   margin-bottom: calc(.75 * 1rem);
   padding: calc(.5 * 1rem);
