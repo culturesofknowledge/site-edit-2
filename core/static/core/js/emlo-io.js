@@ -35,3 +35,47 @@ function show_delete_dialog() {
     console.log(retVal)
 
 }
+
+function setup_standtext() {
+    $('.res_standtext').each((i, e) => {
+        append_standtext_ele(e)
+    });
+}
+
+function create_standtext_btn(text, target_id) {
+    let ele = $('<div>');
+    ele.text(text)
+    ele.attr('target_id', target_id)
+    ele.addClass('standtext_btn')
+
+    ele.on('click', (e) => {
+
+        let target_ele = $('#' + ele.attr('target_id'));
+        let space = target_ele.val() ? ' ' : '';
+        target_ele.val(
+            `${target_ele.val()}${space}${ele.text()}`
+        );
+    });
+
+    return ele;
+
+}
+
+function append_standtext_ele(target_text_ele) {
+
+    // build list of standtext button
+    const standtext_list = [
+        'GeoNames', 'TGN', 'Wikidata ID', 'Wikipeda',
+    ];
+    const text_ele_list = standtext_list.map((t) => {
+        return create_standtext_btn(t, target_text_ele.id)
+    })
+
+    //  build standtext container
+    let standtext_div_jqe = $('<div>')
+    standtext_div_jqe.addClass('flex')
+    standtext_div_jqe.append(text_ele_list)
+    $(target_text_ele).after(standtext_div_jqe)
+
+}
+
