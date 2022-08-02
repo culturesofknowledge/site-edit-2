@@ -1,6 +1,5 @@
 from django.db import models
 
-
 # KTODO Researchers' notes for front-end display
 # KTODO Related resources
 from core.helper.model_utils import RecordTracker
@@ -58,6 +57,9 @@ class CofkUnionLocation(models.Model, RecordTracker):
     resources = models.ManyToManyField('core.CofkUnionResource')
     comments = models.ManyToManyField('core.CofkUnionComment')
     images = models.ManyToManyField('uploader.CofkUnionImage')
+
+    class Meta:
+        db_table = 'cofk_union_location'
 
 
 class CofkCollectLocationResource(models.Model):
