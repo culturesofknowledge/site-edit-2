@@ -230,7 +230,7 @@ class CofkCollectToolSession(models.Model):
                                  null=True)
 
     class Meta:
-        db_table = 'cofk_user_saved_query_selection'
+        db_table = 'cofk_collect_tool_session'
 
 
 class CofkUnionFavouriteLanguage(models.Model):
