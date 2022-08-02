@@ -127,6 +127,7 @@ def full_form(request, location_id):
 
     def _render_full_form():
 
+        # reversed list for UI
         for fs in [res_formset, images_formset, comment_formset]:
             fs.forms = list(reversed(fs.forms))
 
@@ -144,7 +145,7 @@ def full_form(request, location_id):
         form_formsets = [loc_form, res_formset, comment_formset, images_formset, img_form]
 
         if not all(f.is_valid() for f in form_formsets):
-            log.warning(f'something invalid {loc_form.is_valid()} / {res_formset.is_valid()}')
+            log.warning(f'something invalid')
             return _render_full_form()
 
         update_current_user_timestamp(request.user.username, form_formsets)

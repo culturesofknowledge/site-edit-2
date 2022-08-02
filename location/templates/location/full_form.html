@@ -10,6 +10,7 @@
             setup_location_form_listener()
             setup_url_checker()
             setup_standtext()
+            setup_checkbox_position()
         })
     </script>
 {% endblock %}
@@ -48,6 +49,7 @@
                         {{ form.change_timestamp  }}
                         {{ form.change_user  }}
                         {{ form.record_tracker_label }}
+                        <!-- KTODO  copy references feature -->
                     {% endfor %}
                 </fieldset>
 
@@ -138,4 +140,5 @@
             </div>
         </div>
     </div>
+    <!-- KTODO delete record button >
 {% endblock %}

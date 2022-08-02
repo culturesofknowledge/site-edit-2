@@ -542,8 +542,8 @@ input[type="radio"] {
   input[type="checkbox"] + label,
   input[type="radio"] + label {
     line-height: 1; }
-  input[type="checkbox"] + label::before,
-  input[type="radio"] + label::before {
+  input[type="checkbox"] + label::after,
+  input[type="radio"] + label::after {
     content: '\a0';
     display: inline-block;
     margin: 0 calc(.25 * 1rem) 0 0;
@@ -555,8 +555,8 @@ input[type="radio"] {
   input[type="checkbox"]:checked + label,
   input[type="radio"]:checked + label {
     color: #172854; }
-    input[type="checkbox"]:checked + label::before,
-    input[type="radio"]:checked + label::before {
+    input[type="checkbox"]:checked + label::after,
+    input[type="radio"]:checked + label::after {
       content: '\a0';
       background: #172854;
       border: 1px solid white;
@@ -565,7 +565,7 @@ input[type="radio"] {
 input[type="radio"] + label {
   display: inline-block;
   margin: 0 calc(.5 * 1rem) calc(.5 * 1rem) 0; }
-  input[type="radio"] + label::before {
+  input[type="radio"] + label::after {
     border-radius: 50%; }
 
 ::placeholder {
@@ -677,10 +677,6 @@ input[type="radio"] + label {
 .page-footer {
   margin-top: calc(2.5 * 1rem);
   padding-bottom: calc(2 * 1rem); }
-
-input.elcheckbox {
-  display: block;
-  -webkit-appearance: checkbox; }
 
 .url_checker_div {
   display: flex; }

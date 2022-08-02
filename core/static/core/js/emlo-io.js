@@ -79,3 +79,19 @@ function append_standtext_ele(target_text_ele) {
 
 }
 
+
+function setup_checkbox_position() {
+    /** django always put checkbox after the label
+     *  this function reorder checkbox and label, put checkbox before label
+     *  for scss "+ label" style
+     */
+    $('.elcheckbox').each((i, e) => {
+        let checkbox_jqe = $(e)
+        let label = checkbox_jqe.prev('label')
+        checkbox_jqe.parent().remove(checkbox_jqe)
+        label.before(
+            checkbox_jqe
+        )
+    })
+
+}
