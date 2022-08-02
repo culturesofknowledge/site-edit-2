@@ -53,6 +53,9 @@ class CofkUnionWork(models.Model, RecordTracker):
     change_user = models.CharField(max_length=50)
     uuid = models.UUIDField(blank=True, null=True)
 
+    class Meta:
+        db_table = 'cofk_union_work'
+
 
 class CofkCollectWork(models.Model):
     upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
@@ -300,6 +303,9 @@ class CofkUnionQueryableWork(models.Model):
     original_notes = models.TextField(blank=True, null=True)
     relevant_to_cofk = models.CharField(max_length=1)
     subjects = models.TextField(blank=True, null=True)
+
+    class Meta:
+        db_table = 'cofk_union_queryable_work'
 
 
 class CofkCollectWorkSummary(models.Model):

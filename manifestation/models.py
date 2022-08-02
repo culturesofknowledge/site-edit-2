@@ -65,6 +65,9 @@ class CofkUnionManifestation(models.Model, RecordTracker):
     manifestation_receipt_date_is_range = models.SmallIntegerField()
     accompaniments = models.TextField(blank=True, null=True)
 
+    class Meta:
+        db_table = 'cofk_union_manifestation'
+
 
 class CofkCollectManifestation(models.Model):
     upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
@@ -101,3 +104,6 @@ class CofkCollectImageOfManif(models.Model):
     image_filename = models.CharField(max_length=2000)
     _id = models.CharField(max_length=32, blank=True, null=True)
     iwork_id = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        db_table = 'cofk_collect_image_of_manif'

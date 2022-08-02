@@ -8,6 +8,9 @@ class CofkCollectStatus(models.Model):
     status_desc = models.CharField(max_length=100)
     editable = models.IntegerField(null=False, default=1)  # TODO schema changed for current system
 
+    class Meta:
+        db_table = 'cofk_collect_status'
+
 
 class CofkCollectToolUser(models.Model):
     tool_user_id = models.AutoField(primary_key=True)
@@ -15,6 +18,9 @@ class CofkCollectToolUser(models.Model):
     tool_user_surname = models.CharField(max_length=100)
     tool_user_forename = models.CharField(max_length=100)
     tool_user_pw = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = 'cofk_collect_tool_user'
 
 
 class CofkLookupCatalogue(models.Model):
@@ -24,6 +30,9 @@ class CofkLookupCatalogue(models.Model):
     is_in_union = models.IntegerField()
     publish_status = models.SmallIntegerField()
 
+    class Meta:
+        db_table = 'cofk_lookup_catalogue'
+
 
 class CofkReportGroup(models.Model):
     report_group_id = models.AutoField(primary_key=True)
@@ -31,6 +40,9 @@ class CofkReportGroup(models.Model):
     report_group_order = models.IntegerField()
     on_main_reports_menu = models.IntegerField()
     report_group_code = models.CharField(max_length=100, blank=True, null=True)
+
+    class Meta:
+        db_table = 'cofk_report_group'
 
 
 class CofkUnionAuditLiteral(models.Model):
@@ -45,6 +57,9 @@ class CofkUnionAuditLiteral(models.Model):
     column_name = models.CharField(max_length=100)
     new_column_value = models.TextField(blank=True, null=True)
     old_column_value = models.TextField(blank=True, null=True)
+
+    class Meta:
+        db_table = 'cofk_union_audit_literal'
 
 
 class CofkUnionAuditRelationship(models.Model):
@@ -66,6 +81,9 @@ class CofkUnionAuditRelationship(models.Model):
     right_id_value_old = models.CharField(max_length=100)
     right_id_decode_old = models.TextField()
 
+    class Meta:
+        db_table = 'cofk_union_audit_relationship'
+
 
 class CofkUnionImage(models.Model, RecordTracker):
     image_id = models.AutoField(primary_key=True)
@@ -82,10 +100,16 @@ class CofkUnionImage(models.Model, RecordTracker):
     credits = models.CharField(max_length=2000)
     uuid = models.UUIDField(blank=True, null=True)
 
+    class Meta:
+        db_table = 'cofk_union_image'
+
 
 class CofkUnionOrgType(models.Model):
     org_type_id = models.AutoField(primary_key=True)
     org_type_desc = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = 'cofk_union_org_type'
 
 
 class CofkUnionPublication(models.Model):
@@ -95,15 +119,24 @@ class CofkUnionPublication(models.Model):
     change_user = models.CharField(max_length=50)
     abbrev = models.CharField(max_length=50)
 
+    class Meta:
+        db_table = 'cofk_union_publication'
+
 
 class CofkUnionRoleCategory(models.Model):
     role_category_id = models.AutoField(primary_key=True)
     role_category_desc = models.CharField(max_length=100)
 
+    class Meta:
+        db_table = 'cofk_union_role_category'
+
 
 class CofkUnionSubject(models.Model):
     subject_id = models.AutoField(primary_key=True)
     subject_desc = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = 'cofk_union_subject'
 
 
 class Iso639LanguageCode(models.Model):
@@ -111,6 +144,9 @@ class Iso639LanguageCode(models.Model):
     code_639_1 = models.CharField(max_length=2)
     language_name = models.CharField(max_length=100)
     language_id = models.AutoField(primary_key=True)
+
+    class Meta:
+        db_table = 'iso639_language_code'
 
 
 def user_directory_path(instance, filename):
@@ -131,6 +167,9 @@ class CofkCollectUpload(models.Model):
     upload_name = models.CharField(max_length=254, blank=True, null=True)
     upload_file = models.FileField(upload_to=user_directory_path)  # TODO schema changed for current system
 
+    class Meta:
+        db_table = 'cofk_collect_upload'
+
 
 class CofkReport(models.Model):
     report_id = models.AutoField(primary_key=True)
@@ -149,6 +188,9 @@ class CofkReport(models.Model):
     parm_methods = models.TextField(blank=True, null=True)
     report_help = models.TextField(blank=True, null=True)
 
+    class Meta:
+        db_table = 'cofk_report'
+
 
 class CofkUserSavedQuery(models.Model):
     query_id = models.AutoField(primary_key=True)
@@ -162,6 +204,9 @@ class CofkUserSavedQuery(models.Model):
     query_record_layout = models.CharField(max_length=12)
     query_menu_item_name = models.TextField(blank=True, null=True)
     creation_timestamp = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        db_table = 'cofk_user_saved_query'
 
 
 class CofkUserSavedQuerySelection(models.Model):
@@ -184,7 +229,13 @@ class CofkCollectToolSession(models.Model):
     username = models.ForeignKey(CofkCollectToolUser, models.DO_NOTHING, db_column='username', blank=True,
                                  null=True)
 
+    class Meta:
+        db_table = 'cofk_user_saved_query_selection'
+
 
 class CofkUnionFavouriteLanguage(models.Model):
     language_code = models.OneToOneField(Iso639LanguageCode, models.DO_NOTHING, db_column='language_code',
                                          primary_key=True)
+
+    class Meta:
+        db_table = 'cofk_union_favourite_language'
