@@ -14,7 +14,7 @@ from django.db.models import Model
 from psycopg2.extras import DictCursor
 
 from core.helper import iter_utils
-from core.models import CofkUnionResource
+from core.models import CofkUnionResource, CofkUnionComment
 from location.models import CofkUnionLocation
 
 log = logging.getLogger(__name__)
@@ -78,18 +78,6 @@ class Command(BaseCommand):
                        database=options['database'],
                        host=options['host'],
                        port=options['port'])
-        # main3()
-
-
-def main3():
-    cursor = connection.cursor()
-    sql = 'select 1 from cofk_union_location_resources where cofkunionlocation_id = 4835 and cofkunionresource_id = 939258 '
-    a = is_exists(connection, sql)
-    # cursor.execute(sql)
-
-    # print('aksdjalskjl')
-    # pass
-    print(a, sql)
 
 
 def create_stand_relation_col_name(table_name):
@@ -99,16 +87,18 @@ def create_stand_relation_col_name(table_name):
 def create_m2m_relationship_by_relationship_table(conn,
                                                   left_model_class: Type[Model],
                                                   right_model_class: Type[Model],
-                                                  cur_relation_table_name):
+                                                  cur_relation_table_name,
+                                                  check_duplicate_fn=None, ):
     left_table_name = left_model_class._meta.db_table
     right_table_name = right_model_class._meta.db_table
     left_col = create_stand_relation_col_name(left_table_name)
     right_col = create_stand_relation_col_name(right_table_name)
 
-    def is_duplicate(_left_id, _right_id):
-        sql = f'select 1 from cofk_union_location_resources ' \
-              f'where {left_col} = {_left_id} and {right_col} = {_right_id} '
-        return is_exists(connection, sql)
+    if check_duplicate_fn is None:
+        def check_duplicate_fn(_left_id, _right_id):
+            sql = f'select 1 from {cur_relation_table_name} ' \
+                  f'where {left_col} = {_left_id} and {right_col} = {_right_id} '
+            return is_exists(connection, sql)
 
     query_cursor = conn.cursor()
     sql = 'select left_id_value, right_id_value from cofk_union_relationship ' \
@@ -118,7 +108,7 @@ def create_m2m_relationship_by_relationship_table(conn,
     query_cursor.execute(sql)
 
     values = query_cursor.fetchall()
-    values = (_id for _id in values if not is_duplicate(*_id))
+    values = (_id for _id in values if not check_duplicate_fn(*_id))
     sql_list = (
         (f'insert into {cur_relation_table_name} ({left_col}, {right_col}) '
          f"values ({left_id}, {right_id})")
@@ -132,13 +122,17 @@ def create_m2m_relationship_by_relationship_table(conn,
             insert_cursor.execute(sql)
             record_counter.plus_one()
         except django.db.utils.IntegrityError as e:
-            msg = str(e)
+            msg = str(e).replace('\n', ' ')
             if re.search(r'violates foreign key constraint.+Key .+is not present in table', msg, re.DOTALL):
                 log.warning(msg)
             else:
                 raise e
 
     log_save_records(cur_relation_table_name, record_counter.cur_size())
+
+
+def no_duplicate_check(*args, **kwargs):
+    return False
 
 
 def data_migration(user, password, database, host, port):
@@ -152,9 +146,14 @@ def data_migration(user, password, database, host, port):
     clone_action_fn_list = [
         lambda: clone_rows_by_model_class(conn, CofkUnionLocation),
         lambda: clone_rows_by_model_class(conn, CofkUnionResource),
+        lambda: clone_rows_by_model_class(conn, CofkUnionComment),
         lambda: create_m2m_relationship_by_relationship_table(
             conn, CofkUnionLocation, CofkUnionResource,
             f'{CofkUnionLocation._meta.db_table}_resources',
+        ),
+        lambda: create_m2m_relationship_by_relationship_table(
+            conn, CofkUnionComment, CofkUnionLocation,
+            f'{CofkUnionLocation._meta.db_table}_comments',
         ),
     ]
 
