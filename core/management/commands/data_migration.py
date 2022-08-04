@@ -30,6 +30,10 @@ def create_query_all_sql(db_table, schema='public'):
     return f'select * from {schema}.{db_table}'
 
 
+def create_seq_col_name(model_class: Type[Model]):
+    return f'{model_class._meta.db_table}_{model_class._meta.pk.name}_seq'
+
+
 def find_rows_by_db_table(conn, db_table):
     cursor = conn.cursor(cursor_factory=DictCursor)
     cursor.execute(create_query_all_sql(db_table))
@@ -37,7 +41,9 @@ def find_rows_by_db_table(conn, db_table):
     return results
 
 
-def clone_rows_by_model_class(conn, model_class: Type[Model], check_duplicate_fn=None):
+def clone_rows_by_model_class(conn, model_class: Type[Model],
+                              check_duplicate_fn=None,
+                              seq_name='', ):
     """ most simple method to copy rows from old DB to new DB
     * assume all column name are same
     * assume no column have been removed
@@ -56,6 +62,19 @@ def clone_rows_by_model_class(conn, model_class: Type[Model], check_duplicate_fn
     model_class.objects.bulk_create(rows, batch_size=500)
     log_save_records(f'{model_class.__module__}.{model_class.__name__}',
                      record_counter.cur_size())
+
+    # change sequence value
+    if seq_name == '':
+        seq_name = create_seq_col_name(model_class)
+
+    if seq_name:
+        max_pk = CofkUnionLocation.objects.latest('pk').pk
+
+        new_val = 10_000_000
+        if max_pk > new_val:
+            new_val = max_pk + new_val
+
+        connection.cursor().execute(f"select setval('{seq_name}', {new_val})")
 
 
 def log_save_records(target, size):
@@ -147,6 +166,7 @@ def data_migration(user, password, database, host, port):
         lambda: clone_rows_by_model_class(conn, CofkUnionLocation),
         lambda: clone_rows_by_model_class(conn, CofkUnionResource),
         lambda: clone_rows_by_model_class(conn, CofkUnionComment),
+        # lambda: clone_rows_by_model_class(conn, CofkUnionImage),
         lambda: create_m2m_relationship_by_relationship_table(
             conn, CofkUnionLocation, CofkUnionResource,
             f'{CofkUnionLocation._meta.db_table}_resources',
