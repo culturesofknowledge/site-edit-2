@@ -4,7 +4,7 @@ from django.forms import ModelForm, HiddenInput, IntegerField, CharField, Form
 from core.helper import form_utils, widgets_utils
 from core.models import CofkUnionResource, CofkUnionComment
 from location.models import CofkUnionLocation
-from siteedit2 import settings
+from django.conf import settings
 from uploader.models import CofkUnionImage
 
 

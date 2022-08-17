@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
 
-from siteedit2 import settings
+from django.conf import settings
 from uploader import views
 import os
 

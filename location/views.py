@@ -12,7 +12,7 @@ from core.services import media_service
 from location.forms import LocationForm, LocationResourceForm, LocationCommentForm, GeneralSearchFieldset, \
     LocationImageForm, LocUploadImageForm
 from location.models import CofkUnionLocation
-from siteedit2 import settings
+from django.conf import settings
 from uploader.models import CofkUnionImage
 
 log = logging.getLogger(__name__)

@@ -44,3 +44,7 @@ logs/
 staticfiles/
 data/
 files/
+
+
+# dev environment file
+siteedit2/settings/local_dev.py
