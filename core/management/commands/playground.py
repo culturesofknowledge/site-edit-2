@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.management import BaseCommand
 
 from core.models import CofkUnionResource, CofkUnionComment
@@ -55,6 +56,9 @@ def main2():
 
 
 def main3():
+
+    print(settings.MEDIA_ROOT)
+
     c = CofkUnionComment()
     c.update_current_user_timestamp('aaa')
     print(c.__dict__)

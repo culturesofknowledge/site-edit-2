@@ -1,5 +1,6 @@
 from typing import Iterable
 
+from django.conf import settings
 from django.test import LiveServerTestCase
 from django.urls import reverse
 from selenium import webdriver
@@ -10,7 +11,7 @@ from selenium.webdriver.common.by import By
 class EmloSeleniumTestCase(LiveServerTestCase):
     @classmethod
     def setUpClass(cls):
-        cls.host = 'pycharm-py'
+        cls.host = settings.TEST_WEB_HOST
 
         super().setUpClass()
         options = webdriver.ChromeOptions()
@@ -19,7 +20,7 @@ class EmloSeleniumTestCase(LiveServerTestCase):
         options.add_argument("--window-size=800,600")
         options.add_argument("--disable-dev-shm-usage")
         cls.selenium = webdriver.Remote(
-            command_executor='http://chrome:4444/wd/hub',
+            command_executor=f'http://{settings.SELENIUM_HOST_PORT}/wd/hub',
             desired_capabilities=DesiredCapabilities.CHROME,
             options=options,
         )

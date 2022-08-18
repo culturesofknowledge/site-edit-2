@@ -98,10 +98,10 @@ WSGI_APPLICATION = 'siteedit2.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ['POSTGRES_NAME'],
-        'USER': os.environ['POSTGRES_USER'],
-        'PASSWORD': os.environ['POSTGRES_PASSWORD'],
-        'HOST': os.environ['POSTGRES_HOST'],
+        'NAME': os.environ.get('POSTGRES_NAME', '__unknown_env__'),
+        'USER': os.environ.get('POSTGRES_USER', '__unknown_env__'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', '__unknown_env__'),
+        'HOST': os.environ.get('POSTGRES_HOST', '__unknown_env__'),
         'PORT': '5432',
     }
 }
