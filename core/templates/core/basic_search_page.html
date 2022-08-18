@@ -24,8 +24,34 @@
             <div class="col col--2of3">
                 <h2>{{ total_record }} {{ title }}s found</h2>
 
-                <!-- Search components -->
+                <!-- Search components (e.g. sort by, records per page) -->
                 {{ search_components }}
+
+                <!-- search function toolbar (e.g. download output, compact, expanded)  -->
+                <aside class="margin-bottom row">
+                    <div class="col col--1of2">
+                        <a href="" class="btn margin-right">Download output</a>
+                        <a href="" class="btn margin-right">Save query</a>
+                    </div>
+                    <div class="col col--1of2">
+                        <h3 class="sr-only">Layout</h3>
+                        <div class="align-right">
+                            <input type="radio" id="display-as-grid" value="display-as-grid"
+                                   name="display-style" checked/>
+                            <label for="display-as-grid">
+                                Compact
+                                <small> <span data-feather="grid" aria-hidden="true"></span> </small>
+                            </label>
+
+                            <input type="radio" id="display-as-list" value="display-as-list"
+                                   name="display-style"/>
+                            <label for="display-as-list">
+                                Expanded
+                                <small><span data-feather="list" aria-hidden="true"></span></small>
+                            </label>
+                        </div>
+                    </div>
+                </aside>
 
 
                 <!-- Search result -->
@@ -58,6 +84,7 @@
     </span>
     </div>
 
+    <!-- script -->
     <script>
         function submit_page(target_page_num) {
             if (target_page_num) {
