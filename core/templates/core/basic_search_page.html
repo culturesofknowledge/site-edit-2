@@ -53,15 +53,7 @@
                     </div>
                 </aside>
 
-
-                <!-- Search result -->
-                <ol class="unstyled-list">
-                    {% for r in records %}
-                        <li class="search-result">
-                            {{ r }}
-                        </li>
-                    {% endfor %}
-                </ol>
+                {{ results_renderer | safe }}
 
             </div>
 

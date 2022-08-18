@@ -11,6 +11,7 @@ register = template.Library()
 
 
 class SearchResultRenderer:
+    # KTODO rename
     def __init__(self, record):
         self.record = record
 
@@ -21,6 +22,21 @@ class SearchResultRenderer:
     @property
     def template_name(self):
         raise NotImplementedError('please define search result template')
+
+
+class CompactSearchResultsRenderer:
+    container_template_name = ''
+
+    def __init__(self, records):
+        self.records = records
+
+    def render(self):
+        # KTODO to be extract
+        from location.views import LocationSearchResultRenderer  # KTODO to be  mv to location package
+        context = {
+            'search_results': map(LocationSearchResultRenderer, self.records)
+        }
+        return render_to_string('core/component/search_compact_layout.html', context)
 
 
 class BasicSearchView(ListView):
@@ -72,14 +88,10 @@ class BasicSearchView(ListView):
     def get_sort_by(self):
         return self.request_data.get('sort_by', self.sort_by_choices[0][0])
 
-    def get_records(self):
-        return map(self.record_renderer, self.get_queryset().iterator())
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
         search_components_factory = build_search_components(self.sort_by_choices)
-        new_records = map(self.record_renderer, context[self.context_object_name])
 
         default_search_components_dict = {
             'num_record': str(self.paginate_by),
@@ -89,9 +101,9 @@ class BasicSearchView(ListView):
         context.update({'query_fieldset_list': self.query_fieldset_list,
                         'search_components': search_components_factory(default_search_components_dict |
                                                                        self.request_data.dict()),
-                        self.context_object_name: new_records,
-                        'total_record': self.get_queryset().count(),  # KTODO test with some condition
+                        'total_record': self.get_queryset().count(),
                         'title': self.title or '',
+                        'results_renderer': CompactSearchResultsRenderer(context[self.context_object_name]).render,
                         })
         return context
 
