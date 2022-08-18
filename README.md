@@ -50,3 +50,9 @@ python3 manage.py data_migration -d ouls -p password -u postgres -o 172.17.0.1 -
 ```shell
 python3 manage.py data_migration --settings=siteedit2.settings.local_dev -d ouls -p password -u postgres -o 172.17.0.1 -t 15432
 ```
+
+How to create superuser 
+----------------------------------
+```shell
+python3 manage.py createsuperuser
+```
