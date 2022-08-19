@@ -1,4 +1,4 @@
-from typing import Callable, Iterable, Tuple, List
+from typing import Iterable, Tuple, List, Type
 from urllib.parse import urlencode
 
 from django import template
@@ -6,37 +6,26 @@ from django.template.loader import render_to_string
 from django.views.generic import ListView
 
 from core.forms import build_search_components
+from core.helper.renderer import CompactItemRenderer
 
 register = template.Library()
 
 
-class SearchResultRenderer:
-    # KTODO rename
-    def __init__(self, record):
-        self.record = record
-
-    def __call__(self, *args, **kwargs):
-        return render_to_string(self.template_name,
-                                context={'record': self.record})
-
-    @property
-    def template_name(self):
-        raise NotImplementedError('please define search result template')
-
-
 class CompactSearchResultsRenderer:
-    container_template_name = ''
+    template_name = 'core/component/search_compact_layout.html'
 
     def __init__(self, records):
         self.records = records
 
+    @property
+    def compact_item_renderer_factory(self) -> Type[CompactItemRenderer]:
+        raise NotImplementedError('type of CompactItemRenderer have not provided ')
+
     def render(self):
-        # KTODO to be extract
-        from location.views import LocationSearchResultRenderer  # KTODO to be  mv to location package
         context = {
-            'search_results': map(LocationSearchResultRenderer, self.records)
+            'search_results': map(self.compact_item_renderer_factory, self.records)
         }
-        return render_to_string('core/component/search_compact_layout.html', context)
+        return render_to_string(self.template_name, context)
 
 
 class BasicSearchView(ListView):
@@ -45,14 +34,6 @@ class BasicSearchView(ListView):
     """
     template_name = 'core/basic_search_page.html'
     context_object_name = 'records'
-
-    @property
-    def record_renderer(self) -> Callable:
-        """
-        return renderer factory function
-        that created function can convert search result record to html
-        """
-        raise NotImplementedError()
 
     @property
     def query_fieldset_list(self) -> Iterable:
@@ -81,6 +62,10 @@ class BasicSearchView(ListView):
         raise NotImplementedError()
 
     @property
+    def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
+        raise NotImplementedError('missing compact_search_results_renderer_factory')
+
+    @property
     def request_data(self):
         """ by default requests data would be GET  """
         return self.request.GET
@@ -103,7 +88,8 @@ class BasicSearchView(ListView):
                                                                        self.request_data.dict()),
                         'total_record': self.get_queryset().count(),
                         'title': self.title or '',
-                        'results_renderer': CompactSearchResultsRenderer(context[self.context_object_name]).render,
+                        'results_renderer': self.compact_search_results_renderer_factory(
+                            context[self.context_object_name]).render,
                         })
         return context
 

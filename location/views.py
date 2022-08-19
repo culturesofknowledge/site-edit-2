@@ -1,18 +1,19 @@
 import itertools
 import logging
-from typing import Iterable, Union, Callable, List, Tuple
+from typing import Iterable, Union, Callable, List, Tuple, Type
 
+from django.conf import settings
 from django.forms import formset_factory, BaseForm, BaseFormSet, ModelForm
 from django.shortcuts import render, get_object_or_404, redirect
 
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
-from core.helper.view_utils import SearchResultRenderer, BasicSearchView
+from core.helper.renderer import CompactItemRenderer
+from core.helper.view_utils import BasicSearchView, CompactSearchResultsRenderer
 from core.services import media_service
 from location.forms import LocationForm, LocationResourceForm, LocationCommentForm, GeneralSearchFieldset, \
     LocationImageForm, LocUploadImageForm
 from location.models import CofkUnionLocation
-from django.conf import settings
 from uploader.models import CofkUnionImage
 
 log = logging.getLogger(__name__)
@@ -175,19 +176,20 @@ def full_form(request, location_id):
     return _render_full_form()
 
 
-class LocationSearchResultRenderer(SearchResultRenderer):
+class LocationCompactSearchResultsRenderer(CompactSearchResultsRenderer):
+    class _LocationCompactItemRenderer(CompactItemRenderer):
+
+        @property
+        def template_name(self):
+            return 'location/compact_item.html'
 
     @property
-    def template_name(self):
-        return 'location/search_result.html'
+    def compact_item_renderer_factory(self) -> Type[CompactItemRenderer]:
+        return self._LocationCompactItemRenderer
 
 
 class LocationSearchView(BasicSearchView):
     paginate_by = 4
-
-    @property
-    def record_renderer(self) -> Callable:
-        return LocationSearchResultRenderer
 
     @property
     def query_fieldset_list(self) -> Iterable:
@@ -227,3 +229,7 @@ class LocationSearchView(BasicSearchView):
     @property
     def title(self) -> str:
         return 'Location'
+
+    @property
+    def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
+        return LocationCompactSearchResultsRenderer
