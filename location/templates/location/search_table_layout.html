@@ -14,7 +14,11 @@
 
     {% for r in search_results %}
         <tr>
-            <td> {{ r.location_id }} </td>
+            <td>
+                <a href="{% url 'location:full_form' r.location_id %}">
+                    {{ r.location_id }}
+                </a>
+            </td>
             <td>
                 {% if r.editors_notes %}
                     <details>
@@ -23,7 +27,11 @@
                     </details>
                 {% endif %}
             </td>
-            <td> {{ r.location_name }} </td>
+            <td>
+                <a href="{% url 'location:full_form' r.location_id %}">
+                    {{ r.location_name }}
+                </a>
+            </td>
             <td> {{ r.location_synonyms }} </td>
             <td> {{ r.latitude }} </td>
             <td> {{ r.longitude }} </td>
