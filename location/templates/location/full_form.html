@@ -5,9 +5,12 @@
 {% block head %}
     <script src="{% static 'location/js/init_loc_form.js' %}" defer></script>
     <script defer>
+
         $(function () {
             setup_location_form_listener()
             setup_url_checker()
+            setup_standtext()
+            setup_checkbox_position()
         })
     </script>
 {% endblock %}
@@ -15,7 +18,7 @@
 {% block content %}
     <div class="row row--centered">
         <div class="col col--1of2">
-            <h1 class="align-center">Location</h1>
+            <h1 class="align-center" id="header_location">Location</h1>
             <form action="{% url 'location:full_form' loc_id %}" method="post"
                   enctype="multipart/form-data">
                 {% csrf_token %}
@@ -27,7 +30,7 @@
 
 
                 <!-- Comment section -->
-                <h1>Researcher' notes for front-end display</h1>
+                <h1 id="header_researcher_note">Researcher' notes for front-end display</h1>
                 {{ comment_formset.management_form }}
                 <fieldset>
                     <legend>Notes</legend>
@@ -40,13 +43,20 @@
                             {% endif %}
                         </label>
                         {{ form.comment }}
+                        {{ form.comment_id }}
+                        {{ form.creation_timestamp  }}
+                        {{ form.creation_user  }}
+                        {{ form.change_timestamp  }}
+                        {{ form.change_user  }}
+                        {{ form.record_tracker_label }}
+                        <!-- KTODO  copy references feature -->
                     {% endfor %}
                 </fieldset>
 
 
                 <!-- Resource section -->
 
-                <h1>Related resource: </h1>
+                <h1 id="header_resource">Related resource: </h1>
                 {{ res_formset.management_form }}
                 {% for form in res_formset %}
                     <fieldset>
@@ -58,12 +68,14 @@
                             {% endif %}
                         </legend>
                         {{ form }}
+                        {{ form.record_tracker_label }}
+
                     </fieldset>
                 {% endfor %}
 
 
                 <div>
-                    <h1>Images: </h1>
+                    <h1 id="header_image">Images: </h1>
                     <div>
                         Copyright law must be respected at all times. You must ensure that all necessary permissions
                         have been
@@ -119,6 +131,14 @@
                     <input type="submit" value="Submit">
                 </div>
             </form>
+            <div class="flex-col fixed-right-bottom">
+                <h4>Table of content</h4>
+                <a href="#header_location">Location</a>
+                <a href="#header_researcher_note">Researcher' note</a>
+                <a href="#header_resource">Resource</a>
+                <a href="#header_image">Image</a>
+            </div>
         </div>
     </div>
+    <!-- KTODO delete record button >
 {% endblock %}

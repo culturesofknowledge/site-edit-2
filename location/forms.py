@@ -1,6 +1,7 @@
 from django import forms
 from django.forms import ModelForm, HiddenInput, IntegerField, CharField, Form
 
+from core.helper import form_utils, widgets_utils
 from core.models import CofkUnionResource, CofkUnionComment
 from location.models import CofkUnionLocation
 from siteedit2 import settings
@@ -9,7 +10,7 @@ from uploader.models import CofkUnionImage
 
 def create_common_checkbox(**attrs):
     _attrs = {'class': 'elcheckbox'} | (attrs or {})
-    return forms.CheckboxInput(_attrs)
+    return forms.CheckboxInput(_attrs, check_test=widgets_utils.one_zero_check_test)
 
 
 class LocationForm(ModelForm):
@@ -58,7 +59,26 @@ class LocationResourceForm(ModelForm):
     resource_id = IntegerField(required=False, widget=HiddenInput())
     resource_url = forms.CharField(required=False,
                                    label='URL')
+
     resource_url.widget.attrs.update({'class': 'url_checker'})
+    resource_name = forms.CharField(required=True,
+                                    label='Title or brief description',
+                                    widget=forms.Textarea(
+                                        {'class': 'res_standtext'}
+                                    ), )
+
+    resource_details = forms.CharField(required=True,
+                                       label='Further details of resource',
+                                       widget=forms.Textarea(
+                                           {'class': 'res_standtext'}
+                                       ), )
+
+    creation_timestamp = forms.DateTimeField(required=False, widget=HiddenInput())
+    creation_user = forms.CharField(required=False, widget=HiddenInput())
+    change_timestamp = forms.DateTimeField(required=False, widget=HiddenInput())
+    change_user = forms.CharField(required=False, widget=HiddenInput())
+
+    record_tracker_label = form_utils.record_tracker_label_fn_factory('Entry')
 
     class Meta:
         model = CofkUnionResource
@@ -68,22 +88,32 @@ class LocationResourceForm(ModelForm):
             'resource_name',
             'resource_url',
             'resource_details',
+            'creation_timestamp',
+            'creation_user',
+            'change_timestamp',
+            'change_user',
         )
-        labels = {
-            'resource_name': 'Title or brief description',
-            'resource_details': 'Further details of resource',
-        }
 
 
 class LocationCommentForm(ModelForm):
-    comment_id = IntegerField(required=False)
-    comment_id.widget = HiddenInput()
+    comment_id = IntegerField(required=False, widget=HiddenInput())
+
+    creation_timestamp = forms.DateTimeField(required=False, widget=HiddenInput())
+    creation_user = forms.CharField(required=False, widget=HiddenInput())
+    change_timestamp = forms.DateTimeField(required=False, widget=HiddenInput())
+    change_user = forms.CharField(required=False, widget=HiddenInput())
+
+    record_tracker_label = form_utils.record_tracker_label_fn_factory('Note')
 
     class Meta:
         model = CofkUnionComment
         fields = (
             'comment_id',
             'comment',
+            'creation_timestamp',
+            'creation_user',
+            'change_timestamp',
+            'change_user',
         )
         labels = {
             'comment': 'Note',
@@ -111,12 +141,14 @@ class LocationImageForm(ModelForm):
                                   label='licence URL*')
     licence_url.widget.attrs.update({'class': 'url_checker', 'value': settings.DEFAULT_IMG_LICENCE_URL})
 
-    # KTODO
-    # can_be_displayed = forms.BooleanField(required=False,
-    #                                       label='Can be displayed to public',
-    #                                       widget=create_common_checkbox(),
-    #                                       initial=True,
-    #                                       )
+    can_be_displayed = forms.BooleanField(required=False,
+                                          label='Can be displayed to public',
+                                          widget=create_common_checkbox(value='1'),
+                                          initial='1',
+
+                                          # validators=[],
+                                          # error_messages='hihiihihi',
+                                          )
     display_order = forms.IntegerField(required=False, label='Order for display in front end')
 
     class Meta:
@@ -128,9 +160,14 @@ class LocationImageForm(ModelForm):
             'credits',
             'licence_details',
             'licence_url',
-            # 'can_be_displayed',
+            'can_be_displayed',
             'display_order',
         )
+
+    def clean(self):
+        if 'can_be_displayed' in self.cleaned_data:
+            self.cleaned_data['can_be_displayed'] = '1' if self.cleaned_data['can_be_displayed'] else '0'
+        return super().clean()
 
 
 class GeneralSearchFieldset(ModelForm):
