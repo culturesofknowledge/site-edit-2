@@ -1,31 +1,14 @@
-from typing import Iterable, Tuple, List, Type
+from typing import Iterable, Tuple, List, Type, Callable
 from urllib.parse import urlencode
 
 from django import template
-from django.template.loader import render_to_string
 from django.views.generic import ListView
 
 from core.forms import build_search_components
-from core.helper.renderer import CompactItemRenderer
+from core.helper.renderer import CompactSearchResultsRenderer
+import core.constant as core_constant
 
 register = template.Library()
-
-
-class CompactSearchResultsRenderer:
-    template_name = 'core/component/search_compact_layout.html'
-
-    def __init__(self, records):
-        self.records = records
-
-    @property
-    def compact_item_renderer_factory(self) -> Type[CompactItemRenderer]:
-        raise NotImplementedError('type of CompactItemRenderer have not provided ')
-
-    def render(self):
-        context = {
-            'search_results': map(self.compact_item_renderer_factory, self.records)
-        }
-        return render_to_string(self.template_name, context)
 
 
 class BasicSearchView(ListView):
@@ -63,7 +46,13 @@ class BasicSearchView(ListView):
 
     @property
     def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
+        """ factory of Compact layout """
         raise NotImplementedError('missing compact_search_results_renderer_factory')
+
+    @property
+    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+        """ factory of Table layout """
+        raise NotImplementedError('missing table_search_results_renderer_factory')
 
     @property
     def request_data(self):
@@ -82,14 +71,19 @@ class BasicSearchView(ListView):
             'num_record': str(self.paginate_by),
             'sort_by': self.get_sort_by(),
         }
+        is_compact_layout = (self.request_data.get('display-style', core_constant.SEARCH_LAYOUT_TABLE)
+                             == core_constant.SEARCH_LAYOUT_GRID)
+        results_renderer = (self.compact_search_results_renderer_factory
+                            if is_compact_layout
+                            else self.table_search_results_renderer_factory)
 
         context.update({'query_fieldset_list': self.query_fieldset_list,
                         'search_components': search_components_factory(default_search_components_dict |
                                                                        self.request_data.dict()),
                         'total_record': self.get_queryset().count(),
                         'title': self.title or '',
-                        'results_renderer': self.compact_search_results_renderer_factory(
-                            context[self.context_object_name]).render,
+                        'results_renderer': results_renderer(context[self.context_object_name]),
+                        'is_compact_layout': is_compact_layout,
                         })
         return context
 

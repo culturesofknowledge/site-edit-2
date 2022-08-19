@@ -1,0 +1,34 @@
+<table>
+    <thead>
+    <tr></tr>
+    <tr>
+        <th>ID</th>
+        <th>Editors notes</th>
+        <th>Full name of location</th>
+        <th>Alternative names for location</th>
+        <th>Latitude</th>
+        <th>Longitude</th>
+    </tr>
+    </thead>
+    <tbody>
+
+    {% for r in search_results %}
+        <tr>
+            <td> {{ r.location_id }} </td>
+            <td>
+                {% if r.editors_notes %}
+                    <details>
+                        <summary>Details</summary>
+                        {{ r.editors_notes }}
+                    </details>
+                {% endif %}
+            </td>
+            <td> {{ r.location_name }} </td>
+            <td> {{ r.location_synonyms }} </td>
+            <td> {{ r.latitude }} </td>
+            <td> {{ r.longitude }} </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+
+</table>

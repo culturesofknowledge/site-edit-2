@@ -1,6 +1,6 @@
 import itertools
 import logging
-from typing import Iterable, Union, Callable, List, Tuple, Type
+from typing import Iterable, Union, List, Tuple, Type, Callable
 
 from django.conf import settings
 from django.forms import formset_factory, BaseForm, BaseFormSet, ModelForm
@@ -8,12 +8,13 @@ from django.shortcuts import render, get_object_or_404, redirect
 
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
-from core.helper.renderer import CompactItemRenderer
-from core.helper.view_utils import BasicSearchView, CompactSearchResultsRenderer
+from core.helper.renderer import CompactSearchResultsRenderer
+from core.helper.view_utils import BasicSearchView
 from core.services import media_service
 from location.forms import LocationForm, LocationResourceForm, LocationCommentForm, GeneralSearchFieldset, \
     LocationImageForm, LocUploadImageForm
 from location.models import CofkUnionLocation
+from location.renderer import LocationCompactSearchResultsRenderer, LocationTableSearchResultsRenderer
 from uploader.models import CofkUnionImage
 
 log = logging.getLogger(__name__)
@@ -176,19 +177,8 @@ def full_form(request, location_id):
     return _render_full_form()
 
 
-class LocationCompactSearchResultsRenderer(CompactSearchResultsRenderer):
-    class _LocationCompactItemRenderer(CompactItemRenderer):
-
-        @property
-        def template_name(self):
-            return 'location/compact_item.html'
-
-    @property
-    def compact_item_renderer_factory(self) -> Type[CompactItemRenderer]:
-        return self._LocationCompactItemRenderer
-
-
 class LocationSearchView(BasicSearchView):
+
     paginate_by = 4
 
     @property
@@ -233,3 +223,7 @@ class LocationSearchView(BasicSearchView):
     @property
     def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
         return LocationCompactSearchResultsRenderer
+
+    @property
+    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+        return LocationTableSearchResultsRenderer

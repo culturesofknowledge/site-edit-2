@@ -36,15 +36,24 @@
                     <div class="col col--1of2">
                         <h3 class="sr-only">Layout</h3>
                         <div class="align-right">
-                            <input type="radio" id="display-as-grid" value="display-as-grid"
-                                   name="display-style" checked/>
+                            <input type="radio" id="display-as-grid" value="grid"
+                                   name="display-style"
+                                    {% if is_compact_layout %}
+                                   checked
+                                    {% endif %}
+
+                            />
                             <label for="display-as-grid">
                                 Compact
                                 <small> <span data-feather="grid" aria-hidden="true"></span> </small>
                             </label>
 
-                            <input type="radio" id="display-as-list" value="display-as-list"
-                                   name="display-style"/>
+                            <input type="radio" id="display-as-list" value="table"
+                                   name="display-style"
+                                    {% if not is_compact_layout %}
+                                   checked
+                                    {% endif %}
+                            />
                             <label for="display-as-list">
                                 Expanded
                                 <small><span data-feather="list" aria-hidden="true"></span></small>
