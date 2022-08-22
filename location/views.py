@@ -192,8 +192,8 @@ class LocationMergeView(ListView):
         return []
 
     def get(self, request, *args, **kwargs):
-        breakpoint()
         # response for search query
+        print(self.request_data)
         return super().get(request, *args, **kwargs)
 
 

@@ -113,15 +113,19 @@
         }
 
         function setup_merge_btn() {
-            $('merge_btn').on('click', (e) => {
+            $('#merge_btn').on('click', (e) => {
                 let btn = $(e.target)
                 e.preventDefault();
 
                 let form = btn.closest('form')
-                form.append(
-                    $(`<input type="hidden" name="__merge_id" value="112233" />`),
-                    $(`<input type="hidden" name="__merge_id" value="33344" />`),
-                )
+                $('.selectable_entry.selected').map((i, v) => {
+                    let entry_id = $(v).attr('entry_id');
+                    return $(`<input type="hidden" name="__merge_id" value="${entry_id}" />`);
+                }).each((i, v) => {
+                    form.append(v);
+                });
+
+                // debugger
                 $(form).attr('action', "{{ merge_page_url }}")
                 form.submit()
             })
