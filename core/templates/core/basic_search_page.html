@@ -38,6 +38,9 @@
                                 name="__form_action" value="download_csv">
                             Download output
                         </button>
+                        <button id="merge_btn" class="btn margin-right inline_btn">
+                            Merge
+                        </button>
                         <a href="" class="btn margin-right">Save query</a>
                     </div>
                     <div class="col col--1of2">
@@ -94,6 +97,12 @@
 
     <!-- script -->
     <script>
+        function setup_selectable_entry() {
+            $('.selectable_entry').on('click', (e) => {
+                $(e.target).closest('.selectable_entry').toggleClass('selected')
+            })
+        }
+
         function submit_page(target_page_num) {
             if (target_page_num) {
                 let page_ele = document.getElementById('id_page')
@@ -101,6 +110,22 @@
             }
 
             document.getElementById('search_form').submit()
+        }
+
+        function setup_merge_btn() {
+            $('merge_btn').on('click', (e) => {
+                let btn = $(e.target)
+                e.preventDefault();
+
+                let form = btn.closest('form')
+                form.append(
+                    $(`<input type="hidden" name="__merge_id" value="112233" />`),
+                    $(`<input type="hidden" name="__merge_id" value="33344" />`),
+                )
+                $(form).attr('action', "{{ merge_page_url }}")
+                form.submit()
+            })
+
         }
 
         ['id_next_page', 'id_previous_page'].forEach((target_id) => {
@@ -118,7 +143,12 @@
             });
         });
 
-        setup_record_delete()
+        $(function () {
+            setup_record_delete();
+            setup_selectable_entry();
+            setup_merge_btn();
+        })
+
 
     </script>
 

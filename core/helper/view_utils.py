@@ -5,6 +5,9 @@ from typing import Iterable, Tuple, List, Type, Callable
 from urllib.parse import urlencode
 
 from django import template
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.views import View
 from django.views.generic import ListView
 
 import core.constant as core_constant
@@ -65,6 +68,10 @@ class BasicSearchView(ListView):
         raise NotImplementedError('missing download_csv_handler')
 
     @property
+    def merge_page_name(self) -> View:
+        raise NotImplementedError('missing merge_page_name')
+
+    @property
     def request_data(self):
         """ by default requests data would be GET  """
         return self.request.GET
@@ -95,6 +102,7 @@ class BasicSearchView(ListView):
                         'results_renderer': results_renderer(context[self.context_object_name]),
                         'is_compact_layout': is_compact_layout,
                         'to_user_messages': getattr(self, 'to_user_messages', []),
+                        'merge_page_url': reverse(self.merge_page_name),
                         })
 
         return context
@@ -134,10 +142,13 @@ class BasicSearchView(ListView):
         return super().get(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
+        simple_form_action_map = {
+            'download_csv': self.resp_download_csv,
+        }
 
-        # response for download_csv
-        if self.request_data.get("__form_action") == 'download_csv':
-            return self.resp_download_csv(request, *args, **kwargs)
+        # simple routing with __form_action
+        if resp_fn := simple_form_action_map.get(self.request_data.get("__form_action")):
+            return resp_fn(request, *args, **kwargs)
 
         if num_record := request.GET.get('num_record'):
             self.paginate_by = num_record

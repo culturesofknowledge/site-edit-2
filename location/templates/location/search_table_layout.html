@@ -13,7 +13,7 @@
     <tbody>
 
     {% for r in search_results %}
-        <tr>
+        <tr class="selectable_entry" entry_id="{{ r.location_id }}">
             <td>
                 <a href="{% url 'location:full_form' r.location_id %}">
                     {{ r.location_id }}

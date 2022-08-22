@@ -5,6 +5,7 @@ from typing import Iterable, Union, List, Tuple, Type, Callable
 from django.conf import settings
 from django.forms import formset_factory, BaseForm, BaseFormSet, ModelForm
 from django.shortcuts import render, get_object_or_404, redirect
+from django.views.generic import ListView
 
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
@@ -178,6 +179,24 @@ def full_form(request, location_id):
     return _render_full_form()
 
 
+class LocationMergeView(ListView):
+    template_name = 'location/merge.html'
+
+    @property
+    def request_data(self):
+        """ by default requests data would be GET  """
+        return self.request.GET
+
+    def get_queryset(self):
+        # KTODO
+        return []
+
+    def get(self, request, *args, **kwargs):
+        breakpoint()
+        # response for search query
+        return super().get(request, *args, **kwargs)
+
+
 class LocationSearchView(BasicSearchView):
     paginate_by = 4
 
@@ -219,6 +238,10 @@ class LocationSearchView(BasicSearchView):
     @property
     def title(self) -> str:
         return 'Location'
+
+    @property
+    def merge_page_name(self):
+        return 'location:merge'
 
     @property
     def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
