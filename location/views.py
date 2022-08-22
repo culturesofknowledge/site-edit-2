@@ -236,23 +236,51 @@ class LocationSearchView(BasicSearchView):
 class LocationDownloadCsvHandler(DownloadCsvHandler):
     def get_header_list(self) -> list[str]:
         return [
-            'ID',
-            'Editors notes',
-            'Full name of location',
-            'Alternative names for location',
-            'Latitude',
-            'Longitude',
+            "Location name",
+            "Location id",
+            "Editors notes",
+            "Sent",
+            "Recd",
+            "All works",
+            "Researchers notes",
+            "Related resources",
+            "Latitude",
+            "Longitude",
+            "Element 1 eg room"
+            "Element 2 eg building"
+            "Element 3 eg parish"
+            "Element 4 eg city"
+            "Element 5 eg county"
+            "Element 6 eg country"
+            "Element 7 eg empire"
+            "Images",
+            "Change user",
+            "Change timestamp",
         ]
 
     def obj_to_values(self, obj) -> Iterable[str]:
         obj: CofkUnionLocation
         values = (
+            obj.location_name,
             obj.location_id,
             obj.editors_notes,
-            obj.location_name,
-            obj.location_synonyms,
+            '0',  # KTODO send value
+            '0',  # KTODO recd value
+            '0',  # KTODO All works, should be send + recd
+            ' ~ '.join(r.comment for r in obj.comments.iterator()),
+            ' ~ '.join(r.resource_url for r in obj.resources.iterator()),
             obj.latitude,
             obj.longitude,
+            obj.element_1_eg_room,
+            obj.element_2_eg_building,
+            obj.element_3_eg_parish,
+            obj.element_4_eg_city,
+            obj.element_5_eg_county,
+            obj.element_6_eg_country,
+            obj.element_7_eg_empire,
+            ' ~ '.join(r.image_filename for r in obj.images.iterator()),
+            obj.change_timestamp,
+            obj.change_user,
         )
         values = map(str, values)
         return values
