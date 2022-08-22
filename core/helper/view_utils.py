@@ -1,14 +1,15 @@
 import logging
+import os
+from multiprocessing import Process
 from typing import Iterable, Tuple, List, Type, Callable
 from urllib.parse import urlencode
 
 from django import template
-from django.http import FileResponse
 from django.views.generic import ListView
 
 import core.constant as core_constant
 from core.forms import build_search_components
-from core.helper import file_utils
+from core.helper import file_utils, email_utils
 from core.helper.renderer import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
 
@@ -93,23 +94,50 @@ class BasicSearchView(ListView):
                         'title': self.title or '',
                         'results_renderer': results_renderer(context[self.context_object_name]),
                         'is_compact_layout': is_compact_layout,
+                        'to_user_messages': getattr(self, 'to_user_messages', []),
                         })
+
         return context
 
-    def resp_download_csv(self):
-
+    @staticmethod
+    def send_csv_email(csv_handler, queryset, to_email):
         csv_path = file_utils.create_new_tmp_file_path()
-        self.download_csv_handler.create_csv_file(csv_path, self.get_queryset())
-        # KTODO how to clean up the tmp file
+        csv_handler.create_csv_file(csv_path, queryset)
 
-        resp = FileResponse(open(csv_path, mode='rb'), filename='search_result.csv')
-        return resp
+        if not to_email:
+            log.error(f'unknown user email -- [{to_email}]')
+
+        resp = email_utils.send_email(
+            to_email,
+            subject='Search result',
+            attachments=[
+                ('search_result.csv', open(csv_path, mode='rb'), 'text/csv')
+            ],
+        )
+        os.remove(csv_path)
+        log.debug('email resp', resp)
+
+    def resp_download_csv(self, request, *args, **kwargs):
+
+        def _fn():
+            try:
+                self.send_csv_email(self.download_csv_handler, self.get_queryset(), request.user.email)
+            except Exception as e:
+                log.error('send csv email fail....')
+                log.exception(e)
+
+        # create csv file and send email in other process
+        Process(target=_fn).run()
+
+        # stay as same page
+        self.to_user_messages = ['Csv file will be send to your email later.']
+        return super().get(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
 
         # response for download_csv
         if self.request_data.get("__form_action") == 'download_csv':
-            return self.resp_download_csv()
+            return self.resp_download_csv(request, *args, **kwargs)
 
         if num_record := request.GET.get('num_record'):
             self.paginate_by = num_record

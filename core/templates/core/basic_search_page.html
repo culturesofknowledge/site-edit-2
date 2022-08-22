@@ -4,6 +4,10 @@
 
     <h1> {{ title }} </h1>
 
+    {% for to_user_msg in to_user_messages %}
+        <h1>{{ to_user_msg }}</h1>
+    {% endfor %}
+
     <form id="search_form" method="get">
         {% csrf_token %}
 
