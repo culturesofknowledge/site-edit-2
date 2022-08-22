@@ -1,14 +1,19 @@
+import logging
 from typing import Iterable, Tuple, List, Type, Callable
 from urllib.parse import urlencode
 
 from django import template
+from django.http import FileResponse
 from django.views.generic import ListView
 
-from core.forms import build_search_components
-from core.helper.renderer import CompactSearchResultsRenderer
 import core.constant as core_constant
+from core.forms import build_search_components
+from core.helper import file_utils
+from core.helper.renderer import CompactSearchResultsRenderer
+from core.helper.view_components import DownloadCsvHandler
 
 register = template.Library()
+log = logging.getLogger(__name__)
 
 
 class BasicSearchView(ListView):
@@ -55,6 +60,10 @@ class BasicSearchView(ListView):
         raise NotImplementedError('missing table_search_results_renderer_factory')
 
     @property
+    def download_csv_handler(self) -> DownloadCsvHandler:
+        raise NotImplementedError('missing download_csv_handler')
+
+    @property
     def request_data(self):
         """ by default requests data would be GET  """
         return self.request.GET
@@ -87,10 +96,25 @@ class BasicSearchView(ListView):
                         })
         return context
 
+    def resp_download_csv(self):
+
+        csv_path = file_utils.create_new_tmp_file_path()
+        self.download_csv_handler.create_csv_file(csv_path, self.get_queryset())
+        # KTODO how to clean up the tmp file
+
+        resp = FileResponse(open(csv_path, mode='rb'), filename='search_result.csv')
+        return resp
+
     def get(self, request, *args, **kwargs):
+
+        # response for download_csv
+        if self.request_data.get("__form_action") == 'download_csv':
+            return self.resp_download_csv()
+
         if num_record := request.GET.get('num_record'):
             self.paginate_by = num_record
 
+        # response for search query
         return super().get(request, *args, **kwargs)
 
 

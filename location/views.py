@@ -9,6 +9,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 from core.helper.renderer import CompactSearchResultsRenderer
+from core.helper.view_components import DownloadCsvHandler
 from core.helper.view_utils import BasicSearchView
 from core.services import media_service
 from location.forms import LocationForm, LocationResourceForm, LocationCommentForm, GeneralSearchFieldset, \
@@ -178,7 +179,6 @@ def full_form(request, location_id):
 
 
 class LocationSearchView(BasicSearchView):
-
     paginate_by = 4
 
     @property
@@ -227,3 +227,32 @@ class LocationSearchView(BasicSearchView):
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
         return LocationTableSearchResultsRenderer
+
+    @property
+    def download_csv_handler(self) -> DownloadCsvHandler:
+        return LocationDownloadCsvHandler()
+
+
+class LocationDownloadCsvHandler(DownloadCsvHandler):
+    def get_header_list(self) -> list[str]:
+        return [
+            'ID',
+            'Editors notes',
+            'Full name of location',
+            'Alternative names for location',
+            'Latitude',
+            'Longitude',
+        ]
+
+    def obj_to_values(self, obj) -> Iterable[str]:
+        obj: CofkUnionLocation
+        values = (
+            obj.location_id,
+            obj.editors_notes,
+            obj.location_name,
+            obj.location_synonyms,
+            obj.latitude,
+            obj.longitude,
+        )
+        values = map(str, values)
+        return values

@@ -698,4 +698,7 @@ input[type="radio"] + label {
   font-variation-settings: 'slnt' -1;
   margin-bottom: 15px; }
 
+.inline_btn {
+  display: inline; }
+
 /*# sourceMappingURL=main.css.map */

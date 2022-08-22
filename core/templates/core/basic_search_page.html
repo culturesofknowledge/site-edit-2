@@ -16,7 +16,7 @@
                     {{ query_fieldset }}
                 {% endfor %}
                 <div class="flex-col sticky-bottom">
-                    <button type="submit">Search</button>
+                    <button type="submit" name="__form_action" value="search">Search</button>
                 </div>
             </aside>
 
@@ -30,7 +30,10 @@
                 <!-- search function toolbar (e.g. download output, compact, expanded)  -->
                 <aside class="margin-bottom row">
                     <div class="col col--1of2">
-                        <a href="" class="btn margin-right">Download output</a>
+                        <button type='submit' class="btn margin-right inline_btn"
+                                name="__form_action" value="download_csv">
+                            Download output
+                        </button>
                         <a href="" class="btn margin-right">Save query</a>
                     </div>
                     <div class="col col--1of2">
