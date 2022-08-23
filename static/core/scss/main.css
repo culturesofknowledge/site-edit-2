@@ -721,13 +721,13 @@ input[type="radio"] + label {
   background-color: #172854;
   display: none; }
 
+.menu-item:hover .menu-subitem {
+  display: block; }
+
 .menu-subitem li {
   padding: 10px; }
   .menu-subitem li:hover {
     background-color: #EFC319;
     color: black; }
-
-.menu-item:hover .menu-subitem {
-  display: block; }
 
 /*# sourceMappingURL=main.css.map */

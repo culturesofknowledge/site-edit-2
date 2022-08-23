@@ -2,10 +2,11 @@
     <thead>
     <tr></tr>
     <tr>
+        <th>Full name of location</th>
         <th>ID</th>
         <th>Editors notes</th>
-        <th>Full name of location</th>
-        <th>Alternative names for location</th>
+        <th>Researchers' notes</th>
+        <th>Related resources</th>
         <th>Latitude</th>
         <th>Longitude</th>
     </tr>
@@ -14,6 +15,11 @@
 
     {% for r in search_results %}
         <tr class="selectable_entry" entry_id="{{ r.location_id }}">
+            <td>
+                <a href="{% url 'location:full_form' r.location_id %}">
+                    {{ r.location_name }}
+                </a>
+            </td>
             <td>
                 <a href="{% url 'location:full_form' r.location_id %}">
                     {{ r.location_id }}
@@ -28,11 +34,19 @@
                 {% endif %}
             </td>
             <td>
-                <a href="{% url 'location:full_form' r.location_id %}">
-                    {{ r.location_name }}
-                </a>
+                <details>
+                    <summary>Details</summary>
+                    {% for comment in r.comments.iterator %}
+                        <span>
+                        {{ comment.comment }}
+                        </span>
+                        <br />
+                    {% endfor %}
+
+                    {{ r.editors_notes }}
+                </details>
+
             </td>
-            <td> {{ r.location_synonyms }} </td>
             <td> {{ r.latitude }} </td>
             <td> {{ r.longitude }} </td>
         </tr>

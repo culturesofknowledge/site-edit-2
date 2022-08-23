@@ -220,8 +220,16 @@ class LocationSearchView(BasicSearchView):
         field_fn_maps = {
             'editors_notes': model_utils.create_contains_query,
             'location_name': model_utils.create_contains_query,
-            'location_synonyms': model_utils.create_contains_query,
             'location_id': model_utils.create_eq_query,
+            'latitude': model_utils.create_contains_query,
+            'longitude': model_utils.create_contains_query,
+            'element_1_eg_room': model_utils.create_contains_query,
+            'element_2_eg_building': model_utils.create_contains_query,
+            'element_3_eg_parish': model_utils.create_contains_query,
+            'element_4_eg_city': model_utils.create_contains_query,
+            'element_5_eg_county': model_utils.create_contains_query,
+            'element_6_eg_country': model_utils.create_contains_query,
+            'element_7_eg_empire': model_utils.create_contains_query,
         }
 
         query_field_values = ((f, self.request_data.get(f)) for f in field_fn_maps.keys())
