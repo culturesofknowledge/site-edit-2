@@ -133,6 +133,9 @@
 .no-margin {
   margin: 0; }
 
+.no-padding {
+  padding: 0; }
+
 .margin-right {
   margin-right: 1em; }
 
@@ -703,5 +706,28 @@ input[type="radio"] + label {
 
 .selectable_entry.selected {
   background-color: gray; }
+
+.menu-item {
+  position: relative;
+  margin-right: 1em;
+  height: 25px;
+  display: inline-block; }
+
+.menu-subitem {
+  position: absolute;
+  left: 5px;
+  z-index: 100;
+  min-width: 150px;
+  background-color: #172854;
+  display: none; }
+
+.menu-subitem li {
+  padding: 10px; }
+  .menu-subitem li:hover {
+    background-color: #EFC319;
+    color: black; }
+
+.menu-item:hover .menu-subitem {
+  display: block; }
 
 /*# sourceMappingURL=main.css.map */
