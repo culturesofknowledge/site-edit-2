@@ -80,6 +80,8 @@
 
     </form>
 
+    <form id="merge_form" action="{{ merge_page_url }}"></form>
+
     <!-- Pagination -->
     <div class="pagination">
     <span class="page-links">
@@ -114,10 +116,12 @@
 
         function setup_merge_btn() {
             $('#merge_btn').on('click', (e) => {
-                let btn = $(e.target)
                 e.preventDefault();
 
-                let form = btn.closest('form')
+                // clean up old merge_id if any
+                $('#merge_form input[name=__merge_id]').remove();
+
+                let form = $('#merge_form');
                 $('.selectable_entry.selected').map((i, v) => {
                     let entry_id = $(v).attr('entry_id');
                     return $(`<input type="hidden" name="__merge_id" value="${entry_id}" />`);
@@ -126,7 +130,6 @@
                 });
 
                 // debugger
-                $(form).attr('action', "{{ merge_page_url }}")
                 form.submit()
             })
 
