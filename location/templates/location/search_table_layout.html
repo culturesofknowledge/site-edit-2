@@ -5,10 +5,9 @@
         <th>Full name of location</th>
         <th>ID</th>
         <th>Editors notes</th>
-        <th>Researchers' notes</th>
-        <th>Related resources</th>
         <th>Latitude</th>
         <th>Longitude</th>
+        <th>Details</th>
     </tr>
     </thead>
     <tbody>
@@ -33,22 +32,48 @@
                     </details>
                 {% endif %}
             </td>
+            <td> {{ r.latitude }} </td>
+            <td> {{ r.longitude }} </td>
             <td>
                 <details>
                     <summary>Details</summary>
-                    {% for comment in r.comments.iterator %}
-                        <span>
-                        {{ comment.comment }}
-                        </span>
-                        <br />
-                    {% endfor %}
+                    <div class="table-row-detail">
+                        <div>
+                            <label>Last edit</label>
+                            {{ r.change_timestamp }}
+                        </div>
+                        <div>
+                            <label>Last changed by</label>
+                            {{ r.change_user }}
+                        </div>
+                        {% if r.comments.count %}
+                            <div>
+                                <label>Researchers' notes</label>
+                                {% for comment in r.comments.iterator %}
+                                    <div>
+                                        {{ comment.comment }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        {% if r.resources.count %}
+                            <div>
+                                <label>Related resources</label>
+                                {% for resource in r.resources.iterator %}
+                                    <div>
+                                        <a href="{{ resource.resource_url }}" target="_blank">
+                                            {{ resource.resource_name }}
+                                        </a>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
 
-                    {{ r.editors_notes }}
+                    </div>
+
+
                 </details>
-
             </td>
-            <td> {{ r.latitude }} </td>
-            <td> {{ r.longitude }} </td>
         </tr>
     {% endfor %}
     </tbody>

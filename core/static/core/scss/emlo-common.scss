@@ -70,3 +70,17 @@
   background-color: $gold;
   color: black;
 }
+
+.table-row-detail {
+  min-width: 400px;
+
+  & > div {
+    margin-bottom: 10px;
+
+    label {
+      margin: 0;
+    }
+
+  }
+
+}

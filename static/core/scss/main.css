@@ -737,4 +737,11 @@ input[type="radio"] + label {
   background-color: #EFC319;
   color: black; }
 
+.table-row-detail {
+  min-width: 400px; }
+  .table-row-detail > div {
+    margin-bottom: 10px; }
+    .table-row-detail > div label {
+      margin: 0; }
+
 /*# sourceMappingURL=main.css.map */
