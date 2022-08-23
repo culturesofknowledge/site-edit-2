@@ -38,6 +38,9 @@
                                 name="__form_action" value="download_csv">
                             Download output
                         </button>
+                        <button class="btn margin-right inline_btn selectable_mode_btn">
+                            Select
+                        </button>
                         <button id="merge_btn" class="btn margin-right inline_btn">
                             Merge
                         </button>
@@ -99,11 +102,40 @@
 
     <!-- script -->
     <script>
-        function setup_selectable_entry() {
-            $('.selectable_entry').on('click', (e) => {
-                $(e.target).closest('.selectable_entry').toggleClass('selected')
-            })
+        var emlojs = emlojs || {};
+        emlojs.selectable_service = {
+            _mode_change_listener_fn_list: [],
+            is_selectable_mode_on: function () {
+                return $('.selectable_mode_btn').hasClass('selectable_mode_on');
+            },
+            setup_toggle_selectable_mode: function () {
+                $('.selectable_mode_btn').on('click', (e) => {
+                    e.preventDefault();
+                    $(e.target).toggleClass('selectable_mode_on')
+
+
+                    let is_mode_on = this.is_selectable_mode_on()
+                    this._mode_change_listener_fn_list.forEach((fn) => {
+                        fn(is_mode_on)
+                    });
+                })
+            },
+            setup_selectable_entry: function () {
+                $('.selectable_entry').on('click', (e) => {
+                    if (this.is_selectable_mode_on()) {
+                        $(e.target).closest('.selectable_entry').toggleClass('selected')
+                    }
+                })
+            },
+            setup_all: function () {
+                this.setup_toggle_selectable_mode();
+                this.setup_selectable_entry();
+            },
+            on_mode_change: function (fn) {
+                this._mode_change_listener_fn_list.push(fn);
+            },
         }
+
 
         function submit_page(target_page_num) {
             if (target_page_num) {
@@ -115,6 +147,18 @@
         }
 
         function setup_merge_btn() {
+            $('#merge_btn').hide()
+            emlojs.selectable_service.on_mode_change((is_on) => {
+                if (is_on) {
+                    $('#merge_btn').show()
+                } else {
+                    $('#merge_btn').hide()
+
+                    // cancel all selected entry
+                    $('.selectable_entry.selected').removeClass('selected');
+                }
+            });
+
             $('#merge_btn').on('click', (e) => {
                 e.preventDefault();
 
@@ -152,7 +196,7 @@
 
         $(function () {
             setup_record_delete();
-            setup_selectable_entry();
+            emlojs.selectable_service.setup_all()
             setup_merge_btn();
         })
 

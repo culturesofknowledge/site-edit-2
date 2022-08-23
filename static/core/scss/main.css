@@ -230,6 +230,9 @@
   bottom: 0;
   right: 20px; }
 
+.hiding {
+  display: none; }
+
 /* Grid: to be used for general layout only */
 body {
   padding: 0 1.5vw;
@@ -729,5 +732,9 @@ input[type="radio"] + label {
   .menu-subitem li:hover {
     background-color: #EFC319;
     color: black; }
+
+.selectable_mode_btn.selectable_mode_on {
+  background-color: #EFC319;
+  color: black; }
 
 /*# sourceMappingURL=main.css.map */
