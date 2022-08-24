@@ -82,10 +82,26 @@ class LocationFormTests(EmloSeleniumTestCase):
                          fixtures.loc_comment_dict_a['comment'])
 
 
+def prepare_loc_records() -> list[CofkUnionLocation]:
+    loc_list = [CofkUnionLocation(**loc_dict)
+                for loc_dict in (fixtures.location_dict_a, fixtures.location_dict_b,)]
+    CofkUnionLocation.objects.bulk_create(loc_list)
+    return loc_list
+
+
 class LocationSearchTests(EmloSeleniumTestCase):
 
     def find_result_elements(self):
-        return self.selenium.find_elements(By.CSS_SELECTOR, 'li.search-result')
+        return self.selenium.find_elements(By.CSS_SELECTOR, 'tbody tr.selectable_entry')
+
+    def find_search_btn(self):
+        return self.selenium.find_element(By.CSS_SELECTOR, 'button[name=__form_action][value=search]')
+
+    def find_elements_by_css(self, css_selector):
+        return self.selenium.find_elements(by=By.CSS_SELECTOR, value=css_selector)
+
+    def find_element_by_css(self, css_selector):
+        return self.selenium.find_element(by=By.CSS_SELECTOR, value=css_selector)
 
     def assert_search_page(self, num_row_show, num_total):
         # assert
@@ -99,16 +115,15 @@ class LocationSearchTests(EmloSeleniumTestCase):
         self.assertEqual(size_titles[0][0], f'{num_total}')
 
     def test_search_page(self):
-        #  prepare data
-        loc_list = [CofkUnionLocation(**loc_dict)
-                    for loc_dict in (fixtures.location_dict_a, fixtures.location_dict_b,)]
-        CofkUnionLocation.objects.bulk_create(loc_list)
+        # prepare data
+        loc_list = prepare_loc_records()
 
         # go to search page
         url = self.get_url_by_viewname('location:search')
         self.selenium.get(url)
 
-        self.assert_search_page(len(loc_list), len(loc_list))
+        self.assert_search_page(num_row_show=len(loc_list),
+                                num_total=len(loc_list))
 
         target_loc = loc_list[1]
 
@@ -116,12 +131,28 @@ class LocationSearchTests(EmloSeleniumTestCase):
         ele = self.selenium.find_element(By.ID, 'id_location_name')
         ele.send_keys(target_loc.location_name)
 
-        self.selenium.find_element(By.CSS_SELECTOR, 'button[type=submit]').click()
+        self.find_search_btn().click()
 
         # only have one record match
-        self.assert_search_page(1, 1)
+        self.assert_search_page(num_row_show=1,
+                                num_total=1)
 
         # check location name in record result
         result_ele = self.find_result_elements()[0]
-        location_name = result_ele.find_element(By.CSS_SELECTOR, 'div h3 a[href]').text
+        location_name = result_ele.find_elements(By.CSS_SELECTOR, 'td')[0].text
         self.assertEqual(location_name, target_loc.location_name)
+
+    def setup_for_layout_test(self, layout_btn_id):
+        prepare_loc_records()
+        url = self.get_url_by_viewname('location:search')
+        self.selenium.get(url)
+        self.selenium.find_element(value=layout_btn_id).click()
+        self.find_search_btn().click()
+
+    def test_search__table_layout(self):
+        self.setup_for_layout_test('display-as-list')
+        self.assertIsNotNone(self.find_element_by_css('#search_form table'))
+
+    def test_search__compact_layout(self):
+        self.setup_for_layout_test('display-as-grid')
+        self.assertIsNotNone(self.find_element_by_css('ol li[class=search-result]'))

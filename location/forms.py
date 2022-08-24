@@ -1,10 +1,10 @@
 from django import forms
+from django.conf import settings
 from django.forms import ModelForm, HiddenInput, IntegerField, CharField, Form
 
 from core.helper import form_utils, widgets_utils
 from core.models import CofkUnionResource, CofkUnionComment
 from location.models import CofkUnionLocation
-from django.conf import settings
 from uploader.models import CofkUnionImage
 
 
@@ -178,8 +178,8 @@ class GeneralSearchFieldset(ModelForm):
                               widget=forms.TextInput(attrs={'placeholder': 'xxxx'}))
     location_id = IntegerField(required=False)
     editors_notes = CharField(required=False)
-    latitude = CharField(required=False)
-    longitude = CharField(required=False)
+    latitude = IntegerField(required=False)
+    longitude = IntegerField(required=False)
     element_1_eg_room = CharField(required=False)
     element_2_eg_building = CharField(required=False)
     element_3_eg_parish = CharField(required=False)
