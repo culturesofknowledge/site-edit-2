@@ -16,6 +16,7 @@ from psycopg2.extras import DictCursor
 from core.helper import iter_utils
 from core.models import CofkUnionResource, CofkUnionComment
 from location.models import CofkUnionLocation
+from uploader.models import CofkUnionImage
 
 log = logging.getLogger(__name__)
 
@@ -166,7 +167,7 @@ def data_migration(user, password, database, host, port):
         lambda: clone_rows_by_model_class(conn, CofkUnionLocation),
         lambda: clone_rows_by_model_class(conn, CofkUnionResource),
         lambda: clone_rows_by_model_class(conn, CofkUnionComment),
-        # lambda: clone_rows_by_model_class(conn, CofkUnionImage),
+        lambda: clone_rows_by_model_class(conn, CofkUnionImage),
         lambda: create_m2m_relationship_by_relationship_table(
             conn, CofkUnionLocation, CofkUnionResource,
             f'{CofkUnionLocation._meta.db_table}_resources',

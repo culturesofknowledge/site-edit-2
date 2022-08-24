@@ -1,9 +1,8 @@
 import datetime
 from pathlib import Path
 
+from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile
-
-from siteedit2 import settings
 
 IMG_PATH = Path(settings.MEDIA_ROOT).joinpath('img')
 IMG_PATH.mkdir(parents=True, exist_ok=True)
