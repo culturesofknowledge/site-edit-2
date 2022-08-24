@@ -1,11 +1,14 @@
-from django.urls import path
-
+from core.helper import url_utils
 from . import views
 
 app_name = 'location'
-urlpatterns = [
-    path('form', views.init_form, name='init_form'),
-    path('form/<int:location_id>', views.full_form, name='full_form'),
-    path('search', views.LocationSearchView.as_view(), name='search'),
-    path('merge', views.LocationMergeView.as_view(), name='merge'),
-]
+urlpatterns = []
+urlpatterns.extend(
+    url_utils.create_common_urls_for_section(
+        init_view=views.init_form,
+        edit_view=views.full_form,
+        search_view=views.LocationSearchView.as_view(),
+        merge_view=views.LocationMergeView.as_view(),
+        edit_id_name='location_id',
+    )
+)

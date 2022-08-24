@@ -20,6 +20,7 @@ from location.renderer import LocationCompactSearchResultsRenderer, LocationTabl
 from uploader.models import CofkUnionImage
 
 log = logging.getLogger(__name__)
+FormOrFormSet = Union[BaseForm, BaseFormSet]
 
 
 def init_form(request):
@@ -36,9 +37,6 @@ def init_form(request):
             return redirect('location:search')
 
     return render(request, 'location/init_form.html', {'loc_form': loc_form, })
-
-
-FormOrFormSet = Union[BaseForm, BaseFormSet]
 
 
 def to_forms(form_or_formset: FormOrFormSet):

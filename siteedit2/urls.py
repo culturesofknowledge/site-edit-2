@@ -27,6 +27,7 @@ urlpatterns = [
     path('login/', include('login.urls')),
     path('admin/', admin.site.urls),
     path('location/', include('location.urls')),
+    path('preson/', include('person.urls')),
     path('upload/', views.upload_view, name='upload'),
 ]
 
