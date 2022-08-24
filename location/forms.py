@@ -8,11 +8,6 @@ from location.models import CofkUnionLocation
 from uploader.models import CofkUnionImage
 
 
-def create_common_checkbox(**attrs):
-    _attrs = {'class': 'elcheckbox'} | (attrs or {})
-    return forms.CheckboxInput(_attrs, check_test=widgets_utils.one_zero_check_test)
-
-
 class LocationForm(ModelForm):
     form_title__ = 'Core fields and editors\' notes:'
 
@@ -143,11 +138,8 @@ class LocationImageForm(ModelForm):
 
     can_be_displayed = forms.BooleanField(required=False,
                                           label='Can be displayed to public',
-                                          widget=create_common_checkbox(value='1'),
+                                          widget=widgets_utils.create_common_checkbox(value='1'),
                                           initial='1',
-
-                                          # validators=[],
-                                          # error_messages='hihiihihi',
                                           )
     display_order = forms.IntegerField(required=False, label='Order for display in front end')
 

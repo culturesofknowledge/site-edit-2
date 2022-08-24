@@ -109,6 +109,8 @@ class CofkUnionPerson(models.Model, RecordTracker):
     flourished_uncertain = models.SmallIntegerField()
     flourished_approx = models.SmallIntegerField()
 
+    roles = models.ManyToManyField('uploader.CofkUnionRoleCategory')
+
     class Meta:
         db_table = 'cofk_union_person'
 

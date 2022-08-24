@@ -9,6 +9,7 @@ urlpatterns.extend(
         edit_view=views.init_form,
         search_view=views.init_form,
         merge_view=views.init_form,
+        edit_id_name='person_id',
         # edit_view=views.full_form,
         # search_view=views.LocationSearchView.as_view(),
         # merge_view=views.LocationMergeView.as_view(),

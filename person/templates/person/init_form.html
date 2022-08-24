@@ -1,0 +1,92 @@
+{% extends "core/emlo_logined.html" %}
+{% load static %}
+
+
+{% block content %}
+
+    <div class="row row--centered">
+        <div class="col col--1of2">
+            <div>
+                {{ person_form.errors }}
+            </div>
+
+
+            <form action="{% url 'person:init_form' %}" method="post">
+                {% csrf_token %}
+
+                <fieldset id="header_person">
+                    <legend>Core fields and editors' notes:</legend>
+                    <div class="margin-bottom">
+                        <label>Primary name*</label>
+                        {{ person_form.foaf_name }}
+                        {{ person_form.foaf_name.errors }}
+                        <small>(No more than 200 characters. Preferably Surname, Forename)</small>
+                    </div>
+                    <div class="margin-bottom">
+                        {% include "core/component/common_form_choices.html" with label_text='Gender' choices_field=person_form.gender %}
+                    </div>
+                    <div class="margin-bottom">
+                        {{ person_form.is_organisation }}
+                        <label for="{{ person_form.is_organisation.id_for_label }}">Organisation?</label>
+                        <small> (Leave this checkbox blank if the correspondent was an individual person; tick if the
+                            correspondent was a group or organisation.)</small>
+                    </div>
+                    <div class="margin-bottom">
+                        <label>Editors' notes</label>
+                        {{ person_form.editors_notes }}
+                        <small>
+                            These notes are for internal use; we do not plan to display them on the 'front end' website.
+                            To enter a publicly available note, please use the researchers' notes field instead.
+                        </small>
+                    </div>
+
+                </fieldset>
+
+
+                <fieldset id="header_synonyms">
+                    <legend>Synonyms:</legend>
+                    <div class="margin-bottom">
+                        <label>Alternative names and spellings:</label>
+                        {{ person_form.skos_altlabel }}
+                        {{ person_form.skos_altlabel.errors }}
+                        <small>
+                            Please use this field for different spellings of the primary name, e.g. Lyster for Lister.
+                            You can also use it for alternative names such as a woman's maiden/married name.
+                            Please put each synonym on a separate line.
+                        </small>
+                    </div>
+
+                </fieldset>
+                <fieldset id="header_roles">
+                    <legend>Roles/titles:</legend>
+                    <div class="margin-bottom">
+                        {% include "core/component/common_form_choices.html" with label_text='Professional categories' choices_field=person_form.roles_titles %}
+                    </div>
+                    <div class="margin-bottom">
+                        <label>Further details of roles / titles:</label>
+                        {{ person_form.person_aliases }}
+                    </div>
+                </fieldset>
+
+
+                <div class="flex-col sticky-bottom">
+                    <input type="submit" value="Submit">
+                </div>
+
+            </form>
+            <div class="flex-col fixed-right-bottom">
+                <h4>Table of content</h4>
+                <a href="#header_person">Notes</a>
+                <a href="#header_synonyms">Synonyms</a>
+                <a href="#header_roles">Roles</a>
+                <a href="#header_dates">Dates</a>
+                <a href="#header_further_reading">Further reading</a>
+            </div>
+
+        </div>
+    </div>
+
+
+
+
+{% endblock %}
