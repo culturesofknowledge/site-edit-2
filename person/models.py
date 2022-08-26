@@ -2,6 +2,7 @@ from django.db import models
 
 from core.helper.model_utils import RecordTracker
 
+SEQ_NAME_COFKUNIONPERSION__IPERSON_ID = 'cofkunionpersion__iperson_id'
 
 class CofkCollectPerson(models.Model):
     upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
@@ -55,6 +56,7 @@ class CofkCollectPerson(models.Model):
 
 
 class CofkUnionPerson(models.Model, RecordTracker):
+    # KTODO value of person_id is very special, what is purpose of this field
     person_id = models.CharField(primary_key=True, max_length=100)
     foaf_name = models.CharField(max_length=200)
     skos_altlabel = models.TextField(blank=True, null=True)

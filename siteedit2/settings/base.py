@@ -195,7 +195,13 @@ LOGIN_REDIRECT_URL = '/login/dashboard'  # KTODO this value to be update
 MEDIA_ROOT = '/code/files/'  # TODO this needs to be updated
 MEDIA_URL = '/media/'
 
+# ######### EMLO settings
+
 DEFAULT_IMG_LICENCE_URL = 'http://cofk2.bodleian.ox.ac.uk/culturesofknowledge/licence/terms_of_use.html'
 
 MAILGUN_DOMAIN = "<your mailgun messages url>"
 MAILGUN_API_KEY = "<your mailgun api key>"
+
+EMLO_SEQ_VAL_INIT = {
+    'COFKUNIONPERSION__IPERSON_ID': 1000,
+}

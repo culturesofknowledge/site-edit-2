@@ -1,36 +1,15 @@
+import logging
+
 from django import forms
 from django.forms import ModelForm, CharField
 
-from core.helper import widgets_utils
+from core.helper import widgets_utils, form_utils
 from person.models import CofkUnionPerson
+
+log = logging.getLogger(__name__)
 
 
 class PersonForm(ModelForm):
-    # location_id = IntegerField(required=False, widget=HiddenInput())
-    # location_name = CharField(required=False,
-    #                           widget=forms.TextInput(attrs=dict(readonly=True)),
-    #                           label='Full name of location')
-    # editors_notes = CharField(required=False,
-    #                           widget=forms.Textarea())
-    # element_1_eg_room = CharField(required=False,
-    #                               label='1. E.g. room')
-    # element_2_eg_building = CharField(required=False,
-    #                                   label='2. E.g. building')
-    # element_3_eg_parish = CharField(required=False,
-    #                                 label='3. E.g. parish')
-    # element_4_eg_city = CharField(required=True,
-    #                               label='4. E.g. city')
-    # element_5_eg_county = CharField(required=False,
-    #                                 label='5. E.g. county')
-    # element_6_eg_country = CharField(required=False,
-    #                                  label='6. E.g. country')
-    # element_7_eg_empire = CharField(required=False,
-    #                                 label='7. E.g. empire')
-    # location_synonyms = CharField(required=False,
-    #                               label='Alternative names for location')
-    # latitude = CharField(required=False)
-    # longitude = CharField(required=False)
-
     gender = CharField(required=False,
                        widget=forms.RadioSelect(choices=[
                            ('M', 'Male'),
@@ -39,7 +18,7 @@ class PersonForm(ModelForm):
                        ])
                        )
     is_organisation = forms.BooleanField(required=False,
-                                         widget=widgets_utils.create_common_checkbox(value='1'),
+                                         widget=widgets_utils.create_common_checkbox(),
                                          initial='1',
                                          )
     roles_titles = forms.CharField(required=False,
@@ -76,6 +55,19 @@ class PersonForm(ModelForm):
                                        ]
                                    )
                                    )
+    date_of_death_inferred = forms.IntegerField(required=False, initial=0)
+    date_of_death_uncertain = forms.IntegerField(required=False, initial=0)
+    date_of_death_approx = forms.IntegerField(required=False, initial=0)
+    date_of_birth_inferred = forms.IntegerField(required=False, initial=0)
+    date_of_birth_uncertain = forms.IntegerField(required=False, initial=0)
+    date_of_birth_approx = forms.IntegerField(required=False, initial=0)
+    flourished_inferred = forms.IntegerField(required=False, initial=0)
+    flourished_uncertain = forms.IntegerField(required=False, initial=0)
+    flourished_approx = forms.IntegerField(required=False, initial=0)
+
+    date_of_birth_is_range = forms.IntegerField(required=False, initial=0)
+    date_of_death_is_range = forms.IntegerField(required=False, initial=0)
+    flourished_is_range = forms.IntegerField(required=False, initial=0)
 
     class Meta:
         model = CofkUnionPerson
@@ -102,9 +94,38 @@ class PersonForm(ModelForm):
             'date_of_death_uncertain',
             'date_of_death_approx',
 
+            'flourished_year',
+            'flourished_month',
+            'flourished_day',
+            'flourished',
+            'flourished_inferred',
+            'flourished_uncertain',
+            'flourished_approx',
+
             'further_reading',
+
+            'date_of_birth_is_range',
+            'date_of_death_is_range',
+            'flourished_is_range',
+
         )
 
+    def clean(self):
+        form_utils.clean_checkbox_to_one_zero(self.cleaned_data, ['is_organisation'])
+        form_utils.clean_by_default_value(self.cleaned_data, [
+            'date_of_birth_inferred',
+            'date_of_birth_uncertain',
+            'date_of_birth_approx',
+            'date_of_death_inferred',
+            'date_of_death_uncertain',
+            'date_of_death_approx',
+            'flourished_inferred',
+            'flourished_uncertain',
+            'flourished_approx',
 
-"""
-"""
+            'date_of_birth_is_range',
+            'date_of_death_is_range',
+            'flourished_is_range',
+        ], 0)
+
+        return super().clean()

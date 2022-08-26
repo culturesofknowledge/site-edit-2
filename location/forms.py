@@ -138,7 +138,7 @@ class LocationImageForm(ModelForm):
 
     can_be_displayed = forms.BooleanField(required=False,
                                           label='Can be displayed to public',
-                                          widget=widgets_utils.create_common_checkbox(value='1'),
+                                          widget=widgets_utils.create_common_checkbox(),
                                           initial='1',
                                           )
     display_order = forms.IntegerField(required=False, label='Order for display in front end')
@@ -157,8 +157,7 @@ class LocationImageForm(ModelForm):
         )
 
     def clean(self):
-        if 'can_be_displayed' in self.cleaned_data:
-            self.cleaned_data['can_be_displayed'] = '1' if self.cleaned_data['can_be_displayed'] else '0'
+        form_utils.clean_checkbox_to_one_zero(self.cleaned_data, 'can_be_displayed')
         return super().clean()
 
 

@@ -3,7 +3,7 @@ import logging
 from django.conf import settings
 from django.core.management import BaseCommand
 
-from core.helper import email_utils
+from core.helper import email_utils, model_utils
 from core.models import CofkUnionResource, CofkUnionComment
 from location import fixtures
 from location.models import CofkUnionLocation
@@ -15,7 +15,7 @@ class Command(BaseCommand):
     help = 'playground for try some python code'
 
     def handle(self, *args, **options):
-        main4()
+        main5()
 
 
 def main1():
@@ -82,3 +82,8 @@ def main4():
 
     # You can send up to 300 emails/day from this sandbox server.
     # Next, you should add your own domain so you can send 10000 emails/month for free.
+
+
+def main5():
+    result = model_utils.next_seq_safe('xxkks')
+    print(result)
