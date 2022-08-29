@@ -28,6 +28,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+CSRF_TRUSTED_ORIGINS = ['http://209.97.176.41']  # KTODO temp solution, should be update docker setting
+
 # Application definition
 
 INSTALLED_APPS = [
