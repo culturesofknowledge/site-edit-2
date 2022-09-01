@@ -1,0 +1,17 @@
+<table>
+    <thead>
+    <tr></tr>
+    <tr></tr>
+    </thead>
+    <tbody>
+
+    {% for r in search_results %}
+        <tr class="selectable_entry" entry_id="{{ r.pk }}">
+            <td>
+                {{ r }}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+
+</table>

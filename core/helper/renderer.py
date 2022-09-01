@@ -37,3 +37,34 @@ class CompactSearchResultsRenderer:
     @property
     def record_renderer_factory(self) -> Type[SearchRecordRenderer]:
         raise NotImplementedError('type of CompactItemRenderer have not provided ')
+
+
+def create_table_search_results_renderer(records_name, template_path):
+    def _renderer_by_record(records):
+        def _render():
+            context = {
+                records_name: records
+            }
+            return render_to_string(template_path, context)
+
+        return _render
+
+    return _renderer_by_record
+
+
+class DemoCompactSearchResultsRenderer(CompactSearchResultsRenderer):
+    class _DemoSRR(SearchRecordRenderer):
+
+        @property
+        def template_name(self):
+            return 'core/demo_compact_item.html'
+
+    @property
+    def record_renderer_factory(self) -> Type[SearchRecordRenderer]:
+        return self._DemoSRR
+
+
+demo_table_search_results_renderer = create_table_search_results_renderer(
+    'search_results',
+    'core/demo_search_table_layout.html',
+)

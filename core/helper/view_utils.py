@@ -5,7 +5,6 @@ from typing import Iterable, Tuple, List, Type, Callable
 from urllib.parse import urlencode
 
 from django import template
-from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.views import View
 from django.views.generic import ListView
@@ -13,7 +12,8 @@ from django.views.generic import ListView
 import core.constant as core_constant
 from core.forms import build_search_components
 from core.helper import file_utils, email_utils
-from core.helper.renderer import CompactSearchResultsRenderer
+from core.helper.renderer import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
+    demo_table_search_results_renderer
 from core.helper.view_components import DownloadCsvHandler
 
 register = template.Library()
@@ -24,6 +24,7 @@ class BasicSearchView(ListView):
     """
     Helper for you to build common style of search page for emlo editor
     """
+    paginate_by = 5
     template_name = 'core/basic_search_page.html'
     context_object_name = 'records'
 
@@ -68,8 +69,11 @@ class BasicSearchView(ListView):
         raise NotImplementedError('missing download_csv_handler')
 
     @property
-    def merge_page_name(self) -> View:
+    def merge_page_name(self) -> str:
         raise NotImplementedError('missing merge_page_name')
+
+    def get_queryset(self):
+        raise NotImplementedError('missing get_queryset')
 
     @property
     def request_data(self):
@@ -163,3 +167,45 @@ def urlparams(*_, **kwargs):
     if safe_args:
         return '?{}'.format(urlencode(safe_args))
     return ''
+
+
+class DefaultSearchView(BasicSearchView):
+
+    @property
+    def query_fieldset_list(self) -> Iterable:
+        return []
+
+    @property
+    def title(self) -> str:
+        return '__TITLE__'
+
+    @property
+    def sort_by_choices(self) -> List[Tuple[str, str]]:
+        return [
+            ('-change_timestamp', 'Change Timestamp desc',),
+            ('change_timestamp', 'Change Timestamp asc',),
+        ]
+
+    @property
+    def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
+        return DemoCompactSearchResultsRenderer
+
+    @property
+    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+        return demo_table_search_results_renderer
+
+    @property
+    def download_csv_handler(self) -> DownloadCsvHandler:
+        return None
+
+    @property
+    def merge_page_name(self) -> View:
+        return 'login:gate'
+
+    def get_queryset(self):
+        class _FakeQueryset(list):
+
+            def count(self, *args, **kwargs):
+                return 0
+
+        return _FakeQueryset()

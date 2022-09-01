@@ -196,7 +196,6 @@ class LocationMergeView(ListView):
 
 
 class LocationSearchView(BasicSearchView):
-    paginate_by = 4
 
     @property
     def query_fieldset_list(self) -> Iterable:
@@ -246,7 +245,7 @@ class LocationSearchView(BasicSearchView):
         return 'Location'
 
     @property
-    def merge_page_name(self):
+    def merge_page_name(self) -> str:
         return 'location:merge'
 
     @property
