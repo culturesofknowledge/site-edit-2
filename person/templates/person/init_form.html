@@ -59,13 +59,19 @@
                 </fieldset>
                 <fieldset id="header_roles">
                     <legend>Roles/titles:</legend>
-                    <div class="margin-bottom">
+                    <div class="choices-container">
                         {% include "core/component/common_form_choices.html" with label_text='Professional categories' choices_field=person_form.roles_titles %}
                     </div>
                     <div class="margin-bottom">
                         <label>Further details of roles / titles:</label>
                         {{ person_form.person_aliases }}
                     </div>
+                    <small>
+                        Please use this field for titles and career-related details such as '5th Earl of Aylesbury' or
+                        'Bishop of Chester 1650-1680'.
+                        <br/>
+                        Please put each role/title on a separate line.
+                    </small>
                 </fieldset>
 
 

@@ -1,7 +1,7 @@
-<label>{{ label_text }}</label>
+<label style="width: 100%">{{ label_text }}</label>
 {{ choices_field.errors }}
 {% for cb in choices_field %}
-    <small>
+    <small class="choice-item">
         {{ cb.tag }}
         <label for="{{ cb.id_for_label }}">
             {{ cb.choice_label }}
