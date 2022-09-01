@@ -7,6 +7,7 @@
 # Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
 
+from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 
 
@@ -72,9 +73,9 @@ class CofkReportOutputs(models.Model):
 class CofkUnionComment(models.Model, RecordTracker):
     comment_id = models.AutoField(primary_key=True)
     comment = models.TextField(blank=True, null=True)
-    creation_timestamp = models.DateTimeField(blank=True, null=True)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
-    change_timestamp = models.DateTimeField(blank=True, null=True)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     change_user = models.CharField(max_length=50)
     uuid = models.UUIDField(blank=True, null=True)
 
@@ -99,9 +100,9 @@ class CofkUnionRelationship(models.Model, RecordTracker):
     right_id_value = models.CharField(max_length=100)
     relationship_valid_from = models.DateTimeField(blank=True, null=True)
     relationship_valid_till = models.DateTimeField(blank=True, null=True)
-    creation_timestamp = models.DateTimeField(blank=True, null=True)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
-    change_timestamp = models.DateTimeField(blank=True, null=True)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     change_user = models.CharField(max_length=50)
 
     class Meta:
@@ -112,9 +113,9 @@ class CofkUnionRelationshipType(models.Model, RecordTracker):
     relationship_code = models.CharField(primary_key=True, max_length=50)
     desc_left_to_right = models.CharField(max_length=200)
     desc_right_to_left = models.CharField(max_length=200)
-    creation_timestamp = models.DateTimeField(blank=True, null=True)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
-    change_timestamp = models.DateTimeField(blank=True, null=True)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     change_user = models.CharField(max_length=50)
 
     class Meta:
@@ -126,9 +127,9 @@ class CofkUnionResource(models.Model, RecordTracker):
     resource_name = models.TextField()
     resource_details = models.TextField()
     resource_url = models.TextField()
-    creation_timestamp = models.DateTimeField(blank=True, null=True)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
-    change_timestamp = models.DateTimeField(blank=True, null=True)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     change_user = models.CharField(max_length=50)
     uuid = models.UUIDField(blank=True, null=True)
 
@@ -193,7 +194,7 @@ class CopyCofkUnionQueryableWork(models.Model):
     original_catalogue = models.CharField(max_length=100, blank=True, null=True)
     accession_code = models.CharField(max_length=1000, blank=True, null=True)
     work_to_be_deleted = models.SmallIntegerField(blank=True, null=True)
-    change_timestamp = models.DateTimeField(blank=True, null=True)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     change_user = models.CharField(max_length=50, blank=True, null=True)
     drawer = models.CharField(max_length=50, blank=True, null=True)
     editors_notes = models.TextField(blank=True, null=True)
@@ -221,9 +222,9 @@ class ProActivity(models.Model, RecordTracker):
     date_to_uncertainty = models.TextField(blank=True, null=True)
     notes_used = models.TextField(blank=True, null=True)
     additional_notes = models.TextField(blank=True, null=True)
-    creation_timestamp = models.DateTimeField(blank=True, null=True)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     creation_user = models.TextField(blank=True, null=True)
-    change_timestamp = models.DateTimeField(blank=True, null=True)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     change_user = models.TextField(blank=True, null=True)
     event_label = models.TextField(blank=True, null=True)
 
@@ -246,7 +247,7 @@ class ProAssertion(models.Model):
     assertion_id = models.TextField(blank=True, null=True)
     source_id = models.TextField(blank=True, null=True)
     source_description = models.TextField(blank=True, null=True)
-    change_timestamp = models.DateTimeField(blank=True, null=True)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
 
     class Meta:
         db_table = 'pro_assertion'
@@ -346,7 +347,7 @@ class ProIngestV8Toreview(models.Model):
 
 class ProLocation(models.Model):
     location_id = models.TextField(blank=True, null=True)
-    change_timestamp = models.DateTimeField(blank=True, null=True)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     activity_id = models.IntegerField(blank=True, null=True)
 
     class Meta:
@@ -363,7 +364,7 @@ class ProPeopleCheck(models.Model):
 
 class ProPrimaryPerson(models.Model):
     person_id = models.TextField(blank=True, null=True)
-    change_timestamp = models.DateTimeField(blank=True, null=True)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     activity_id = models.IntegerField(blank=True, null=True)
 
     class Meta:
@@ -378,7 +379,7 @@ class ProRelationship(models.Model):
     object_id = models.TextField(blank=True, null=True)
     object_type = models.TextField(blank=True, null=True)
     object_role_id = models.TextField(blank=True, null=True)
-    change_timestamp = models.DateTimeField(blank=True, null=True)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     activity_id = models.IntegerField(blank=True, null=True)
 
     class Meta:
@@ -389,7 +390,7 @@ class ProRoleInActivity(models.Model):
     entity_type = models.TextField(blank=True, null=True)
     entity_id = models.TextField(blank=True, null=True)
     role_id = models.TextField(blank=True, null=True)
-    change_timestamp = models.DateTimeField(blank=True, null=True)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     activity_id = models.IntegerField(blank=True, null=True)
 
     class Meta:
@@ -418,9 +419,9 @@ class ProTextualSource(models.Model, RecordTracker):
                                         null=True)  # Field name made lowercase.
     repository = models.TextField(blank=True, null=True)
     creation_user = models.TextField(blank=True, null=True)
-    creation_timestamp = models.DateTimeField(blank=True, null=True)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     change_user = models.TextField(blank=True, null=True)
-    change_timestamp = models.DateTimeField(blank=True, null=True)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
 
     class Meta:
         db_table = 'pro_textual_source'

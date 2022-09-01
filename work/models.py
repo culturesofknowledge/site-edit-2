@@ -1,5 +1,6 @@
 from django.db import models
 
+from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 
 
@@ -47,9 +48,9 @@ class CofkUnionWork(models.Model, RecordTracker):
     editors_notes = models.TextField(blank=True, null=True)
     edit_status = models.CharField(max_length=3)
     relevant_to_cofk = models.CharField(max_length=3)
-    creation_timestamp = models.DateTimeField(blank=True, null=True)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
-    change_timestamp = models.DateTimeField(blank=True, null=True)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     change_user = models.CharField(max_length=50)
     uuid = models.UUIDField(blank=True, null=True)
 
@@ -295,7 +296,7 @@ class CofkUnionQueryableWork(models.Model):
     original_catalogue = models.CharField(max_length=100)
     accession_code = models.CharField(max_length=1000, blank=True, null=True)
     work_to_be_deleted = models.SmallIntegerField()
-    change_timestamp = models.DateTimeField(blank=True, null=True)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     change_user = models.CharField(max_length=50)
     drawer = models.CharField(max_length=50, blank=True, null=True)
     editors_notes = models.TextField(blank=True, null=True)

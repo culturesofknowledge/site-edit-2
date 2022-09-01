@@ -1,5 +1,6 @@
 from django.db import models
 
+from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 
 SEQ_NAME_COFKUNIONPERSION__IPERSON_ID = 'cofkunionpersion__iperson_id'
@@ -79,9 +80,9 @@ class CofkUnionPerson(models.Model, RecordTracker):
     gender = models.CharField(max_length=1)
     is_organisation = models.CharField(max_length=1)
     iperson_id = models.IntegerField()
-    creation_timestamp = models.DateTimeField(blank=True, null=True)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
-    change_timestamp = models.DateTimeField(blank=True, null=True)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     change_user = models.CharField(max_length=50)
     editors_notes = models.TextField(blank=True, null=True)
     further_reading = models.TextField(blank=True, null=True)

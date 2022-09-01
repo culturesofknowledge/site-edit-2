@@ -62,3 +62,7 @@ def next_seq_safe(seq_name):
 
     result = cursor.fetchone()
     return result[0]
+
+
+def default_current_timestamp():
+    return datetime.datetime.now()
