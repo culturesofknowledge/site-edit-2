@@ -1,9 +1,12 @@
+import functools
+
 from django.db import models
 
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 
-SEQ_NAME_COFKUNIONPERSION__IPERSON_ID = 'cofkunionpersion__iperson_id'
+SEQ_NAME_COFKUNIONPERSION__IPERSON_ID = 'cofk_union_person_iperson_id_seq'
+
 
 class CofkCollectPerson(models.Model):
     upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
@@ -79,7 +82,8 @@ class CofkUnionPerson(models.Model, RecordTracker):
     date_of_death_approx = models.SmallIntegerField()
     gender = models.CharField(max_length=1)
     is_organisation = models.CharField(max_length=1)
-    iperson_id = models.IntegerField()
+    iperson_id = models.IntegerField(
+        default=functools.partial(model_utils.next_seq_safe, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID))
     creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
     change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)

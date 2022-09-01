@@ -19,9 +19,9 @@ def init_form(request):
                 log.info(f'person have been saved')
                 person_form.instance.update_current_user_timestamp(request.user.username)
                 person_form.instance: CofkUnionPerson
-                # person_form.instance.person_id = model_utils.
-                person_form.instance.iperson_id = model_utils.next_seq_safe(
-                    models.SEQ_NAME_COFKUNIONPERSION__IPERSON_ID)
+                # KTODO how to define person_id
+                # person_form.instance.iperson_id = model_utils.next_seq_safe(
+                #     models.SEQ_NAME_COFKUNIONPERSION__IPERSON_ID)
                 new_person = person_form.save()
                 # return redirect('person:full_form', new_person.iperson_id)
                 return redirect('person:search')  # TOBEREMOVE debugging only

@@ -17,7 +17,7 @@ from core.helper import iter_utils
 from core.models import CofkUnionResource, CofkUnionComment
 from location.models import CofkUnionLocation
 from uploader.models import CofkUnionImage, CofkUnionOrgType
-from person.models import CofkUnionPerson
+from person.models import CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID
 
 log = logging.getLogger(__name__)
 
@@ -180,7 +180,7 @@ def data_migration(user, password, database, host, port):
         lambda: clone_rows_by_model_class(conn, CofkUnionOrgType),
         lambda: clone_rows_by_model_class(conn, CofkUnionPerson, col_val_handler_fn_list=[
             _val_handler_person__organisation_type,
-        ], seq_name='cofk_union_person_iperson_id_seq'),
+        ], seq_name=SEQ_NAME_COFKUNIONPERSION__IPERSON_ID),
         lambda: clone_rows_by_model_class(conn, CofkUnionLocation),
         lambda: clone_rows_by_model_class(conn, CofkUnionResource),
         lambda: clone_rows_by_model_class(conn, CofkUnionComment),
