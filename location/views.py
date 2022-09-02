@@ -11,7 +11,7 @@ from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
-from core.helper.view_utils import BasicSearchView
+from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate
 from core.services import media_service
 from location import renderer
 from location.forms import LocationForm, LocationResourceForm, LocationCommentForm, GeneralSearchFieldset, \
@@ -24,20 +24,20 @@ log = logging.getLogger(__name__)
 FormOrFormSet = Union[BaseForm, BaseFormSet]
 
 
-def init_form(request):
-    loc_form = LocationForm(request.POST or None)
-    if request.method == 'POST':
-        if loc_form.is_valid():
-            if loc_form.has_changed():
-                log.info(f'location have been saved')
-                loc_form.instance.update_current_user_timestamp(request.user.username)
-                _new_loc = loc_form.save()
-                return redirect('location:full_form', _new_loc.location_id)
-            else:
-                log.debug('form have no change, skip record save')
-            return redirect('location:search')
+class LocationInitView(CommonInitFormViewTemplate):
 
-    return render(request, 'location/init_form.html', {'loc_form': loc_form, })
+    def resp_form_page(self, request, form):
+        return render(request, 'location/init_form.html', {'loc_form': form})
+
+    def resp_search_page(self, request, form):
+        return redirect('location:search')
+
+    def resp_after_saved(self, request, form, new_instance):
+        return redirect('location:full_form', new_instance.location_id)
+
+    @property
+    def form_factory(self) -> Callable[..., BaseForm]:
+        return LocationForm
 
 
 def to_forms(form_or_formset: FormOrFormSet):

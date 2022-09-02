@@ -5,7 +5,7 @@ app_name = 'location'
 urlpatterns = []
 urlpatterns.extend(
     url_utils.create_common_urls_for_section(
-        init_view=views.init_form,
+        init_view=views.LocationInitView.as_view(),
         edit_view=views.full_form,
         search_view=views.LocationSearchView.as_view(),
         merge_view=views.LocationMergeView.as_view(),

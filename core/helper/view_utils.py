@@ -2,9 +2,11 @@ import logging
 import os
 from multiprocessing import Process
 from typing import Iterable, Tuple, List, Type, Callable
+from typing import NoReturn
 from urllib.parse import urlencode
 
 from django import template
+from django.forms import ModelForm
 from django.urls import reverse
 from django.views import View
 from django.views.generic import ListView
@@ -209,3 +211,42 @@ class DefaultSearchView(BasicSearchView):
                 return 0
 
         return _FakeQueryset()
+
+
+class CommonInitFormViewTemplate(View):
+
+    def resp_form_page(self, request, form):
+        raise NotImplementedError()
+
+    def resp_search_page(self, request, form):
+        raise NotImplementedError()
+
+    def resp_after_saved(self, request, form, new_instance):
+        raise NotImplementedError()
+
+    @property
+    def form_factory(self) -> Callable[..., ModelForm]:
+        raise NotImplementedError()
+
+    def on_form_changed(self, request, form) -> NoReturn:
+        if hasattr(form.instance, 'update_current_user_timestamp'):
+            form.instance.update_current_user_timestamp(request.user.username)
+        _new_loc = form.save()
+        return _new_loc
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_factory(request.POST or None)
+        if form.is_valid():
+            if form.has_changed():
+                log.info(f'form have been changed')
+                new_instance = self.on_form_changed(request, form)
+                return self.resp_after_saved(request, form, new_instance)
+            else:
+                log.debug('form have no change, skip record save')
+            return self.resp_search_page(request, form)
+
+        return self.resp_form_page(request, form)
+
+    def get(self, request, *args, **kwargs):
+        form = self.form_factory()
+        return self.resp_form_page(request, form)
