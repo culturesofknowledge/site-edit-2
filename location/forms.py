@@ -2,7 +2,7 @@ from django import forms
 from django.conf import settings
 from django.forms import ModelForm, HiddenInput, IntegerField, CharField, Form
 
-from core.helper import form_utils, widgets_utils
+from core.helper import form_utils
 from core.models import CofkUnionResource, CofkUnionComment
 from location.models import CofkUnionLocation
 from uploader.models import CofkUnionImage
@@ -24,7 +24,7 @@ class LocationForm(ModelForm):
     element_3_eg_parish = CharField(required=False,
                                     label='3. E.g. parish')
     element_4_eg_city = CharField(required=True,
-                                  label='4. E.g. city')
+                                  label='4. E.g. city * ')
     element_5_eg_county = CharField(required=False,
                                     label='5. E.g. county')
     element_6_eg_country = CharField(required=False,

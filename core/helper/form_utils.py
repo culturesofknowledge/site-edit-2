@@ -49,15 +49,21 @@ def clean_by_default_value(cleaned_data: dict, field_names: Iterable[str],
 
 
 class ZeroOneCheckboxField(forms.BooleanField):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, is_str=True, *args, **kwargs):
         default_kwargs = dict(
             widget=widgets_utils.create_common_checkbox(),
             initial='0',
+            required=False,
         )
         kwargs = default_kwargs | kwargs
         super().__init__(*args, **kwargs)
 
+        self.is_str = is_str
+
     def clean(self, value):
         new_value = super().clean(value)
-        new_value = '1' if new_value else '0'
+        if self.is_str:
+            new_value = '1' if new_value else '0'
+        else:
+            new_value = 1 if new_value else 0
         return new_value

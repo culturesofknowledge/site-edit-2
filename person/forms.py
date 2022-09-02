@@ -3,10 +3,21 @@ import logging
 from django import forms
 from django.forms import ModelForm, CharField
 
-from core.helper import widgets_utils, form_utils
+from core.helper import form_utils
 from person.models import CofkUnionPerson
 
 log = logging.getLogger(__name__)
+
+calendar_date_choices = [
+    ("", 'Unknown'),
+    ("G", 'Gregorian'),
+    ("JM", 'Julian (year starting 25th Mar)'),
+    ("JJ", 'Julian (year starting 1st Jan)'),
+    ("O", 'Other'),
+]
+
+
+# def calendar_date
 
 
 class PersonForm(ModelForm):
@@ -56,16 +67,21 @@ class PersonForm(ModelForm):
     date_of_death_inferred = forms.IntegerField(required=False, initial=0)
     date_of_death_uncertain = forms.IntegerField(required=False, initial=0)
     date_of_death_approx = forms.IntegerField(required=False, initial=0)
+    date_of_death_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+
     date_of_birth_inferred = forms.IntegerField(required=False, initial=0)
     date_of_birth_uncertain = forms.IntegerField(required=False, initial=0)
     date_of_birth_approx = forms.IntegerField(required=False, initial=0)
+    date_of_birth_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    date_of_birth_calendar = forms.CharField(required=False,
+                                             widget=forms.RadioSelect(
+                                                 choices=calendar_date_choices,
+                                             ))
+
     flourished_inferred = forms.IntegerField(required=False, initial=0)
     flourished_uncertain = forms.IntegerField(required=False, initial=0)
     flourished_approx = forms.IntegerField(required=False, initial=0)
-
-    date_of_birth_is_range = forms.IntegerField(required=False, initial=0)
-    date_of_death_is_range = forms.IntegerField(required=False, initial=0)
-    flourished_is_range = forms.IntegerField(required=False, initial=0)
+    flourished_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
 
     class Meta:
         model = CofkUnionPerson
@@ -84,6 +100,8 @@ class PersonForm(ModelForm):
             'date_of_birth_inferred',
             'date_of_birth_uncertain',
             'date_of_birth_approx',
+            'date_of_birth_calendar',
+
             'date_of_death_year',
             'date_of_death_month',
             'date_of_death_day',
@@ -109,6 +127,7 @@ class PersonForm(ModelForm):
         )
 
     def clean(self):
+        log.debug(f'cleaned_data: {self.cleaned_data}')
         form_utils.clean_by_default_value(self.cleaned_data, [
             'date_of_birth_inferred',
             'date_of_birth_uncertain',

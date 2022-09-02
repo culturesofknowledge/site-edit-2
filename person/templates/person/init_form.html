@@ -63,8 +63,8 @@
                         {% include "core/component/common_form_choices.html" with label_text='Professional categories' choices_field=person_form.roles_titles %}
                     </div>
                     <div class="margin-bottom">
-                        <label>Further details of roles / titles:</label>
                         {{ person_form.person_aliases }}
+                        <label>Further details of roles / titles:</label>
                     </div>
                     <small>
                         Please use this field for titles and career-related details such as '5th Earl of Aylesbury' or
@@ -72,6 +72,24 @@
                         <br/>
                         Please put each role/title on a separate line.
                     </small>
+                </fieldset>
+
+                <fieldset id="header_dates">
+                    <legend>Dates:</legend>
+
+
+                    <fieldset>
+                        <legend>Date of birth</legend>
+                        <div class="margin-bottom">
+                            {% include "core/component/common_form_choices.html" with label_text='Calendar of date of birth' choices_field=person_form.date_of_birth_calendar %}
+                        </div>
+                        <div class="margin-bottom">
+                            {{ person_form.date_of_birth_is_range }}
+                            <label for="{{ person_form.date_of_birth_is_range.id_for_label }}">Date range?</label>
+                        </div>
+                    </fieldset>
+
+
                 </fieldset>
 
 
