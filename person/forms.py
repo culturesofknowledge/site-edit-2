@@ -17,10 +17,8 @@ class PersonForm(ModelForm):
                            ('', 'Unknown or not applicable'),
                        ])
                        )
-    is_organisation = forms.BooleanField(required=False,
-                                         widget=widgets_utils.create_common_checkbox(),
-                                         initial='1',
-                                         )
+
+    is_organisation = form_utils.ZeroOneCheckboxField(required=False, initial='1', )
     roles_titles = forms.CharField(required=False,
                                    widget=forms.CheckboxSelectMultiple(
                                        choices=[
@@ -111,7 +109,6 @@ class PersonForm(ModelForm):
         )
 
     def clean(self):
-        form_utils.clean_checkbox_to_one_zero(self.cleaned_data, ['is_organisation'])
         form_utils.clean_by_default_value(self.cleaned_data, [
             'date_of_birth_inferred',
             'date_of_birth_uncertain',

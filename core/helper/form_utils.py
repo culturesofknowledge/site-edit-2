@@ -1,7 +1,10 @@
 import logging
 from typing import Iterable
 
+from django import forms
 from django.template.loader import render_to_string
+
+from core.helper import widgets_utils
 
 log = logging.getLogger(__name__)
 
@@ -35,15 +38,6 @@ def _prepare_valid_field_names(cleaned_data, field_names):
     return field_names
 
 
-def clean_checkbox_to_one_zero(cleaned_data: dict, field_names: Iterable[str] | str):
-    """ DB required store value as '1' and '0'
-    we can use this method change form value from True or False to '1' and '0'
-    """
-
-    for f in _prepare_valid_field_names(cleaned_data, field_names):
-        cleaned_data[f] = '1' if cleaned_data[f] else '0'
-
-
 def clean_by_default_value(cleaned_data: dict, field_names: Iterable[str],
                            default_val, is_empty_fn=None, ):
     is_empty_fn = is_empty_fn or (lambda v: v is None)
@@ -52,3 +46,18 @@ def clean_by_default_value(cleaned_data: dict, field_names: Iterable[str],
     for field in _prepare_valid_field_names(cleaned_data, field_names):
         if is_empty_fn(cleaned_data[field]):
             cleaned_data[field] = default_val
+
+
+class ZeroOneCheckboxField(forms.BooleanField):
+    def __init__(self, *args, **kwargs):
+        default_kwargs = dict(
+            widget=widgets_utils.create_common_checkbox(),
+            initial='0',
+        )
+        kwargs = default_kwargs | kwargs
+        super().__init__(*args, **kwargs)
+
+    def clean(self, value):
+        new_value = super().clean(value)
+        new_value = '1' if new_value else '0'
+        return new_value

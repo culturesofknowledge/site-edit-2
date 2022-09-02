@@ -136,11 +136,9 @@ class LocationImageForm(ModelForm):
                                   label='licence URL*')
     licence_url.widget.attrs.update({'class': 'url_checker', 'value': settings.DEFAULT_IMG_LICENCE_URL})
 
-    can_be_displayed = forms.BooleanField(required=False,
-                                          label='Can be displayed to public',
-                                          widget=widgets_utils.create_common_checkbox(),
-                                          initial='1',
-                                          )
+    can_be_displayed = form_utils.ZeroOneCheckboxField(required=False,
+                                                       label='Can be displayed to public',
+                                                       initial='1', )
     display_order = forms.IntegerField(required=False, label='Order for display in front end')
 
     class Meta:
@@ -155,10 +153,6 @@ class LocationImageForm(ModelForm):
             'can_be_displayed',
             'display_order',
         )
-
-    def clean(self):
-        form_utils.clean_checkbox_to_one_zero(self.cleaned_data, 'can_be_displayed')
-        return super().clean()
 
 
 class GeneralSearchFieldset(ModelForm):
