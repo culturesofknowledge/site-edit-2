@@ -12,7 +12,7 @@ from django.views.generic import ListView
 import core.constant as core_constant
 from core.forms import build_search_components
 from core.helper import file_utils, email_utils
-from core.helper.renderer import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
+from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
     demo_table_search_results_renderer
 from core.helper.view_components import DownloadCsvHandler
 

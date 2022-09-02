@@ -1,9 +1,10 @@
 import logging
-from typing import List, Tuple
+from typing import List, Tuple, Callable, Iterable
 
 from django.shortcuts import render, redirect
 from django.views import View
 
+from core.helper import renderer_utils
 from core.helper.view_utils import DefaultSearchView
 from person.forms import PersonForm
 from person.models import CofkUnionPerson
@@ -33,6 +34,11 @@ def init_form(request):
     return render(request, 'person/init_form.html', {'person_form': person_form, })
 
 
+def full_form(request, iperson_id):
+    # KTODO
+    return render(request, 'person/init_form.html', {'person_form': person_form, })
+
+
 class PersonSearchView(DefaultSearchView):
 
     @property
@@ -52,3 +58,7 @@ class PersonSearchView(DefaultSearchView):
 
     def get_queryset(self):
         return CofkUnionPerson.objects.all()  # KTODO
+
+    @property
+    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+        return renderer_utils.create_table_search_results_renderer('person/search_table_layout.html')

@@ -1,8 +1,7 @@
 from typing import Type
 
-from django.template.loader import render_to_string
-
-from core.helper.renderer import CompactSearchResultsRenderer, SearchRecordRenderer
+from core.helper import renderer_utils
+from core.helper.renderer_utils import CompactSearchResultsRenderer, SearchRecordRenderer
 
 
 class LocationCompactSearchResultsRenderer(CompactSearchResultsRenderer):
@@ -17,13 +16,6 @@ class LocationCompactSearchResultsRenderer(CompactSearchResultsRenderer):
         return self._LocSRR
 
 
-class LocationTableSearchResultsRenderer:
-
-    def __init__(self, records):
-        self.records = records
-
-    def __call__(self):
-        context = {
-            'search_results': self.records
-        }
-        return render_to_string('location/search_table_layout.html', context)
+location_table_search_result_renderer = renderer_utils.create_table_search_results_renderer(
+    'location/search_table_layout.html'
+)

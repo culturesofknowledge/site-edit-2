@@ -39,7 +39,7 @@ class CompactSearchResultsRenderer:
         raise NotImplementedError('type of CompactItemRenderer have not provided ')
 
 
-def create_table_search_results_renderer(records_name, template_path):
+def create_table_search_results_renderer(template_path, records_name='search_results', ):
     def _renderer_by_record(records):
         def _render():
             context = {
@@ -65,6 +65,5 @@ class DemoCompactSearchResultsRenderer(CompactSearchResultsRenderer):
 
 
 demo_table_search_results_renderer = create_table_search_results_renderer(
-    'search_results',
     'core/demo_search_table_layout.html',
 )

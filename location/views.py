@@ -9,14 +9,15 @@ from django.views.generic import ListView
 
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
-from core.helper.renderer import CompactSearchResultsRenderer
+from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
 from core.helper.view_utils import BasicSearchView
 from core.services import media_service
+from location import renderer
 from location.forms import LocationForm, LocationResourceForm, LocationCommentForm, GeneralSearchFieldset, \
     LocationImageForm, LocUploadImageForm
 from location.models import CofkUnionLocation
-from location.renderer import LocationCompactSearchResultsRenderer, LocationTableSearchResultsRenderer
+from location.renderer import LocationCompactSearchResultsRenderer
 from uploader.models import CofkUnionImage
 
 log = logging.getLogger(__name__)
@@ -254,7 +255,7 @@ class LocationSearchView(BasicSearchView):
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
-        return LocationTableSearchResultsRenderer
+        return renderer.location_table_search_result_renderer
 
     @property
     def download_csv_handler(self) -> DownloadCsvHandler:
