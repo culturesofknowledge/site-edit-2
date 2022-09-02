@@ -57,7 +57,11 @@ class PersonSearchView(DefaultSearchView):
         return 'person:merge'
 
     def get_queryset(self):
-        return CofkUnionPerson.objects.all()  # KTODO
+        # KTODO
+        queryset = CofkUnionPerson.objects.all()
+        if sort_by := self.get_sort_by():
+            queryset = queryset.order_by(sort_by)
+        return queryset
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
