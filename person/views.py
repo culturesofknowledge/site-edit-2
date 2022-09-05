@@ -18,9 +18,6 @@ class PersonInitView(CommonInitFormViewTemplate):
     def resp_form_page(self, request, form):
         return render(request, 'person/init_form.html', {'person_form': form})
 
-    def resp_search_page(self, request, form):
-        return redirect('person:search')
-
     def resp_after_saved(self, request, form, new_instance):
         return redirect('person:full_form', new_instance.iperson_id)
 

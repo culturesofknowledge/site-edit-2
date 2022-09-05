@@ -218,9 +218,6 @@ class CommonInitFormViewTemplate(View):
     def resp_form_page(self, request, form):
         raise NotImplementedError()
 
-    def resp_search_page(self, request, form):
-        raise NotImplementedError()
-
     def resp_after_saved(self, request, form, new_instance):
         raise NotImplementedError()
 
@@ -237,13 +234,9 @@ class CommonInitFormViewTemplate(View):
     def post(self, request, *args, **kwargs):
         form = self.form_factory(request.POST or None)
         if form.is_valid():
-            if form.has_changed():
-                log.info(f'form have been changed')
-                new_instance = self.on_form_changed(request, form)
-                return self.resp_after_saved(request, form, new_instance)
-            else:
-                log.debug('form have no change, skip record save')
-            return self.resp_search_page(request, form)
+            log.info(f'form have been changed')
+            new_instance = self.on_form_changed(request, form)
+            return self.resp_after_saved(request, form, new_instance)
 
         return self.resp_form_page(request, form)
 

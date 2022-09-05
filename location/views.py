@@ -29,9 +29,6 @@ class LocationInitView(CommonInitFormViewTemplate):
     def resp_form_page(self, request, form):
         return render(request, 'location/init_form.html', {'loc_form': form})
 
-    def resp_search_page(self, request, form):
-        return redirect('location:search')
-
     def resp_after_saved(self, request, form, new_instance):
         return redirect('location:full_form', new_instance.location_id)
 
