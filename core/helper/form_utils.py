@@ -20,7 +20,7 @@ def record_tracker_label_fn_factory(subject='Entry'):
     return _fn
 
 
-def _filter_and_log_field_names(cleaned_data: dict, field_names: Iterable[str]):
+def filter_and_log_field_names(cleaned_data: dict, field_names: Iterable[str]):
     def _filter_with_log_fn(_field_name):
         if _field_name not in cleaned_data:
             msg = f'field[{_field_name}] not found in cleaned_data'
@@ -34,7 +34,7 @@ def _filter_and_log_field_names(cleaned_data: dict, field_names: Iterable[str]):
 
 def _prepare_valid_field_names(cleaned_data, field_names):
     field_names = [field_names] if isinstance(field_names, str) else field_names
-    field_names = _filter_and_log_field_names(cleaned_data, field_names)
+    field_names = filter_and_log_field_names(cleaned_data, field_names)
     return field_names
 
 
@@ -67,3 +67,40 @@ class ZeroOneCheckboxField(forms.BooleanField):
         else:
             new_value = 1 if new_value else 0
         return new_value
+
+
+class ThreeFieldDateField(forms.Field):
+
+    def __init__(self, year_field_name,
+                 month_field_name,
+                 day_field_name,
+                 *args, **kwargs):
+        default_kwargs = dict(
+            widget=widgets_utils.NewDateInput(),
+            # initial='0',
+            required=False,
+        )
+        kwargs = default_kwargs | kwargs
+        super().__init__(*args, **kwargs)
+
+        self.year_field_name = year_field_name
+        self.month_field_name = month_field_name
+        self.day_field_name = day_field_name
+
+    def bound_data(self, data, initial):
+        # KTODO
+        breakpoint()
+        return super().bound_data(data, initial)
+
+    def clean_other_fields(self, cleaned_data: dict, value: str):
+        date_values = value and value.split('-')
+        if len(date_values) != 3:
+            return
+
+        (
+            cleaned_data[self.year_field_name],
+            cleaned_data[self.month_field_name],
+            cleaned_data[self.day_field_name],
+        ) = date_values
+
+        return cleaned_data

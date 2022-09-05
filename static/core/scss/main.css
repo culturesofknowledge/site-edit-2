@@ -751,4 +751,10 @@ input[type="radio"] + label {
   .choices-container .choice-item {
     width: 40%; }
 
+.issues-date-ct {
+  display: flex;
+  flex-direction: row; }
+  .issues-date-ct .issues-date-item {
+    margin-right: 15px; }
+
 /*# sourceMappingURL=main.css.map */

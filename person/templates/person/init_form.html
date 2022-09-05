@@ -63,8 +63,8 @@
                         {% include "core/component/common_form_choices.html" with label_text='Professional categories' choices_field=person_form.roles_titles %}
                     </div>
                     <div class="margin-bottom">
-                        {{ person_form.person_aliases }}
                         <label>Further details of roles / titles:</label>
+                        {{ person_form.person_aliases }}
                     </div>
                     <small>
                         Please use this field for titles and career-related details such as '5th Earl of Aylesbury' or
@@ -77,20 +77,33 @@
                 <fieldset id="header_dates">
                     <legend>Dates:</legend>
 
-
-                    <fieldset>
-                        <legend>Date of birth</legend>
-                        <div class="margin-bottom">
-                            {% include "core/component/common_form_choices.html" with label_text='Calendar of date of birth' choices_field=person_form.date_of_birth_calendar %}
-                        </div>
-                        <div class="margin-bottom">
-                            {{ person_form.date_of_birth_is_range }}
-                            <label for="{{ person_form.date_of_birth_is_range.id_for_label }}">Date range?</label>
-                        </div>
-                    </fieldset>
-
+                    {% include "person/component/date_fields.html" with title_name='date of birth' calendar=person_form.date_of_birth_calendar  is_range=person_form.date_of_birth_is_range  date_select=person_form.date_of_birth_date inferred=person_form.date_of_birth_inferred  uncertain=person_form.date_of_birth_uncertain  approx=person_form.date_of_birth_approx %}
+                    {% include "person/component/date_fields.html" with title_name='date of death' calendar=person_form.date_of_death_calendar  is_range=person_form.date_of_death_is_range  date_select=person_form.date_of_death_date inferred=person_form.date_of_death_inferred  uncertain=person_form.date_of_death_uncertain  approx=person_form.date_of_death_approx %}
+                    {% include "person/component/date_fields.html" with title_name='date when flourished' calendar=person_form.flourished_calendar  is_range=person_form.flourished_is_range  date_select=person_form.flourished_date inferred=person_form.flourished_inferred  uncertain=person_form.flourished_uncertain  approx=person_form.flourished_approx %}
 
                 </fieldset>
+
+                <fieldset id="header_further_reading">
+                    <legend>Further reading:</legend>
+                    <div class="margin-bottom">
+                        <label>Bibliographical information:</label>
+                        {{ person_form.further_reading }}
+                    </div>
+                    <div>
+                        <small>You can copy references from an existing list into the above field:</small>
+                        __TODO__
+                        <!-- KTODO copy features -->
+                    </div>
+                    <div>
+                        <small>Or add a new reference to the list, then pick up full details or abbreviation:</small>
+                        __TODO__
+                        <!-- KTODO copy features -->
+                    </div>
+                </fieldset>
+
+
+                {% block more_section_content %}
+                {% endblock %}
 
 
                 <div class="flex-col sticky-bottom">
@@ -105,12 +118,12 @@
                 <a href="#header_roles">Roles</a>
                 <a href="#header_dates">Dates</a>
                 <a href="#header_further_reading">Further reading</a>
+                {% block more_table_of_content %}
+                {% endblock %}
             </div>
 
         </div>
     </div>
-
-
 
 
 {% endblock %}

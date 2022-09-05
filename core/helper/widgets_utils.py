@@ -1,4 +1,5 @@
 from django import forms
+from django.forms import widgets
 
 
 def one_zero_check_test(value):
@@ -8,3 +9,7 @@ def one_zero_check_test(value):
 def create_common_checkbox(**attrs):
     _attrs = {'class': 'elcheckbox'} | (attrs or {})
     return forms.CheckboxInput(_attrs, check_test=one_zero_check_test)
+
+
+class NewDateInput(widgets.Input):
+    input_type = "date"

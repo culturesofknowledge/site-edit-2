@@ -64,24 +64,42 @@ class PersonForm(ModelForm):
                                        ]
                                    )
                                    )
-    date_of_death_inferred = forms.IntegerField(required=False, initial=0)
-    date_of_death_uncertain = forms.IntegerField(required=False, initial=0)
-    date_of_death_approx = forms.IntegerField(required=False, initial=0)
-    date_of_death_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
 
-    date_of_birth_inferred = forms.IntegerField(required=False, initial=0)
-    date_of_birth_uncertain = forms.IntegerField(required=False, initial=0)
-    date_of_birth_approx = forms.IntegerField(required=False, initial=0)
+    date_of_birth_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    date_of_birth_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    date_of_birth_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_birth_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_birth_calendar = forms.CharField(required=False,
-                                             widget=forms.RadioSelect(
-                                                 choices=calendar_date_choices,
-                                             ))
+                                             widget=forms.RadioSelect(choices=calendar_date_choices, ))
+    date_of_birth_date = form_utils.ThreeFieldDateField(
+        'date_of_birth_year',
+        'date_of_birth_month',
+        'date_of_birth_day',
+    )
 
-    flourished_inferred = forms.IntegerField(required=False, initial=0)
-    flourished_uncertain = forms.IntegerField(required=False, initial=0)
-    flourished_approx = forms.IntegerField(required=False, initial=0)
+    date_of_death_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    date_of_death_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    date_of_death_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    date_of_death_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    date_of_death_calendar = forms.CharField(required=False,
+                                             widget=forms.RadioSelect(choices=calendar_date_choices, ))
+    date_of_death_date = form_utils.ThreeFieldDateField(
+        'date_of_death_year',
+        'date_of_death_month',
+        'date_of_death_day',
+    )
+
+    flourished_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    flourished_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    flourished_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     flourished_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    flourished_calendar = forms.CharField(required=False,
+                                          widget=forms.RadioSelect(choices=calendar_date_choices, ))
+    flourished_date = form_utils.ThreeFieldDateField(
+        'flourished_year',
+        'flourished_month',
+        'flourished_day',
+    )
 
     class Meta:
         model = CofkUnionPerson
@@ -143,5 +161,9 @@ class PersonForm(ModelForm):
             'date_of_death_is_range',
             'flourished_is_range',
         ], 0)
+
+        for field_name in form_utils.filter_and_log_field_names(
+                self.cleaned_data, ['date_select_birth']):
+            self.fields[field_name].clean_other_fields(self.cleaned_data, self.cleaned_data.get(field_name))
 
         return super().clean()

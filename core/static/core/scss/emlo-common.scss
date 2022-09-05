@@ -95,3 +95,11 @@
   }
 
 }
+
+.issues-date-ct {
+  display: flex;
+  flex-direction: row;
+  .issues-date-item {
+    margin-right: 15px;
+  }
+}
