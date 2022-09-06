@@ -101,7 +101,9 @@ class PersonForm(ModelForm):
         'flourished_day',
     )
 
-    birthplace = forms.CharField(required=False, widget=forms.HiddenInput())
+    birth_place = forms.CharField(required=False, widget=forms.HiddenInput())
+    death_place = forms.CharField(required=False, widget=forms.HiddenInput())
+    other_place = forms.CharField(required=False, widget=forms.HiddenInput())
 
     class Meta:
         model = CofkUnionPerson

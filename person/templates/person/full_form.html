@@ -4,7 +4,11 @@
 {% block more_section_content %}
     <fieldset id="header_known_loc">
         <legend>Known geographical locations</legend>
-        {% include "core/component/obj_ref.html" with label='Birthplace (or place of formation for organisations):' name='birthplace' id_field=person_form.birthplace quick_init_vname='location:quick_init' %}
+        {% include "core/component/obj_ref.html" with label='Birthplace (or place of formation for organisations):' id_field=person_form.birth_place quick_init_vname='location:quick_init' %}
+        {% include "core/component/obj_ref.html" with label='Place of death (or of cessation if an organisation):' id_field=person_form.death_place quick_init_vname='location:quick_init' %}
+        <h3>Other locations:</h3>
+        <!-- KTODO multi other places -->
+        {% include "core/component/obj_ref.html" with label='Add location:' id_field=person_form.other_place quick_init_vname='location:quick_init' %}
 
 
     </fieldset>
