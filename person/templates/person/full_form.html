@@ -8,7 +8,14 @@
         {% include "core/component/obj_ref.html" with label='Place of death (or of cessation if an organisation):' id_field=person_form.death_place quick_init_vname='location:quick_init' %}
         <h3>Other locations:</h3>
         <!-- KTODO multi other places -->
-        {% include "core/component/obj_ref.html" with label='Add location:' id_field=person_form.other_place quick_init_vname='location:quick_init' %}
+        {% include "core/component/obj_ref.html" with label='Add location:' id_field=new_other_location.location_id quick_init_vname='location:quick_init' %}
+        <div>
+            <small>Relevant dates:</small>
+            <span>From:</span>
+            {{ new_other_location.date_from }}
+            <span>To:</span>
+            {{ new_other_location.date_to }}
+        </div>
 
 
     </fieldset>

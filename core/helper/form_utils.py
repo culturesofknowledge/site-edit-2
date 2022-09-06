@@ -89,7 +89,7 @@ class ThreeFieldDateField(forms.Field):
 
     def bound_data(self, data, initial):
         # KTODO
-        breakpoint()
+        # breakpoint()
         return super().bound_data(data, initial)
 
     def clean_other_fields(self, cleaned_data: dict, value: str):

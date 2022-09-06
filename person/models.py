@@ -83,7 +83,9 @@ class CofkUnionPerson(models.Model, RecordTracker):
     gender = models.CharField(max_length=1)
     is_organisation = models.CharField(max_length=1)
     iperson_id = models.IntegerField(
-        default=functools.partial(model_utils.next_seq_safe, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID))
+        default=functools.partial(model_utils.next_seq_safe, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID),
+        unique=True,
+    )
     creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
     change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
@@ -118,8 +120,31 @@ class CofkUnionPerson(models.Model, RecordTracker):
 
     roles = models.ManyToManyField('uploader.CofkUnionRoleCategory')
 
+    locations = models.ManyToManyField('location.CofkUnionLocation',
+                                       through='person.CofkPersonLocationMap',
+                                       through_fields=('person', 'location'))
+
     class Meta:
         db_table = 'cofk_union_person'
+
+
+class CofkPersonLocationMap(models.Model, RecordTracker):
+    person_location_id = models.AutoField(primary_key=True)
+    person = models.ForeignKey(CofkUnionPerson, to_field='iperson_id', on_delete=models.CASCADE)
+    # person = models.ForeignKey(CofkUnionPerson, on_delete=models.CASCADE)
+    location = models.ForeignKey('location.CofkUnionLocation', on_delete=models.CASCADE)
+    from_date = models.DateField(null=True)
+    to_date = models.DateField(null=True)
+
+    relationship_type = models.CharField(max_length=100)
+
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    creation_user = models.CharField(max_length=50)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    change_user = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = 'cofk_person_location_map'
 
 
 class CofkCollectOccupationOfPerson(models.Model):

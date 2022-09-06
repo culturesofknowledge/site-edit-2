@@ -155,7 +155,7 @@ def full_form(request, location_id):
     if request.method == 'POST':
         form_formsets = [loc_form, res_formset, comment_formset, images_formset, img_form]
 
-        if not all(f.is_valid() for f in form_formsets):
+        if view_utils.any_invalid(form_formsets):
             log.warning(f'something invalid')
             return _render_full_form()
 

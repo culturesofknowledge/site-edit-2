@@ -2,13 +2,14 @@ import logging
 from typing import List, Tuple, Callable, Iterable
 
 from django.forms import BaseForm
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 
 from core.helper import renderer_utils, view_utils
 from core.helper.view_utils import DefaultSearchView, CommonInitFormViewTemplate
-from person.forms import PersonForm
-from person.models import CofkUnionPerson
+from location.models import CofkUnionLocation
+from person.forms import PersonForm, PersonLocationForm
+from person.models import CofkUnionPerson, CofkPersonLocationMap
 
 log = logging.getLogger(__name__)
 
@@ -38,8 +39,32 @@ def return_quick_init(request, pk):
 
 
 def full_form(request, iperson_id):
-    person_form = PersonForm(request.POST or None)
-    return render(request, 'person/full_form.html', {'person_form': person_form, })
+    person = get_object_or_404(CofkUnionPerson, iperson_id=iperson_id)
+    person_form = PersonForm(request.POST or None, instance=person)
+    new_other_location = PersonLocationForm(request.POST or None, prefix='new_loc')
+
+    def _render_full_form():
+        return render(request, 'person/full_form.html', {
+            'person_form': person_form,
+            'new_other_location': new_other_location,
+        })
+
+    if request.POST:
+        form_formsets = [person_form, new_other_location]
+        if view_utils.any_invalid(form_formsets):
+            return _render_full_form()
+        ps_loc: CofkPersonLocationMap = new_other_location.instance
+        ps_loc.location = CofkUnionLocation.objects.get(location_id=new_other_location.cleaned_data['location_id'])
+        ps_loc.person = person_form.instance
+        ps_loc.relationship_type = 'was_in_location'
+        ps_loc.update_current_user_timestamp(request.user.username)
+        ps_loc.save()
+
+        person_form.save()
+
+        breakpoint()
+
+    return _render_full_form()
 
 
 class PersonSearchView(DefaultSearchView):

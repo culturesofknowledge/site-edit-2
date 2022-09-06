@@ -246,11 +246,13 @@ class CommonInitFormViewTemplate(View):
         return self.resp_form_page(request, form)
 
 
-
-
 def redirect_return_quick_init(request, name, item_name, item_id):
     return render(request, 'core/return_quick_init.html', {
         'name': 'Person',
         'item_name': item_name,
         'item_id': item_id,
     })
+
+
+def any_invalid(form_formsets: Iterable):
+    return not all(f.is_valid() for f in form_formsets)
