@@ -7,7 +7,7 @@ from django.forms import formset_factory, BaseForm, BaseFormSet, ModelForm
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView
 
-from core.helper import model_utils
+from core.helper import model_utils, view_utils
 from core.helper.model_utils import RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
@@ -35,6 +35,17 @@ class LocationInitView(CommonInitFormViewTemplate):
     @property
     def form_factory(self) -> Callable[..., BaseForm]:
         return LocationForm
+
+
+class LocationQuickInitView(LocationInitView):
+    def resp_after_saved(self, request, form, new_instance):
+        return redirect('location:return_quick_init', new_instance.location_id)
+
+
+def return_quick_init(request, pk):
+    location: CofkUnionLocation = CofkUnionLocation.objects.get(location_id=pk)
+    return view_utils.redirect_return_quick_init(
+        request, 'Place', location.location_name, location.location_id, )
 
 
 def to_forms(form_or_formset: FormOrFormSet):

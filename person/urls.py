@@ -1,3 +1,5 @@
+from django.urls import path
+
 from core.helper import url_utils
 from . import views
 
@@ -15,3 +17,12 @@ urlpatterns.extend(
         # merge_view=views.LocationMergeView.as_view(),
     )
 )
+
+urlpatterns.extend(url_utils.create_urls_for_quick_init(
+    views.PersonQuickInitView.as_view(),
+    views.return_quick_init,
+))
+
+urlpatterns.extend([
+    path('debug1', views.return_quick_init, name='debug1'),
+])

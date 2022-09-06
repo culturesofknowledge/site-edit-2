@@ -1,0 +1,28 @@
+{% extends "core/emlo_logined.html" %}
+{% load static %}
+
+
+{% block content %}
+    <h1>New {{ name }} has been saved.</h1>
+    <h3> {{ item_name }} </h3>
+
+    <small>Click OK to pass the details back into the main data entry screen.</small>
+    <button id="ok_btn"> OK</button>
+    <button id="cancel_btn"> Cancel</button>
+
+    <script>
+        $(function () {
+            $('#ok_btn').on('click', function () {
+                window.opener.on_quick_init_completed({
+                    item_name: '{{ item_name }}',
+                    item_id: {{ item_id }},
+                })
+                window.close()
+            })
+            $('#cancel_btn').on('click', function () {
+                window.close()
+            })
+        })
+    </script>
+
+{% endblock %}

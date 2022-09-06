@@ -1,0 +1,30 @@
+{% extends "person/init_form.html" %}
+{% load static %}
+
+{% block more_section_content %}
+    <fieldset id="header_known_loc">
+        <legend>Known geographical locations</legend>
+        {% include "core/component/obj_ref.html" with label='Birthplace (or place of formation for organisations):' name='birthplace' id_field=person_form.birthplace quick_init_vname='location:quick_init' %}
+
+
+    </fieldset>
+
+    <script>
+
+        $(function () {
+            $('#{{ person_form.birthplace.id_for_label }}_create_btn').on('click', function () {
+                window.open('{% url 'location:quick_init' %}');
+                window.on_quick_init_completed = function (data) {
+                    $('#{{ person_form.birthplace.id_for_label }}_name').val(data.item_name)
+                    $('#{{ person_form.birthplace.id_for_label }}').val(data.item_id)
+                }
+            });
+        })
+
+    </script>
+
+{% endblock %}
+
+{% block more_table_of_content %}
+    <a href="#header_known_loc">Known geographical locations</a>
+{% endblock %}

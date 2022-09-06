@@ -1,0 +1,40 @@
+{% with fid=id_field.id_for_label %}
+    <div class="margin-bottom">
+        <label>{{ label }}</label>
+        <div>
+            <input id="{{ fid }}_name" type="text" readonly/>
+            {{ id_field }}
+            <div class="button-row">
+                <button id="{{ fid }}_clean_btn">Clean</button>
+                <button id="{{ fid }}_select_btn">Select <!-- KTODO --></button>
+                <button id="{{ fid }}_create_btn">Create</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        $(() => {
+            $('#{{ fid }}_clean_btn').on('click', function (e) {
+                e.preventDefault();
+                $('#{{ fid }}_name').val('');
+                $('#{{ fid }}').val('');
+            });
+
+            $('#{{ fid }}_create_btn').on('click', function (e) {
+                e.preventDefault();
+                window.open('{% url quick_init_vname %}');
+                window.on_quick_init_completed = function (data) {
+                    $('#{{ fid }}_name').val(data.item_name);
+                    $('#{{ fid }}').val(data.item_id);
+                }
+            });
+
+
+        })
+
+
+    </script>
+
+
+{% endwith %}

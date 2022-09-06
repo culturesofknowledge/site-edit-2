@@ -5,7 +5,7 @@ from django.forms import BaseForm
 from django.shortcuts import render, redirect
 from django.views import View
 
-from core.helper import renderer_utils
+from core.helper import renderer_utils, view_utils
 from core.helper.view_utils import DefaultSearchView, CommonInitFormViewTemplate
 from person.forms import PersonForm
 from person.models import CofkUnionPerson
@@ -26,9 +26,20 @@ class PersonInitView(CommonInitFormViewTemplate):
         return PersonForm
 
 
+class PersonQuickInitView(PersonInitView):
+    def resp_after_saved(self, request, form, new_instance):
+        return redirect('person:return_quick_init', new_instance.iperson_id)
+
+
+def return_quick_init(request, pk):
+    person = CofkUnionPerson.objects.get(iperson_id=pk)
+    return view_utils.redirect_return_quick_init(
+        request, 'Person', person.foaf_name, person.iperson_id, )
+
+
 def full_form(request, iperson_id):
-    # KTODO
-    return render(request, 'person/init_form.html', {'person_form': person_form, })
+    person_form = PersonForm(request.POST or None)
+    return render(request, 'person/full_form.html', {'person_form': person_form, })
 
 
 class PersonSearchView(DefaultSearchView):

@@ -757,4 +757,9 @@ input[type="radio"] + label {
   .issues-date-ct .issues-date-item {
     margin-right: 15px; }
 
+.button-row {
+  display: flex; }
+  .button-row button {
+    margin-right: 20px; }
+
 /*# sourceMappingURL=main.css.map */

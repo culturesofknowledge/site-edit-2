@@ -12,3 +12,8 @@ urlpatterns.extend(
         edit_id_name='location_id',
     )
 )
+
+urlpatterns.extend(url_utils.create_urls_for_quick_init(
+    views.LocationQuickInitView.as_view(),
+    views.return_quick_init,
+))

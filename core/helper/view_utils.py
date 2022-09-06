@@ -1,4 +1,5 @@
 import logging
+from django.shortcuts import render, redirect
 import os
 from multiprocessing import Process
 from typing import Iterable, Tuple, List, Type, Callable
@@ -243,3 +244,13 @@ class CommonInitFormViewTemplate(View):
     def get(self, request, *args, **kwargs):
         form = self.form_factory()
         return self.resp_form_page(request, form)
+
+
+
+
+def redirect_return_quick_init(request, name, item_name, item_id):
+    return render(request, 'core/return_quick_init.html', {
+        'name': 'Person',
+        'item_name': item_name,
+        'item_id': item_id,
+    })
