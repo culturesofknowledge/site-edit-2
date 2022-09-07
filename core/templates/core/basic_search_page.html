@@ -142,7 +142,7 @@
 
         }
 
-        emlojs.recref_service = {
+        emlojs.recref_select_service = {
 
             setup_all: function () {
                 $('.selectable_entry').on('click', (e) => {
@@ -228,7 +228,7 @@
             emlojs.selectable_service.setup_all()
             setup_merge_btn();
             {% if recref_mode == '1' %}
-                emlojs.recref_service.setup_all()
+                emlojs.recref_select_service.setup_all()
             {% endif %}
         })
 

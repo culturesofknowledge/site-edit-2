@@ -1,56 +1,18 @@
 {% with fid=id_field.id_for_label %}
-    <div class="margin-bottom">
+    <!-- remember import recref_service.js -->
+    <div class="margin-bottom recref_main" recref_type="{{ recref_type }}">
         <label>{{ label }}</label>
         <div>
-            <input id="{{ fid }}_name" type="text" readonly/>
-            {{ id_field }}
+            <input id="{{ fid }}_name" type="text" class="recref_text" readonly/>
+            <input id="{{ fid }}" type="hidden" class="recref_id"
+                   name="{{ fid.html_name }}" value="{{ fid.value }}"/>
             <div class="button-row">
-                <button id="{{ fid }}_clean_btn">Clean</button>
-                <button id="{{ fid }}_select_btn">Select <!-- KTODO --></button>
-                <button id="{{ fid }}_create_btn">Create</button>
+                <button id="{{ fid }}_clean_btn" class="recref_clean">Clean</button>
+                <button id="{{ fid }}_select_btn" class="recref_select">Select</button>
+                <button id="{{ fid }}_create_btn" class="recref_create">Create</button>
             </div>
         </div>
     </div>
-
-
-    <script>
-        // KTODO extract following javascript to js file and emlojs object
-        // otherwise, it will duplicate following javascript when include by django
-
-        $(() => {
-
-            // KTODO should use classname instead of id
-            $('#{{ fid }}_clean_btn').on('click', function (e) {
-                e.preventDefault();
-                $('#{{ fid }}_name').val('');
-                $('#{{ fid }}').val('');
-            });
-
-            $('#{{ fid }}_select_btn').on('click', function (e) {
-                e.preventDefault();
-                window.open('{% url search_vname %}?recref_mode=1');
-                window.on_quick_init_completed = function (data) {
-                    // KTODO extract this function
-                    $('#{{ fid }}_name').val(data.item_name);
-                    $('#{{ fid }}').val(data.item_id);
-                }
-            })
-
-
-            $('#{{ fid }}_create_btn').on('click', function (e) {
-                e.preventDefault();
-                window.open('{% url quick_init_vname %}');
-                window.on_quick_init_completed = function (data) {
-                    $('#{{ fid }}_name').val(data.item_name);
-                    $('#{{ fid }}').val(data.item_id);
-                }
-            });
-
-
-        })
-
-
-    </script>
 
 
 {% endwith %}
