@@ -11,7 +11,7 @@
     <form id="search_form" method="get">
         {% csrf_token %}
 
-        <input type="hidden" name="obj_ref_mode" value="{{ obj_ref_mode }}" />
+        <input type="hidden" name="recref_mode" value="{{ recref_mode }}" />
 
         <div class="row">
 
@@ -142,7 +142,7 @@
 
         }
 
-        emlojs.obj_ref_service = {
+        emlojs.recref_service = {
 
             setup_all: function () {
                 $('.selectable_entry').on('click', (e) => {
@@ -227,8 +227,8 @@
             setup_record_delete();
             emlojs.selectable_service.setup_all()
             setup_merge_btn();
-            {% if obj_ref_mode == '1' %}
-                emlojs.obj_ref_service.setup_all()
+            {% if recref_mode == '1' %}
+                emlojs.recref_service.setup_all()
             {% endif %}
         })
 

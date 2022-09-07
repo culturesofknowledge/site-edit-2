@@ -88,7 +88,7 @@ class BasicSearchView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['obj_ref_mode'] = self.request_data.get('obj_ref_mode', '0')
+        context['recref_mode'] = self.request_data.get('recref_mode', '0')
 
         search_components_factory = build_search_components(self.sort_by_choices)
 

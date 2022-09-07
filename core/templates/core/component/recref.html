@@ -28,7 +28,7 @@
 
             $('#{{ fid }}_select_btn').on('click', function (e) {
                 e.preventDefault();
-                window.open('{% url search_vname %}?obj_ref_mode=1');
+                window.open('{% url search_vname %}?recref_mode=1');
                 window.on_quick_init_completed = function (data) {
                     // KTODO extract this function
                     $('#{{ fid }}_name').val(data.item_name);
