@@ -14,12 +14,28 @@
 
 
     <script>
+        // KTODO extract following javascript to js file and emlojs object
+        // otherwise, it will duplicate following javascript when include by django
+
         $(() => {
+
+            // KTODO should use classname instead of id
             $('#{{ fid }}_clean_btn').on('click', function (e) {
                 e.preventDefault();
                 $('#{{ fid }}_name').val('');
                 $('#{{ fid }}').val('');
             });
+
+            $('#{{ fid }}_select_btn').on('click', function (e) {
+                e.preventDefault();
+                window.open('{% url search_vname %}?obj_ref_mode=1');
+                window.on_quick_init_completed = function (data) {
+                    // KTODO extract this function
+                    $('#{{ fid }}_name').val(data.item_name);
+                    $('#{{ fid }}').val(data.item_id);
+                }
+            })
+
 
             $('#{{ fid }}_create_btn').on('click', function (e) {
                 e.preventDefault();

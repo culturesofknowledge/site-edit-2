@@ -1,5 +1,4 @@
 import logging
-from django.shortcuts import render, redirect
 import os
 from multiprocessing import Process
 from typing import Iterable, Tuple, List, Type, Callable
@@ -8,6 +7,7 @@ from urllib.parse import urlencode
 
 from django import template
 from django.forms import ModelForm
+from django.shortcuts import render
 from django.urls import reverse
 from django.views import View
 from django.views.generic import ListView
@@ -88,6 +88,7 @@ class BasicSearchView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['obj_ref_mode'] = self.request_data.get('obj_ref_mode', '0')
 
         search_components_factory = build_search_components(self.sort_by_choices)
 

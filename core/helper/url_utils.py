@@ -26,5 +26,5 @@ def create_common_urls_for_section(
 def create_urls_for_quick_init(quick_init_view, return_quick_init_view):
     return [
         path('quick_init', quick_init_view, name='quick_init'),
-        path('return_quick_init/<int:pk>', return_quick_init_view, name='return_quick_init'),
+        path('return_quick_init/<pk>', return_quick_init_view, name='return_quick_init'),
     ]
