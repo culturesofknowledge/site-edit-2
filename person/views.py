@@ -10,7 +10,7 @@ from core.helper import renderer_utils, view_utils
 from core.helper.view_utils import DefaultSearchView, CommonInitFormViewTemplate
 from location.models import CofkUnionLocation
 from person.forms import PersonForm
-from person.models import CofkUnionPerson, CofkPersonLocationMap
+from person.models import CofkUnionPerson, CofkPersonLocationMap, CofkPersonOrganisationMap
 
 log = logging.getLogger(__name__)
 
@@ -39,25 +39,41 @@ def return_quick_init(request, pk):
         request, 'Person', person.foaf_name, person.iperson_id, )
 
 
+class RecrefConvertor:
+
+    @property
+    def target_id_name(self) -> str:
+        raise NotImplementedError()
+
+    def find_rec_name_by_id(self, target_id) -> Optional[str]:
+        raise NotImplementedError()
+
+    def convert(self, record_dict: dict) -> dict:
+        target_id = record_dict.get(self.target_id_name, '')
+        record_dict['target_id'] = target_id
+        if (rec_name := self.find_rec_name_by_id(target_id)) is None:
+            log.warning(f"[{self.__class__.__name__}] record not found -- [{target_id}]")
+        else:
+            record_dict['rec_name'] = rec_name
+
+        return record_dict
+
+
 class LocRecrefHandler(view_utils.MultiRecrefHandler):
+    class _Convertor(RecrefConvertor):
+
+        @property
+        def target_id_name(self) -> str:
+            return 'location_id'
+
+        def find_rec_name_by_id(self, target_id) -> Optional[str]:
+            loc = CofkUnionLocation.objects.get(location_id=target_id)
+            return loc and loc.location_name
 
     def __init__(self, request_data, many_related_manager, name=None, **kwargs):
         name = name or 'loc'
         super().__init__(request_data, name=name, many_related_manager=many_related_manager,
-                         data_fn=self._prepare_per_loc_data, **kwargs)
-
-    @staticmethod
-    def _prepare_per_loc_data(record_dict: dict):
-        loc_id = record_dict.get('location_id', '')
-        record_dict['target_id'] = loc_id
-        record_dict['recref_id'] = record_dict.get('person_location_id', '')
-        loc = CofkUnionLocation.objects.get(location_id=loc_id)
-        if not loc:
-            log.warning(f"location not found -- [{loc_id}]")
-        else:
-            record_dict['rec_name'] = loc.location_name
-
-        return record_dict
+                         data_fn=self._Convertor().convert, **kwargs)
 
     @property
     def recref_class(self) -> Type[models.Model]:
@@ -76,24 +92,83 @@ class LocRecrefHandler(view_utils.MultiRecrefHandler):
         return ps_loc
 
 
+class OrganisationRecrefConvertor:
+
+    @property
+    def target_id_name(self):
+        return 'location_id'
+
+
+class OrganisationRecrefHandler(view_utils.MultiRecrefHandler):
+    class _Convertor(RecrefConvertor):
+
+        @property
+        def target_id_name(self) -> str:
+            return 'organisation_id'
+
+        def find_rec_name_by_id(self, target_id) -> Optional[str]:
+            record = CofkUnionPerson.objects.get(iperson_id=target_id)
+            return record and record.foaf_name
+
+    def __init__(self, request_data, many_related_manager, name=None, **kwargs):
+        name = name or 'org'
+        super().__init__(request_data,
+                         name=name,
+                         many_related_manager=many_related_manager,
+                         data_fn=self._Convertor().convert, **kwargs)
+
+    @property
+    def recref_class(self) -> Type[models.Model]:
+        return CofkPersonOrganisationMap
+
+    def create_recref_by_new_form(self, target_id, new_form, parent_instance) -> Optional[models.Model]:
+        recref: CofkPersonOrganisationMap = CofkPersonOrganisationMap()
+        recref.organisation = CofkUnionPerson.objects.get(iperson_id=target_id)
+        if not recref.organisation:
+            # KTODO can we put it to validate function?
+            log.warning(f"person not found -- {target_id} ")
+            return None
+
+        recref.owner_person = parent_instance
+        recref.relationship_type = 'member_of'
+        return recref
+
+
+def log_invalid(form_formset: Iterable):
+    form_formset = (f for f in form_formset if not f.is_valid())
+    for f in form_formset:
+        log.debug(f'invalid form [{f}]')
+
+
 def full_form(request, iperson_id):
     person = get_object_or_404(CofkUnionPerson, iperson_id=iperson_id)
     person_form = PersonForm(request.POST or None, instance=person)
-    loc_handler = LocRecrefHandler(request.POST,
-                                   many_related_manager=person.cofkpersonlocationmap_set, )
+    loc_handler = LocRecrefHandler(
+        request.POST, many_related_manager=person.cofkpersonlocationmap_set, )
+    org_handler = OrganisationRecrefHandler(
+        request.POST, many_related_manager=person.cofkpersonorganisationmap_set, )
 
     def _render_full_form():
-        context = {
-                      'person_form': person_form,
-                  } | loc_handler.create_context()
+        context = (
+                {
+                    'person_form': person_form,
+                }
+                | loc_handler.create_context()
+                | org_handler.create_context()
+        )
         return render(request, 'person/full_form.html', context)
 
     if request.POST:
-        form_formsets = [person_form, loc_handler.new_form, loc_handler.update_formset]
+        form_formsets = [person_form,
+                         loc_handler.new_form, loc_handler.update_formset,
+                         # org_handler.new_form, org_handler.update_formset,
+                         ]
+        log_invalid(form_formsets)
         if view_utils.any_invalid(form_formsets):
             return _render_full_form()
 
         loc_handler.maintain_record(request, person_form.instance)
+        org_handler.maintain_record(request, person_form.instance)
 
         person_form.save()
 

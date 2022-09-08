@@ -128,8 +128,8 @@ class CofkUnionPerson(models.Model, RecordTracker):
         db_table = 'cofk_union_person'
 
 
-class CofkPersonLocationMap(models.Model, RecordTracker):
-    person_location_id = models.AutoField(primary_key=True)
+class Recref(models.Model, RecordTracker):
+    recref_id = models.AutoField(primary_key=True)
     person = models.ForeignKey(CofkUnionPerson, to_field='iperson_id', on_delete=models.CASCADE)
     # person = models.ForeignKey(CofkUnionPerson, on_delete=models.CASCADE)
     location = models.ForeignKey('location.CofkUnionLocation', on_delete=models.CASCADE)
@@ -144,7 +144,27 @@ class CofkPersonLocationMap(models.Model, RecordTracker):
     change_user = models.CharField(max_length=50)
 
     class Meta:
+        abstract = True
+
+
+class CofkPersonLocationMap(Recref):
+    person = models.ForeignKey(CofkUnionPerson, to_field='iperson_id', on_delete=models.CASCADE)
+    location = models.ForeignKey('location.CofkUnionLocation', on_delete=models.CASCADE)
+
+    class Meta(Recref.Meta):
         db_table = 'cofk_person_location_map'
+
+
+class CofkPersonOrganisationMap(Recref):
+    owner_person = models.ForeignKey(CofkUnionPerson, to_field='iperson_id',
+                                     related_name='owner_person',
+                                     on_delete=models.CASCADE)
+    organisation = models.ForeignKey(CofkUnionPerson, to_field='iperson_id',
+                                     related_name='organisation',
+                                     on_delete=models.CASCADE)
+
+    class Meta(Recref.Meta):
+        db_table = 'cofk_person_person_map'
 
 
 class CofkCollectOccupationOfPerson(models.Model):
