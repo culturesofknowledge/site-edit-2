@@ -10,33 +10,7 @@
 
 
         <h3>Other locations:</h3>
-        <!-- KTODO multi other places -->
-        <div>
-            {{ loc_formset.management_form }}
-            {% for form in loc_formset %}
-                <div class="inline-from-to">
-                    {{ form.recref_id }}
-                    {{ form.target_id }}
-                    <label> {{ form.rec_name.value }}  </label>
-                    <small>From:</small>
-                    {{ form.from_date }}
-                    <small>To:</small>
-                    {{ form.to_date }}
-
-                    {{ form.is_delete }}
-                    <label for="{{ form.is_delete.id_for_label }}">Delete</label>
-                </div>
-            {% endfor %}
-        </div>
-
-        {% include "core/component/recref.html" with recref_type='location' id_field=new_loc_form.target_id label='Add location:' %}
-        <div class="inline-from-to">
-            <label>Relevant dates:</label>
-            <small>From:</small>
-            {{ new_loc_form.from_date }}
-            <small>To:</small>
-            {{ new_loc_form.to_date }}
-        </div>
+        {% include "core/component/create_update_recref.html" with recref_type='location' recref_formset=loc_formset new_form=new_loc_form add_label='Add location:' %}
 
 
     </fieldset>
