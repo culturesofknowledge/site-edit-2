@@ -64,6 +64,11 @@ emlojs.recref_service = {
                     select_url: '/location/search?recref_mode=1',
                     create_url: '/location/quick_init',
                 }
+            } else if(recref_type === 'person') {
+                urls = {
+                    select_url: '/person/search?recref_mode=1',
+                    create_url: '/person/quick_init',
+                }
             }
             else{
                 console.log(`unknown recref_type [${recref_type}]`)

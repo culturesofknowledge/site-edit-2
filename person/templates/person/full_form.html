@@ -15,8 +15,8 @@
             {{ loc_formset.management_form }}
             {% for form in loc_formset %}
                 <div class="inline-from-to">
-                    {{ form.person_location_id }}
-                    {{ form.location_id }}
+                    {{ form.recref_id }}
+                    {{ form.target_id }}
                     <label> {{ form.rec_name.value }}  </label>
                     <small>From:</small>
                     {{ form.from_date }}
@@ -29,15 +29,20 @@
             {% endfor %}
         </div>
 
-        {% include "core/component/recref.html" with recref_type='location' id_field=new_other_location.location_id label='Add location:' %}
+        {% include "core/component/recref.html" with recref_type='location' id_field=new_loc_form.target_id label='Add location:' %}
         <div class="inline-from-to">
             <label>Relevant dates:</label>
             <small>From:</small>
-            {{ new_other_location.from_date }}
+            {{ new_loc_form.from_date }}
             <small>To:</small>
-            {{ new_other_location.to_date }}
+            {{ new_loc_form.to_date }}
         </div>
 
+
+    </fieldset>
+    <fieldset id="header_organisations">
+        <legend>Organisations to which belonged</legend>
+        {% include "core/component/recref.html" with recref_type='person' id_field=new_org.iperson_id label='Add another organisation:' %}
 
     </fieldset>
 
@@ -59,4 +64,5 @@
 
 {% block more_table_of_content %}
     <a href="#header_known_loc">Known geographical locations</a>
+    <a href="#header_organisations">Organisations to which belonged</a>
 {% endblock %}

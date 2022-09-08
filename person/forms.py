@@ -3,8 +3,8 @@ import logging
 from django import forms
 from django.forms import ModelForm, CharField
 
-from core.helper import form_utils, widgets_utils
-from person.models import CofkUnionPerson, CofkPersonLocationMap
+from core.helper import form_utils
+from person.models import CofkUnionPerson
 
 log = logging.getLogger(__name__)
 
@@ -18,22 +18,6 @@ calendar_date_choices = [
 
 
 # def calendar_date
-
-class PersonLocationForm(ModelForm):
-    person_location_id = forms.CharField(required=False, widget=forms.HiddenInput())
-    location_id = forms.CharField(required=False, widget=forms.HiddenInput())
-    rec_name = forms.CharField(required=False)
-    from_date = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
-    to_date = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
-    is_delete = form_utils.ZeroOneCheckboxField(required=False, is_str=False)
-
-    class Meta:
-        model = CofkPersonLocationMap
-        fields = (
-            'person_location_id',
-            'from_date',
-            'to_date',
-        )
 
 
 class PersonForm(ModelForm):
