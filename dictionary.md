@@ -5,3 +5,4 @@
 | recref | Record Reference |
 | jqe    | Jquery Element   |
 | ele    | Html Element     |
+| ps_loc | Person Location  |

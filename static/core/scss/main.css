@@ -762,4 +762,12 @@ input[type="radio"] + label {
   .button-row button {
     margin-right: 20px; }
 
+.inline-from-to {
+  display: flex;
+  flex-direction: row; }
+  .inline-from-to > label {
+    margin-right: 15px; }
+  .inline-from-to input[type=date] {
+    width: 130px; }
+
 /*# sourceMappingURL=main.css.map */

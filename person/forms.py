@@ -20,16 +20,19 @@ calendar_date_choices = [
 # def calendar_date
 
 class PersonLocationForm(ModelForm):
+    person_location_id = forms.CharField(required=False, widget=forms.HiddenInput())
     location_id = forms.CharField(required=False, widget=forms.HiddenInput())
-    date_from = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
-    date_to = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
+    rec_name = forms.CharField(required=False)
+    from_date = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
+    to_date = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
     is_delete = form_utils.ZeroOneCheckboxField(required=False, is_str=False)
 
     class Meta:
         model = CofkPersonLocationMap
         fields = (
-            'date_from',
-            'date_to',
+            'person_location_id',
+            'from_date',
+            'to_date',
         )
 
 
@@ -179,8 +182,10 @@ class PersonForm(ModelForm):
             'flourished_is_range',
         ], 0)
 
-        for field_name in form_utils.filter_and_log_field_names(
-                self.cleaned_data, ['date_select_birth']):
-            self.fields[field_name].clean_other_fields(self.cleaned_data, self.cleaned_data.get(field_name))
+        # trigger clean_other_fields
+        _fields = ((n, f) for n, f in self.fields.items()
+                   if hasattr(f, 'clean_other_fields'))
+        for field_name, field in _fields:
+            field.clean_other_fields(self.cleaned_data, self.cleaned_data.get(field_name))
 
         return super().clean()

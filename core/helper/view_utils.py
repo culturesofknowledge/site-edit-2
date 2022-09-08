@@ -7,6 +7,7 @@ from urllib.parse import urlencode
 
 from django import template
 from django.forms import ModelForm
+from django.forms import formset_factory
 from django.shortcuts import render
 from django.urls import reverse
 from django.views import View
@@ -257,3 +258,17 @@ def redirect_return_quick_init(request, name, item_name, item_id):
 
 def any_invalid(form_formsets: Iterable):
     return not all(f.is_valid() for f in form_formsets)
+
+
+def create_formset(form_class, post_data=None, prefix=None, many_related_manager=None,
+                   data_fn=None,
+                   extra=1):
+    initial = (i.__dict__ for i in many_related_manager.iterator())
+    if data_fn:
+        initial = map(data_fn, initial)
+    initial = list(initial)
+    return formset_factory(form_class, extra=extra)(
+        post_data or None,
+        prefix=prefix,
+        initial=initial,
+    )

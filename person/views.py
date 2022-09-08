@@ -38,31 +38,66 @@ def return_quick_init(request, pk):
         request, 'Person', person.foaf_name, person.iperson_id, )
 
 
+def _prepare_per_loc_data(form_dict: dict):
+    loc = CofkUnionLocation.objects.get(location_id=form_dict.get('location_id', ''))
+    if not loc:
+        log.warning(f"location not found -- [{form_dict.get('location_id', '')}]")
+    else:
+        form_dict['rec_name'] = loc.location_name
+    return form_dict
+
+
 def full_form(request, iperson_id):
     person = get_object_or_404(CofkUnionPerson, iperson_id=iperson_id)
     person_form = PersonForm(request.POST or None, instance=person)
     new_other_location = PersonLocationForm(request.POST or None, prefix='new_loc')
 
+    loc_formset = view_utils.create_formset(PersonLocationForm, post_data=request.POST,
+                                            prefix='per_loc', many_related_manager=person.cofkpersonlocationmap_set,
+                                            data_fn=_prepare_per_loc_data,
+                                            extra=0, )
+
     def _render_full_form():
         return render(request, 'person/full_form.html', {
             'person_form': person_form,
             'new_other_location': new_other_location,
+            'loc_formset': loc_formset,
         })
 
     if request.POST:
-        form_formsets = [person_form, new_other_location]
+        form_formsets = [person_form, new_other_location, loc_formset]
         if view_utils.any_invalid(form_formsets):
             return _render_full_form()
-        ps_loc: CofkPersonLocationMap = new_other_location.instance
-        ps_loc.location = CofkUnionLocation.objects.get(location_id=new_other_location.cleaned_data['location_id'])
-        ps_loc.person = person_form.instance
-        ps_loc.relationship_type = 'was_in_location'
-        ps_loc.update_current_user_timestamp(request.user.username)
-        ps_loc.save()
+
+        # save new person_location_map
+        if new_other_location.cleaned_data.get('location_id'):
+            ps_loc: CofkPersonLocationMap = new_other_location.instance
+            ps_loc.location = CofkUnionLocation.objects.get(location_id=new_other_location.cleaned_data['location_id'])
+            if not ps_loc.location:
+                # KTODO can we put it to validate function?
+                log.warning(f"location_id not found -- {new_other_location.cleaned_data['location_id']} ")
+                return _render_full_form()
+
+            ps_loc.person = person_form.instance
+            ps_loc.relationship_type = 'was_in_location'
+            ps_loc.update_current_user_timestamp(request.user.username)
+            ps_loc.save()
+
+        # update loc_formset
+        loc_target_changed_fields = {'to_date', 'from_date', 'is_delete'}
+        _loc_forms = (f for f in loc_formset if not loc_target_changed_fields.isdisjoint(f.changed_data))
+        for f in _loc_forms:
+            if f.cleaned_data['is_delete']:
+                CofkPersonLocationMap.objects.filter(pk=f.cleaned_data['person_location_id']).delete()
+            else:
+                ps_loc = CofkPersonLocationMap.objects.get(pk=f.cleaned_data['person_location_id'])
+                ps_loc.to_date = f.instance.to_date
+                ps_loc.from_date = f.instance.from_date
+                ps_loc.update_current_user_timestamp(request.user.username)
+                print(f.cleaned_data)
+                ps_loc.save()
 
         person_form.save()
-
-        breakpoint()
 
     return _render_full_form()
 

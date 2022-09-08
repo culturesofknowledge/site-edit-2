@@ -3,7 +3,7 @@ import logging
 from typing import Iterable, Union, List, Tuple, Type, Callable
 
 from django.conf import settings
-from django.forms import formset_factory, BaseForm, BaseFormSet, ModelForm
+from django.forms import BaseForm, BaseFormSet, ModelForm
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView
 
@@ -80,16 +80,6 @@ def save_changed_forms(form_formsets: Iterable[FormOrFormSet]):
         f.save()
 
 
-def create_formset(form_class, post_data=None, prefix=None, many_related_manager=None):
-    initial = [i.__dict__ for i in many_related_manager.iterator()]
-    return formset_factory(form_class)(
-        post_data or None,
-        prefix=prefix,
-        initial=initial
-        # KTODO try queryset=
-    )
-
-
 def save_formset(forms: Iterable[ModelForm],
                  many_related_manager=None,
                  model_id_name=None,
@@ -128,12 +118,12 @@ def full_form(request, location_id):
 
     loc_form = LocationForm(request.POST or None, instance=loc)
 
-    res_formset = create_formset(LocationResourceForm, post_data=request.POST,
-                                 prefix='loc_res', many_related_manager=loc.resources)
-    comment_formset = create_formset(LocationCommentForm, post_data=request.POST,
-                                     prefix='loc_comment', many_related_manager=loc.comments)
-    images_formset = create_formset(LocationImageForm, post_data=request.POST,
-                                    prefix='loc_image', many_related_manager=loc.images)
+    res_formset = view_utils.create_formset(LocationResourceForm, post_data=request.POST,
+                                            prefix='loc_res', many_related_manager=loc.resources)
+    comment_formset = view_utils.create_formset(LocationCommentForm, post_data=request.POST,
+                                                prefix='loc_comment', many_related_manager=loc.comments)
+    images_formset = view_utils.create_formset(LocationImageForm, post_data=request.POST,
+                                               prefix='loc_image', many_related_manager=loc.images)
     img_form = LocUploadImageForm(request.POST or None, request.FILES)
 
     def _render_full_form():

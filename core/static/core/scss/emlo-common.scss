@@ -99,6 +99,7 @@
 .issues-date-ct {
   display: flex;
   flex-direction: row;
+
   .issues-date-item {
     margin-right: 15px;
   }
@@ -111,3 +112,18 @@
     margin-right: 20px;
   }
 }
+
+.inline-from-to {
+  display: flex;
+  flex-direction: row;
+
+  & > label {
+    margin-right: 15px;
+  }
+
+  input[type=date] {
+    width: 130px;
+  }
+}
+
+

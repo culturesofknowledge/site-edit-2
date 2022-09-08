@@ -5,7 +5,11 @@
         <div>
             <input id="{{ fid }}_name" type="text" class="recref_text" readonly/>
             <input id="{{ fid }}" type="hidden" class="recref_id"
-                   name="{{ fid.html_name }}" value="{{ fid.value }}"/>
+                   name="{{ id_field.html_name }}"
+                    {% if id_field.value %}
+                   value="{{ id_field.value }}"
+                    {% endif %}
+            />
             <div class="button-row">
                 <button id="{{ fid }}_clean_btn" class="recref_clean">Clean</button>
                 <button id="{{ fid }}_select_btn" class="recref_select">Select</button>
