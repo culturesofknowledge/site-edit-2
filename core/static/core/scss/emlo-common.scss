@@ -115,10 +115,11 @@
 
 .inline-from-to {
   display: flex;
+  flex-wrap: wrap;
   flex-direction: row;
 
-  & > label {
-    margin-right: 15px;
+  & > label:first-of-type {
+    width: 100%;
   }
 
   input[type=date] {

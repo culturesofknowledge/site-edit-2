@@ -764,9 +764,10 @@ input[type="radio"] + label {
 
 .inline-from-to {
   display: flex;
+  flex-wrap: wrap;
   flex-direction: row; }
-  .inline-from-to > label {
-    margin-right: 15px; }
+  .inline-from-to > label:first-of-type {
+    width: 100%; }
   .inline-from-to input[type=date] {
     width: 130px; }
 
