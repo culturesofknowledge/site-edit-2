@@ -76,7 +76,7 @@ def full_form(request, iperson_id):
 
         # save new person_location_map
         if target_id := new_loc_form.cleaned_data.get('target_id'):
-            ps_loc: CofkPersonLocationMap = new_loc_form.instance
+            ps_loc: CofkPersonLocationMap = CofkPersonLocationMap()
             ps_loc.location = CofkUnionLocation.objects.get(location_id=target_id)
             if not ps_loc.location:
                 # KTODO can we put it to validate function?
@@ -86,6 +86,8 @@ def full_form(request, iperson_id):
             ps_loc.person = person_form.instance
             ps_loc.relationship_type = 'was_in_location'
             ps_loc.update_current_user_timestamp(request.user.username)
+            ps_loc.to_date = new_loc_form.cleaned_data.get('to_date')
+            ps_loc.from_date = new_loc_form.cleaned_data.get('from_date')
             ps_loc.save()
 
         # update loc_formset
