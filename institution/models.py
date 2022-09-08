@@ -5,7 +5,7 @@ from core.helper.model_utils import RecordTracker
 
 class CofkCollectInstitution(models.Model):
     upload = models.ForeignKey("uploader.CofkCollectUpload", on_delete=models.CASCADE)
-    institution_id = models.IntegerField(primary_key=True)
+    institution_id = models.IntegerField()
     # TODO under what circumstances is this populated? it is clearly not populated when spreadsheet is uploaded
     union_institution = models.ForeignKey('CofkUnionInstitution', models.DO_NOTHING, blank=True, null=True)
     institution_name = models.TextField()
@@ -25,12 +25,7 @@ class CofkCollectInstitution(models.Model):
         return f'{self.institution_name} (#{self.institution_id})'
 
 
-<<<<<<< HEAD
 class CofkUnionInstitution(models.Model, RecordTracker):
-=======
-
-class CofkUnionInstitution(models.Model):
->>>>>>> a4a9ee0 (Error working)
     institution_id = models.AutoField(primary_key=True)
     institution_name = models.TextField()
     institution_synonyms = models.TextField()

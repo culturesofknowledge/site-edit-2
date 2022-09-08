@@ -3,12 +3,8 @@ from datetime import datetime
 from django.core.exceptions import ValidationError
 from django.db import models
 
-<<<<<<< HEAD
 from core.helper.model_utils import RecordTracker
-=======
 from uploader.models import CofkCollectUpload, CofkCollectStatus
-
->>>>>>> 26f1f1c (Conform to generated legacy schema)
 
 
 class CofkUnionWork(models.Model, RecordTracker):

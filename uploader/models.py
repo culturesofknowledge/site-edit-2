@@ -8,13 +8,11 @@ class CofkCollectStatus(models.Model):
     status_desc = models.CharField(max_length=100)
     editable = models.IntegerField(null=False, default=1)  # TODO schema changed for current system
 
-<<<<<<< HEAD
     class Meta:
         db_table = 'cofk_collect_status'
-=======
+
     def __str__(self):
         return self.status_desc
->>>>>>> fb599c0 (Various)
 
 
 class CofkCollectToolUser(models.Model):
@@ -151,7 +149,7 @@ class Iso639LanguageCode(models.Model):
     language_id = models.AutoField(primary_key=True)
 
     class Meta:
-        db_table = 'iso639_language_code'
+        db_table = 'iso_639_language_codes'
 
 
 def user_directory_path(instance, filename):

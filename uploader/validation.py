@@ -16,6 +16,14 @@ class CofkExcelFileError(Exception):
         self.msg = msg
 
 
+class CofkMissingSheetError(Exception):
+    pass
+
+
+class CofkMissingColumnError(Exception):
+    pass
+
+
 class CofkValue:
     def __init__(self, key, value):
         self.key = key

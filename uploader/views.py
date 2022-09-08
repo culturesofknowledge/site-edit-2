@@ -20,7 +20,9 @@ from django.conf import settings
 
 from uploader.models import CofkCollectStatus, CofkCollectUpload
 from uploader.spreadsheet import CofkUploadExcelFile
+from uploader.validation import CofkMissingColumnError, CofkMissingSheetError
 from work.forms import CofkCollectWorkForm
+
 from work.models import CofkCollectWork
 
 log = logging.getLogger(__name__)
@@ -62,19 +64,25 @@ def handle_upload(request, context):
 
         except ValidationError as ve:
             context['report']['total_errors'] = 1
-            context['report']['errors'] = {'file': {'total': 1, 'error': str(ve)[1:-1]}}
+            context['report']['errors'] = {'file': {'total': 1, 'error': [str(ve)[1:-1]]}}
             log.error(ve)
-        except KeyError as ke:
+        #except KeyError as ke:
+        #    context['report']['total_errors'] = 1
+        #    context['report']['errors'] = {'file': {'total': 1, 'error': [f'Column "{ke.args[0]}" missing']}}
+        #    log.error(context['report']['errors'])
+        except CofkMissingSheetError as cmse:
             context['report']['total_errors'] = 1
-            context['report']['errors'] = {'file': {'total': 1, 'error': f'Column "{ke.args[0]}" missing'}}
-            log.error(context['report']['error'])
-        except ValueError as ve:
-            context['report']['total_errors'] = 1
-            context['report']['errors'] = {'file': {'total': 1, 'error': ve.args[0]}}
-            log.error(vars(ve))
+            context['report']['errors'] = {'file': {'total': 1, 'error': [cmse]}}
+            log.error(context['report']['errors'])
+        except CofkMissingColumnError as cmce:
+            errors = [str(err) for i, err in enumerate(cmce.args[0]) if i % 2 != 0]
+            context['report']['total_errors'] = len(errors)
+            context['report']['errors'] = {'file': {'total': len(errors), 'error': errors}}
+            #log.error(ve.args[0])
+            log.error([err for i, err in enumerate(cmce.args[0]) if i % 2 != 0])
         except (FileNotFoundError, BadZipFile, OptionError, OSError) as e:
             context['report']['total_errors'] = 1
-            context['report']['errors'] = {'file': {'total': 1, 'error': 'Could not read the Excel file.'}}
+            context['report']['errors'] = {'file': {'total': 1, 'error': ['Could not read the Excel file.']}}
             log.error(e)
         #except Exception as e:
         #    context['report']['total_errors'] = 1
@@ -86,7 +94,7 @@ def handle_upload(request, context):
             # TODO delete uploaded file
             context['report']['errors'] = cuef.errors
             context['report']['total_errors'] = cuef.total_errors
-        elif context['report']['total_errors']:
+        elif 'total_errors' in context['report']:
             new_upload.delete()
         else:
             new_upload.upload_name = request.FILES['upload_file']._name + ' ' + str(new_upload.upload_timestamp)
@@ -113,7 +121,24 @@ def upload_view(request, **kwargs):
             print(context['report'])
             return redirect(f'/upload/{context["report"]["upload_id"]}')
 
-    context['uploads'] = CofkCollectUpload.objects.all()
+    context['uploads'] = CofkCollectUpload.objects.order_by('-upload_timestamp').all()
+
+    return render(request, template_url, context)
+
+
+@login_required
+def upload_review(request, upload_id, **kwargs):
+    template_url = 'review.html'
+    upload = CofkCollectUpload.objects.filter(upload_id=upload_id).first()
+    # works = [CofkCollectWorkForm(instance=w) for w in CofkCollectWork.objects.filter(upload=upload)]
+    work_form = 0 # CofkCollectWorkForm(instance=works[0])
+
+    context = {'upload': upload,
+               'works': CofkCollectWork.objects.filter(upload=upload),
+               'people': CofkCollectPerson.objects.filter(upload=upload),
+               'places': CofkCollectLocation.objects.filter(upload=upload),
+               'institutions': CofkCollectInstitution.objects.filter(upload=upload),}
+               #'manifestations': CofkCollectManifestation.objects.filter(upload=upload)}
 
     return render(request, template_url, context)
 

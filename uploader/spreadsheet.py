@@ -14,12 +14,23 @@ from person.models import CofkCollectPerson
 from uploader.OpenpyxlReaderWOFormatting import OpenpyxlReaderWOFormatting
 from uploader.constants import mandatory_sheets
 from uploader.models import CofkCollectUpload, Iso639LanguageCode, CofkCollectStatus
-from uploader.validation import validate_work, validate_manifestation, CofkExcelFileError
+from uploader.validation import validate_work, validate_manifestation, CofkExcelFileError, CofkMissingSheetError, \
+    CofkMissingColumnError
 from work.models import CofkCollectAuthorOfWork, CofkCollectAddresseeOfWork, CofkCollectWork, \
     CofkCollectPersonMentionedInWork, CofkCollectLanguageOfWork, CofkCollectWorkResource
 
 log = logging.getLogger(__name__)
 
+
+def check_data_types(sheet_name: str):
+    sheet = [s for s in mandatory_sheets if s['name'] == sheet_name][0]
+
+    if 'ints' in sheet:
+        for test_int in sheet['ints']:
+            try:
+                int(1)
+            except:
+                pass
 
 class CofkEntity:
     def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame):
@@ -68,7 +79,7 @@ class CofkRepositories(CofkEntity):
 
     def process_repository(self, repository_data):
         self.__repository_data = repository_data
-        self.__repository_data['upload_id'] = self.upload.upload_id
+        self.__repository_data['upload'] = self.upload
         self.__institution_id = repository_data['institution_id']
 
         log.info("Processing repository, institution_id #{}, upload_id #{}".format(
@@ -83,7 +94,7 @@ class CofkRepositories(CofkEntity):
 
     def already_exists(self) -> bool:
         return CofkCollectInstitution.objects \
-            .filter(institution_id=self.__institution_id, upload_id=self.upload) \
+            .filter(institution_id=self.__institution_id, upload=self.upload) \
             .exists()
 
 
@@ -638,6 +649,7 @@ class CofkUploadExcelFile:
         self.people = None
         self.manifestations = None
         self.total_errors = 0
+        self.data = {}
 
         """
         Setting sheet_name to None returns a dict with sheet name as key and data frame as value
@@ -653,33 +665,37 @@ class CofkUploadExcelFile:
                                     usecols=lambda c: not c.startswith('Unnamed:'),
                                     engine='openpyxl_wo_formatting')
 
-        work_data = self.get_sheet_data('Work')
+        self.check_sheets()
 
-        self.check_sheets(work_data)
+        for sheet in [s['name'] for s in mandatory_sheets]:
+            self.data[sheet.lower()] = self.get_sheet_data(sheet)
+
+        self.check_columns()
+
+        self.check_data_present()
 
         # It's best to process the sheets in reverse order, starting with repositories/institutions
         self.repositories = CofkRepositories(upload=self.upload,
-                                             sheet_data=self.get_sheet_data('Repositories'))
+                                             sheet_data=self.data['repositories'])
 
         # The next sheet is places/locations
         self.locations = CofkLocations(upload=self.upload,
-                                       sheet_data=self.get_sheet_data('Places'))
+                                       sheet_data=self.data['places'])
 
         # The next sheet is people
         self.people = CofkPeople(upload=self.upload,
-                                 sheet_data=self.get_sheet_data('People'),
-                                 work_data=work_data)
-        work_data = self.people.work_data
+                                 sheet_data=self.data['people'],
+                                 work_data=self.data['work'])
 
         # [['author_names', 'author_ids',
         #                                                         'addressee_names', 'addressee_ids',
         #                                                         'mention_id', 'emlo_mention_id']]
         # Second last but not least, the works themselves
-        self.works = CofkWork(upload=self.upload, sheet_data=work_data)
+        self.works = CofkWork(upload=self.upload, sheet_data=self.people.work_data)
         self.upload.total_works = len(self.works.ids)
 
         # The last sheet is manifestations
-        self.manifestations = CofkManifestations(upload=self.upload, sheet_data=self.get_sheet_data('Manifestation'))
+        self.manifestations = CofkManifestations(upload=self.upload, sheet_data=self.data['manifestation'])
 
         self.works.format_errors_for_template()
 
@@ -696,18 +712,44 @@ class CofkUploadExcelFile:
     def get_sheet_data(self, sheet_name: str) -> pd.DataFrame:
         return self.wb[sheet_name].where(pd.notnull(self.wb[sheet_name]), None)
 
-    def check_sheets(self, work_data: pd.DataFrame):
-        # Verify all required sheets are present
-        if not all(elem in list(self.wb.keys()) for elem in mandatory_sheets):
-            msg = "Missing sheet/s: {}".format(", ".join(list(mandatory_sheets - self.wb.keys())))
+    def check_data_present(self):
+        #  TODO verify this is correct
+        # if index length is less than 2 then there's only the header, no data
+        if len(self.data['work'].index) < 2:
+            msg = "Spreadsheet contains no data"
             log.error(msg)
+
             raise ValueError(msg)
+
+    def check_sheets(self):
+        # Verify all required sheets are present
+        sheet_names = [s['name'] for s in mandatory_sheets]
+
+        if not all(elem in list(self.wb.keys()) for elem in sheet_names):
+            msg = "Missing sheet/s: {}".format(", ".join(list(sheet_names - self.wb.keys())))
+            log.error(msg)
+            raise CofkMissingSheetError(msg)
 
         log.debug("All {} sheets verified".format(len(mandatory_sheets)))
 
-        #  TODO verify this is correct
-        # if index length is less than 2 then there's only the header, no data
-        if len(work_data.index) < 2:
-            msg = "Spreadsheet contains no data"
-            log.error(msg)
-            raise ValueError(msg)
+    def check_columns(self):
+        total_missing_columns = []
+        for sheet in mandatory_sheets:
+            missing_columns = []
+            sheet_name = sheet['name']
+            for ms in set(sheet['columns']).difference(set(self.data[sheet_name.lower()].columns)):
+                missing_columns.append(ms)
+
+            if missing_columns:
+                if len(missing_columns) > 1:
+                    ms = ', '.join(missing_columns)
+                    missing_columns.append(CofkMissingColumnError(f'Missing columns {ms} from the sheet {sheet_name}'))
+                else:
+                    missing_columns.append(CofkMissingColumnError(f'Missing column {missing_columns[0]} from the sheet {sheet_name}'))
+                total_missing_columns += missing_columns
+
+        if total_missing_columns:
+            log.info(total_missing_columns)
+            raise CofkMissingColumnError(total_missing_columns)
+
+

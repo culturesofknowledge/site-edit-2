@@ -13,68 +13,63 @@
 {% if report %}
 <ol class="unstyled-list">
 
-        <li class="search-result">
-          <article class="row">
+    <li class="search-result">
+        <article class="row">
             <div class="col col--4of6">
-              <p class="fw-700 search-result__date">
-                <small>
-                  <time datetime="1753-01-05">{{ report.time }}</time>
-                </small>
-              </p>
-              <h3>
-                <span style="color: #f00;">&#x2717;</span> {{ report.file }}
-              </h3>
-              {% if report.elapsed %}
                 <p class="fw-700 search-result__date">
-                <small>
-                  Processing time: {{ report.elapsed }}
-                </small>
-              </p>
+                    <small>
+                        <time datetime="1753-01-05">{{ report.time }}</time>
+                    </small>
+                </p>
+                <h3>
+                    <span style="color: #f00;">&#x2717;</span> {{ report.file }}
+                </h3>
+                {% if report.elapsed %}
+                <p class="fw-700 search-result__date">
+                    <small>Processing time: {{ report.elapsed }}</small>
+                </p>
                 {% endif %}
-              <p class="fw-700 search-result__date">
-                <small>
-                  File size: {{ report.size }} kb
-                </small>
-              </p>
+                <p class="fw-700 search-result__date">
+                    <small>File size: {{ report.size }} kb</small>
+                </p>
                 {% if report.total_errors > 1 %}
                 <p class="fw-700 search-result__date">
-                <small>
-                  Errors: {{ report.total_errors }}
-                </small>
-              </p>
+                    <small>Errors: {{ report.total_errors }}</small>
+                </p>
                 {% endif %}
 
                 {% for entity, properties in report.errors.items %}
 
-                    {% if entity != 'file' %}
-
-                  <details class="search-results__abstract">
+                {% if entity != 'file' %}
+                <details class="search-results__abstract">
                     <summary class="fw-700">{{ entity }} ({{ properties.total }})</summary>
-                                             <ul>
-                             {% for row in properties.errors %}
+                    <ul>
+                    {% for row in properties.errors %}
 
-                                <li>Row: {{ row.row }}<br/>
+                        <li>Row: {{ row.row }}<br/>
 
-                                    <ul>
-                                    {% for row_error in row.errors %}
-                                        <li>{{ row_error }}</li>
-                                    {% endfor %}
-                                    </ul>
-
-                                </li>
-
+                            <ul>
+                            {% for row_error in row.errors %}
+                                <li>{{ row_error }}</li>
                             {% endfor %}
-                        </ul>
-                  </details>
-                    {% else %}
-                    <span style="color: #f00;">{{ properties.error }}</span>
-                    {% endif %}
+                            </ul>
+
+                        </li>
+
+                    {% endfor %}
+                    </ul>
+                </details>
+                {% else %}
+                {% for error in properties.error %}
+                    <span style="color: #f00;">{{ error }}</span></br>
                 {% endfor %}
+                {% endif %}
+            {% endfor %}
 
-            </div>
+        </div>
 
-          </article>
-        </li>
+      </article>
+    </li>
 </ol>
 {% endif %}
 
