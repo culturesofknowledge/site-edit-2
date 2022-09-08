@@ -10,7 +10,7 @@
 
 
         <h3>Other locations:</h3>
-        {% include "core/component/create_update_recref.html" with recref_type='location' recref_formset=loc_formset new_form=new_loc_form add_label='Add location:' %}
+        {% include "core/component/create_update_recref.html" with recref_type='location' recref_formset=recref_loc.update_formset new_form=recref_loc.new_form add_label='Add location:' %}
 
 
     </fieldset>

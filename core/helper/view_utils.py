@@ -3,9 +3,11 @@ import os
 from multiprocessing import Process
 from typing import Iterable, Tuple, List, Type, Callable
 from typing import NoReturn
+from typing import Optional
 from urllib.parse import urlencode
 
 from django import template
+from django.db import models
 from django.forms import ModelForm
 from django.forms import formset_factory
 from django.shortcuts import render
@@ -14,8 +16,10 @@ from django.views import View
 from django.views.generic import ListView
 
 import core.constant as core_constant
+from core.forms import RecrefForm
 from core.forms import build_search_components
 from core.helper import file_utils, email_utils
+from core.helper import view_utils
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
     demo_table_search_results_renderer
 from core.helper.view_components import DownloadCsvHandler
@@ -272,3 +276,65 @@ def create_formset(form_class, post_data=None, prefix=None, many_related_manager
         prefix=prefix,
         initial=initial,
     )
+
+
+class MultiRecrefHandler:
+    """
+    provide common workflow handle multi recref records
+    * create, delete , update record
+    * create form and formset
+    """
+
+    def __init__(self, request_data, name, many_related_manager, data_fn):
+        self.name = name
+        self.new_form = RecrefForm(request_data or None, prefix=f'new_{name}')
+        self.update_formset = view_utils.create_formset(RecrefForm, post_data=request_data,
+                                                        prefix=f'recref_{name}',
+                                                        many_related_manager=many_related_manager,
+                                                        data_fn=data_fn,
+                                                        extra=0, )
+
+    def create_context(self) -> dict:
+        return {
+            f'recref_{self.name}': {
+                'new_form': self.new_form,
+                'update_formset': self.update_formset,
+            },
+        }
+
+    @property
+    def recref_class(self) -> Type[models.Model]:
+        raise NotImplementedError()
+
+    @staticmethod
+    def fill_common_recref_field(recref, cleaned_data, username):
+        recref.to_date = cleaned_data.get('to_date')
+        recref.from_date = cleaned_data.get('from_date')
+        recref.update_current_user_timestamp(username)
+        return recref
+
+    def create_recref_by_new_form(self, target_id, new_form, parent_instance) -> Optional[models.Model]:
+        raise NotImplementedError()
+
+    def maintain_record(self, request, parent_instance):
+        """
+        workflow for handle:
+        create, update, delete recref record by form data
+        """
+        # save new_form
+        if target_id := self.new_form.cleaned_data.get('target_id'):
+            if recref := self.create_recref_by_new_form(target_id, self.new_form, parent_instance):
+                recref = self.fill_common_recref_field(recref, self.new_form.cleaned_data, request.user.username)
+                recref.save()
+
+        # update update_formset
+        target_changed_fields = {'to_date', 'from_date', 'is_delete'}
+        _forms = (f for f in self.update_formset if not target_changed_fields.isdisjoint(f.changed_data))
+        for f in _forms:
+            if f.cleaned_data['is_delete']:
+                self.recref_class.objects.filter(pk=f.cleaned_data['recref_id']).delete()
+            else:
+                ps_loc = self.recref_class.objects.get(pk=f.cleaned_data['recref_id'])
+                ps_loc = self.fill_common_recref_field(ps_loc, self.new_form.cleaned_data, request.user.username)
+                print(f.cleaned_data)  # TOBEREMOVE
+                ps_loc.save()
