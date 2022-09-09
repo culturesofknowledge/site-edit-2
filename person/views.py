@@ -101,7 +101,7 @@ class PersonRecrefHandler(view_utils.MultiRecrefHandler):
             return record and record.foaf_name
 
         initial_list = (m.__dict__ for m in model_list)
-        initial_list = (convert_to_recref_form_dict(r, 'organisation_id', _find_rec_name_by_id)
+        initial_list = (convert_to_recref_form_dict(r, 'related_id', _find_rec_name_by_id)
                         for r in initial_list)
 
         name = name or 'person'
@@ -114,13 +114,13 @@ class PersonRecrefHandler(view_utils.MultiRecrefHandler):
 
     def create_recref_by_new_form(self, target_id, new_form, parent_instance) -> Optional[models.Model]:
         recref: CofkPersonPersonMap = CofkPersonPersonMap()
-        recref.organisation = CofkUnionPerson.objects.get(iperson_id=target_id)
-        if not recref.organisation:
+        recref.related = CofkUnionPerson.objects.get(iperson_id=target_id)
+        if not recref.related:
             # KTODO can we put it to validate function?
             log.warning(f"person not found -- {target_id} ")
             return None
 
-        recref.owner_person = parent_instance
+        recref.person = parent_instance
         recref.relationship_type = 'member_of'
         recref.person_type = self.person_type
         return recref
@@ -204,8 +204,11 @@ class PersonSearchView(DefaultSearchView):
         ]
 
     @property
-    def merge_page_name(self) -> View:
+    def merge_page_vname(self) -> str:
         return 'person:merge'
+    @property
+    def return_quick_init_vname(self) -> str:
+        return 'person:return_quick_init'
 
     def get_queryset(self):
         # KTODO

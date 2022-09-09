@@ -247,8 +247,12 @@ class LocationSearchView(BasicSearchView):
         return 'Location'
 
     @property
-    def merge_page_name(self) -> str:
+    def merge_page_vname(self) -> str:
         return 'location:merge'
+
+    @property
+    def return_quick_init_vname(self) -> str:
+        return 'location:return_quick_init'
 
     @property
     def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:

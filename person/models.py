@@ -139,10 +139,10 @@ class CofkPersonLocationMap(Recref):
 
 class CofkPersonPersonMap(Recref):
     person = models.ForeignKey(CofkUnionPerson, to_field='iperson_id',
-                               related_name='passive_relationships',
+                               related_name='active_relationships',
                                on_delete=models.CASCADE)
     related = models.ForeignKey(CofkUnionPerson, to_field='iperson_id',
-                                related_name='active_relationships',
+                                related_name='passive_relationships',
                                 on_delete=models.CASCADE)
     person_type = models.CharField(null=False, default='other', max_length=100)
 

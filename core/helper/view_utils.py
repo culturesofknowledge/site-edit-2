@@ -78,8 +78,12 @@ class BasicSearchView(ListView):
         raise NotImplementedError('missing download_csv_handler')
 
     @property
-    def merge_page_name(self) -> str:
-        raise NotImplementedError('missing merge_page_name')
+    def merge_page_vname(self) -> str:
+        raise NotImplementedError('missing merge_page_vname')
+
+    @property
+    def return_quick_init_vname(self) -> str:
+        raise NotImplementedError('missing return_quick_init_vname')
 
     def get_queryset(self):
         raise NotImplementedError('missing get_queryset')
@@ -116,7 +120,8 @@ class BasicSearchView(ListView):
                         'results_renderer': results_renderer(context[self.context_object_name]),
                         'is_compact_layout': is_compact_layout,
                         'to_user_messages': getattr(self, 'to_user_messages', []),
-                        'merge_page_url': reverse(self.merge_page_name),
+                        'merge_page_url': reverse(self.merge_page_vname),
+                        'return_quick_init_vname': self.return_quick_init_vname,
                         })
 
         return context
@@ -209,7 +214,11 @@ class DefaultSearchView(BasicSearchView):
         return None
 
     @property
-    def merge_page_name(self) -> View:
+    def merge_page_vname(self) -> str:
+        return 'login:gate'
+
+    @property
+    def return_quick_init_vname(self) -> str:
         return 'login:gate'
 
     def get_queryset(self):

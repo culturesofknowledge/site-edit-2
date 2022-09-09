@@ -150,9 +150,7 @@
                         $(e.target).closest('.selectable_entry')
                     );
 
-                    // KTODO extact return_quick_init
-
-                    let form = $('<form action="{% url 'location:return_quick_init' '__entry_id__' %}">');
+                    let form = $('<form action="{% url return_quick_init_vname '__entry_id__' %}">');
                     form.attr(
                         'action',
                         form.attr('action').replace('__entry_id__', entry_id)
