@@ -49,7 +49,7 @@ class BasicSearchView(ListView):
         raise NotImplementedError()
 
     @property
-    def sort_by_choices(self) -> List[Tuple[str, str]]:
+    def sort_by_choices(self) -> list[tuple[str, str]]:
         """
         return list of tuple for "django field value" and "Label"
         Example :
@@ -79,10 +79,12 @@ class BasicSearchView(ListView):
 
     @property
     def merge_page_vname(self) -> str:
+        # KTODO merge feature can be disable
         raise NotImplementedError('missing merge_page_vname')
 
     @property
     def return_quick_init_vname(self) -> str:
+        # KTODO return_quick_init feature can be disable
         raise NotImplementedError('missing return_quick_init_vname')
 
     def get_queryset(self):
@@ -195,7 +197,7 @@ class DefaultSearchView(BasicSearchView):
         return '__TITLE__'
 
     @property
-    def sort_by_choices(self) -> List[Tuple[str, str]]:
+    def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
             ('-change_timestamp', 'Change Timestamp desc',),
             ('change_timestamp', 'Change Timestamp asc',),
@@ -264,7 +266,7 @@ class CommonInitFormViewTemplate(View):
 
 def redirect_return_quick_init(request, name, item_name, item_id):
     return render(request, 'core/return_quick_init.html', {
-        'name': 'Person',
+        'name': name,
         'item_name': item_name,
         'item_id': item_id,
     })

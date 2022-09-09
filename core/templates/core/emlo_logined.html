@@ -13,9 +13,7 @@
             <li class="menu-item">
                 <a href="/repositories/">Repositories</a>
             </li>
-            <li class="menu-item">
-                <a href="/publications/">Publications</a>
-            </li>
+            {% include "core/component/common_section_menu_item.html" with search_vname='publication:search' init_vname='publication:init_form' section_name='Publications' %}
         </ul>
         <ul class="no-margin">
             <li class="menu-item">

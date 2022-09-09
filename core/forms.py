@@ -1,12 +1,10 @@
-from typing import Tuple, List
-
 from django import forms
 from django.forms import Form
 
 from core.helper import widgets_utils, form_utils
 
 
-def build_search_components(sort_by_choices: List[Tuple[str, str]]):
+def build_search_components(sort_by_choices: list[tuple[str, str]]):
     class SearchComponents(Form):
         template_name = 'core/form/search_components.html'
         sort_by = forms.CharField(label='Sort by',

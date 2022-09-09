@@ -220,7 +220,7 @@ class PersonSearchView(DefaultSearchView):
         return 'Person'
 
     @property
-    def sort_by_choices(self) -> List[Tuple[str, str]]:
+    def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
             ('-change_timestamp', 'Change Timestamp desc',),
             ('change_timestamp', 'Change Timestamp asc',),

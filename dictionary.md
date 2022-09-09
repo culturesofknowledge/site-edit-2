@@ -6,4 +6,5 @@
 | jqe    | Jquery Element   |
 | ele    | Html Element     |
 | ps_loc | Person Location  |
-| org    | Organisations  |
+| pub    | Publication      |
+| org    | Organisations    |

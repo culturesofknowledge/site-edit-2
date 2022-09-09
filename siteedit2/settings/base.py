@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'institution',
     'manifestation',
     'person',
+    'publication',
 ]
 
 MIDDLEWARE = [
