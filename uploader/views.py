@@ -90,11 +90,13 @@ def handle_upload(request, context):
         #    log.error(e)
 
         if cuef and cuef.errors:
+            log.error('Deleting new upload')
             new_upload.delete()
             # TODO delete uploaded file
             context['report']['errors'] = cuef.errors
             context['report']['total_errors'] = cuef.total_errors
         elif 'total_errors' in context['report']:
+            log.error('Deleting new upload')
             new_upload.delete()
         else:
             new_upload.upload_name = request.FILES['upload_file']._name + ' ' + str(new_upload.upload_timestamp)
@@ -118,7 +120,6 @@ def upload_view(request, **kwargs):
 
         # If workbook upload is successful we redirect to review view
         if 'report' in context and 'total_errors' not in context['report']:
-            print(context['report'])
             return redirect(f'/upload/{context["report"]["upload_id"]}')
 
     context['uploads'] = CofkCollectUpload.objects.order_by('-upload_timestamp').all()

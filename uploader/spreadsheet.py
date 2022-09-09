@@ -28,7 +28,6 @@ class CofkEntity:
         self.sheet_data = sheet_data
         self.row_data = None
         self.errors = {}
-        self.total_errors = 0
         self.row = 1
 
     def check_data_types(self, sheet_name: str):
@@ -61,8 +60,9 @@ class CofkEntity:
 
         self.errors[self.row].append(error)
 
-    def format_errors_for_template(self) -> list[dict]:
+    def format_errors_for_template(self) -> dict:
         errors = []
+        total_errors = 0
 
         for k, value_array in self.errors.items():
             row_errors = []
@@ -70,13 +70,13 @@ class CofkEntity:
                 if hasattr(v, 'error_dict'):
                     row_errors += [str(e)[2:-2] for e in v.error_dict['__all__']]
                 if hasattr(v, 'message'):
-                    log.info('MESSAGE')
                     row_errors += [str(e) for e in v]
 
-            self.total_errors += len(row_errors)
+            total_errors += len(row_errors)
             errors.append({'row': k, 'errors': row_errors})
 
-        return errors
+        return {'errors': errors,
+                'total': total_errors}
 
 
 class CofkRepositories(CofkEntity):
@@ -188,7 +188,7 @@ class CofkPeople(CofkEntity):
         # Get all people from people spreadsheet
         for i in range(1, len(self.sheet_data.index)):
             self.row_data = {k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None}
-            log.debug(self.row_data)
+
             self.check_data_types('People')
             # TODO handle multiple people in same row
             iperson_id = self.row_data['iperson_id'] if 'iperson_id' in self.row_data else None
@@ -727,28 +727,23 @@ class CofkUploadExcelFile:
         self.manifestations = CofkManifestations(upload=self.upload, sheet_data=self.data['manifestation'])
 
         if self.works.errors:
-            self.errors['work'] = {'errors': self.works.format_errors_for_template(),
-                                   'total': self.works.total_errors}
+            self.errors['work'] = self.works.format_errors_for_template()
             self.total_errors += self.errors['work']['total']
 
         if self.people.errors:
-            self.errors['people'] = {'errors': self.people.format_errors_for_template(),
-                                     'total': self.people.total_errors}
+            self.errors['people'] = self.people.format_errors_for_template()
             self.total_errors += self.errors['people']['total']
 
         if self.repositories.errors:
-            self.errors['repositories'] = {'errors': self.repositories.format_errors_for_template(),
-                                           'total': self.repositories.total_errors}
+            self.errors['repositories'] = self.repositories.format_errors_for_template()
             self.total_errors += self.errors['repositories']['total']
 
         if self.locations.errors:
-            self.errors['locations'] = {'errors': self.locations.format_errors_for_template(),
-                                        'total': self.locations.total_errors}
+            self.errors['locations'] = self.locations.format_errors_for_template()
             self.total_errors += self.errors['locations']['total']
 
         if self.manifestations.errors:
-            self.errors['manifestations'] = {'errors': self.manifestations.format_errors_for_template(),
-                                             'total': self.manifestations.total_errors}
+            self.errors['manifestations'] = self.manifestations.format_errors_for_template()
             self.total_errors += self.errors['manifestations']['total']
 
     def get_sheet_data(self, sheet_name: str) -> pd.DataFrame:
