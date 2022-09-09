@@ -1,5 +1,5 @@
 import logging
-from typing import List, Tuple, Callable, Iterable, Type, Optional, Any
+from typing import List, Tuple, Callable, Iterable, Type, Optional, Any, NoReturn
 
 from django.db import models
 from django.forms import BaseForm
@@ -26,6 +26,10 @@ class PersonInitView(CommonInitFormViewTemplate):
     @property
     def form_factory(self) -> Callable[..., BaseForm]:
         return PersonForm
+
+    def on_form_changed(self, request, form) -> NoReturn:
+        form.instance.person_id = f'cofk_union_person-iperson_id:{form.instance.iperson_id}'
+        return super().on_form_changed(request, form)
 
 
 class PersonQuickInitView(PersonInitView):
