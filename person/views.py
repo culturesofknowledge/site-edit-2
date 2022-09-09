@@ -95,16 +95,18 @@ class OrganisationRecrefConvertor:
 
 class PersonRecrefHandler(view_utils.MultiRecrefHandler):
 
-    def __init__(self, request_data, person_type: str, model_list=None, name=None):
+    def __init__(self, request_data, person_type: str,
+                 person: CofkUnionPerson,
+                 name=None, ):
         def _find_rec_name_by_id(target_id) -> Optional[str]:
             record = CofkUnionPerson.objects.get(iperson_id=target_id)
             return record and record.foaf_name
 
-        initial_list = (m.__dict__ for m in model_list)
+        initial_list = (m.__dict__ for m in _get_other_persons_by_type(person, person_type))
         initial_list = (convert_to_recref_form_dict(r, 'related_id', _find_rec_name_by_id)
                         for r in initial_list)
 
-        name = name or 'person'
+        name = name or person_type
         super().__init__(request_data, name=name, initial_list=initial_list)
         self.person_type = person_type
 
@@ -148,20 +150,41 @@ class PersonFullFormHandler:
         self.loc_handler = LocRecrefHandler(
             request_data, model_list=self.person.cofkpersonlocationmap_set.iterator(), )
 
-        self.org_handler = PersonRecrefHandler(
-            request_data,
-            name='organisation',
-            person_type='organisation',
-            model_list=_get_other_persons_by_type(self.person, 'organisation'), )
+        self.org_handler = PersonRecrefHandler(request_data, person_type='organisation',
+                                               person=self.person)
+        self.parent_handler = PersonRecrefHandler(request_data, person_type='parent',
+                                                  person=self.person)
+        self.children_handler = PersonRecrefHandler(request_data, person_type='children',
+                                                    person=self.person)
+
+        self.employer_handler = PersonRecrefHandler(request_data, person_type='employer',
+                                                    person=self.person)
+        self.employee_handler = PersonRecrefHandler(request_data, person_type='employee',
+                                                    person=self.person)
+        self.teacher_handler = PersonRecrefHandler(request_data, person_type='teacher',
+                                                   person=self.person)
+        self.student_handler = PersonRecrefHandler(request_data, person_type='student',
+                                                   person=self.person)
+        self.patron_handler = PersonRecrefHandler(request_data, person_type='patron',
+                                                  person=self.person)
+        self.protege_handler = PersonRecrefHandler(request_data, person_type='protege',
+                                                   person=self.person)
+        self.other_handler = PersonRecrefHandler(request_data, person_type='other',
+                                                 name='person_other',
+                                                 person=self.person)
+
+    @property
+    def all_recref_handlers(self):
+        attr_list = (getattr(self, p) for p in dir(self))
+        attr_list = (a for a in attr_list if isinstance(a, view_utils.MultiRecrefHandler))
+        return attr_list
 
     def render_form(self, request):
-        context = (
-                {
-                    'person_form': self.person_form,
-                }
-                | self.loc_handler.create_context()
-                | self.org_handler.create_context()
-        )
+        context = {
+            'person_form': self.person_form,
+        }
+        for h in self.all_recref_handlers:
+            context.update(h.create_context())
         return render(request, 'person/full_form.html', context)
 
 
@@ -170,17 +193,17 @@ def full_form(request, iperson_id):
 
     # handle form submit
     if request.POST:
-        form_formsets = [fhandler.person_form,
-                         fhandler.loc_handler.new_form, fhandler.loc_handler.update_formset,
-                         fhandler.org_handler.new_form, fhandler.org_handler.update_formset,  # KTODO
-                         ]
+
+        # define form_formsets
+        form_formsets = [fhandler.person_form, ]
+        for h in fhandler.all_recref_handlers:
+            form_formsets.extend([h.new_form, h.update_formset, ])
+
         log_invalid(form_formsets)
         if view_utils.any_invalid(form_formsets):
             return fhandler.render_form(request)
-        for recref_handler in [
-            fhandler.loc_handler,
-            fhandler.org_handler,
-        ]:
+
+        for recref_handler in fhandler.all_recref_handlers:
             recref_handler.maintain_record(request, fhandler.person_form.instance)
 
         fhandler.person_form.save()
@@ -206,6 +229,7 @@ class PersonSearchView(DefaultSearchView):
     @property
     def merge_page_vname(self) -> str:
         return 'person:merge'
+
     @property
     def return_quick_init_vname(self) -> str:
         return 'person:return_quick_init'
