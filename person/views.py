@@ -1,5 +1,5 @@
 import logging
-from typing import List, Tuple, Callable, Iterable, Type, Optional
+from typing import List, Tuple, Callable, Iterable, Type, Optional, Any
 
 from django.db import models
 from django.forms import BaseForm
@@ -39,41 +39,31 @@ def return_quick_init(request, pk):
         request, 'Person', person.foaf_name, person.iperson_id, )
 
 
-class RecrefConvertor:
+def convert_to_recref_form_dict(record_dict: dict, target_id_name: str,
+                                find_rec_name_by_id_fn: Callable[[Any], str]) -> dict:
+    target_id = record_dict.get(target_id_name, '')
+    record_dict['target_id'] = target_id
+    if (rec_name := find_rec_name_by_id_fn(target_id)) is None:
+        log.warning(f"[{target_id_name}] record not found -- [{target_id}]")
+    else:
+        record_dict['rec_name'] = rec_name
 
-    @property
-    def target_id_name(self) -> str:
-        raise NotImplementedError()
-
-    def find_rec_name_by_id(self, target_id) -> Optional[str]:
-        raise NotImplementedError()
-
-    def convert(self, record_dict: dict) -> dict:
-        target_id = record_dict.get(self.target_id_name, '')
-        record_dict['target_id'] = target_id
-        if (rec_name := self.find_rec_name_by_id(target_id)) is None:
-            log.warning(f"[{self.__class__.__name__}] record not found -- [{target_id}]")
-        else:
-            record_dict['rec_name'] = rec_name
-
-        return record_dict
+    return record_dict
 
 
 class LocRecrefHandler(view_utils.MultiRecrefHandler):
-    class _Convertor(RecrefConvertor):
 
-        @property
-        def target_id_name(self) -> str:
-            return 'location_id'
-
-        def find_rec_name_by_id(self, target_id) -> Optional[str]:
+    def __init__(self, request_data, model_list, name=None, **kwargs):
+        def _find_rec_name_by_id(target_id) -> Optional[str]:
             loc = CofkUnionLocation.objects.get(location_id=target_id)
             return loc and loc.location_name
 
-    def __init__(self, request_data, many_related_manager, name=None, **kwargs):
+        initial_list = (m.__dict__ for m in model_list)
+        initial_list = (convert_to_recref_form_dict(r, 'location_id', _find_rec_name_by_id)
+                        for r in initial_list)
+
         name = name or 'loc'
-        super().__init__(request_data, name=name, many_related_manager=many_related_manager,
-                         data_fn=self._Convertor().convert, **kwargs)
+        super().__init__(request_data, name=name, initial_list=initial_list, **kwargs)
 
     @property
     def recref_class(self) -> Type[models.Model]:
@@ -100,22 +90,18 @@ class OrganisationRecrefConvertor:
 
 
 class OrganisationRecrefHandler(view_utils.MultiRecrefHandler):
-    class _Convertor(RecrefConvertor):
 
-        @property
-        def target_id_name(self) -> str:
-            return 'organisation_id'
-
-        def find_rec_name_by_id(self, target_id) -> Optional[str]:
+    def __init__(self, request_data, model_list, name=None, **kwargs):
+        def _find_rec_name_by_id(target_id) -> Optional[str]:
             record = CofkUnionPerson.objects.get(iperson_id=target_id)
             return record and record.foaf_name
 
-    def __init__(self, request_data, many_related_manager, name=None, **kwargs):
+        initial_list = (m.__dict__ for m in model_list)
+        initial_list = (convert_to_recref_form_dict(r, 'organisation_id', _find_rec_name_by_id)
+                        for r in initial_list)
+
         name = name or 'org'
-        super().__init__(request_data,
-                         name=name,
-                         many_related_manager=many_related_manager,
-                         data_fn=self._Convertor().convert, **kwargs)
+        super().__init__(request_data, name=name, initial_list=initial_list, **kwargs)
 
     @property
     def recref_class(self) -> Type[models.Model]:

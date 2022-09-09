@@ -4,6 +4,7 @@ from django.db import models
 
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
+from core.models import Recref
 
 SEQ_NAME_COFKUNIONPERSION__IPERSON_ID = 'cofk_union_person_iperson_id_seq'
 
@@ -128,25 +129,6 @@ class CofkUnionPerson(models.Model, RecordTracker):
         db_table = 'cofk_union_person'
 
 
-class Recref(models.Model, RecordTracker):
-    recref_id = models.AutoField(primary_key=True)
-    person = models.ForeignKey(CofkUnionPerson, to_field='iperson_id', on_delete=models.CASCADE)
-    # person = models.ForeignKey(CofkUnionPerson, on_delete=models.CASCADE)
-    location = models.ForeignKey('location.CofkUnionLocation', on_delete=models.CASCADE)
-    from_date = models.DateField(null=True)
-    to_date = models.DateField(null=True)
-
-    relationship_type = models.CharField(max_length=100)
-
-    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
-    creation_user = models.CharField(max_length=50)
-    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
-    change_user = models.CharField(max_length=50)
-
-    class Meta:
-        abstract = True
-
-
 class CofkPersonLocationMap(Recref):
     person = models.ForeignKey(CofkUnionPerson, to_field='iperson_id', on_delete=models.CASCADE)
     location = models.ForeignKey('location.CofkUnionLocation', on_delete=models.CASCADE)
@@ -162,6 +144,7 @@ class CofkPersonOrganisationMap(Recref):
     organisation = models.ForeignKey(CofkUnionPerson, to_field='iperson_id',
                                      related_name='organisation',
                                      on_delete=models.CASCADE)
+    person_type = models.CharField(null=False, default='other')
 
     class Meta(Recref.Meta):
         db_table = 'cofk_person_person_map'

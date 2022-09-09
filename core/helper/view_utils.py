@@ -264,17 +264,15 @@ def any_invalid(form_formsets: Iterable):
     return not all(f.is_valid() for f in form_formsets)
 
 
-def create_formset(form_class, post_data=None, prefix=None, many_related_manager=None,
-                   data_fn=None,
+def create_formset(form_class, post_data=None, prefix=None,
+                   initial_list: Iterable[dict] = None,
                    extra=1):
-    initial = (i.__dict__ for i in many_related_manager.iterator())
-    if data_fn:
-        initial = map(data_fn, initial)
-    initial = list(initial)
+    initial_list = initial_list or []
+    initial_list = list(initial_list)
     return formset_factory(form_class, extra=extra)(
         post_data or None,
         prefix=prefix,
-        initial=initial,
+        initial=initial_list,
     )
 
 
@@ -285,13 +283,13 @@ class MultiRecrefHandler:
     * create form and formset
     """
 
-    def __init__(self, request_data, name, many_related_manager, data_fn):
+    def __init__(self, request_data, name, initial_list=None):
+
         self.name = name
         self.new_form = RecrefForm(request_data or None, prefix=f'new_{name}')
         self.update_formset = view_utils.create_formset(RecrefForm, post_data=request_data,
                                                         prefix=f'recref_{name}',
-                                                        many_related_manager=many_related_manager,
-                                                        data_fn=data_fn,
+                                                        initial_list=initial_list,
                                                         extra=0, )
 
     def create_context(self) -> dict:

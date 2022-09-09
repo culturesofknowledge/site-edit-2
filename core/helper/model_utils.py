@@ -66,3 +66,7 @@ def next_seq_safe(seq_name):
 
 def default_current_timestamp():
     return datetime.datetime.now()
+
+
+def related_manager_to_dict_list(related_manager) -> Iterable[dict]:
+    return (r.__dict__ for r in related_manager.iterator())

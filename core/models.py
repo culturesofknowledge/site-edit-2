@@ -11,6 +11,22 @@ from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 
 
+class Recref(models.Model, RecordTracker):
+    recref_id = models.AutoField(primary_key=True)
+    from_date = models.DateField(null=True)
+    to_date = models.DateField(null=True)
+
+    relationship_type = models.CharField(max_length=100)
+
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    creation_user = models.CharField(max_length=50)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    change_user = models.CharField(max_length=50)
+
+    class Meta:
+        abstract = True
+
+
 class CofkHelpOptions(models.Model):
     option_id = models.AutoField(primary_key=True)
     menu_item = models.ForeignKey('CofkMenu', models.DO_NOTHING, blank=True, null=True)
