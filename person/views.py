@@ -10,7 +10,7 @@ from core.helper import renderer_utils, view_utils
 from core.helper.view_utils import DefaultSearchView, CommonInitFormViewTemplate
 from location.models import CofkUnionLocation
 from person.forms import PersonForm
-from person.models import CofkUnionPerson, CofkPersonLocationMap, CofkPersonOrganisationMap
+from person.models import CofkUnionPerson, CofkPersonLocationMap, CofkPersonPersonMap
 
 log = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ def convert_to_recref_form_dict(record_dict: dict, target_id_name: str,
 
 class LocRecrefHandler(view_utils.MultiRecrefHandler):
 
-    def __init__(self, request_data, model_list, name=None, **kwargs):
+    def __init__(self, request_data, model_list, name=None):
         def _find_rec_name_by_id(target_id) -> Optional[str]:
             loc = CofkUnionLocation.objects.get(location_id=target_id)
             return loc and loc.location_name
@@ -63,7 +63,7 @@ class LocRecrefHandler(view_utils.MultiRecrefHandler):
                         for r in initial_list)
 
         name = name or 'loc'
-        super().__init__(request_data, name=name, initial_list=initial_list, **kwargs)
+        super().__init__(request_data, name=name, initial_list=initial_list)
 
     @property
     def recref_class(self) -> Type[models.Model]:
@@ -89,9 +89,9 @@ class OrganisationRecrefConvertor:
         return 'location_id'
 
 
-class OrganisationRecrefHandler(view_utils.MultiRecrefHandler):
+class PersonRecrefHandler(view_utils.MultiRecrefHandler):
 
-    def __init__(self, request_data, model_list, name=None, **kwargs):
+    def __init__(self, request_data, person_type: str, model_list=None, name=None):
         def _find_rec_name_by_id(target_id) -> Optional[str]:
             record = CofkUnionPerson.objects.get(iperson_id=target_id)
             return record and record.foaf_name
@@ -100,15 +100,16 @@ class OrganisationRecrefHandler(view_utils.MultiRecrefHandler):
         initial_list = (convert_to_recref_form_dict(r, 'organisation_id', _find_rec_name_by_id)
                         for r in initial_list)
 
-        name = name or 'org'
-        super().__init__(request_data, name=name, initial_list=initial_list, **kwargs)
+        name = name or 'person'
+        super().__init__(request_data, name=name, initial_list=initial_list)
+        self.person_type = person_type
 
     @property
     def recref_class(self) -> Type[models.Model]:
-        return CofkPersonOrganisationMap
+        return CofkPersonPersonMap
 
     def create_recref_by_new_form(self, target_id, new_form, parent_instance) -> Optional[models.Model]:
-        recref: CofkPersonOrganisationMap = CofkPersonOrganisationMap()
+        recref: CofkPersonPersonMap = CofkPersonPersonMap()
         recref.organisation = CofkUnionPerson.objects.get(iperson_id=target_id)
         if not recref.organisation:
             # KTODO can we put it to validate function?
@@ -117,6 +118,7 @@ class OrganisationRecrefHandler(view_utils.MultiRecrefHandler):
 
         recref.owner_person = parent_instance
         recref.relationship_type = 'member_of'
+        recref.person_type = self.person_type
         return recref
 
 
@@ -126,39 +128,62 @@ def log_invalid(form_formset: Iterable):
         log.debug(f'invalid form [{f}]')
 
 
-def full_form(request, iperson_id):
-    person = get_object_or_404(CofkUnionPerson, iperson_id=iperson_id)
-    person_form = PersonForm(request.POST or None, instance=person)
-    loc_handler = LocRecrefHandler(
-        request.POST, many_related_manager=person.cofkpersonlocationmap_set, )
-    org_handler = OrganisationRecrefHandler(
-        request.POST, many_related_manager=person.cofkpersonorganisationmap_set, )
+def _get_other_persons_by_type(person: CofkUnionPerson, person_type: str) -> Iterable[CofkPersonPersonMap]:
+    persons = (p for p in person.active_relationships.iterator()
+               if p.person_type == person_type)
+    return persons
 
-    def _render_full_form():
+
+class PersonFullFormHandler:
+    def __init__(self, iperson_id, request_data, ):
+        self.load_data(iperson_id, request_data=request_data)
+
+    def load_data(self, iperson_id, request_data=None):
+        self.person = get_object_or_404(CofkUnionPerson, iperson_id=iperson_id)
+        self.person_form = PersonForm(request_data or None, instance=self.person)
+        self.loc_handler = LocRecrefHandler(
+            request_data, model_list=self.person.cofkpersonlocationmap_set.iterator(), )
+
+        self.org_handler = PersonRecrefHandler(
+            request_data,
+            name='organisation',
+            person_type='organisation',
+            model_list=_get_other_persons_by_type(self.person, 'organisation'), )
+
+    def render_form(self, request):
         context = (
                 {
-                    'person_form': person_form,
+                    'person_form': self.person_form,
                 }
-                | loc_handler.create_context()
-                | org_handler.create_context()
+                | self.loc_handler.create_context()
+                | self.org_handler.create_context()
         )
         return render(request, 'person/full_form.html', context)
 
+
+def full_form(request, iperson_id):
+    fhandler = PersonFullFormHandler(iperson_id, request_data=request.POST or None)
+
+    # handle form submit
     if request.POST:
-        form_formsets = [person_form,
-                         loc_handler.new_form, loc_handler.update_formset,
-                         # org_handler.new_form, org_handler.update_formset,
+        form_formsets = [fhandler.person_form,
+                         fhandler.loc_handler.new_form, fhandler.loc_handler.update_formset,
+                         fhandler.org_handler.new_form, fhandler.org_handler.update_formset,  # KTODO
                          ]
         log_invalid(form_formsets)
         if view_utils.any_invalid(form_formsets):
-            return _render_full_form()
+            return fhandler.render_form(request)
+        for recref_handler in [
+            fhandler.loc_handler,
+            fhandler.org_handler,
+        ]:
+            recref_handler.maintain_record(request, fhandler.person_form.instance)
 
-        loc_handler.maintain_record(request, person_form.instance)
-        org_handler.maintain_record(request, person_form.instance)
+        fhandler.person_form.save()
 
-        person_form.save()
+        fhandler.load_data(iperson_id, request_data=None)
 
-    return _render_full_form()
+    return fhandler.render_form(request)
 
 
 class PersonSearchView(DefaultSearchView):

@@ -23,6 +23,7 @@ from core.helper import view_utils
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
     demo_table_search_results_renderer
 from core.helper.view_components import DownloadCsvHandler
+from core.models import Recref
 
 register = template.Library()
 log = logging.getLogger(__name__)
@@ -311,7 +312,7 @@ class MultiRecrefHandler:
         recref.update_current_user_timestamp(username)
         return recref
 
-    def create_recref_by_new_form(self, target_id, new_form, parent_instance) -> Optional[models.Model]:
+    def create_recref_by_new_form(self, target_id, new_form, parent_instance) -> Optional[Recref]:
         raise NotImplementedError()
 
     def maintain_record(self, request, parent_instance):

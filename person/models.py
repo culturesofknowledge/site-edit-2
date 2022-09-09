@@ -137,14 +137,14 @@ class CofkPersonLocationMap(Recref):
         db_table = 'cofk_person_location_map'
 
 
-class CofkPersonOrganisationMap(Recref):
-    owner_person = models.ForeignKey(CofkUnionPerson, to_field='iperson_id',
-                                     related_name='owner_person',
-                                     on_delete=models.CASCADE)
-    organisation = models.ForeignKey(CofkUnionPerson, to_field='iperson_id',
-                                     related_name='organisation',
-                                     on_delete=models.CASCADE)
-    person_type = models.CharField(null=False, default='other')
+class CofkPersonPersonMap(Recref):
+    person = models.ForeignKey(CofkUnionPerson, to_field='iperson_id',
+                               related_name='passive_relationships',
+                               on_delete=models.CASCADE)
+    related = models.ForeignKey(CofkUnionPerson, to_field='iperson_id',
+                                related_name='active_relationships',
+                                on_delete=models.CASCADE)
+    person_type = models.CharField(null=False, default='other', max_length=100)
 
     class Meta(Recref.Meta):
         db_table = 'cofk_person_person_map'
