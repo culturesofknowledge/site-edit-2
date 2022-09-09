@@ -55,26 +55,25 @@ mandatory_sheets = [
                  'excipit', 'notes_on_letter', 'mention_id', 'emlo_mention_id', 'notes_on_people_mentioned',
                  'editors_notes', 'resource_name', 'resource_url', 'resource_details'],
      'ints': ['iwork_id', 'date_of_work_std_year', 'date_of_work_std_month', 'date_of_work2_std_year',
-              'date_of_work2_std_month', 'date_of_work2_std_day', 'origin_id', 'destination_id']},
+              'date_of_work2_std_month', 'date_of_work2_std_day', 'origin_id', 'destination_id'],
+     'bools': ['date_of_work_std_is_range', 'date_of_work_inferred', 'date_of_work_uncertain', 'date_of_work_approx',
+               'authors_inferred', 'authors_uncertain', 'addressees_inferred', 'addressees_uncertain',
+               'origin_inferred', 'origin_uncertain', 'destination_inferred', 'destination_uncertain',
+               'hasgreek', 'hasarabic', 'hashebrew', 'haslatin']
+     },
     {'name': 'Manifestation',
-     'columns': ['manifestation_id', 'iwork_id', 'manifestation_type', 'repository_id', 'repository_names',
+     'columns': ['manifestation_id', 'iwork_id', 'manifestation_type', 'repository_id', 'repository_name',
                  'id_number_or_shelfmark', 'manifestation_notes', 'manifestation_type_p', 'printed_edition_details',
                  'printed_edition_notes', 'ms_translation', 'printed_translation']},
     {'name': 'People',
-     'columns': ['primary_name', 'iperson_id', 'editors_notes']},
+     'columns': ['primary_name', 'iperson_id', 'editors_notes'],
+     'ints': ['iperson_id']},
     {'name': 'Places',
-     'columns': ['location_name', 'location_id', 'editors_notes']},
+     'columns': ['location_name', 'location_id', 'editors_notes'],
+     'ints': ['location_id']},
     {'name': 'Repositories',
      'columns': ['institution_name', 'institution_id', 'institution_city', 'institution_country'],
      'ints': ['institution_id']}
 ]
-
-ints = ['iwork_id', 'date_of_work_std_year', 'date_of_work_std_month', 'date_of_work2_std_year',
-        'date_of_work2_std_month', 'date_of_work2_std_day', 'origin_id', 'destination_id']
-
-bools = ['date_of_work_std_is_range', 'date_of_work_inferred', 'date_of_work_uncertain', 'date_of_work_approx',
-         'authors_inferred', 'authors_uncertain', 'addressees_as_marked', 'addressees_inferred', 'addressees_uncertain',
-         'origin_inferred', 'origin_uncertain', 'destination_inferred', 'destination_uncertain', 'hasgreek',
-         'hasarabic', 'hashebrew', 'haslatin']
 
 multiple_ints = ['author_ids', 'addressee_ids']

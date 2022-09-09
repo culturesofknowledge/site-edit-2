@@ -22,22 +22,38 @@ from work.models import CofkCollectAuthorOfWork, CofkCollectAddresseeOfWork, Cof
 log = logging.getLogger(__name__)
 
 
-def check_data_types(sheet_name: str):
-    sheet = [s for s in mandatory_sheets if s['name'] == sheet_name][0]
-
-    if 'ints' in sheet:
-        for test_int in sheet['ints']:
-            try:
-                int(1)
-            except:
-                pass
-
 class CofkEntity:
     def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame):
         self.upload = upload
         self.sheet_data = sheet_data
+        self.row_data = None
         self.errors = {}
+        self.total_errors = 0
         self.row = 1
+
+    def check_data_types(self, sheet_name: str):
+        sheet = [s for s in mandatory_sheets if s['name'] == sheet_name][0]
+
+        if 'ints' in sheet:
+            for test_int_column in [t for t in sheet['ints'] if t in self.row_data]:
+                try:
+                    int(self.row_data[test_int_column])
+                except ValueError as ve:
+                    msg = f'Column {test_int_column} in {sheet_name} sheet is not a valid integer.'
+                    log.error(msg)
+                    self.add_error(ValidationError(msg))
+
+        if 'bools' in sheet:
+            for test_bool_column in [t for t in sheet['bools'] if t in self.row_data]:
+                try:
+                    if int(self.row_data[test_bool_column]) not in [0, 1]:
+                        msg = f'Column {test_bool_column} in {sheet_name} sheet is not a boolean value of either 0 or 1.'
+                        log.error(msg)
+                        self.add_error(ValidationError(msg))
+                except ValueError as ve:
+                    msg = f'Column {test_bool_column} in {sheet_name} sheet is not a boolean value of either 0 or 1.'
+                    log.error(msg)
+                    self.add_error(ValidationError(msg))
 
     def add_error(self, error: ValidationError):
         if self.row not in self.errors:
@@ -45,22 +61,20 @@ class CofkEntity:
 
         self.errors[self.row].append(error)
 
-    def get_total_errors(self) -> int:
-        try:
-            return sum([len(v[0].error_dict['__all__']) for k, v in self.errors.items()])
-        except AttributeError:
-            return sum([len(v) for k, v in self.errors.items()])
-        # if hasattr(v[0], 'error_dict') and '__all__' in v[0].error_dict])
-
-    def format_errors_for_template(self):
+    def format_errors_for_template(self) -> list[dict]:
         errors = []
-        for k, v in self.errors.items():
-            try:
-                errors.append({'row': k,
-                               'errors': [str(e)[2:-2] for e in v[0].error_dict['__all__']]})
-            except AttributeError:
-                errors.append({'row': k,
-                               'errors': [str(e)[2:-2] for e in v]})
+
+        for k, value_array in self.errors.items():
+            row_errors = []
+            for v in value_array:
+                if hasattr(v, 'error_dict'):
+                    row_errors += [str(e)[2:-2] for e in v.error_dict['__all__']]
+                if hasattr(v, 'message'):
+                    log.info('MESSAGE')
+                    row_errors += [str(e) for e in v]
+
+            self.total_errors += len(row_errors)
+            errors.append({'row': k, 'errors': row_errors})
 
         return errors
 
@@ -70,7 +84,6 @@ class CofkRepositories(CofkEntity):
         super().__init__(upload, sheet_data)
 
         self.__institution_id = None
-        self.__repository_data = {}
         self.ids = []
 
         # Process each row in turn, using a dict comprehension to filter out empty values
@@ -78,31 +91,35 @@ class CofkRepositories(CofkEntity):
             self.process_repository({k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None})
 
     def process_repository(self, repository_data):
-        self.__repository_data = repository_data
-        self.__repository_data['upload'] = self.upload
+        self.row_data = repository_data
+        self.row_data['upload'] = self.upload
         self.__institution_id = repository_data['institution_id']
 
         log.info("Processing repository, institution_id #{}, upload_id #{}".format(
             self.__institution_id, self.upload.upload_id))
 
+        self.check_data_types('Repositories')
+
         if not self.already_exists():
-            repository = CofkCollectInstitution(**self.__repository_data)
+            repository = CofkCollectInstitution(**self.row_data)
             repository.save()
             self.ids.append(self.__institution_id)
 
             log.info("Repository created.")
 
     def already_exists(self) -> bool:
-        return CofkCollectInstitution.objects \
-            .filter(institution_id=self.__institution_id, upload=self.upload) \
-            .exists()
+        try:
+            return CofkCollectInstitution.objects \
+                .filter(institution_id=self.__institution_id, upload=self.upload) \
+                .exists()
+        except ValueError:
+            return True
 
 
 class CofkLocations(CofkEntity):
     def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame, limit=None):
         super().__init__(upload, sheet_data)
         self.__location_id = None
-        self.__location_data = {}
         limit = limit if limit else len(self.sheet_data.index)
         self.ids = []
 
@@ -111,16 +128,18 @@ class CofkLocations(CofkEntity):
             self.process_location({k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None})
 
     def process_location(self, repository_data):
-        self.__location_data = repository_data
-        self.__location_data['upload_id'] = self.upload.upload_id
+        self.row_data = repository_data
+        self.row_data['upload_id'] = self.upload.upload_id
         self.__location_id = repository_data['location_id']
+
+        self.check_data_types('Places')
 
         log.info("Processing location, location_id #{}, upload_id #{}".format(
             1, self.upload.upload_id))
 
         if not self.already_exists():
             # Name, city and country are required
-            location = CofkCollectLocation(**self.__location_data)
+            location = CofkCollectLocation(**self.row_data)
             location.location_id = 1
             location.element_1_eg_room = 0
             location.element_2_eg_building = 0
@@ -147,8 +166,16 @@ class CofkLocations(CofkEntity):
 
 
 class CofkPeople(CofkEntity):
-    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame,
-                 work_data: pd.DataFrame):
+    """
+    This class process the People sheet in the uploaded workbook.
+    """
+
+    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame, work_data: pd.DataFrame):
+        """
+        sheet_data: all data from the "People" sheet
+        word_data: all data from the "Work" sheet, from which a few columns are required
+        # TODO editor's notes from people sheet need to be added
+        """
         super().__init__(upload, sheet_data)
         self.upload_id = upload.upload_id
         self.work_data = work_data
@@ -160,46 +187,49 @@ class CofkPeople(CofkEntity):
 
         # Get all people from people spreadsheet
         for i in range(1, len(self.sheet_data.index)):
-            row = self.sheet_data.iloc[i].to_dict()
+            self.row_data = {k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None}
+            log.debug(self.row_data)
+            self.check_data_types('People')
             # TODO handle multiple people in same row
-            # if ';' not in row['primary_name'] and isinstance(row['iperson_id'], int):
-            work_people.append((row['primary_name'], row['iperson_id']))
+            iperson_id = self.row_data['iperson_id'] if 'iperson_id' in self.row_data else None
+            sheet_people.append((self.row_data['primary_name'], iperson_id))
 
         # Get all people from references in Work spreadsheet
         for i in range(1, len(work_data.index)):
             row = work_data.iloc[i].to_dict()
+            # log.debug(row)
             # TODO handle multiple people in same row
-            # if 'author_names' in row and 'author_ids' in row and\
-            #        ';' not in row['author_names'] and isinstance(row['author_ids'], int):
             if row['author_names']:
-                sheet_people.append((row['author_names'], row['author_ids']))
-            # if 'addressee_names' in row and 'addressee_ids' in row and\
-            #        ';' not in row['addressee_names'] and isinstance(row['addressee_ids'], int):
+                work_people.append((row['author_names'], row['author_ids']))
+
             if row['addressee_names']:
-                sheet_people.append((row['addressee_names'], row['addressee_ids']))
-            # if 'mention_id' in row and 'emlo_mention_id' in row and row['mention_id']
-            # is not None and';' not in row['mention_id'] and isinstance(row['emlo_mention_id'], int):
+                work_people.append((row['addressee_names'], row['addressee_ids']))
+
             if row['mention_id']:
-                sheet_people.append((row['mention_id'], row['emlo_mention_id']))
+                work_people.append((row['mention_id'], row['emlo_mention_id']))
 
         unique_sheet_people = set(sheet_people)
         unique_work_people = set(work_people)
 
-        if unique_work_people < unique_sheet_people:
+        if unique_work_people > unique_sheet_people:
             ppl = [f'{p[0]} #{p[1]}' for p in list(unique_sheet_people - unique_work_people)]
             ppl_joined = ', '.join(ppl)
             self.add_error(ValidationError(f'The person {ppl_joined} is referenced in the Work spreadsheet but is '
                                            f'missing from the People spreadsheet'))
-        elif unique_work_people > unique_sheet_people:
+        elif unique_work_people < unique_sheet_people:
             ppl = [str(p) for p in list(unique_work_people - unique_sheet_people)]
             ppl_joined = ', '.join(ppl)
             self.add_error(ValidationError(f'The person {ppl_joined} is referenced in the People spreadsheet but is '
                                            f'missing from the Work spreadsheet'))
 
         for p in [p for p in list(unique_work_people.union(unique_sheet_people)) if p[1] is not None]:
-            if not CofkCollectPerson.objects.filter(iperson_id=p[1]).exists():
-                self.add_error(ValidationError(f'The person {p[0]} #{p[1]} is referenced in either the Work or the'
-                                               f' People spreadsheet but does not exist'))
+            try:
+                if not CofkCollectPerson.objects.filter(iperson_id=p[1]).exists():
+                    self.add_error(ValidationError(f'The person {p[0]} #{p[1]} is referenced in either the Work or the'
+                                                   f' People spreadsheet but does not exist'))
+            except ValueError:
+                # Will fail if iperson_id column in People sheet contains incorrect data type
+                pass
 
         for new_p in [p[0] for p in list(unique_work_people.union(unique_sheet_people)) if p[1] is None]:
             rows, cols = np.where(work_data == new_p)
@@ -225,7 +255,6 @@ class CofkPeople(CofkEntity):
             person.date_of_death_uncertain = 0
             person.date_of_death_approx = 0
             person.flourished_is_range = 0
-            # person.date_of_death_is_range = 0
 
             person.save()
             self.work_data.iloc[rows, cols + 1] = person.iperson_id
@@ -301,7 +330,6 @@ class CofkWork(CofkEntity):
         super().__init__(upload, sheet_data)
 
         self.iwork_id = None
-        self.work_data = {}
         self.non_work_data = {}
         self.ids = []
 
@@ -389,14 +417,14 @@ class CofkWork(CofkEntity):
 
     def preprocess_data(self):
         # Isolating data relevant to a work
-        non_work_keys = list(set(self.work_data.keys()) - set([c for c in CofkCollectWork.__dict__.keys()]))
-        # log.debug(self.work_data)
+        non_work_keys = list(set(self.row_data.keys()) - set([c for c in CofkCollectWork.__dict__.keys()]))
+        # log.debug(self.row_data)
 
-        # Removing non-work data so that variable work_data_raw can be used to pass parameters
+        # Removing non-work data so that variable row_data_raw can be used to pass parameters
         # to create a CofkCollectWork object
         for m in non_work_keys:
-            self.non_work_data[m] = self.work_data[m]
-            del self.work_data[m]
+            self.non_work_data[m] = self.row_data[m]
+            del self.row_data[m]
 
         # log.debug(self.non_work_data)
 
@@ -407,10 +435,12 @@ class CofkWork(CofkEntity):
         :param work_data:
         :return:
         """
-        self.work_data = work_data
+        self.row_data = work_data
 
-        self.work_data['upload_id'] = self.upload.upload_id
+        self.row_data['upload_id'] = self.upload.upload_id
         self.iwork_id = work_data['iwork_id']
+
+        self.check_data_types('Work')
 
         log.info("Processing work, iwork_id #{}, upload_id #{}".format(
             self.iwork_id, self.upload.upload_id))
@@ -419,20 +449,20 @@ class CofkWork(CofkEntity):
 
         # Origin location needs to be processed before work is created
         # Is it possible that a work has more than one origin?
-        if 'origin_id' in self.work_data:
-            self.work_data['origin_id'] = self.process_location(
-                loc_id=self.work_data['origin_id'],
+        if False and 'origin_id' in self.row_data:
+            self.row_data['origin_id'] = self.process_location(
+                loc_id=self.row_data['origin_id'],
                 name=self.non_work_data['origin_name'])
 
         # Destination location needs to be processed before work is created
         # Is it possible that a work has more than one destination?
-        if 'destination_id' in self.work_data:
-            work_data['destination_id'] = self.process_location(
-                loc_id=self.work_data['destination_id'],
+        if False and 'destination_id' in self.row_data:
+            self.row_data['destination_id'] = self.process_location(
+                loc_id=self.row_data['destination_id'],
                 name=self.non_work_data['destination_name'])
 
         # Creating the work itself
-        work = CofkCollectWork(**work_data)
+        work = CofkCollectWork(**self.row_data)
         work.mentioned_inferred = 0
         work.mentioned_uncertain = 0
         work.place_mentioned_inferred = 0
@@ -460,6 +490,8 @@ class CofkWork(CofkEntity):
         except ValidationError as ve:
             self.add_error(ve)
             print(ve)
+        except TypeError as te:
+            log.error(te)
 
         self.ids.append(self.iwork_id)
 
@@ -687,33 +719,42 @@ class CofkUploadExcelFile:
                                  sheet_data=self.data['people'],
                                  work_data=self.data['work'])
 
-        # [['author_names', 'author_ids',
-        #                                                         'addressee_names', 'addressee_ids',
-        #                                                         'mention_id', 'emlo_mention_id']]
         # Second last but not least, the works themselves
-        self.works = CofkWork(upload=self.upload, sheet_data=self.people.work_data)
+        self.works = CofkWork(upload=self.upload, sheet_data=self.data['work'])
         self.upload.total_works = len(self.works.ids)
 
         # The last sheet is manifestations
         self.manifestations = CofkManifestations(upload=self.upload, sheet_data=self.data['manifestation'])
 
-        self.works.format_errors_for_template()
-
         if self.works.errors:
-            self.errors['work'] = {'total': self.works.get_total_errors(),
-                                   'errors': self.works.format_errors_for_template()}
+            self.errors['work'] = {'errors': self.works.format_errors_for_template(),
+                                   'total': self.works.total_errors}
             self.total_errors += self.errors['work']['total']
 
         if self.people.errors:
-            self.errors['people'] = {'total': self.people.get_total_errors(),
-                                     'errors': self.people.format_errors_for_template()}
+            self.errors['people'] = {'errors': self.people.format_errors_for_template(),
+                                     'total': self.people.total_errors}
             self.total_errors += self.errors['people']['total']
+
+        if self.repositories.errors:
+            self.errors['repositories'] = {'errors': self.repositories.format_errors_for_template(),
+                                           'total': self.repositories.total_errors}
+            self.total_errors += self.errors['repositories']['total']
+
+        if self.locations.errors:
+            self.errors['locations'] = {'errors': self.locations.format_errors_for_template(),
+                                        'total': self.locations.total_errors}
+            self.total_errors += self.errors['locations']['total']
+
+        if self.manifestations.errors:
+            self.errors['manifestations'] = {'errors': self.manifestations.format_errors_for_template(),
+                                             'total': self.manifestations.total_errors}
+            self.total_errors += self.errors['manifestations']['total']
 
     def get_sheet_data(self, sheet_name: str) -> pd.DataFrame:
         return self.wb[sheet_name].where(pd.notnull(self.wb[sheet_name]), None)
 
     def check_data_present(self):
-        #  TODO verify this is correct
         # if index length is less than 2 then there's only the header, no data
         if len(self.data['work'].index) < 2:
             msg = "Spreadsheet contains no data"
@@ -745,11 +786,10 @@ class CofkUploadExcelFile:
                     ms = ', '.join(missing_columns)
                     missing_columns.append(CofkMissingColumnError(f'Missing columns {ms} from the sheet {sheet_name}'))
                 else:
-                    missing_columns.append(CofkMissingColumnError(f'Missing column {missing_columns[0]} from the sheet {sheet_name}'))
+                    missing_columns.append(
+                        CofkMissingColumnError(f'Missing column {missing_columns[0]} from the sheet {sheet_name}'))
                 total_missing_columns += missing_columns
 
         if total_missing_columns:
             log.info(total_missing_columns)
             raise CofkMissingColumnError(total_missing_columns)
-
-
