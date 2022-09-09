@@ -119,11 +119,14 @@ def full_form(request, location_id):
     loc_form = LocationForm(request.POST or None, instance=loc)
 
     res_formset = view_utils.create_formset(LocationResourceForm, post_data=request.POST,
-                                            prefix='loc_res', many_related_manager=loc.resources)
+                                            prefix='loc_res',
+                                            initial_list=model_utils.related_manager_to_dict_list(loc.resources), )
     comment_formset = view_utils.create_formset(LocationCommentForm, post_data=request.POST,
-                                                prefix='loc_comment', many_related_manager=loc.comments)
+                                                prefix='loc_comment',
+                                                initial_list=model_utils.related_manager_to_dict_list(loc.comments), )
     images_formset = view_utils.create_formset(LocationImageForm, post_data=request.POST,
-                                               prefix='loc_image', many_related_manager=loc.images)
+                                               prefix='loc_image',
+                                               initial_list=model_utils.related_manager_to_dict_list(loc.images), )
     img_form = LocUploadImageForm(request.POST or None, request.FILES)
 
     def _render_full_form():
