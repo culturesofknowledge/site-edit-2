@@ -38,8 +38,8 @@
                     <br/>Original calendar: {{ work.display_original_calendar }}
                 {% endif %}
 
-                {% if work.display_issues %}
-                    <br/>Issues with date of work: {{ work.display_issues }}
+                {% if work.display_date_issues %}
+                    <br/>Issues with date of work: {{ work.display_date_issues }}
                 {% endif %}
 
                 {% if work.notes_on_date_of_work %}
@@ -49,8 +49,30 @@
             </td>
         </tr>
         <tr>
+            <td class="header">Author(s)</td>
+            <td>{{ work.origin_id }}
+
+                {% if work.origin_as_marked %}
+                    <br/>As marked: {{ work.origin_as_marked }}
+                {% endif %}
+
+                {% if work.display_origin_issues %}
+                    <br/>Issues with origin: {{ work.display_origin_issues }}
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
             <td class="header">Origin</td>
-            <td>{{ work.origin_id }}</td>
+            <td>{{ work.origin_id }}
+
+                {% if work.origin_as_marked %}
+                    <br/>As marked: {{ work.origin_as_marked }}
+                {% endif %}
+
+                {% if work.display_origin_issues %}
+                    <br/>Issues with origin: {{ work.display_origin_issues }}
+                {% endif %}
+            </td>
         </tr>
         <tr>
             <td class="header">Repositories and versions</td>

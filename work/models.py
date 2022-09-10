@@ -5,6 +5,7 @@ from django.db import models
 
 from core.helper.model_utils import RecordTracker
 from location.models import CofkCollectLocation
+from person.models import CofkCollectPerson
 from uploader.models import CofkCollectUpload, CofkCollectStatus
 
 
@@ -262,7 +263,7 @@ class CofkCollectWork(models.Model):
             return 'Julian (March year start)'
 
     @property
-    def display_issues(self):
+    def display_date_issues(self):
         issues = []
 
         if self.date_of_work_std_is_range == 1:
@@ -276,6 +277,18 @@ class CofkCollectWork(models.Model):
 
         if self.date_of_work_approx == 1:
             issues.append('approximate')
+
+        return ', '.join(issues)
+
+    @property
+    def display_origin_issues(self):
+        issues = []
+
+        if self.origin_inferred == 1:
+            issues.append('inferred')
+
+        if self.origin_uncertain == 1:
+            issues.append('uncertain')
 
         return ', '.join(issues)
 
@@ -296,14 +309,14 @@ class CofkCollectAddresseeOfWork(models.Model):
 class CofkCollectAuthorOfWork(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     author_id = models.IntegerField()
-    iperson_id = models.IntegerField()
-    iwork_id = models.IntegerField()
+    iperson_id = models.ManyToManyField(CofkCollectPerson)
+    iwork_id = models.ManyToManyField(CofkCollectWork)
     notes_on_author = models.TextField(blank=True, null=True)
     _id = models.CharField(max_length=32, blank=True, null=True)
 
     class Meta:
         db_table = 'cofk_collect_author_of_work'
-        unique_together = (('upload', 'iwork_id', 'author_id'),)
+        # unique_together = (('upload', 'iwork_id', 'author_id'),)
 
 
 class CofkCollectDestinationOfWork(models.Model):
