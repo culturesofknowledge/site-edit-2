@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from core.helper.model_utils import RecordTracker
+from location.models import CofkCollectLocation
 from uploader.models import CofkCollectUpload, CofkCollectStatus
 
 
@@ -92,7 +93,8 @@ class CofkCollectWork(models.Model):
     destination_as_marked = models.TextField(blank=True, null=True)
     destination_inferred = models.SmallIntegerField()
     destination_uncertain = models.SmallIntegerField()
-    origin_id = models.IntegerField(blank=True, null=True)
+    #origin_id = models.IntegerField(blank=True, null=True)
+    origin_id = models.ForeignKey(CofkCollectLocation, models.CASCADE)
     origin_as_marked = models.TextField(blank=True, null=True)
     origin_inferred = models.SmallIntegerField()
     origin_uncertain = models.SmallIntegerField()
@@ -222,6 +224,60 @@ class CofkCollectWork(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         return super().save(*args, **kwargs)
+
+    @property
+    def date_of_work_std(self):
+        try:
+            return datetime(self.date_of_work_std_year, self.date_of_work_std_month, self.date_of_work_std_day)\
+                .strftime("%d %b %Y")
+        except Exception:
+            pass
+
+    @property
+    def date_of_work2_std(self):
+        try:
+            return datetime(self.date_of_work2_std_year, self.date_of_work2_std_month, self.date_of_work2_std_day)\
+                .strftime("%d %b %Y")
+        except Exception:
+            pass
+
+    @property
+    def display_daterange(self):
+        if self.date_of_work_std and self.date_of_work2_std:
+            return f'{self.date_of_work_std} to {self.date_of_work2_std}'
+        elif self.date_of_work_std:
+            return f'{self.date_of_work_std} to ????-??-??'
+
+        return f'????-??-?? To {self.date_of_work2_std}'
+
+    @property
+    def display_original_calendar(self):
+        if self.original_calendar == 'G':
+            return 'Gregorian'
+        elif self.original_calendar == 'J':
+            return 'Julian' # This will switch to "JJ" after accepted, see review.php
+        elif self.original_calendar == 'JJ':
+            return 'Julian (January year start)'
+        elif self.original_calendar == 'JM':
+            return 'Julian (March year start)'
+
+    @property
+    def display_issues(self):
+        issues = []
+
+        if self.date_of_work_std_is_range == 1:
+            issues.append('estimated or known range')
+
+        if self.date_of_work_inferred == 1:
+            issues.append('inferred')
+
+        if self.date_of_work_uncertain == 1:
+            issues.append('uncertain')
+
+        if self.date_of_work_approx == 1:
+            issues.append('approximate')
+
+        return ', '.join(issues)
 
 
 class CofkCollectAddresseeOfWork(models.Model):

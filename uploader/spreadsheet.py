@@ -68,7 +68,10 @@ class CofkEntity:
             row_errors = []
             for v in value_array:
                 if hasattr(v, 'error_dict'):
-                    row_errors += [str(e)[2:-2] for e in v.error_dict['__all__']]
+                    if '__all__' in v.error_dict:
+                        row_errors += [str(e)[2:-2] for e in v.error_dict['__all__']]
+                    else:
+                        row_errors += [str(e) for e in v]
                 if hasattr(v, 'message'):
                     row_errors += [str(e) for e in v]
 
@@ -224,7 +227,7 @@ class CofkPeople(CofkEntity):
 
         for p in [p for p in list(unique_work_people.union(unique_sheet_people)) if p[1] is not None]:
             try:
-                if not CofkCollectPerson.objects.filter(iperson_id=p[1]).exists():
+                if CofkCollectPerson.objects.filter(iperson_id=p[1], upload_id=upload.upload_id).exists():
                     self.add_error(ValidationError(f'The person {p[0]} #{p[1]} is referenced in either the Work or the'
                                                    f' People spreadsheet but does not exist'))
             except ValueError:
@@ -449,7 +452,7 @@ class CofkWork(CofkEntity):
 
         # Origin location needs to be processed before work is created
         # Is it possible that a work has more than one origin?
-        if False and 'origin_id' in self.row_data:
+        if 'origin_id' in self.row_data:
             self.row_data['origin_id'] = self.process_location(
                 loc_id=self.row_data['origin_id'],
                 name=self.non_work_data['origin_name'])
@@ -463,25 +466,65 @@ class CofkWork(CofkEntity):
 
         # Creating the work itself
         work = CofkCollectWork(**self.row_data)
-        work.mentioned_inferred = 0
-        work.mentioned_uncertain = 0
-        work.place_mentioned_inferred = 0
-        work.place_mentioned_uncertain = 0
-        work.date_of_work2_approx = 0
-        work.date_of_work2_inferred = 0
-        work.date_of_work2_uncertain = 0
-        work.date_of_work_std_is_range = 0
-        work.date_of_work_inferred = 0
-        work.date_of_work_uncertain = 0
-        work.date_of_work_approx = 0
-        work.authors_inferred = 0
-        work.authors_uncertain = 0
-        work.addressees_inferred = 0
-        work.addressees_uncertain = 0
-        work.destination_inferred = 0
-        work.destination_uncertain = 0
-        work.origin_inferred = 0
-        work.origin_uncertain = 0
+
+        # These repetitive ifs are required because it's not possible to set default values
+        # to the database fields
+        if 'mentioned_inferred' not in self.row_data:
+            work.mentioned_inferred = 0
+
+        if 'mentioned_uncertain' not in self.row_data:
+            work.mentioned_uncertain = 0
+
+        if 'place_mentioned_inferred' not in self.row_data:
+            work.place_mentioned_inferred = 0
+
+        if 'place_mentioned_uncertain' not in self.row_data:
+            work.place_mentioned_uncertain = 0
+
+        if 'date_of_work2_approx' not in self.row_data:
+            work.date_of_work2_approx = 0
+
+        if 'date_of_work2_inferred' not in self.row_data:
+            work.date_of_work2_inferred = 0
+
+        if 'date_of_work2_uncertain' not in self.row_data:
+            work.date_of_work2_uncertain = 0
+
+        if 'date_of_work_std_is_range' not in self.row_data:
+            work.date_of_work_std_is_range = 0
+
+        if 'date_of_work_inferred' not in self.row_data:
+            work.date_of_work_inferred = 0
+
+        if 'date_of_work_uncertain' not in self.row_data:
+            work.date_of_work_uncertain = 0
+
+        if 'date_of_work_approx' not in self.row_data:
+            work.date_of_work_approx = 0
+
+        if 'authors_inferred' not in self.row_data:
+            work.authors_inferred = 0
+
+        if 'authors_uncertain' not in self.row_data:
+            work.authors_uncertain = 0
+
+        if 'addressees_inferred' not in self.row_data:
+            work.addressees_inferred = 0
+
+        if 'addressees_uncertain' not in self.row_data:
+            work.addressees_uncertain = 0
+
+        if 'destination_inferred' not in self.row_data:
+            work.destination_inferred = 0
+
+        if 'destination_uncertain' not in self.row_data:
+            work.destination_uncertain = 0
+
+        if 'origin_inferred' not in self.row_data:
+            work.origin_inferred = 0
+
+        if 'origin_uncertain' not in self.row_data:
+            work.origin_uncertain = 0
 
         work.upload_status = CofkCollectStatus.objects.filter(status_id=1).first()
 
@@ -489,9 +532,9 @@ class CofkWork(CofkEntity):
             work.save()
         except ValidationError as ve:
             self.add_error(ve)
-            print(ve)
+            log.warning(ve)
         except TypeError as te:
-            log.error(te)
+            log.warning(te)
 
         self.ids.append(self.iwork_id)
 
@@ -534,7 +577,7 @@ class CofkWork(CofkEntity):
 
             person_mention.save()'''
 
-    def process_location(self, loc_id, name) -> int:
+    def process_location(self, loc_id, name) -> CofkCollectLocation:
         """
         Method that checks if a location specific to the location id and upload exists,
         if so it returns the id provided id if not a new location is created incrementing
@@ -547,7 +590,7 @@ class CofkWork(CofkEntity):
         loc_id = int(loc_id)
 
         location_id = CofkCollectLocation.objects.filter(location_id=loc_id,
-                                                         upload_id=self.upload.upload_id).exists()
+                                                         upload_id=self.upload.upload_id).first()
 
         if not location_id:
             location_id = CofkCollectLocation.objects.order_by('-location_id').first().location_id + 1
@@ -559,7 +602,7 @@ class CofkWork(CofkEntity):
 
             log.info("Created location {}, upload_id #{}".format(
                 name, self.upload.upload_id))
-            return loc.location_id
+            return loc
 
         return location_id
 

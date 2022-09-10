@@ -21,21 +21,39 @@
     </div>
     <table cellspacing="0" cellpadding="14" border="1" class="review">
         <tr>
-            <td>Status and possible actions</td>
+            <td class="header">Status and possible actions</td>
             <td><strong>{{ work.upload_status }}</strong> (Collect ID: {{ work.iwork_id}})<br/>
                 <button>Accept</button> <button>Reject</button><br/>
                 Note: confirmation will be required before Accept/Reject of work</td>
         </tr>
         <tr>
-            <td>Date of work</td>
-            <td>{{ work.date_of_work_std_day }}-{{ work.date_of_work_std_month }}-{{ work.date_of_work_std_year }}</td>
+            <td class="header">Date of work</td>
+            <td>{{ work.display_daterange }}
+
+                {% if work.addressees_as_marked %}
+                    <br/>As marked: {{ work.addressees_as_marked }}
+                {% endif %}
+
+                {% if work.display_original_calendar %}
+                    <br/>Original calendar: {{ work.display_original_calendar }}
+                {% endif %}
+
+                {% if work.display_issues %}
+                    <br/>Issues with date of work: {{ work.display_issues }}
+                {% endif %}
+
+                {% if work.notes_on_date_of_work %}
+                    <br/>Notes on date: {{ work.notes_on_date_of_work }}
+                {% endif %}
+
+            </td>
         </tr>
         <tr>
-            <td>Origin</td>
+            <td class="header">Origin</td>
             <td>{{ work.origin_id }}</td>
         </tr>
         <tr>
-            <td>Repositories and versions</td>
+            <td class="header">Repositories and versions</td>
             <td></td>
         </tr>
     </table>

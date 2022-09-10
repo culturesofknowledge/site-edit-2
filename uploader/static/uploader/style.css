@@ -116,3 +116,9 @@ td  {
 button {
     font-size: medium;
 }
+
+.review td.header {
+    max-width: 150px;
+    font-weight: bold;
+    vertical-align: top;
+}
