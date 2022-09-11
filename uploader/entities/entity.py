@@ -15,6 +15,7 @@ class CofkEntity:
         self.sheet_data = sheet_data
         self.row_data = None
         self.errors = {}
+        self.other_errors = {}
         self.row = 1
 
     def check_data_types(self, sheet_name: str):
@@ -41,11 +42,24 @@ class CofkEntity:
                     log.error(msg)
                     self.add_error(ValidationError(msg))
 
-    def add_error(self, error: ValidationError):
-        if self.row not in self.errors:
-            self.errors[self.row] = []
+    def add_error(self, error: ValidationError, entity=None, row=None):
+        """
 
-        self.errors[self.row].append(error)
+        """
+        if not row:
+            row = self.row
+
+        if entity:
+            if self.row not in self.other_errors:
+                self.other_errors[row] = []
+
+            self.other_errors[row].append({'entity': entity, 'error': error})
+            return
+
+        if self.row not in self.errors:
+            self.errors[row] = []
+
+        self.errors[row].append(error)
 
     def format_errors_for_template(self) -> dict:
         errors = []

@@ -57,25 +57,28 @@ class CofkUploadExcelFile:
 
         self.check_data_present()
 
-        # It's best to process the sheets in reverse order, starting with repositories/institutions
-        self.repositories = CofkRepositories(upload=self.upload,
-                                             sheet_data=self.data['repositories'])
+        # It's process the sheets in reverse order, starting with repositories/institutions
+        self.repositories = CofkRepositories(upload=self.upload, sheet_data=self.data['repositories'])
 
         # The next sheet is places/locations
-        self.locations = CofkLocations(upload=self.upload,
-                                       sheet_data=self.data['places'])
+        self.locations = CofkLocations(upload=self.upload, sheet_data=self.data['places'])
 
         # The next sheet is people
-        self.people = CofkPeople(upload=self.upload,
-                                 sheet_data=self.data['people'],
+        self.people = CofkPeople(upload=self.upload, sheet_data=self.data['people'],
                                  work_data=self.data['work'])
 
         # Second last but not least, the works themselves
-        self.works = CofkWork(upload=self.upload, sheet_data=self.data['work'])
+        self.works = CofkWork(upload=self.upload, sheet_data=self.data['work'], people=self.people)
         self.upload.total_works = len(self.works.ids)
 
         # The last sheet is manifestations
         self.manifestations = CofkManifestations(upload=self.upload, sheet_data=self.data['manifestation'])
+
+        if self.people.other_errors:
+            for row_index in self.people.other_errors:
+                for error in self.people.other_errors[row_index]:
+                    if error['entity'] == 'work':
+                        self.works.add_error(error['error'], None, row_index)
 
         if self.works.errors:
             self.errors['work'] = self.works.format_errors_for_template()

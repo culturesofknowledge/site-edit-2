@@ -1,20 +1,23 @@
 import logging
-from turtle import pd
+
 from typing import List
 
+import pandas as pd
 from django.core.exceptions import ValidationError
 
 from location.models import CofkCollectLocation
 from uploader.entities.entity import CofkEntity
+from uploader.entities.people import CofkPeople
 from uploader.models import CofkCollectUpload, CofkCollectStatus, Iso639LanguageCode
-from work.models import CofkCollectWork, CofkCollectLanguageOfWork, CofkCollectWorkResource
+from work.models import CofkCollectWork, CofkCollectLanguageOfWork, CofkCollectWorkResource, \
+    CofkCollectPersonMentionedInWork, CofkCollectAuthorOfWork, CofkCollectAddresseeOfWork
 
 log = logging.getLogger(__name__)
 
 
 class CofkWork(CofkEntity):
 
-    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame, limit=None):
+    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame, people: CofkPeople, limit=None):
         """
         non_work_data will contain any raw data about:
         1. origin location
@@ -24,7 +27,7 @@ class CofkWork(CofkEntity):
         5. resources
         6. authors
         7. addressees
-        :param upload_id:
+        :param upload:
         """
         # log = logger
         super().__init__(upload, sheet_data)
@@ -32,6 +35,7 @@ class CofkWork(CofkEntity):
         self.iwork_id = None
         self.non_work_data = {}
         self.ids = []
+        self.people = people
 
         limit = limit if limit else len(self.sheet_data.index)
 
@@ -41,9 +45,9 @@ class CofkWork(CofkEntity):
             self.row += 1
 
     def preprocess_languages(self):
-        '''
+        """
         TODO try catch below, sometimes work data?
-        '''
+        """
         try:
             work_languages = self.non_work_data['language_id'].split(';')
         except KeyError:
@@ -66,59 +70,57 @@ class CofkWork(CofkEntity):
                 self.iwork_id, self.upload.upload_id))
             self.process_languages(work_languages)
 
-    '''def process_authors(self, author_ids, author_names):
-        author_ids = str(self.non_work_data[author_ids])
-        author_names = str(self.non_work_data[author_names])
-
-        authors = self.process_people(author_ids, author_names)
+    def process_authors(self, work: CofkCollectWork):
         try:
             a_id = CofkCollectAuthorOfWork.objects.order_by('-author_id').first().author_id
         except AttributeError:
             a_id = 0
 
-        for p in authors:
+        for p in self.people.authors:
+            try:
+                person = [p2 for p2 in self.people.people if p['id'] == p2.iperson_id][0]
+            except IndexError:
+                continue
+
             author = CofkCollectAuthorOfWork(
                 author_id=a_id,
-                upload_id=self.upload.upload_id,
-                iwork_id=self.iwork_id,
-                iperson_id=p)
+                upload=self.upload,
+                iwork_id=work,
+                iperson_id=person)
 
             a_id = a_id + 1
 
-            try:
-                author.save()
-            except IntegrityError as ie:
-                log.error(ie)
+            author.save()
 
-    def process_addressees(self, addressee_ids, addressee_names):
-        addressee_ids = str(self.non_work_data[addressee_ids])
-        addressee_names = str(self.non_work_data[addressee_names])
-
-        addressees = self.process_people(addressee_ids, addressee_names)
-
+    def process_addressees(self, work: CofkCollectWork):
         try:
             a_id = CofkCollectAddresseeOfWork.objects.order_by('-addressee_id').first().addressee_id
         except AttributeError:
             a_id = 0
 
-        for p in addressees:
+        for p in self.people.addressees:
+            try:
+                person = [p2 for p2 in self.people.people if p['id'] == p2.iperson_id][0]
+            except IndexError:
+                continue
+
             addressee = CofkCollectAddresseeOfWork(
                 addressee_id=a_id,
-                upload_id=self.upload.upload_id,
-                iwork_id=self.iwork_id,
-                iperson_id=p)
+                upload=self.upload,
+                iwork_id=work,
+                iperson_id=person)
 
-            try:
-                addressee.save()
-            except IntegrityError as ie:
-                log.error(ie)
+            #try:
+            addressee.save()
+            #except IntegrityError as ie:
+            #    log.error(ie)
 
-            a_id = a_id + 1'''
+            a_id = a_id + 1
 
     def preprocess_data(self):
         # Isolating data relevant to a work
         non_work_keys = list(set(self.row_data.keys()) - set([c for c in CofkCollectWork.__dict__.keys()]))
-        log.debug(self.row_data)
+        #log.debug(self.row_data)
 
         # Removing non-work data so that variable row_data_raw can be used to pass parameters
         # to create a CofkCollectWork object
@@ -126,7 +128,7 @@ class CofkWork(CofkEntity):
             self.non_work_data[m] = self.row_data[m]
             del self.row_data[m]
 
-        log.debug(self.non_work_data)
+        #log.debug(self.non_work_data)
 
     def process_work(self, work_data):
         """
@@ -238,7 +240,9 @@ class CofkWork(CofkEntity):
 
         # Processing people mentioned in work
         # if 'emlo_mention_id' in self.work_data and 'mention_id' in self.work_data:
-        # self.process_mentions('emlo_mention_id', 'mention_id')
+        self.process_authors(work)
+        self.process_mentions(work)
+        self.process_addressees(work)
 
         # Processing languages used in work
         self.preprocess_languages()
@@ -247,37 +251,38 @@ class CofkWork(CofkEntity):
         if 'resource_name' in self.non_work_data or 'resource_url' in self.non_work_data:
             self.process_resource()
 
-        # self.process_authors('author_ids', 'author_names')
+    def process_mentions(self, work: CofkCollectWork):
+        try:
+            m_id = CofkCollectPersonMentionedInWork.objects.order_by('-mention_id').first().mention_id
+        except AttributeError:
+            m_id = 0
 
-        # self.process_addressees('addressee_ids', 'addressee_names')
+        for p in self.people.mentioned:
+            try:
+                person = [p2 for p2 in self.people.people if p['id'] == p2.iperson_id][0]
+            except IndexError:
+                continue
 
-    '''def process_mentions(self, emlo_mention_ids: str, mention_ids: str):
-        emlo_mention_ids = str(self.non_work_data[emlo_mention_ids])
-        mention_ids = str(self.non_work_data[mention_ids])
+            log.info("Processing people mentioned , iwork_id #{}, upload_id #{}".format(
+                self.iwork_id, self.upload.upload_id))
 
-        log.info("Processing people mentioned , iwork_id #{}, upload_id #{}".format(
-            self.iwork_id, self.upload.upload_id))
+            person_mentioned = CofkCollectPersonMentionedInWork(
+                mention_id=m_id,
+                upload=self.upload,
+                iwork_id=work,
+                iperson_id=person)
 
-        # Before mentions can be registered the people mentioned need
-        # to be created
-        people_mentioned = self.process_people(emlo_mention_ids, mention_ids)
-        log.info(people_mentioned)
+            m_id = m_id + 1
 
-        for p in people_mentioned:
-            person_mention = CofkCollectPersonMentionedInWork(
-                # mention_id=mention_id,
-                upload_id=self.upload.upload_id,
-                iwork_id=self.iwork_id,
-                iperson_id=p)
-
-            person_mention.save()'''
+            person_mentioned.save()
 
     def process_location(self, location_id: str, location_name: str) -> CofkCollectLocation:
         """
         Method that checks if a location specific to the location id and upload exists,
         if so it returns the id provided id if not a new location is created incrementing
         the highest location id by one.
-        :param loc_id:
+        :param location_id:
+        :param location_name:
         :param name:
         :return:
         """
