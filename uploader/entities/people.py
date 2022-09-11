@@ -1,14 +1,12 @@
 import logging
 from typing import List
 
-import numpy as np
 import pandas as pd
 from django.core.exceptions import ValidationError
 
 from person.models import CofkCollectPerson
 from uploader.entities.entity import CofkEntity
 from uploader.models import CofkCollectUpload
-from work.models import CofkCollectAuthorOfWork, CofkCollectAddresseeOfWork, CofkCollectPersonMentionedInWork
 
 log = logging.getLogger(__name__)
 
@@ -25,7 +23,7 @@ class CofkPeople(CofkEntity):
     contains information about the nature of the relation (which of the above tables to link to).
     """
 
-    def get_people_in_people_sheet(self) -> List[tuple]:
+    def process_people_sheet(self) -> List[tuple]:
         """
         Get all people from people spreadsheet
         Populating a list of tuples of (Name, iperson_id)
@@ -84,7 +82,7 @@ class CofkPeople(CofkEntity):
 
         return [(self.row_data[names], self.row_data[ids])]
 
-    def get_people_in_work_sheet(self) -> List[tuple]:
+    def process_work_sheet(self) -> List[tuple]:
         """
         Get all people from references in Work spreadsheet.
         Work sheets can contain multiple values for people per work. If so, the values are separated by
@@ -131,18 +129,8 @@ class CofkPeople(CofkEntity):
         self.mentioned = []
         self.addressees = []
 
-        sheet_people = self.get_people_in_people_sheet()
-        work_people = self.get_people_in_work_sheet()
-
-        log.debug(sheet_people)
-        log.debug(self.people)
-        log.debug(self.authors)
-        log.debug(self.mentioned)
-        log.debug(self.addressees)
-        log.debug(work_people)
-
-        unique_sheet_people = set(sheet_people)
-        unique_work_people = set(work_people)
+        unique_sheet_people = set(self.process_people_sheet())
+        unique_work_people = set(self.process_work_sheet())
 
         if unique_work_people != unique_sheet_people:
             if unique_work_people > unique_sheet_people:
@@ -155,42 +143,3 @@ class CofkPeople(CofkEntity):
                 ppl_joined = ', '.join(ppl)
                 self.add_error(ValidationError(f'The person {ppl_joined} is referenced in the People spreadsheet but is '
                                                f'missing from the Work spreadsheet'))
-
-        '''for p in [p for p in list(unique_work_people.union(unique_sheet_people)) if p[1] is not None]:
-            try:
-                if CofkCollectPerson.objects.filter(iperson_id=p[1], upload_id=upload.upload_id).exists():
-                    self.add_error(ValidationError(f'The person {p[0]} #{p[1]} is referenced in either the Work or the'
-                                                   f' People spreadsheet but does not exist'))
-            except ValueError:
-                # Will fail if iperson_id column in People sheet contains incorrect data type
-                pass
-       
-
-        for new_p in [p[0] for p in list(unique_work_people.union(unique_sheet_people)) if p[1] is None]:
-            rows, cols = np.where(work_data == new_p)
-
-            last_person_by_iperson_id = CofkCollectPerson.objects.order_by('-iperson_id').first()
-
-            iperson_id = 1
-
-            if last_person_by_iperson_id:
-                iperson_id = last_person_by_iperson_id.iperson_id + 1
-
-            person = CofkCollectPerson()
-            person.upload = upload
-            person.iperson_id = iperson_id
-            person.primary_name = new_p
-            person.date_of_birth_is_range = 0
-            person.date_of_birth_inferred = 0
-            person.date_of_birth_uncertain = 0
-            person.date_of_birth_approx = 0
-            person.date_of_birth_inferred = 0
-            person.date_of_death_is_range = 0
-            person.date_of_death_inferred = 0
-            person.date_of_death_uncertain = 0
-            person.date_of_death_approx = 0
-            person.flourished_is_range = 0
-
-            person.save()
-            self.work_data.iloc[rows, cols + 1] = person.iperson_id
-        '''
