@@ -78,7 +78,10 @@
 
     </fieldset>
 
-    {% include "core/component/comment_publication.html" with comment_formset=comment_formset %}
+    {% include "core/component/comment_publication_formset.html" with comment_formset=comment_formset %}
+
+    {% include "core/component/resource_formset.html" with res_formset=res_formset %}
+
 
     <script>
 
@@ -90,6 +93,13 @@
                     $('#{{ person_form.birthplace.id_for_label }}').val(data.item_id)
                 }
             });
+
+            setup_url_checker();
+            setup_standtext([
+                'CERL', 'Deutsche Nationalbibliothek',
+                'ODNB entry', 'VIAF', 'Wikidata ID', 'Wikipedia',
+            ]);
+
         })
 
     </script>

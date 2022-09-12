@@ -7,7 +7,7 @@ from django.forms import BaseForm, BaseFormSet, ModelForm
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView
 
-from core.forms import CommentForm
+from core.forms import CommentForm, ResourceForm
 from core.helper import model_utils, view_utils
 from core.helper.model_utils import RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer
@@ -15,7 +15,7 @@ from core.helper.view_components import DownloadCsvHandler
 from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate
 from core.services import media_service
 from location import renderer
-from location.forms import LocationForm, LocationResourceForm, GeneralSearchFieldset, \
+from location.forms import LocationForm, GeneralSearchFieldset, \
     LocationImageForm, LocUploadImageForm
 from location.models import CofkUnionLocation
 from location.renderer import LocationCompactSearchResultsRenderer
@@ -89,7 +89,7 @@ def full_form(request, location_id):
 
     loc_form = LocationForm(request.POST or None, instance=loc)
 
-    res_formset = view_utils.create_formset(LocationResourceForm, post_data=request.POST,
+    res_formset = view_utils.create_formset(ResourceForm, post_data=request.POST,
                                             prefix='loc_res',
                                             initial_list=model_utils.related_manager_to_dict_list(loc.resources), )
     comment_formset = view_utils.create_formset(CommentForm, post_data=request.POST,
@@ -103,7 +103,7 @@ def full_form(request, location_id):
     def _render_full_form():
 
         # reversed list for UI
-        for fs in [res_formset, images_formset]:
+        for fs in [images_formset]:
             fs.forms = list(reversed(fs.forms))
 
         return render(request, 'location/full_form.html',

@@ -9,7 +9,9 @@
         $(function () {
             setup_location_form_listener()
             setup_url_checker()
-            setup_standtext()
+            setup_standtext([
+                'GeoNames', 'TGN', 'Wikidata ID', 'Wikipeda',
+            ]);
             setup_checkbox_position()
         })
     </script>
@@ -31,28 +33,12 @@
 
                 <!-- Comment section -->
                 <h1 id="header_researcher_note">Researcher' notes for front-end display</h1>
-                {% include "core/component/comment_publication.html" with comment_formset=comment_formset %}
+                {% include "core/component/comment_publication_formset.html" with comment_formset=comment_formset %}
 
 
                 <!-- Resource section -->
-
                 <h1 id="header_resource">Related resource: </h1>
-                {{ res_formset.management_form }}
-                {% for form in res_formset %}
-                    <fieldset>
-                        <legend>
-                            {% if forloop.first %}
-                                Add a new resource
-                            {% else %}
-                                Resource no. {{ forloop.counter0 }}. {{ form.resource_name.value }}
-                            {% endif %}
-                        </legend>
-                        {{ form }}
-                        {{ form.record_tracker_label }}
-
-                    </fieldset>
-                {% endfor %}
-
+                {% include "core/component/resource_formset.html" with res_formset=res_formset %}
 
                 <div>
                     <h1 id="header_image">Images: </h1>
@@ -75,7 +61,7 @@
                         </ol>
                         <span>
                     In both cases, credits and licence details must be supplied before the image can be displayed to the public.
-                </span>
+                        </span>
                     </div>
 
                     {{ images_formset.management_form }}

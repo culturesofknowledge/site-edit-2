@@ -3,7 +3,7 @@ from django.forms import ModelForm, HiddenInput, IntegerField, Form
 
 from core.helper import form_utils
 from core.helper import widgets_utils
-from core.models import CofkUnionComment
+from core.models import CofkUnionComment, CofkUnionResource
 
 
 def build_search_components(sort_by_choices: list[tuple[str, str]]):
@@ -58,3 +58,43 @@ class CommentForm(ModelForm):
         labels = {
             'comment': 'Note',
         }
+
+
+class ResourceForm(ModelForm):
+    resource_id = IntegerField(required=False, widget=HiddenInput())
+    resource_url = forms.CharField(required=False,
+                                   label='URL')
+
+    resource_url.widget.attrs.update({'class': 'url_checker'})
+    resource_name = forms.CharField(required=True,
+                                    label='Title or brief description',
+                                    widget=forms.Textarea(
+                                        {'class': 'res_standtext'}
+                                    ), )
+
+    resource_details = forms.CharField(required=True,
+                                       label='Further details of resource',
+                                       widget=forms.Textarea(
+                                           {'class': 'res_standtext'}
+                                       ), )
+
+    creation_timestamp = forms.DateTimeField(required=False, widget=HiddenInput())
+    creation_user = forms.CharField(required=False, widget=HiddenInput())
+    change_timestamp = forms.DateTimeField(required=False, widget=HiddenInput())
+    change_user = forms.CharField(required=False, widget=HiddenInput())
+
+    record_tracker_label = form_utils.record_tracker_label_fn_factory('Entry')
+
+    class Meta:
+        model = CofkUnionResource
+        fields = (
+            # upload_id = models.OneToOneField("uploader.CofkCollectUpload", null=False, on_delete=models.DO_NOTHING)
+            'resource_id',
+            'resource_name',
+            'resource_url',
+            'resource_details',
+            'creation_timestamp',
+            'creation_user',
+            'change_timestamp',
+            'change_user',
+        )

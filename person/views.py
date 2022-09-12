@@ -5,7 +5,7 @@ from django.db import models
 from django.forms import BaseForm
 from django.shortcuts import render, redirect, get_object_or_404
 
-from core.forms import CommentForm
+from core.forms import CommentForm, ResourceForm
 from core.helper import renderer_utils, view_utils, model_utils
 from core.helper.view_utils import DefaultSearchView, CommonInitFormViewTemplate
 from location.models import CofkUnionLocation
@@ -177,6 +177,10 @@ class PersonFullFormHandler:
                                                          prefix='comment',
                                                          initial_list=model_utils.related_manager_to_dict_list(
                                                              self.person.comments), )
+        self.res_formset = view_utils.create_formset(ResourceForm, post_data=request_data,
+                                                     prefix='res',
+                                                     initial_list=model_utils.related_manager_to_dict_list(
+                                                         self.person.resources), )
 
     @property
     def all_recref_handlers(self):
@@ -187,7 +191,8 @@ class PersonFullFormHandler:
     def render_form(self, request):
         context = {
             'person_form': self.person_form,
-            'comment_formset' : self.comment_formset,
+            'comment_formset': self.comment_formset,
+            'res_formset': self.res_formset,
         }
         for h in self.all_recref_handlers:
             context.update(h.create_context())
@@ -201,7 +206,7 @@ def full_form(request, iperson_id):
     if request.POST:
 
         # define form_formsets
-        form_formsets = [fhandler.person_form, fhandler.comment_formset]
+        form_formsets = [fhandler.person_form, fhandler.comment_formset, fhandler.res_formset]
         for h in fhandler.all_recref_handlers:
             form_formsets.extend([h.new_form, h.update_formset, ])
 
@@ -213,9 +218,10 @@ def full_form(request, iperson_id):
             recref_handler.maintain_record(request, fhandler.person_form.instance)
 
         fhandler.person_form.save()
-        view_utils.save_formset(fhandler.comment_formset,
-                                fhandler.person.comments,
+        view_utils.save_formset(fhandler.comment_formset, fhandler.person.comments,
                                 model_id_name='comment_id')
+        view_utils.save_formset(fhandler.res_formset, fhandler.person.resources,
+                                model_id_name='resource_id')
 
         fhandler.load_data(iperson_id, request_data=None)
 

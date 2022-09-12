@@ -144,7 +144,10 @@
   button {
     margin-left: $space-xs;
   }
+}
 
-
+.flex-row-wrap {
+  display: flex;
+  flex-wrap: wrap;
 }
 

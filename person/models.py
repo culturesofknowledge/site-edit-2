@@ -126,6 +126,7 @@ class CofkUnionPerson(models.Model, RecordTracker):
                                        through_fields=('person', 'location'))
 
     comments = models.ManyToManyField('core.CofkUnionComment')
+    resources = models.ManyToManyField('core.CofkUnionResource')
 
     class Meta:
         db_table = 'cofk_union_person'

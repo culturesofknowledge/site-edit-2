@@ -781,4 +781,8 @@ input[type="radio"] + label {
   .ref-publication-row button {
     margin-left: calc(.5 * 1rem); }
 
+.flex-row-wrap {
+  display: flex;
+  flex-wrap: wrap; }
+
 /*# sourceMappingURL=main.css.map */
