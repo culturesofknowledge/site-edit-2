@@ -358,7 +358,6 @@ class MultiRecrefHandler:
             else:
                 ps_loc = self.recref_class.objects.get(pk=f.cleaned_data['recref_id'])
                 ps_loc = self.fill_common_recref_field(ps_loc, f.cleaned_data, request.user.username)
-                print(f.cleaned_data)  # TOBEREMOVE
                 ps_loc.save()
 
 
