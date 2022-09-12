@@ -3,6 +3,7 @@
 
 
 {% block content %}
+    <script src="{% static 'core/js/ref_publication_service.js' %}" defer></script>
 
     <div class="row row--centered">
         <div class="col col--1of2">
@@ -89,16 +90,7 @@
                         <label>Bibliographical information:</label>
                         {{ person_form.further_reading }}
                     </div>
-                    <div>
-                        <small>You can copy references from an existing list into the above field:</small>
-                        __TODO__
-                        <!-- KTODO copy features -->
-                    </div>
-                    <div>
-                        <small>Or add a new reference to the list, then pick up full details or abbreviation:</small>
-                        __TODO__
-                        <!-- KTODO copy features -->
-                    </div>
+                    <div class="ref-publication-row" textbox_id="{{ person_form.further_reading.id_for_label }}"></div>
                 </fieldset>
 
 
