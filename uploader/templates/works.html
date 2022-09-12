@@ -30,8 +30,8 @@
             <td class="header">Date of work</td>
             <td>{{ work.display_daterange }}
 
-                {% if work.addressees_as_marked %}
-                    <br/>As marked: {{ work.addressees_as_marked }}
+                {% if work.date_of_work_as_marked %}
+                    <br/>As marked: {{ work.date_of_work_as_marked }}
                 {% endif %}
 
                 {% if work.display_original_calendar %}
@@ -49,15 +49,21 @@
             </td>
         </tr>
         <tr>
-            <td class="header">Author(s)</td>
-            <td>{{ work.origin_id }}
+            <td class="header">Author{{ authors|pluralize:",s" }}</td>
+            <td>{% for author in authors %}
+                    {{ author }}<br/>
+                {% endfor %}
 
-                {% if work.origin_as_marked %}
-                    <br/>As marked: {{ work.origin_as_marked }}
+                {% if work.authors_as_marked %}
+                    <br/>As marked: {{ work.authors_as_marked }}
                 {% endif %}
 
-                {% if work.display_origin_issues %}
-                    <br/>Issues with origin: {{ work.display_origin_issues }}
+                {% if work.display_authors_issues %}
+                    <br/>Issues with author{{ authors|pluralize:",s" }}: {{ work.display_authors_issues }}
+                {% endif %}
+
+                {% if work.notes_on_authors %}
+                    <br/>Notes on author{{ authors|pluralize:",s" }}: {{ work.notes_on_authors }}
                 {% endif %}
             </td>
         </tr>

@@ -7,17 +7,20 @@ from django.core.exceptions import ValidationError
 
 from location.models import CofkCollectLocation
 from uploader.entities.entity import CofkEntity
+from uploader.entities.locations import CofkLocations
 from uploader.entities.people import CofkPeople
 from uploader.models import CofkCollectUpload, CofkCollectStatus, Iso639LanguageCode
 from work.models import CofkCollectWork, CofkCollectLanguageOfWork, CofkCollectWorkResource, \
-    CofkCollectPersonMentionedInWork, CofkCollectAuthorOfWork, CofkCollectAddresseeOfWork
+    CofkCollectPersonMentionedInWork, CofkCollectAuthorOfWork, CofkCollectAddresseeOfWork, CofkCollectOriginOfWork, \
+    CofkCollectDestinationOfWork
 
 log = logging.getLogger(__name__)
 
 
 class CofkWork(CofkEntity):
 
-    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame, people: CofkPeople, limit=None):
+    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame, people: CofkPeople,
+                 locations: CofkLocations):
         """
         non_work_data will contain any raw data about:
         1. origin location
@@ -29,18 +32,16 @@ class CofkWork(CofkEntity):
         7. addressees
         :param upload:
         """
-        # log = logger
         super().__init__(upload, sheet_data)
 
         self.iwork_id = None
         self.non_work_data = {}
         self.ids = []
         self.people = people
-
-        limit = limit if limit else len(self.sheet_data.index)
+        self.locations = locations
 
         # Process each row in turn, using a dict comprehension to filter out empty values
-        for i in range(1, limit):
+        for i in range(1, len(self.sheet_data.index)):
             self.process_work({k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None})
             self.row += 1
 
@@ -149,107 +150,54 @@ class CofkWork(CofkEntity):
 
         self.preprocess_data()
 
-        # Origin location needs to be processed before work is created
-        # Is it possible that a work has more than one origin?
+        # The relation between origin/destination locations and works are circular
+        # foreign keys. They will be processed after the work has been saved.
         if 'origin_id' in self.row_data:
-            self.row_data['origin_id'] = self.process_location('origin_id', 'origin_name')
+            del self.row_data['origin_id']
 
-        # Destination location needs to be processed before work is created
-        # Is it possible that a work has more than one destination?
-        if False and 'destination_id' in self.row_data:
-            self.row_data['destination_id'] = self.process_location('destination_id', 'destination_name')
+        if 'destination_id' in self.row_data:
+            del self.row_data['destination_id']
 
-        log.debug(self.row_data)
+        #log.debug(self.row_data)
 
         # Creating the work itself
         work = CofkCollectWork(**self.row_data)
 
-        # These repetitive ifs are required because it's not possible to set default values
-        # to the database fields
-        if 'mentioned_inferred' not in self.row_data:
-            work.mentioned_inferred = 0
-
-        if 'mentioned_uncertain' not in self.row_data:
-            work.mentioned_uncertain = 0
-
-        if 'place_mentioned_inferred' not in self.row_data:
-            work.place_mentioned_inferred = 0
-
-        if 'place_mentioned_uncertain' not in self.row_data:
-            work.place_mentioned_uncertain = 0
-
-        if 'date_of_work2_approx' not in self.row_data:
-            work.date_of_work2_approx = 0
-
-        if 'date_of_work2_inferred' not in self.row_data:
-            work.date_of_work2_inferred = 0
-
-        if 'date_of_work2_uncertain' not in self.row_data:
-            work.date_of_work2_uncertain = 0
-
-        if 'date_of_work_std_is_range' not in self.row_data:
-            work.date_of_work_std_is_range = 0
-
-        if 'date_of_work_inferred' not in self.row_data:
-            work.date_of_work_inferred = 0
-
-        if 'date_of_work_uncertain' not in self.row_data:
-            work.date_of_work_uncertain = 0
-
-        if 'date_of_work_approx' not in self.row_data:
-            work.date_of_work_approx = 0
-
-        if 'authors_inferred' not in self.row_data:
-            work.authors_inferred = 0
-
-        if 'authors_uncertain' not in self.row_data:
-            work.authors_uncertain = 0
-
-        if 'addressees_inferred' not in self.row_data:
-            work.addressees_inferred = 0
-
-        if 'addressees_uncertain' not in self.row_data:
-            work.addressees_uncertain = 0
-
-        if 'destination_inferred' not in self.row_data:
-            work.destination_inferred = 0
-
-        if 'destination_uncertain' not in self.row_data:
-            work.destination_uncertain = 0
-
-        if 'origin_inferred' not in self.row_data:
-            work.origin_inferred = 0
-
-        if 'origin_uncertain' not in self.row_data:
-            work.origin_uncertain = 0
-
-        work.upload_status = CofkCollectStatus.objects.filter(status_id=1).first()
+        self.set_default_values(work)
 
         try:
             work.save()
+
+            self.ids.append(self.iwork_id)
+
+            log.info("Work created iwork_id #{}, upload_id #{}".format(
+                self.iwork_id, self.upload.upload_id))
+
+            # Processing people mentioned in work
+            # if 'emlo_mention_id' in self.work_data and 'mention_id' in self.work_data:
+            self.process_authors(work)
+            self.process_mentions(work)
+            self.process_addressees(work)
+
+            # Origin location needs to be processed before work is created
+            # Is it possible that a work has more than one origin?
+            self.process_origin(work)
+
+            # Destination location needs to be processed before work is created
+            # Is it possible that a work has more than one destination?
+            self.process_destination(work)
+
+            # Processing languages used in work
+            self.preprocess_languages()
+
+            # Processing resources in work
+            if 'resource_name' in self.non_work_data or 'resource_url' in self.non_work_data:
+                self.process_resource()
         except ValidationError as ve:
             self.add_error(ve)
             log.warning(ve)
         except TypeError as te:
             log.warning(te)
-
-        self.ids.append(self.iwork_id)
-
-        log.info("Work created iwork_id #{}, upload_id #{}".format(
-            self.iwork_id, self.upload.upload_id))
-
-        # Processing people mentioned in work
-        # if 'emlo_mention_id' in self.work_data and 'mention_id' in self.work_data:
-        self.process_authors(work)
-        self.process_mentions(work)
-        self.process_addressees(work)
-
-        # Processing languages used in work
-        self.preprocess_languages()
-
-        # Processing resources in work
-        if 'resource_name' in self.non_work_data or 'resource_url' in self.non_work_data:
-            self.process_resource()
 
     def process_mentions(self, work: CofkCollectWork):
         try:
@@ -276,7 +224,57 @@ class CofkWork(CofkEntity):
 
             person_mentioned.save()
 
-    def process_location(self, location_id: str, location_name: str) -> CofkCollectLocation:
+    def process_origin(self, work: CofkCollectWork):
+        try:
+            o_id = CofkCollectOriginOfWork.objects.order_by('-origin_id').first().origin_id
+        except AttributeError:
+            o_id = 0
+
+        for o in self.locations.origins:
+            try:
+                origin = [o2 for o2 in self.locations.locations if o['id'] == o2.location_id][0]
+            except IndexError:
+                continue
+
+            log.info("Processing origin location , iwork_id #{}, upload_id #{}".format(
+                self.iwork_id, self.upload.upload_id))
+
+            origin_location = CofkCollectOriginOfWork(
+                origin_id=o_id,
+                upload=self.upload,
+                iwork_id=work,
+                location_id=origin)
+
+            o_id = o_id + 1
+
+            origin_location.save()
+
+    def process_destination(self, work: CofkCollectWork):
+        try:
+            d_id = CofkCollectDestinationOfWork.objects.order_by('-destination_id').first().destination_id
+        except AttributeError:
+            d_id = 0
+
+        for d in self.locations.destinations:
+            try:
+                destination = [d2 for d2 in self.locations.locations if d['id'] == d2.location_id][0]
+            except IndexError:
+                continue
+
+            log.info("Processing destination location , iwork_id #{}, upload_id #{}".format(
+                self.iwork_id, self.upload.upload_id))
+
+            destination_location = CofkCollectDestinationOfWork(
+                destination_id=d_id,
+                upload=self.upload,
+                iwork_id=work,
+                location_id=destination)
+
+            d_id = d_id + 1
+
+            destination_location.save()
+
+    '''def process_location(self, location_id: str, location_name: str) -> CofkCollectLocation:
         """
         Method that checks if a location specific to the location id and upload exists,
         if so it returns the id provided id if not a new location is created incrementing
@@ -300,7 +298,7 @@ class CofkWork(CofkEntity):
 
             log.info(f'Created location {self.non_work_data[location_name]}, upload_id #{self.upload.upload_id}')
 
-        return location
+        return location'''
 
     '''
     def process_people(self, ids: str, names: str) -> List[int]:
@@ -402,3 +400,67 @@ class CofkWork(CofkEntity):
 
         log.info("Resource created #{} iwork_id #{}, upload_id #{}".format(resource.resource_id,
                                                                            self.iwork_id, self.upload.upload_id))
+
+    def set_default_values(self, work: CofkCollectWork):
+        """
+        These repetitive ifs are required because it's not possible to set default values
+        to the database fields
+        """
+        work.upload_status = CofkCollectStatus.objects.filter(status_id=1).first()
+
+        if 'mentioned_inferred' not in self.row_data:
+            work.mentioned_inferred = 0
+
+        if 'mentioned_uncertain' not in self.row_data:
+            work.mentioned_uncertain = 0
+
+        if 'place_mentioned_inferred' not in self.row_data:
+            work.place_mentioned_inferred = 0
+
+        if 'place_mentioned_uncertain' not in self.row_data:
+            work.place_mentioned_uncertain = 0
+
+        if 'date_of_work2_approx' not in self.row_data:
+            work.date_of_work2_approx = 0
+
+        if 'date_of_work2_inferred' not in self.row_data:
+            work.date_of_work2_inferred = 0
+
+        if 'date_of_work2_uncertain' not in self.row_data:
+            work.date_of_work2_uncertain = 0
+
+        if 'date_of_work_std_is_range' not in self.row_data:
+            work.date_of_work_std_is_range = 0
+
+        if 'date_of_work_inferred' not in self.row_data:
+            work.date_of_work_inferred = 0
+
+        if 'date_of_work_uncertain' not in self.row_data:
+            work.date_of_work_uncertain = 0
+
+        if 'date_of_work_approx' not in self.row_data:
+            work.date_of_work_approx = 0
+
+        if 'authors_inferred' not in self.row_data:
+            work.authors_inferred = 0
+
+        if 'authors_uncertain' not in self.row_data:
+            work.authors_uncertain = 0
+
+        if 'addressees_inferred' not in self.row_data:
+            work.addressees_inferred = 0
+
+        if 'addressees_uncertain' not in self.row_data:
+            work.addressees_uncertain = 0
+
+        if 'destination_inferred' not in self.row_data:
+            work.destination_inferred = 0
+
+        if 'destination_uncertain' not in self.row_data:
+            work.destination_uncertain = 0
+
+        if 'origin_inferred' not in self.row_data:
+            work.origin_inferred = 0
+
+        if 'origin_uncertain' not in self.row_data:
+            work.origin_uncertain = 0

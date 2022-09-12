@@ -61,14 +61,17 @@ class CofkUploadExcelFile:
         self.repositories = CofkRepositories(upload=self.upload, sheet_data=self.data['repositories'])
 
         # The next sheet is places/locations
-        self.locations = CofkLocations(upload=self.upload, sheet_data=self.data['places'])
+        self.locations = CofkLocations(upload=self.upload, sheet_data=self.data['places'],
+                                       work_data=self.data['work'])
+        log.debug(self.locations)
 
         # The next sheet is people
         self.people = CofkPeople(upload=self.upload, sheet_data=self.data['people'],
                                  work_data=self.data['work'])
 
         # Second last but not least, the works themselves
-        self.works = CofkWork(upload=self.upload, sheet_data=self.data['work'], people=self.people)
+        self.works = CofkWork(upload=self.upload, sheet_data=self.data['work'], people=self.people,
+                              locations=self.locations)
         self.upload.total_works = len(self.works.ids)
 
         # The last sheet is manifestations

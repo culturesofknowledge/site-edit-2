@@ -90,12 +90,13 @@ class CofkCollectWork(models.Model):
     addressees_inferred = models.SmallIntegerField()
     addressees_uncertain = models.SmallIntegerField()
     notes_on_addressees = models.TextField(blank=True, null=True)
-    destination_id = models.IntegerField(blank=True, null=True)
+    #destination_id = models.IntegerField(blank=True, null=True)
+    destination = models.ForeignKey('CofkCollectDestinationOfWork', models.CASCADE, blank=True, null=True)
     destination_as_marked = models.TextField(blank=True, null=True)
     destination_inferred = models.SmallIntegerField()
     destination_uncertain = models.SmallIntegerField()
     #origin_id = models.IntegerField(blank=True, null=True)
-    origin_id = models.ForeignKey(CofkCollectLocation, models.CASCADE)
+    origin = models.ForeignKey('CofkCollectOriginOfWork', models.CASCADE, blank=True,  null=True)
     origin_as_marked = models.TextField(blank=True, null=True)
     origin_inferred = models.SmallIntegerField()
     origin_uncertain = models.SmallIntegerField()
@@ -292,6 +293,18 @@ class CofkCollectWork(models.Model):
 
         return ', '.join(issues)
 
+    @property
+    def display_authors_issues(self):
+        issues = []
+
+        if self.authors_inferred == 1:
+            issues.append('inferred')
+
+        if self.authors_uncertain == 1:
+            issues.append('uncertain')
+
+        return ', '.join(issues)
+
 
 class CofkCollectAddresseeOfWork(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
@@ -327,6 +340,9 @@ class CofkCollectAuthorOfWork(models.Model):
     notes_on_author = models.TextField(blank=True, null=True)
     _id = models.CharField(max_length=32, blank=True, null=True)
 
+    def __str__(self):
+        return str(self.iperson_id)
+
     class Meta:
         db_table = 'cofk_collect_author_of_work'
         unique_together = (('upload', 'iwork_id', 'author_id'),)
@@ -335,8 +351,8 @@ class CofkCollectAuthorOfWork(models.Model):
 class CofkCollectDestinationOfWork(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     destination_id = models.IntegerField()
-    location_id = models.IntegerField()
-    iwork_id = models.IntegerField()
+    location_id = models.ForeignKey('location.CofkCollectLocation', models.CASCADE)
+    iwork_id = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
     notes_on_destination = models.TextField(blank=True, null=True)
     _id = models.CharField(max_length=32, blank=True, null=True)
 
@@ -360,8 +376,8 @@ class CofkCollectLanguageOfWork(models.Model):
 class CofkCollectOriginOfWork(models.Model):
     upload = models.OneToOneField('uploader.CofkCollectUpload', models.CASCADE)
     origin_id = models.IntegerField()
-    location_id = models.IntegerField()
-    iwork_id = models.IntegerField()
+    location_id = models.ForeignKey('location.CofkCollectLocation', models.CASCADE)
+    iwork_id = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
     notes_on_origin = models.TextField(blank=True, null=True)
     _id = models.CharField(max_length=32, blank=True, null=True)
 

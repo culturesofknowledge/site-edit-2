@@ -23,7 +23,7 @@ from uploader.spreadsheet import CofkUploadExcelFile
 from uploader.validation import CofkMissingColumnError, CofkMissingSheetError
 from work.forms import CofkCollectWorkForm
 
-from work.models import CofkCollectWork
+from work.models import CofkCollectWork, CofkCollectAuthorOfWork
 
 log = logging.getLogger(__name__)
 
@@ -136,24 +136,8 @@ def upload_review(request, upload_id, **kwargs):
 
     context = {'upload': upload,
                'works': CofkCollectWork.objects.filter(upload=upload),
-               'people': CofkCollectPerson.objects.filter(upload=upload),
-               'places': CofkCollectLocation.objects.filter(upload=upload),
-               'institutions': CofkCollectInstitution.objects.filter(upload=upload),}
-               #'manifestations': CofkCollectManifestation.objects.filter(upload=upload)}
-
-    return render(request, template_url, context)
-
-
-@login_required
-def upload_review(request, upload_id, **kwargs):
-    template_url = 'review.html'
-    upload = CofkCollectUpload.objects.filter(upload_id=upload_id).first()
-    # works = [CofkCollectWorkForm(instance=w) for w in CofkCollectWork.objects.filter(upload=upload)]
-    work_form = 0 # CofkCollectWorkForm(instance=works[0])
-
-    context = {'upload': upload,
-               'works': CofkCollectWork.objects.filter(upload=upload),
-               'people': CofkCollectPerson.objects.filter(upload=upload),
+               #'people': CofkCollectPerson.objects.filter(upload=upload),
+               'authors': CofkCollectAuthorOfWork.objects.filter(upload=upload),
                'places': CofkCollectLocation.objects.filter(upload=upload),
                'institutions': CofkCollectInstitution.objects.filter(upload=upload),}
                #'manifestations': CofkCollectManifestation.objects.filter(upload=upload)}
