@@ -4,7 +4,8 @@ from django.forms import ModelForm
 from django.shortcuts import redirect, get_object_or_404
 from django.shortcuts import render
 
-from core.helper import renderer_utils, view_utils
+from core.forms import CommentForm
+from core.helper import renderer_utils, view_utils, model_utils
 from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView
 from publication.forms import PublicationForm
 from publication.models import CofkUnionPublication

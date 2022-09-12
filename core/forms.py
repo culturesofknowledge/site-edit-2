@@ -1,7 +1,9 @@
 from django import forms
-from django.forms import Form
+from django.forms import ModelForm, HiddenInput, IntegerField, Form
 
-from core.helper import widgets_utils, form_utils
+from core.helper import form_utils
+from core.helper import widgets_utils
+from core.models import CofkUnionComment
 
 
 def build_search_components(sort_by_choices: list[tuple[str, str]]):
@@ -31,3 +33,28 @@ class RecrefForm(forms.Form):
     from_date = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
     to_date = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
     is_delete = form_utils.ZeroOneCheckboxField(required=False, is_str=False)
+
+
+class CommentForm(ModelForm):
+    comment_id = IntegerField(required=False, widget=HiddenInput())
+
+    creation_timestamp = forms.DateTimeField(required=False, widget=HiddenInput())
+    creation_user = forms.CharField(required=False, widget=HiddenInput())
+    change_timestamp = forms.DateTimeField(required=False, widget=HiddenInput())
+    change_user = forms.CharField(required=False, widget=HiddenInput())
+
+    record_tracker_label = form_utils.record_tracker_label_fn_factory('Note')
+
+    class Meta:
+        model = CofkUnionComment
+        fields = (
+            'comment_id',
+            'comment',
+            'creation_timestamp',
+            'creation_user',
+            'change_timestamp',
+            'change_user',
+        )
+        labels = {
+            'comment': 'Note',
+        }

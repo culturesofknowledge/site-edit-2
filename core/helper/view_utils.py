@@ -350,3 +350,33 @@ class MultiRecrefHandler:
                 ps_loc = self.fill_common_recref_field(ps_loc, f.cleaned_data, request.user.username)
                 print(f.cleaned_data)  # TOBEREMOVE
                 ps_loc.save()
+
+
+def save_formset(forms: Iterable[ModelForm],
+                 many_related_manager=None,
+                 model_id_name=None,
+                 form_id_name=None):
+    _forms = (f for f in forms if f.has_changed())
+    for form in _forms:
+        log.debug(f'form has changed : {form.changed_data}')
+
+        # set id value to instead by mode_id
+        if model_id_name:
+            if hasattr(form.instance, model_id_name):
+                form_id_name = form_id_name or model_id_name
+                form.is_valid()  # make sure cleaned_data exist
+                if form_id_name in form.cleaned_data:
+                    setattr(form.instance, model_id_name,
+                            form.cleaned_data.get(form_id_name))
+                else:
+                    log.warning(f'form_id_name[{model_id_name}] not found in form_clean_data[{form.cleaned_data}]')
+
+            else:
+                log.warning(f'mode_id_name[{model_id_name}] not found in form.instance')
+
+        # save form
+        form.save()
+
+        # bind many-to-many relation
+        if many_related_manager:
+            many_related_manager.add(form.instance)

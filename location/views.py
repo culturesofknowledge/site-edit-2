@@ -1,12 +1,13 @@
 import itertools
 import logging
-from typing import Iterable, Union, List, Tuple, Type, Callable
+from typing import Iterable, Union, Type, Callable
 
 from django.conf import settings
 from django.forms import BaseForm, BaseFormSet, ModelForm
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView
 
+from core.forms import CommentForm
 from core.helper import model_utils, view_utils
 from core.helper.model_utils import RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer
@@ -14,7 +15,7 @@ from core.helper.view_components import DownloadCsvHandler
 from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate
 from core.services import media_service
 from location import renderer
-from location.forms import LocationForm, LocationResourceForm, LocationCommentForm, GeneralSearchFieldset, \
+from location.forms import LocationForm, LocationResourceForm, GeneralSearchFieldset, \
     LocationImageForm, LocUploadImageForm
 from location.models import CofkUnionLocation
 from location.renderer import LocationCompactSearchResultsRenderer
@@ -80,36 +81,6 @@ def save_changed_forms(form_formsets: Iterable[FormOrFormSet]):
         f.save()
 
 
-def save_formset(forms: Iterable[ModelForm],
-                 many_related_manager=None,
-                 model_id_name=None,
-                 form_id_name=None):
-    _forms = (f for f in forms if f.has_changed())
-    for form in _forms:
-        log.debug(f'form has changed : {form.changed_data}')
-
-        # set id value to instead by mode_id
-        if model_id_name:
-            if hasattr(form.instance, model_id_name):
-                form_id_name = form_id_name or model_id_name
-                form.is_valid()  # make sure cleaned_data exist
-                if form_id_name in form.cleaned_data:
-                    setattr(form.instance, model_id_name,
-                            form.cleaned_data.get(form_id_name))
-                else:
-                    log.warning(f'form_id_name[{model_id_name}] not found in form_clean_data[{form.cleaned_data}]')
-
-            else:
-                log.warning(f'mode_id_name[{model_id_name}] not found in form.instance')
-
-        # save form
-        form.save()
-
-        # bind many-to-many relation
-        if many_related_manager:
-            many_related_manager.add(form.instance)
-
-
 def full_form(request, location_id):
     loc = None
     location_id = location_id or request.POST.get('location_id')
@@ -121,7 +92,7 @@ def full_form(request, location_id):
     res_formset = view_utils.create_formset(LocationResourceForm, post_data=request.POST,
                                             prefix='loc_res',
                                             initial_list=model_utils.related_manager_to_dict_list(loc.resources), )
-    comment_formset = view_utils.create_formset(LocationCommentForm, post_data=request.POST,
+    comment_formset = view_utils.create_formset(CommentForm, post_data=request.POST,
                                                 prefix='loc_comment',
                                                 initial_list=model_utils.related_manager_to_dict_list(loc.comments), )
     images_formset = view_utils.create_formset(LocationImageForm, post_data=request.POST,
@@ -155,11 +126,11 @@ def full_form(request, location_id):
         update_current_user_timestamp(request.user.username, form_formsets)
 
         # save formset
-        save_formset(res_formset, loc.resources, model_id_name='resource_id')
-        save_formset(comment_formset, loc.comments, model_id_name='comment_id')
+        view_utils.save_formset(res_formset, loc.resources, model_id_name='resource_id')
+        view_utils.save_formset(comment_formset, loc.comments, model_id_name='comment_id')
         images_formset = (f for f in images_formset if f.is_valid())
         images_formset = (f for f in images_formset if f.cleaned_data.get('image_filename'))
-        save_formset(images_formset, loc.images, model_id_name='image_id')
+        view_utils.save_formset(images_formset, loc.images, model_id_name='image_id')
 
         # save if user uploaded an image
         if uploaded_img_file := img_form.cleaned_data.get('image'):
