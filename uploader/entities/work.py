@@ -129,8 +129,6 @@ class CofkWork(CofkEntity):
             self.non_work_data[m] = self.row_data[m]
             del self.row_data[m]
 
-        #log.debug(self.non_work_data)
-
     def process_work(self, work_data):
         """
         This method processes one row of data from the Excel sheet.
@@ -158,8 +156,6 @@ class CofkWork(CofkEntity):
         if 'destination_id' in self.row_data:
             del self.row_data['destination_id']
 
-        #log.debug(self.row_data)
-
         # Creating the work itself
         work = CofkCollectWork(**self.row_data)
 
@@ -174,7 +170,6 @@ class CofkWork(CofkEntity):
                 self.iwork_id, self.upload.upload_id))
 
             # Processing people mentioned in work
-            # if 'emlo_mention_id' in self.work_data and 'mention_id' in self.work_data:
             self.process_authors(work)
             self.process_mentions(work)
             self.process_addressees(work)
@@ -248,6 +243,7 @@ class CofkWork(CofkEntity):
             o_id = o_id + 1
 
             origin_location.save()
+            log.debug(f'{origin_location} saved')
 
     def process_destination(self, work: CofkCollectWork):
         try:

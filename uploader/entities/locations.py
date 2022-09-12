@@ -24,10 +24,10 @@ class CofkLocations(CofkEntity):
             #log.debug(self.row_data)
 
             self.check_data_types('Places')
-            location_id = self.row_data['location_id'] if 'location_id' in self.row_data else None
+            location_id = self.row_data['location_id'] if 'location_id' in self.row_data else 1
 
             location = CofkCollectLocation(**self.row_data)
-            location.location_id = 1
+            location.location_id = location_id
             location.element_1_eg_room = 0
             location.element_2_eg_building = 0
             location.element_3_eg_parish = 0
