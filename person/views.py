@@ -7,7 +7,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 
 from core.forms import CommentForm, ResourceForm
 from core.helper import renderer_utils, view_utils, model_utils
-from core.helper.view_utils import DefaultSearchView, CommonInitFormViewTemplate
+from core.helper.view_utils import DefaultSearchView, CommonInitFormViewTemplate, ImageHandler
 from location.models import CofkUnionLocation
 from person.forms import PersonForm
 from person.models import CofkUnionPerson, CofkPersonLocationMap, CofkPersonPersonMap
@@ -128,12 +128,6 @@ class PersonRecrefHandler(view_utils.MultiRecrefHandler):
         return recref
 
 
-def log_invalid(form_formset: Iterable):
-    form_formset = (f for f in form_formset if not f.is_valid())
-    for f in form_formset:
-        log.debug(f'invalid form [{f}]')
-
-
 def _get_other_persons_by_type(person: CofkUnionPerson, person_type: str) -> Iterable[CofkPersonPersonMap]:
     persons = (p for p in person.active_relationships.iterator()
                if p.person_type == person_type)
@@ -141,10 +135,10 @@ def _get_other_persons_by_type(person: CofkUnionPerson, person_type: str) -> Ite
 
 
 class PersonFullFormHandler:
-    def __init__(self, iperson_id, request_data, ):
-        self.load_data(iperson_id, request_data=request_data)
+    def __init__(self, iperson_id, request):
+        self.load_data(iperson_id, request_data=request.POST, request=request)
 
-    def load_data(self, iperson_id, request_data=None):
+    def load_data(self, iperson_id, request_data=None, request=None, ):
         self.person = get_object_or_404(CofkUnionPerson, iperson_id=iperson_id)
         self.person_form = PersonForm(request_data or None, instance=self.person)
         self.loc_handler = LocRecrefHandler(
@@ -181,6 +175,7 @@ class PersonFullFormHandler:
                                                      prefix='res',
                                                      initial_list=model_utils.related_manager_to_dict_list(
                                                          self.person.resources), )
+        self.img_handler = ImageHandler(request_data, request and request.FILES, self.person.images)
 
     @property
     def all_recref_handlers(self):
@@ -190,30 +185,35 @@ class PersonFullFormHandler:
 
     def render_form(self, request):
         context = {
-            'person_form': self.person_form,
-            'comment_formset': self.comment_formset,
-            'res_formset': self.res_formset,
-        }
+                      'person_form': self.person_form,
+                      'comment_formset': self.comment_formset,
+                      'res_formset': self.res_formset,
+                  } | self.img_handler.create_context()
         for h in self.all_recref_handlers:
             context.update(h.create_context())
         return render(request, 'person/full_form.html', context)
 
 
 def full_form(request, iperson_id):
-    fhandler = PersonFullFormHandler(iperson_id, request_data=request.POST or None)
+    fhandler = PersonFullFormHandler(iperson_id, request)
 
     # handle form submit
     if request.POST:
 
         # define form_formsets
-        form_formsets = [fhandler.person_form, fhandler.comment_formset, fhandler.res_formset]
+        # KTODO make this list generic
+        form_formsets = [fhandler.person_form, fhandler.comment_formset, fhandler.res_formset,
+                         fhandler.img_handler.img_form,
+                         fhandler.img_handler.image_formset,
+                         ]
         for h in fhandler.all_recref_handlers:
             form_formsets.extend([h.new_form, h.update_formset, ])
 
-        log_invalid(form_formsets)
-        if view_utils.any_invalid(form_formsets):
+        # ----- validate
+        if view_utils.any_invalid_with_log(form_formsets):
             return fhandler.render_form(request)
 
+        # ------- save
         for recref_handler in fhandler.all_recref_handlers:
             recref_handler.maintain_record(request, fhandler.person_form.instance)
 
@@ -222,7 +222,9 @@ def full_form(request, iperson_id):
                                 model_id_name='comment_id')
         view_utils.save_formset(fhandler.res_formset, fhandler.person.resources,
                                 model_id_name='resource_id')
+        fhandler.img_handler.save(request)
 
+        # reload all form data for rendering
         fhandler.load_data(iperson_id, request_data=None)
 
     return fhandler.render_form(request)

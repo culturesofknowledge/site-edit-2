@@ -1,9 +1,11 @@
 from django import forms
+from django.conf import settings
 from django.forms import ModelForm, HiddenInput, IntegerField, Form
 
 from core.helper import form_utils
 from core.helper import widgets_utils
 from core.models import CofkUnionComment, CofkUnionResource
+from uploader.models import CofkUnionImage
 
 
 def build_search_components(sort_by_choices: list[tuple[str, str]]):
@@ -98,3 +100,43 @@ class ResourceForm(ModelForm):
             'change_timestamp',
             'change_user',
         )
+
+
+class ImageForm(ModelForm):
+    image_id = IntegerField(required=False, widget=HiddenInput())
+    image_filename = forms.CharField(required=False,
+                                     label='URL for full-size image')
+    image_filename.widget.attrs.update({'class': 'url_checker'})
+
+    thumbnail = forms.CharField(required=False,
+                                label='URL for thumbnail (if any)')
+    credits = forms.CharField(required=False,
+                              label="Credits for 'front end' display*")
+    licence_details = forms.CharField(required=False, widget=forms.Textarea(),
+                                      label='Either: full text of licence*')
+
+    licence_url = forms.CharField(required=False,
+                                  label='licence URL*')
+    licence_url.widget.attrs.update({'class': 'url_checker', 'value': settings.DEFAULT_IMG_LICENCE_URL})
+
+    can_be_displayed = form_utils.ZeroOneCheckboxField(required=False,
+                                                       label='Can be displayed to public',
+                                                       initial='1', )
+    display_order = forms.IntegerField(required=False, label='Order for display in front end')
+
+    class Meta:
+        model = CofkUnionImage
+        fields = (
+            'image_id',
+            'image_filename',
+            'thumbnail',
+            'credits',
+            'licence_details',
+            'licence_url',
+            'can_be_displayed',
+            'display_order',
+        )
+
+
+class UploadImageForm(Form):
+    selected_image = forms.ImageField(required=False)

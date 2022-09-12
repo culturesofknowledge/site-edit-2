@@ -127,6 +127,7 @@ class CofkUnionPerson(models.Model, RecordTracker):
 
     comments = models.ManyToManyField('core.CofkUnionComment')
     resources = models.ManyToManyField('core.CofkUnionResource')
+    images = models.ManyToManyField('uploader.CofkUnionImage')
 
     class Meta:
         db_table = 'cofk_union_person'

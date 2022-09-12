@@ -41,58 +41,8 @@
                 <h1 id="header_resource">Related resource: </h1>
                 {% include "core/component/resource_formset.html" with res_formset=res_formset %}
 
-                <div>
-                    <h1 id="header_image">Images: </h1>
-                    <div>
-                        Copyright law must be respected at all times. You must ensure that all necessary permissions
-                        have been
-                        obtained before uploading or attempting to display images.
-                    </div>
-                    <div>
-                        You can associate images with a location in two different ways:
-                        <ol>
-                            <li>
-                                Upload them if you have a copy on your own personal computer
-                            </li>
-                            <li>
-                                Link to them by typing in, or copying and pasting in, the URL of an image on this or
-                                another
-                                repository's server.
-                            </li>
-                        </ol>
-                        <span>
-                    In both cases, credits and licence details must be supplied before the image can be displayed to the public.
-                        </span>
-                    </div>
-
-                    {{ images_formset.management_form }}
-                    {% for form in images_formset %}
-                        {% if forloop.first %}
-                            <strong> Upload image files from your own computer: </strong>
-                            {{ img_form }}
-                            <p>Or:</p>
-
-                            <strong> Enter or change links to images by typing in the URL: </strong>
-                            <div> Enter new image details:</div>
-
-                        {% endif %}
-
-
-                        <fieldset>
-                            <legend>
-                                {% if forloop.first %}
-                                    Enter new image details:
-                                {% else %}
-                                    Existing image no. {{ forloop.counter0 }} of {{ total_images }}
-                                {% endif %}
-                            </legend>
-
-                            {{ form }}
-                        </fieldset>
-
-
-                    {% endfor %}
-                </div>
+                <!-- Images section -->
+                {% include "core/component/image_formset.html" with img_handler=img_handler %}
 
                 <div class="flex-col sticky-bottom">
                     <input type="submit" value="Submit">

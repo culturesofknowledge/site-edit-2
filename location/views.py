@@ -2,7 +2,6 @@ import itertools
 import logging
 from typing import Iterable, Union, Type, Callable
 
-from django.conf import settings
 from django.forms import BaseForm, BaseFormSet, ModelForm
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView
@@ -12,14 +11,11 @@ from core.helper import model_utils, view_utils
 from core.helper.model_utils import RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
-from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate
-from core.services import media_service
+from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate, ImageHandler
 from location import renderer
-from location.forms import LocationForm, GeneralSearchFieldset, \
-    LocationImageForm, LocUploadImageForm
+from location.forms import LocationForm, GeneralSearchFieldset
 from location.models import CofkUnionLocation
 from location.renderer import LocationCompactSearchResultsRenderer
-from uploader.models import CofkUnionImage
 
 log = logging.getLogger(__name__)
 FormOrFormSet = Union[BaseForm, BaseFormSet]
@@ -95,31 +91,23 @@ def full_form(request, location_id):
     comment_formset = view_utils.create_formset(CommentForm, post_data=request.POST,
                                                 prefix='loc_comment',
                                                 initial_list=model_utils.related_manager_to_dict_list(loc.comments), )
-    images_formset = view_utils.create_formset(LocationImageForm, post_data=request.POST,
-                                               prefix='loc_image',
-                                               initial_list=model_utils.related_manager_to_dict_list(loc.images), )
-    img_form = LocUploadImageForm(request.POST or None, request.FILES)
+    img_handler = ImageHandler(request.POST, request.FILES, loc.images)
 
     def _render_full_form():
-
-        # reversed list for UI
-        for fs in [images_formset]:
-            fs.forms = list(reversed(fs.forms))
 
         return render(request, 'location/full_form.html',
                       {'loc_form': loc_form,
                        'res_formset': res_formset,
                        'comment_formset': comment_formset,
-                       'images_formset': images_formset,
                        'loc_id': location_id,
-                       'img_form': img_form,
-                       'total_images': loc.images.count(),
-                       })
+                       } | img_handler.create_context()
+                      )
 
     if request.method == 'POST':
-        form_formsets = [loc_form, res_formset, comment_formset, images_formset, img_form]
+        form_formsets = [loc_form, res_formset, comment_formset, img_handler.image_formset,
+                         img_handler.img_form]
 
-        if view_utils.any_invalid(form_formsets):
+        if view_utils.any_invalid_with_log(form_formsets):
             log.warning(f'something invalid')
             return _render_full_form()
 
@@ -128,20 +116,7 @@ def full_form(request, location_id):
         # save formset
         view_utils.save_formset(res_formset, loc.resources, model_id_name='resource_id')
         view_utils.save_formset(comment_formset, loc.comments, model_id_name='comment_id')
-        images_formset = (f for f in images_formset if f.is_valid())
-        images_formset = (f for f in images_formset if f.cleaned_data.get('image_filename'))
-        view_utils.save_formset(images_formset, loc.images, model_id_name='image_id')
-
-        # save if user uploaded an image
-        if uploaded_img_file := img_form.cleaned_data.get('image'):
-            file_path = media_service.save_uploaded_img(uploaded_img_file)
-            file_url = media_service.get_img_url_by_file_path(file_path)
-            img_obj = CofkUnionImage(image_filename=file_url, display_order=0,
-                                     licence_details='', credits='',
-                                     licence_url=settings.DEFAULT_IMG_LICENCE_URL)
-            img_obj.update_current_user_timestamp(request.user.username)
-            img_obj.save()
-            loc.images.add(img_obj)
+        img_handler.save(request)
 
         loc_form.save()
         log.info(f'location [{location_id}] have been saved')

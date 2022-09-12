@@ -1,12 +1,13 @@
 import logging
 import os
 from multiprocessing import Process
-from typing import Iterable, Tuple, List, Type, Callable
+from typing import Iterable, Type, Callable
 from typing import NoReturn
 from typing import Optional
 from urllib.parse import urlencode
 
 from django import template
+from django.conf import settings
 from django.db import models
 from django.forms import ModelForm
 from django.forms import formset_factory
@@ -16,14 +17,18 @@ from django.views import View
 from django.views.generic import ListView
 
 import core.constant as core_constant
+from core.forms import ImageForm, UploadImageForm
 from core.forms import RecrefForm
 from core.forms import build_search_components
 from core.helper import file_utils, email_utils
+from core.helper import model_utils
 from core.helper import view_utils
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
     demo_table_search_results_renderer
 from core.helper.view_components import DownloadCsvHandler
 from core.models import Recref
+from core.services import media_service
+from uploader.models import CofkUnionImage
 
 register = template.Library()
 log = logging.getLogger(__name__)
@@ -272,8 +277,13 @@ def redirect_return_quick_init(request, name, item_name, item_id):
     })
 
 
-def any_invalid(form_formsets: Iterable):
-    return not all(f.is_valid() for f in form_formsets)
+def any_invalid_with_log(form_formsets: Iterable):
+    for f in form_formsets:
+        if not f.is_valid():
+            log.debug(f'form is invalid [{f}] -- [{f.error_messages}]')
+            return True
+
+    return False
 
 
 def create_formset(form_class, post_data=None, prefix=None,
@@ -380,3 +390,40 @@ def save_formset(forms: Iterable[ModelForm],
         # bind many-to-many relation
         if many_related_manager:
             many_related_manager.add(form.instance)
+
+
+class ImageHandler:
+    def __init__(self, request_data, request_files,
+                 img_related_manager):
+        self.img_related_manager = img_related_manager
+        self.image_formset = view_utils.create_formset(
+            ImageForm, post_data=request_data,
+            prefix='image',
+            initial_list=model_utils.related_manager_to_dict_list(
+                self.img_related_manager), )
+        self.img_form = UploadImageForm(request_data or None, request_files)
+
+    def create_context(self):
+        return {
+            'img_handler': {
+                'image_formset': self.image_formset,
+                'img_form': self.img_form,
+                'total_images': self.img_related_manager.count(),
+            }
+        }
+
+    def save(self, request):
+        image_formset = (f for f in self.image_formset if f.is_valid())
+        image_formset = (f for f in image_formset if f.cleaned_data.get('image_filename'))
+        view_utils.save_formset(image_formset, self.img_related_manager, model_id_name='image_id')
+
+        # save if user uploaded an image
+        if uploaded_img_file := self.img_form.cleaned_data.get('selected_image'):
+            file_path = media_service.save_uploaded_img(uploaded_img_file)
+            file_url = media_service.get_img_url_by_file_path(file_path)
+            img_obj = CofkUnionImage(image_filename=file_url, display_order=0,
+                                     licence_details='', credits='',
+                                     licence_url=settings.DEFAULT_IMG_LICENCE_URL)
+            img_obj.update_current_user_timestamp(request.user.username)
+            img_obj.save()
+            self.img_related_manager.add(img_obj)
