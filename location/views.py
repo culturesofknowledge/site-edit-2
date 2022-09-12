@@ -132,7 +132,7 @@ def full_form(request, location_id):
     def _render_full_form():
 
         # reversed list for UI
-        for fs in [res_formset, images_formset, comment_formset]:
+        for fs in [res_formset, images_formset]:
             fs.forms = list(reversed(fs.forms))
 
         return render(request, 'location/full_form.html',

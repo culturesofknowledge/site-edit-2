@@ -1,7 +1,8 @@
+{% load cl_filters %}
 {{ comment_formset.management_form }}
 <fieldset>
     <legend>Notes</legend>
-    {% for form in comment_formset %}
+    {% for form in comment_formset|reverse_list %}
         <div>
             <label>
                 {% if forloop.first %}
