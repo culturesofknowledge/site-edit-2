@@ -127,4 +127,24 @@
   }
 }
 
+.row-spaced {
+  @extend .row;
+  margin: 0px;
+
+  & > * {
+    margin-right: $space-xs;
+  }
+
+}
+
+.ref-publication-row {
+  @extend .row;
+  margin: $space-xxs;
+
+  button {
+    margin-left: $space-xs;
+  }
+
+
+}
 

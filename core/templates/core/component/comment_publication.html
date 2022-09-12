@@ -1,0 +1,44 @@
+{{ comment_formset.management_form }}
+<fieldset>
+    <legend>Notes</legend>
+    {% for form in comment_formset %}
+        <div>
+            <label>
+                {% if forloop.first %}
+                    New note:
+                {% else %}
+                    Existing note:
+                {% endif %}
+            </label>
+            {{ form.comment }}
+            {{ form.comment_id }}
+            {{ form.record_tracker_label }}
+            <div class="ref-publication-row">
+                <h4>Refer publication:</h4>
+                <button class="create_pub"> Create</button>
+                <button class="copy_pub"> Copy</button>
+            </div>
+        </div>
+    {% endfor %}
+</fieldset>
+
+
+<script>
+
+    function create_fn_open_ref_pub(url) {
+        return function (e) {
+            e.preventDefault();
+            window.open(url);
+            window.on_quick_init_completed = function (data) {
+                let target_ta = $(e.target.parentElement.parentElement).find('textarea')
+                target_ta.text(target_ta.text() + ' ' + data.item_name)
+            }
+        }
+    }
+
+
+    $(() => {
+        $('.create_pub').click(create_fn_open_ref_pub('/publication/quick_init'));
+        $('.copy_pub').click(create_fn_open_ref_pub('/publication/search?recref_mode=1'));
+    });
+</script>

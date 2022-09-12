@@ -31,27 +31,7 @@
 
                 <!-- Comment section -->
                 <h1 id="header_researcher_note">Researcher' notes for front-end display</h1>
-                {{ comment_formset.management_form }}
-                <fieldset>
-                    <legend>Notes</legend>
-                    {% for form in comment_formset %}
-                        <label>
-                            {% if forloop.first %}
-                                New note:
-                            {% else %}
-                                Existing note:
-                            {% endif %}
-                        </label>
-                        {{ form.comment }}
-                        {{ form.comment_id }}
-                        {{ form.creation_timestamp  }}
-                        {{ form.creation_user  }}
-                        {{ form.change_timestamp  }}
-                        {{ form.change_user  }}
-                        {{ form.record_tracker_label }}
-                        <!-- KTODO  copy references feature -->
-                    {% endfor %}
-                </fieldset>
+                {% include "core/component/comment_publication.html" with comment_formset=comment_formset %}
 
 
                 <!-- Resource section -->

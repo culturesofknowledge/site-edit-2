@@ -1,0 +1,44 @@
+{% extends "core/emlo_logined.html" %}
+{% load static %}
+
+
+{% block content %}
+    <h1>Following publication has been selected.</h1>
+
+    <input id="ref_id" type="hidden" value="{{ pub.publication_id }}"/>
+    <div class="margin-bottom">
+        <h3>Details</h3>
+        <div class="row-spaced">
+            <h3 class="selected_val">{{ pub.publication_details }}</h3>
+            <button class="select_btn"> Select</button>
+        </div>
+    </div>
+
+    {% if pub.abbrev %}
+        <div class="margin-bottom">
+            <h3>Abbrev</h3>
+            <div class="row-spaced">
+                <h3 class="selected_val">{{ pub.abbrev }}</h3>
+                <button class="select_btn"> Select</button>
+            </div>
+        </div>
+    {% endif %}
+
+    <button id="select_btn"> Cancel</button>
+
+    <script>
+        $(function () {
+            $('.select_btn').on('click', function (e) {
+                window.opener.on_quick_init_completed({
+                    item_name: $(e.target.parentElement).find('.selected_val').html(),
+                    item_id: $('#ref_id').attr('value'),
+                })
+                window.close()
+            })
+            $('#cancel_btn').on('click', function () {
+                window.close()
+            })
+        })
+    </script>
+
+{% endblock %}

@@ -3,12 +3,14 @@
 
 
 {% block content %}
-    <h1>New {{ name }} has been saved.</h1>
+    <h1>Following {{ name }} has been selected.</h1>
     <h3> {{ item_name }} </h3>
 
     <small>Click OK to pass the details back into the main data entry screen.</small>
-    <button id="ok_btn"> OK</button>
-    <button id="cancel_btn"> Cancel</button>
+    <div class="row-spaced">
+        <button id="ok_btn"> OK</button>
+        <button id="cancel_btn"> Cancel</button>
+    </div>
 
     <script>
         $(function () {

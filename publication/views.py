@@ -82,9 +82,7 @@ class PubQuickInitView(PubInitView):
 
 
 def return_quick_init(request, pk):
-    # KTODO
     pub = CofkUnionPublication.objects.get(pk=pk)
-    return view_utils.redirect_return_quick_init(
-        request, 'Publication',
-        pub.publication_details,
-        pub.publication_id, )
+    return render(request, 'publication/return_quick_init_pub.html', {
+        'pub': pub,
+    })

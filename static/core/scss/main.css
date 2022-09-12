@@ -243,7 +243,7 @@ body {
   body {
     padding: 0 calc(1.5vw * 3); } }
 
-.row {
+.row, .ref-publication-row, .row-spaced {
   display: flex;
   flex: 0 1 auto;
   flex-wrap: wrap;
@@ -254,7 +254,7 @@ body {
   justify-content: center; }
 
 @media only screen and (min-width: 768px) {
-  .row {
+  .row, .ref-publication-row, .row-spaced {
     flex-direction: row; } }
 
 .col {
@@ -770,5 +770,15 @@ input[type="radio"] + label {
     width: 100%; }
   .inline-from-to input[type=date] {
     width: 130px; }
+
+.row-spaced {
+  margin: 0px; }
+  .row-spaced > * {
+    margin-right: calc(.5 * 1rem); }
+
+.ref-publication-row {
+  margin: calc(.25 * 1rem); }
+  .ref-publication-row button {
+    margin-left: calc(.5 * 1rem); }
 
 /*# sourceMappingURL=main.css.map */
