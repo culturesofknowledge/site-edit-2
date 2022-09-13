@@ -21,7 +21,7 @@ from uploader.spreadsheet import CofkUploadExcelFile
 from uploader.validation import CofkMissingColumnError, CofkMissingSheetError
 
 from work.models import CofkCollectWork, CofkCollectAuthorOfWork, CofkCollectAddresseeOfWork, CofkCollectLanguageOfWork, \
-    CofkCollectPersonMentionedInWork
+    CofkCollectPersonMentionedInWork, CofkCollectWorkResource
 
 log = logging.getLogger(__name__)
 
@@ -140,6 +140,7 @@ def upload_review(request, upload_id, **kwargs):
                'languages': CofkCollectLanguageOfWork.objects.filter(upload=upload),
                'places': CofkCollectLocation.objects.filter(upload=upload),
                'institutions': CofkCollectInstitution.objects.filter(upload=upload),
-               'manifestations': CofkCollectManifestation.objects.filter(upload=upload)}
+               'manifestations': CofkCollectManifestation.objects.filter(upload=upload),
+               'resources': CofkCollectWorkResource.objects.filter(upload=upload)}
 
     return render(request, template_url, context)

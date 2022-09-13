@@ -166,6 +166,27 @@
                     {{ mention }}<br/>
                 {% endfor %}</td>
         </tr>
+        {% if work.notes_on_letter %}
+        <tr>
+            <td class="header">General notes</td>
+            <td>{{ work.notes_on_letter }}</td>
+        </tr>
+        {% endif %}
+        {% if work.editors_notes %}
+        <tr>
+            <td class="header">Project editors' notes</td>
+            <td>{{ work.editors_notes }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+            <td class="header">Related resources</td>
+            <td>{% for resource in resources|filter_by_work:work %}
+                    Description: {{ resource.resource_name }}<br/>
+                    URL: <a href="{{ resource.resource_url }}">{{ resource.resource_url }}</a><br/>
+                    Details: {{ resource.resource_details }}<br/>
+                {% endfor %}
+            </td>
+        </tr>
     </table>
     <hr/>
 
