@@ -1,3 +1,5 @@
+{% load filter_by_work %}
+
 
 <div id="works">
     <h1>Works</h1>
@@ -46,7 +48,7 @@
         </tr>
         <tr>
             <td class="header">Author{{ authors|pluralize:",s" }}</td>
-            <td>{% for author in authors %}
+            <td>{% for author in authors|filter_by_work:work %}
                     {{ author }}<br/>
                 {% endfor %}
 
@@ -78,7 +80,7 @@
         </tr>
         <tr>
             <td class="header">Addressee{{ addressees|pluralize:",s" }}</td>
-            <td>{% for addressee in addressees %}
+            <td>{% for addressee in addressees|filter_by_work:work %}
                     {{ addressee }}<br/>
                 {% endfor %}
 
@@ -110,7 +112,7 @@
         </tr>
         <tr>
             <td class="header">Languages</td>
-            <td>{% for language in languages %}
+            <td>{% for language in languages|filter_by_work:work %}
                     {{ language }}<br/>
                 {% endfor %}
             </td>
@@ -141,7 +143,7 @@
         {% endif %}
         <tr>
             <td class="header">{{ mentioned|pluralize:"Person,People" }} mentioned</td>
-            <td>{% for mention in mentioned %}
+            <td>{% for mention in mentioned|filter_by_work:work %}
                     {{ mention }}<br/>
                 {% endfor %}
 
@@ -160,7 +162,9 @@
         </tr>
         <tr>
             <td class="header">Repositories and versions</td>
-            <td></td>
+            <td>{% for manifestation in manifestations|filter_by_work:work %}
+                    {{ mention }}<br/>
+                {% endfor %}</td>
         </tr>
     </table>
     <hr/>

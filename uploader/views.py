@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import time
@@ -14,14 +13,12 @@ from pandas._config.config import OptionError
 from institution.models import CofkCollectInstitution
 from location.models import CofkCollectLocation
 from manifestation.models import CofkCollectManifestation
-from person.models import CofkCollectPerson
 from uploader.forms import CofkCollectUploadForm
 from django.conf import settings
 
 from uploader.models import CofkCollectStatus, CofkCollectUpload
 from uploader.spreadsheet import CofkUploadExcelFile
 from uploader.validation import CofkMissingColumnError, CofkMissingSheetError
-from work.forms import CofkCollectWorkForm
 
 from work.models import CofkCollectWork, CofkCollectAuthorOfWork, CofkCollectAddresseeOfWork, CofkCollectLanguageOfWork, \
     CofkCollectPersonMentionedInWork
@@ -133,17 +130,16 @@ def upload_review(request, upload_id, **kwargs):
     template_url = 'review.html'
     upload = CofkCollectUpload.objects.filter(upload_id=upload_id).first()
     # works = [CofkCollectWorkForm(instance=w) for w in CofkCollectWork.objects.filter(upload=upload)]
-    work_form = 0 # CofkCollectWorkForm(instance=works[0])
+    work_form = 0  # CofkCollectWorkForm(instance=works[0])
 
     context = {'upload': upload,
                'works': CofkCollectWork.objects.filter(upload=upload),
-               #'people': CofkCollectPerson.objects.filter(upload=upload),
                'authors': CofkCollectAuthorOfWork.objects.filter(upload=upload),
                'addressees': CofkCollectAddresseeOfWork.objects.filter(upload=upload),
                'mentioned': CofkCollectPersonMentionedInWork.objects.filter(upload=upload),
                'languages': CofkCollectLanguageOfWork.objects.filter(upload=upload),
                'places': CofkCollectLocation.objects.filter(upload=upload),
-               'institutions': CofkCollectInstitution.objects.filter(upload=upload),}
-               #'manifestations': CofkCollectManifestation.objects.filter(upload=upload)}
+               'institutions': CofkCollectInstitution.objects.filter(upload=upload),
+               'manifestations': CofkCollectManifestation.objects.filter(upload=upload)}
 
     return render(request, template_url, context)

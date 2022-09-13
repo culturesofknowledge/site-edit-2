@@ -72,7 +72,7 @@ class CofkUnionManifestation(models.Model, RecordTracker):
 class CofkCollectManifestation(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     manifestation_id = models.IntegerField()
-    iwork_id = models.IntegerField()
+    iwork = models.ForeignKey('work.CofkCollectWork', models.DO_NOTHING)
     union_manifestation = models.ForeignKey(CofkUnionManifestation, models.DO_NOTHING, blank=True, null=True)
     manifestation_type = models.CharField(max_length=3)
     repository_id = models.IntegerField(blank=True, null=True)
@@ -89,6 +89,7 @@ class CofkCollectManifestation(models.Model):
 
     def __str__(self):
         return f'Manifestation #{self.manifestation_id}'
+
 
 class CofkUnionLanguageOfManifestation(models.Model):
     manifestation = models.OneToOneField(CofkUnionManifestation, models.DO_NOTHING, primary_key=True)

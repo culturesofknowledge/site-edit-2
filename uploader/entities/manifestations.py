@@ -11,17 +11,18 @@ log = logging.getLogger(__name__)
 
 class CofkManifestations(CofkEntity):
 
-    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame, limit=None):
+    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame):
         super().__init__(upload, sheet_data)
 
         self.__manifestation_id = None
         self.__non_manifestation_data = {}
         self.__manifestation_data = {}
-        limit = limit if limit else len(self.sheet_data.index)
         self.ids = []
 
+        self.check_data_types('Manifestation')
+
         # Process each row in turn, using a dict comprehension to filter out empty values
-        for i in range(1, limit):
+        for i in range(1, len(self.sheet_data.index)):
             self.process_manifestation({k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None})
 
     def preprocess_data(self):

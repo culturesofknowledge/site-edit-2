@@ -170,8 +170,8 @@ class CofkWork(CofkEntity):
             self.preprocess_languages(work)
 
             # Processing resources in work
-            if 'resource_name' in self.non_work_data or 'resource_url' in self.non_work_data:
-                self.process_resource()
+            self.process_resource(work)
+
         except ValidationError as ve:
             self.add_error(ve)
             log.warning(ve)
@@ -252,24 +252,22 @@ class CofkWork(CofkEntity):
                                                  language_code=lan)
                 lang.save()
             else:
-                msg = f'"{language}" is not a valid ISO639 language.'
+                msg = f'The value in column "language_id", "{language}" is not a valid ISO639 language.'
                 log.error(msg)
                 self.add_error(ValidationError(msg))
 
-    def process_resource(self):
+    def process_resource(self, work: CofkCollectWork):
         resource_name = self.non_work_data['resource_name'] if 'resource_name' in self.non_work_data else ''
         resource_url = self.non_work_data['resource_url'] if 'resource_url' in self.non_work_data else ''
         resource_details = self.non_work_data['resource_details'] if 'resource_details' in self.non_work_data else ''
 
-        log.info("Processing resource , iwork_id #{}, upload_id #{}".format(
-            self.iwork_id, self.upload.upload_id))
+        r_id = CofkCollectWorkResource.objects.\
+            values_list('resource_id', flat=True).order_by('-resource_id').first()
 
-        try:
-            r_id = CofkCollectWorkResource.objects.order_by('-resource_id').first().resource_id
-        except AttributeError:
+        if r_id is None:
             r_id = 0
 
-        resource = CofkCollectWorkResource(upload_id=self.upload.upload_id, iwork_id=self.iwork_id,
+        resource = CofkCollectWorkResource(upload=self.upload, iwork=work,
                                            resource_id=r_id + 1, resource_name=resource_name,
                                            resource_url=resource_url, resource_details=resource_details)
         resource.save()

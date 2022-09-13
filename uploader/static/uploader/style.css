@@ -122,3 +122,7 @@ button {
     font-weight: bold;
     vertical-align: top;
 }
+
+summary:hover{
+    cursor: pointer;
+}
