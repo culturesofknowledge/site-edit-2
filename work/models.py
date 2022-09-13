@@ -4,8 +4,6 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from core.helper.model_utils import RecordTracker
-from location.models import CofkCollectLocation
-from person.models import CofkCollectPerson
 from uploader.models import CofkCollectUpload, CofkCollectStatus
 
 
@@ -90,12 +88,12 @@ class CofkCollectWork(models.Model):
     addressees_inferred = models.SmallIntegerField()
     addressees_uncertain = models.SmallIntegerField()
     notes_on_addressees = models.TextField(blank=True, null=True)
-    #destination_id = models.IntegerField(blank=True, null=True)
+    # destination_id = models.IntegerField(blank=True, null=True)
     destination = models.ForeignKey('CofkCollectDestinationOfWork', models.CASCADE, blank=True, null=True)
     destination_as_marked = models.TextField(blank=True, null=True)
     destination_inferred = models.SmallIntegerField()
     destination_uncertain = models.SmallIntegerField()
-    #origin_id = models.IntegerField(blank=True, null=True)
+    # origin_id = models.IntegerField(blank=True, null=True)
     origin = models.ForeignKey('CofkCollectOriginOfWork', models.CASCADE, blank=True,  null=True)
     origin_as_marked = models.TextField(blank=True, null=True)
     origin_inferred = models.SmallIntegerField()

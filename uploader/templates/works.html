@@ -115,22 +115,30 @@
                 {% endfor %}
             </td>
         </tr>
+        {% if work.incipit %}
         <tr>
             <td class="header">Incipit</td>
             <td>{{ work.incipit }}</td>
         </tr>
+        {% endif %}
+        {% if work.explicit %}
         <tr>
             <td class="header">Explicit</td>
             <td>{{ work.explicit }}</td>
         </tr>
+        {% endif %}
+        {% if work.abstract %}
         <tr>
             <td class="header">Abstract</td>
             <td>{{ work.abstract }}</td>
         </tr>
+        {% endif %}
+        {% if work.keywords %}
         <tr>
             <td class="header">Keywords</td>
             <td>{{ work.keywords }}</td>
         </tr>
+        {% endif %}
         <tr>
             <td class="header">{{ mentioned|pluralize:"Person,People" }} mentioned</td>
             <td>{% for mention in mentioned %}

@@ -335,7 +335,7 @@ class CofkWork(CofkEntity):
                                                  language_code=lan)
                 lang.save()
             else:
-                msg = f'Upload {self.upload.upload_id}: Submitted {language} not a valid ISO639 language'
+                msg = f'"{language}" is not a valid ISO639 language.'
                 log.error(msg)
                 self.add_error(ValidationError(msg))
 
