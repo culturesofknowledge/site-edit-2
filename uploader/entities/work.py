@@ -78,15 +78,13 @@ class CofkWork(CofkEntity):
         if a_id is None:
             a_id = 1
 
-        for p in self.people.authors:
+        for a_id, p in enumerate(self.people.authors, start=a_id):
             try:
                 person = [p2 for p2 in self.people.people if p['id'] == p2.iperson_id][0]
             except IndexError:
                 continue
 
             author = CofkCollectAuthorOfWork(author_id=a_id, upload=self.upload, iwork=work, iperson=person)
-            a_id = a_id + 1
-
             author.save()
 
     def process_addressees(self, work: CofkCollectWork):
@@ -95,7 +93,7 @@ class CofkWork(CofkEntity):
         if a_id is None:
             a_id = 1
 
-        for p in self.people.addressees:
+        for a_id, p in enumerate(self.people.addressees, start=a_id):
             try:
                 person = [p2 for p2 in self.people.people if p['id'] == p2.iperson_id][0]
             except IndexError:
@@ -103,7 +101,6 @@ class CofkWork(CofkEntity):
 
             addressee = CofkCollectAddresseeOfWork(addressee_id=a_id, upload=self.upload, iwork=work, iperson=person)
             addressee.save()
-            a_id = a_id + 1
 
     def preprocess_data(self):
         # Isolating data relevant to a work
@@ -192,7 +189,7 @@ class CofkWork(CofkEntity):
         if m_id is None:
             m_id = 0
 
-        for p in self.people.mentioned:
+        for m_id, p in enumerate(self.people.mentioned, start=m_id):
             try:
                 person = [p2 for p2 in self.people.people if p['id'] == p2.iperson_id][0]
             except IndexError:
@@ -202,8 +199,6 @@ class CofkWork(CofkEntity):
 
             person_mentioned = CofkCollectPersonMentionedInWork(mention_id=m_id, upload=self.upload, iwork=work,
                                                                 iperson=person)
-            m_id = m_id + 1
-
             person_mentioned.save()
 
     def process_origin(self, work: CofkCollectWork):
@@ -212,7 +207,7 @@ class CofkWork(CofkEntity):
         if o_id is None:
             o_id = 0
 
-        for o in self.locations.origins:
+        for o_id, o in enumerate(self.locations.origins, start=o_id):
             try:
                 origin = [o2 for o2 in self.locations.locations if o['id'] == o2.location_id][0]
             except IndexError:
@@ -221,7 +216,6 @@ class CofkWork(CofkEntity):
             log.info(f'Processing origin location , iwork_id #{self.iwork_id}, upload_id #{self.upload.upload_id}')
 
             origin_location = CofkCollectOriginOfWork(origin_id=o_id, upload=self.upload, iwork=work, location=origin)
-            o_id = o_id + 1
 
             origin_location.save()
             log.debug(f'{origin_location} saved')
@@ -232,7 +226,7 @@ class CofkWork(CofkEntity):
         if d_id is None:
             d_id = 0
 
-        for d in self.locations.destinations:
+        for d_id, d in enumerate(self.locations.destinations, start=d_id):
             try:
                 destination = [d2 for d2 in self.locations.locations if d['id'] == d2.location_id][0]
             except IndexError:
@@ -242,7 +236,6 @@ class CofkWork(CofkEntity):
 
             destination_location = CofkCollectDestinationOfWork(destination_id=d_id, upload=self.upload, iwork=work,
                                                                 location=destination)
-            d_id = d_id + 1
 
             destination_location.save()
 
@@ -334,16 +327,17 @@ class CofkWork(CofkEntity):
 
         l_id += 1
 
-        for language in has_language:
+        for l_id, language in enumerate(has_language, start=l_id):
             lan = Iso639LanguageCode.objects.filter(code_639_3=language).first()
 
             if lan is not None:
                 lang = CofkCollectLanguageOfWork(language_of_work_id=l_id, upload=self.upload, iwork=work,
                                                  language_code=lan)
                 lang.save()
-                l_id += 1
             else:
-                log.debug(f'Upload {self.upload.upload_id}: Submitted {language} not a valid ISO639 language')
+                msg = f'Upload {self.upload.upload_id}: Submitted {language} not a valid ISO639 language'
+                log.error(msg)
+                self.add_error(ValidationError(msg))
 
     def process_resource(self):
         resource_name = self.non_work_data['resource_name'] if 'resource_name' in self.non_work_data else ''
