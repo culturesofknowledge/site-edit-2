@@ -5,7 +5,6 @@ from typing import List
 import pandas as pd
 from django.core.exceptions import ValidationError
 
-from location.models import CofkCollectLocation
 from uploader.entities.entity import CofkEntity
 from uploader.entities.locations import CofkLocations
 from uploader.entities.people import CofkPeople
@@ -73,10 +72,11 @@ class CofkWork(CofkEntity):
             self.process_languages(work, work_languages)
 
     def process_authors(self, work: CofkCollectWork):
-        try:
-            a_id = CofkCollectAuthorOfWork.objects.order_by('-author_id').first().author_id
-        except AttributeError:
-            a_id = 0
+        a_id = CofkCollectAuthorOfWork.objects.\
+                values_list('author_id', flat=True).order_by('-author_id').first()
+
+        if a_id is None:
+            a_id = 1
 
         for p in self.people.authors:
             try:
@@ -84,21 +84,16 @@ class CofkWork(CofkEntity):
             except IndexError:
                 continue
 
-            author = CofkCollectAuthorOfWork(
-                author_id=a_id,
-                upload=self.upload,
-                iwork_id=work,
-                iperson_id=person)
-
+            author = CofkCollectAuthorOfWork(author_id=a_id, upload=self.upload, iwork=work, iperson=person)
             a_id = a_id + 1
 
             author.save()
 
     def process_addressees(self, work: CofkCollectWork):
-        try:
-            a_id = CofkCollectAddresseeOfWork.objects.order_by('-addressee_id').first().addressee_id
-        except AttributeError:
-            a_id = 0
+        a_id = CofkCollectAddresseeOfWork.objects.\
+                values_list('addressee_id', flat=True).order_by('-addressee_id').first()
+        if a_id is None:
+            a_id = 1
 
         for p in self.people.addressees:
             try:
@@ -106,23 +101,14 @@ class CofkWork(CofkEntity):
             except IndexError:
                 continue
 
-            addressee = CofkCollectAddresseeOfWork(
-                addressee_id=a_id,
-                upload=self.upload,
-                iwork_id=work,
-                iperson_id=person)
-
-            #try:
+            addressee = CofkCollectAddresseeOfWork(addressee_id=a_id, upload=self.upload, iwork=work, iperson=person)
             addressee.save()
-            #except IntegrityError as ie:
-            #    log.error(ie)
-
             a_id = a_id + 1
 
     def preprocess_data(self):
         # Isolating data relevant to a work
         non_work_keys = list(set(self.row_data.keys()) - set([c for c in CofkCollectWork.__dict__.keys()]))
-        #log.debug(self.row_data)
+        # log.debug(self.row_data)
 
         # Removing non-work data so that variable row_data_raw can be used to pass parameters
         # to create a CofkCollectWork object
@@ -167,8 +153,7 @@ class CofkWork(CofkEntity):
 
             self.ids.append(self.iwork_id)
 
-            log.info("Work created iwork_id #{}, upload_id #{}".format(
-                self.iwork_id, self.upload.upload_id))
+            log.info(f'Work created iwork_id #{self.iwork_id}, upload_id #{self.upload.upload_id}')
 
             # Processing people mentioned in work
             self.process_authors(work)
@@ -197,13 +182,14 @@ class CofkWork(CofkEntity):
         except ValidationError as ve:
             self.add_error(ve)
             log.warning(ve)
-        #except TypeError as te:
+        # except TypeError as te:
         #    log.warning(te)
 
     def process_mentions(self, work: CofkCollectWork):
-        try:
-            m_id = CofkCollectPersonMentionedInWork.objects.order_by('-mention_id').first().mention_id
-        except AttributeError:
+        m_id = CofkCollectPersonMentionedInWork.objects.\
+                values_list('mention_id', flat=True).order_by('-mention_id').first()
+
+        if m_id is None:
             m_id = 0
 
         for p in self.people.mentioned:
@@ -212,23 +198,18 @@ class CofkWork(CofkEntity):
             except IndexError:
                 continue
 
-            log.info("Processing people mentioned , iwork_id #{}, upload_id #{}".format(
-                self.iwork_id, self.upload.upload_id))
+            log.info(f'Processing people mentioned , iwork_id #{self.iwork_id}, upload_id #{self.upload.upload_id}')
 
-            person_mentioned = CofkCollectPersonMentionedInWork(
-                mention_id=m_id,
-                upload=self.upload,
-                iwork_id=work,
-                iperson_id=person)
-
+            person_mentioned = CofkCollectPersonMentionedInWork(mention_id=m_id, upload=self.upload, iwork=work,
+                                                                iperson=person)
             m_id = m_id + 1
 
             person_mentioned.save()
 
     def process_origin(self, work: CofkCollectWork):
-        try:
-            o_id = CofkCollectOriginOfWork.objects.order_by('-origin_id').first().origin_id
-        except AttributeError:
+        o_id = CofkCollectOriginOfWork.objects.\
+                values_list('origin_id', flat=True).order_by('-origin_id').first()
+        if o_id is None:
             o_id = 0
 
         for o in self.locations.origins:
@@ -237,24 +218,18 @@ class CofkWork(CofkEntity):
             except IndexError:
                 continue
 
-            log.info("Processing origin location , iwork_id #{}, upload_id #{}".format(
-                self.iwork_id, self.upload.upload_id))
+            log.info(f'Processing origin location , iwork_id #{self.iwork_id}, upload_id #{self.upload.upload_id}')
 
-            origin_location = CofkCollectOriginOfWork(
-                origin_id=o_id,
-                upload=self.upload,
-                iwork_id=work,
-                location_id=origin)
-
+            origin_location = CofkCollectOriginOfWork(origin_id=o_id, upload=self.upload, iwork=work, location=origin)
             o_id = o_id + 1
 
             origin_location.save()
             log.debug(f'{origin_location} saved')
 
     def process_destination(self, work: CofkCollectWork):
-        try:
-            d_id = CofkCollectDestinationOfWork.objects.order_by('-destination_id').first().destination_id
-        except AttributeError:
+        d_id = CofkCollectDestinationOfWork.objects.\
+                values_list('destination_id', flat=True).order_by('-destination_id').first()
+        if d_id is None:
             d_id = 0
 
         for d in self.locations.destinations:
@@ -263,15 +238,10 @@ class CofkWork(CofkEntity):
             except IndexError:
                 continue
 
-            log.info("Processing destination location , iwork_id #{}, upload_id #{}".format(
-                self.iwork_id, self.upload.upload_id))
+            log.info(f'Processing destination location , iwork_id #{self.iwork_id}, upload_id #{self.upload.upload_id}')
 
-            destination_location = CofkCollectDestinationOfWork(
-                destination_id=d_id,
-                upload=self.upload,
-                iwork_id=work,
-                location_id=destination)
-
+            destination_location = CofkCollectDestinationOfWork(destination_id=d_id, upload=self.upload, iwork=work,
+                                                                location=destination)
             d_id = d_id + 1
 
             destination_location.save()
@@ -356,24 +326,22 @@ class CofkWork(CofkEntity):
         return people'''
 
     def process_languages(self, work: CofkCollectWork, has_language: List[str]):
+        l_id = CofkCollectLanguageOfWork.objects. \
+            values_list('language_of_work_id', flat=True).order_by('-language_of_work_id').first()
+
+        if l_id is None:
+            l_id = 0
+
+        l_id += 1
+
         for language in has_language:
             lan = Iso639LanguageCode.objects.filter(code_639_3=language).first()
 
             if lan is not None:
-                first_language = CofkCollectLanguageOfWork.objects.order_by('-language_of_work_id').first()
-
-                if first_language:
-                    l_id = first_language.language_of_work_id
-                else:
-                    l_id = 0
-
-                lang = CofkCollectLanguageOfWork(
-                    language_of_work_id=l_id + 1,
-                    upload=self.upload,
-                    iwork=work,
-                    language_code=lan)
-
+                lang = CofkCollectLanguageOfWork(language_of_work_id=l_id, upload=self.upload, iwork=work,
+                                                 language_code=lan)
                 lang.save()
+                l_id += 1
             else:
                 log.debug(f'Upload {self.upload.upload_id}: Submitted {language} not a valid ISO639 language')
 
@@ -390,17 +358,13 @@ class CofkWork(CofkEntity):
         except AttributeError:
             r_id = 0
 
-        resource = CofkCollectWorkResource(
-            upload_id=self.upload.upload_id,
-            iwork_id=self.iwork_id,
-            resource_id=r_id + 1,
-            resource_name=resource_name,
-            resource_url=resource_url,
-            resource_details=resource_details)
+        resource = CofkCollectWorkResource(upload_id=self.upload.upload_id, iwork_id=self.iwork_id,
+                                           resource_id=r_id + 1, resource_name=resource_name,
+                                           resource_url=resource_url, resource_details=resource_details)
         resource.save()
 
-        log.info("Resource created #{} iwork_id #{}, upload_id #{}".format(resource.resource_id,
-                                                                           self.iwork_id, self.upload.upload_id))
+        log.info(f'Resource created #{resource.resource_id} iwork_id #{self.iwork_id},'
+                 f' upload_id #{self.upload.upload_id}')
 
     def set_default_values(self, work: CofkCollectWork):
         """

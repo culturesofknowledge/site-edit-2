@@ -345,8 +345,8 @@ class CofkCollectWork(models.Model):
 class CofkCollectAddresseeOfWork(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     addressee_id = models.IntegerField()
-    iperson_id = models.ForeignKey('person.CofkCollectPerson', models.CASCADE)
-    iwork_id = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
+    iperson = models.ForeignKey('person.CofkCollectPerson', models.CASCADE)
+    iwork = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
     notes_on_addressee = models.TextField(blank=True, null=True)
     _id = models.CharField(max_length=32, blank=True, null=True)
 
@@ -371,13 +371,13 @@ class CofkCollectAuthorOfWork(models.Model):
     """
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     author_id = models.IntegerField()
-    iperson_id = models.ForeignKey('person.CofkCollectPerson', models.CASCADE)
-    iwork_id = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
+    iperson = models.ForeignKey('person.CofkCollectPerson', models.CASCADE)
+    iwork = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
     notes_on_author = models.TextField(blank=True, null=True)
     _id = models.CharField(max_length=32, blank=True, null=True)
 
     def __str__(self):
-        return str(self.iperson_id)
+        return str(self.iperson)
 
     class Meta:
         db_table = 'cofk_collect_author_of_work'
@@ -387,8 +387,8 @@ class CofkCollectAuthorOfWork(models.Model):
 class CofkCollectDestinationOfWork(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     destination_id = models.IntegerField()
-    location_id = models.ForeignKey('location.CofkCollectLocation', models.CASCADE)
-    iwork_id = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
+    location = models.ForeignKey('location.CofkCollectLocation', models.CASCADE)
+    iwork = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
     notes_on_destination = models.TextField(blank=True, null=True)
     _id = models.CharField(max_length=32, blank=True, null=True)
 
@@ -416,8 +416,8 @@ class CofkCollectLanguageOfWork(models.Model):
 class CofkCollectOriginOfWork(models.Model):
     upload = models.OneToOneField('uploader.CofkCollectUpload', models.CASCADE)
     origin_id = models.IntegerField()
-    location_id = models.ForeignKey('location.CofkCollectLocation', models.CASCADE)
-    iwork_id = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
+    location = models.ForeignKey('location.CofkCollectLocation', models.CASCADE)
+    iwork = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
     notes_on_origin = models.TextField(blank=True, null=True)
     _id = models.CharField(max_length=32, blank=True, null=True)
 
@@ -429,10 +429,13 @@ class CofkCollectOriginOfWork(models.Model):
 class CofkCollectPersonMentionedInWork(models.Model):
     upload = models.ForeignKey("uploader.CofkCollectUpload", null=False, on_delete=models.CASCADE)
     mention_id = models.IntegerField()
-    iperson_id = models.ForeignKey('person.CofkCollectPerson', models.CASCADE)
-    iwork_id = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
+    iperson = models.ForeignKey('person.CofkCollectPerson', models.CASCADE)
+    iwork = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
     notes_on_person_mentioned = models.TextField(blank=True, null=True)
     _id = models.CharField(max_length=32)
+
+    def __str__(self):
+        return str(self.iperson)
 
     class Meta:
         db_table = 'cofk_collect_person_mentioned_in_work'
