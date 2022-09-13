@@ -52,6 +52,8 @@ class CofkPeople(CofkEntity):
 
             self.people.append(person)
 
+            log.info(f'Creating new person {person}')
+
             sheet_people.append((self.row_data['primary_name'], iperson_id))
 
         CofkCollectPerson.objects.bulk_create(self.people)
@@ -96,7 +98,6 @@ class CofkPeople(CofkEntity):
 
         for i in range(1, len(self.work_data.index)):
             self.row_data = {k: v for k, v in self.work_data.iloc[i].to_dict().items() if v is not None}
-            #log.debug(self.row_data)
 
             for people_relation in [w for w in work_people_fields if w[0] in self.row_data]:
                 related_people = self.list_people(people_relation[0], people_relation[1])
@@ -136,10 +137,10 @@ class CofkPeople(CofkEntity):
             if unique_work_people > unique_sheet_people:
                 ppl = [f'{p[0]} #{p[1]}' for p in list(unique_sheet_people - unique_work_people)]
                 ppl_joined = ', '.join(ppl)
-                self.add_error(ValidationError(f'The person {ppl_joined} is referenced in the Work spreadsheet but is '
-                                               f'missing from the People spreadsheet'))
+                self.add_error(ValidationError(f'The person {ppl_joined} is referenced in the Work spreadsheet'
+                                               f' but is missing from the People spreadsheet'))
             elif unique_work_people < unique_sheet_people:
                 ppl = [str(p) for p in list(unique_work_people - unique_sheet_people)]
                 ppl_joined = ', '.join(ppl)
-                self.add_error(ValidationError(f'The person {ppl_joined} is referenced in the People spreadsheet but is '
-                                               f'missing from the Work spreadsheet'))
+                self.add_error(ValidationError(f'The person {ppl_joined} is referenced in the People spreadsheet'
+                                               f' but is missing from the Work spreadsheet'))

@@ -44,7 +44,7 @@ class CofkWork(CofkEntity):
             self.process_work({k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None})
             self.row += 1
 
-    def preprocess_languages(self, work:CofkCollectWork):
+    def preprocess_languages(self, work: CofkCollectWork):
         """
         TODO try catch below, sometimes work data?
         TODO does the order of languages matter?
@@ -113,12 +113,9 @@ class CofkWork(CofkEntity):
             self.non_work_data[m] = self.row_data[m]
             del self.row_data[m]
 
-    def process_work(self, work_data):
+    def process_work(self, work_data: dict):
         """
         This method processes one row of data from the Excel sheet.
-
-        :param work_data:
-        :return:
         """
         self.row_data = work_data
 
@@ -127,8 +124,7 @@ class CofkWork(CofkEntity):
 
         self.check_data_types('Work')
 
-        log.info("Processing work, iwork_id #{}, upload_id #{}".format(
-            self.iwork_id, self.upload.upload_id))
+        log.info(f'Processing work, iwork_id #{self.iwork_id}, upload_id #{self.upload.upload_id}')
 
         self.preprocess_data()
 
@@ -238,85 +234,6 @@ class CofkWork(CofkEntity):
                                                                 location=destination)
 
             destination_location.save()
-
-    '''def process_location(self, location_id: str, location_name: str) -> CofkCollectLocation:
-        """
-        Method that checks if a location specific to the location id and upload exists,
-        if so it returns the id provided id if not a new location is created incrementing
-        the highest location id by one.
-        :param location_id:
-        :param location_name:
-        :param name:
-        :return:
-        """
-        # TODO where does Geonames lookup happen?
-
-        location = CofkCollectLocation.objects.filter(location_id=self.row_data[location_id],
-                                                      upload_id=self.upload.upload_id).first()
-
-        if not location:
-            location_id = CofkCollectLocation.objects.order_by('-location_id').first().location_id + 1
-            location = CofkCollectLocation(upload_id=self.upload.upload_id,
-                                           location_id=location_id,
-                                           location_name=self.non_work_data[location_name])
-            location.save()
-
-            log.info(f'Created location {self.non_work_data[location_name]}, upload_id #{self.upload.upload_id}')
-
-        return location'''
-
-    '''
-    def process_people(self, ids: str, names: str) -> List[int]:
-        """
-        This method assumes that the data holds correct information on persons.
-        That means that if the id and name specific to the current upload do not exist,
-        they are created.
-
-        Persons created seem to be specific to the upload. The cofk_collect_person table
-        has upload_id as a primary key. This means that persons at this stage (pre-review)
-        do not seem to be global and there is likely massive duplication in the
-        cofk_collect_person table.
-        :param ids:
-        :param names:
-        :return:
-        """
-        ids = ids.split(';')
-        names = names.split(';')
-        people = []
-
-        # If there are more names than ids then a new person needs to be created
-        if len(ids) < len(names):
-            log.debug("More names than ids.")
-            new_names = names[len(ids):]
-
-            for name in new_names:
-                new_person = CofkCollectPerson(
-                    upload_id=self.upload.upload_id,
-                    # iperson_id=last_person_id,
-                    primary_name=name)
-
-                new_person.save()
-                people.append(new_person.id)
-
-        for person in zip(ids, names):
-            # Check if person already exists
-            person_id = person[0]
-
-            if not CofkCollectPerson.objects.filter(iperson_id=person_id).exists():
-                log.info("Creating new person {}-{}".format(person[0], person[1]))
-                # Person does not exist, so we need to create it
-                new_person = CofkCollectPerson(
-                    upload_id=self.upload.upload_id,
-                    iperson_id=person[0],
-                    primary_name=person[1])
-
-                new_person.save()
-
-                people.append(new_person.iperson_id)
-            else:
-                people.append(person_id[0])
-
-        return people'''
 
     def process_languages(self, work: CofkCollectWork, has_language: List[str]):
         l_id = CofkCollectLanguageOfWork.objects. \

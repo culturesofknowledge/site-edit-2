@@ -17,11 +17,11 @@ class CofkLocations(CofkEntity):
         """
         Get all people from people spreadsheet
         Populating a list of tuples of (Name, iperson_id)
+        TODO where does Geonames lookup happen?
         """
         sheet_locations = []
         for i in range(1, len(self.sheet_data.index)):
             self.row_data = {k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None}
-            #log.debug(self.row_data)
 
             self.check_data_types('Places')
             location_id = self.row_data['location_id'] if 'location_id' in self.row_data else 1
@@ -46,10 +46,9 @@ class CofkLocations(CofkEntity):
 
         return sheet_locations
 
-    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame, work_data: pd.DataFrame, limit=None):
+    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame, work_data: pd.DataFrame):
         super().__init__(upload, sheet_data)
         self.work_data = work_data
-        limit = limit if limit else len(self.sheet_data.index)
         self.locations = []
         self.origins = []
         self.destinations = []
@@ -61,13 +60,13 @@ class CofkLocations(CofkEntity):
             if unique_work_locations > unique_sheet_locations:
                 loc = [f'{l[0]} #{l[1]}' for l in list(unique_sheet_locations - unique_work_locations)]
                 loc_joined = ', '.join(loc)
-                self.add_error(ValidationError(f'The location {loc_joined} is referenced in the Work spreadsheet but is '
-                                               f'missing from the Places spreadsheet'))
+                self.add_error(ValidationError(f'The location {loc_joined} is referenced in the Work spreadsheet'
+                                               f' but is missing from the Places spreadsheet'))
             elif unique_work_locations < unique_sheet_locations:
                 loc = [str(l) for l in list(unique_work_locations - unique_sheet_locations)]
                 loc_joined = ', '.join(loc)
-                self.add_error(ValidationError(f'The person {loc_joined} is referenced in the Places spreadsheet but is '
-                                               f'missing from the Work spreadsheet'))
+                self.add_error(ValidationError(f'The person {loc_joined} is referenced in the Places spreadsheet'
+                                               f' but is missing from the Work spreadsheet'))
 
     def process_work_sheet(self) -> List[tuple]:
         """
@@ -81,7 +80,6 @@ class CofkLocations(CofkEntity):
 
         for i in range(1, len(self.work_data.index)):
             self.row_data = {k: v for k, v in self.work_data.iloc[i].to_dict().items() if v is not None}
-            #log.debug(self.row_data)
 
             for locations_relation in [w for w in work_locations_fields if w[0] in self.row_data]:
                 related_location = (self.row_data[locations_relation[0]],
