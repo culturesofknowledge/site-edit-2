@@ -292,6 +292,18 @@ class CofkCollectWork(models.Model):
             issues.append('uncertain')
 
         return ', '.join(issues)
+    
+    @property
+    def display_destination_issues(self):
+        issues = []
+
+        if self.destination_inferred == 1:
+            issues.append('inferred')
+
+        if self.destination_uncertain == 1:
+            issues.append('uncertain')
+
+        return ', '.join(issues)
 
     @property
     def display_authors_issues(self):
@@ -301,6 +313,30 @@ class CofkCollectWork(models.Model):
             issues.append('inferred')
 
         if self.authors_uncertain == 1:
+            issues.append('uncertain')
+
+        return ', '.join(issues)
+
+    @property
+    def display_addressees_issues(self):
+        issues = []
+
+        if self.addressees_inferred == 1:
+            issues.append('inferred')
+
+        if self.addressees_uncertain == 1:
+            issues.append('uncertain')
+
+        return ', '.join(issues)
+
+    @property
+    def display_mentioned_issues(self):
+        issues = []
+
+        if self.mentioned_inferred == 1:
+            issues.append('inferred')
+
+        if self.mentioned_uncertain == 1:
             issues.append('uncertain')
 
         return ', '.join(issues)
@@ -364,9 +400,13 @@ class CofkCollectDestinationOfWork(models.Model):
 class CofkCollectLanguageOfWork(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     language_of_work_id = models.IntegerField()
-    iwork_id = models.IntegerField()
+    #iwork_id = models.IntegerField()
+    iwork = models.ForeignKey('work.CofkCollectWork', models.DO_NOTHING)
     language_code = models.ForeignKey('uploader.Iso639LanguageCode', models.DO_NOTHING, db_column='language_code')
     _id = models.CharField(max_length=32, blank=True, null=True)
+
+    def __str__(self):
+        return str(self.language_code)
 
     class Meta:
         db_table = 'cofk_collect_language_of_work'

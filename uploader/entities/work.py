@@ -45,9 +45,10 @@ class CofkWork(CofkEntity):
             self.process_work({k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None})
             self.row += 1
 
-    def preprocess_languages(self):
+    def preprocess_languages(self, work:CofkCollectWork):
         """
         TODO try catch below, sometimes work data?
+        TODO does the order of languages matter?
         """
         try:
             work_languages = self.non_work_data['language_id'].split(';')
@@ -69,7 +70,7 @@ class CofkWork(CofkEntity):
         if len(work_languages):
             log.info("Foreign language in iwork_id #{}, upload_id #{}".format(
                 self.iwork_id, self.upload.upload_id))
-            self.process_languages(work_languages)
+            self.process_languages(work, work_languages)
 
     def process_authors(self, work: CofkCollectWork):
         try:
@@ -178,12 +179,17 @@ class CofkWork(CofkEntity):
             # Is it possible that a work has more than one origin?
             self.process_origin(work)
 
+            work.origin = CofkCollectOriginOfWork.objects.filter(iwork_id=work).first()
+
             # Destination location needs to be processed before work is created
             # Is it possible that a work has more than one destination?
             self.process_destination(work)
 
+            work.destination = CofkCollectDestinationOfWork.objects.filter(iwork_id=work).first()
+            work.save()
+
             # Processing languages used in work
-            self.preprocess_languages()
+            self.preprocess_languages(work)
 
             # Processing resources in work
             if 'resource_name' in self.non_work_data or 'resource_url' in self.non_work_data:
@@ -191,8 +197,8 @@ class CofkWork(CofkEntity):
         except ValidationError as ve:
             self.add_error(ve)
             log.warning(ve)
-        except TypeError as te:
-            log.warning(te)
+        #except TypeError as te:
+        #    log.warning(te)
 
     def process_mentions(self, work: CofkCollectWork):
         try:
@@ -349,7 +355,7 @@ class CofkWork(CofkEntity):
 
         return people'''
 
-    def process_languages(self, has_language: List[str]):
+    def process_languages(self, work: CofkCollectWork, has_language: List[str]):
         for language in has_language:
             lan = Iso639LanguageCode.objects.filter(code_639_3=language).first()
 
@@ -357,15 +363,14 @@ class CofkWork(CofkEntity):
                 first_language = CofkCollectLanguageOfWork.objects.order_by('-language_of_work_id').first()
 
                 if first_language:
-                    l_id = CofkCollectLanguageOfWork.objects.order_by('-language_of_work_id').first() \
-                        .language_of_work_id
+                    l_id = first_language.language_of_work_id
                 else:
                     l_id = 0
 
                 lang = CofkCollectLanguageOfWork(
                     language_of_work_id=l_id + 1,
-                    upload_id=self.upload.upload_id,
-                    iwork_id=self.iwork_id,
+                    upload=self.upload,
+                    iwork=work,
                     language_code=lan)
 
                 lang.save()

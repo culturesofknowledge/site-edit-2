@@ -1,13 +1,9 @@
 
 <div id="works">
     <h1>Works</h1>
-    {% if works|length == 1 %}
-    <p>Details of {{ works| length }} new work was uploaded in this contribution. </p>
-    You can export details of the work in this contribution to a spreadsheet <button>Export</button>
-    {% else %}
-    <p>Details of {{ works | length }} new works were uploaded in this contribution. </p>
-    You can export details of the works in this contribution to a spreadsheet <button>Export</button>
-    {% endif %}
+
+    <p>Details of {{ works| length }} new work{{ works|pluralize:" was,s were" }} uploaded in this contribution.</p>
+    You can export details of the work{{ works|pluralize:",s"}} in this contribution to a spreadsheet <button>Export</button>
 
 </div>
 
@@ -69,7 +65,7 @@
         </tr>
         <tr>
             <td class="header">Origin</td>
-            <td>{{ work.origin_id }}
+            <td>{{ work.origin }}
 
                 {% if work.origin_as_marked %}
                     <br/>As marked: {{ work.origin_as_marked }}
@@ -77,6 +73,80 @@
 
                 {% if work.display_origin_issues %}
                     <br/>Issues with origin: {{ work.display_origin_issues }}
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td class="header">Addressee{{ addressees|pluralize:",s" }}</td>
+            <td>{% for addressee in addressees %}
+                    {{ addressee }}<br/>
+                {% endfor %}
+
+                {% if work.addressees_as_marked %}
+                    <br/>As marked: {{ work.addressees_as_marked }}
+                {% endif %}
+
+                {% if work.display_authors_issues %}
+                    <br/>Issues with author{{ authors|pluralize:",s" }}: {{ work.display_addressees_issues }}
+                {% endif %}
+
+                {% if work.notes_on_addressees %}
+                    <br/>Notes on author{{ authors|pluralize:",s" }}: {{ work.notes_on_addressees }}
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td class="header">Destination</td>
+            <td>{{ work.destination }}
+
+                {% if work.destination_as_marked %}
+                    <br/>As marked: {{ work.destination_as_marked }}
+                {% endif %}
+
+                {% if work.display_destination_issues %}
+                    <br/>Issues with destination: {{ work.display_destination_issues }}
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td class="header">Languages</td>
+            <td>{% for language in languages %}
+                    {{ language }}<br/>
+                {% endfor %}
+            </td>
+        </tr>
+        <tr>
+            <td class="header">Incipit</td>
+            <td>{{ work.incipit }}</td>
+        </tr>
+        <tr>
+            <td class="header">Explicit</td>
+            <td>{{ work.explicit }}</td>
+        </tr>
+        <tr>
+            <td class="header">Abstract</td>
+            <td>{{ work.abstract }}</td>
+        </tr>
+        <tr>
+            <td class="header">Keywords</td>
+            <td>{{ work.keywords }}</td>
+        </tr>
+        <tr>
+            <td class="header">{{ mentioned|pluralize:"Person,People" }} mentioned</td>
+            <td>{% for mention in mentioned %}
+                    {{ mention }}<br/>
+                {% endfor %}
+
+                {% if work.mentioned_as_marked %}
+                    <br/>As marked: {{ work.mentioned_as_marked }}
+                {% endif %}
+
+                {% if work.display_mentioned_issues %}
+                    <br/>Issues with {{ mentioned|pluralize:"person,people" }} mentioned: {{ work.display_mentioned_issues }}
+                {% endif %}
+
+                {% if work.notes_on_people_mentioned %}
+                    <br/>Notes on {{ mentioned|pluralize:"person,people" }} mentioned: {{ work.notes_on_people_mentioned }}
                 {% endif %}
             </td>
         </tr>

@@ -23,7 +23,8 @@ from uploader.spreadsheet import CofkUploadExcelFile
 from uploader.validation import CofkMissingColumnError, CofkMissingSheetError
 from work.forms import CofkCollectWorkForm
 
-from work.models import CofkCollectWork, CofkCollectAuthorOfWork
+from work.models import CofkCollectWork, CofkCollectAuthorOfWork, CofkCollectAddresseeOfWork, CofkCollectLanguageOfWork, \
+    CofkCollectPersonMentionedInWork
 
 log = logging.getLogger(__name__)
 
@@ -138,6 +139,9 @@ def upload_review(request, upload_id, **kwargs):
                'works': CofkCollectWork.objects.filter(upload=upload),
                #'people': CofkCollectPerson.objects.filter(upload=upload),
                'authors': CofkCollectAuthorOfWork.objects.filter(upload=upload),
+               'addressees': CofkCollectAddresseeOfWork.objects.filter(upload=upload),
+               'mentioned': CofkCollectPersonMentionedInWork.objects.filter(upload=upload),
+               'languages': CofkCollectLanguageOfWork.objects.filter(upload=upload),
                'places': CofkCollectLocation.objects.filter(upload=upload),
                'institutions': CofkCollectInstitution.objects.filter(upload=upload),}
                #'manifestations': CofkCollectManifestation.objects.filter(upload=upload)}
