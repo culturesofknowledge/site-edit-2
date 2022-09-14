@@ -2,8 +2,10 @@ import re
 
 from selenium.webdriver.common.by import By
 
-from location import fixtures
+from core import fixtures as core_fixtures
+from location import fixtures as loc_fixtures
 from location.models import CofkUnionLocation
+from siteedit2.utils import test_utils
 from siteedit2.utils.test_utils import EmloSeleniumTestCase, simple_test_create_form
 
 
@@ -14,29 +16,26 @@ class LocationFormTests(EmloSeleniumTestCase):
     def test_create_location(self):
         self.selenium.get(self.get_url_by_viewname('location:init_form'))
 
-        self.fill_form_by_dict(fixtures.location_dict_a.items(),
+        self.fill_form_by_dict(loc_fixtures.location_dict_a.items(),
                                exclude_fields=['location_name'], )
 
         new_id = simple_test_create_form(self, CofkUnionLocation)
 
         loc = CofkUnionLocation.objects.get(location_id=new_id)
-        self.assertEqual(loc.element_1_eg_room, fixtures.location_dict_a.get('element_1_eg_room'))
+        self.assertEqual(loc.element_1_eg_room, loc_fixtures.location_dict_a.get('element_1_eg_room'))
 
     def test_full_form__GET(self):
-        loc_a = fixtures.create_location_a()
+        loc_a = loc_fixtures.create_location_a()
         loc_a.save()
-
-        # update web page
         url = self.get_url_by_viewname('location:full_form',
                                        kwargs={'location_id': loc_a.location_id})
-        self.selenium.get(url)
-
-        for field_name in ['editors_notes', 'element_1_eg_room', 'element_4_eg_city', 'latitude']:
-            self.assertEqual(self.selenium.find_element(By.ID, f'id_{field_name}').get_attribute('value'),
-                             getattr(loc_a, field_name))
+        test_utils.simple_test_full_form__GET(
+            self, loc_a,
+            url, ['editors_notes', 'element_1_eg_room', 'element_4_eg_city', 'latitude']
+        )
 
     def test_full_form__POST(self):
-        loc_a = fixtures.create_location_a()
+        loc_a = loc_fixtures.create_location_a()
         loc_a.save()
         n_res = loc_a.resources.count()
         n_comment = loc_a.comments.count()
@@ -51,10 +50,10 @@ class LocationFormTests(EmloSeleniumTestCase):
         self.selenium.get(url)
 
         # fill resource
-        self.fill_formset_by_dict(fixtures.loc_res_dict_a, 'loc_res')
+        self.fill_formset_by_dict(core_fixtures.res_dict_a, 'loc_res')
 
         # fill comment
-        self.fill_formset_by_dict(fixtures.loc_comment_dict_a, 'loc_comment')
+        self.fill_formset_by_dict(core_fixtures.comment_dict_a, 'loc_comment')
 
         self.selenium.find_element(By.CSS_SELECTOR, 'input[type=submit]').click()
 
@@ -64,17 +63,20 @@ class LocationFormTests(EmloSeleniumTestCase):
         # assert resource
         self.assertEqual(loc_a.resources.count(), 1)
         self.assertEqual(loc_a.resources.first().resource_name,
-                         fixtures.loc_res_dict_a['resource_name'])
+                         core_fixtures.res_dict_a['resource_name'])
 
         # assert comment
         self.assertEqual(loc_a.comments.count(), 1)
         self.assertEqual(loc_a.comments.first().comment,
-                         fixtures.loc_comment_dict_a['comment'])
+                         core_fixtures.comment_dict_a['comment'])
 
 
 def prepare_loc_records() -> list[CofkUnionLocation]:
     loc_list = [CofkUnionLocation(**loc_dict)
-                for loc_dict in (fixtures.location_dict_a, fixtures.location_dict_b,)]
+                for loc_dict in (
+                    loc_fixtures.location_dict_a,
+                    loc_fixtures.location_dict_b,
+                )]
     CofkUnionLocation.objects.bulk_create(loc_list)
     return loc_list
 

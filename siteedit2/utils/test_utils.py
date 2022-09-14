@@ -53,6 +53,36 @@ class EmloSeleniumTestCase(LiveServerTestCase):
                                        for k, v in data.items())
 
 
+def get_selected_radio_val(elements):
+    for ele in elements:
+        if ele.is_selected():
+            return ele.get_attribute('value')
+    return None
+
+
+def simple_test_full_form__GET(selenium_test: EmloSeleniumTestCase,
+                               model: Model,
+                               full_form_url: str,
+                               check_fields: Iterable[str]):
+    # load full form
+    selenium_test.selenium.get(full_form_url)
+
+    for field_name in check_fields:
+        model_val = getattr(model, field_name)
+        elements = selenium_test.selenium.find_elements(By.CSS_SELECTOR, f'[name={field_name}]')
+        if len(elements) == 1:
+            selenium_test.assertEqual(elements[0].get_attribute('value'), model_val)
+        elif len(elements) > 1:
+            ele_type = elements[0].get_attribute('type')
+            if ele_type == 'radio':
+                selected_val = get_selected_radio_val(elements)
+                selenium_test.assertEqual(selected_val, model_val)
+            else:
+                raise NotImplementedError(f'unknown type [{ele_type}]')
+        else:
+            raise Exception(f'field not found -- {field_name}')
+
+
 def simple_test_create_form(selenium_test: EmloSeleniumTestCase,
                             model_class: Type[Model]):
     org_size = model_class.objects.count()
