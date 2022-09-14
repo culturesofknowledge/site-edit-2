@@ -1,4 +1,4 @@
-{% load filter_by_work %}
+{% load utils  %}
 
 
 <div id="works">
@@ -162,9 +162,36 @@
         </tr>
         <tr>
             <td class="header">Repositories and versions</td>
-            <td>{% for manifestation in manifestations|filter_by_work:work %}
-                    {{ manifestation }}<br/>
-                {% endfor %}</td>
+            <td>
+                <ul>
+                    {% for manifestation in manifestations|filter_by_work:work %}
+                    <li>
+                        {% if manifestation.manifestation_type %}
+                        Document type: {{ manifestation.manifestation_type|document_type }}<br/>
+                        {% endif %}
+
+                        {% if manifestation.repository %}
+                        Repository: {{ manifestation.repository }}<br/>
+                        {% endif %}
+
+                        {% if manifestation.id_number_or_shelfmark %}
+                        Shelfmark: {{ manifestation.id_number_or_shelfmark }}<br/>
+                        {% endif %}
+
+                        {% if manifestation.manifestation_notes %}
+                        Document notes: {{ manifestation.manifestation_notes }}<br/>
+                        {% endif %}
+
+                        {% if manifestation.printed_edition_details %}
+                        Printed edition details: {{ manifestation.printed_edition_details }}<br/>
+                        {% endif %}
+
+                        {{ manifestation.manifestation_type_p }}
+
+                    </li>
+                    {% endfor %}
+                </ul>
+            </td>
         </tr>
         {% if work.notes_on_letter %}
         <tr>

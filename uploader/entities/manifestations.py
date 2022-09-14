@@ -30,7 +30,10 @@ class CofkManifestations(CofkEntity):
             self.process_manifestation({k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None})
 
     def preprocess_data(self):
-        self.row_data = {k.replace(' ', '_'): v for k, v in self.row_data.items()}
+        if 'printed_edition_notes' in self.row_data:
+            self.row_data['manifestation_notes'] = self.row_data.pop('printed_edition_notes')
+        if 'manifestation_type_p' in self.row_data:
+            self.row_data['manifestation_type'] = self.row_data.pop('manifestation_type_p')
 
         # Isolating data relevant to a work
         non_work_keys = list(set(self.row_data.keys()) - set([c for c in CofkCollectManifestation.__dict__.keys()]))
