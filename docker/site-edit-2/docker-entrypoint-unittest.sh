@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DJANGO_SETTINGS_MODULE=siteedit2.settings.test
+DJANGO_SETTINGS_MODULE=siteedit2.settings.tests
 
 # Apply database migrations
 echo "Apply migrations"
