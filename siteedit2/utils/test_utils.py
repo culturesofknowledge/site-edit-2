@@ -9,6 +9,8 @@ from selenium import webdriver
 from selenium.webdriver import DesiredCapabilities
 from selenium.webdriver.common.by import By
 
+import core.fixtures
+
 
 class EmloSeleniumTestCase(LiveServerTestCase):
     @classmethod
@@ -96,3 +98,68 @@ def simple_test_create_form(selenium_test: EmloSeleniumTestCase,
     new_id = re.findall(r'.+/(\d+)', selenium_test.selenium.current_url)[0]
     new_id = int(new_id)
     return new_id
+
+
+class SimpleM2MTester:
+    def __init__(self,
+                 selenium_test: EmloSeleniumTestCase,
+                 related_manager,
+                 formset_prefix: str,
+                 model_dict: dict, ):
+        self.selenium_test = selenium_test
+        self.related_manager = related_manager
+        self.model_dict = model_dict
+        self.formset_prefix = formset_prefix
+        self.org_size = self.related_manager.count()
+
+    def fill(self):
+        """Step 1: fill form"""
+        self.selenium_test.fill_formset_by_dict(self.model_dict, self.formset_prefix)
+
+    def assert_after_update(self):
+        """Step 2: assert after update"""
+
+        # related_manager should be refreshed by model.refresh_from_db
+        self.selenium_test.assertGreater(self.related_manager.count(), self.org_size)
+        self.assert_fn()
+
+    def assert_fn(self):
+        raise NotImplementedError()
+
+
+class ResourceM2MTester(SimpleM2MTester):
+
+    def __init__(self, selenium_test: EmloSeleniumTestCase, related_manager,
+                 formset_prefix: str = 'res',
+                 model_dict: dict = core.fixtures.res_dict_a,
+                 ):
+        super().__init__(selenium_test, related_manager, formset_prefix, model_dict)
+
+    def assert_fn(self):
+        self.selenium_test.assertEqual(self.related_manager.last().resource_name,
+                                       self.model_dict['resource_name'])
+
+
+class CommentM2MTester(SimpleM2MTester):
+
+    def __init__(self, selenium_test: EmloSeleniumTestCase, related_manager,
+                 formset_prefix: str = 'comment',
+                 model_dict: dict = core.fixtures.comment_dict_a, ):
+        super().__init__(selenium_test, related_manager, formset_prefix, model_dict)
+
+    def assert_fn(self):
+        self.selenium_test.assertEqual(self.related_manager.last().comment,
+                                       self.model_dict['comment'])
+
+
+class MultiM2MTester:
+    def __init__(self, m2m_tester_list):
+        self.m2m_tester_list = m2m_tester_list
+
+    def fill(self):
+        for tester in self.m2m_tester_list:
+            tester.fill()
+
+    def assert_after_update(self):
+        for tester in self.m2m_tester_list:
+            tester.assert_after_update()

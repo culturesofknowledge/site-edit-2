@@ -8,3 +8,4 @@
 | ps_loc | Person Location  |
 | pub    | Publication      |
 | org    | Organisations    |
+| pson   | Person           |
