@@ -1,6 +1,8 @@
-from typing import Iterable
+import re
+from typing import Iterable, Type
 
 from django.conf import settings
+from django.db.models import Model
 from django.test import LiveServerTestCase
 from django.urls import reverse
 from selenium import webdriver
@@ -34,6 +36,13 @@ class EmloSeleniumTestCase(LiveServerTestCase):
     def get_url_by_viewname(self, viewname, **kwargs):
         return self.live_server_url + reverse(viewname, **kwargs)
 
+    def fill_form_by_dict(self,
+                          model_dict: dict,
+                          exclude_fields: Iterable[str] = None):
+        if exclude_fields is not None and (exclude_fields := set(exclude_fields)):
+            model_dict = ((k, v) for k, v in model_dict if k not in exclude_fields)
+        self.fill_val_by_selector_list((f'#id_{k}', v) for k, v in model_dict)
+
     def fill_val_by_selector_list(self, selector_list: Iterable[tuple]):
         for selector, val in selector_list:
             ele = self.selenium.find_element(by=By.CSS_SELECTOR, value=selector)
@@ -42,3 +51,18 @@ class EmloSeleniumTestCase(LiveServerTestCase):
     def fill_formset_by_dict(self, data: dict, formset_prefix, form_idx=0):
         self.fill_val_by_selector_list((f'#id_{formset_prefix}-{form_idx}-{k}', v)
                                        for k, v in data.items())
+
+
+def simple_test_create_form(selenium_test: EmloSeleniumTestCase,
+                            model_class: Type[Model]):
+    org_size = model_class.objects.count()
+
+    submit_btn = selenium_test.selenium.find_element(By.CSS_SELECTOR, 'input[type=submit]')
+    submit_btn.click()
+
+    # check new should be created in db
+    selenium_test.assertGreater(model_class.objects.count(), org_size)
+
+    new_id = re.findall(r'.+/(\d+)', selenium_test.selenium.current_url)[0]
+    new_id = int(new_id)
+    return new_id

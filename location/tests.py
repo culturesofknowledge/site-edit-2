@@ -4,7 +4,7 @@ from selenium.webdriver.common.by import By
 
 from location import fixtures
 from location.models import CofkUnionLocation
-from siteedit2.utils.test_utils import EmloSeleniumTestCase
+from siteedit2.utils.test_utils import EmloSeleniumTestCase, simple_test_create_form
 
 
 class LocationFormTests(EmloSeleniumTestCase):
@@ -14,22 +14,12 @@ class LocationFormTests(EmloSeleniumTestCase):
     def test_create_location(self):
         self.selenium.get(self.get_url_by_viewname('location:init_form'))
 
-        loc_key_values = fixtures.location_dict_a.items()
-        loc_key_values = ((k, v) for k, v in loc_key_values if k not in ['location_name'])
-        self.fill_val_by_selector_list((f'#id_{k}', v) for k, v in loc_key_values)
+        self.fill_form_by_dict(fixtures.location_dict_a.items(),
+                               exclude_fields=['location_name'], )
 
-        org_location_size = CofkUnionLocation.objects.count()
+        new_id = simple_test_create_form(self, CofkUnionLocation)
 
-        submit_btn = self.selenium.find_element(By.CSS_SELECTOR, 'input[type=submit]')
-        submit_btn.click()
-
-        # check new location should be created in db
-        self.assertGreater(CofkUnionLocation.objects.count(), org_location_size)
-
-        new_loc_id = re.findall(r'.+/(\d+)', self.selenium.current_url)[0]
-        new_loc_id = int(new_loc_id)
-
-        loc = CofkUnionLocation.objects.get(location_id=new_loc_id)
+        loc = CofkUnionLocation.objects.get(location_id=new_id)
         self.assertEqual(loc.element_1_eg_room, fixtures.location_dict_a.get('element_1_eg_room'))
 
     def test_full_form__GET(self):
