@@ -75,7 +75,7 @@ class CofkCollectManifestation(models.Model):
     iwork = models.ForeignKey('work.CofkCollectWork', models.DO_NOTHING)
     union_manifestation = models.ForeignKey(CofkUnionManifestation, models.DO_NOTHING, blank=True, null=True)
     manifestation_type = models.CharField(max_length=3)
-    repository_id = models.IntegerField(blank=True, null=True)
+    repository = models.ForeignKey('institution.CofkCollectInstitution', models.DO_NOTHING, blank=True, null=True)
     id_number_or_shelfmark = models.CharField(max_length=500, blank=True, null=True)
     printed_edition_details = models.TextField(blank=True, null=True)
     manifestation_notes = models.TextField(blank=True, null=True)

@@ -14,7 +14,7 @@ class CofkRepositories(CofkEntity):
         super().__init__(upload, sheet_data)
 
         self.__institution_id = None
-        self.ids = []
+        self.institutions = []
 
         # Process each row in turn, using a dict comprehension to filter out empty values
         for i in range(1, len(self.sheet_data.index)):
@@ -33,9 +33,9 @@ class CofkRepositories(CofkEntity):
         if not self.already_exists():
             repository = CofkCollectInstitution(**self.row_data)
             repository.save()
-            self.ids.append(self.__institution_id)
+            self.institutions.append(repository)
 
-            log.info("Repository created.")
+            log.info(f'Repository {repository} created.')
 
     def already_exists(self) -> bool:
         try:

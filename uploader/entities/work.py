@@ -36,6 +36,7 @@ class CofkWork(CofkEntity):
         self.iwork_id = None
         self.non_work_data = {}
         self.ids = []
+        self.works = []
         self.people = people
         self.locations = locations
 
@@ -171,6 +172,8 @@ class CofkWork(CofkEntity):
 
             # Processing resources in work
             self.process_resource(work)
+
+            self.works.append(work)
 
         except ValidationError as ve:
             self.add_error(ve)
