@@ -142,44 +142,45 @@ class CofkWork(CofkEntity):
 
         self.set_default_values(work)
 
-        try:
-            work.save()
+        if not self.errors:
+            try:
+                work.save()
 
-            self.ids.append(self.iwork_id)
+                self.ids.append(self.iwork_id)
 
-            log.info(f'Work created iwork_id #{self.iwork_id}, upload_id #{self.upload.upload_id}')
+                log.info(f'Work created iwork_id #{self.iwork_id}, upload_id #{self.upload.upload_id}')
 
-            # Processing people mentioned in work
-            self.process_authors(work)
-            self.process_mentions(work)
-            self.process_addressees(work)
+                # Processing people mentioned in work
+                self.process_authors(work)
+                self.process_mentions(work)
+                self.process_addressees(work)
 
-            # Origin location needs to be processed before work is created
-            # Is it possible that a work has more than one origin?
-            self.process_origin(work)
+                # Origin location needs to be processed before work is created
+                # Is it possible that a work has more than one origin?
+                self.process_origin(work)
 
-            work.origin = CofkCollectOriginOfWork.objects.filter(iwork_id=work).first()
+                work.origin = CofkCollectOriginOfWork.objects.filter(iwork_id=work).first()
 
-            # Destination location needs to be processed before work is created
-            # Is it possible that a work has more than one destination?
-            self.process_destination(work)
+                # Destination location needs to be processed before work is created
+                # Is it possible that a work has more than one destination?
+                self.process_destination(work)
 
-            work.destination = CofkCollectDestinationOfWork.objects.filter(iwork_id=work).first()
-            work.save()
+                work.destination = CofkCollectDestinationOfWork.objects.filter(iwork_id=work).first()
+                work.save()
 
-            # Processing languages used in work
-            self.preprocess_languages(work)
+                # Processing languages used in work
+                self.preprocess_languages(work)
 
-            # Processing resources in work
-            self.process_resource(work)
+                # Processing resources in work
+                self.process_resource(work)
 
-            self.works.append(work)
+                self.works.append(work)
 
-        except ValidationError as ve:
-            self.add_error(ve)
-            log.warning(ve)
-        # except TypeError as te:
-        #    log.warning(te)
+            except ValidationError as ve:
+                self.add_error(ve)
+                log.warning(ve)
+            # except TypeError as te:
+            #    log.warning(te)
 
     def process_mentions(self, work: CofkCollectWork):
         m_id = CofkCollectPersonMentionedInWork.objects.\
