@@ -4,12 +4,15 @@
 
 {% block head %}
     <script src="{% static 'location/js/init_loc_form.js' %}" defer></script>
+    <script src="{% static 'core/js/ref_publication_service.js' %}" defer></script>
     <script defer>
 
         $(function () {
             setup_location_form_listener()
             setup_url_checker()
-            setup_standtext()
+            setup_standtext([
+                'GeoNames', 'TGN', 'Wikidata ID', 'Wikipeda',
+            ]);
             setup_checkbox_position()
         })
     </script>
@@ -31,101 +34,15 @@
 
                 <!-- Comment section -->
                 <h1 id="header_researcher_note">Researcher' notes for front-end display</h1>
-                {{ comment_formset.management_form }}
-                <fieldset>
-                    <legend>Notes</legend>
-                    {% for form in comment_formset %}
-                        <label>
-                            {% if forloop.first %}
-                                New note:
-                            {% else %}
-                                Existing note:
-                            {% endif %}
-                        </label>
-                        {{ form.comment }}
-                        {{ form.comment_id }}
-                        {{ form.creation_timestamp  }}
-                        {{ form.creation_user  }}
-                        {{ form.change_timestamp  }}
-                        {{ form.change_user  }}
-                        {{ form.record_tracker_label }}
-                        <!-- KTODO  copy references feature -->
-                    {% endfor %}
-                </fieldset>
+                {% include "core/component/comment_publication_formset.html" with comment_formset=comment_formset %}
 
 
                 <!-- Resource section -->
-
                 <h1 id="header_resource">Related resource: </h1>
-                {{ res_formset.management_form }}
-                {% for form in res_formset %}
-                    <fieldset>
-                        <legend>
-                            {% if forloop.first %}
-                                Add a new resource
-                            {% else %}
-                                Resource no. {{ forloop.counter0 }}. {{ form.resource_name.value }}
-                            {% endif %}
-                        </legend>
-                        {{ form }}
-                        {{ form.record_tracker_label }}
+                {% include "core/component/resource_formset.html" with res_formset=res_formset %}
 
-                    </fieldset>
-                {% endfor %}
-
-
-                <div>
-                    <h1 id="header_image">Images: </h1>
-                    <div>
-                        Copyright law must be respected at all times. You must ensure that all necessary permissions
-                        have been
-                        obtained before uploading or attempting to display images.
-                    </div>
-                    <div>
-                        You can associate images with a location in two different ways:
-                        <ol>
-                            <li>
-                                Upload them if you have a copy on your own personal computer
-                            </li>
-                            <li>
-                                Link to them by typing in, or copying and pasting in, the URL of an image on this or
-                                another
-                                repository's server.
-                            </li>
-                        </ol>
-                        <span>
-                    In both cases, credits and licence details must be supplied before the image can be displayed to the public.
-                </span>
-                    </div>
-
-                    {{ images_formset.management_form }}
-                    {% for form in images_formset %}
-                        {% if forloop.first %}
-                            <strong> Upload image files from your own computer: </strong>
-                            {{ img_form }}
-                            <p>Or:</p>
-
-                            <strong> Enter or change links to images by typing in the URL: </strong>
-                            <div> Enter new image details:</div>
-
-                        {% endif %}
-
-
-                        <fieldset>
-                            <legend>
-                                {% if forloop.first %}
-                                    Enter new image details:
-                                {% else %}
-                                    Existing image no. {{ forloop.counter0 }} of {{ total_images }}
-                                {% endif %}
-                            </legend>
-
-                            {{ form }}
-                        </fieldset>
-
-
-                    {% endfor %}
-                </div>
+                <!-- Images section -->
+                {% include "core/component/image_formset.html" with img_handler=img_handler %}
 
                 <div class="flex-col sticky-bottom">
                     <input type="submit" value="Submit">

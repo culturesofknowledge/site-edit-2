@@ -4,8 +4,14 @@
 
     <h1> {{ title }} </h1>
 
+    {% for to_user_msg in to_user_messages %}
+        <h1>{{ to_user_msg }}</h1>
+    {% endfor %}
+
     <form id="search_form" method="get">
         {% csrf_token %}
+
+        <input type="hidden" name="recref_mode" value="{{ recref_mode }}" />
 
         <div class="row">
 
@@ -16,7 +22,7 @@
                     {{ query_fieldset }}
                 {% endfor %}
                 <div class="flex-col sticky-bottom">
-                    <button type="submit">Search</button>
+                    <button type="submit" name="__form_action" value="search">Search</button>
                 </div>
             </aside>
 
@@ -24,24 +30,62 @@
             <div class="col col--2of3">
                 <h2>{{ total_record }} {{ title }}s found</h2>
 
-                <!-- Search components -->
+                <!-- Search components (e.g. sort by, records per page) -->
                 {{ search_components }}
 
+                <!-- search function toolbar (e.g. download output, compact, expanded)  -->
+                <aside class="margin-bottom row">
+                    <div class="col col--1of2">
+                        <button type='submit' class="btn margin-right inline_btn"
+                                name="__form_action" value="download_csv">
+                            Download output
+                        </button>
+                        <button class="btn margin-right inline_btn selectable_mode_btn">
+                            Select
+                        </button>
+                        <button id="merge_btn" class="btn margin-right inline_btn">
+                            Merge
+                        </button>
+                        <a href="" class="btn margin-right">Save query</a>
+                    </div>
+                    <div class="col col--1of2">
+                        <h3 class="sr-only">Layout</h3>
+                        <div class="align-right">
+                            <input type="radio" id="display-as-grid" value="grid"
+                                   name="display-style"
+                                    {% if is_compact_layout %}
+                                   checked
+                                    {% endif %}
 
-                <!-- Search result -->
-                <ol class="unstyled-list">
-                    {% for r in records %}
-                        <li class="search-result">
-                            {{ r }}
-                        </li>
-                    {% endfor %}
-                </ol>
+                            />
+                            <label for="display-as-grid">
+                                Compact
+                                <small> <span data-feather="grid" aria-hidden="true"></span> </small>
+                            </label>
+
+                            <input type="radio" id="display-as-list" value="table"
+                                   name="display-style"
+                                    {% if not is_compact_layout %}
+                                   checked
+                                    {% endif %}
+                            />
+                            <label for="display-as-list">
+                                Expanded
+                                <small><span data-feather="list" aria-hidden="true"></span></small>
+                            </label>
+                        </div>
+                    </div>
+                </aside>
+
+                {{ results_renderer | safe }}
 
             </div>
 
         </div>
 
     </form>
+
+    <form id="merge_form" action="{{ merge_page_url }}"></form>
 
     <!-- Pagination -->
     <div class="pagination">
@@ -58,7 +102,68 @@
     </span>
     </div>
 
+    <!-- script -->
     <script>
+        var emlojs = emlojs || {};
+        emlojs.selectable_service = {
+            _mode_change_listener_fn_list: [],
+            is_selectable_mode_on: function () {
+                return $('.selectable_mode_btn').hasClass('selectable_mode_on');
+            },
+            setup_toggle_selectable_mode: function () {
+                $('.selectable_mode_btn').on('click', (e) => {
+                    e.preventDefault();
+                    $(e.target).toggleClass('selectable_mode_on')
+
+
+                    let is_mode_on = this.is_selectable_mode_on()
+                    this._mode_change_listener_fn_list.forEach((fn) => {
+                        fn(is_mode_on)
+                    });
+                })
+            },
+            setup_selectable_entry: function () {
+                $('.selectable_entry').on('click', (e) => {
+                    if (this.is_selectable_mode_on()) {
+                        $(e.target).closest('.selectable_entry').toggleClass('selected')
+                    }
+                })
+            },
+            setup_all: function () {
+                this.setup_toggle_selectable_mode();
+                this.setup_selectable_entry();
+            },
+            on_mode_change: function (fn) {
+                this._mode_change_listener_fn_list.push(fn);
+            },
+            get_entry_id: function (selectable_entry_ele) {
+                return $(selectable_entry_ele).attr('entry_id');
+            }
+
+        }
+
+        emlojs.recref_select_service = {
+
+            setup_all: function () {
+                $('.selectable_entry').on('click', (e) => {
+                    let entry_id = emlojs.selectable_service.get_entry_id(
+                        $(e.target).closest('.selectable_entry')
+                    );
+
+                    let form = $('<form action="{% url return_quick_init_vname '__entry_id__' %}">');
+                    form.attr(
+                        'action',
+                        form.attr('action').replace('__entry_id__', entry_id)
+                    )
+                    $('body').append(form)
+                    form.submit()
+                })
+
+            },
+
+        }
+
+
         function submit_page(target_page_num) {
             if (target_page_num) {
                 let page_ele = document.getElementById('id_page')
@@ -66,6 +171,39 @@
             }
 
             document.getElementById('search_form').submit()
+        }
+
+        function setup_merge_btn() {
+            $('#merge_btn').hide()
+            emlojs.selectable_service.on_mode_change((is_on) => {
+                if (is_on) {
+                    $('#merge_btn').show()
+                } else {
+                    $('#merge_btn').hide()
+
+                    // cancel all selected entry
+                    $('.selectable_entry.selected').removeClass('selected');
+                }
+            });
+
+            $('#merge_btn').on('click', (e) => {
+                e.preventDefault();
+
+                // clean up old merge_id if any
+                $('#merge_form input[name=__merge_id]').remove();
+
+                let form = $('#merge_form');
+                $('.selectable_entry.selected').map((i, v) => {
+                    let entry_id = emlojs.selectable_service.get_entry_id(v);
+                    return $(`<input type="hidden" name="__merge_id" value="${entry_id}" />`);
+                }).each((i, v) => {
+                    form.append(v);
+                });
+
+                // debugger
+                form.submit()
+            })
+
         }
 
         ['id_next_page', 'id_previous_page'].forEach((target_id) => {
@@ -83,7 +221,15 @@
             });
         });
 
-        setup_record_delete()
+        $(function () {
+            setup_record_delete();
+            emlojs.selectable_service.setup_all()
+            setup_merge_btn();
+            {% if recref_mode == '1' %}
+                emlojs.recref_select_service.setup_all()
+            {% endif %}
+        })
+
 
     </script>
 

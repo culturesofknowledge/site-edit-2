@@ -1,0 +1,23 @@
+<div class="margin-bottom">
+    <label>{{ title }}</label>
+    <div class="issues-date-ct">
+        <div class="issues-date-item">
+            {{ inferred }}
+            <label for="{{ inferred.id_for_label }}">
+                <small> Date is inferred </small>
+            </label>
+        </div>
+        <div class="issues-date-item">
+            {{ uncertain }}
+            <label for="{{ uncertain.id_for_label }}">
+                <small> Date is uncertain </small>
+            </label>
+        </div>
+        <div class="issues-date-item">
+            {{ approx }}
+            <label for="{{ approx.id_for_label }}">
+                <small> Date is approximate </small>
+            </label>
+        </div>
+    </div>
+</div>

@@ -36,9 +36,9 @@ function show_delete_dialog() {
 
 }
 
-function setup_standtext() {
+function setup_standtext(standtext_list) {
     $('.res_standtext').each((i, e) => {
-        append_standtext_ele(e)
+        append_standtext_ele(e, standtext_list)
     });
 }
 
@@ -61,19 +61,21 @@ function create_standtext_btn(text, target_id) {
 
 }
 
-function append_standtext_ele(target_text_ele) {
+function append_standtext_ele(target_text_ele, standtext_list) {
 
     // build list of standtext button
-    const standtext_list = [
-        'GeoNames', 'TGN', 'Wikidata ID', 'Wikipeda',
-    ];
+    if (standtext_list === undefined) {
+        standtext_list = [
+            'GeoNames', 'TGN', 'Wikidata ID', 'Wikipeda',
+        ];
+    }
     const text_ele_list = standtext_list.map((t) => {
         return create_standtext_btn(t, target_text_ele.id)
     })
 
     //  build standtext container
     let standtext_div_jqe = $('<div>')
-    standtext_div_jqe.addClass('flex')
+    standtext_div_jqe.addClass('flex-row-wrap')
     standtext_div_jqe.append(text_ele_list)
     $(target_text_ele).after(standtext_div_jqe)
 

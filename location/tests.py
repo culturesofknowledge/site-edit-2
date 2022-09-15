@@ -2,9 +2,11 @@ import re
 
 from selenium.webdriver.common.by import By
 
-from location import fixtures
+import location.fixtures
 from location.models import CofkUnionLocation
-from siteedit2.utils.test_utils import EmloSeleniumTestCase
+from siteedit2.utils import test_utils
+from siteedit2.utils.test_utils import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
+    CommentM2MTester
 
 
 class LocationFormTests(EmloSeleniumTestCase):
@@ -14,78 +16,73 @@ class LocationFormTests(EmloSeleniumTestCase):
     def test_create_location(self):
         self.selenium.get(self.get_url_by_viewname('location:init_form'))
 
-        loc_key_values = fixtures.location_dict_a.items()
-        loc_key_values = ((k, v) for k, v in loc_key_values if k not in ['location_name'])
-        self.fill_val_by_selector_list((f'#id_{k}', v) for k, v in loc_key_values)
+        self.fill_form_by_dict(location.fixtures.location_dict_a.items(),
+                               exclude_fields=['location_name'], )
 
-        org_location_size = CofkUnionLocation.objects.count()
+        new_id = simple_test_create_form(self, CofkUnionLocation)
 
-        submit_btn = self.selenium.find_element(By.CSS_SELECTOR, 'input[type=submit]')
-        submit_btn.click()
-
-        # check new location should be created in db
-        self.assertGreater(CofkUnionLocation.objects.count(), org_location_size)
-
-        new_loc_id = re.findall(r'.+/(\d+)', self.selenium.current_url)[0]
-        new_loc_id = int(new_loc_id)
-
-        loc = CofkUnionLocation.objects.get(location_id=new_loc_id)
-        self.assertEqual(loc.element_1_eg_room, fixtures.location_dict_a.get('element_1_eg_room'))
+        loc = CofkUnionLocation.objects.get(location_id=new_id)
+        self.assertEqual(loc.element_1_eg_room, location.fixtures.location_dict_a.get('element_1_eg_room'))
 
     def test_full_form__GET(self):
-        loc_a = fixtures.create_location_a()
+        loc_a = location.fixtures.create_location_a()
         loc_a.save()
-
-        # update web page
         url = self.get_url_by_viewname('location:full_form',
                                        kwargs={'location_id': loc_a.location_id})
-        self.selenium.get(url)
-
-        for field_name in ['editors_notes', 'element_1_eg_room', 'element_4_eg_city', 'latitude']:
-            self.assertEqual(self.selenium.find_element(By.ID, f'id_{field_name}').get_attribute('value'),
-                             getattr(loc_a, field_name))
+        test_utils.simple_test_full_form__GET(
+            self, loc_a,
+            url, ['editors_notes', 'element_1_eg_room', 'element_4_eg_city', 'latitude']
+        )
 
     def test_full_form__POST(self):
-        loc_a = fixtures.create_location_a()
+        loc_a = location.fixtures.create_location_a()
         loc_a.save()
-        n_res = loc_a.resources.count()
-        n_comment = loc_a.comments.count()
 
-        # check before update
-        self.assertEqual(n_res, 0)
-        self.assertEqual(n_comment, 0)
+        m2m_tester = MultiM2MTester(m2m_tester_list=[
+            ResourceM2MTester(self, loc_a.resources, formset_prefix='loc_res'),
+            CommentM2MTester(self, loc_a.comments, formset_prefix='loc_comment'),
+        ])
 
         # update web page
         url = self.get_url_by_viewname('location:full_form',
                                        kwargs={'location_id': loc_a.location_id})
         self.selenium.get(url)
 
-        # fill resource
-        self.fill_formset_by_dict(fixtures.loc_res_dict_a, 'loc_res')
-
-        # fill comment
-        self.fill_formset_by_dict(fixtures.loc_comment_dict_a, 'loc_comment')
+        # fill m2m
+        m2m_tester.fill()
 
         self.selenium.find_element(By.CSS_SELECTOR, 'input[type=submit]').click()
 
         # assert result after form submit
         loc_a.refresh_from_db()
 
-        # assert resource
-        self.assertEqual(loc_a.resources.count(), 1)
-        self.assertEqual(loc_a.resources.first().resource_name,
-                         fixtures.loc_res_dict_a['resource_name'])
+        # assert m2m tester
+        m2m_tester.assert_after_update()
 
-        # assert comment
-        self.assertEqual(loc_a.comments.count(), 1)
-        self.assertEqual(loc_a.comments.first().comment,
-                         fixtures.loc_comment_dict_a['comment'])
+
+def prepare_loc_records() -> list[CofkUnionLocation]:
+    loc_list = [CofkUnionLocation(**loc_dict)
+                for loc_dict in (
+                    location.fixtures.location_dict_a,
+                    location.fixtures.location_dict_b,
+                )]
+    CofkUnionLocation.objects.bulk_create(loc_list)
+    return loc_list
 
 
 class LocationSearchTests(EmloSeleniumTestCase):
 
     def find_result_elements(self):
-        return self.selenium.find_elements(By.CSS_SELECTOR, 'li.search-result')
+        return self.selenium.find_elements(By.CSS_SELECTOR, 'tbody tr.selectable_entry')
+
+    def find_search_btn(self):
+        return self.selenium.find_element(By.CSS_SELECTOR, 'button[name=__form_action][value=search]')
+
+    def find_elements_by_css(self, css_selector):
+        return self.selenium.find_elements(by=By.CSS_SELECTOR, value=css_selector)
+
+    def find_element_by_css(self, css_selector):
+        return self.selenium.find_element(by=By.CSS_SELECTOR, value=css_selector)
 
     def assert_search_page(self, num_row_show, num_total):
         # assert
@@ -99,16 +96,15 @@ class LocationSearchTests(EmloSeleniumTestCase):
         self.assertEqual(size_titles[0][0], f'{num_total}')
 
     def test_search_page(self):
-        #  prepare data
-        loc_list = [CofkUnionLocation(**loc_dict)
-                    for loc_dict in (fixtures.location_dict_a, fixtures.location_dict_b,)]
-        CofkUnionLocation.objects.bulk_create(loc_list)
+        # prepare data
+        loc_list = prepare_loc_records()
 
         # go to search page
         url = self.get_url_by_viewname('location:search')
         self.selenium.get(url)
 
-        self.assert_search_page(len(loc_list), len(loc_list))
+        self.assert_search_page(num_row_show=len(loc_list),
+                                num_total=len(loc_list))
 
         target_loc = loc_list[1]
 
@@ -116,12 +112,28 @@ class LocationSearchTests(EmloSeleniumTestCase):
         ele = self.selenium.find_element(By.ID, 'id_location_name')
         ele.send_keys(target_loc.location_name)
 
-        self.selenium.find_element(By.CSS_SELECTOR, 'button[type=submit]').click()
+        self.find_search_btn().click()
 
         # only have one record match
-        self.assert_search_page(1, 1)
+        self.assert_search_page(num_row_show=1,
+                                num_total=1)
 
         # check location name in record result
         result_ele = self.find_result_elements()[0]
-        location_name = result_ele.find_element(By.CSS_SELECTOR, 'div h3 a[href]').text
+        location_name = result_ele.find_elements(By.CSS_SELECTOR, 'td')[0].text
         self.assertEqual(location_name, target_loc.location_name)
+
+    def setup_for_layout_test(self, layout_btn_id):
+        prepare_loc_records()
+        url = self.get_url_by_viewname('location:search')
+        self.selenium.get(url)
+        self.selenium.find_element(value=layout_btn_id).click()
+        self.find_search_btn().click()
+
+    def test_search__table_layout(self):
+        self.setup_for_layout_test('display-as-list')
+        self.assertIsNotNone(self.find_element_by_css('#search_form table'))
+
+    def test_search__compact_layout(self):
+        self.setup_for_layout_test('display-as-grid')
+        self.assertIsNotNone(self.find_element_by_css('ol li[class=search-result]'))

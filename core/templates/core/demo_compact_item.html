@@ -1,0 +1,21 @@
+<article class="row selectable_entry" entry_id="{{ record.pk }}">
+    <div class="col col--4of6">
+        <h3>
+            <a href="#!">
+                {{ record.pk }}
+            </a>
+        </h3>
+        <p><small><a href="#!" class="record_delete">Delete record</a></small></p>
+    </div>
+
+    <aside class="col col--2of6 align-right">
+        <dl>
+
+            <dt>Last edited by </dt>
+            <dd>
+                {{ record.change_user }}<br/>
+                {{ record.change_timestamp }}
+            </dd>
+        </dl>
+    </aside>
+</article>

@@ -3,20 +3,21 @@ import logging
 import re
 import warnings
 from argparse import ArgumentParser
-from typing import Type
+from typing import Type, Callable
 
 import django.db.utils
 import psycopg2
 import psycopg2.errors
 from django.core.management import BaseCommand
 from django.db import connection
-from django.db.models import Model
+from django.db.models import Model, Max
 from psycopg2.extras import DictCursor
 
 from core.helper import iter_utils
 from core.models import CofkUnionResource, CofkUnionComment
 from location.models import CofkUnionLocation
-from uploader.models import CofkUnionImage
+from person.models import CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID
+from uploader.models import CofkUnionImage, CofkUnionOrgType
 
 log = logging.getLogger(__name__)
 
@@ -44,7 +45,10 @@ def find_rows_by_db_table(conn, db_table):
 
 def clone_rows_by_model_class(conn, model_class: Type[Model],
                               check_duplicate_fn=None,
-                              seq_name='', ):
+                              col_val_handler_fn_list: list[Callable[[dict], dict]] = None,
+                              seq_name='',
+                              int_pk_col_name='pk',
+                              ):
     """ most simple method to copy rows from old DB to new DB
     * assume all column name are same
     * assume no column have been removed
@@ -57,6 +61,9 @@ def clone_rows_by_model_class(conn, model_class: Type[Model],
 
     rows = find_rows_by_db_table(conn, model_class._meta.db_table)
     rows = map(dict, rows)
+    if col_val_handler_fn_list:
+        for _fn in col_val_handler_fn_list:
+            rows = map(_fn, rows)
     rows = (model_class(**r) for r in rows)
     rows = itertools.filterfalse(check_duplicate_fn, rows)
     rows = map(record_counter, rows)
@@ -68,8 +75,10 @@ def clone_rows_by_model_class(conn, model_class: Type[Model],
     if seq_name == '':
         seq_name = create_seq_col_name(model_class)
 
-    if seq_name:
-        max_pk = CofkUnionLocation.objects.latest('pk').pk
+    if seq_name and int_pk_col_name:
+        max_pk = list(model_class.objects.aggregate(Max(int_pk_col_name)).values())[0]
+        if isinstance(max_pk, str):
+            raise ValueError(f'max_pk should be int -- [{max_pk}][{type(max_pk)}]')
 
         new_val = 10_000_000
         if max_pk > new_val:
@@ -155,6 +164,14 @@ def no_duplicate_check(*args, **kwargs):
     return False
 
 
+def _val_handler_person__organisation_type(row: dict):
+    if row['organisation_type']:
+        row['organisation_type'] = CofkUnionOrgType.objects.get(pk=row['organisation_type'])
+    else:
+        row['organisation_type'] = None
+    return row
+
+
 def data_migration(user, password, database, host, port):
     warnings.filterwarnings('ignore',
                             '.*DateTimeField .+ received a naive datetime .+ while time zone support is active.*')
@@ -164,6 +181,13 @@ def data_migration(user, password, database, host, port):
     print(conn)
 
     clone_action_fn_list = [
+        lambda: clone_rows_by_model_class(conn, CofkUnionOrgType),
+        lambda: clone_rows_by_model_class(
+            conn, CofkUnionPerson, col_val_handler_fn_list=[
+                _val_handler_person__organisation_type,
+            ], seq_name=SEQ_NAME_COFKUNIONPERSION__IPERSON_ID,
+            int_pk_col_name='iperson_id',
+        ),
         lambda: clone_rows_by_model_class(conn, CofkUnionLocation),
         lambda: clone_rows_by_model_class(conn, CofkUnionResource),
         lambda: clone_rows_by_model_class(conn, CofkUnionComment),

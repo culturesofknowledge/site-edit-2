@@ -4,28 +4,22 @@
 {% block header %}
     <nav class="flex-space-between">
         <!-- TODO value of  href to be define  -->
-        <ul class="inlined-list no-margin">
-            <li>
+        <ul class="no-padding no-margin">
+            <li class="menu-item">
                 <a href="/works/">Works</a>
             </li>
-            <li>
-                <a href="/people/">People</a>
-            </li>
-            <li>
-                <a href="{% url 'location:search' %}">Places</a>
-            </li>
-            <li>
+            {% include "core/component/common_section_menu_item.html" with search_vname='person:search' init_vname='person:init_form' section_name='People' %}
+            {% include "core/component/common_section_menu_item.html" with search_vname='location:search' init_vname='location:init_form' section_name='Places' %}
+            <li class="menu-item">
                 <a href="/repositories/">Repositories</a>
             </li>
-            <li>
-                <a href="/publications/">Publications</a>
-            </li>
+            {% include "core/component/common_section_menu_item.html" with search_vname='publication:search' init_vname='publication:init_form' section_name='Publications' %}
         </ul>
-        <ul class="inlined-list no-margin">
-            <li>
+        <ul class="no-margin">
+            <li class="menu-item">
                 <a href="/audit/">Audit</a>
             </li>
-            <li>
+            <li class="menu-item">
                 <a href="{% url 'login:logout' %}">Logout</a>
             </li>
         </ul>

@@ -1,0 +1,10 @@
+<label style="width: 100%">{{ label_text }}</label>
+{{ choices_field.errors }}
+{% for cb in choices_field %}
+    <small class="choice-item">
+        {{ cb.tag }}
+        <label for="{{ cb.id_for_label }}">
+            {{ cb.choice_label }}
+        </label>
+    </small>
+{% endfor %}

@@ -1,0 +1,7 @@
+# extending docker-compose.yml
+
+# KTODO can we used other port rather than 8010
+version: '3.3'
+services:
+  pycharm-py:
+    entrypoint: /code/docker/site-edit-2/docker-entrypoint-unittest.sh

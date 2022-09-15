@@ -1,5 +1,6 @@
 from django.db import models
 
+from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 
 
@@ -50,7 +51,7 @@ class CofkReportGroup(models.Model):
 
 class CofkUnionAuditLiteral(models.Model):
     audit_id = models.AutoField(primary_key=True)
-    change_timestamp = models.DateTimeField(blank=True, null=True)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     change_user = models.CharField(max_length=50)
     change_type = models.CharField(max_length=3)
     table_name = models.CharField(max_length=100)
@@ -67,7 +68,7 @@ class CofkUnionAuditLiteral(models.Model):
 
 class CofkUnionAuditRelationship(models.Model):
     audit_id = models.AutoField(primary_key=True)
-    change_timestamp = models.DateTimeField(blank=True, null=True)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     change_user = models.CharField(max_length=50)
     change_type = models.CharField(max_length=3)
     left_table_name = models.CharField(max_length=100)
@@ -91,9 +92,9 @@ class CofkUnionAuditRelationship(models.Model):
 class CofkUnionImage(models.Model, RecordTracker):
     image_id = models.AutoField(primary_key=True)
     image_filename = models.TextField(blank=True, null=True)
-    creation_timestamp = models.DateTimeField(blank=True, null=True)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
-    change_timestamp = models.DateTimeField(blank=True, null=True)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     change_user = models.CharField(max_length=50)
     thumbnail = models.TextField(blank=True, null=True)
     can_be_displayed = models.CharField(max_length=1)
@@ -113,17 +114,6 @@ class CofkUnionOrgType(models.Model):
 
     class Meta:
         db_table = 'cofk_union_org_type'
-
-
-class CofkUnionPublication(models.Model):
-    publication_id = models.AutoField(primary_key=True)
-    publication_details = models.TextField()
-    change_timestamp = models.DateTimeField(blank=True, null=True)
-    change_user = models.CharField(max_length=50)
-    abbrev = models.CharField(max_length=50)
-
-    class Meta:
-        db_table = 'cofk_union_publication'
 
 
 class CofkUnionRoleCategory(models.Model):
@@ -209,7 +199,7 @@ class CofkUserSavedQuery(models.Model):
     query_entries_per_page = models.SmallIntegerField()
     query_record_layout = models.CharField(max_length=12)
     query_menu_item_name = models.TextField(blank=True, null=True)
-    creation_timestamp = models.DateTimeField(blank=True, null=True)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
 
     class Meta:
         db_table = 'cofk_user_saved_query'

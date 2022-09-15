@@ -1,5 +1,6 @@
 from django.db import models
 
+from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 
 
@@ -31,9 +32,9 @@ class CofkUnionManifestation(models.Model, RecordTracker):
     manifestation_incipit = models.TextField(blank=True, null=True)
     manifestation_excipit = models.TextField(blank=True, null=True)
     manifestation_ps = models.TextField(blank=True, null=True)
-    creation_timestamp = models.DateTimeField(blank=True, null=True)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
-    change_timestamp = models.DateTimeField(blank=True, null=True)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     change_user = models.CharField(max_length=50)
     manifestation_creation_date2_year = models.IntegerField(blank=True, null=True)
     manifestation_creation_date2_month = models.IntegerField(blank=True, null=True)

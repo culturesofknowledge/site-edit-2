@@ -7,7 +7,7 @@ WORKDIR /code
 RUN apt-get update \
     && apt-get -y install libpq-dev gcc build-essential
 COPY requirements.txt /code/
-COPY docker-entrypoint.sh /code/
+COPY ./docker/site-edit-2/docker-entrypoint.sh /code/
 RUN pip install --upgrade pip setuptools wheel
 RUN pip install -r requirements.txt
 COPY . /code/

@@ -133,6 +133,9 @@
 .no-margin {
   margin: 0; }
 
+.no-padding {
+  padding: 0; }
+
 .margin-right {
   margin-right: 1em; }
 
@@ -227,6 +230,9 @@
   bottom: 0;
   right: 20px; }
 
+.hiding {
+  display: none; }
+
 /* Grid: to be used for general layout only */
 body {
   padding: 0 1.5vw;
@@ -237,7 +243,7 @@ body {
   body {
     padding: 0 calc(1.5vw * 3); } }
 
-.row {
+.row, .ref-publication-row, .row-spaced {
   display: flex;
   flex: 0 1 auto;
   flex-wrap: wrap;
@@ -248,7 +254,7 @@ body {
   justify-content: center; }
 
 @media only screen and (min-width: 768px) {
-  .row {
+  .row, .ref-publication-row, .row-spaced {
     flex-direction: row; } }
 
 .col {
@@ -697,5 +703,86 @@ input[type="radio"] + label {
   font-style: italic;
   font-variation-settings: 'slnt' -1;
   margin-bottom: 15px; }
+
+.inline_btn {
+  display: inline; }
+
+.selectable_entry.selected {
+  background-color: gray; }
+
+.menu-item {
+  position: relative;
+  margin-right: 1em;
+  height: 25px;
+  display: inline-block; }
+
+.menu-subitem {
+  position: absolute;
+  left: 5px;
+  z-index: 100;
+  min-width: 150px;
+  background-color: #172854;
+  display: none; }
+
+.menu-item:hover .menu-subitem {
+  display: block; }
+
+.menu-subitem li {
+  padding: 10px; }
+  .menu-subitem li:hover {
+    background-color: #EFC319;
+    color: black; }
+
+.selectable_mode_btn.selectable_mode_on {
+  background-color: #EFC319;
+  color: black; }
+
+.table-row-detail {
+  min-width: 400px; }
+  .table-row-detail > div {
+    margin-bottom: 10px; }
+    .table-row-detail > div label {
+      margin: 0; }
+
+.choices-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: left; }
+  .choices-container .choice-item {
+    width: 40%; }
+
+.issues-date-ct {
+  display: flex;
+  flex-direction: row; }
+  .issues-date-ct .issues-date-item {
+    margin-right: 15px; }
+
+.button-row {
+  display: flex; }
+  .button-row button {
+    margin-right: 20px; }
+
+.inline-from-to {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row; }
+  .inline-from-to > label:first-of-type {
+    width: 100%; }
+  .inline-from-to input[type=date] {
+    width: 130px; }
+
+.row-spaced {
+  margin: 0px; }
+  .row-spaced > * {
+    margin-right: calc(.5 * 1rem); }
+
+.ref-publication-row {
+  margin: calc(.25 * 1rem); }
+  .ref-publication-row button {
+    margin-left: calc(.5 * 1rem); }
+
+.flex-row-wrap {
+  display: flex;
+  flex-wrap: wrap; }
 
 /*# sourceMappingURL=main.css.map */

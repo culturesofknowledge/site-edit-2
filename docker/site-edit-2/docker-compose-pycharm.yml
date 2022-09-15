@@ -4,10 +4,10 @@ version: '3.3'
 services:
   pycharm-py:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../../
+      dockerfile: docker/site-edit-2/Dockerfile
     volumes:
-      - .:/code
+      - ../../:/code
     env_file:
       - .env
     depends_on:

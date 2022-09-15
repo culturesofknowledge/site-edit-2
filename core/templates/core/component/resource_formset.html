@@ -1,0 +1,16 @@
+{% load cl_filters %}
+{{ res_formset.management_form }}
+{% for form in res_formset|reverse_list %}
+    <fieldset>
+        <legend>
+            {% if forloop.first %}
+                Add a new resource
+            {% else %}
+                Resource no. {{ forloop.counter0 }}. {{ form.resource_name.value }}
+            {% endif %}
+        </legend>
+        {{ form }}
+        {{ form.record_tracker_label }}
+
+    </fieldset>
+{% endfor %}

@@ -1,0 +1,2 @@
+SEARCH_LAYOUT_GRID = 'grid'
+SEARCH_LAYOUT_TABLE = 'table'

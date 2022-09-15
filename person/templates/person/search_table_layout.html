@@ -1,0 +1,29 @@
+<table>
+    <thead>
+    <tr></tr>
+    <tr>
+        <!-- KTODO add more fields -->
+        <th>Name</th>
+        <th>ID</th>
+    </tr>
+    </thead>
+    <tbody>
+
+    {% for r in search_results %}
+        <tr class="selectable_entry" entry_id="{{ r.iperson_id }}">
+            <td>
+                <a href="{% url 'person:full_form' r.iperson_id %}">
+                    {{ r.foaf_name }}
+                </a>
+            </td>
+
+            <td>
+                <a href="{% url 'person:full_form' r.iperson_id %}">
+                    {{ r.iperson_id }}
+                </a>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+
+</table>
