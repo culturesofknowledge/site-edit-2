@@ -1,0 +1,23 @@
+<!-- remember import recref_service.js -->
+
+{% with fid=id_field.id_for_label %}
+    <div class="margin-bottom recref_main" recref_type="{{ recref_type }}">
+        <label>{{ label }}</label>
+        <div>
+            <input id="{{ fid }}_name" type="text" class="recref_text" readonly/>
+            <input id="{{ fid }}" type="hidden" class="recref_id"
+                   name="{{ id_field.html_name }}"
+                    {% if id_field.value %}
+                   value="{{ id_field.value }}"
+                    {% endif %}
+            />
+            <div class="button-row">
+                <button id="{{ fid }}_clean_btn" class="recref_clean">Clean</button>
+                <button id="{{ fid }}_select_btn" class="recref_select">Select</button>
+                <button id="{{ fid }}_create_btn" class="recref_create">Create</button>
+            </div>
+        </div>
+    </div>
+
+
+{% endwith %}

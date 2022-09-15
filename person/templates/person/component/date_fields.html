@@ -1,0 +1,21 @@
+<fieldset>
+    <legend>{{ title_name | title }}</legend>
+    <div class="margin-bottom">
+        {% include "core/component/common_form_choices.html" with label_text='Calendar of '|add:title_name choices_field=calendar %}
+    </div>
+    <div class="margin-bottom">
+        {{ is_range }}
+        <label for="{{ is_range.id_for_label }}">Date range?</label>
+        <small>
+            (Tick this box if the date of birth cannot be narrowed down to a single year.)
+        </small>
+    </div>
+
+    <div class="margin-bottom">
+        <label>Date:</label>
+        {{ date_select }}
+    </div>
+
+    {% include "person/component/issues_with_date.html" with title='Issues with '|add:title_name|add:':' inferred=inferred  uncertain=uncertain  approx=approx %}
+
+</fieldset>

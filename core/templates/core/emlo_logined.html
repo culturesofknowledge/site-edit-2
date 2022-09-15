@@ -8,26 +8,12 @@
             <li class="menu-item">
                 <a href="/works/">Works</a>
             </li>
-            <li class="menu-item">
-                <a href="/people/">People</a>
-            </li>
-            <li class="menu-item">
-                <a href="{% url 'location:search' %}">Places</a>
-                <ul class='unstyled-list no-margin menu-subitem'>
-                    <a href='{% url 'location:search' %}'>
-                        <li> Search</li>
-                    </a>
-                    <a href='{% url 'location:init_form' %}'>
-                        <li>Add a new Places</li>
-                    </a>
-                </ul>
-            </li>
+            {% include "core/component/common_section_menu_item.html" with search_vname='person:search' init_vname='person:init_form' section_name='People' %}
+            {% include "core/component/common_section_menu_item.html" with search_vname='location:search' init_vname='location:init_form' section_name='Places' %}
             <li class="menu-item">
                 <a href="/repositories/">Repositories</a>
             </li>
-            <li class="menu-item">
-                <a href="/publications/">Publications</a>
-            </li>
+            {% include "core/component/common_section_menu_item.html" with search_vname='publication:search' init_vname='publication:init_form' section_name='Publications' %}
         </ul>
         <ul class="no-margin">
             <li class="menu-item">

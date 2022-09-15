@@ -84,3 +84,70 @@
   }
 
 }
+
+.choices-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: left;
+
+  .choice-item {
+    width: 40%;
+  }
+
+}
+
+.issues-date-ct {
+  display: flex;
+  flex-direction: row;
+
+  .issues-date-item {
+    margin-right: 15px;
+  }
+}
+
+.button-row {
+  display: flex;
+
+  button {
+    margin-right: 20px;
+  }
+}
+
+.inline-from-to {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+
+  & > label:first-of-type {
+    width: 100%;
+  }
+
+  input[type=date] {
+    width: 130px;
+  }
+}
+
+.row-spaced {
+  @extend .row;
+  margin: 0px;
+
+  & > * {
+    margin-right: $space-xs;
+  }
+
+}
+
+.ref-publication-row {
+  @extend .row;
+  margin: $space-xxs;
+
+  button {
+    margin-left: $space-xs;
+  }
+}
+
+.flex-row-wrap {
+  display: flex;
+  flex-wrap: wrap;
+}
+

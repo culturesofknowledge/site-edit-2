@@ -1,0 +1,26 @@
+<div>
+    {{ recref_formset.management_form }}
+    {% for form in recref_formset %}
+        <div class="inline-from-to">
+            {{ form.recref_id }}
+            {{ form.target_id }}
+            <label> {{ form.rec_name.value }}  </label>
+            <small>From:</small>
+            {{ form.from_date }}
+            <small>To:</small>
+            {{ form.to_date }}
+
+            {{ form.is_delete }}
+            <label for="{{ form.is_delete.id_for_label }}">Delete</label>
+        </div>
+    {% endfor %}
+</div>
+
+{% include "core/component/recref.html" with recref_type=recref_type id_field=new_form.target_id label=add_label %}
+<div class="inline-from-to">
+    <label>Relevant dates:</label>
+    <small>From:</small>
+    {{ new_form.from_date }}
+    <small>To:</small>
+    {{ new_form.to_date }}
+</div>

@@ -1,0 +1,45 @@
+{% extends "core/emlo_logined.html" %}
+{% load static %}
+
+
+{% block content %}
+
+    <div class="row row--centered">
+        <div class="col col--1of2">
+            <div>
+                {{ pub_form.errors }}
+            </div>
+
+
+            <form method="post">
+                {% csrf_token %}
+
+                <fieldset>
+                    <legend>Publication</legend>
+                    <div class="margin-bottom">
+                        <label>Publication Details*</label>
+                        {{ pub_form.publication_details }}
+                        {{ pub_form.publication_details.errors }}
+                        <small>(e.g. author(s)/editor(s), title, place and year of publication)</small>
+                    </div>
+
+                    <div class="margin-bottom">
+                        <label>Abbreviation</label>
+                        {{ pub_form.abbrev }}
+                        {{ pub_form.abbrev.errors }}
+                        <small>(optional, max. 50 characters)</small>
+                    </div>
+                </fieldset>
+
+
+                <div class="flex-col sticky-bottom">
+                    <input type="submit" value="Submit">
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+
+{% endblock %}

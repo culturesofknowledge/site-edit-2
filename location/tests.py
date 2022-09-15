@@ -2,9 +2,11 @@ import re
 
 from selenium.webdriver.common.by import By
 
-from location import fixtures
+import location.fixtures
 from location.models import CofkUnionLocation
-from siteedit2.utils.test_utils import EmloSeleniumTestCase
+from siteedit2.utils import test_utils
+from siteedit2.utils.test_utils import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
+    CommentM2MTester
 
 
 class LocationFormTests(EmloSeleniumTestCase):
@@ -14,77 +16,56 @@ class LocationFormTests(EmloSeleniumTestCase):
     def test_create_location(self):
         self.selenium.get(self.get_url_by_viewname('location:init_form'))
 
-        loc_key_values = fixtures.location_dict_a.items()
-        loc_key_values = ((k, v) for k, v in loc_key_values if k not in ['location_name'])
-        self.fill_val_by_selector_list((f'#id_{k}', v) for k, v in loc_key_values)
+        self.fill_form_by_dict(location.fixtures.location_dict_a.items(),
+                               exclude_fields=['location_name'], )
 
-        org_location_size = CofkUnionLocation.objects.count()
+        new_id = simple_test_create_form(self, CofkUnionLocation)
 
-        submit_btn = self.selenium.find_element(By.CSS_SELECTOR, 'input[type=submit]')
-        submit_btn.click()
-
-        # check new location should be created in db
-        self.assertGreater(CofkUnionLocation.objects.count(), org_location_size)
-
-        new_loc_id = re.findall(r'.+/(\d+)', self.selenium.current_url)[0]
-        new_loc_id = int(new_loc_id)
-
-        loc = CofkUnionLocation.objects.get(location_id=new_loc_id)
-        self.assertEqual(loc.element_1_eg_room, fixtures.location_dict_a.get('element_1_eg_room'))
+        loc = CofkUnionLocation.objects.get(location_id=new_id)
+        self.assertEqual(loc.element_1_eg_room, location.fixtures.location_dict_a.get('element_1_eg_room'))
 
     def test_full_form__GET(self):
-        loc_a = fixtures.create_location_a()
+        loc_a = location.fixtures.create_location_a()
         loc_a.save()
-
-        # update web page
         url = self.get_url_by_viewname('location:full_form',
                                        kwargs={'location_id': loc_a.location_id})
-        self.selenium.get(url)
-
-        for field_name in ['editors_notes', 'element_1_eg_room', 'element_4_eg_city', 'latitude']:
-            self.assertEqual(self.selenium.find_element(By.ID, f'id_{field_name}').get_attribute('value'),
-                             getattr(loc_a, field_name))
+        test_utils.simple_test_full_form__GET(
+            self, loc_a,
+            url, ['editors_notes', 'element_1_eg_room', 'element_4_eg_city', 'latitude']
+        )
 
     def test_full_form__POST(self):
-        loc_a = fixtures.create_location_a()
+        loc_a = location.fixtures.create_location_a()
         loc_a.save()
-        n_res = loc_a.resources.count()
-        n_comment = loc_a.comments.count()
 
-        # check before update
-        self.assertEqual(n_res, 0)
-        self.assertEqual(n_comment, 0)
+        m2m_tester = MultiM2MTester(m2m_tester_list=[
+            ResourceM2MTester(self, loc_a.resources, formset_prefix='loc_res'),
+            CommentM2MTester(self, loc_a.comments, formset_prefix='loc_comment'),
+        ])
 
         # update web page
         url = self.get_url_by_viewname('location:full_form',
                                        kwargs={'location_id': loc_a.location_id})
         self.selenium.get(url)
 
-        # fill resource
-        self.fill_formset_by_dict(fixtures.loc_res_dict_a, 'loc_res')
-
-        # fill comment
-        self.fill_formset_by_dict(fixtures.loc_comment_dict_a, 'loc_comment')
+        # fill m2m
+        m2m_tester.fill()
 
         self.selenium.find_element(By.CSS_SELECTOR, 'input[type=submit]').click()
 
         # assert result after form submit
         loc_a.refresh_from_db()
 
-        # assert resource
-        self.assertEqual(loc_a.resources.count(), 1)
-        self.assertEqual(loc_a.resources.first().resource_name,
-                         fixtures.loc_res_dict_a['resource_name'])
-
-        # assert comment
-        self.assertEqual(loc_a.comments.count(), 1)
-        self.assertEqual(loc_a.comments.first().comment,
-                         fixtures.loc_comment_dict_a['comment'])
+        # assert m2m tester
+        m2m_tester.assert_after_update()
 
 
 def prepare_loc_records() -> list[CofkUnionLocation]:
     loc_list = [CofkUnionLocation(**loc_dict)
-                for loc_dict in (fixtures.location_dict_a, fixtures.location_dict_b,)]
+                for loc_dict in (
+                    location.fixtures.location_dict_a,
+                    location.fixtures.location_dict_b,
+                )]
     CofkUnionLocation.objects.bulk_create(loc_list)
     return loc_list
 

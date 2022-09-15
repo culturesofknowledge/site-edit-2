@@ -29,15 +29,6 @@ location_dict_b = dict(
     longitude='longitude value 2',
 )
 
-loc_res_dict_a = {
-    'resource_name': 'resource_name a',
-    'resource_url': 'resource_url a',
-    'resource_details': 'resource_details a',
-}
-
-loc_comment_dict_a = {
-    'comment': 'yooooooooooooooooooo',
-}
 
 
 def create_location_a():

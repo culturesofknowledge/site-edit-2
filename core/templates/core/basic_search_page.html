@@ -11,6 +11,8 @@
     <form id="search_form" method="get">
         {% csrf_token %}
 
+        <input type="hidden" name="recref_mode" value="{{ recref_mode }}" />
+
         <div class="row">
 
             <!-- Query fieldsets -->
@@ -134,6 +136,31 @@
             on_mode_change: function (fn) {
                 this._mode_change_listener_fn_list.push(fn);
             },
+            get_entry_id: function (selectable_entry_ele) {
+                return $(selectable_entry_ele).attr('entry_id');
+            }
+
+        }
+
+        emlojs.recref_select_service = {
+
+            setup_all: function () {
+                $('.selectable_entry').on('click', (e) => {
+                    let entry_id = emlojs.selectable_service.get_entry_id(
+                        $(e.target).closest('.selectable_entry')
+                    );
+
+                    let form = $('<form action="{% url return_quick_init_vname '__entry_id__' %}">');
+                    form.attr(
+                        'action',
+                        form.attr('action').replace('__entry_id__', entry_id)
+                    )
+                    $('body').append(form)
+                    form.submit()
+                })
+
+            },
+
         }
 
 
@@ -167,7 +194,7 @@
 
                 let form = $('#merge_form');
                 $('.selectable_entry.selected').map((i, v) => {
-                    let entry_id = $(v).attr('entry_id');
+                    let entry_id = emlojs.selectable_service.get_entry_id(v);
                     return $(`<input type="hidden" name="__merge_id" value="${entry_id}" />`);
                 }).each((i, v) => {
                     form.append(v);
@@ -198,6 +225,9 @@
             setup_record_delete();
             emlojs.selectable_service.setup_all()
             setup_merge_btn();
+            {% if recref_mode == '1' %}
+                emlojs.recref_select_service.setup_all()
+            {% endif %}
         })
 
 
