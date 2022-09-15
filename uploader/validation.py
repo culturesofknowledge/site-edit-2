@@ -24,6 +24,10 @@ class CofkMissingColumnError(Exception):
     pass
 
 
+class CofkNoDataError(Exception):
+    pass
+
+
 class CofkValue:
     def __init__(self, key, value):
         self.key = key

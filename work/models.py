@@ -348,6 +348,9 @@ class CofkCollectAddresseeOfWork(models.Model):
     notes_on_addressee = models.TextField(blank=True, null=True)
     _id = models.CharField(max_length=32, blank=True, null=True)
 
+    def __str__(self):
+        return str(self.iperson)
+
     class Meta:
         db_table = 'cofk_collect_addressee_of_work'
         unique_together = (('upload', 'iwork_id', 'addressee_id'),)
@@ -390,6 +393,9 @@ class CofkCollectDestinationOfWork(models.Model):
     notes_on_destination = models.TextField(blank=True, null=True)
     _id = models.CharField(max_length=32, blank=True, null=True)
 
+    def __str__(self):
+        return str(self.location)
+
     class Meta:
         db_table = 'cofk_collect_destination_of_work'
         unique_together = (('upload', 'iwork_id', 'destination_id'),)
@@ -398,7 +404,6 @@ class CofkCollectDestinationOfWork(models.Model):
 class CofkCollectLanguageOfWork(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     language_of_work_id = models.IntegerField()
-    #iwork_id = models.IntegerField()
     iwork = models.ForeignKey('work.CofkCollectWork', models.DO_NOTHING)
     language_code = models.ForeignKey('uploader.Iso639LanguageCode', models.DO_NOTHING, db_column='language_code')
     _id = models.CharField(max_length=32, blank=True, null=True)
@@ -418,6 +423,9 @@ class CofkCollectOriginOfWork(models.Model):
     iwork = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
     notes_on_origin = models.TextField(blank=True, null=True)
     _id = models.CharField(max_length=32, blank=True, null=True)
+
+    def __str__(self):
+        return str(self.location)
 
     class Meta:
         db_table = 'cofk_collect_origin_of_work'

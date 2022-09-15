@@ -11,7 +11,7 @@ from uploader.entities.people import CofkPeople
 from uploader.entities.repositories import CofkRepositories
 from uploader.entities.work import CofkWork
 from uploader.models import CofkCollectUpload
-from uploader.validation import CofkMissingSheetError, CofkMissingColumnError
+from uploader.validation import CofkMissingSheetError, CofkMissingColumnError, CofkNoDataError
 
 log = logging.getLogger(__name__)
 
@@ -112,7 +112,7 @@ class CofkUploadExcelFile:
             msg = "Spreadsheet contains no data"
             log.error(msg)
 
-            raise ValueError(msg)
+            raise CofkNoDataError(msg)
 
     def check_sheets(self):
         # Verify all required sheets are present

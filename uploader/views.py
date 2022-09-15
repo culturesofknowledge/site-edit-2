@@ -18,7 +18,7 @@ from django.conf import settings
 
 from uploader.models import CofkCollectStatus, CofkCollectUpload
 from uploader.spreadsheet import CofkUploadExcelFile
-from uploader.validation import CofkMissingColumnError, CofkMissingSheetError
+from uploader.validation import CofkMissingColumnError, CofkMissingSheetError, CofkNoDataError
 
 from work.models import CofkCollectWork, CofkCollectAuthorOfWork, CofkCollectAddresseeOfWork, CofkCollectLanguageOfWork, \
     CofkCollectPersonMentionedInWork, CofkCollectWorkResource
@@ -68,6 +68,10 @@ def handle_upload(request, context):
         #    context['report']['total_errors'] = 1
         #    context['report']['errors'] = {'file': {'total': 1, 'error': [f'Column "{ke.args[0]}" missing']}}
         #    log.error(context['report']['errors'])
+        except CofkNoDataError as cnde:
+            context['report']['total_errors'] = 1
+            context['report']['errors'] = {'file': {'total': 1, 'error': [cnde]}}
+            log.error(context['report']['errors'])
         except CofkMissingSheetError as cmse:
             context['report']['total_errors'] = 1
             context['report']['errors'] = {'file': {'total': 1, 'error': [cmse]}}
