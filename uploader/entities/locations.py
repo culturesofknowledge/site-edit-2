@@ -4,7 +4,7 @@ from typing import List
 import pandas as pd
 from django.core.exceptions import ValidationError
 
-from location.models import CofkCollectLocation
+from location.models import CofkCollectLocation, CofkUnionLocation
 from uploader.entities.entity import CofkEntity
 from uploader.models import CofkCollectUpload
 
@@ -27,6 +27,9 @@ class CofkLocations(CofkEntity):
             location_id = self.row_data['location_id'] if 'location_id' in self.row_data else 1
 
             location = CofkCollectLocation(**self.row_data)
+            if location_id:
+                location.union_location = CofkUnionLocation.objects.filter(location_id=location_id).first()
+                log.debug(CofkUnionLocation.objects.filter(location_id=location_id).first())
             location.location_id = location_id
             location.element_1_eg_room = 0
             location.element_2_eg_building = 0
@@ -35,6 +38,8 @@ class CofkLocations(CofkEntity):
             location.element_5_eg_county = 0
             location.element_6_eg_country = 0
             location.element_7_eg_empire = 0
+            #log.debug(vars(location))
+            #location.save()
 
             self.locations.append(location)
 

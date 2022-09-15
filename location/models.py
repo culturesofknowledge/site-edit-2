@@ -35,7 +35,7 @@ class CofkCollectLocation(models.Model):
         unique_together = (('upload', 'location_id'),)
 
     def __str__(self):
-        return f'{self.location_name} (#{self.location_id})'
+        return str(self.union_location)
 
 
 class CofkUnionLocation(models.Model, RecordTracker):
@@ -61,6 +61,9 @@ class CofkUnionLocation(models.Model, RecordTracker):
     resources = models.ManyToManyField('core.CofkUnionResource')
     comments = models.ManyToManyField('core.CofkUnionComment')
     images = models.ManyToManyField('uploader.CofkUnionImage')
+
+    def __str__(self):
+        return self.location_name
 
     class Meta:
         db_table = 'cofk_union_location'

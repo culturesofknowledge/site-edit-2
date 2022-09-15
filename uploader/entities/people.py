@@ -4,7 +4,7 @@ from typing import List
 import pandas as pd
 from django.core.exceptions import ValidationError
 
-from person.models import CofkCollectPerson
+from person.models import CofkCollectPerson, CofkUnionPerson
 from uploader.entities.entity import CofkEntity
 from uploader.models import CofkCollectUpload
 
@@ -36,6 +36,9 @@ class CofkPeople(CofkEntity):
             iperson_id = self.row_data['iperson_id'] if 'iperson_id' in self.row_data else None
 
             person = CofkCollectPerson()
+            if iperson_id:
+                person.person = CofkUnionPerson.objects.filter(iperson_id=iperson_id).first()
+
             person.upload = self.upload
             person.iperson_id = iperson_id
             person.primary_name = self.row_data['primary_name']

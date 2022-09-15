@@ -49,7 +49,11 @@
         <tr>
             <td class="header">Author{{ authors|pluralize:",s" }}</td>
             <td>{% for author in authors|filter_by_work:work %}
-                    {{ author }}<br/>
+                    {% if author.iperson.person %}
+                        {{ author.iperson.person.foaf_name }}
+                    {% else %}
+                        {{ author }}<br/>
+                    {% endif %}
                 {% endfor %}
 
                 {% if work.authors_as_marked %}
@@ -67,7 +71,11 @@
         </tr>
         <tr>
             <td class="header">Origin</td>
-            <td>{{ work.origin }}
+            <td>{% if work.origin.union_location %}
+                    {{ work.origin.union_location }}
+                {% else %}
+                    {{ work.origin }}
+                {% endif %}
 
                 {% if work.origin_as_marked %}
                     <br/>As marked: {{ work.origin_as_marked }}
@@ -81,7 +89,11 @@
         <tr>
             <td class="header">Addressee{{ addressees|pluralize:",s" }}</td>
             <td>{% for addressee in addressees|filter_by_work:work %}
-                    {{ addressee }}<br/>
+                    {% if addressee.iperson.person %}
+                        {{ addressee.iperson.person.foaf_name }}
+                    {% else %}
+                        {{ addressee }}<br/>
+                    {% endif %}
                 {% endfor %}
 
                 {% if work.addressees_as_marked %}
@@ -99,7 +111,11 @@
         </tr>
         <tr>
             <td class="header">Destination</td>
-            <td>{{ work.destination }}
+            <td>{% if work.destination.union_location %}
+                    {{ work.destination.union_location }}
+                {% else %}
+                    {{ work.destination }}
+                {% endif %}
 
                 {% if work.destination_as_marked %}
                     <br/>As marked: {{ work.destination_as_marked }}
@@ -144,7 +160,11 @@
         <tr>
             <td class="header">{{ mentioned|pluralize:"Person,People" }} mentioned</td>
             <td>{% for mention in mentioned|filter_by_work:work %}
-                    {{ mention }}<br/>
+                    {% if mention.iperson.person %}
+                        {{ mention.iperson.person.foaf_name }}
+                    {% else %}
+                        {{ mention }}<br/>
+                    {% endif %}
                 {% endfor %}
 
                 {% if work.mentioned_as_marked %}
