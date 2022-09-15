@@ -27,9 +27,10 @@ class CofkLocations(CofkEntity):
             location_id = self.row_data['location_id'] if 'location_id' in self.row_data else 1
 
             location = CofkCollectLocation(**self.row_data)
-            if location_id:
+
+            if location_id and isinstance(location_id, int):
                 location.union_location = CofkUnionLocation.objects.filter(location_id=location_id).first()
-                log.debug(CofkUnionLocation.objects.filter(location_id=location_id).first())
+
             location.location_id = location_id
             location.element_1_eg_room = 0
             location.element_2_eg_building = 0
@@ -45,7 +46,11 @@ class CofkLocations(CofkEntity):
 
             sheet_locations.append((self.row_data['location_name'], location_id))
 
-        CofkCollectLocation.objects.bulk_create(self.locations)
+        try:
+            CofkCollectLocation.objects.bulk_create(self.locations)
+        except ValueError:
+            # Will error if location_id != int
+            pass
 
         log.debug(f'Created {len(self.locations)} locations.')
 

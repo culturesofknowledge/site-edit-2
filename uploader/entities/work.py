@@ -86,7 +86,11 @@ class CofkWork(CofkEntity):
                 continue
 
             author = CofkCollectAuthorOfWork(author_id=a_id, upload=self.upload, iwork=work, iperson=person)
-            author.save()
+
+            try:
+                author.save()
+            except ValueError:
+                pass
 
     def process_addressees(self, work: CofkCollectWork):
         a_id = CofkCollectAddresseeOfWork.objects.\
@@ -101,7 +105,10 @@ class CofkWork(CofkEntity):
                 continue
 
             addressee = CofkCollectAddresseeOfWork(addressee_id=a_id, upload=self.upload, iwork=work, iperson=person)
-            addressee.save()
+            try:
+                addressee.save()
+            except ValueError:
+                pass
 
     def preprocess_data(self):
         # Isolating data relevant to a work
@@ -199,7 +206,10 @@ class CofkWork(CofkEntity):
 
             person_mentioned = CofkCollectPersonMentionedInWork(mention_id=m_id, upload=self.upload, iwork=work,
                                                                 iperson=person)
-            person_mentioned.save()
+            try:
+                person_mentioned.save()
+            except ValueError:
+                pass
 
     def process_origin(self, work: CofkCollectWork):
         o_id = CofkCollectOriginOfWork.objects.\
@@ -237,7 +247,11 @@ class CofkWork(CofkEntity):
             destination_location = CofkCollectDestinationOfWork(destination_id=d_id, upload=self.upload, iwork=work,
                                                                 location=destination)
 
-            destination_location.save()
+            try:
+                destination_location.save()
+            except ValueError:
+                # Will error if location_id != int
+                pass
 
     def process_languages(self, work: CofkCollectWork, has_language: List[str]):
         l_id = CofkCollectLanguageOfWork.objects. \

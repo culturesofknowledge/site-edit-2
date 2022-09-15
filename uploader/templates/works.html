@@ -48,16 +48,34 @@
         </tr>
         <tr>
             <td class="header">Author{{ authors|pluralize:",s" }}</td>
-            <td>{% for author in authors|filter_by_work:work %}
+            <td>
+                {% if authors|length > 1 %}
+                    <ul>
+                {% endif %}
+
+                {% for author in authors|filter_by_work:work %}
+                    {% if authors|length > 1 %}
+                        <li>
+                    {% endif %}
                     {% if author.iperson.person %}
                         {{ author.iperson.person.foaf_name }}
                     {% else %}
-                        {{ author }}<br/>
+                        {{ author }}
+                    {% endif %}
+                    {% if authors|length > 1 %}
+                        </li>
+                    {% else %}
+                        <br/>
                     {% endif %}
                 {% endfor %}
+                {% if authors|length > 1 %}
+                    </ul>
+                {% else %}
+                <br/>
+                {% endif %}
 
                 {% if work.authors_as_marked %}
-                    <br/>As marked: {{ work.authors_as_marked }}
+                    As marked: {{ work.authors_as_marked }}
                 {% endif %}
 
                 {% if work.display_authors_issues %}

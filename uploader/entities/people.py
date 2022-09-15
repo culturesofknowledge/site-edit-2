@@ -36,7 +36,7 @@ class CofkPeople(CofkEntity):
             iperson_id = self.row_data['iperson_id'] if 'iperson_id' in self.row_data else None
 
             person = CofkCollectPerson()
-            if iperson_id:
+            if iperson_id and isinstance(iperson_id, int):
                 person.person = CofkUnionPerson.objects.filter(iperson_id=iperson_id).first()
 
             person.upload = self.upload
@@ -59,7 +59,10 @@ class CofkPeople(CofkEntity):
 
             sheet_people.append((self.row_data['primary_name'], iperson_id))
 
-        CofkCollectPerson.objects.bulk_create(self.people)
+        try:
+            CofkCollectPerson.objects.bulk_create(self.people)
+        except ValueError:
+            pass
 
         return sheet_people
 
