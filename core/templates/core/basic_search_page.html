@@ -215,9 +215,10 @@
             }
         });
 
-        ['id_sort_by', 'id_num_record'].forEach((target_id) => {
+        ['id_sort_by', 'id_num_record',
+            'display-as-grid', 'display-as-list'].forEach((target_id) => {
             document.getElementById(target_id).addEventListener('change', () => {
-                submit_page()
+                submit_page();
             });
         });
 
