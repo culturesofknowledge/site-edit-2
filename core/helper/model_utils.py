@@ -6,12 +6,13 @@ from typing import Iterable
 import django
 from django.conf import settings
 from django.db.models import Q
+import django.utils.timezone
 
 
 class RecordTracker:
 
     def update_current_user_timestamp(self, user):
-        now = datetime.datetime.now()
+        now = default_current_timestamp()
         if hasattr(self, 'creation_timestamp') and not self.creation_timestamp:
             self.creation_timestamp = now
 
@@ -65,7 +66,7 @@ def next_seq_safe(seq_name):
 
 
 def default_current_timestamp():
-    return datetime.datetime.now()
+    return django.utils.timezone.now()
 
 
 def related_manager_to_dict_list(related_manager) -> Iterable[dict]:
