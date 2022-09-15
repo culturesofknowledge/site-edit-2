@@ -38,7 +38,7 @@ class BasicSearchView(ListView):
     """
     Helper for you to build common style of search page for emlo editor
     """
-    paginate_by = 5
+    paginate_by = 10
     template_name = 'core/basic_search_page.html'
     context_object_name = 'records'
 

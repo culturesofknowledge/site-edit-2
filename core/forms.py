@@ -17,7 +17,7 @@ def build_search_components(sort_by_choices: list[tuple[str, str]]):
 
         num_record = forms.IntegerField(label='Records per page',
                                         widget=forms.Select(choices=[
-                                            (5, 5),
+                                            (10, 10),
                                             (25, 25),
                                             (50, 50),
                                             (100, 100),
