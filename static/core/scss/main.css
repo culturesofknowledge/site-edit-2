@@ -133,6 +133,9 @@
 .no-margin {
   margin: 0; }
 
+.no-padding {
+  padding: 0; }
+
 .margin-right {
   margin-right: 1em; }
 
@@ -226,6 +229,9 @@
   position: fixed;
   bottom: 0;
   right: 20px; }
+
+.hiding {
+  display: none; }
 
 /* Grid: to be used for general layout only */
 body {
@@ -697,5 +703,45 @@ input[type="radio"] + label {
   font-style: italic;
   font-variation-settings: 'slnt' -1;
   margin-bottom: 15px; }
+
+.inline_btn {
+  display: inline; }
+
+.selectable_entry.selected {
+  background-color: gray; }
+
+.menu-item {
+  position: relative;
+  margin-right: 1em;
+  height: 25px;
+  display: inline-block; }
+
+.menu-subitem {
+  position: absolute;
+  left: 5px;
+  z-index: 100;
+  min-width: 150px;
+  background-color: #172854;
+  display: none; }
+
+.menu-item:hover .menu-subitem {
+  display: block; }
+
+.menu-subitem li {
+  padding: 10px; }
+  .menu-subitem li:hover {
+    background-color: #EFC319;
+    color: black; }
+
+.selectable_mode_btn.selectable_mode_on {
+  background-color: #EFC319;
+  color: black; }
+
+.table-row-detail {
+  min-width: 400px; }
+  .table-row-detail > div {
+    margin-bottom: 10px; }
+    .table-row-detail > div label {
+      margin: 0; }
 
 /*# sourceMappingURL=main.css.map */

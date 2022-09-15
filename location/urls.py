@@ -7,4 +7,5 @@ urlpatterns = [
     path('form', views.init_form, name='init_form'),
     path('form/<int:location_id>', views.full_form, name='full_form'),
     path('search', views.LocationSearchView.as_view(), name='search'),
+    path('merge', views.LocationMergeView.as_view(), name='merge'),
 ]
