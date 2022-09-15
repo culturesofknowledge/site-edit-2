@@ -74,8 +74,9 @@ class CofkUploadExcelFile:
         self.upload.total_works = len(self.works.ids)
 
         # The last sheet is manifestations
-        self.manifestations = CofkManifestations(upload=self.upload, sheet_data=self.data['manifestation'],
-                                                 repositories=self.repositories, works=self.works)
+        if self.works.works:
+            self.manifestations = CofkManifestations(upload=self.upload, sheet_data=self.data['manifestation'],
+                                                     repositories=self.repositories, works=self.works)
 
         if self.people.other_errors:
             for row_index in self.people.other_errors:
@@ -99,7 +100,7 @@ class CofkUploadExcelFile:
             self.errors['locations'] = self.locations.format_errors_for_template()
             self.total_errors += self.errors['locations']['total']
 
-        if self.manifestations.errors:
+        if self.manifestations and self.manifestations.errors:
             self.errors['manifestations'] = self.manifestations.format_errors_for_template()
             self.total_errors += self.errors['manifestations']['total']
 

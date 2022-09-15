@@ -1,6 +1,8 @@
 import logging
 
 import pandas as pd
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 
 from manifestation.models import CofkCollectManifestation
 from uploader.entities.entity import CofkEntity
@@ -63,6 +65,8 @@ class CofkManifestations(CofkEntity):
 
         work = None
 
+        log.debug(self.works.works)
+
         try:
             work = [w2 for w2 in self.works.works if
                     self.row_data['iwork_id'] == w2.iwork_id][0]
@@ -82,7 +86,11 @@ class CofkManifestations(CofkEntity):
             self.__manifestation_id, self.upload.upload_id))
 
         manifestation = CofkCollectManifestation(**self.row_data)
-        manifestation.save()
+
+        try:
+            manifestation.save()
+        except IntegrityError as ie:
+            self.add_error(ValidationError(ie))
 
         self.ids.append(self.__manifestation_id)
 
