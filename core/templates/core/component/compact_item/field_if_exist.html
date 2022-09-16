@@ -1,0 +1,12 @@
+{% if field_value %}
+    <div>
+        <dt>{{ title }}
+            {% if icon_name %}
+                <span data-feather="{{ icon_name }}" aria-hidden="true"></span>
+            {% endif %}
+        </dt>
+        <dd class="display-inline-block">
+            {{ field_value }}
+        </dd>
+    </div>
+{% endif %}

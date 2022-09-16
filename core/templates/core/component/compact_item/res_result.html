@@ -1,0 +1,15 @@
+{% if resources.count %}
+    <div>
+        <dt>Related resources</dt>
+        <dd>
+            <ul>
+                {% for res in resources.iterator %}
+                    <li>
+                        <a href="{{ res.resource_url }}" target="_blank" rel="noopener">{{ res.resource_name }}</a>
+                        <span data-feather="arrow-up-right" aria-hidden="true"></span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </dd>
+    </div>
+{% endif %}

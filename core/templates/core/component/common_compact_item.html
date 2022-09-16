@@ -1,0 +1,30 @@
+{% block compact_item_wrapper %}
+    <article class="row selectable_entry" entry_id="{{ entry_id }}">
+        <div class="col col--4of6">
+
+            {% block title_wrapper %}
+                <h3>
+                    {% block title_link %}
+                    {% endblock %}
+                </h3>
+            {% endblock %}
+
+
+            <dl>
+                {% block left_content %}
+                {% endblock %}
+            </dl>
+
+            <!-- KTODO delete url -->
+            <p><small><a href="#!" class="record_delete">Delete record</a></small></p>
+
+        </div>
+
+        <aside class="col col--2of6 align-right">
+            <dl>
+                {% block right_content %}
+                {% endblock %}
+            </dl>
+        </aside>
+    </article>
+{% endblock %}

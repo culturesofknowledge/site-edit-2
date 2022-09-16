@@ -1,92 +1,31 @@
-<article class="row selectable_entry" entry_id="{{ record.location_id }}">
-    <div class="col col--4of6">
-        <h3>
-            <a href="{% url 'person:full_form' record.iperson_id %}">
-                {{ record.foaf_name }}
-            </a>
-        </h3>
+{% extends 'core/component/common_compact_item.html' %}
 
-{#        <dl>#}
-{#            {% if record.editors_notes %}#}
-{#                <dt>Editor notes <span data-feather="file-text" aria-hidden="true"></span></dt>#}
-{#                <dd class="display-inline-block">#}
-{#                    {{ record.editors_notes }}#}
-{#                </dd>#}
-{#            {% endif %}#}
-{##}
-{#            {% if record.location_synonyms %}#}
-{#                <dt>Location synonyms <span data-feather="globe" aria-hidden="true"></span></dt>#}
-{#                <dd class="display-inline-block">{{ record.location_synonyms }}</dd>#}
-{#            {% endif %}#}
-{##}
-{#            {% if record.latitude or record.longitude %}#}
-{#                <div class="row">#}
-{#                    <div class="col col--1of2">#}
-{#                        <dt>Latitude</dt>#}
-{#                        <dd class="display-inline-block">{{ record.latitude }}</dd>#}
-{#                    </div>#}
-{#                    <div class="col col--1of2">#}
-{#                        <dt>Longitude</dt>#}
-{#                        <dd class="display-inline-block">{{ record.longitude }}</dd>#}
-{#                    </div>#}
-{#                </div>#}
-{#            {% endif %}#}
+{% block compact_item_wrapper %}
+    {% with entry_id=record.iperson_id %}
+        {{ block.super }}
+    {% endwith %}
+{% endblock %}
 
+{% block title_link %}
+    <a href="{% url 'person:full_form' record.iperson_id %}">
+        {{ record.foaf_name }}
+    </a>
+{% endblock %}
 
-            <!-- TOBEREMOVE following comment -->
-{#            {% if work.languages and work.images %}#}
-{#                <div class="row">#}
-{#                <div class="col col--1of2">#}
-{#            {% endif %}#}
+{% block left_content %}
+    {% include "core/component/compact_item/field_if_exist.html" with field_value=record.editors_notes title='Editor notes' icon_name='file-text' %}
 
-{#            {% if work.languages %}#}
-{#                <dt>Languages <span data-feather="globe" aria-hidden="true"></span></dt>#}
-{#                {% for lang in work.languages %}#}
-{#                    <dd class="display-inline-block">{{ lang.name }}{% if not loop.last %}, {% endif %}</dd>#}
-{#                {% endfor %}#}
-{#            {% endif %}#}
+    {% include "core/component/compact_item/field_if_exist.html" with field_value=record.skos_altlabel title='Synonyms' icon_name='file-text' %}
 
-{#            {% if work.languages and work.images %}#}
-{#                </div>#}
-{#                <div class="col col--1of2">#}
-{#            {% endif %}#}
+    {% include "core/component/compact_item/field_if_exist.html" with field_value=record.further_reading title='Further reading' %}
+{% endblock %}
 
-{#            {% if work.images %}#}
-{#                <dt>Images <span data-feather="image" aria-hidden="true"></span></dt>#}
-{#                {% for img in work.images %}#}
-{#                    <dd class="display-inline-block"> [<a href="/{{ img.url }}">View</a>]</dd>#}
-{#                {% endfor %}#}
-{#            {% endif %}#}
+{% block right_content %}
+    <dt>Person ID</dt>
+    <dd><a href="{% url 'person:full_form' record.iperson_id %}">#{{ record.iperson_id }}</a></dd>
 
-{#            {% if work.languages and work.images %}#}
-{#                </div>#}
-{#                </div>#}
-{#            {% endif %}#}
+    {% include "core/component/compact_item/last_edited_by.html" with record=record %}
 
-{#        </dl>#}
-        <p><small><a href="#!" class="record_delete">Delete record</a></small></p>
-    </div>
+    {% include "core/component/compact_item/res_result.html" with resources=record.resources %}
 
-    <aside class="col col--2of6 align-right">
-        <dl>
-
-            <dt>Person ID</dt>
-            <dd><a href="{% url 'person:full_form' record.iperson_id %}">#{{ record.iperson_id }}</a></dd>
-
-            {% include "core/component/compact_item/last_edited_by.html" with record=record %}
-
-            {% if work.related_resources %}
-                <dt>Related resources </dt>
-                <dd>
-                    <ul>
-                        {% for rel_res in work.related_resources %}
-                            <li><a href="{{ rel_res.url }}" target="_blank" rel="noopener">{{ rel_res.title }}</a>
-                                <span data-feather="arrow-up-right" aria-hidden="true"></span></li>
-                        {% endfor %}
-                    </ul>
-                </dd>
-            {% endif %}
-
-        </dl>
-    </aside>
-</article>
+{% endblock %}
