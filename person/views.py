@@ -7,6 +7,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 
 from core.forms import CommentForm, ResourceForm
 from core.helper import renderer_utils, view_utils, model_utils
+from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_utils import DefaultSearchView, CommonInitFormViewTemplate, ImageHandler
 from location.models import CofkUnionLocation
 from person.forms import PersonForm
@@ -261,3 +262,7 @@ class PersonSearchView(DefaultSearchView):
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
         return renderer_utils.create_table_search_results_renderer('person/search_table_layout.html')
+
+    @property
+    def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
+        return renderer_utils.create_compact_renderer(item_template_name='person/compact_item.html')

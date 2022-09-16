@@ -7,15 +7,13 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView
 
 from core.forms import CommentForm, ResourceForm
-from core.helper import model_utils, view_utils
+from core.helper import model_utils, view_utils, renderer_utils
 from core.helper.model_utils import RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
 from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate, ImageHandler
-from location import renderer
 from location.forms import LocationForm, GeneralSearchFieldset
 from location.models import CofkUnionLocation
-from location.renderer import LocationCompactSearchResultsRenderer
 
 log = logging.getLogger(__name__)
 FormOrFormSet = Union[BaseForm, BaseFormSet]
@@ -202,11 +200,13 @@ class LocationSearchView(BasicSearchView):
 
     @property
     def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
-        return LocationCompactSearchResultsRenderer
+        return renderer_utils.create_compact_renderer(item_template_name='location/compact_item.html')
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
-        return renderer.location_table_search_result_renderer
+        return renderer_utils.create_table_search_results_renderer(
+            'location/search_table_layout.html'
+        )
 
     @property
     def download_csv_handler(self) -> DownloadCsvHandler:
