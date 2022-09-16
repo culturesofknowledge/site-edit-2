@@ -1,0 +1,15 @@
+
+
+{% if record.change_timestamp %}
+    <div>
+        <label>Last edit</label>
+        {{ record.change_timestamp }}
+    </div>
+{% endif %}
+
+{% if record.change_user %}
+    <div>
+        <label>Last changed by</label>
+        {{ record.change_user }}
+    </div>
+{% endif %}

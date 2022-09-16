@@ -1,0 +1,6 @@
+{% if value %}
+    <details>
+        <summary>{{ title | default:"Details" }}</summary>
+        {{ value }}
+    </details>
+{% endif %}

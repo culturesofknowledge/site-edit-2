@@ -38,36 +38,11 @@
                 <details>
                     <summary>Details</summary>
                     <div class="table-row-detail">
-                        <div>
-                            <label>Last edit</label>
-                            {{ r.change_timestamp }}
-                        </div>
-                        <div>
-                            <label>Last changed by</label>
-                            {{ r.change_user }}
-                        </div>
-                        {% if r.comments.count %}
-                            <div>
-                                <label>Researchers' notes</label>
-                                {% for comment in r.comments.iterator %}
-                                    <div>
-                                        {{ comment.comment }}
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                        {% if r.resources.count %}
-                            <div>
-                                <label>Related resources</label>
-                                {% for resource in r.resources.iterator %}
-                                    <div>
-                                        <a href="{{ resource.resource_url }}" target="_blank">
-                                            {{ resource.resource_name }}
-                                        </a>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
+                        {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r %}
+
+                        {% include "core/component/search_table_layout/comment_result.html" with comments=r.comments %}
+
+                        {% include "core/component/search_table_layout/res_result.html" with resources=r.resources %}
 
                     </div>
 
