@@ -7,7 +7,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView
 
 from core.forms import CommentForm, ResourceForm
-from core.helper import model_utils, view_utils, renderer_utils
+from core.helper import model_utils, view_utils, renderer_utils, query_utils
 from core.helper.model_utils import RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
@@ -161,26 +161,23 @@ class LocationSearchView(BasicSearchView):
 
         # queries for like_fields
         field_fn_maps = {
-            'editors_notes': model_utils.create_contains_query,
-            'location_name': model_utils.create_contains_query,
-            'location_id': model_utils.create_eq_query,
-            'latitude': model_utils.create_contains_query,
-            'longitude': model_utils.create_contains_query,
-            'element_1_eg_room': model_utils.create_contains_query,
-            'element_2_eg_building': model_utils.create_contains_query,
-            'element_3_eg_parish': model_utils.create_contains_query,
-            'element_4_eg_city': model_utils.create_contains_query,
-            'element_5_eg_county': model_utils.create_contains_query,
-            'element_6_eg_country': model_utils.create_contains_query,
-            'element_7_eg_empire': model_utils.create_contains_query,
+            'editors_notes': query_utils.create_contains_query,
+            'location_name': query_utils.create_contains_query,
+            'location_id': query_utils.create_eq_query,
+            'latitude': query_utils.create_contains_query,
+            'longitude': query_utils.create_contains_query,
+            'element_1_eg_room': query_utils.create_contains_query,
+            'element_2_eg_building': query_utils.create_contains_query,
+            'element_3_eg_parish': query_utils.create_contains_query,
+            'element_4_eg_city': query_utils.create_contains_query,
+            'element_5_eg_county': query_utils.create_contains_query,
+            'element_6_eg_country': query_utils.create_contains_query,
+            'element_7_eg_empire': query_utils.create_contains_query,
         }
 
-        query_field_values = ((f, self.request_data.get(f)) for f in field_fn_maps.keys())
-        query_field_values = ((f, v) for f, v in query_field_values if v)
-        queries = [field_fn_maps[f](f, v) for f, v in query_field_values]
-
+        queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
         if queries:
-            queryset = queryset.filter(model_utils.any_queries(queries))
+            queryset = queryset.filter(query_utils.all_queries_match(queries))
 
         if sort_by := self.get_sort_by():
             queryset = queryset.order_by(sort_by)

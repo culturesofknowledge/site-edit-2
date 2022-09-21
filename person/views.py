@@ -2,15 +2,17 @@ import logging
 from typing import Callable, Iterable, Type, Optional, Any, NoReturn
 
 from django.db import models
+from django.db.models import F
+from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual
 from django.forms import BaseForm
 from django.shortcuts import render, redirect, get_object_or_404
 
 from core.forms import CommentForm, ResourceForm
-from core.helper import renderer_utils, view_utils, model_utils
+from core.helper import renderer_utils, view_utils, model_utils, query_utils
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_utils import DefaultSearchView, CommonInitFormViewTemplate, ImageHandler
 from location.models import CofkUnionLocation
-from person.forms import PersonForm
+from person.forms import PersonForm, GeneralSearchFieldset
 from person.models import CofkUnionPerson, CofkPersonLocationMap, CofkPersonPersonMap
 
 log = logging.getLogger(__name__)
@@ -254,7 +256,18 @@ class PersonSearchView(DefaultSearchView):
 
     def get_queryset(self):
         # KTODO
+
+        field_fn_maps = {
+            'birth_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_birth_year'), v),
+            'birth_year_to': lambda _, v: LessThanOrEqual(F('date_of_birth_year'), v),
+        }
+
         queryset = CofkUnionPerson.objects.all()
+
+        queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
+        if queries:
+            queryset = queryset.filter(query_utils.all_queries_match(queries))
+
         if sort_by := self.get_sort_by():
             queryset = queryset.order_by(sort_by)
         return queryset
@@ -266,3 +279,7 @@ class PersonSearchView(DefaultSearchView):
     @property
     def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
         return renderer_utils.create_compact_renderer(item_template_name='person/compact_item.html')
+
+    @property
+    def query_fieldset_list(self) -> Iterable:
+        return [GeneralSearchFieldset(self.request_data)]

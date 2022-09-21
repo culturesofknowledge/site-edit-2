@@ -179,3 +179,34 @@ class PersonForm(ModelForm):
             field.clean_other_fields(self.cleaned_data, self.cleaned_data.get(field_name))
 
         return super().clean()
+
+
+class GeneralSearchFieldset(forms.Form):
+    title = 'General'
+    template_name = 'core/form/search_fieldset.html'
+
+    # location_name = forms.CharField(required=False,
+    #                           widget=forms.TextInput(attrs={'placeholder': 'xxxx'}))
+    # location_id = forms.IntegerField(required=False)
+    # editors_notes = forms.CharField(required=False)
+    # latitude = forms.IntegerField(required=False)
+    # longitude = forms.IntegerField(required=False)
+    # element_1_eg_room = forms.CharField(required=False)
+    # element_2_eg_building = forms.CharField(required=False)
+    # element_3_eg_parish = forms.CharField(required=False)
+    # element_4_eg_city = forms.CharField(required=False)
+    # element_5_eg_county = forms.CharField(required=False)
+    # element_6_eg_country = forms.CharField(required=False)
+    # element_7_eg_empire = forms.CharField(required=False)
+
+    person_id = forms.IntegerField(required=False)
+    foaf_name = forms.CharField(required=False)
+
+    birth_year_from = forms.IntegerField(required=False)
+    birth_year_to = forms.IntegerField(required=False)
+
+    death_year_from = forms.IntegerField(required=False)
+    death_year_to = forms.IntegerField(required=False)
+
+    flourished_year_from = forms.IntegerField(required=False)
+    flourished_year_to = forms.IntegerField(required=False)

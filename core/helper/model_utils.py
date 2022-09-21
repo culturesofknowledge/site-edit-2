@@ -1,11 +1,8 @@
-import datetime
-import functools
 import logging
 from typing import Iterable
 
 import django
 from django.conf import settings
-from django.db.models import Q
 import django.utils.timezone
 
 
@@ -24,22 +21,6 @@ class RecordTracker:
 
         if hasattr(self, 'change_user'):
             self.change_user = user
-
-
-def create_lookup_query(field, lookup, value) -> Q:
-    return Q(**{f'{field}__{lookup}': value})
-
-
-def create_contains_query(field, value) -> Q:
-    return create_lookup_query(field, 'contains', value)
-
-
-def create_eq_query(field, value):
-    return Q(**{field: value})
-
-
-def any_queries(queries: Iterable[Q]):
-    return functools.reduce(lambda a, b: a | b, queries, Q())
 
 
 def next_seq_safe(seq_name):
