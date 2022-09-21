@@ -99,7 +99,6 @@ class ThreeFieldDateField(forms.Field):
             return f'{year}-{month:0>2}-{day:0>2}'
         return ''
 
-
     def clean_other_fields(self, cleaned_data: dict, value: str):
         date_values = value and value.split('-')
         if len(date_values) != 3:
