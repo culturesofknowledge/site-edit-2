@@ -70,6 +70,10 @@ class ZeroOneCheckboxField(forms.BooleanField):
 
 
 class ThreeFieldDateField(forms.Field):
+    """
+    remember update form (get_initial_for_field, clean) to trigger
+    get_initial_by_initial_dict, clean_other_fields
+    """
 
     def __init__(self, year_field_name,
                  month_field_name,
@@ -87,10 +91,14 @@ class ThreeFieldDateField(forms.Field):
         self.month_field_name = month_field_name
         self.day_field_name = day_field_name
 
-    def bound_data(self, data, initial):
-        # KTODO
-        # breakpoint()
-        return super().bound_data(data, initial)
+    def get_initial_by_initial_dict(self, field_name: str, initial: dict):
+        year = initial.get(self.year_field_name, None)
+        month = initial.get(self.month_field_name, None)
+        day = initial.get(self.day_field_name, None)
+        if year and month and day:
+            return f'{year}-{month:0>2}-{day:0>2}'
+        return ''
+
 
     def clean_other_fields(self, cleaned_data: dict, value: str):
         date_values = value and value.split('-')

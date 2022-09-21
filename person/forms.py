@@ -148,6 +148,12 @@ class PersonForm(ModelForm):
 
         )
 
+    def get_initial_for_field(self, field, field_name):
+        if hasattr(field, 'get_initial_by_initial_dict'):
+            return field.get_initial_by_initial_dict(field_name, self.initial)
+
+        return super().get_initial_for_field(field, field_name)
+
     def clean(self):
         log.debug(f'cleaned_data: {self.cleaned_data}')
         form_utils.clean_by_default_value(self.cleaned_data, [
