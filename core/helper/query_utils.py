@@ -32,12 +32,12 @@ def all_queries_match(queries: Iterable[Q]) -> Q:
 
 
 def create_queries_by_field_fn_maps(field_fn_maps: dict, data: dict) -> list[Q]:
-    def _run_input_fn(_fn, _field, _val):
-        if isinstance(_fn, Lookup):
+    def _run_fn(_fn, _field, _val):
+        if issubclass(_fn, Lookup):
             _field = F(_field)
         return _fn(_field, _val)
 
     query_field_values = ((f, data.get(f)) for f in field_fn_maps.keys())
     query_field_values = ((f, v) for f, v in query_field_values if v)
-    queries = [_run_input_fn(field_fn_maps[f], f, v) for f, v in query_field_values]
+    queries = [_run_fn(field_fn_maps[f], f, v) for f, v in query_field_values]
     return queries

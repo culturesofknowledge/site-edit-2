@@ -1,0 +1,9 @@
+<fieldset>
+    <legend>{{ form.title }}</legend>
+    {% include "core/component/common_field_layout.html" with field=form.iperson_id %}
+    {% include "core/component/common_field_layout.html" with field=form.foaf_name %}
+
+    {% include "core/component/search/from_to_year.html" with title='Born' from_field=form.birth_year_from to_field=form.birth_year_to %}
+    {% include "core/component/search/from_to_year.html" with title='Died' from_field=form.death_year_from to_field=form.death_year_to %}
+    {% include "core/component/search/from_to_year.html" with title='Flourished' from_field=form.flourished_year_from to_field=form.flourished_year_to %}
+</fieldset>

@@ -3,7 +3,7 @@ from typing import Callable, Iterable, Type, Optional, Any, NoReturn
 
 from django.db import models
 from django.db.models import F
-from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual
+from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual, Exact, IContains
 from django.forms import BaseForm
 from django.shortcuts import render, redirect, get_object_or_404
 
@@ -258,8 +258,14 @@ class PersonSearchView(DefaultSearchView):
         # KTODO
 
         field_fn_maps = {
+            'iperson_id': Exact,
+            'foaf_name': IContains,
             'birth_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_birth_year'), v),
             'birth_year_to': lambda _, v: LessThanOrEqual(F('date_of_birth_year'), v),
+            'death_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_death_year'), v),
+            'death_year_to': lambda _, v: LessThanOrEqual(F('date_of_death_year'), v),
+            'flourished_year_from': lambda _, v: GreaterThanOrEqual(F('flourished_of_death_year'), v),
+            'flourished_year_to': lambda _, v: LessThanOrEqual(F('flourished_of_death_year'), v),
         }
 
         queryset = CofkUnionPerson.objects.all()

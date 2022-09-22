@@ -191,7 +191,7 @@ class PersonForm(ModelForm):
 
 class GeneralSearchFieldset(forms.Form):
     title = 'General'
-    template_name = 'core/form/search_fieldset.html'
+    template_name = 'person/component/person_search_fieldset.html'
 
     # location_name = forms.CharField(required=False,
     #                           widget=forms.TextInput(attrs={'placeholder': 'xxxx'}))
@@ -207,14 +207,14 @@ class GeneralSearchFieldset(forms.Form):
     # element_6_eg_country = forms.CharField(required=False)
     # element_7_eg_empire = forms.CharField(required=False)
 
-    person_id = forms.IntegerField(required=False)
+    iperson_id = forms.IntegerField(required=False)
     foaf_name = forms.CharField(required=False)
 
-    birth_year_from = forms.IntegerField(required=False)
-    birth_year_to = forms.IntegerField(required=False)
+    birth_year_from = create_year_field()
+    birth_year_to = create_year_field()
 
-    death_year_from = forms.IntegerField(required=False)
-    death_year_to = forms.IntegerField(required=False)
+    death_year_from = create_year_field()
+    death_year_to = create_year_field()
 
-    flourished_year_from = forms.IntegerField(required=False)
-    flourished_year_to = forms.IntegerField(required=False)
+    flourished_year_from = create_year_field()
+    flourished_year_to = create_year_field()
