@@ -146,8 +146,16 @@
   }
 }
 
-.flex-row-wrap {
+.flex-row-wrap { // TOBEREMOVE that same as .row
   display: flex;
   flex-wrap: wrap;
 }
 
+.three-date-fields{
+  @extend .row;
+  margin: 0px;
+
+  input, select {
+    width: 80px;
+  }
+}

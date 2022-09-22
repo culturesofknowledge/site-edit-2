@@ -16,8 +16,34 @@ calendar_date_choices = [
     ("O", 'Other'),
 ]
 
+short_month_choices = [
+    (None, ''),
+    (1, 'Jan'),
+    (2, 'Feb'),
+    (3, 'Mar'),
+    (4, 'Apr'),
+    (5, 'May'),
+    (6, 'Jun'),
+    (7, 'Jul'),
+    (8, 'Aug'),
+    (9, 'Sep'),
+    (10, 'Oct'),
+    (11, 'Nov'),
+    (12, 'Dec'),
+]
 
-# def calendar_date
+
+def create_day_field(required=False):
+    return forms.IntegerField(required=required, min_value=1, max_value=31)
+
+
+def create_month_field(required=False):
+    return forms.IntegerField(required=required,
+                              widget=forms.Select(choices=short_month_choices))
+
+
+def create_year_field(required=False):
+    return forms.IntegerField(required=required, min_value=1, max_value=9999)
 
 
 class PersonForm(ModelForm):
@@ -65,41 +91,35 @@ class PersonForm(ModelForm):
                                    )
                                    )
 
+    date_of_birth_year = create_year_field()
+    date_of_birth_month = create_month_field()
+    date_of_birth_day = create_day_field()
     date_of_birth_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_birth_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_birth_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_birth_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_birth_calendar = forms.CharField(required=False,
                                              widget=forms.RadioSelect(choices=calendar_date_choices, ))
-    date_of_birth_date = form_utils.ThreeFieldDateField(
-        'date_of_birth_year',
-        'date_of_birth_month',
-        'date_of_birth_day',
-    )
 
+    date_of_death_year = create_year_field()
+    date_of_death_month = create_month_field()
+    date_of_death_day = create_day_field()
     date_of_death_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_death_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_death_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_death_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_death_calendar = forms.CharField(required=False,
                                              widget=forms.RadioSelect(choices=calendar_date_choices, ))
-    date_of_death_date = form_utils.ThreeFieldDateField(
-        'date_of_death_year',
-        'date_of_death_month',
-        'date_of_death_day',
-    )
 
+    flourished_year = create_year_field()
+    flourished_month = create_month_field()
+    flourished_day = create_day_field()
     flourished_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     flourished_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     flourished_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     flourished_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     flourished_calendar = forms.CharField(required=False,
                                           widget=forms.RadioSelect(choices=calendar_date_choices, ))
-    flourished_date = form_utils.ThreeFieldDateField(
-        'flourished_year',
-        'flourished_month',
-        'flourished_day',
-    )
 
     birth_place = forms.CharField(required=False, widget=forms.HiddenInput())
     death_place = forms.CharField(required=False, widget=forms.HiddenInput())
@@ -148,12 +168,6 @@ class PersonForm(ModelForm):
 
         )
 
-    def get_initial_for_field(self, field, field_name):
-        if hasattr(field, 'get_initial_by_initial_dict'):
-            return field.get_initial_by_initial_dict(field_name, self.initial)
-
-        return super().get_initial_for_field(field, field_name)
-
     def clean(self):
         log.debug(f'cleaned_data: {self.cleaned_data}')
         form_utils.clean_by_default_value(self.cleaned_data, [
@@ -171,12 +185,6 @@ class PersonForm(ModelForm):
             'date_of_death_is_range',
             'flourished_is_range',
         ], 0)
-
-        # trigger clean_other_fields
-        _fields = ((n, f) for n, f in self.fields.items()
-                   if hasattr(f, 'clean_other_fields'))
-        for field_name, field in _fields:
-            field.clean_other_fields(self.cleaned_data, self.cleaned_data.get(field_name))
 
         return super().clean()
 

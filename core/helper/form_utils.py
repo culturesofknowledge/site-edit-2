@@ -1,4 +1,5 @@
 import logging
+import warnings
 from typing import Iterable
 
 from django import forms
@@ -73,7 +74,9 @@ class ThreeFieldDateField(forms.Field):
     """
     remember update form (get_initial_for_field, clean) to trigger
     get_initial_by_initial_dict, clean_other_fields
+    TOBEREMOVE no longer need
     """
+    warnings.warn('ThreeFieldDateField logic no longer used, to be remove', DeprecationWarning)
 
     def __init__(self, year_field_name,
                  month_field_name,

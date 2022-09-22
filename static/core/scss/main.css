@@ -243,7 +243,7 @@ body {
   body {
     padding: 0 calc(1.5vw * 3); } }
 
-.row, .ref-publication-row, .row-spaced {
+.row, .three-date-fields, .ref-publication-row, .row-spaced {
   display: flex;
   flex: 0 1 auto;
   flex-wrap: wrap;
@@ -254,7 +254,7 @@ body {
   justify-content: center; }
 
 @media only screen and (min-width: 768px) {
-  .row, .ref-publication-row, .row-spaced {
+  .row, .three-date-fields, .ref-publication-row, .row-spaced {
     flex-direction: row; } }
 
 .col {
@@ -784,5 +784,10 @@ input[type="radio"] + label {
 .flex-row-wrap {
   display: flex;
   flex-wrap: wrap; }
+
+.three-date-fields {
+  margin: 0px; }
+  .three-date-fields input, .three-date-fields select {
+    width: 80px; }
 
 /*# sourceMappingURL=main.css.map */
