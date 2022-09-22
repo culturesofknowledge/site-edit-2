@@ -10,7 +10,7 @@ SEQ_NAME_COFKUNIONPERSION__IPERSON_ID = 'cofk_union_person_iperson_id_seq'
 
 
 class CofkCollectPerson(models.Model):
-    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
+    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     iperson_id = models.IntegerField()
     # KTODO temporary related_name
     union_iperson = models.ForeignKey('CofkUnionPerson', models.DO_NOTHING, blank=True, null=True,
@@ -58,6 +58,9 @@ class CofkCollectPerson(models.Model):
     class Meta:
         db_table = 'cofk_collect_person'
         unique_together = (('upload', 'iperson_id'),)
+
+    def __str__(self):
+        return f'{self.primary_name} (#{self.iperson_id})'
 
 
 class CofkUnionPerson(models.Model, RecordTracker):

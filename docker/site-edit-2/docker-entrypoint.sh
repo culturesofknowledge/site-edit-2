@@ -19,7 +19,7 @@ python manage.py create_upload_status
 
 # Make migrations
 echo "Load ISO639"
-python manage.py create_iso639
+#python manage.py create_iso639
 
 # Start server
 echo "Starting server"

@@ -1,0 +1,30 @@
+<div id="people">
+    <h1>People and groups</h1>
+    {% if people|length == 1 %}
+    <p>Details of {{ people| length }} new person or group was uploaded in this contribution. </p>
+    {% else %}
+    <p>Details of {{ people | length }} new people or groups were uploaded in this contribution. </p>
+    {% endif %}
+
+</div>
+
+{% for person in people %}
+
+    <p style="font-weight: bold; font-size: larger;">People and groups {{ forloop.counter }} of {{ people | length }}</p>
+
+    <div style="margin: 1em;">
+        <a href="#works">Works</a> - <a href="#people">People</a>
+    </div>
+    <table cellspacing="0" cellpadding="14" border="1" class="review">
+        <tr>
+            <td>#ID</td>
+            <td>{{ person.iperson_id }}</td>
+        </tr>
+        <tr>
+            <td>Primary name</td>
+            <td>{{ person.primary_name }}</td>
+        </tr>
+    </table>
+    <hr/>
+
+{% endfor %}

@@ -29,7 +29,7 @@ urlpatterns = [
     path('location/', include('location.urls')),
     path('person/', include('person.urls')),
     path('publication/', include('publication.urls')),
-    path('upload/', views.upload_view, name='upload'),
+    path('upload/', include('uploader.urls')),
 ]
 
 urlpatterns += static(settings.MEDIA_URL + 'img',
