@@ -12,18 +12,23 @@ def send_email(to: str | Iterable[str],
                content='No content',
                attachments=None,
                **kwargs):
+    if to == '' or to is None or to == []:
+        log.warning('skip send email, [to] should not empty')
+        return
+
     attachments = attachments or []
-    if not isinstance(to, str):
-        to = map(lambda s: f'<{s}>', to)
-        to = ','.join(to)
+    if isinstance(to, str):
+        to = [to, settings.MAILGUN_DOMAIN]
     else:
-        to = f'<{to}>'
+        to = list(to)
+
+    log.debug(f'send email -- [{to=}][{settings.MAILGUN_DOMAIN}][{subject}]')
 
     resp = requests.post(
         f"https://api.mailgun.net/v3/{settings.MAILGUN_DOMAIN}/messages",
         auth=("api", settings.MAILGUN_API_KEY),
         data={
-            "from": f"Mailgun Sandbox <postmaster@{settings.MAILGUN_DOMAIN}>",
+            "from": f"Excited User <mailgun@{settings.MAILGUN_DOMAIN}>",
             "to": to,
             "subject": subject,
             "text": content
@@ -34,5 +39,5 @@ def send_email(to: str | Iterable[str],
         **kwargs,
     )
     if resp.status_code != 200:
-        log.error(f'send mail fail -- [{subject}]')
+        log.error(f'send mail fail -- [{resp.text}][{to}][{subject=}][{settings.MAILGUN_DOMAIN}]')
     return resp

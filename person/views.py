@@ -8,9 +8,10 @@ from django.forms import BaseForm
 from django.shortcuts import render, redirect, get_object_or_404
 
 from core.forms import CommentForm, ResourceForm
-from core.helper import renderer_utils, view_utils, model_utils, query_utils
+from core.helper import renderer_utils, view_utils, model_utils, query_utils, download_csv_utils
 from core.helper.renderer_utils import CompactSearchResultsRenderer
-from core.helper.view_utils import DefaultSearchView, CommonInitFormViewTemplate, ImageHandler
+from core.helper.view_components import DownloadCsvHandler
+from core.helper.view_utils import CommonInitFormViewTemplate, ImageHandler, BasicSearchView
 from location.models import CofkUnionLocation
 from person.forms import PersonForm, GeneralSearchFieldset
 from person.models import CofkUnionPerson, CofkPersonLocationMap, CofkPersonPersonMap
@@ -233,7 +234,7 @@ def full_form(request, iperson_id):
     return fhandler.render_form(request)
 
 
-class PersonSearchView(DefaultSearchView):
+class PersonSearchView(BasicSearchView):
 
     @property
     def title(self) -> str:
@@ -308,3 +309,64 @@ class PersonSearchView(DefaultSearchView):
         #         request_data[k] = v
 
         return [GeneralSearchFieldset(request_data)]
+
+    @property
+    def download_csv_handler(self) -> DownloadCsvHandler:
+        return PersonDownloadCsvHandler()
+
+
+class PersonDownloadCsvHandler(DownloadCsvHandler):
+    def get_header_list(self) -> list[str]:
+        return [
+            "ID",
+            "Name",
+            "Born",
+            "Died",
+            "Flourished",
+            "Org?",
+            "Type of group",
+            "Sent",
+            "Recd",
+            "All works",
+            "Researchers notes",
+            "Related resources",
+            "Mentioned",
+            "Editor's notes",
+            "Further reading",
+            "Images",
+            "Change user",
+            "Change timestamp",
+        ]
+
+    @staticmethod
+    def to_date_str(year, month, day) -> str:
+        if year and not month and not day:
+            return str(year)
+
+        return f'{year}-{month}-{day}'
+
+    def obj_to_values(self, obj) -> Iterable[Any]:
+        obj: CofkUnionPerson
+        org_type = obj.organisation_type
+        org_type = org_type.org_type_desc if org_type else ''
+        values = [
+            obj.iperson_id,
+            obj.foaf_name,
+            self.to_date_str(obj.date_of_birth_year, obj.date_of_birth_month, obj.date_of_birth_day),
+            self.to_date_str(obj.date_of_death_year, obj.date_of_death_month, obj.date_of_death_day),
+            self.to_date_str(obj.flourished_year, obj.flourished_month, obj.flourished_day),
+            obj.is_organisation,
+            org_type,
+            '0',  # KTODO send value
+            '0',  # KTODO recd value
+            '0',  # KTODO All works, should be send + recd
+            download_csv_utils.join_comment_lines(obj.comments.iterator()),
+            download_csv_utils.join_resource_lines(obj.resources.iterator()),
+            '',  # KTODO mentioned
+            obj.editors_notes,
+            obj.further_reading,
+            download_csv_utils.join_image_lines(obj.images.iterator()),
+            obj.change_timestamp,
+            obj.change_user,
+        ]
+        return values

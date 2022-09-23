@@ -7,7 +7,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView
 
 from core.forms import CommentForm, ResourceForm
-from core.helper import model_utils, view_utils, renderer_utils, query_utils
+from core.helper import model_utils, view_utils, renderer_utils, query_utils, download_csv_utils
 from core.helper.model_utils import RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
@@ -244,8 +244,8 @@ class LocationDownloadCsvHandler(DownloadCsvHandler):
             '0',  # KTODO send value
             '0',  # KTODO recd value
             '0',  # KTODO All works, should be send + recd
-            ' ~ '.join(r.comment for r in obj.comments.iterator()),
-            ' ~ '.join(r.resource_url for r in obj.resources.iterator()),
+            download_csv_utils.join_comment_lines(obj.comments.iterator()),
+            download_csv_utils.join_resource_lines(obj.resources.iterator()),
             obj.latitude,
             obj.longitude,
             obj.element_1_eg_room,
@@ -255,9 +255,8 @@ class LocationDownloadCsvHandler(DownloadCsvHandler):
             obj.element_5_eg_county,
             obj.element_6_eg_country,
             obj.element_7_eg_empire,
-            ' ~ '.join(r.image_filename for r in obj.images.iterator()),
+            download_csv_utils.join_image_lines(obj.images.iterator()),
             obj.change_timestamp,
             obj.change_user,
         )
-        values = map(str, values)
         return values
