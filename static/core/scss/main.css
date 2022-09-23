@@ -243,7 +243,7 @@ body {
   body {
     padding: 0 calc(1.5vw * 3); } }
 
-.row, .row-date-fields, .ref-publication-row, .row-spaced {
+.row, .row-no-margin, .row-date-fields, .ref-publication-row, .row-spaced {
   display: flex;
   flex: 0 1 auto;
   flex-wrap: wrap;
@@ -254,7 +254,7 @@ body {
   justify-content: center; }
 
 @media only screen and (min-width: 768px) {
-  .row, .row-date-fields, .ref-publication-row, .row-spaced {
+  .row, .row-no-margin, .row-date-fields, .ref-publication-row, .row-spaced {
     flex-direction: row; } }
 
 .col {
@@ -785,9 +785,10 @@ input[type="radio"] + label {
   display: flex;
   flex-wrap: wrap; }
 
-.row-date-fields {
-  margin: 0px; }
-  .row-date-fields input, .row-date-fields select {
-    width: 80px; }
+.row-no-margin, .row-date-fields {
+  margin: 0; }
+
+.row-date-fields input, .row-date-fields select {
+  width: 80px; }
 
 /*# sourceMappingURL=main.css.map */

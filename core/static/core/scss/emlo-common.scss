@@ -151,9 +151,13 @@
   flex-wrap: wrap;
 }
 
-.row-date-fields{
+.row-no-margin{
   @extend .row;
-  margin: 0px;
+  margin: 0;
+}
+
+.row-date-fields{
+  @extend .row-no-margin;
 
   input, select {
     width: 80px;

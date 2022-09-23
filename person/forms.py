@@ -1,6 +1,7 @@
 import logging
 
 from django import forms
+from django.db.models import TextChoices
 from django.forms import ModelForm, CharField
 
 from core.helper import form_utils
@@ -189,6 +190,22 @@ class PersonForm(ModelForm):
         return super().clean()
 
 
+class StrLookupChoices(TextChoices):
+    CONTAINS = 'contains', 'contains',
+    DOES_NOT_CONTAIN = 'does_not_contain', 'does not contain',
+
+    STARTS_WITH = 'starts_with', 'starts with',
+    DOES_NOT_START_WITH = 'does_not_start_with', 'does not start with',
+    ENDS_WITH = 'ends_with', 'ends with',
+    DOES_NOT_END_WITH = 'does_not_end_with', 'does not end with',
+
+    EQUALS = 'equals', 'equals',
+    IS_NOT_EQUAL_TO = 'is_not_equal_to', 'is not equal to',
+
+    IS_BLANK = 'is_blank', 'is blank',
+    IS_NOT_BLANK = 'is_not_blank', 'is not blank',
+
+
 class GeneralSearchFieldset(forms.Form):
     title = 'General'
     template_name = 'person/component/person_search_fieldset.html'
@@ -208,7 +225,10 @@ class GeneralSearchFieldset(forms.Form):
     # element_7_eg_empire = forms.CharField(required=False)
 
     iperson_id = forms.IntegerField(required=False)
+
     foaf_name = forms.CharField(required=False)
+    foaf_name_lookup = CharField(required=False,
+                                 widget=forms.Select(choices=StrLookupChoices.choices), )
 
     birth_year_from = create_year_field()
     birth_year_to = create_year_field()

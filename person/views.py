@@ -3,7 +3,7 @@ from typing import Callable, Iterable, Type, Optional, Any, NoReturn
 
 from django.db import models
 from django.db.models import F
-from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual, Exact, IContains
+from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual, Exact
 from django.forms import BaseForm
 from django.shortcuts import render, redirect, get_object_or_404
 
@@ -259,7 +259,6 @@ class PersonSearchView(DefaultSearchView):
 
         field_fn_maps = {
             'iperson_id': Exact,
-            'foaf_name': IContains,
             'birth_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_birth_year'), v),
             'birth_year_to': lambda _, v: LessThanOrEqual(F('date_of_birth_year'), v),
             'death_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_death_year'), v),
@@ -271,6 +270,12 @@ class PersonSearchView(DefaultSearchView):
         queryset = CofkUnionPerson.objects.all()
 
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
+        queries.extend(
+            query_utils.create_queries_by_lookup_field(self.request_data, [
+                'foaf_name'
+            ])
+        )
+
         if queries:
             queryset = queryset.filter(query_utils.all_queries_match(queries))
 
@@ -288,4 +293,12 @@ class PersonSearchView(DefaultSearchView):
 
     @property
     def query_fieldset_list(self) -> Iterable:
-        return [GeneralSearchFieldset(self.request_data)]
+        default_values = {
+            'foaf_name_lookup': 'starts_with',
+        }
+        request_data = default_values | self.request_data.dict()
+        # for k, v in default_values.items():
+        #     if k not in request_data:
+        #         request_data[k] = v
+
+        return [GeneralSearchFieldset(request_data)]
