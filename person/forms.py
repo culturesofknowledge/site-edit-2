@@ -23,11 +23,28 @@ person_gender_choices = [
 ]
 
 
+class YesEmptyCheckboxField(forms.CharField):
+    def __init__(self, *args, **kwargs):
+        widget = forms.CheckboxInput({'class': 'elcheckbox'},
+                                     check_test=lambda v: v == 'Y')
+        default_kwargs = dict(
+            widget=widget,
+            initial='',
+            required=False,
+        )
+        kwargs = default_kwargs | kwargs
+        super().__init__(*args, **kwargs)
+
+    def clean(self, value):
+        new_value = super().clean(value)
+        return 'Y' if new_value == 'True' else ''
+
+
 class PersonForm(ModelForm):
     gender = CharField(required=False,
                        widget=forms.RadioSelect(choices=person_gender_choices))
 
-    is_organisation = form_utils.ZeroOneCheckboxField(required=False, initial='1', )
+    is_organisation = YesEmptyCheckboxField()
     roles_titles = forms.CharField(required=False,
                                    widget=forms.CheckboxSelectMultiple(
                                        choices=[
@@ -189,10 +206,10 @@ class GeneralSearchFieldset(forms.Form):
         ]
     ))
 
-    person_or_group = forms.CharField(widget=forms.Select(choices=[
+    person_or_group = forms.CharField(required=False, widget=forms.Select(choices=[
         (None, 'All'),
-        (0, 'Person'),
-        ('Y', 'Group'),
+        ('P', 'Person'),
+        ('G', 'Group'),
     ]))
 
     editors_notes = forms.CharField(required=False)

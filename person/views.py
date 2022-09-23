@@ -261,6 +261,7 @@ class PersonSearchView(DefaultSearchView):
 
         field_fn_maps = {
             'gender': lambda f, v: Exact(F(f), '' if v == 'U' else v),
+            'person_or_group': lambda _, v: Exact(F('is_organisation'), 'Y' if v == 'G' else ''),
             'birth_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_birth_year'), v),
             'birth_year_to': lambda _, v: LessThanOrEqual(F('date_of_birth_year'), v),
             'death_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_death_year'), v),

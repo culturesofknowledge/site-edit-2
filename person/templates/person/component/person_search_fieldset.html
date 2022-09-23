@@ -11,6 +11,8 @@
 
     {% include "core/component/common_field_layout.html" with field=form.gender %}
 
+    {% include "core/component/common_field_layout.html" with field=form.person_or_group %}
+
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.editors_notes field_lookup=form.editors_notes_lookup %}
 
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.further_reading field_lookup=form.further_reading_lookup %}
