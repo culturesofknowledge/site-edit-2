@@ -257,14 +257,18 @@ class PersonSearchView(DefaultSearchView):
     def get_queryset(self):
         # KTODO
 
+        # KTODO person_or_group
+
         field_fn_maps = {
-            'iperson_id': Exact,
+            'gender': lambda f, v: Exact(F(f), '' if v == 'U' else v),
             'birth_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_birth_year'), v),
             'birth_year_to': lambda _, v: LessThanOrEqual(F('date_of_birth_year'), v),
             'death_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_death_year'), v),
             'death_year_to': lambda _, v: LessThanOrEqual(F('date_of_death_year'), v),
             'flourished_year_from': lambda _, v: GreaterThanOrEqual(F('flourished_of_death_year'), v),
             'flourished_year_to': lambda _, v: LessThanOrEqual(F('flourished_of_death_year'), v),
+            'change_timestamp_from': lambda _, v: GreaterThanOrEqual(F('change_timestamp'), v),
+            'change_timestamp_to': lambda _, v: LessThanOrEqual(F('change_timestamp'), v),
         }
 
         queryset = CofkUnionPerson.objects.all()
@@ -272,7 +276,8 @@ class PersonSearchView(DefaultSearchView):
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
         queries.extend(
             query_utils.create_queries_by_lookup_field(self.request_data, [
-                'foaf_name'
+                'foaf_name', 'iperson_id', 'editors_notes',
+                'further_reading', 'change_user'
             ])
         )
 

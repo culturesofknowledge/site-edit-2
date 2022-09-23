@@ -1,10 +1,9 @@
 import logging
 
 from django import forms
-from django.db.models import TextChoices
 from django.forms import ModelForm, CharField
 
-from core.helper import form_utils
+from core.helper import form_utils, widgets_utils
 from person.models import CofkUnionPerson
 
 log = logging.getLogger(__name__)
@@ -17,44 +16,16 @@ calendar_date_choices = [
     ("O", 'Other'),
 ]
 
-short_month_choices = [
-    (None, ''),
-    (1, 'Jan'),
-    (2, 'Feb'),
-    (3, 'Mar'),
-    (4, 'Apr'),
-    (5, 'May'),
-    (6, 'Jun'),
-    (7, 'Jul'),
-    (8, 'Aug'),
-    (9, 'Sep'),
-    (10, 'Oct'),
-    (11, 'Nov'),
-    (12, 'Dec'),
+person_gender_choices = [
+    ('M', 'Male'),
+    ('F', 'Female'),
+    ('', 'Unknown or not applicable'),
 ]
-
-
-def create_day_field(required=False):
-    return forms.IntegerField(required=required, min_value=1, max_value=31)
-
-
-def create_month_field(required=False):
-    return forms.IntegerField(required=required,
-                              widget=forms.Select(choices=short_month_choices))
-
-
-def create_year_field(required=False):
-    return forms.IntegerField(required=required, min_value=1, max_value=9999)
 
 
 class PersonForm(ModelForm):
     gender = CharField(required=False,
-                       widget=forms.RadioSelect(choices=[
-                           ('M', 'Male'),
-                           ('F', 'Female'),
-                           ('', 'Unknown or not applicable'),
-                       ])
-                       )
+                       widget=forms.RadioSelect(choices=person_gender_choices))
 
     is_organisation = form_utils.ZeroOneCheckboxField(required=False, initial='1', )
     roles_titles = forms.CharField(required=False,
@@ -92,9 +63,9 @@ class PersonForm(ModelForm):
                                    )
                                    )
 
-    date_of_birth_year = create_year_field()
-    date_of_birth_month = create_month_field()
-    date_of_birth_day = create_day_field()
+    date_of_birth_year = form_utils.create_year_field()
+    date_of_birth_month = form_utils.create_month_field()
+    date_of_birth_day = form_utils.create_day_field()
     date_of_birth_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_birth_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_birth_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
@@ -102,9 +73,9 @@ class PersonForm(ModelForm):
     date_of_birth_calendar = forms.CharField(required=False,
                                              widget=forms.RadioSelect(choices=calendar_date_choices, ))
 
-    date_of_death_year = create_year_field()
-    date_of_death_month = create_month_field()
-    date_of_death_day = create_day_field()
+    date_of_death_year = form_utils.create_year_field()
+    date_of_death_month = form_utils.create_month_field()
+    date_of_death_day = form_utils.create_day_field()
     date_of_death_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_death_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_death_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
@@ -112,9 +83,9 @@ class PersonForm(ModelForm):
     date_of_death_calendar = forms.CharField(required=False,
                                              widget=forms.RadioSelect(choices=calendar_date_choices, ))
 
-    flourished_year = create_year_field()
-    flourished_month = create_month_field()
-    flourished_day = create_day_field()
+    flourished_year = form_utils.create_year_field()
+    flourished_month = form_utils.create_month_field()
+    flourished_day = form_utils.create_day_field()
     flourished_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     flourished_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     flourished_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
@@ -190,51 +161,48 @@ class PersonForm(ModelForm):
         return super().clean()
 
 
-class StrLookupChoices(TextChoices):
-    CONTAINS = 'contains', 'contains',
-    DOES_NOT_CONTAIN = 'does_not_contain', 'does not contain',
-
-    STARTS_WITH = 'starts_with', 'starts with',
-    DOES_NOT_START_WITH = 'does_not_start_with', 'does not start with',
-    ENDS_WITH = 'ends_with', 'ends with',
-    DOES_NOT_END_WITH = 'does_not_end_with', 'does not end with',
-
-    EQUALS = 'equals', 'equals',
-    IS_NOT_EQUAL_TO = 'is_not_equal_to', 'is not equal to',
-
-    IS_BLANK = 'is_blank', 'is blank',
-    IS_NOT_BLANK = 'is_not_blank', 'is not blank',
-
-
 class GeneralSearchFieldset(forms.Form):
     title = 'General'
     template_name = 'person/component/person_search_fieldset.html'
 
-    # location_name = forms.CharField(required=False,
-    #                           widget=forms.TextInput(attrs={'placeholder': 'xxxx'}))
-    # location_id = forms.IntegerField(required=False)
-    # editors_notes = forms.CharField(required=False)
-    # latitude = forms.IntegerField(required=False)
-    # longitude = forms.IntegerField(required=False)
-    # element_1_eg_room = forms.CharField(required=False)
-    # element_2_eg_building = forms.CharField(required=False)
-    # element_3_eg_parish = forms.CharField(required=False)
-    # element_4_eg_city = forms.CharField(required=False)
-    # element_5_eg_county = forms.CharField(required=False)
-    # element_6_eg_country = forms.CharField(required=False)
-    # element_7_eg_empire = forms.CharField(required=False)
-
     iperson_id = forms.IntegerField(required=False)
+    iperson_id_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
     foaf_name = forms.CharField(required=False)
-    foaf_name_lookup = CharField(required=False,
-                                 widget=forms.Select(choices=StrLookupChoices.choices), )
+    foaf_name_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    birth_year_from = create_year_field()
-    birth_year_to = create_year_field()
+    birth_year_from = form_utils.create_year_field()
+    birth_year_to = form_utils.create_year_field()
 
-    death_year_from = create_year_field()
-    death_year_to = create_year_field()
+    death_year_from = form_utils.create_year_field()
+    death_year_to = form_utils.create_year_field()
 
-    flourished_year_from = create_year_field()
-    flourished_year_to = create_year_field()
+    flourished_year_from = form_utils.create_year_field()
+    flourished_year_to = form_utils.create_year_field()
+
+    gender = forms.CharField(required=False, widget=forms.Select(
+        choices=[
+            (None, 'All'),
+            ('M', 'Male'),
+            ('F', 'Female'),
+            ('U', 'Unknown or not applicable'),
+        ]
+    ))
+
+    person_or_group = forms.CharField(widget=forms.Select(choices=[
+        (None, 'All'),
+        (0, 'Person'),
+        ('Y', 'Group'),
+    ]))
+
+    editors_notes = forms.CharField(required=False)
+    editors_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    further_reading = forms.CharField(required=False)
+    further_reading_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    change_timestamp_from = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
+    change_timestamp_to = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
+
+    change_user = forms.CharField(required=False)
+    change_user_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)

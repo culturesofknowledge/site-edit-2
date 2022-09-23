@@ -3,11 +3,28 @@ import warnings
 from typing import Iterable
 
 from django import forms
+from django.db.models import TextChoices
 from django.template.loader import render_to_string
 
 from core.helper import widgets_utils
 
 log = logging.getLogger(__name__)
+
+short_month_choices = [
+    (None, ''),
+    (1, 'Jan'),
+    (2, 'Feb'),
+    (3, 'Mar'),
+    (4, 'Apr'),
+    (5, 'May'),
+    (6, 'Jun'),
+    (7, 'Jul'),
+    (8, 'Aug'),
+    (9, 'Sep'),
+    (10, 'Oct'),
+    (11, 'Nov'),
+    (12, 'Dec'),
+]
 
 
 def record_tracker_label_fn_factory(subject='Entry'):
@@ -114,3 +131,56 @@ class ThreeFieldDateField(forms.Field):
         ) = date_values
 
         return cleaned_data
+
+
+class IntLookupChoices(TextChoices):
+    EQUALS = 'equals', 'equals',
+    IS_NOT_EQUAL_TO = 'is_not_equal_to', 'is not equal to',
+
+    LESS_THAN = 'less_than', 'less than'
+    GREATER_THAN = 'great_than', 'great than'
+
+    IS_BLANK = 'is_blank', 'is blank',
+    IS_NOT_BLANK = 'is_not_blank', 'is not blank',
+
+
+class StrLookupChoices(TextChoices):
+    CONTAINS = 'contains', 'contains',
+    DOES_NOT_CONTAIN = 'does_not_contain', 'does not contain',
+
+    STARTS_WITH = 'starts_with', 'starts with',
+    DOES_NOT_START_WITH = 'does_not_start_with', 'does not start with',
+    ENDS_WITH = 'ends_with', 'ends with',
+    DOES_NOT_END_WITH = 'does_not_end_with', 'does not end with',
+
+    EQUALS = 'equals', 'equals',
+    IS_NOT_EQUAL_TO = 'is_not_equal_to', 'is not equal to',
+
+    IS_BLANK = 'is_blank', 'is blank',
+    IS_NOT_BLANK = 'is_not_blank', 'is not blank',
+
+
+class EqualSimpleLookupChoices(TextChoices):
+    EQUALS = 'equals', 'equals',
+    IS_NOT_EQUAL_TO = 'is_not_equal_to', 'is not equal to',
+
+    IS_BLANK = 'is_blank', 'is blank',
+    IS_NOT_BLANK = 'is_not_blank', 'is not blank',
+
+
+def create_day_field(required=False):
+    return forms.IntegerField(required=required, min_value=1, max_value=31)
+
+
+def create_month_field(required=False):
+    return forms.IntegerField(required=required,
+                              widget=forms.Select(choices=short_month_choices))
+
+
+def create_year_field(required=False):
+    return forms.IntegerField(required=required, min_value=1, max_value=9999)
+
+
+def create_lookup_field(choices, required=False):
+    return forms.CharField(required=required,
+                           widget=forms.Select(choices=choices), )

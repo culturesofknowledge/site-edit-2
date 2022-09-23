@@ -151,15 +151,23 @@
   flex-wrap: wrap;
 }
 
-.row-no-margin{
+.row-no-margin {
   @extend .row;
   margin: 0;
 }
 
-.row-date-fields{
+.row-date-fields {
   @extend .row-no-margin;
 
   input, select {
     width: 80px;
+  }
+}
+
+.row-from-to {
+  @extend .row-no-margin;
+
+  input, select {
+    @extend .col--2of5;
   }
 }
