@@ -78,8 +78,15 @@ class CofkPeople(CofkEntity):
         if isinstance(self.row_data[ids], str) and ';' in self.row_data[names]:
             names_list = [n.strip() for n in self.row_data[names].split(';')]
 
+            if '' in names_list:
+                self.add_error(ValidationError(f'Encountered an empty value for a name in {names}.'), 'work')
+
             try:
                 ids_list = [int(i) for i in self.row_data[ids].split(';')]
+
+                if len(ids_list) < len(names_list):
+                    # New people entries
+                    ids_list += [None] * (len(names_list) - len(ids_list))
 
                 return list(zip(names_list, ids_list))
             except ValueError:
@@ -141,12 +148,12 @@ class CofkPeople(CofkEntity):
 
         if unique_work_people != unique_sheet_people:
             if unique_work_people > unique_sheet_people:
-                ppl = [f'{p[0]} #{p[1]}' for p in list(unique_sheet_people - unique_work_people)]
+                ppl = [f'{p[0]} #{p[1]}' for p in list(unique_work_people - unique_sheet_people)]
                 ppl_joined = ', '.join(ppl)
                 self.add_error(ValidationError(f'The person {ppl_joined} is referenced in the Work spreadsheet'
                                                f' but is missing from the People spreadsheet'))
             elif unique_work_people < unique_sheet_people:
-                ppl = [str(p) for p in list(unique_work_people - unique_sheet_people)]
+                ppl = [str(p) for p in list(unique_sheet_people - unique_work_people)]
                 ppl_joined = ', '.join(ppl)
                 self.add_error(ValidationError(f'The person {ppl_joined} is referenced in the People spreadsheet'
                                                f' but is missing from the Work spreadsheet'))

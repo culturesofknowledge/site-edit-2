@@ -5,7 +5,7 @@ from core.helper.model_utils import RecordTracker
 
 
 class CofkCollectStatus(models.Model):
-    status_id = models.IntegerField(primary_key=True)
+    status_id = models.AutoField(primary_key=True)
     status_desc = models.CharField(max_length=100)
     editable = models.IntegerField(null=False, default=1)  # TODO schema changed for current system
 

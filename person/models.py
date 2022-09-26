@@ -11,7 +11,7 @@ SEQ_NAME_COFKUNIONPERSION__IPERSON_ID = 'cofk_union_person_iperson_id_seq'
 
 class CofkCollectPerson(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
-    iperson_id = models.IntegerField()
+    iperson_id = models.IntegerField(blank=True, null=True)
     # KTODO temporary related_name
     union_iperson = models.ForeignKey('CofkUnionPerson', models.DO_NOTHING, blank=True, null=True,
                                       related_name='union_collect_persons')

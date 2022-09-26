@@ -5,7 +5,7 @@
     <h1>Works</h1>
 
     <p>Details of {{ works| length }} new work{{ works|pluralize:" was,s were" }} uploaded in this contribution.</p>
-    You can export details of the work{{ works|pluralize:",s"}} in this contribution to a spreadsheet <button>Export</button>
+    <!--You can export details of the work{{ works|pluralize:",s"}} in this contribution to a spreadsheet <button>Export</button>-->
 
 </div>
 
@@ -21,7 +21,7 @@
         <tr>
             <td class="header">Status and possible actions</td>
             <td><strong>{{ work.upload_status }}</strong> (Collect ID: {{ work.iwork_id}})<br/>
-                <button>Accept</button> <button>Reject</button><br/>
+                <button disabled>Accept</button> <button>Reject</button><br/>
                 Note: confirmation will be required before Accept/Reject of work</td>
         </tr>
         <tr>

@@ -39,7 +39,6 @@ class CofkManifestations(CofkEntity):
 
         # Isolating data relevant to a work
         non_work_keys = list(set(self.row_data.keys()) - set([c for c in CofkCollectManifestation.__dict__.keys()]))
-        log.debug(non_work_keys)
 
         # Removing non work data so that variable work_data_raw can be used to pass parameters
         # to create a CofkCollectWork object
@@ -60,12 +59,8 @@ class CofkManifestations(CofkEntity):
             pass
 
         self.preprocess_data()
-
         self.row_data['upload'] = self.upload
-
         work = None
-
-        log.debug(self.works.works)
 
         try:
             work = [w2 for w2 in self.works.works if

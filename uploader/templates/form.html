@@ -60,9 +60,9 @@
                     </ul>
                 </details>
                 {% else %}
-                {% for error in properties.error %}
-                    <span style="color: #f00;">{{ error }}</span></br>
-                {% endfor %}
+                    {% for error in properties.error %}
+                        <span style="color: #f00;">{{ error }}</span></br>
+                    {% endfor %}
                 {% endif %}
             {% endfor %}
 
@@ -84,7 +84,7 @@
         <th>Rejected</th>
         <th>Status</th>
         <td></td>
-        <td></td>
+        <!--<td></td>-->
     </tr>
 {% for upload in uploads %}
     <tr>
@@ -98,7 +98,7 @@
         <td>{{ upload.works_rejected }}</td>
         <td>{{ upload.upload_status }}</td>
         <td><form action="/upload/{{ upload.upload_id }}"><input type="submit" value="Review"></form></td>
-        <td><input type="button" value="Export"></td>
+        <!--<td><input type="button" value="Export"></td>-->
 
     </tr>
 {% endfor %}

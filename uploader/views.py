@@ -13,6 +13,7 @@ from pandas._config.config import OptionError
 from institution.models import CofkCollectInstitution
 from location.models import CofkCollectLocation
 from manifestation.models import CofkCollectManifestation
+from person.models import CofkCollectPerson
 from uploader.forms import CofkCollectUploadForm
 from django.conf import settings
 
@@ -86,10 +87,10 @@ def handle_upload(request, context):
             context['report']['total_errors'] = 1
             context['report']['errors'] = {'file': {'total': 1, 'error': ['Could not read the Excel file.']}}
             log.error(e)
-        #except Exception as e:
-        #    context['report']['total_errors'] = 1
-        #    context['error'] = 'Indeterminate error.'
-        #    log.error(e)
+        except Exception as e:
+            context['report']['total_errors'] = 1
+            context['error'] = 'Indeterminate error.'
+            log.error(e)
 
         if cuef and cuef.errors:
             log.error('Deleting new upload')
@@ -133,8 +134,6 @@ def upload_view(request, **kwargs):
 def upload_review(request, upload_id, **kwargs):
     template_url = 'review.html'
     upload = CofkCollectUpload.objects.filter(upload_id=upload_id).first()
-    # works = [CofkCollectWorkForm(instance=w) for w in CofkCollectWork.objects.filter(upload=upload)]
-    work_form = 0  # CofkCollectWorkForm(instance=works[0])
 
     context = {'upload': upload,
                'works': CofkCollectWork.objects.filter(upload=upload),
@@ -142,6 +141,9 @@ def upload_review(request, upload_id, **kwargs):
                'addressees': CofkCollectAddresseeOfWork.objects.filter(upload=upload),
                'mentioned': CofkCollectPersonMentionedInWork.objects.filter(upload=upload),
                'languages': CofkCollectLanguageOfWork.objects.filter(upload=upload),
+               # Authors, addressees and mentinoed link to People, here we're only
+               # passing new people for review purposes
+               'people': CofkCollectPerson.objects.filter(upload=upload, iperson_id__isnull=True),
                'places': CofkCollectLocation.objects.filter(upload=upload),
                'institutions': CofkCollectInstitution.objects.filter(upload=upload),
                'manifestations': CofkCollectManifestation.objects.filter(upload=upload),
