@@ -1,0 +1,4 @@
+*.gz
+*.pg-dumpall
+data/
+files/

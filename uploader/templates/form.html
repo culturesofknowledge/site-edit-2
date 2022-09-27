@@ -1,10 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "emlo_base.html" %}
+
+{% block content %}
+
 <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
 
@@ -13,10 +10,98 @@
     <input type="submit">
 </form>
 
-<ul>
-    {% for error in errors %}
-        <li>{{ error }}</li>
-    {% endfor %}
-</ul>
-</body>
-</html>
+{% if report %}
+<ol class="unstyled-list">
+
+    <li class="search-result">
+        <article class="row">
+            <div class="col col--4of6">
+                <p class="fw-700 search-result__date">
+                    <small>
+                        <time datetime="1753-01-05">{{ report.time }}</time>
+                    </small>
+                </p>
+                <h3>
+                    <span style="color: #f00;">&#x2717;</span> {{ report.file }}
+                </h3>
+                {% if report.elapsed %}
+                <p class="fw-700 search-result__date">
+                    <small>Processing time: {{ report.elapsed }}</small>
+                </p>
+                {% endif %}
+                <p class="fw-700 search-result__date">
+                    <small>File size: {{ report.size }} kb</small>
+                </p>
+                {% if report.total_errors > 1 %}
+                <p class="fw-700 search-result__date">
+                    <small>Errors: {{ report.total_errors }}</small>
+                </p>
+                {% endif %}
+
+                {% for entity, properties in report.errors.items %}
+
+                {% if entity != 'file' %}
+                <details class="search-results__abstract">
+                    <summary class="fw-700">{{ entity }} ({{ properties.total }})</summary>
+                    <ul>
+                    {% for row in properties.errors %}
+
+                        <li>Row: {{ row.row }}<br/>
+
+                            <ul>
+                            {% for row_error in row.errors %}
+                                <li>{{ row_error }}</li>
+                            {% endfor %}
+                            </ul>
+
+                        </li>
+
+                    {% endfor %}
+                    </ul>
+                </details>
+                {% else %}
+                    {% for error in properties.error %}
+                        <span style="color: #f00;">{{ error }}</span></br>
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+
+        </div>
+
+      </article>
+    </li>
+</ol>
+{% endif %}
+
+<table border="1" class="uploads">
+    <tr>
+        <th>ID</th>
+        <th>Date/time</th>
+        <th>Source of data</th>
+        <th>Contact email</th>
+        <th>Works uploaded</th>
+        <th>Accepted</th>
+        <th>Rejected</th>
+        <th>Status</th>
+        <td></td>
+        <!--<td></td>-->
+    </tr>
+{% for upload in uploads %}
+    <tr>
+
+        <td>{{ upload.upload_id }}</td>
+        <td>{{ upload.upload_timestamp }}</td>
+        <td>{{ upload.upload_name }}</td>
+        <td>{{ upload.uploader_email }}</td>
+        <td>{{ upload.total_works }}</td>
+        <td>{{ upload.works_accepted }}</td>
+        <td>{{ upload.works_rejected }}</td>
+        <td>{{ upload.upload_status }}</td>
+        <td><form action="/upload/{{ upload.upload_id }}"><input type="submit" value="Review"></form></td>
+        <!--<td><input type="button" value="Export"></td>-->
+
+    </tr>
+{% endfor %}
+</table>
+
+{% endblock %}

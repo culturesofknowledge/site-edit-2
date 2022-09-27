@@ -30,7 +30,7 @@ db.sqlite3
 db.sqlite3-journal
 
 # Environments
-.env
+docker/site-edit-2/.env
 .venv
 env/
 venv/
@@ -45,6 +45,7 @@ staticfiles/
 data/
 files/
 
-
 # dev environment file
 siteedit2/settings/local_dev.py
+# */migrations
+

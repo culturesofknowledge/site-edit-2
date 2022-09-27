@@ -1,0 +1,258 @@
+{% load utils  %}
+
+
+<div id="works">
+    <h1>Works</h1>
+
+    <p>Details of {{ works| length }} new work{{ works|pluralize:" was,s were" }} uploaded in this contribution.</p>
+    <!--You can export details of the work{{ works|pluralize:",s"}} in this contribution to a spreadsheet <button>Export</button>-->
+
+</div>
+
+    <hr>
+
+{% for work in works %}
+    <p style="font-weight: bold; font-size: larger;">Work {{ forloop.counter }} of {{ works | length }}</p>
+
+    <div style="margin: 1em;">
+        <a href="#works">Works</a> - <a href="#people">People</a>
+    </div>
+    <table cellspacing="0" cellpadding="14" border="1" class="review">
+        <tr>
+            <td class="header">Status and possible actions</td>
+            <td><strong>{{ work.upload_status }}</strong> (Collect ID: {{ work.iwork_id}})<br/>
+                <button disabled>Accept</button> <button>Reject</button><br/>
+                Note: confirmation will be required before Accept/Reject of work</td>
+        </tr>
+        <tr>
+            <td class="header">Date of work</td>
+            <td>{{ work.display_daterange }}
+
+                {% if work.date_of_work_as_marked %}
+                    <br/>As marked: {{ work.date_of_work_as_marked }}
+                {% endif %}
+
+                {% if work.display_original_calendar %}
+                    <br/>Original calendar: {{ work.display_original_calendar }}
+                {% endif %}
+
+                {% if work.display_date_issues %}
+                    <br/>Issues with date of work: {{ work.display_date_issues }}
+                {% endif %}
+
+                {% if work.notes_on_date_of_work %}
+                    <br/>Notes on date: {{ work.notes_on_date_of_work }}
+                {% endif %}
+
+            </td>
+        </tr>
+        <tr>
+            <td class="header">Author{{ authors|pluralize:",s" }}</td>
+            <td>
+                {% if authors|length > 1 %}
+                    <ul>
+                {% endif %}
+
+                {% for author in authors|filter_by_work:work %}
+                    {% if authors|length > 1 %}
+                        <li>
+                    {% endif %}
+                    {% if author.iperson.person %}
+                        {{ author.iperson.person.foaf_name }}
+                    {% else %}
+                        {{ author }}
+                    {% endif %}
+                    {% if authors|length > 1 %}
+                        </li>
+                    {% else %}
+                        <br/>
+                    {% endif %}
+                {% endfor %}
+                {% if authors|length > 1 %}
+                    </ul>
+                {% else %}
+                <br/>
+                {% endif %}
+
+                {% if work.authors_as_marked %}
+                    As marked: {{ work.authors_as_marked }}
+                {% endif %}
+
+                {% if work.display_authors_issues %}
+                    <br/>Issues with author{{ authors|pluralize:",s" }}: {{ work.display_authors_issues }}
+                {% endif %}
+
+                {% if work.notes_on_authors %}
+                    <br/>Notes on author{{ authors|pluralize:",s" }}: {{ work.notes_on_authors }}
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td class="header">Origin</td>
+            <td>{% if work.origin.union_location %}
+                    {{ work.origin.union_location }}
+                {% else %}
+                    {{ work.origin }}
+                {% endif %}
+
+                {% if work.origin_as_marked %}
+                    <br/>As marked: {{ work.origin_as_marked }}
+                {% endif %}
+
+                {% if work.display_origin_issues %}
+                    <br/>Issues with origin: {{ work.display_origin_issues }}
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td class="header">Addressee{{ addressees|pluralize:",s" }}</td>
+            <td>{% for addressee in addressees|filter_by_work:work %}
+                    {% if addressee.iperson.person %}
+                        {{ addressee.iperson.person.foaf_name }}
+                    {% else %}
+                        {{ addressee }}<br/>
+                    {% endif %}
+                {% endfor %}
+
+                {% if work.addressees_as_marked %}
+                    <br/>As marked: {{ work.addressees_as_marked }}
+                {% endif %}
+
+                {% if work.display_authors_issues %}
+                    <br/>Issues with author{{ authors|pluralize:",s" }}: {{ work.display_addressees_issues }}
+                {% endif %}
+
+                {% if work.notes_on_addressees %}
+                    <br/>Notes on author{{ authors|pluralize:",s" }}: {{ work.notes_on_addressees }}
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td class="header">Destination</td>
+            <td>{% if work.destination.union_location %}
+                    {{ work.destination.union_location }}
+                {% else %}
+                    {{ work.destination }}
+                {% endif %}
+
+                {% if work.destination_as_marked %}
+                    <br/>As marked: {{ work.destination_as_marked }}
+                {% endif %}
+
+                {% if work.display_destination_issues %}
+                    <br/>Issues with destination: {{ work.display_destination_issues }}
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td class="header">Languages</td>
+            <td>{% for language in languages|filter_by_work:work %}
+                    {{ language }}<br/>
+                {% endfor %}
+            </td>
+        </tr>
+        {% if work.incipit %}
+        <tr>
+            <td class="header">Incipit</td>
+            <td>{{ work.incipit }}</td>
+        </tr>
+        {% endif %}
+        {% if work.explicit %}
+        <tr>
+            <td class="header">Explicit</td>
+            <td>{{ work.explicit }}</td>
+        </tr>
+        {% endif %}
+        {% if work.abstract %}
+        <tr>
+            <td class="header">Abstract</td>
+            <td>{{ work.abstract }}</td>
+        </tr>
+        {% endif %}
+        {% if work.keywords %}
+        <tr>
+            <td class="header">Keywords</td>
+            <td>{{ work.keywords }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+            <td class="header">{{ mentioned|pluralize:"Person,People" }} mentioned</td>
+            <td>{% for mention in mentioned|filter_by_work:work %}
+                    {% if mention.iperson.person %}
+                        {{ mention.iperson.person.foaf_name }}
+                    {% else %}
+                        {{ mention }}<br/>
+                    {% endif %}
+                {% endfor %}
+
+                {% if work.mentioned_as_marked %}
+                    <br/>As marked: {{ work.mentioned_as_marked }}
+                {% endif %}
+
+                {% if work.display_mentioned_issues %}
+                    <br/>Issues with {{ mentioned|pluralize:"person,people" }} mentioned: {{ work.display_mentioned_issues }}
+                {% endif %}
+
+                {% if work.notes_on_people_mentioned %}
+                    <br/>Notes on {{ mentioned|pluralize:"person,people" }} mentioned: {{ work.notes_on_people_mentioned }}
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td class="header">Repositories and versions</td>
+            <td>
+                <ul>
+                    {% for manifestation in manifestations|filter_by_work:work %}
+                    <li>
+                        {% if manifestation.manifestation_type %}
+                        Document type: {{ manifestation.manifestation_type|document_type }}<br/>
+                        {% endif %}
+
+                        {% if manifestation.repository %}
+                        Repository: {{ manifestation.repository }}<br/>
+                        {% endif %}
+
+                        {% if manifestation.id_number_or_shelfmark %}
+                        Shelfmark: {{ manifestation.id_number_or_shelfmark }}<br/>
+                        {% endif %}
+
+                        {% if manifestation.manifestation_notes %}
+                        Document notes: {{ manifestation.manifestation_notes }}<br/>
+                        {% endif %}
+
+                        {% if manifestation.printed_edition_details %}
+                        Printed edition details: {{ manifestation.printed_edition_details }}<br/>
+                        {% endif %}
+
+                        {{ manifestation.manifestation_type_p }}
+
+                    </li>
+                    {% endfor %}
+                </ul>
+            </td>
+        </tr>
+        {% if work.notes_on_letter %}
+        <tr>
+            <td class="header">General notes</td>
+            <td>{{ work.notes_on_letter }}</td>
+        </tr>
+        {% endif %}
+        {% if work.editors_notes %}
+        <tr>
+            <td class="header">Project editors' notes</td>
+            <td>{{ work.editors_notes }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+            <td class="header">Related resources</td>
+            <td>{% for resource in resources|filter_by_work:work %}
+                    Description: {{ resource.resource_name }}<br/>
+                    URL: <a href="{{ resource.resource_url }}">{{ resource.resource_url }}</a><br/>
+                    Details: {{ resource.resource_details }}<br/>
+                {% endfor %}
+            </td>
+        </tr>
+    </table>
+    <hr/>
+
+{% endfor %}

@@ -5,12 +5,15 @@ from core.helper.model_utils import RecordTracker
 
 
 class CofkCollectStatus(models.Model):
-    status_id = models.IntegerField(primary_key=True)
+    status_id = models.AutoField(primary_key=True)
     status_desc = models.CharField(max_length=100)
     editable = models.IntegerField(null=False, default=1)  # TODO schema changed for current system
 
     class Meta:
         db_table = 'cofk_collect_status'
+
+    def __str__(self):
+        return self.status_desc
 
 
 class CofkCollectToolUser(models.Model):
@@ -135,8 +138,11 @@ class Iso639LanguageCode(models.Model):
     language_name = models.CharField(max_length=100)
     language_id = models.AutoField(primary_key=True)
 
+    def __str__(self):
+        return self.language_name
+
     class Meta:
-        db_table = 'iso639_language_code'
+        db_table = 'iso_639_language_codes'
 
 
 def user_directory_path(instance, filename):
