@@ -126,21 +126,20 @@ def create_m2m_relationship_by_relationship_table(conn,
     if check_duplicate_fn is None:
         def check_duplicate_fn(_left_id, _right_id):
             sql = f'select 1 from {cur_relation_table_name} ' \
-                  f'where {left_col} = {_left_id} and {right_col} = {_right_id} '
+                  f"where {left_col} = '{_left_id}' and {right_col} = '{_right_id}' "
             return is_exists(connection, sql)
 
     query_cursor = conn.cursor()
     sql = 'select left_id_value, right_id_value from cofk_union_relationship ' \
           f" where left_table_name = '{left_table_name}' " \
           f" and right_table_name = '{right_table_name}' "
-    print(sql)
     query_cursor.execute(sql)
 
     values = query_cursor.fetchall()
     values = (_id for _id in values if not check_duplicate_fn(*_id))
     sql_list = (
         (f'insert into {cur_relation_table_name} ({left_col}, {right_col}) '
-         f"values ({left_id}, {right_id})")
+         f"values ('{left_id}', '{right_id}')")
         for left_id, right_id in values
     )
     record_counter = iter_utils.RecordCounter()
