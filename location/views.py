@@ -2,6 +2,8 @@ import itertools
 import logging
 from typing import Iterable, Union, Type, Callable
 
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.forms import BaseForm, BaseFormSet, ModelForm
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView
@@ -19,7 +21,7 @@ log = logging.getLogger(__name__)
 FormOrFormSet = Union[BaseForm, BaseFormSet]
 
 
-class LocationInitView(CommonInitFormViewTemplate):
+class LocationInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
 
     def resp_form_page(self, request, form):
         return render(request, 'location/init_form.html', {'loc_form': form})
@@ -37,6 +39,7 @@ class LocationQuickInitView(LocationInitView):
         return redirect('location:return_quick_init', new_instance.location_id)
 
 
+@login_required
 def return_quick_init(request, pk):
     location: CofkUnionLocation = CofkUnionLocation.objects.get(location_id=pk)
     return view_utils.redirect_return_quick_init(
@@ -75,6 +78,7 @@ def save_changed_forms(form_formsets: Iterable[FormOrFormSet]):
         f.save()
 
 
+@login_required
 def full_form(request, location_id):
     loc = None
     location_id = location_id or request.POST.get('location_id')
@@ -123,7 +127,7 @@ def full_form(request, location_id):
     return _render_full_form()
 
 
-class LocationMergeView(ListView):
+class LocationMergeView(LoginRequiredMixin, ListView):
     template_name = 'location/merge.html'
 
     @property
@@ -141,7 +145,7 @@ class LocationMergeView(ListView):
         return super().get(request, *args, **kwargs)
 
 
-class LocationSearchView(BasicSearchView):
+class LocationSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
     def query_fieldset_list(self) -> Iterable:

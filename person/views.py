@@ -1,6 +1,8 @@
 import logging
 from typing import Callable, Iterable, Type, Optional, Any, NoReturn
 
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models
 from django.db.models import F
 from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual, Exact
@@ -19,7 +21,7 @@ from person.models import CofkUnionPerson, CofkPersonLocationMap, CofkPersonPers
 log = logging.getLogger(__name__)
 
 
-class PersonInitView(CommonInitFormViewTemplate):
+class PersonInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
 
     def resp_form_page(self, request, form):
         return render(request, 'person/init_form.html', {'person_form': form})
@@ -41,6 +43,7 @@ class PersonQuickInitView(PersonInitView):
         return redirect('person:return_quick_init', new_instance.iperson_id)
 
 
+@login_required
 def return_quick_init(request, pk):
     person = CofkUnionPerson.objects.get(iperson_id=pk)
     return view_utils.redirect_return_quick_init(
@@ -198,6 +201,7 @@ class PersonFullFormHandler:
         return render(request, 'person/full_form.html', context)
 
 
+@login_required
 def full_form(request, iperson_id):
     fhandler = PersonFullFormHandler(iperson_id, request)
 
@@ -234,7 +238,7 @@ def full_form(request, iperson_id):
     return fhandler.render_form(request)
 
 
-class PersonSearchView(BasicSearchView):
+class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
     def title(self) -> str:

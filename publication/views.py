@@ -1,17 +1,18 @@
 from typing import Callable, Iterable
 
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.forms import ModelForm
 from django.shortcuts import redirect, get_object_or_404
 from django.shortcuts import render
 
-from core.forms import CommentForm
-from core.helper import renderer_utils, view_utils, model_utils
+from core.helper import renderer_utils
 from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView
 from publication.forms import PublicationForm
 from publication.models import CofkUnionPublication
 
 
-class PubSearchView(DefaultSearchView):
+class PubSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def title(self) -> str:
@@ -44,7 +45,7 @@ class PubSearchView(DefaultSearchView):
         return renderer_utils.create_table_search_results_renderer('publication/search_table_layout.html')
 
 
-class PubInitView(CommonInitFormViewTemplate):
+class PubInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
 
     def resp_form_page(self, request, form):
         return render(request, 'publication/init_form.html', {'pub_form': form})
@@ -57,6 +58,7 @@ class PubInitView(CommonInitFormViewTemplate):
         return PublicationForm
 
 
+@login_required
 def full_form(request, pk):
     # KTODO
     pub = get_object_or_404(CofkUnionPublication, pk=pk)
@@ -82,6 +84,7 @@ class PubQuickInitView(PubInitView):
         return redirect('publication:return_quick_init', new_instance.pk)
 
 
+@login_required
 def return_quick_init(request, pk):
     pub = CofkUnionPublication.objects.get(pk=pk)
     return render(request, 'publication/return_quick_init_pub.html', {
