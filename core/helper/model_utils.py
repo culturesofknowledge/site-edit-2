@@ -1,9 +1,10 @@
 import logging
-from typing import Iterable
+from typing import Iterable, Type
 
 import django
 from django.conf import settings
 import django.utils.timezone
+from django.db import models
 
 
 class RecordTracker:
@@ -52,3 +53,10 @@ def default_current_timestamp():
 
 def related_manager_to_dict_list(related_manager) -> Iterable[dict]:
     return (r.__dict__ for r in related_manager.iterator())
+
+
+def create_multi_records_by_dict_list(model_class: Type[models.Model],
+                                      dict_list: Iterable[dict]) -> list:
+    records = [model_class(**r) for r in dict_list]
+    model_class.objects.bulk_create(records)
+    return records

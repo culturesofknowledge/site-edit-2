@@ -1,12 +1,12 @@
-import re
-
 from selenium.webdriver.common.by import By
 
 import location.fixtures
+import location.fixtures
+from core.helper import model_utils
 from location.models import CofkUnionLocation
 from siteedit2.utils import test_utils
 from siteedit2.utils.test_utils import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
-    CommentM2MTester
+    CommentM2MTester, CommonSearchTests
 
 
 class LocationFormTests(EmloSeleniumTestCase):
@@ -61,79 +61,25 @@ class LocationFormTests(EmloSeleniumTestCase):
 
 
 def prepare_loc_records() -> list[CofkUnionLocation]:
-    loc_list = [CofkUnionLocation(**loc_dict)
-                for loc_dict in (
-                    location.fixtures.location_dict_a,
-                    location.fixtures.location_dict_b,
-                )]
-    CofkUnionLocation.objects.bulk_create(loc_list)
-    return loc_list
+    return model_utils.create_multi_records_by_dict_list(CofkUnionLocation, (
+        location.fixtures.location_dict_a,
+        location.fixtures.location_dict_b,
+    ))
 
 
-class LocationSearchTests(EmloSeleniumTestCase):
+class LocationCommonSearchTests(EmloSeleniumTestCase, CommonSearchTests):
 
-    def find_result_elements(self):
-        return self.selenium.find_elements(By.CSS_SELECTOR, 'tbody tr.selectable_entry')
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setup_common_search_test(self, 'location:search', prepare_loc_records)
 
-    def find_search_btn(self):
-        return self.selenium.find_element(By.CSS_SELECTOR, 'button[name=__form_action][value=search]')
+    def test_search__search_unique(self):
+        def _fill(target_record):
+            ele = self.selenium.find_element(By.ID, 'id_location_id')
+            ele.send_keys(target_record.location_id)
 
-    def find_elements_by_css(self, css_selector):
-        return self.selenium.find_elements(by=By.CSS_SELECTOR, value=css_selector)
+        def _check(target_record):
+            self.assertEqual(self.find_table_col_element(0, 0).text,
+                             target_record.location_name)
 
-    def find_element_by_css(self, css_selector):
-        return self.selenium.find_element(by=By.CSS_SELECTOR, value=css_selector)
-
-    def assert_search_page(self, num_row_show, num_total):
-        # assert
-        self.assertEqual(len(self.find_result_elements()), num_row_show, )
-
-        size_titles = (e.text for e in self.selenium.find_elements(By.CSS_SELECTOR, 'h2'))
-        size_titles = (re.findall(r'(\d+) Locations found', t) for t in size_titles)
-        size_titles = (s for s in size_titles if s)
-        size_titles = list(size_titles)
-        self.assertEqual(len(size_titles), 1)
-        self.assertEqual(size_titles[0][0], f'{num_total}')
-
-    def test_search_page(self):
-        # prepare data
-        loc_list = prepare_loc_records()
-
-        # go to search page
-        url = self.get_url_by_viewname('location:search')
-        self.selenium.get(url)
-
-        self.assert_search_page(num_row_show=len(loc_list),
-                                num_total=len(loc_list))
-
-        target_loc = loc_list[1]
-
-        # search by name
-        ele = self.selenium.find_element(By.ID, 'id_location_name')
-        ele.send_keys(target_loc.location_name)
-
-        self.find_search_btn().click()
-
-        # only have one record match
-        self.assert_search_page(num_row_show=1,
-                                num_total=1)
-
-        # check location name in record result
-        result_ele = self.find_result_elements()[0]
-        location_name = result_ele.find_elements(By.CSS_SELECTOR, 'td')[0].text
-        self.assertEqual(location_name, target_loc.location_name)
-
-    def setup_for_layout_test(self, layout_btn_id):
-        prepare_loc_records()
-        url = self.get_url_by_viewname('location:search')
-        self.selenium.get(url)
-        self.selenium.find_element(value=layout_btn_id).click()
-        self.find_search_btn().click()
-
-    def test_search__table_layout(self):
-        self.setup_for_layout_test('display-as-list')
-        self.assertIsNotNone(self.find_element_by_css('#search_form table'))
-
-    def test_search__compact_layout(self):
-        self.setup_for_layout_test('display-as-grid')
-        self.assertIsNotNone(self.find_element_by_css('ol li[class=search-result]'))
+        self._test_search__search_unique(_fill, _check)

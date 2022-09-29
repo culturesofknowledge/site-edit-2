@@ -10,6 +10,7 @@ from selenium.webdriver import DesiredCapabilities
 from selenium.webdriver.common.by import By
 
 import core.fixtures
+from core.helper.view_utils import BasicSearchView
 
 
 class EmloSeleniumTestCase(LiveServerTestCase):
@@ -53,6 +54,15 @@ class EmloSeleniumTestCase(LiveServerTestCase):
     def fill_formset_by_dict(self, data: dict, formset_prefix, form_idx=0):
         self.fill_val_by_selector_list((f'#id_{formset_prefix}-{form_idx}-{k}', v)
                                        for k, v in data.items())
+
+    def find_elements_by_css(self, css_selector):
+        return self.selenium.find_elements(by=By.CSS_SELECTOR, value=css_selector)
+
+    def find_element_by_css(self, css_selector):
+        return self.selenium.find_element(by=By.CSS_SELECTOR, value=css_selector)
+
+    def goto_vname(self, vname):
+        self.selenium.get(self.get_url_by_viewname(vname))
 
 
 def get_selected_radio_val(elements):
@@ -163,3 +173,84 @@ class MultiM2MTester:
     def assert_after_update(self):
         for tester in self.m2m_tester_list:
             tester.assert_after_update()
+
+
+class CommonSearchTests:
+    LAYOUT_VAL_TABLE = 'display-as-list'
+    LAYOUT_VAL_COMPACT = 'display-as-grid'
+
+    def setup_common_search_test(self, test_case: EmloSeleniumTestCase,
+                                 search_vname,
+                                 prepare_records):
+        self.test_case = test_case
+        self.search_vname = search_vname
+        self.prepare_records = prepare_records
+
+    def switch_layout(self, layout_val):
+        # assume selenium already in search page
+        self.test_case.selenium.find_element(value=layout_val).click()
+
+    def goto_search_page(self):
+        self.test_case.goto_vname(self.search_vname)
+
+    def find_search_btn(self):
+        return self.test_case.selenium.find_element(By.CSS_SELECTOR, 'button[name=__form_action][value=search]')
+
+    def find_table_rows(self):
+        return self.test_case.selenium.find_elements(By.CSS_SELECTOR, 'tbody tr.selectable_entry')
+
+    def find_table_col_element(self, row_idx: int = 0, col_idx: int = 0):
+        result_ele = self.find_table_rows()[row_idx]
+        return result_ele.find_elements(By.CSS_SELECTOR, 'td')[col_idx]
+
+    def setup_for_layout_test(self, layout_val):
+        self.prepare_records()
+        self.goto_search_page()
+        self.switch_layout(layout_val)
+
+    def test_search__GET(self):
+        records = self.prepare_records()
+
+        self.goto_search_page()
+
+        self.assert_search_page(num_row_show=min(len(records), BasicSearchView.paginate_by),
+                                num_total=len(records))
+
+    def test_search__table_layout(self):
+        self.setup_for_layout_test(self.LAYOUT_VAL_TABLE)
+        self.test_case.assertIsNotNone(self.test_case.find_element_by_css('#search_form table'))
+
+    def test_search__compact_layout(self):
+        self.setup_for_layout_test(self.LAYOUT_VAL_COMPACT)
+        self.test_case.assertIsNotNone(self.test_case.find_element_by_css('ol li[class=search-result]'))
+
+    def _test_search__search_unique(self, fill_field_fn, assert_table_result_fn):
+        # prepare data
+        records = self.prepare_records()
+
+        # go to search page
+        self.goto_search_page()
+
+        target_rec = records[0]
+
+        # search by name
+        fill_field_fn(target_rec)
+
+        self.find_search_btn().click()
+
+        # only have one record match
+        self.assert_search_page(num_row_show=1,
+                                num_total=1)
+
+        # check value in record result
+        assert_table_result_fn(target_rec)
+
+    def assert_search_page(self, num_row_show, num_total):
+        self.test_case.assertEqual(len(self.find_table_rows()), num_row_show, )
+
+        size_titles = (e.text for e in self.test_case.selenium.find_elements(By.CSS_SELECTOR, 'h2'))
+        size_titles = (re.findall(r'(\d+) .+? found', t) for t in size_titles)
+        size_titles = (s for s in size_titles if s)
+        size_titles = list(size_titles)
+        self.test_case.assertEqual(len(size_titles), 1)
+        self.test_case.assertEqual(size_titles[0][0], f'{num_total}')

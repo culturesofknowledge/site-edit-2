@@ -1,11 +1,11 @@
 from selenium.webdriver.common.by import By
 
 import person.fixtures
-from core.helper import selenium_utils
+from core.helper import selenium_utils, model_utils
 from person.models import CofkUnionPerson
 from siteedit2.utils import test_utils
 from siteedit2.utils.test_utils import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
-    CommentM2MTester
+    CommentM2MTester, CommonSearchTests
 
 
 class PersonInitFormTest(EmloSeleniumTestCase):
@@ -65,3 +65,27 @@ class PersonInitFormTest(EmloSeleniumTestCase):
         self.assertEqual(pson_a.further_reading, new_further_reading)
 
         m2m_tester.assert_after_update()
+
+
+def prepare_person_records() -> list[CofkUnionPerson]:
+    return model_utils.create_multi_records_by_dict_list(CofkUnionPerson, (
+        person.fixtures.person_dict_a,
+        person.fixtures.person_dict_b,
+    ))
+
+
+class PersonCommonSearchTests(EmloSeleniumTestCase, CommonSearchTests):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setup_common_search_test(self, 'person:search', prepare_person_records)
+
+    def test_search__search_unique(self):
+        def _fill(target_record):
+            ele = self.selenium.find_element(By.ID, 'id_iperson_id')
+            ele.send_keys(target_record.iperson_id)
+
+        def _check(target_record):
+            self.assertEqual(self.find_table_col_element(0, 0).text,
+                             str(target_record.iperson_id))
+
+        self._test_search__search_unique(_fill, _check)
