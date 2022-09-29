@@ -159,6 +159,24 @@ def create_m2m_relationship_by_relationship_table(conn,
     log_save_records(cur_relation_table_name, record_counter.cur_size())
 
 
+def create_comments_relationship(conn, model_class: Type[Model],
+                                 cur_relation_table_name=None, ):
+    cur_relation_table_name = cur_relation_table_name or f'{model_class._meta.db_table}_comments'
+    return create_m2m_relationship_by_relationship_table(
+        conn, CofkUnionComment, model_class,
+        cur_relation_table_name,
+    )
+
+
+def create_resources_relationship(conn, model_class: Type[Model],
+                                  cur_relation_table_name=None, ):
+    cur_relation_table_name = cur_relation_table_name or f'{model_class._meta.db_table}_resources'
+    return create_m2m_relationship_by_relationship_table(
+        conn, model_class, CofkUnionResource,
+        cur_relation_table_name,
+    )
+
+
 def no_duplicate_check(*args, **kwargs):
     return False
 
@@ -181,32 +199,26 @@ def data_migration(user, password, database, host, port):
 
     clone_action_fn_list = [
         lambda: clone_rows_by_model_class(conn, CofkUnionOrgType),
+        lambda: clone_rows_by_model_class(conn, CofkUnionResource),
+        lambda: clone_rows_by_model_class(conn, CofkUnionComment),
+        lambda: clone_rows_by_model_class(conn, CofkUnionImage),
+
+        # ### Location
+        lambda: clone_rows_by_model_class(conn, CofkUnionLocation),
+        # m2m location
+        lambda: create_resources_relationship(conn, CofkUnionLocation),
+        lambda: create_comments_relationship(conn, CofkUnionLocation),
+
+        # ### Person
         lambda: clone_rows_by_model_class(
             conn, CofkUnionPerson, col_val_handler_fn_list=[
                 _val_handler_person__organisation_type,
             ], seq_name=SEQ_NAME_COFKUNIONPERSION__IPERSON_ID,
             int_pk_col_name='iperson_id',
         ),
-        lambda: clone_rows_by_model_class(conn, CofkUnionLocation),
-        lambda: clone_rows_by_model_class(conn, CofkUnionResource),
-        lambda: clone_rows_by_model_class(conn, CofkUnionComment),
-        lambda: clone_rows_by_model_class(conn, CofkUnionImage),
-
-        # m2m location
-        lambda: create_m2m_relationship_by_relationship_table(
-            conn, CofkUnionLocation, CofkUnionResource,
-            f'{CofkUnionLocation._meta.db_table}_resources',
-        ),
-        lambda: create_m2m_relationship_by_relationship_table(
-            conn, CofkUnionComment, CofkUnionLocation,
-            f'{CofkUnionLocation._meta.db_table}_comments',
-        ),
-
         # m2m person
-        lambda: create_m2m_relationship_by_relationship_table(
-            conn, CofkUnionComment, CofkUnionPerson,
-            f'{CofkUnionPerson._meta.db_table}_comments',
-        ),
+        lambda: create_comments_relationship(conn, CofkUnionPerson),
+        lambda: create_resources_relationship(conn, CofkUnionPerson),
     ]
 
     for fn in clone_action_fn_list:
