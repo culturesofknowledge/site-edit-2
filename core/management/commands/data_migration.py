@@ -192,6 +192,8 @@ def data_migration(user, password, database, host, port):
         lambda: clone_rows_by_model_class(conn, CofkUnionResource),
         lambda: clone_rows_by_model_class(conn, CofkUnionComment),
         lambda: clone_rows_by_model_class(conn, CofkUnionImage),
+
+        # m2m location
         lambda: create_m2m_relationship_by_relationship_table(
             conn, CofkUnionLocation, CofkUnionResource,
             f'{CofkUnionLocation._meta.db_table}_resources',
@@ -199,6 +201,12 @@ def data_migration(user, password, database, host, port):
         lambda: create_m2m_relationship_by_relationship_table(
             conn, CofkUnionComment, CofkUnionLocation,
             f'{CofkUnionLocation._meta.db_table}_comments',
+        ),
+
+        # m2m person
+        lambda: create_m2m_relationship_by_relationship_table(
+            conn, CofkUnionComment, CofkUnionPerson,
+            f'{CofkUnionPerson._meta.db_table}_comments',
         ),
     ]
 
