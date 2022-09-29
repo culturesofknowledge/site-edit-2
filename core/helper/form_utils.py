@@ -169,7 +169,10 @@ class EqualSimpleLookupChoices(TextChoices):
 
 
 def create_day_field(required=False):
-    return forms.IntegerField(required=required, min_value=1, max_value=31)
+    return forms.IntegerField(required=required, min_value=1, max_value=31,
+                              widget=forms.TextInput(
+                                  attrs={'placeholder': 'DD'}
+                              ))
 
 
 def create_month_field(required=False):
@@ -178,7 +181,10 @@ def create_month_field(required=False):
 
 
 def create_year_field(required=False):
-    return forms.IntegerField(required=required, min_value=1, max_value=9999)
+    return forms.IntegerField(required=required, min_value=1, max_value=9999,
+                              widget=forms.TextInput(
+                                  attrs={'placeholder': 'YYYY'}
+                              ))
 
 
 def create_lookup_field(choices, required=False):
