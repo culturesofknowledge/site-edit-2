@@ -134,38 +134,38 @@ class ThreeFieldDateField(forms.Field):
 
 
 class IntLookupChoices(TextChoices):
-    EQUALS = 'equals', 'equals',
-    IS_NOT_EQUAL_TO = 'is_not_equal_to', 'is not equal to',
+    EQUALS = 'equals', 'equals (=)',
+    NOT_EQUAL_TO = 'not_equal_to', 'not equal to (!=)',
 
-    LESS_THAN = 'less_than', 'less than'
-    GREATER_THAN = 'great_than', 'great than'
+    LESS_THAN = 'less_than', 'less than (<)'
+    GREATER_THAN = 'great_than', 'great than (>)'
 
     IS_BLANK = 'is_blank', 'is blank',
-    IS_NOT_BLANK = 'is_not_blank', 'is not blank',
+    NOT_BLANK = 'not_blank', 'not blank',
 
 
 class StrLookupChoices(TextChoices):
     CONTAINS = 'contains', 'contains',
-    DOES_NOT_CONTAIN = 'does_not_contain', 'does not contain',
+    DOES_NOT_CONTAIN = 'not_contain', 'not contain',
 
     STARTS_WITH = 'starts_with', 'starts with',
-    DOES_NOT_START_WITH = 'does_not_start_with', 'does not start with',
+    DOES_NOT_START_WITH = 'not_start_with', 'not start with',
     ENDS_WITH = 'ends_with', 'ends with',
-    DOES_NOT_END_WITH = 'does_not_end_with', 'does not end with',
+    DOES_NOT_END_WITH = 'not_end_with', 'not end with',
 
-    EQUALS = 'equals', 'equals',
-    IS_NOT_EQUAL_TO = 'is_not_equal_to', 'is not equal to',
+    EQUALS = 'equals', 'equals (=)',
+    NOT_EQUAL_TO = 'not_equal_to', 'not equal to (!=)',
 
     IS_BLANK = 'is_blank', 'is blank',
-    IS_NOT_BLANK = 'is_not_blank', 'is not blank',
+    NOT_BLANK = 'not_blank', 'not blank',
 
 
 class EqualSimpleLookupChoices(TextChoices):
-    EQUALS = 'equals', 'equals',
-    IS_NOT_EQUAL_TO = 'is_not_equal_to', 'is not equal to',
+    EQUALS = 'equals', 'equals (=)',
+    NOT_EQUAL_TO = 'not_equal_to', 'not equal to (!=)',
 
     IS_BLANK = 'is_blank', 'is blank',
-    IS_NOT_BLANK = 'is_not_blank', 'is not blank',
+    NOT_BLANK = 'not_blank', 'not blank',
 
 
 def create_day_field(required=False):

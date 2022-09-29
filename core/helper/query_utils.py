@@ -87,16 +87,16 @@ choices_lookup_map = {
     'starts_with': lookups.IStartsWith,
     'ends_with': lookups.IEndsWith,
     'equals': lookups.Exact,
-    'does_not_contain': cond_not(lookups.IContains),
-    'does_not_start_with': cond_not(lookups.IStartsWith),
-    'does_not_end_with': cond_not(lookups.IEndsWith),
-    'is_not_equal_to': cond_not(lookups.Exact),
+    'not_contain': cond_not(lookups.IContains),
+    'not_start_with': cond_not(lookups.IStartsWith),
+    'not_end_with': cond_not(lookups.IEndsWith),
+    'not_equal_to': cond_not(lookups.Exact),
     'is_blank': is_blank,
-    'is_not_blank': cond_not(is_blank),
+    'not_blank': cond_not(is_blank),
     None: lookups.Exact,
     '': lookups.Exact,
 }
 
 nullable_lookup_keys = [
-    'is_blank', 'is_not_blank',
+    'is_blank', 'not_blank',
 ]

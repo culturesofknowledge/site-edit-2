@@ -308,9 +308,6 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             'foaf_name_lookup': 'starts_with',
         }
         request_data = default_values | self.request_data.dict()
-        # for k, v in default_values.items():
-        #     if k not in request_data:
-        #         request_data[k] = v
 
         return [GeneralSearchFieldset(request_data)]
 
