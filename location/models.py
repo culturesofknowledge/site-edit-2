@@ -9,7 +9,7 @@ from core.helper.model_utils import RecordTracker
 class CofkCollectLocation(models.Model):
     # KTODO why upload_id in database become upload_id_id, should I change field name to upload instead
     # KTODO change null=True for draft version
-    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING, null=True)
+    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE, null=True)
     location_id = models.IntegerField()
     # KTODO what is usage of UnionLocation
     union_location = models.ForeignKey('CofkUnionLocation', models.DO_NOTHING, blank=True, null=True)
@@ -33,6 +33,9 @@ class CofkCollectLocation(models.Model):
     class Meta:
         db_table = 'cofk_collect_location'
         unique_together = (('upload', 'location_id'),)
+
+    def __str__(self):
+        return str(self.union_location)
 
 
 class CofkUnionLocation(models.Model, RecordTracker):
@@ -58,6 +61,9 @@ class CofkUnionLocation(models.Model, RecordTracker):
     resources = models.ManyToManyField('core.CofkUnionResource')
     comments = models.ManyToManyField('core.CofkUnionComment')
     images = models.ManyToManyField('uploader.CofkUnionImage')
+
+    def __str__(self):
+        return self.location_name
 
     class Meta:
         db_table = 'cofk_union_location'

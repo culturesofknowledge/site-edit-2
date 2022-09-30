@@ -21,8 +21,6 @@ from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
 
-from uploader import views
-
 urlpatterns = [
     path('', RedirectView.as_view(url='/login/dashboard')),
     path('login/', include('login.urls')),
@@ -30,7 +28,7 @@ urlpatterns = [
     path('location/', include('location.urls')),
     path('person/', include('person.urls')),
     path('publication/', include('publication.urls')),
-    path('upload/', views.upload_view, name='upload'),
+    path('upload/', include('uploader.urls')),
 ]
 
 urlpatterns += static(settings.MEDIA_URL + 'img',
