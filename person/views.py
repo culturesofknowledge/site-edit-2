@@ -106,7 +106,7 @@ class PersonRecrefHandler(view_utils.MultiRecrefHandler):
                  person: CofkUnionPerson,
                  name=None, ):
         def _find_rec_name_by_id(target_id) -> Optional[str]:
-            record = CofkUnionPerson.objects.get(iperson_id=target_id)
+            record = CofkUnionPerson.objects.get(pk=target_id)
             return record and record.foaf_name
 
         initial_list = (m.__dict__ for m in _get_other_persons_by_type(person, person_type))

@@ -134,7 +134,7 @@ class CofkUnionPerson(models.Model, RecordTracker):
 
 
 class CofkPersonLocationMap(Recref):
-    person = models.ForeignKey(CofkUnionPerson, to_field='iperson_id', on_delete=models.CASCADE)
+    person = models.ForeignKey(CofkUnionPerson, on_delete=models.CASCADE)
     location = models.ForeignKey('location.CofkUnionLocation', on_delete=models.CASCADE)
 
     class Meta(Recref.Meta):
@@ -142,10 +142,10 @@ class CofkPersonLocationMap(Recref):
 
 
 class CofkPersonPersonMap(Recref):
-    person = models.ForeignKey(CofkUnionPerson, to_field='iperson_id',
+    person = models.ForeignKey(CofkUnionPerson,
                                related_name='active_relationships',
                                on_delete=models.CASCADE)
-    related = models.ForeignKey(CofkUnionPerson, to_field='iperson_id',
+    related = models.ForeignKey(CofkUnionPerson,
                                 related_name='passive_relationships',
                                 on_delete=models.CASCADE)
     person_type = models.CharField(null=False, default='other', max_length=100)
