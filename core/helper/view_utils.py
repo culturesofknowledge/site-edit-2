@@ -38,7 +38,7 @@ class BasicSearchView(ListView):
     """
     Helper for you to build common style of search page for emlo editor
     """
-    paginate_by = 5
+    paginate_by = 10
     template_name = 'core/basic_search_page.html'
     context_object_name = 'records'
 
@@ -148,6 +148,7 @@ class BasicSearchView(ListView):
                 ('search_result.csv', open(csv_path, mode='rb'), 'text/csv')
             ],
         )
+        log.info(f'csv file email have be send to [{to_email}]')
         os.remove(csv_path)
         log.debug('email resp', resp)
 
@@ -161,7 +162,7 @@ class BasicSearchView(ListView):
                 log.exception(e)
 
         # create csv file and send email in other process
-        Process(target=_fn).run()
+        Process(target=_fn).start()
 
         # stay as same page
         self.to_user_messages = ['Csv file will be send to your email later.']

@@ -3,28 +3,31 @@ import logging
 import re
 import warnings
 from argparse import ArgumentParser
-from typing import Type, Callable
+from typing import Type, Callable, Iterable, Any
 
 import django.db.utils
 import psycopg2
 import psycopg2.errors
 from django.core.management import BaseCommand
-from django.db import connection
-from django.db.models import Model, Max
+from django.db import connection as cur_conn
+from django.db.models import Model, Max, fields
+from django.db.models.fields.related_descriptors import ForwardManyToOneDescriptor
 from psycopg2.extras import DictCursor
 
 from core.helper import iter_utils
 from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType
 from location.models import CofkUnionLocation
-from person.models import CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID
-from uploader.models import CofkUnionImage, CofkUnionOrgType, CofkCollectStatus, Iso639LanguageCode, CofkLookupCatalogue
+from person.models import CofkPersonLocationMap, CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID, \
+    CofkPersonPersonMap
+from uploader.models import CofkCollectStatus, Iso639LanguageCode, CofkLookupCatalogue
+from uploader.models import CofkUnionOrgType, CofkUnionImage
 
 log = logging.getLogger(__name__)
 
 
-def is_exists(conn, sql):
+def is_exists(conn, sql, vals=None):
     cursor = conn.cursor()
-    cursor.execute(sql)
+    cursor.execute(sql, vals)
     return cursor.fetchone() is not None
 
 
@@ -37,10 +40,13 @@ def create_seq_col_name(model_class: Type[Model]):
 
 
 def find_rows_by_db_table(conn, db_table):
-    cursor = conn.cursor(cursor_factory=DictCursor)
-    cursor.execute(create_query_all_sql(db_table))
-    results = cursor.fetchall()
-    return results
+    return iter_records(conn, create_query_all_sql(db_table), cursor_factory=DictCursor)
+
+
+def iter_records(conn, sql, cursor_factory=None):
+    query_cursor = conn.cursor(cursor_factory=cursor_factory)
+    query_cursor.execute(sql)
+    return query_cursor.fetchall()
 
 
 def clone_rows_by_model_class(conn, model_class: Type[Model],
@@ -84,7 +90,7 @@ def clone_rows_by_model_class(conn, model_class: Type[Model],
         if max_pk > new_val:
             new_val = max_pk + new_val
 
-        connection.cursor().execute(f"select setval('{seq_name}', {new_val})")
+        cur_conn.cursor().execute(f"select setval('{seq_name}', {new_val})")
 
 
 def log_save_records(target, size):
@@ -109,7 +115,7 @@ class Command(BaseCommand):
                        port=options['port'])
 
 
-def create_stand_relation_col_name(table_name):
+def create_common_relation_col_name(table_name):
     return table_name.replace('_', '') + '_id'
 
 
@@ -117,38 +123,45 @@ def create_m2m_relationship_by_relationship_table(conn,
                                                   left_model_class: Type[Model],
                                                   right_model_class: Type[Model],
                                                   cur_relation_table_name,
-                                                  check_duplicate_fn=None, ):
+                                                  check_duplicate_fn=None,
+                                                  ):
     left_table_name = left_model_class._meta.db_table
     right_table_name = right_model_class._meta.db_table
-    left_col = create_stand_relation_col_name(left_table_name)
-    right_col = create_stand_relation_col_name(right_table_name)
+    left_col = create_common_relation_col_name(left_table_name)
+    right_col = create_common_relation_col_name(right_table_name)
 
     if check_duplicate_fn is None:
         def check_duplicate_fn(_left_id, _right_id):
             sql = f'select 1 from {cur_relation_table_name} ' \
-                  f'where {left_col} = {_left_id} and {right_col} = {_right_id} '
-            return is_exists(connection, sql)
+                  f"where {left_col} = '{_left_id}' and {right_col} = '{_right_id}' "
+            return is_exists(cur_conn, sql)
 
-    query_cursor = conn.cursor()
     sql = 'select left_id_value, right_id_value from cofk_union_relationship ' \
           f" where left_table_name = '{left_table_name}' " \
           f" and right_table_name = '{right_table_name}' "
-    print(sql)
-    query_cursor.execute(sql)
-
-    values = query_cursor.fetchall()
+    values = iter_records(conn, sql)
     values = (_id for _id in values if not check_duplicate_fn(*_id))
-    sql_list = (
-        (f'insert into {cur_relation_table_name} ({left_col}, {right_col}) '
-         f"values ({left_id}, {right_id})")
+    sql_val_list = (
+        (
+            (f'insert into {cur_relation_table_name} ({left_col}, {right_col}) '
+             f"values (%s, %s)"),
+            [left_id, right_id],
+        )
         for left_id, right_id in values
     )
-    record_counter = iter_utils.RecordCounter()
 
-    insert_cursor = connection.cursor()
-    for sql in sql_list:
+    record_size = insert_sql_val_list(sql_val_list)
+    log_save_records(cur_relation_table_name, record_size)
+
+
+def insert_sql_val_list(sql_val_list: Iterable[tuple[str, Any]]) -> int:
+    record_counter = iter_utils.RecordCounter()
+    insert_cursor = cur_conn.cursor()
+    for sql, vals in sql_val_list:
+        # print(sql)
+        # print(vals)
         try:
-            insert_cursor.execute(sql)
+            insert_cursor.execute(sql, vals)
             record_counter.plus_one()
         except django.db.utils.IntegrityError as e:
             msg = str(e).replace('\n', ' ')
@@ -156,8 +169,223 @@ def create_m2m_relationship_by_relationship_table(conn,
                 log.warning(msg)
             else:
                 raise e
+    return record_counter.cur_size()
 
-    log_save_records(cur_relation_table_name, record_counter.cur_size())
+
+def as_str_sql_val(val) -> str:
+    if val is None:
+        return 'null'
+    return "'{}'".format(val)
+
+
+class FieldVal:
+    def fields(self) -> list[str]:
+        return []
+
+    def values(self, record: dict) -> list[Any]:
+        return []
+
+
+class RecrefIdFieldVal(FieldVal):
+    def __init__(self,
+                 cur_recref_class: Type[Model],
+                 cur_left_field: ForwardManyToOneDescriptor,
+                 cur_right_field: ForwardManyToOneDescriptor
+                 ):
+        self.cur_recref_class = cur_recref_class
+        self.cur_left_field = cur_left_field
+        self.cur_right_field = cur_right_field
+
+    @property
+    def mapping_table_name(self) -> str:
+        return self.cur_recref_class._meta.db_table
+
+    @property
+    def cur_left_table_name(self) -> str:
+        return self.cur_left_field.field.related_fields[0][1].model._meta.db_table
+
+    @property
+    def cur_right_table_name(self) -> str:
+        return self.cur_right_field.field.related_fields[0][1].model._meta.db_table
+
+    def prepare_val(self, field: ForwardManyToOneDescriptor, old_val):
+        related_field = field.field.related_fields[0][1]
+        if isinstance(related_field, fields.CharField):
+            return old_val
+        elif isinstance(related_field, (fields.IntegerField, fields.AutoField)):
+            return int(old_val)
+        else:
+            raise NotImplementedError(f'unexpected field type {related_field}')
+
+    def check_duplicate_fn(self, record: dict):
+        cur_left_col_name, cur_right_col_name = self.fields()
+        where_list = [
+            f"{cur_left_col_name} = %s",
+            f"{cur_right_col_name} = %s",
+            "relationship_type = %s",
+        ]
+        sql = f'select 1 from {self.mapping_table_name} ' \
+              f"where {' and '.join(where_list)} "
+        vals = [
+            *self.values(record),
+            record['relationship_type'],
+        ]
+        return is_exists(cur_conn, sql, vals)
+
+    def fields(self) -> list[str]:
+        return [
+            self.cur_left_field.field.related_fields[0][0].get_attname(),
+            self.cur_right_field.field.related_fields[0][0].get_attname(),
+        ]
+
+    def values(self, record: dict) -> list[Any]:
+        return [
+            self.prepare_val(self.cur_left_field, record['left_id_value']),
+            self.prepare_val(self.cur_right_field, record['right_id_value']),
+        ]
+
+
+class RecrefFieldVal(FieldVal):
+    def fields(self) -> list[str]:
+        return [
+            'from_date',
+            'to_date',
+            'relationship_type',
+            'creation_timestamp',
+            'creation_user',
+            'change_timestamp',
+            'change_user',
+        ]
+
+    def values(self, record: dict) -> list[Any]:
+        return [
+            record['relationship_valid_from'],
+            record['relationship_valid_till'],
+            record['relationship_type'],
+            record['creation_timestamp'],
+            record['creation_user'],
+            record['change_timestamp'],
+            record['change_user'],
+        ]
+
+
+class CofkPersonPersonMapFieldVal(FieldVal):
+
+    def fields(self) -> list[str]:
+        return ['person_type']
+
+    def values(self, record: dict) -> list[Any]:
+        value_map = {
+            'taught': 'teacher',
+            'colleague_of': 'employer',
+            'parent_of': 'parent',
+            'relative_of': 'protege',
+            'member_of': 'organisation',
+            'friend_of': 'protege',
+            'acquaintance_of': 'protege',
+            'collaborated_with': 'employee',
+            'employed': 'employee',
+            'was_patron_of': 'patron',
+            'spouse_of': 'patron',
+            'unspecified_relationship_with': 'other',
+            'sibling_of': 'other',
+        }
+        # KTODO double check mapping
+
+        """
+taught
+unspecified_relationship_with
+acquaintance_of
+colleague_of
+friend_of
+parent_of
+relative_of
+member_of
+collaborated_with
+was_patron_of
+spouse_of
+sibling_of
+employed
+        """
+        """
+organisation
+parent
+children
+employer
+employee
+teacher
+student
+patron
+protege
+other
+        """
+
+        return [
+            value_map.get(record['relationship_type'], 'other'),
+        ]
+
+
+def create_sql_val_holder(vals) -> str:
+    return ', '.join(['%s'] * len(vals))
+
+
+def create_recref(conn,
+                  id_field_val: RecrefIdFieldVal,
+                  extra_field_val: FieldVal = None,
+                  ):
+    extra_field_val = extra_field_val or FieldVal()
+
+    sql = 'select * from cofk_union_relationship ' \
+          f" where left_table_name = '{id_field_val.cur_left_table_name}' " \
+          f" and right_table_name = '{id_field_val.cur_right_table_name}' "
+    values = iter_records(conn, sql, cursor_factory=DictCursor)
+    values = (r for r in values if not id_field_val.check_duplicate_fn(r))
+
+    fields_sql = ', '.join(
+        RecrefFieldVal().fields() + id_field_val.fields() + extra_field_val.fields()
+    )
+    sql_vals_list = (RecrefFieldVal().values(r) + id_field_val.values(r) + extra_field_val.values(r) for r in values)
+
+    sql_val_list = (
+        (
+            (
+                f'insert into {id_field_val.mapping_table_name} ({fields_sql}) '
+                f"values ({create_sql_val_holder(sql_vals)})"
+            ),
+            sql_vals
+        )
+        for sql_vals in sql_vals_list
+    )
+
+    record_size = insert_sql_val_list(sql_val_list)
+    log_save_records(id_field_val.mapping_table_name, record_size)
+
+
+def create_comments_relationship(conn, model_class: Type[Model],
+                                 cur_relation_table_name=None, ):
+    cur_relation_table_name = cur_relation_table_name or f'{model_class._meta.db_table}_comments'
+    return create_m2m_relationship_by_relationship_table(
+        conn, CofkUnionComment, model_class,
+        cur_relation_table_name,
+    )
+
+
+def create_resources_relationship(conn, model_class: Type[Model],
+                                  cur_relation_table_name=None, ):
+    cur_relation_table_name = cur_relation_table_name or f'{model_class._meta.db_table}_resources'
+    return create_m2m_relationship_by_relationship_table(
+        conn, model_class, CofkUnionResource,
+        cur_relation_table_name,
+    )
+
+
+def create_images_relationship(conn, model_class: Type[Model],
+                               cur_relation_table_name=None, ):
+    cur_relation_table_name = cur_relation_table_name or f'{model_class._meta.db_table}_images'
+    return create_m2m_relationship_by_relationship_table(
+        conn, CofkUnionImage, model_class,
+        cur_relation_table_name,
+    )
 
 
 def no_duplicate_check(*args, **kwargs):
@@ -186,24 +414,38 @@ def data_migration(user, password, database, host, port):
         lambda: clone_rows_by_model_class(conn, Iso639LanguageCode),
         lambda: clone_rows_by_model_class(conn, CofkCollectStatus),
         lambda: clone_rows_by_model_class(conn, CofkUnionOrgType),
+        lambda: clone_rows_by_model_class(conn, CofkUnionResource),
+        lambda: clone_rows_by_model_class(conn, CofkUnionComment),
+        lambda: clone_rows_by_model_class(conn, CofkUnionImage),
+
+        # ### Location
+        lambda: clone_rows_by_model_class(conn, CofkUnionLocation),
+        # m2m location
+        lambda: create_resources_relationship(conn, CofkUnionLocation),
+        lambda: create_comments_relationship(conn, CofkUnionLocation),
+
+        # ### Person
         lambda: clone_rows_by_model_class(
             conn, CofkUnionPerson, col_val_handler_fn_list=[
                 _val_handler_person__organisation_type,
             ], seq_name=SEQ_NAME_COFKUNIONPERSION__IPERSON_ID,
             int_pk_col_name='iperson_id',
         ),
-        lambda: clone_rows_by_model_class(conn, CofkUnionLocation),
-        lambda: clone_rows_by_model_class(conn, CofkUnionResource),
-        lambda: clone_rows_by_model_class(conn, CofkUnionComment),
-        lambda: clone_rows_by_model_class(conn, CofkUnionImage),
-        lambda: create_m2m_relationship_by_relationship_table(
-            conn, CofkUnionLocation, CofkUnionResource,
-            f'{CofkUnionLocation._meta.db_table}_resources',
-        ),
-        lambda: create_m2m_relationship_by_relationship_table(
-            conn, CofkUnionComment, CofkUnionLocation,
-            f'{CofkUnionLocation._meta.db_table}_comments',
-        ),
+        # m2m person
+        lambda: create_comments_relationship(conn, CofkUnionPerson),
+        lambda: create_resources_relationship(conn, CofkUnionPerson),
+        lambda: create_images_relationship(conn, CofkUnionPerson),
+        lambda: create_recref(conn,
+                              RecrefIdFieldVal(CofkPersonLocationMap,
+                                               CofkPersonLocationMap.person,
+                                               CofkPersonLocationMap.location),
+                              ),
+        lambda: create_recref(conn,
+                              RecrefIdFieldVal(CofkPersonPersonMap,
+                                               CofkPersonPersonMap.person,
+                                               CofkPersonPersonMap.related),
+                              CofkPersonPersonMapFieldVal(),
+                              ),
     ]
 
     for fn in clone_action_fn_list:

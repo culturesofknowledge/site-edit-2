@@ -1,0 +1,10 @@
+{% if comments.count %}
+    <div>
+        <label>Researchers' notes</label>
+        {% for comment in comments.iterator %}
+            <div>
+                {{ comment.comment }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}

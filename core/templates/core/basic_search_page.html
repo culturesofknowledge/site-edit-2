@@ -3,6 +3,7 @@
 {% block content %}
 
     <h1> {{ title }} </h1>
+    <button id="fieldset-toggle">Toggle</button>
 
     {% for to_user_msg in to_user_messages %}
         <h1>{{ to_user_msg }}</h1>
@@ -11,12 +12,12 @@
     <form id="search_form" method="get">
         {% csrf_token %}
 
-        <input type="hidden" name="recref_mode" value="{{ recref_mode }}" />
+        <input type="hidden" name="recref_mode" value="{{ recref_mode }}"/>
 
         <div class="row">
 
             <!-- Query fieldsets -->
-            <aside class="col col--1of3">
+            <aside id="query-fieldset" class="col col--1of3">
                 <h3 class="sr-only">Search</h3>
                 {% for query_fieldset in query_fieldset_list %}
                     {{ query_fieldset }}
@@ -27,8 +28,8 @@
             </aside>
 
 
-            <div class="col col--2of3">
-                <h2>{{ total_record }} {{ title }}s found</h2>
+            <div id="query-result" class="col col--2of3">
+                <h2>{{ total_record | floatformat:'g' }} {{ title }}s found</h2>
 
                 <!-- Search components (e.g. sort by, records per page) -->
                 {{ search_components }}
@@ -215,16 +216,26 @@
             }
         });
 
-        ['id_sort_by', 'id_num_record'].forEach((target_id) => {
+        ['id_sort_by', 'id_num_record',
+            'display-as-grid', 'display-as-list'].forEach((target_id) => {
             document.getElementById(target_id).addEventListener('change', () => {
-                submit_page()
+                submit_page();
             });
         });
+
+        function setup_fieldset_toggle() {
+            $('#fieldset-toggle').click(function () {
+                $('#query-fieldset').toggle();
+                $('#query-result').toggleClass('col--2of3')
+            });
+
+        }
 
         $(function () {
             setup_record_delete();
             emlojs.selectable_service.setup_all()
             setup_merge_btn();
+            setup_fieldset_toggle();
             {% if recref_mode == '1' %}
                 emlojs.recref_select_service.setup_all()
             {% endif %}

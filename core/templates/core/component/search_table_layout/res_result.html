@@ -1,0 +1,12 @@
+{% if resources.count %}
+    <div>
+        <label>Related resources</label>
+        {% for resource in resources.iterator %}
+            <div>
+                <a href="{{ resource.resource_url }}" target="_blank">
+                    {{ resource.resource_name }}
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}

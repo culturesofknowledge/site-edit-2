@@ -1,21 +1,27 @@
 import logging
 from typing import Callable, Iterable, Type, Optional, Any, NoReturn
 
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models
+from django.db.models import F
+from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual, Exact
 from django.forms import BaseForm
 from django.shortcuts import render, redirect, get_object_or_404
 
 from core.forms import CommentForm, ResourceForm
-from core.helper import renderer_utils, view_utils, model_utils
-from core.helper.view_utils import DefaultSearchView, CommonInitFormViewTemplate, ImageHandler
+from core.helper import renderer_utils, view_utils, model_utils, query_utils, download_csv_utils
+from core.helper.renderer_utils import CompactSearchResultsRenderer
+from core.helper.view_components import DownloadCsvHandler
+from core.helper.view_utils import CommonInitFormViewTemplate, ImageHandler, BasicSearchView
 from location.models import CofkUnionLocation
-from person.forms import PersonForm
+from person.forms import PersonForm, GeneralSearchFieldset
 from person.models import CofkUnionPerson, CofkPersonLocationMap, CofkPersonPersonMap
 
 log = logging.getLogger(__name__)
 
 
-class PersonInitView(CommonInitFormViewTemplate):
+class PersonInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
 
     def resp_form_page(self, request, form):
         return render(request, 'person/init_form.html', {'person_form': form})
@@ -37,6 +43,7 @@ class PersonQuickInitView(PersonInitView):
         return redirect('person:return_quick_init', new_instance.iperson_id)
 
 
+@login_required
 def return_quick_init(request, pk):
     person = CofkUnionPerson.objects.get(iperson_id=pk)
     return view_utils.redirect_return_quick_init(
@@ -99,7 +106,7 @@ class PersonRecrefHandler(view_utils.MultiRecrefHandler):
                  person: CofkUnionPerson,
                  name=None, ):
         def _find_rec_name_by_id(target_id) -> Optional[str]:
-            record = CofkUnionPerson.objects.get(iperson_id=target_id)
+            record = CofkUnionPerson.objects.get(pk=target_id)
             return record and record.foaf_name
 
         initial_list = (m.__dict__ for m in _get_other_persons_by_type(person, person_type))
@@ -194,6 +201,7 @@ class PersonFullFormHandler:
         return render(request, 'person/full_form.html', context)
 
 
+@login_required
 def full_form(request, iperson_id):
     fhandler = PersonFullFormHandler(iperson_id, request)
 
@@ -230,7 +238,7 @@ def full_form(request, iperson_id):
     return fhandler.render_form(request)
 
 
-class PersonSearchView(DefaultSearchView):
+class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
     def title(self) -> str:
@@ -253,7 +261,35 @@ class PersonSearchView(DefaultSearchView):
 
     def get_queryset(self):
         # KTODO
+
+        # KTODO person_or_group
+
+        field_fn_maps = {
+            'gender': lambda f, v: Exact(F(f), '' if v == 'U' else v),
+            'person_or_group': lambda _, v: Exact(F('is_organisation'), 'Y' if v == 'G' else ''),
+            'birth_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_birth_year'), v),
+            'birth_year_to': lambda _, v: LessThanOrEqual(F('date_of_birth_year'), v),
+            'death_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_death_year'), v),
+            'death_year_to': lambda _, v: LessThanOrEqual(F('date_of_death_year'), v),
+            'flourished_year_from': lambda _, v: GreaterThanOrEqual(F('flourished_of_death_year'), v),
+            'flourished_year_to': lambda _, v: LessThanOrEqual(F('flourished_of_death_year'), v),
+            'change_timestamp_from': lambda _, v: GreaterThanOrEqual(F('change_timestamp'), v),
+            'change_timestamp_to': lambda _, v: LessThanOrEqual(F('change_timestamp'), v),
+        }
+
         queryset = CofkUnionPerson.objects.all()
+
+        queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
+        queries.extend(
+            query_utils.create_queries_by_lookup_field(self.request_data, [
+                'foaf_name', 'iperson_id', 'editors_notes',
+                'further_reading', 'change_user'
+            ])
+        )
+
+        if queries:
+            queryset = queryset.filter(query_utils.all_queries_match(queries))
+
         if sort_by := self.get_sort_by():
             queryset = queryset.order_by(sort_by)
         return queryset
@@ -261,3 +297,77 @@ class PersonSearchView(DefaultSearchView):
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
         return renderer_utils.create_table_search_results_renderer('person/search_table_layout.html')
+
+    @property
+    def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
+        return renderer_utils.create_compact_renderer(item_template_name='person/compact_item.html')
+
+    @property
+    def query_fieldset_list(self) -> Iterable:
+        default_values = {
+            'foaf_name_lookup': 'starts_with',
+        }
+        request_data = default_values | self.request_data.dict()
+
+        return [GeneralSearchFieldset(request_data)]
+
+    @property
+    def download_csv_handler(self) -> DownloadCsvHandler:
+        return PersonDownloadCsvHandler()
+
+
+class PersonDownloadCsvHandler(DownloadCsvHandler):
+    def get_header_list(self) -> list[str]:
+        return [
+            "ID",
+            "Name",
+            "Born",
+            "Died",
+            "Flourished",
+            "Org?",
+            "Type of group",
+            "Sent",
+            "Recd",
+            "All works",
+            "Researchers notes",
+            "Related resources",
+            "Mentioned",
+            "Editor's notes",
+            "Further reading",
+            "Images",
+            "Change user",
+            "Change timestamp",
+        ]
+
+    @staticmethod
+    def to_date_str(year, month, day) -> str:
+        if year and not month and not day:
+            return str(year)
+
+        return f'{year}-{month}-{day}'
+
+    def obj_to_values(self, obj) -> Iterable[Any]:
+        obj: CofkUnionPerson
+        org_type = obj.organisation_type
+        org_type = org_type.org_type_desc if org_type else ''
+        values = [
+            obj.iperson_id,
+            obj.foaf_name,
+            self.to_date_str(obj.date_of_birth_year, obj.date_of_birth_month, obj.date_of_birth_day),
+            self.to_date_str(obj.date_of_death_year, obj.date_of_death_month, obj.date_of_death_day),
+            self.to_date_str(obj.flourished_year, obj.flourished_month, obj.flourished_day),
+            obj.is_organisation,
+            org_type,
+            '0',  # KTODO send value
+            '0',  # KTODO recd value
+            '0',  # KTODO All works, should be send + recd
+            download_csv_utils.join_comment_lines(obj.comments.iterator()),
+            download_csv_utils.join_resource_lines(obj.resources.iterator()),
+            '',  # KTODO mentioned
+            obj.editors_notes,
+            obj.further_reading,
+            download_csv_utils.join_image_lines(obj.images.iterator()),
+            obj.change_timestamp,
+            obj.change_user,
+        ]
+        return values

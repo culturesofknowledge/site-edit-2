@@ -13,7 +13,7 @@
 
     <div class="margin-bottom">
         <label>Date:</label>
-        {{ date_select }}
+        {% include 'core/component/form_three_date_fields.html' with day_field=day_field month_field=month_field year_field=year_field %}
     </div>
 
     {% include "person/component/issues_with_date.html" with title='Issues with '|add:title_name|add:':' inferred=inferred  uncertain=uncertain  approx=approx %}

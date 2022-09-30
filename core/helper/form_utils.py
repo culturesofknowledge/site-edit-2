@@ -1,12 +1,30 @@
 import logging
+import warnings
 from typing import Iterable
 
 from django import forms
+from django.db.models import TextChoices
 from django.template.loader import render_to_string
 
 from core.helper import widgets_utils
 
 log = logging.getLogger(__name__)
+
+short_month_choices = [
+    (None, ''),
+    (1, 'Jan'),
+    (2, 'Feb'),
+    (3, 'Mar'),
+    (4, 'Apr'),
+    (5, 'May'),
+    (6, 'Jun'),
+    (7, 'Jul'),
+    (8, 'Aug'),
+    (9, 'Sep'),
+    (10, 'Oct'),
+    (11, 'Nov'),
+    (12, 'Dec'),
+]
 
 
 def record_tracker_label_fn_factory(subject='Entry'):
@@ -70,6 +88,12 @@ class ZeroOneCheckboxField(forms.BooleanField):
 
 
 class ThreeFieldDateField(forms.Field):
+    """
+    remember update form (get_initial_for_field, clean) to trigger
+    get_initial_by_initial_dict, clean_other_fields
+    TOBEREMOVE no longer need
+    """
+    warnings.warn('ThreeFieldDateField logic no longer used, to be remove', DeprecationWarning)
 
     def __init__(self, year_field_name,
                  month_field_name,
@@ -87,10 +111,13 @@ class ThreeFieldDateField(forms.Field):
         self.month_field_name = month_field_name
         self.day_field_name = day_field_name
 
-    def bound_data(self, data, initial):
-        # KTODO
-        # breakpoint()
-        return super().bound_data(data, initial)
+    def get_initial_by_initial_dict(self, field_name: str, initial: dict):
+        year = initial.get(self.year_field_name, None)
+        month = initial.get(self.month_field_name, None)
+        day = initial.get(self.day_field_name, None)
+        if year and month and day:
+            return f'{year}-{month:0>2}-{day:0>2}'
+        return ''
 
     def clean_other_fields(self, cleaned_data: dict, value: str):
         date_values = value and value.split('-')
@@ -104,3 +131,62 @@ class ThreeFieldDateField(forms.Field):
         ) = date_values
 
         return cleaned_data
+
+
+class IntLookupChoices(TextChoices):
+    EQUALS = 'equals', 'equals (=)',
+    NOT_EQUAL_TO = 'not_equal_to', 'not equal to (!=)',
+
+    LESS_THAN = 'less_than', 'less than (<)'
+    GREATER_THAN = 'great_than', 'great than (>)'
+
+    IS_BLANK = 'is_blank', 'is blank',
+    NOT_BLANK = 'not_blank', 'not blank',
+
+
+class StrLookupChoices(TextChoices):
+    CONTAINS = 'contains', 'contains',
+    DOES_NOT_CONTAIN = 'not_contain', 'not contain',
+
+    STARTS_WITH = 'starts_with', 'starts with',
+    DOES_NOT_START_WITH = 'not_start_with', 'not start with',
+    ENDS_WITH = 'ends_with', 'ends with',
+    DOES_NOT_END_WITH = 'not_end_with', 'not end with',
+
+    EQUALS = 'equals', 'equals (=)',
+    NOT_EQUAL_TO = 'not_equal_to', 'not equal to (!=)',
+
+    IS_BLANK = 'is_blank', 'is blank',
+    NOT_BLANK = 'not_blank', 'not blank',
+
+
+class EqualSimpleLookupChoices(TextChoices):
+    EQUALS = 'equals', 'equals (=)',
+    NOT_EQUAL_TO = 'not_equal_to', 'not equal to (!=)',
+
+    IS_BLANK = 'is_blank', 'is blank',
+    NOT_BLANK = 'not_blank', 'not blank',
+
+
+def create_day_field(required=False):
+    return forms.IntegerField(required=required, min_value=1, max_value=31,
+                              widget=forms.TextInput(
+                                  attrs={'placeholder': 'DD'}
+                              ))
+
+
+def create_month_field(required=False):
+    return forms.IntegerField(required=required,
+                              widget=forms.Select(choices=short_month_choices))
+
+
+def create_year_field(required=False):
+    return forms.IntegerField(required=required, min_value=1, max_value=9999,
+                              widget=forms.TextInput(
+                                  attrs={'placeholder': 'YYYY'}
+                              ))
+
+
+def create_lookup_field(choices, required=False):
+    return forms.CharField(required=required,
+                           widget=forms.Select(choices=choices), )

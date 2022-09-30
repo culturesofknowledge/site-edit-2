@@ -1,10 +1,40 @@
 <table>
+    <colgroup>
+        <col style="min-width: 100px">
+        <col style="min-width: 200px"> <!-- name -->
+        <col>
+        <col>
+        <col>
+        <col>
+        <col>
+        <col>
+        <col>
+        <col>
+        <col>
+        <col>
+        <col>
+        <col>
+        <col>
+    </colgroup>
     <thead>
     <tr></tr>
     <tr>
         <!-- KTODO add more fields -->
-        <th>Name</th>
         <th>ID</th>
+        <th>Name</th>
+        <th>Born</th>
+        <th>Died</th>
+        <th>Fl.</th>
+        <th>Org?</th>
+        <th>Type of group</th>
+        <th>Sent</th>
+        <th>Rec'd</th>
+        <th>Sent or Rec'd</th>
+        <th>Mentioned</th>
+        <th>Editor's notes</th>
+        <th>Further reading</th>
+        <th>Images</th>
+        <th>Other details</th>
     </tr>
     </thead>
     <tbody>
@@ -13,15 +43,72 @@
         <tr class="selectable_entry" entry_id="{{ r.iperson_id }}">
             <td>
                 <a href="{% url 'person:full_form' r.iperson_id %}">
-                    {{ r.foaf_name }}
+                    {{ r.iperson_id }}
                 </a>
             </td>
 
             <td>
                 <a href="{% url 'person:full_form' r.iperson_id %}">
-                    {{ r.iperson_id }}
+                    {{ r.foaf_name }}
                 </a>
             </td>
+
+            <td>
+                {% if r.flourished_year %}
+                    {{ r.flourished_year }}
+                {% endif %}
+            </td>
+
+            <td>
+                {% if r.date_of_death_year %}
+                    {{ r.date_of_death_year }}
+                {% endif %}
+            </td>
+
+            <td>
+                {% if r.flourished_year %}
+                    {{ r.flourished_year }}
+                {% endif %}
+            </td>
+
+            <td>
+                {% if r.is_organisation %}
+                    {{ r.is_organisation }}
+                {% endif %}
+            </td>
+
+            <td>
+                {% if r.organisation_type %}
+                    {{ r.organisation_type.org_type_desc }}
+                {% endif %}
+            </td>
+            <td> 0 <!-- KTODO --> </td>
+            <td> 0 <!-- KTODO --> </td>
+            <td> 0 <!-- KTODO --> </td>
+            <td> <!-- KTODO  what is this field   CofkUnionPersonSummary.mentioned --> </td>
+
+            <td>
+                {% include "core/component/search_table_layout/details_tag_if_exist.html" with value=r.editors_notes %}
+            </td>
+
+            <td>
+                {% include "core/component/search_table_layout/details_tag_if_exist.html" with value=r.further_reading %}
+            </td>
+            <td>
+                <!-- KTODO Image -->
+            </td>
+
+            <td>
+                <details>
+                    <summary>Details</summary>
+                    <div class="table-row-detail">
+                        {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r %}
+                        {% include "core/component/search_table_layout/comment_result.html" with comments=r.comments %}
+                        {% include "core/component/search_table_layout/res_result.html" with resources=r.resources %}
+                    </div>
+                </details>
+            </td>
+
         </tr>
     {% endfor %}
     </tbody>

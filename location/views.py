@@ -2,26 +2,26 @@ import itertools
 import logging
 from typing import Iterable, Union, Type, Callable
 
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.forms import BaseForm, BaseFormSet, ModelForm
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView
 
 from core.forms import CommentForm, ResourceForm
-from core.helper import model_utils, view_utils
+from core.helper import model_utils, view_utils, renderer_utils, query_utils, download_csv_utils
 from core.helper.model_utils import RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
 from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate, ImageHandler
-from location import renderer
 from location.forms import LocationForm, GeneralSearchFieldset
 from location.models import CofkUnionLocation
-from location.renderer import LocationCompactSearchResultsRenderer
 
 log = logging.getLogger(__name__)
 FormOrFormSet = Union[BaseForm, BaseFormSet]
 
 
-class LocationInitView(CommonInitFormViewTemplate):
+class LocationInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
 
     def resp_form_page(self, request, form):
         return render(request, 'location/init_form.html', {'loc_form': form})
@@ -39,6 +39,7 @@ class LocationQuickInitView(LocationInitView):
         return redirect('location:return_quick_init', new_instance.location_id)
 
 
+@login_required
 def return_quick_init(request, pk):
     location: CofkUnionLocation = CofkUnionLocation.objects.get(location_id=pk)
     return view_utils.redirect_return_quick_init(
@@ -77,6 +78,7 @@ def save_changed_forms(form_formsets: Iterable[FormOrFormSet]):
         f.save()
 
 
+@login_required
 def full_form(request, location_id):
     loc = None
     location_id = location_id or request.POST.get('location_id')
@@ -125,7 +127,7 @@ def full_form(request, location_id):
     return _render_full_form()
 
 
-class LocationMergeView(ListView):
+class LocationMergeView(LoginRequiredMixin, ListView):
     template_name = 'location/merge.html'
 
     @property
@@ -143,7 +145,7 @@ class LocationMergeView(ListView):
         return super().get(request, *args, **kwargs)
 
 
-class LocationSearchView(BasicSearchView):
+class LocationSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
     def query_fieldset_list(self) -> Iterable:
@@ -163,26 +165,23 @@ class LocationSearchView(BasicSearchView):
 
         # queries for like_fields
         field_fn_maps = {
-            'editors_notes': model_utils.create_contains_query,
-            'location_name': model_utils.create_contains_query,
-            'location_id': model_utils.create_eq_query,
-            'latitude': model_utils.create_contains_query,
-            'longitude': model_utils.create_contains_query,
-            'element_1_eg_room': model_utils.create_contains_query,
-            'element_2_eg_building': model_utils.create_contains_query,
-            'element_3_eg_parish': model_utils.create_contains_query,
-            'element_4_eg_city': model_utils.create_contains_query,
-            'element_5_eg_county': model_utils.create_contains_query,
-            'element_6_eg_country': model_utils.create_contains_query,
-            'element_7_eg_empire': model_utils.create_contains_query,
+            'editors_notes': query_utils.create_contains_query,
+            'location_name': query_utils.create_contains_query,
+            'location_id': query_utils.create_eq_query,
+            'latitude': query_utils.create_contains_query,
+            'longitude': query_utils.create_contains_query,
+            'element_1_eg_room': query_utils.create_contains_query,
+            'element_2_eg_building': query_utils.create_contains_query,
+            'element_3_eg_parish': query_utils.create_contains_query,
+            'element_4_eg_city': query_utils.create_contains_query,
+            'element_5_eg_county': query_utils.create_contains_query,
+            'element_6_eg_country': query_utils.create_contains_query,
+            'element_7_eg_empire': query_utils.create_contains_query,
         }
 
-        query_field_values = ((f, self.request_data.get(f)) for f in field_fn_maps.keys())
-        query_field_values = ((f, v) for f, v in query_field_values if v)
-        queries = [field_fn_maps[f](f, v) for f, v in query_field_values]
-
+        queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
         if queries:
-            queryset = queryset.filter(model_utils.any_queries(queries))
+            queryset = queryset.filter(query_utils.all_queries_match(queries))
 
         if sort_by := self.get_sort_by():
             queryset = queryset.order_by(sort_by)
@@ -202,11 +201,13 @@ class LocationSearchView(BasicSearchView):
 
     @property
     def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
-        return LocationCompactSearchResultsRenderer
+        return renderer_utils.create_compact_renderer(item_template_name='location/compact_item.html')
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
-        return renderer.location_table_search_result_renderer
+        return renderer_utils.create_table_search_results_renderer(
+            'location/search_table_layout.html'
+        )
 
     @property
     def download_csv_handler(self) -> DownloadCsvHandler:
@@ -247,8 +248,8 @@ class LocationDownloadCsvHandler(DownloadCsvHandler):
             '0',  # KTODO send value
             '0',  # KTODO recd value
             '0',  # KTODO All works, should be send + recd
-            ' ~ '.join(r.comment for r in obj.comments.iterator()),
-            ' ~ '.join(r.resource_url for r in obj.resources.iterator()),
+            download_csv_utils.join_comment_lines(obj.comments.iterator()),
+            download_csv_utils.join_resource_lines(obj.resources.iterator()),
             obj.latitude,
             obj.longitude,
             obj.element_1_eg_room,
@@ -258,9 +259,8 @@ class LocationDownloadCsvHandler(DownloadCsvHandler):
             obj.element_5_eg_county,
             obj.element_6_eg_country,
             obj.element_7_eg_empire,
-            ' ~ '.join(r.image_filename for r in obj.images.iterator()),
+            download_csv_utils.join_image_lines(obj.images.iterator()),
             obj.change_timestamp,
             obj.change_user,
         )
-        values = map(str, values)
         return values

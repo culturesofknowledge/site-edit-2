@@ -18,6 +18,7 @@ def create_common_urls_for_section(
         paths.append(path(f'form/<int:{edit_id_name}>', edit_view, name='full_form'))
     if search_view is not None:
         paths.append(path('search', search_view, name='search'))
+        paths.append(path('', search_view, name='home'))
     if merge_view is not None:
         paths.append(path('merge', merge_view, name='merge'))
     return paths

@@ -20,6 +20,15 @@ class SearchRecordRenderer:
         raise NotImplementedError('please define search result template')
 
 
+def create_search_record_renderer(selected_template_name: str) -> Type[SearchRecordRenderer]:
+    class NewSearchRecordRender(SearchRecordRenderer):
+        @property
+        def template_name(self):
+            return selected_template_name
+
+    return NewSearchRecordRender
+
+
 class CompactSearchResultsRenderer:
     """ renderer for all records as common compact layout
     """
@@ -36,7 +45,26 @@ class CompactSearchResultsRenderer:
 
     @property
     def record_renderer_factory(self) -> Type[SearchRecordRenderer]:
-        raise NotImplementedError('type of CompactItemRenderer have not provided ')
+        raise NotImplementedError('type of SearchRecordRenderer have not provided ')
+
+
+def create_compact_renderer(
+        item_template_name: str = None,
+        item_renderer_factory: Type[SearchRecordRenderer] = None
+) -> Type[CompactSearchResultsRenderer]:
+    if (item_template_name is None
+            and item_renderer_factory is None):
+        raise ValueError('select template_name or renderer_factory to create compact_renderer')
+
+    if item_template_name:
+        item_renderer_factory = create_search_record_renderer(item_template_name)
+
+    class NewCompactSearchResultsRenderer(CompactSearchResultsRenderer):
+        @property
+        def record_renderer_factory(self) -> Type[SearchRecordRenderer]:
+            return item_renderer_factory
+
+    return NewCompactSearchResultsRenderer
 
 
 def create_table_search_results_renderer(template_path, records_name='search_results', ):

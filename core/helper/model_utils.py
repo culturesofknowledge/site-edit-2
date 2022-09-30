@@ -1,17 +1,16 @@
-import datetime
-import functools
 import logging
-from typing import Iterable
+from typing import Iterable, Type
 
 import django
 from django.conf import settings
-from django.db.models import Q
+import django.utils.timezone
+from django.db import models
 
 
 class RecordTracker:
 
     def update_current_user_timestamp(self, user):
-        now = datetime.datetime.now()
+        now = default_current_timestamp()
         if hasattr(self, 'creation_timestamp') and not self.creation_timestamp:
             self.creation_timestamp = now
 
@@ -23,22 +22,6 @@ class RecordTracker:
 
         if hasattr(self, 'change_user'):
             self.change_user = user
-
-
-def create_lookup_query(field, lookup, value) -> Q:
-    return Q(**{f'{field}__{lookup}': value})
-
-
-def create_contains_query(field, value) -> Q:
-    return create_lookup_query(field, 'contains', value)
-
-
-def create_eq_query(field, value):
-    return Q(**{field: value})
-
-
-def any_queries(queries: Iterable[Q]):
-    return functools.reduce(lambda a, b: a | b, queries, Q())
 
 
 def next_seq_safe(seq_name):
@@ -65,8 +48,15 @@ def next_seq_safe(seq_name):
 
 
 def default_current_timestamp():
-    return datetime.datetime.now()
+    return django.utils.timezone.now()
 
 
 def related_manager_to_dict_list(related_manager) -> Iterable[dict]:
     return (r.__dict__ for r in related_manager.iterator())
+
+
+def create_multi_records_by_dict_list(model_class: Type[models.Model],
+                                      dict_list: Iterable[dict]) -> list:
+    records = [model_class(**r) for r in dict_list]
+    model_class.objects.bulk_create(records)
+    return records

@@ -1,0 +1,31 @@
+<fieldset>
+    <legend>{{ form.title }}</legend>
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.location_name field_lookup=form.location_name_lookup %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.location_synonyms field_lookup=form.location_synonyms_lookup %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.location_id field_lookup=form.location_id_lookup %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.editors_notes field_lookup=form.editors_notes_lookup %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.latitude field_lookup=form.latitude_lookup %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.longitude field_lookup=form.longitude_lookup %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.element_1_eg_room field_lookup=form.element_1_eg_room_lookup %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.element_2_eg_building field_lookup=form.element_2_eg_building_lookup %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.element_3_eg_parish field_lookup=form.element_3_eg_parish_lookup %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.element_4_eg_city field_lookup=form.element_4_eg_city_lookup %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.element_5_eg_county field_lookup=form.element_5_eg_county_lookup %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.element_6_eg_country field_lookup=form.element_6_eg_country_lookup %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.element_7_eg_empire field_lookup=form.element_7_eg_empire_lookup %}
+
+
+</fieldset>
