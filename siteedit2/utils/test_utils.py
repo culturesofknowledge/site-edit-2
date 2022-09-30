@@ -11,6 +11,7 @@ from selenium.webdriver.common.by import By
 
 import core.fixtures
 from core.helper.view_utils import BasicSearchView
+from login.models import CofkUser
 
 
 class EmloSeleniumTestCase(LiveServerTestCase):
@@ -30,6 +31,22 @@ class EmloSeleniumTestCase(LiveServerTestCase):
             options=options,
         )
         cls.selenium.implicitly_wait(10)
+
+        cls.login_user = CofkUser()
+        cls.login_user.username = 'test_user_a'
+        cls.login_user.raw_password = 'pass'
+        cls.login_user.set_password(cls.login_user.raw_password)
+
+    def setUp(self) -> None:
+        """ Developer can change login_user by overwrite setUpClass
+        setUp will no login user if login_user is None
+        """
+        if self.login_user is not None:
+            self.login_user.save()
+            self.goto_vname('login:gate')
+            self.find_element_by_css('input[name=username]').send_keys(self.login_user.username)
+            self.find_element_by_css('input[name=password]').send_keys(self.login_user.raw_password)
+            self.find_element_by_css('button').click()
 
     @classmethod
     def tearDownClass(cls):
