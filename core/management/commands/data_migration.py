@@ -14,10 +14,10 @@ from django.db.models import Model, Max
 from psycopg2.extras import DictCursor
 
 from core.helper import iter_utils
-from core.models import CofkUnionResource, CofkUnionComment
+from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType
 from location.models import CofkUnionLocation
 from person.models import CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID
-from uploader.models import CofkUnionImage, CofkUnionOrgType, CofkCollectStatus, Iso639LanguageCode
+from uploader.models import CofkUnionImage, CofkUnionOrgType, CofkCollectStatus, Iso639LanguageCode, CofkLookupCatalogue
 
 log = logging.getLogger(__name__)
 
@@ -181,6 +181,8 @@ def data_migration(user, password, database, host, port):
     print(conn)
 
     clone_action_fn_list = [
+        lambda: clone_rows_by_model_class(conn, CofkLookupCatalogue),
+        lambda: clone_rows_by_model_class(conn, CofkLookupDocumentType),
         lambda: clone_rows_by_model_class(conn, Iso639LanguageCode),
         lambda: clone_rows_by_model_class(conn, CofkCollectStatus),
         lambda: clone_rows_by_model_class(conn, CofkUnionOrgType),
