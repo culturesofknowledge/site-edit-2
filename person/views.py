@@ -232,6 +232,8 @@ def full_form(request, iperson_id):
                                 model_id_name='resource_id')
         fhandler.img_handler.save(request)
 
+        # KTODO save birthplace, deathplace
+
         # reload all form data for rendering
         fhandler.load_data(iperson_id, request_data=None)
 
@@ -260,10 +262,6 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         return 'person:return_quick_init'
 
     def get_queryset(self):
-        # KTODO
-
-        # KTODO person_or_group
-
         field_fn_maps = {
             'gender': lambda f, v: Exact(F(f), '' if v == 'U' else v),
             'person_or_group': lambda _, v: Exact(F('is_organisation'), 'Y' if v == 'G' else ''),
