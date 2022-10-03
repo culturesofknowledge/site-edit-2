@@ -42,7 +42,7 @@ class LocationQuickInitView(LocationInitView):
 @login_required
 def return_quick_init(request, pk):
     location: CofkUnionLocation = CofkUnionLocation.objects.get(location_id=pk)
-    return view_utils.redirect_return_quick_init(
+    return view_utils.render_return_quick_init(
         request, 'Place', location.location_name, location.location_id, )
 
 

@@ -46,8 +46,8 @@ class PersonQuickInitView(PersonInitView):
 @login_required
 def return_quick_init(request, pk):
     person = CofkUnionPerson.objects.get(iperson_id=pk)
-    return view_utils.redirect_return_quick_init(
-        request, 'Person', person.foaf_name, person.iperson_id, )
+    return view_utils.render_return_quick_init(
+        request, 'Person', person.foaf_name, person.person_id, )
 
 
 def convert_to_recref_form_dict(record_dict: dict, target_id_name: str,
@@ -125,7 +125,7 @@ class PersonRecrefHandler(view_utils.MultiRecrefHandler):
 
     def create_recref_by_new_form(self, target_id, new_form, parent_instance) -> Optional[models.Model]:
         recref: CofkPersonPersonMap = CofkPersonPersonMap()
-        recref.related = CofkUnionPerson.objects.get(iperson_id=target_id)
+        recref.related = CofkUnionPerson.objects.get(pk=target_id)
         if not recref.related:
             # KTODO can we put it to validate function?
             log.warning(f"person not found -- {target_id} ")

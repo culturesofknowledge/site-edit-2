@@ -6,6 +6,7 @@ from django.urls import reverse
 from core.helper import form_utils
 from core.helper import widgets_utils
 from core.models import CofkUnionComment, CofkUnionResource
+from person.models import CofkUnionPerson
 from uploader.models import CofkUnionImage
 
 
@@ -45,7 +46,11 @@ class RecrefForm(forms.Form):
 class PersonRecrefForm(RecrefForm):
     @property
     def target_url(self) -> str:
-        return reverse('person:full_form', args=[self.initial.get('target_id')])
+        person = CofkUnionPerson.objects.get(pk=self.initial.get('target_id'))
+        if person:
+            return reverse('person:full_form', args=[person.iperson_id])
+        else:
+            return ''
 
 
 class LocRecrefForm(RecrefForm):

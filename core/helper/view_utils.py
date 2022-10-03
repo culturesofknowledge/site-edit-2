@@ -270,7 +270,7 @@ class CommonInitFormViewTemplate(View):
         return self.resp_form_page(request, form)
 
 
-def redirect_return_quick_init(request, name, item_name, item_id):
+def render_return_quick_init(request, name, item_name, item_id):
     return render(request, 'core/return_quick_init.html', {
         'name': name,
         'item_name': item_name,
