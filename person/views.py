@@ -35,6 +35,7 @@ class PersonInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
 
     def on_form_changed(self, request, form) -> NoReturn:
         form.instance.person_id = f'cofk_union_person-iperson_id:{form.instance.iperson_id}'
+        # KTODO handle form.instance.roles
         return super().on_form_changed(request, form)
 
 
@@ -149,6 +150,7 @@ class PersonFullFormHandler:
 
     def load_data(self, iperson_id, request_data=None, request=None, ):
         self.person = get_object_or_404(CofkUnionPerson, iperson_id=iperson_id)
+        # KTODO handle self.person.roles
         self.person_form = PersonForm(request_data or None, instance=self.person)
         self.loc_handler = LocRecrefHandler(
             request_data, model_list=self.person.cofkpersonlocationmap_set.iterator(), )
