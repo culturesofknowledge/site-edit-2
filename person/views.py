@@ -9,7 +9,7 @@ from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual, Exact
 from django.forms import BaseForm
 from django.shortcuts import render, redirect, get_object_or_404
 
-from core.forms import CommentForm, ResourceForm
+from core.forms import CommentForm, ResourceForm, LocRecrefForm, PersonRecrefForm
 from core.helper import renderer_utils, view_utils, model_utils, query_utils, download_csv_utils
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
@@ -74,7 +74,8 @@ class LocRecrefHandler(view_utils.MultiRecrefHandler):
                         for r in initial_list)
 
         name = name or 'loc'
-        super().__init__(request_data, name=name, initial_list=initial_list)
+        super().__init__(request_data, name=name, initial_list=initial_list,
+                         recref_form_class=LocRecrefForm)
 
     @property
     def recref_class(self) -> Type[models.Model]:
@@ -114,7 +115,8 @@ class PersonRecrefHandler(view_utils.MultiRecrefHandler):
                         for r in initial_list)
 
         name = name or person_type
-        super().__init__(request_data, name=name, initial_list=initial_list)
+        super().__init__(request_data, name=name, initial_list=initial_list,
+                         recref_form_class=PersonRecrefForm)
         self.person_type = person_type
 
     @property

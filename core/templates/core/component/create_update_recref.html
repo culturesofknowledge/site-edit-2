@@ -4,7 +4,11 @@
         <div class="inline-from-to">
             {{ form.recref_id }}
             {{ form.target_id }}
-            <label> {{ form.rec_name.value }}  </label>
+            <label>
+                <a href="{{ form.target_url }}" target="_blank">
+                    {{ form.rec_name.value }}
+                </a>
+            </label>
             <small>From:</small>
             {{ form.from_date }}
             <small>To:</small>

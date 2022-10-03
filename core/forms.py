@@ -1,6 +1,7 @@
 from django import forms
 from django.conf import settings
 from django.forms import ModelForm, HiddenInput, IntegerField, Form
+from django.urls import reverse
 
 from core.helper import form_utils
 from core.helper import widgets_utils
@@ -35,6 +36,23 @@ class RecrefForm(forms.Form):
     from_date = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
     to_date = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
     is_delete = form_utils.ZeroOneCheckboxField(required=False, is_str=False)
+
+    @property
+    def target_url(self) -> str:
+        return ''  # tobe define by subclass
+
+
+class PersonRecrefForm(RecrefForm):
+    @property
+    def target_url(self) -> str:
+        return reverse('person:full_form', args=[self.initial.get('target_id')])
+
+
+class LocRecrefForm(RecrefForm):
+    @property
+    def target_url(self) -> str:
+
+        return reverse('location:full_form', args=[self.initial.get('target_id')])
 
 
 class CommentForm(ModelForm):

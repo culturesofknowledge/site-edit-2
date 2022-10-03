@@ -306,11 +306,13 @@ class MultiRecrefHandler:
     * create form and formset
     """
 
-    def __init__(self, request_data, name, initial_list=None):
+    def __init__(self, request_data, name,
+                 recref_form_class: Type[RecrefForm] = RecrefForm,
+                 initial_list=None):
 
         self.name = name
-        self.new_form = RecrefForm(request_data or None, prefix=f'new_{name}')
-        self.update_formset = view_utils.create_formset(RecrefForm, post_data=request_data,
+        self.new_form = recref_form_class(request_data or None, prefix=f'new_{name}')
+        self.update_formset = view_utils.create_formset(recref_form_class, post_data=request_data,
                                                         prefix=f'recref_{name}',
                                                         initial_list=initial_list,
                                                         extra=0, )
