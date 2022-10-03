@@ -336,7 +336,7 @@ class MultiRecrefHandler:
         recref.update_current_user_timestamp(username)
         return recref
 
-    def create_recref_by_new_form(self, target_id, new_form, parent_instance) -> Optional[Recref]:
+    def create_recref_by_new_form(self, target_id, parent_instance) -> Optional[Recref]:
         raise NotImplementedError()
 
     def maintain_record(self, request, parent_instance):
@@ -347,7 +347,7 @@ class MultiRecrefHandler:
         # save new_form
         self.new_form.is_valid()
         if target_id := self.new_form.cleaned_data.get('target_id'):
-            if recref := self.create_recref_by_new_form(target_id, self.new_form, parent_instance):
+            if recref := self.create_recref_by_new_form(target_id, parent_instance):
                 recref = self.fill_common_recref_field(recref, self.new_form.cleaned_data, request.user.username)
                 recref.save()
 

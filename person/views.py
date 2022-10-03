@@ -81,7 +81,7 @@ class LocRecrefHandler(view_utils.MultiRecrefHandler):
     def recref_class(self) -> Type[models.Model]:
         return CofkPersonLocationMap
 
-    def create_recref_by_new_form(self, target_id, new_form, parent_instance) -> Optional[models.Model]:
+    def create_recref_by_new_form(self, target_id, parent_instance) -> Optional[models.Model]:
         ps_loc: CofkPersonLocationMap = CofkPersonLocationMap()
         ps_loc.location = CofkUnionLocation.objects.get(location_id=target_id)
         if not ps_loc.location:
@@ -123,7 +123,7 @@ class PersonRecrefHandler(view_utils.MultiRecrefHandler):
     def recref_class(self) -> Type[models.Model]:
         return CofkPersonPersonMap
 
-    def create_recref_by_new_form(self, target_id, new_form, parent_instance) -> Optional[models.Model]:
+    def create_recref_by_new_form(self, target_id, parent_instance) -> Optional[models.Model]:
         recref: CofkPersonPersonMap = CofkPersonPersonMap()
         recref.related = CofkUnionPerson.objects.get(pk=target_id)
         if not recref.related:
