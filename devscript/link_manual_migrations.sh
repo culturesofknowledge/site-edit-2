@@ -6,9 +6,12 @@ if [ ! -f "manage.py" ]; then
 fi
 
 cd person/migrations
-ln -sf ../manual_migrations/0*
+ln -vsf ../manual_migrations/0*.py
 
 cd ../../
-
 cd uploader/migrations
-ln -sf ../manual_migrations/0*
+ln -vsf ../manual_migrations/0*.py
+
+cd ../../
+cd work/migrations
+ln -vsf ../manual_migrations/0*.py

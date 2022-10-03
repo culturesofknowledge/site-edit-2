@@ -1,26 +1,45 @@
 import logging
-from typing import Callable
 
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.forms import BaseForm
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 
-from core.helper.view_utils import CommonInitFormViewTemplate
+from core.helper.view_utils import DefaultSearchView
+from person.models import CofkUnionPerson
 from work.forms import WorkForm
 
 log = logging.getLogger(__name__)
 
 
-# Create your views here.
+@login_required
+def init_form(request):
+    work_form = WorkForm(request.POST or None)
+    if request.method == 'POST':
+        if work_form.is_valid():
+            pass
 
-class WorkInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
+        pass
 
-    def resp_form_page(self, request, form):
-        return render(request, 'work/init_form.html', {'work_form': form})
+    return render(request, 'work/init_form.html', {'work_form': work_form})
 
-    def resp_after_saved(self, request, form, new_instance):
-        return redirect('work:full_form', new_instance.iwork_id)
+
+@login_required
+def full_form(request, iwork_id):
+    # KTODO
+    work_form = WorkForm()
+    return render(request, 'work/init_form.html', {'work_form': work_form})
+
+
+class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
-    def form_factory(self) -> Callable[..., BaseForm]:
-        return WorkForm
+    def title(self) -> str:
+        return 'Work'
+
+    def get_queryset(self):
+        queryset = CofkUnionPerson.objects.all()
+        return queryset
+
+    @property
+    def return_quick_init_vname(self) -> str:
+        return 'work:return_quick_init'

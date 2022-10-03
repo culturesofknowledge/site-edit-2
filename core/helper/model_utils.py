@@ -5,6 +5,7 @@ import django
 from django.conf import settings
 import django.utils.timezone
 from django.db import models
+import uuid
 
 
 class RecordTracker:
@@ -49,6 +50,10 @@ def next_seq_safe(seq_name):
 
 def default_current_timestamp():
     return django.utils.timezone.now()
+
+
+def default_uuid():
+    return str(uuid.uuid4())
 
 
 def related_manager_to_dict_list(related_manager) -> Iterable[dict]:

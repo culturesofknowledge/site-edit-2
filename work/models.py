@@ -1,3 +1,4 @@
+import functools
 from datetime import datetime
 
 from django.core.exceptions import ValidationError
@@ -7,56 +8,61 @@ from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 from uploader.models import CofkCollectUpload, CofkCollectStatus
 
+SEQ_NAME_COFKUNIONWORK__IWORK_ID = 'cofk_union_person_iwork_id_seq'
 
 class CofkUnionWork(models.Model, RecordTracker):
     work_id = models.CharField(primary_key=True, max_length=100)
     description = models.TextField(blank=True, null=True)
     date_of_work_as_marked = models.CharField(max_length=250, blank=True, null=True)
-    original_calendar = models.CharField(max_length=2)
-    date_of_work_std = models.CharField(max_length=12, blank=True, null=True)
-    date_of_work_std_gregorian = models.CharField(max_length=12, blank=True, null=True)
+    original_calendar = models.CharField(max_length=2, default='')
+    date_of_work_std = models.CharField(max_length=12, blank=True, null=True, default='9999-12-31')
+    date_of_work_std_gregorian = models.CharField(max_length=12, blank=True, null=True, default='9999-12-31')
     date_of_work_std_year = models.IntegerField(blank=True, null=True)
     date_of_work_std_month = models.IntegerField(blank=True, null=True)
     date_of_work_std_day = models.IntegerField(blank=True, null=True)
     date_of_work2_std_year = models.IntegerField(blank=True, null=True)
     date_of_work2_std_month = models.IntegerField(blank=True, null=True)
     date_of_work2_std_day = models.IntegerField(blank=True, null=True)
-    date_of_work_std_is_range = models.SmallIntegerField()
-    date_of_work_inferred = models.SmallIntegerField()
-    date_of_work_uncertain = models.SmallIntegerField()
-    date_of_work_approx = models.SmallIntegerField()
+    date_of_work_std_is_range = models.SmallIntegerField(default=0)
+    date_of_work_inferred = models.SmallIntegerField(default=0)
+    date_of_work_uncertain = models.SmallIntegerField(default=0)
+    date_of_work_approx = models.SmallIntegerField(default=0)
     authors_as_marked = models.TextField(blank=True, null=True)
     addressees_as_marked = models.TextField(blank=True, null=True)
-    authors_inferred = models.SmallIntegerField()
-    authors_uncertain = models.SmallIntegerField()
-    addressees_inferred = models.SmallIntegerField()
-    addressees_uncertain = models.SmallIntegerField()
+    authors_inferred = models.SmallIntegerField(default=0)
+    authors_uncertain = models.SmallIntegerField(default=0)
+    addressees_inferred = models.SmallIntegerField(default=0)
+    addressees_uncertain = models.SmallIntegerField(default=0)
     destination_as_marked = models.TextField(blank=True, null=True)
     origin_as_marked = models.TextField(blank=True, null=True)
-    destination_inferred = models.SmallIntegerField()
-    destination_uncertain = models.SmallIntegerField()
-    origin_inferred = models.SmallIntegerField()
-    origin_uncertain = models.SmallIntegerField()
+    destination_inferred = models.SmallIntegerField(default=0)
+    destination_uncertain = models.SmallIntegerField(default=0)
+    origin_inferred = models.SmallIntegerField(default=0)
+    origin_uncertain = models.SmallIntegerField(default=0)
     abstract = models.TextField(blank=True, null=True)
     keywords = models.TextField(blank=True, null=True)
     language_of_work = models.CharField(max_length=255, blank=True, null=True)
-    work_is_translation = models.SmallIntegerField()
+    work_is_translation = models.SmallIntegerField(default=0)
     incipit = models.TextField(blank=True, null=True)
     explicit = models.TextField(blank=True, null=True)
     ps = models.TextField(blank=True, null=True)
     original_catalogue = models.ForeignKey("uploader.CofkLookupCatalogue", models.DO_NOTHING,
-                                           db_column='original_catalogue', blank=True, null=True)
+                                           db_column='original_catalogue', blank=True, null=True,
+                                           default='')
     accession_code = models.CharField(max_length=1000, blank=True, null=True)
-    work_to_be_deleted = models.SmallIntegerField()
-    iwork_id = models.IntegerField()
+    work_to_be_deleted = models.SmallIntegerField(default=0)
+    iwork_id = models.IntegerField(
+        default=functools.partial(model_utils.next_seq_safe, SEQ_NAME_COFKUNIONWORK__IWORK_ID),
+        unique=True,
+    )
     editors_notes = models.TextField(blank=True, null=True)
-    edit_status = models.CharField(max_length=3)
-    relevant_to_cofk = models.CharField(max_length=3)
+    edit_status = models.CharField(max_length=3, default='')
+    relevant_to_cofk = models.CharField(max_length=3, default='Y')
     creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
     change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     change_user = models.CharField(max_length=50)
-    uuid = models.UUIDField(blank=True, null=True)
+    uuid = models.UUIDField(blank=True, null=True, default=model_utils.default_uuid)
 
     class Meta:
         db_table = 'cofk_union_work'
