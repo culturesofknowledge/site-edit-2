@@ -1,11 +1,12 @@
 import logging
-from typing import Iterable, Type
+import uuid
+from typing import Iterable, Type, Optional
 
 import django
-from django.conf import settings
 import django.utils.timezone
+from django.conf import settings
 from django.db import models
-import uuid
+from django.db.models import Model
 
 
 class RecordTracker:
@@ -57,7 +58,11 @@ def default_uuid():
 
 
 def related_manager_to_dict_list(related_manager) -> Iterable[dict]:
-    return (r.__dict__ for r in related_manager.iterator())
+    return models_to_dict_list(related_manager.iterator())
+
+
+def models_to_dict_list(model_list) -> Iterable[dict]:
+    return (r.__dict__ for r in model_list)
 
 
 def create_multi_records_by_dict_list(model_class: Type[models.Model],
@@ -65,3 +70,14 @@ def create_multi_records_by_dict_list(model_class: Type[models.Model],
     records = [model_class(**r) for r in dict_list]
     model_class.objects.bulk_create(records)
     return records
+
+
+def get_safe(model_class: Type[Model], **kwargs) -> Optional[Model]:
+    return model_class.objects.filter(**kwargs).first()
+
+
+def get_or_create(model_class: Type[Model], **field_values) -> Model:
+    if obj := get_safe(model_class, **field_values):
+        return obj
+
+    return model_class(**field_values)

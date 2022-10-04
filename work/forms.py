@@ -1,6 +1,5 @@
-import collections
 import logging
-from typing import Iterable, Callable
+from typing import Iterable
 
 from django import forms
 from django.db.models import TextChoices
@@ -8,7 +7,7 @@ from django.forms import CharField
 from django.shortcuts import get_object_or_404
 
 from core.forms import get_peron_full_form_url_by_pk
-from core.helper import view_utils, data_utils
+from core.helper import view_utils, data_utils, form_utils
 from person.models import CofkUnionPerson
 from work.models import CofkCollectWork, CofkUnionWork, CofkWorkPersonMap
 
@@ -25,10 +24,18 @@ class CofkCollectWorkForm(forms.ModelForm):
 class WorkForm(forms.ModelForm):
     sender_person_id = forms.CharField(required=False)
 
+    authors_as_marked = forms.CharField(required=False)
+
+    authors_inferred = form_utils.ZeroOneCheckboxField(is_str=False)
+    authors_uncertain = form_utils.ZeroOneCheckboxField(is_str=False)
+
     class Meta:
         model = CofkUnionWork
         fields = (
             'description',
+            'authors_as_marked',
+            'authors_inferred',
+            'authors_uncertain',
         )
 
 

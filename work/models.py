@@ -1,9 +1,11 @@
 import functools
 from datetime import datetime
+from typing import Iterable
 
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from core.constant import REL_TYPE_COMMENT_AUTHOR
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 from core.models import Recref
@@ -68,6 +70,15 @@ class CofkUnionWork(models.Model, RecordTracker):
 
     class Meta:
         db_table = 'cofk_union_work'
+
+    @property
+    def author_comments(self) -> Iterable['CofkUnionComment']:
+        return (r.comment for r in self.cofkworkcomment_set.filter(relationship_type=REL_TYPE_COMMENT_AUTHOR))
+
+
+class CofkWorkComment(Recref):
+    work = models.ForeignKey(CofkUnionWork, on_delete=models.CASCADE)
+    comment = models.ForeignKey('core.CofkUnionComment', on_delete=models.CASCADE)
 
 
 class CofkCollectWork(models.Model):

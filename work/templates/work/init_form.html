@@ -4,6 +4,7 @@
 {% block head %}
     <script src="{% static 'location/js/work_form.js' %}" defer></script>
     <script src="/static/core/js/recref_service.js"></script>
+    <script src="{% static 'core/js/ref_publication_service.js' %}" defer></script>
     <script defer>
         document.addEventListener('DOMContentLoaded', (e) => {
             setup_work_form_listener()
@@ -40,6 +41,22 @@
                         </div>
 
                         {% include "core/component/recref.html" with recref_type='person' id_field=work_form.sender_person_id label='Add anther authro/sender:' %}
+
+                        <label> Authors/sender as marked: </label>
+                        {{ work_form.authors_as_marked }}
+
+                        <label> Issues with authors/senders: </label>
+
+                        {% include "core/component/common_checkbox.html" with field=work_form.authors_inferred name='Authors / senders inferred' %}
+
+                        {% include "core/component/common_checkbox.html" with field=work_form.authors_uncertain  name='Authors / senders uncertain' %}
+
+                        <!-- Comment section -->
+                        {% if author_comment_formset %}
+                            <h4>Notes on authors/senders</h4>
+                            {% include "core/component/comment_publication_formset.html" with comment_formset=author_comment_formset %}
+                        {% endif %}
+
 
                     </fieldset>
                 </div>

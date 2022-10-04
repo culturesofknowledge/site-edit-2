@@ -387,6 +387,7 @@ def save_formset(forms: Iterable[ModelForm],
                 log.warning(f'mode_id_name[{model_id_name}] not found in form.instance')
 
         # save form
+        log.info(f'form save -- [{form.instance}]')
         form.save()
 
         # bind many-to-many relation
@@ -460,3 +461,19 @@ class FullFormHandler:
         for h in self.all_recref_handlers:
             context.update(h.create_context())
         return context
+
+
+def save_m2m_relation_records(forms: Iterable[ModelForm],
+                              recref_factory: Callable,
+                              username,
+                              model_id_name,
+                              form_id_name=None, ):
+    save_formset(forms, model_id_name=model_id_name,
+                 form_id_name=form_id_name)  # KTODO change extract mode_id_name
+
+    records = (f.instance for f in forms if f.has_changed())
+    for r in records:
+        recref = recref_factory(r)
+        recref.update_current_user_timestamp(username)
+        log.info(f'save m2m recref -- [{recref}][{r}]')
+        recref.save()
