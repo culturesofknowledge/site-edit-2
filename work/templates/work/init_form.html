@@ -31,8 +31,15 @@
                     <fieldset>
                         <legend>Authors / senders</legend>
 
-                        {% include "core/component/recref.html" with recref_type='person' id_field=new_form.target_id label='Add anther authro/sender:' %}
+                        <small>('author/sender' will be deleted if no type selected)</small>
+                        <div class="work_person_container">
+                            {{ work_person_formset.management_form }}
+                            {% for form in work_person_formset  %}
+                                {{ form }}
+                            {% endfor %}
+                        </div>
 
+                        {% include "core/component/recref.html" with recref_type='person' id_field=work_form.sender_person_id label='Add anther authro/sender:' %}
 
                     </fieldset>
                 </div>

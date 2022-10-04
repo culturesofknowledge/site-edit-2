@@ -171,3 +171,16 @@
     @extend .col--2of5;
   }
 }
+
+
+.work_person_container {
+  display: grid;
+  grid-template-columns: 65% 35%;
+  grid-row-gap: 8px;
+  width: 70%;
+
+  & > .grid-item {
+    background-color: #f2f2f2;
+
+  }
+}

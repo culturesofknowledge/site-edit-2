@@ -16,7 +16,7 @@ from core.helper.view_components import DownloadCsvHandler
 from core.helper.view_utils import CommonInitFormViewTemplate, ImageHandler, BasicSearchView
 from location.models import CofkUnionLocation
 from person.forms import PersonForm, GeneralSearchFieldset
-from person.models import CofkUnionPerson, CofkPersonLocationMap, CofkPersonPersonMap
+from person.models import CofkUnionPerson, CofkPersonLocationMap, CofkPersonPersonMap, create_person_id
 
 log = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ class PersonInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
         return PersonForm
 
     def on_form_changed(self, request, form) -> NoReturn:
-        form.instance.person_id = f'cofk_union_person-iperson_id:{form.instance.iperson_id}'
+        form.instance.person_id = create_person_id(form.instance.iperson_id)
         # KTODO handle form.instance.roles
         return super().on_form_changed(request, form)
 
@@ -150,7 +150,7 @@ class PersonFullFormHandler:
 
     def load_data(self, iperson_id, request_data=None, request=None, ):
         self.person = get_object_or_404(CofkUnionPerson, iperson_id=iperson_id)
-        # KTODO handle self.person.roles
+        # KTODO handle self.person.roles, roles_titles
         self.person_form = PersonForm(request_data or None, instance=self.person)
         self.loc_handler = LocRecrefHandler(
             request_data, model_list=self.person.cofkpersonlocationmap_set.iterator(), )
@@ -237,6 +237,7 @@ def full_form(request, iperson_id):
         fhandler.img_handler.save(request)
 
         # KTODO save birthplace, deathplace
+        # KTODo save roles_titles
 
         # reload all form data for rendering
         fhandler.load_data(iperson_id, request_data=None)

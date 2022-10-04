@@ -1,3 +1,5 @@
+import logging
+
 from django import forms
 from django.conf import settings
 from django.forms import ModelForm, HiddenInput, IntegerField, Form
@@ -43,20 +45,27 @@ class RecrefForm(forms.Form):
         return ''  # tobe define by subclass
 
 
+def get_peron_full_form_url_by_pk(pk):
+    if pk is None or pk == '':
+        return ''
+
+    person = CofkUnionPerson.objects.get(pk=pk)
+    if person:
+        return reverse('person:full_form', args=[person.iperson_id])
+    else:
+        logging.warning(f'get_person_full_form_url_by_pk failed, person not found [{pk=}]')
+        return ''
+
+
 class PersonRecrefForm(RecrefForm):
     @property
     def target_url(self) -> str:
-        person = CofkUnionPerson.objects.get(pk=self.initial.get('target_id'))
-        if person:
-            return reverse('person:full_form', args=[person.iperson_id])
-        else:
-            return ''
+        return get_peron_full_form_url_by_pk(self.initial.get('target_id'))
 
 
 class LocRecrefForm(RecrefForm):
     @property
     def target_url(self) -> str:
-
         return reverse('location:full_form', args=[self.initial.get('target_id')])
 
 

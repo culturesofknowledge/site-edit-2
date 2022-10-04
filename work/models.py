@@ -6,9 +6,11 @@ from django.db import models
 
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
+from core.models import Recref
 from uploader.models import CofkCollectUpload, CofkCollectStatus
 
 SEQ_NAME_COFKUNIONWORK__IWORK_ID = 'cofk_union_person_iwork_id_seq'
+
 
 class CofkUnionWork(models.Model, RecordTracker):
     work_id = models.CharField(primary_key=True, max_length=100)
@@ -101,7 +103,7 @@ class CofkCollectWork(models.Model):
     destination_inferred = models.SmallIntegerField()
     destination_uncertain = models.SmallIntegerField()
     # origin_id = models.IntegerField(blank=True, null=True)
-    origin = models.ForeignKey('CofkCollectOriginOfWork', models.CASCADE, blank=True,  null=True)
+    origin = models.ForeignKey('CofkCollectOriginOfWork', models.CASCADE, blank=True, null=True)
     origin_as_marked = models.TextField(blank=True, null=True)
     origin_inferred = models.SmallIntegerField()
     origin_uncertain = models.SmallIntegerField()
@@ -179,9 +181,9 @@ class CofkCollectWork(models.Model):
             self.clean_date(self.date_of_work2_std_day, 'date_of_work2_std_day', self.date_of_work2_std_month)
 
             first_date = datetime(self.date_of_work_std_year,
-                                           self.date_of_work_std_month, self.date_of_work_std_day)
+                                  self.date_of_work_std_month, self.date_of_work_std_day)
             second_date = datetime(self.date_of_work2_std_year,
-                                            self.date_of_work2_std_month, self.date_of_work2_std_day)
+                                   self.date_of_work2_std_month, self.date_of_work2_std_day)
             if first_date >= second_date:
                 self.add_error('%(field1)s-%(field2)s: The start date in a date range can not be after the end date',
                                {'field1': 'date_of_work', 'field2': 'date_of_work2'})
@@ -235,7 +237,7 @@ class CofkCollectWork(models.Model):
     @property
     def date_of_work_std(self):
         try:
-            return datetime(self.date_of_work_std_year, self.date_of_work_std_month, self.date_of_work_std_day)\
+            return datetime(self.date_of_work_std_year, self.date_of_work_std_month, self.date_of_work_std_day) \
                 .strftime("%d %b %Y")
         except Exception:
             pass
@@ -243,7 +245,7 @@ class CofkCollectWork(models.Model):
     @property
     def date_of_work2_std(self):
         try:
-            return datetime(self.date_of_work2_std_year, self.date_of_work2_std_month, self.date_of_work2_std_day)\
+            return datetime(self.date_of_work2_std_year, self.date_of_work2_std_month, self.date_of_work2_std_day) \
                 .strftime("%d %b %Y")
         except Exception:
             pass
@@ -262,7 +264,7 @@ class CofkCollectWork(models.Model):
         if self.original_calendar == 'G':
             return 'Gregorian'
         elif self.original_calendar == 'J':
-            return 'Julian' # This will switch to "JJ" after accepted, see review.php
+            return 'Julian'  # This will switch to "JJ" after accepted, see review.php
         elif self.original_calendar == 'JJ':
             return 'Julian (January year start)'
         elif self.original_calendar == 'JM':
@@ -297,7 +299,7 @@ class CofkCollectWork(models.Model):
             issues.append('uncertain')
 
         return ', '.join(issues)
-    
+
     @property
     def display_destination_issues(self):
         issues = []
@@ -611,3 +613,20 @@ class CofkCollectWorkSummary(models.Model):
     class Meta:
         db_table = 'cofk_collect_work_summary'
         unique_together = (('upload', 'work_id_in_tool'),)
+
+
+class CofkWorkPersonMap(Recref):
+    """
+    possible relationship_type [signed, created, sent]
+    """
+    work = models.ForeignKey(CofkUnionWork,
+                             on_delete=models.CASCADE)
+    person = models.ForeignKey("person.CofkUnionPerson",
+                               on_delete=models.CASCADE)
+
+    class Meta(Recref.Meta):
+        db_table = 'cofk_work_person_map'
+
+
+def create_work_id(iwork_id) -> str:
+    return f'cofk_union_work-iwork_id:{iwork_id}'

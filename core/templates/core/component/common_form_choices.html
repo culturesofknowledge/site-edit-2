@@ -1,4 +1,6 @@
-<label style="width: 100%">{{ label_text }}</label>
+{% if label_text %}
+    <label style="width: 100%">{{ label_text }}</label>
+{% endif %}
 {{ choices_field.errors }}
 {% for cb in choices_field %}
     <small class="choice-item">

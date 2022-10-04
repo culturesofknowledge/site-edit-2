@@ -790,4 +790,12 @@ input[type="radio"] + label {
 .row-date-fields input, .row-date-fields select {
   width: 80px; }
 
+.work_person_container {
+  display: grid;
+  grid-template-columns: 65% 35%;
+  grid-row-gap: 8px;
+  width: 70%; }
+  .work_person_container > .grid-item {
+    background-color: #f2f2f2; }
+
 /*# sourceMappingURL=main.css.map */

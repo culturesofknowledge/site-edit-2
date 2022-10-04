@@ -194,3 +194,7 @@ class CofkUnionPersonSummary(models.Model):
 
     class Meta:
         db_table = 'cofk_union_person_summary'
+
+
+def create_person_id(iperson_id) -> str:
+    return f'cofk_union_person-iperson_id:{iperson_id}'
