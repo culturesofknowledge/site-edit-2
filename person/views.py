@@ -13,7 +13,7 @@ from core.forms import CommentForm, ResourceForm, LocRecrefForm, PersonRecrefFor
 from core.helper import renderer_utils, view_utils, model_utils, query_utils, download_csv_utils
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
-from core.helper.view_utils import CommonInitFormViewTemplate, ImageHandler, BasicSearchView
+from core.helper.view_utils import CommonInitFormViewTemplate, ImageHandler, BasicSearchView, FullFormHandler
 from location.models import CofkUnionLocation
 from person.forms import PersonForm, GeneralSearchFieldset
 from person.models import CofkUnionPerson, CofkPersonLocationMap, CofkPersonPersonMap, create_person_id
@@ -144,12 +144,10 @@ def _get_other_persons_by_type(person: CofkUnionPerson, person_type: str) -> Ite
     return persons
 
 
-class PersonFullFormHandler:
-    def __init__(self, iperson_id, request):
-        self.load_data(iperson_id, request_data=request.POST, request=request)
+class PersonFullFormHandler(FullFormHandler):
 
-    def load_data(self, iperson_id, request_data=None, request=None, ):
-        self.person = get_object_or_404(CofkUnionPerson, iperson_id=iperson_id)
+    def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
+        self.person = get_object_or_404(CofkUnionPerson, iperson_id=pk)
         # KTODO handle self.person.roles, roles_titles
         self.person_form = PersonForm(request_data or None, instance=self.person)
         self.loc_handler = LocRecrefHandler(
@@ -188,33 +186,25 @@ class PersonFullFormHandler:
                                                          self.person.resources), )
         self.img_handler = ImageHandler(request_data, request and request.FILES, self.person.images)
 
-    @property
-    def all_recref_handlers(self):
-        attr_list = (getattr(self, p) for p in dir(self))
-        attr_list = (a for a in attr_list if isinstance(a, view_utils.MultiRecrefHandler))
-        return attr_list
-
     def render_form(self, request):
-        context = {
-                      'person_form': self.person_form,
-                      'comment_formset': self.comment_formset,
-                      'res_formset': self.res_formset,
-                  } | self.img_handler.create_context()
-        for h in self.all_recref_handlers:
-            context.update(h.create_context())
+        context = (
+                dict(self.all_named_form_formset())
+                | self.img_handler.create_context()
+                | self.create_all_recref_context()
+        )
         return render(request, 'person/full_form.html', context)
 
 
 @login_required
 def full_form(request, iperson_id):
-    fhandler = PersonFullFormHandler(iperson_id, request)
+    fhandler = PersonFullFormHandler(iperson_id, request_data=request.POST, request=request)
 
     # handle form submit
     if request.POST:
 
         # define form_formsets
         # KTODO make this list generic
-        form_formsets = [fhandler.person_form, fhandler.comment_formset, fhandler.res_formset,
+        form_formsets = [*fhandler.all_form_formset,
                          fhandler.img_handler.img_form,
                          fhandler.img_handler.image_formset,
                          ]

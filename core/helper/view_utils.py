@@ -9,7 +9,7 @@ from urllib.parse import urlencode
 from django import template
 from django.conf import settings
 from django.db import models
-from django.forms import ModelForm
+from django.forms import ModelForm, BaseForm, BaseFormSet
 from django.forms import formset_factory
 from django.shortcuts import render
 from django.urls import reverse
@@ -429,3 +429,34 @@ class ImageHandler:
             img_obj.update_current_user_timestamp(request.user.username)
             img_obj.save()
             self.img_related_manager.add(img_obj)
+
+
+class FullFormHandler:
+
+    def __init__(self, pk, *args, request_data=None, request=None, **kwargs):
+        self.load_data(pk, request_data=request_data, request=request, *args, **kwargs)
+
+    def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
+        raise NotImplementedError()
+
+    def all_named_form_formset(self) -> Iterable[tuple[str, BaseForm | BaseFormSet]]:
+        attr_list = ((p, getattr(self, p)) for p in dir(self))
+        attr_list = ((p, a) for p, a in attr_list
+                     if isinstance(a, (BaseForm, BaseFormSet)))
+        return attr_list
+
+    @property
+    def all_form_formset(self):
+        return (ff for _, ff in self.all_named_form_formset())
+
+    @property
+    def all_recref_handlers(self):
+        attr_list = (getattr(self, p) for p in dir(self))
+        attr_list = (a for a in attr_list if isinstance(a, view_utils.MultiRecrefHandler))
+        return attr_list
+
+    def create_all_recref_context(self) -> dict:
+        context = {}
+        for h in self.all_recref_handlers:
+            context.update(h.create_context())
+        return context
