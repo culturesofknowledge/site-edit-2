@@ -92,7 +92,7 @@ class RelationField(CharField):
 
 
 class MultiRelRecrefForm(forms.Form):
-    template_name = 'work/component/author_map_form.html'  # KTODO rename to multi_rel_recref_form.html
+    template_name = 'work/component/multi_rel_recref_form.html'  # KTODO rename to multi_rel_recref_form.html
 
     name = forms.CharField(required=False)
     target_id = forms.CharField(required=False, widget=forms.HiddenInput())
