@@ -79,6 +79,8 @@ class CommentForm(ModelForm):
 
     record_tracker_label = form_utils.record_tracker_label_fn_factory('Note')
 
+    comment = forms.CharField(required=True, widget=forms.Textarea(dict(rows='5')))
+
     class Meta:
         model = CofkUnionComment
         fields = (
