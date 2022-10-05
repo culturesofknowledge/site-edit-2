@@ -9,7 +9,8 @@ from core.forms import CommentForm
 from core.helper import view_utils, model_utils
 from core.helper.view_utils import DefaultSearchView, FullFormHandler
 from person.models import CofkUnionPerson
-from work.forms import WorkForm, WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddresseeRecrefForm
+from work.forms import WorkForm, WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
+    AuthorRelationChoices, AddresseeRelationChoices
 from work.models import CofkWorkPersonMap, CofkUnionWork, create_work_id, CofkWorkComment
 
 log = logging.getLogger(__name__)
@@ -36,11 +37,11 @@ class WorkFullFormHandler(FullFormHandler):
             prefix='work_author'
         )
 
-        # self.addressee_formset = WorkAddresseeRecrefForm.create_formset_by_records(
-        #     request_data,
-        #     self.work.cofkworkpersonmap_set.iterator() if self.work else [],
-        #     prefix='work_addressee'
-        # )
+        self.addressee_formset = WorkAddresseeRecrefForm.create_formset_by_records(
+            request_data,
+            self.work.cofkworkpersonmap_set.iterator() if self.work else [],
+            prefix='work_addressee'
+        )
 
         self.author_comment_formset = view_utils.create_formset(
             CommentForm, post_data=request_data,
@@ -99,17 +100,21 @@ class WorkFullFormHandler(FullFormHandler):
         return render(request, self.template_name, context)
 
 
-def create_relation_if_sender_person_id_exist(work_form: WorkForm, work, username):
-    sender_person_id = work_form.cleaned_data.get('sender_person_id')
-    if not sender_person_id:
+def create_work_person_map_if_field_exist(work_form: WorkForm, work, username,
+                                          selected_person_id,
+                                          rel_type, ):
+    selected_person_id = work_form.cleaned_data.get(selected_person_id)
+    if not selected_person_id:
         return
 
     work_person_map = CofkWorkPersonMap()
-    work_person_map.person = get_object_or_404(CofkUnionPerson, pk=sender_person_id)
+    work_person_map.person = get_object_or_404(CofkUnionPerson, pk=selected_person_id)
     work_person_map.work = work
-    work_person_map.relationship_type = 'created'
+    work_person_map.relationship_type = rel_type
     work_person_map.update_current_user_timestamp(username)
     work_person_map.save()
+
+    return work_person_map
 
 
 @login_required
@@ -156,6 +161,13 @@ def is_invalid(fhandler: WorkFullFormHandler, ):
     return view_utils.any_invalid_with_log(form_formsets)
 
 
+def save_multi_rel_recref_formset(multi_rel_recref_formset, work, request):
+    _forms = (f for f in multi_rel_recref_formset if f.has_changed())
+    for form in _forms:
+        form: WorkPersonRecrefForm
+        form.create_or_delete(work, request.user.username)
+
+
 def save_full_form_handler(fhandler: WorkFullFormHandler, request):
     # define form_formsets
     # KTODO make this list generic
@@ -176,15 +188,20 @@ def save_full_form_handler(fhandler: WorkFullFormHandler, request):
         work.work_id = create_work_id(work.iwork_id)
     work.save()
 
-    create_relation_if_sender_person_id_exist(
-        fhandler.work_form, work, request.user.username
+    create_work_person_map_if_field_exist(
+        fhandler.work_form, work, request.user.username,
+        selected_person_id='selected_author_id',
+        rel_type=AuthorRelationChoices.CREATED,
+    )
+    create_work_person_map_if_field_exist(
+        fhandler.work_form, work, request.user.username,
+        selected_person_id='selected_addressee_id',
+        rel_type=AddresseeRelationChoices.ADDRESSED_TO,
     )
 
     # handle author_formset
-    _forms = (f for f in fhandler.author_formset if f.has_changed())
-    for form in _forms:
-        form: WorkPersonRecrefForm
-        form.create_or_delete(work, request.user.username)
+    save_multi_rel_recref_formset(fhandler.author_formset, work, request)
+    save_multi_rel_recref_formset(fhandler.addressee_formset, work, request)
 
     view_utils.save_m2m_relation_records(
         fhandler.author_comment_formset,

@@ -23,8 +23,6 @@ class CofkCollectWorkForm(forms.ModelForm):
 
 
 class WorkForm(forms.ModelForm):
-    sender_person_id = forms.CharField(required=False)
-
     authors_as_marked = forms.CharField(required=False)
     authors_inferred = form_utils.ZeroOneCheckboxField(is_str=False)
     authors_uncertain = form_utils.ZeroOneCheckboxField(is_str=False)
@@ -32,6 +30,10 @@ class WorkForm(forms.ModelForm):
     addressees_as_marked = forms.CharField(required=False)
     addressees_inferred = form_utils.ZeroOneCheckboxField(is_str=False)
     addressees_uncertain = form_utils.ZeroOneCheckboxField(is_str=False)
+
+    # extra field
+    selected_author_id = forms.CharField(required=False)
+    selected_addressee_id = forms.CharField(required=False)
 
     class Meta:
         model = CofkUnionWork
@@ -96,6 +98,10 @@ class MultiRelRecrefForm(forms.Form):
     target_id = forms.CharField(required=False, widget=forms.HiddenInput())
     relationship_types = RelationField(UndefinedRelationChoices)
 
+    @classmethod
+    def get_rel_type_choices_values(cls):
+        return cls.base_fields['relationship_types'].choices_class.values
+
     @property
     def target_url(self):
         raise NotImplementedError()
@@ -148,8 +154,9 @@ class MultiRelRecrefForm(forms.Form):
 
     @classmethod
     def create_formset_by_records(cls, post_data,
-                                  records: Iterable[CofkWorkPersonMap], prefix):
+                                  records: Iterable[Recref], prefix):
         initial_list = []
+        records = (r for r in records if r.relationship_type in cls.get_rel_type_choices_values())
         for person_id, recref_list in data_utils.group_by(records, lambda r: cls.get_target_id(r)).items():
             recref_list: list[Recref]
             initial_list.append({
@@ -171,7 +178,7 @@ class WorkPersonRecrefForm(MultiRelRecrefForm):
     def find_recref_list_by_target_id(self, host_model: Model, target_id):
         return host_model.cofkworkpersonmap_set.filter(
             person_id=target_id,
-            relationship_type__in=self.fields['relationship_types'].choices_class.values,
+            relationship_type__in=self.get_rel_type_choices_values(),
         )
 
     @property

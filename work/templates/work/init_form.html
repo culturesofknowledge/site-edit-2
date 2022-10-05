@@ -32,15 +32,14 @@
                     <fieldset>
                         <legend>Authors / senders</legend>
 
-                        <small>('author/sender' will be deleted if no type selected)</small>
-                        <div class="work_person_container">
+                        <div class="multi_rel_recref_container">
                             {{ author_formset.management_form }}
                             {% for form in author_formset  %}
                                 {{ form }}
                             {% endfor %}
                         </div>
 
-                        {% include "core/component/recref.html" with recref_type='person' id_field=work_form.sender_person_id label='Add anther authro/sender:' %}
+                        {% include "core/component/recref.html" with recref_type='person' id_field=work_form.selected_author_id label='Add another authro/sender:' %}
 
                         <label> Authors/sender as marked: </label>
                         {{ work_form.authors_as_marked }}
@@ -55,9 +54,24 @@
                         {% if author_comment_formset %}
                             {% include "core/component/comment_publication_formset.html" with comment_formset=author_comment_formset comment_title='Notes on authors/senders' %}
                         {% endif %}
+                    </fieldset>
 
+
+                    <fieldset>
+                        <legend>Addressees</legend>
+
+                        <div class="multi_rel_recref_container">
+                            {{ addressee_formset.management_form }}
+                            {% for form in addressee_formset  %}
+                                {{ form }}
+                            {% endfor %}
+                        </div>
+
+                        {% include "core/component/recref.html" with recref_type='person' id_field=work_form.selected_addressee_id label='Add another addressee:' %}
 
                     </fieldset>
+
+
                 </div>
 
                 <!-- ****** Dates -->
