@@ -26,20 +26,19 @@ class WorkFullFormHandler(FullFormHandler):
             self.work = get_object_or_404(CofkUnionWork, iwork_id=pk)
         else:
             self.work = None
-
         self.work_form = WorkForm(request_data or None, instance=self.work)
-        if self.work is None:
-            return
+
+        tmp_work = self.work or CofkUnionWork()
 
         self.work_person_formset = WorkPersonMapForm.create_formset_by_records(
             request_data,
-            self.work.cofkworkpersonmap_set.iterator()
+            self.work.cofkworkpersonmap_set.iterator() if self.work else []
         )
 
         self.author_comment_formset = view_utils.create_formset(
             CommentForm, post_data=request_data,
             prefix='author_comment',
-            initial_list=model_utils.models_to_dict_list(self.work.author_comments),
+            initial_list=model_utils.models_to_dict_list(tmp_work.author_comments),
         )
 
         # self.loc_handler = LocRecrefHandler(
@@ -106,15 +105,11 @@ def init_form(request):
                                    request_data=request.POST, request=request)
     # work_form = WorkForm(request.POST or None)
     if request.method == 'POST':
-        work_form = fhandler.work_form
-        if work_form.is_valid():
-            work: CofkUnionWork = work_form.instance
-            work.work_id = create_work_id(work.iwork_id)
-            work.save()
 
-            create_relation_if_sender_person_id_exist(work_form, work, request.user.username)
-
-            return redirect('work:full_form', work.iwork_id)
+        if is_invalid(fhandler):
+            return fhandler.render_form(request)
+        save_full_form_handler(fhandler, request)
+        return redirect('work:full_form', fhandler.work_form.instance.iwork_id)
 
     return fhandler.render_form(request)
 
@@ -125,54 +120,70 @@ def full_form(request, iwork_id):
                                    request_data=request.POST, request=request)
 
     if request.method == 'POST':
-
-        # define form_formsets
-        # KTODO make this list generic
-        form_formsets = [*fhandler.all_form_formset,
-                         # fhandler.img_handler.img_form,
-                         # fhandler.img_handler.image_formset,
-                         ]
-        for h in fhandler.all_recref_handlers:
-            form_formsets.extend([h.new_form, h.update_formset, ])
-
-        # ----- validate
-        if view_utils.any_invalid_with_log(form_formsets):
+        if is_invalid(fhandler):
             return fhandler.render_form(request)
-
-        # ----- save
-
-        fhandler.work_form.save()
-
-        create_relation_if_sender_person_id_exist(
-            fhandler.work_form, fhandler.work, request.user.username
-        )
-
-        # handle work_person_formset
-        _forms = (f for f in fhandler.work_person_formset if f.has_changed())
-        for form in _forms:
-            form: WorkPersonMapForm
-            form.create_or_delete(fhandler.work, request.user.username)
-
-        # KTODO work.save
-        fhandler.work.refresh_from_db()
-
-        view_utils.save_m2m_relation_records(
-            fhandler.author_comment_formset,
-            lambda c: model_utils.get_or_create(
-                CofkWorkComment,
-                **dict(work_id=fhandler.work.work_id,
-                       comment_id=c.comment_id,
-                       relationship_type=REL_TYPE_COMMENT_AUTHOR)
-            ),
-            request.user.username,
-            model_id_name='comment_id',
-        )
+        save_full_form_handler(fhandler, request)
 
         # reload data
         fhandler.load_data(iwork_id, request_data=None, request=request)
 
     # KTODO
     return fhandler.render_form(request)
+
+
+def is_invalid(fhandler: WorkFullFormHandler, ):
+    # KTODO make this list generic
+    form_formsets = [*fhandler.all_form_formset,
+                     # fhandler.img_handler.img_form,
+                     # fhandler.img_handler.image_formset,
+                     ]
+    for h in fhandler.all_recref_handlers:
+        form_formsets.extend([h.new_form, h.update_formset, ])
+
+    return view_utils.any_invalid_with_log(form_formsets)
+
+
+def save_full_form_handler(fhandler: WorkFullFormHandler, request):
+    # define form_formsets
+    # KTODO make this list generic
+    form_formsets = [*fhandler.all_form_formset,
+                     # fhandler.img_handler.img_form,
+                     # fhandler.img_handler.image_formset,
+                     ]
+    for h in fhandler.all_recref_handlers:
+        form_formsets.extend([h.new_form, h.update_formset, ])
+
+    # ----- validate
+    if view_utils.any_invalid_with_log(form_formsets):
+        return fhandler.render_form(request)
+
+    # ----- save
+    work: CofkUnionWork = fhandler.work_form.instance
+    if not work.work_id:
+        work.work_id = create_work_id(work.iwork_id)
+    work.save()
+
+    create_relation_if_sender_person_id_exist(
+        fhandler.work_form, work, request.user.username
+    )
+
+    # handle work_person_formset
+    _forms = (f for f in fhandler.work_person_formset if f.has_changed())
+    for form in _forms:
+        form: WorkPersonMapForm
+        form.create_or_delete(work, request.user.username)
+
+    view_utils.save_m2m_relation_records(
+        fhandler.author_comment_formset,
+        lambda c: model_utils.get_or_create(
+            CofkWorkComment,
+            **dict(work_id=work.work_id,
+                   comment_id=c.comment_id,
+                   relationship_type=REL_TYPE_COMMENT_AUTHOR)
+        ),
+        request.user.username,
+        model_id_name='comment_id',
+    )
 
 
 class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
