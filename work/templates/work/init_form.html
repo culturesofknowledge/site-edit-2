@@ -50,10 +50,7 @@
 
                         {% include "core/component/common_checkbox.html" with field=work_form.authors_uncertain  name='Authors / senders uncertain' %}
 
-                        <!-- Comment section -->
-                        {% if author_comment_formset %}
-                            {% include "core/component/comment_publication_formset.html" with comment_formset=author_comment_formset comment_title='Notes on authors/senders' %}
-                        {% endif %}
+                        {% include "core/component/comment_publication_formset.html" with comment_formset=author_comment_formset comment_title='Notes on authors/senders' %}
                     </fieldset>
 
 
@@ -68,6 +65,17 @@
                         </div>
 
                         {% include "core/component/recref.html" with recref_type='person' id_field=work_form.selected_addressee_id label='Add another addressee:' %}
+
+                        <label> Addressees as marked: </label>
+                        {{ work_form.addressees_as_marked }}
+
+                        <label> Issues with addressees: </label>
+
+                        {% include "core/component/common_checkbox.html" with field=work_form.addressees_inferred name='Addressees inferred' %}
+
+                        {% include "core/component/common_checkbox.html" with field=work_form.addressees_uncertain  name='Addressees uncertain' %}
+
+                        {% include "core/component/comment_publication_formset.html" with comment_formset=addressee_comment_formset comment_title='Notes on addressees' %}
 
                     </fieldset>
 

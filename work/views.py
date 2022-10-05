@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, get_object_or_404, redirect
 
-from core.constant import REL_TYPE_COMMENT_AUTHOR
+from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE
 from core.forms import CommentForm
 from core.helper import view_utils, model_utils
 from core.helper.view_utils import DefaultSearchView, FullFormHandler
@@ -49,11 +49,11 @@ class WorkFullFormHandler(FullFormHandler):
             initial_list=model_utils.models_to_dict_list(tmp_work.author_comments),
         )
 
-        # self.addressee_comment_formset = view_utils.create_formset(
-        #     CommentForm, post_data=request_data,
-        #     prefix='addressee_comment',
-        #     initial_list=model_utils.models_to_dict_list(tmp_work.addressee_comments),
-        # )
+        self.addressee_comment_formset = view_utils.create_formset(
+            CommentForm, post_data=request_data,
+            prefix='addressee_comment',
+            initial_list=model_utils.models_to_dict_list(tmp_work.addressee_comments),
+        )
 
         # self.loc_handler = LocRecrefHandler(
         #     request_data, model_list=self.person.cofkpersonlocationmap_set.iterator(), )
@@ -168,6 +168,20 @@ def save_multi_rel_recref_formset(multi_rel_recref_formset, work, request):
         form.create_or_delete(work, request.user.username)
 
 
+def save_work_comments(work_id, request, comment_formset, rel_type):
+    view_utils.save_m2m_relation_records(
+        comment_formset,
+        lambda c: model_utils.get_or_create(
+            CofkWorkComment,
+            **dict(work_id=work_id,
+                   comment_id=c.comment_id,
+                   relationship_type=rel_type)
+        ),
+        request.user.username,
+        model_id_name='comment_id',
+    )
+
+
 def save_full_form_handler(fhandler: WorkFullFormHandler, request):
     # define form_formsets
     # KTODO make this list generic
@@ -188,6 +202,7 @@ def save_full_form_handler(fhandler: WorkFullFormHandler, request):
         work.work_id = create_work_id(work.iwork_id)
     work.save()
 
+    # handle selected_person_id
     create_work_person_map_if_field_exist(
         fhandler.work_form, work, request.user.username,
         selected_person_id='selected_author_id',
@@ -203,17 +218,11 @@ def save_full_form_handler(fhandler: WorkFullFormHandler, request):
     save_multi_rel_recref_formset(fhandler.author_formset, work, request)
     save_multi_rel_recref_formset(fhandler.addressee_formset, work, request)
 
-    view_utils.save_m2m_relation_records(
-        fhandler.author_comment_formset,
-        lambda c: model_utils.get_or_create(
-            CofkWorkComment,
-            **dict(work_id=work.work_id,
-                   comment_id=c.comment_id,
-                   relationship_type=REL_TYPE_COMMENT_AUTHOR)
-        ),
-        request.user.username,
-        model_id_name='comment_id',
-    )
+    # handle comments
+    save_work_comments(work.work_id, request, fhandler.author_comment_formset,
+                       REL_TYPE_COMMENT_AUTHOR)
+    save_work_comments(work.work_id, request, fhandler.addressee_comment_formset,
+                       REL_TYPE_COMMENT_ADDRESSEE)
 
 
 class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
