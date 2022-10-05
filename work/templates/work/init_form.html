@@ -34,8 +34,8 @@
 
                         <small>('author/sender' will be deleted if no type selected)</small>
                         <div class="work_person_container">
-                            {{ work_person_formset.management_form }}
-                            {% for form in work_person_formset  %}
+                            {{ author_formset.management_form }}
+                            {% for form in author_formset  %}
                                 {{ form }}
                             {% endfor %}
                         </div>
@@ -53,8 +53,7 @@
 
                         <!-- Comment section -->
                         {% if author_comment_formset %}
-                            <h4>Notes on authors/senders</h4>
-                            {% include "core/component/comment_publication_formset.html" with comment_formset=author_comment_formset %}
+                            {% include "core/component/comment_publication_formset.html" with comment_formset=author_comment_formset comment_title='Notes on authors/senders' %}
                         {% endif %}
 
 

@@ -9,7 +9,7 @@ from core.forms import CommentForm
 from core.helper import view_utils, model_utils
 from core.helper.view_utils import DefaultSearchView, FullFormHandler
 from person.models import CofkUnionPerson
-from work.forms import WorkForm, WorkPersonMapForm
+from work.forms import WorkForm, WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddresseeRecrefForm
 from work.models import CofkWorkPersonMap, CofkUnionWork, create_work_id, CofkWorkComment
 
 log = logging.getLogger(__name__)
@@ -30,16 +30,29 @@ class WorkFullFormHandler(FullFormHandler):
 
         tmp_work = self.work or CofkUnionWork()
 
-        self.work_person_formset = WorkPersonMapForm.create_formset_by_records(
+        self.author_formset = WorkAuthorRecrefForm.create_formset_by_records(
             request_data,
-            self.work.cofkworkpersonmap_set.iterator() if self.work else []
+            self.work.cofkworkpersonmap_set.iterator() if self.work else [],
+            prefix='work_author'
         )
+
+        # self.addressee_formset = WorkAddresseeRecrefForm.create_formset_by_records(
+        #     request_data,
+        #     self.work.cofkworkpersonmap_set.iterator() if self.work else [],
+        #     prefix='work_addressee'
+        # )
 
         self.author_comment_formset = view_utils.create_formset(
             CommentForm, post_data=request_data,
             prefix='author_comment',
             initial_list=model_utils.models_to_dict_list(tmp_work.author_comments),
         )
+
+        # self.addressee_comment_formset = view_utils.create_formset(
+        #     CommentForm, post_data=request_data,
+        #     prefix='addressee_comment',
+        #     initial_list=model_utils.models_to_dict_list(tmp_work.addressee_comments),
+        # )
 
         # self.loc_handler = LocRecrefHandler(
         #     request_data, model_list=self.person.cofkpersonlocationmap_set.iterator(), )
@@ -167,10 +180,10 @@ def save_full_form_handler(fhandler: WorkFullFormHandler, request):
         fhandler.work_form, work, request.user.username
     )
 
-    # handle work_person_formset
-    _forms = (f for f in fhandler.work_person_formset if f.has_changed())
+    # handle author_formset
+    _forms = (f for f in fhandler.author_formset if f.has_changed())
     for form in _forms:
-        form: WorkPersonMapForm
+        form: WorkPersonRecrefForm
         form.create_or_delete(work, request.user.username)
 
     view_utils.save_m2m_relation_records(
