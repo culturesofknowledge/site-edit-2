@@ -3,7 +3,13 @@
 {% load cl_filters %}
 {{ comment_formset.management_form }}
 <fieldset>
-    <legend>Notes</legend>
+    <legend>
+        {% if comment_title %}
+            {{ comment_title }}
+        {% else %}
+            Notes
+        {% endif %}
+    </legend>
     {% for form in comment_formset|reverse_list %}
         <div>
             <label>
