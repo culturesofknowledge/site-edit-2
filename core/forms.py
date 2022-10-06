@@ -1,3 +1,4 @@
+import functools
 import logging
 
 from django import forms
@@ -10,6 +11,7 @@ from core.helper import widgets_utils
 from core.models import CofkUnionComment, CofkUnionResource
 from person.models import CofkUnionPerson
 from uploader.models import CofkUnionImage
+from work.models import CofkUnionWork
 
 
 def build_search_components(sort_by_choices: list[tuple[str, str]]):
@@ -45,16 +47,29 @@ class RecrefForm(forms.Form):
         return ''  # tobe define by subclass
 
 
-def get_peron_full_form_url_by_pk(pk):
-    if pk is None or pk == '':
-        return ''
+def log_no_url(fn):
+    @functools.wraps(fn)
+    def _wrap(*args, **kwargs):
+        url = fn(*args, **kwargs)
+        if url is None:
+            logging.warning(f'{fn.__name__} failed, person not found [{args}]')
+            return ''
 
-    person = CofkUnionPerson.objects.get(pk=pk)
-    if person:
+        return url
+
+    return _wrap
+
+
+@log_no_url
+def get_peron_full_form_url_by_pk(pk):
+    if person := CofkUnionPerson.objects.get(pk=pk):
         return reverse('person:full_form', args=[person.iperson_id])
-    else:
-        logging.warning(f'get_person_full_form_url_by_pk failed, person not found [{pk=}]')
-        return ''
+
+
+@log_no_url
+def get_work_full_form_url_by_pk(pk):
+    if work := CofkUnionWork.objects.get(pk=pk):
+        return reverse('work:full_form', args=[work.iwork_id])
 
 
 class PersonRecrefForm(RecrefForm):
@@ -72,7 +87,7 @@ class LocRecrefForm(RecrefForm):
 class WorkRecrefForm(RecrefForm):
     @property
     def target_url(self) -> str:
-        return reverse('work:full_form', args=[self.initial.get('target_id')])
+        return get_work_full_form_url_by_pk(self.initial.get('target_id'))
 
 
 class CommentForm(ModelForm):

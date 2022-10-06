@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models
 from django.shortcuts import render, get_object_or_404, redirect
+from django.views import View
 
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE
 from core.forms import CommentForm, WorkRecrefForm
@@ -58,8 +59,10 @@ class WorkFullFormHandler(FullFormHandler):
         )
 
         # letters
-        self.earlier_letter_handler = EarlierLetterRecrefHandler(request_data, tmp_work.work_from_set.iterator())
-        self.later_letter_handler = LaterLetterRecrefHandler(request_data, tmp_work.work_to_set.iterator())
+        self.earlier_letter_handler = EarlierLetterRecrefHandler(
+            request_data, tmp_work.work_from_set.iterator())
+        self.later_letter_handler = LaterLetterRecrefHandler(
+            request_data, tmp_work.work_to_set.iterator())
 
         # self.loc_handler = LocRecrefHandler(
         #     request_data, model_list=self.person.cofkpersonlocationmap_set.iterator(), )
@@ -123,19 +126,37 @@ def create_work_person_map_if_field_exist(work_form: WorkForm, work, username,
     return work_person_map
 
 
-@login_required
-def init_form(request):
-    fhandler = WorkFullFormHandler(None, 'work/init_form.html',
-                                   request_data=request.POST, request=request)
-    # work_form = WorkForm(request.POST or None)
-    if request.method == 'POST':
+class WorkInitView(LoginRequiredMixin, View):
 
+    @staticmethod
+    def create_fhandler(request):
+        return WorkFullFormHandler(None, 'work/init_form.html',
+                                   request_data=request.POST, request=request)
+
+    def resp_after_saved(self, request, fhandler):
+        return redirect('work:full_form', fhandler.work_form.instance.iwork_id)
+
+    def post(self, request, *args, **kwargs):
+        fhandler = self.create_fhandler(request)
         if is_invalid(fhandler):
             return fhandler.render_form(request)
         save_full_form_handler(fhandler, request)
-        return redirect('work:full_form', fhandler.work_form.instance.iwork_id)
+        return self.resp_after_saved(request, fhandler)
 
-    return fhandler.render_form(request)
+    def get(self, request, *args, **kwargs):
+        return self.create_fhandler(request).render_form(request)
+
+
+class WorkQuickInitView(WorkInitView):
+    def resp_after_saved(self, request, fhandler):
+        return redirect('work:return_quick_init', fhandler.work_form.instance.iwork_id)
+
+
+@login_required
+def return_quick_init(request, pk):
+    work = CofkUnionWork.objects.get(iwork_id=pk)
+    return view_utils.render_return_quick_init(
+        request, 'Work', work.work_id, work.work_id)  # KTODO work.name
 
 
 @login_required
@@ -230,6 +251,10 @@ def save_full_form_handler(fhandler: WorkFullFormHandler, request):
     save_work_comments(work.work_id, request, fhandler.addressee_comment_formset,
                        REL_TYPE_COMMENT_ADDRESSEE)
 
+    # handle recref_handler
+    for r in fhandler.all_recref_handlers:
+        r.maintain_record(request, work)
+
 
 class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
@@ -287,7 +312,7 @@ class LetterRecrefHandler(view_utils.MultiRecrefHandler):
 class EarlierLetterRecrefHandler(LetterRecrefHandler):
     def __init__(self, request_data, model_list, name='earlier_letter'):
         super().__init__(request_data, model_list, name=name,
-                         target_id_name='work_from_id')
+                         target_id_name='work_to_id')
 
     def define_work_from_to(self, parent_instance, target_instance):
         return parent_instance, target_instance
@@ -297,7 +322,7 @@ class LaterLetterRecrefHandler(LetterRecrefHandler):
 
     def __init__(self, request_data, model_list, name='later_letter'):
         super().__init__(request_data, model_list, name=name,
-                         target_id_name='work_to_id')
+                         target_id_name='work_from_id')
 
     def define_work_from_to(self, parent_instance, target_instance):
         return target_instance, parent_instance
