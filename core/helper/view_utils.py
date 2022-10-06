@@ -350,16 +350,20 @@ class MultiRecrefHandler:
             if recref := self.create_recref_by_new_form(target_id, parent_instance):
                 recref = self.fill_common_recref_field(recref, self.new_form.cleaned_data, request.user.username)
                 recref.save()
+                log.info(f'create new recref [{recref}]')
 
         # update update_formset
         target_changed_fields = {'to_date', 'from_date', 'is_delete'}
         _forms = (f for f in self.update_formset if not target_changed_fields.isdisjoint(f.changed_data))
         for f in _forms:
             f.is_valid()
+            recref_id = f.cleaned_data['recref_id']
             if f.cleaned_data['is_delete']:
-                self.recref_class.objects.filter(pk=f.cleaned_data['recref_id']).delete()
+                log.info(f'remove recref [{recref_id=}]')
+                self.recref_class.objects.filter(pk=recref_id).delete()
             else:
-                ps_loc = self.recref_class.objects.get(pk=f.cleaned_data['recref_id'])
+                log.info(f'update recref [{recref_id=}]')
+                ps_loc = self.recref_class.objects.get(pk=recref_id)
                 ps_loc = self.fill_common_recref_field(ps_loc, f.cleaned_data, request.user.username)
                 ps_loc.save()
 

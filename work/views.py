@@ -7,7 +7,8 @@ from django.db import models
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
 
-from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE
+from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_WORK_IS_REPLY_TO, \
+    REL_TYPE_WORK_MATCHES
 from core.forms import CommentForm, WorkRecrefForm
 from core.helper import view_utils, model_utils, recref_utils
 from core.helper.view_utils import DefaultSearchView, FullFormHandler
@@ -60,9 +61,17 @@ class WorkFullFormHandler(FullFormHandler):
 
         # letters
         self.earlier_letter_handler = EarlierLetterRecrefHandler(
-            request_data, tmp_work.work_from_set.iterator())
+            request_data,
+            tmp_work.work_from_set.filter(relationship_type=REL_TYPE_WORK_IS_REPLY_TO).iterator())
         self.later_letter_handler = LaterLetterRecrefHandler(
-            request_data, tmp_work.work_to_set.iterator())
+            request_data,
+            tmp_work.work_to_set.filter(relationship_type=REL_TYPE_WORK_IS_REPLY_TO).iterator())
+        self.matching_letter_handler = EarlierLetterRecrefHandler(
+            request_data,
+            tmp_work.work_from_set.filter(relationship_type=REL_TYPE_WORK_MATCHES).iterator(),
+            name='matching_letter',
+            rel_type=REL_TYPE_WORK_MATCHES,
+        )
 
         # self.loc_handler = LocRecrefHandler(
         #     request_data, model_list=self.person.cofkpersonlocationmap_set.iterator(), )
@@ -228,6 +237,7 @@ def save_full_form_handler(fhandler: WorkFullFormHandler, request):
     if not work.work_id:
         work.work_id = create_work_id(work.iwork_id)
     work.save()
+    log.info(f'save work {work}')  # KTODO fix iwork_id plus more than 1
 
     # handle selected_person_id
     create_work_person_map_if_field_exist(
@@ -305,14 +315,16 @@ class LetterRecrefHandler(view_utils.MultiRecrefHandler):
         work_work: CofkWorkWorkMap = CofkWorkWorkMap()
         work_work.work_from, work_work.work_to = self.define_work_from_to(
             parent_instance, target_instance)
-        work_work.relationship_type = 'is_reply_to'
+        work_work.relationship_type = self.rel_type
         return work_work
 
 
 class EarlierLetterRecrefHandler(LetterRecrefHandler):
-    def __init__(self, request_data, model_list, name='earlier_letter'):
+    def __init__(self, request_data, model_list, name='earlier_letter',
+                 rel_type=REL_TYPE_WORK_IS_REPLY_TO):
         super().__init__(request_data, model_list, name=name,
-                         target_id_name='work_to_id')
+                         target_id_name='work_to_id',
+                         rel_type=rel_type, )
 
     def define_work_from_to(self, parent_instance, target_instance):
         return parent_instance, target_instance
@@ -320,9 +332,11 @@ class EarlierLetterRecrefHandler(LetterRecrefHandler):
 
 class LaterLetterRecrefHandler(LetterRecrefHandler):
 
-    def __init__(self, request_data, model_list, name='later_letter'):
+    def __init__(self, request_data, model_list, name='later_letter',
+                 rel_type=REL_TYPE_WORK_IS_REPLY_TO):
         super().__init__(request_data, model_list, name=name,
-                         target_id_name='work_from_id')
+                         target_id_name='work_from_id',
+                         rel_type=rel_type)
 
     def define_work_from_to(self, parent_instance, target_instance):
         return target_instance, parent_instance
