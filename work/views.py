@@ -43,17 +43,20 @@ class WorkFullFormHandler(FullFormHandler):
             prefix='work_addressee'
         )
 
+        # comments
         self.author_comment_formset = view_utils.create_formset(
             CommentForm, post_data=request_data,
             prefix='author_comment',
             initial_list=model_utils.models_to_dict_list(tmp_work.author_comments),
         )
-
         self.addressee_comment_formset = view_utils.create_formset(
             CommentForm, post_data=request_data,
             prefix='addressee_comment',
             initial_list=model_utils.models_to_dict_list(tmp_work.addressee_comments),
         )
+
+        # letters
+
 
         # self.loc_handler = LocRecrefHandler(
         #     request_data, model_list=self.person.cofkpersonlocationmap_set.iterator(), )
