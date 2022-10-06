@@ -1,17 +1,19 @@
 import logging
+from typing import Optional, Type
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import models
 from django.shortcuts import render, get_object_or_404, redirect
 
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE
-from core.forms import CommentForm
-from core.helper import view_utils, model_utils
+from core.forms import CommentForm, WorkRecrefForm
+from core.helper import view_utils, model_utils, recref_utils
 from core.helper.view_utils import DefaultSearchView, FullFormHandler
 from person.models import CofkUnionPerson
 from work.forms import WorkForm, WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     AuthorRelationChoices, AddresseeRelationChoices
-from work.models import CofkWorkPersonMap, CofkUnionWork, create_work_id, CofkWorkComment
+from work.models import CofkWorkPersonMap, CofkUnionWork, create_work_id, CofkWorkComment, CofkWorkWorkMap
 
 log = logging.getLogger(__name__)
 
@@ -56,7 +58,8 @@ class WorkFullFormHandler(FullFormHandler):
         )
 
         # letters
-
+        self.earlier_letter_handler = EarlierLetterRecrefHandler(request_data, tmp_work.work_from_set.iterator())
+        self.later_letter_handler = LaterLetterRecrefHandler(request_data, tmp_work.work_to_set.iterator())
 
         # self.loc_handler = LocRecrefHandler(
         #     request_data, model_list=self.person.cofkpersonlocationmap_set.iterator(), )
@@ -241,3 +244,60 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def return_quick_init_vname(self) -> str:
         return 'work:return_quick_init'
+
+
+def find_work_rec_name(work_id) -> Optional[str]:
+    # KTODO tobe define
+    work = CofkUnionWork.objects.get(work_id=work_id)
+    return work and work.work_id
+
+
+class LetterRecrefHandler(view_utils.MultiRecrefHandler):
+    def __init__(self, request_data, model_list, name, target_id_name,
+                 rel_type='is_reply_to'):
+        initial_list = (m.__dict__ for m in model_list)
+        initial_list = (recref_utils.convert_to_recref_form_dict(r, target_id_name, find_work_rec_name)
+                        for r in initial_list)
+        self.rel_type = rel_type
+        super().__init__(request_data, name=name, initial_list=initial_list,
+                         recref_form_class=WorkRecrefForm)
+
+    @property
+    def recref_class(self) -> Type[models.Model]:
+        return CofkWorkWorkMap
+
+    def define_work_from_to(self, parent_instance, target_instance):
+        """ define which one is work_from, work_to
+        :return : work_from, work_to
+        """
+        raise NotImplementedError()
+
+    def create_recref_by_new_form(self, target_id, parent_instance) -> Optional[models.Model]:
+        if not (target_instance := CofkUnionWork.objects.get(work_id=target_id)):
+            log.warning(f"create recref fail, work not found -- {target_id} ")
+            return None
+
+        work_work: CofkWorkWorkMap = CofkWorkWorkMap()
+        work_work.work_from, work_work.work_to = self.define_work_from_to(
+            parent_instance, target_instance)
+        work_work.relationship_type = 'is_reply_to'
+        return work_work
+
+
+class EarlierLetterRecrefHandler(LetterRecrefHandler):
+    def __init__(self, request_data, model_list, name='earlier_letter'):
+        super().__init__(request_data, model_list, name=name,
+                         target_id_name='work_from_id')
+
+    def define_work_from_to(self, parent_instance, target_instance):
+        return parent_instance, target_instance
+
+
+class LaterLetterRecrefHandler(LetterRecrefHandler):
+
+    def __init__(self, request_data, model_list, name='later_letter'):
+        super().__init__(request_data, model_list, name=name,
+                         target_id_name='work_to_id')
+
+    def define_work_from_to(self, parent_instance, target_instance):
+        return target_instance, parent_instance

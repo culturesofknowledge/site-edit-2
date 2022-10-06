@@ -69,6 +69,12 @@ class LocRecrefForm(RecrefForm):
         return reverse('location:full_form', args=[self.initial.get('target_id')])
 
 
+class WorkRecrefForm(RecrefForm):
+    @property
+    def target_url(self) -> str:
+        return reverse('work:full_form', args=[self.initial.get('target_id')])
+
+
 class CommentForm(ModelForm):
     comment_id = IntegerField(required=False, widget=HiddenInput())
 

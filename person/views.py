@@ -10,7 +10,7 @@ from django.forms import BaseForm
 from django.shortcuts import render, redirect, get_object_or_404
 
 from core.forms import CommentForm, ResourceForm, LocRecrefForm, PersonRecrefForm
-from core.helper import renderer_utils, view_utils, model_utils, query_utils, download_csv_utils
+from core.helper import renderer_utils, view_utils, model_utils, query_utils, download_csv_utils, recref_utils
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
 from core.helper.view_utils import CommonInitFormViewTemplate, ImageHandler, BasicSearchView, FullFormHandler
@@ -51,18 +51,6 @@ def return_quick_init(request, pk):
         request, 'Person', person.foaf_name, person.person_id, )
 
 
-def convert_to_recref_form_dict(record_dict: dict, target_id_name: str,
-                                find_rec_name_by_id_fn: Callable[[Any], str]) -> dict:
-    target_id = record_dict.get(target_id_name, '')
-    record_dict['target_id'] = target_id
-    if (rec_name := find_rec_name_by_id_fn(target_id)) is None:
-        log.warning(f"[{target_id_name}] record not found -- [{target_id}]")
-    else:
-        record_dict['rec_name'] = rec_name
-
-    return record_dict
-
-
 class LocRecrefHandler(view_utils.MultiRecrefHandler):
 
     def __init__(self, request_data, model_list, name=None):
@@ -71,7 +59,7 @@ class LocRecrefHandler(view_utils.MultiRecrefHandler):
             return loc and loc.location_name
 
         initial_list = (m.__dict__ for m in model_list)
-        initial_list = (convert_to_recref_form_dict(r, 'location_id', _find_rec_name_by_id)
+        initial_list = (recref_utils.convert_to_recref_form_dict(r, 'location_id', _find_rec_name_by_id)
                         for r in initial_list)
 
         name = name or 'loc'
@@ -112,7 +100,7 @@ class PersonRecrefHandler(view_utils.MultiRecrefHandler):
             return record and record.foaf_name
 
         initial_list = (m.__dict__ for m in _get_other_persons_by_type(person, person_type))
-        initial_list = (convert_to_recref_form_dict(r, 'related_id', _find_rec_name_by_id)
+        initial_list = (recref_utils.convert_to_recref_form_dict(r, 'related_id', _find_rec_name_by_id)
                         for r in initial_list)
 
         name = name or person_type

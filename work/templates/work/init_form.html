@@ -79,6 +79,15 @@
 
                     </fieldset>
 
+                    <fieldset>
+                        <legend>Earlier letters:</legend>
+                        {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_earlier_letter.update_formset new_form=recref_earlier_letter.new_form add_label='Add letter answered by this one:' no_date=True %}
+                    </fieldset>
+
+                    <fieldset>
+                        <legend>Later letter</legend>
+                        {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_later_letter.update_formset new_form=recref_later_letter.new_form add_label='Add reply to this:' no_date=True %}
+                    </fieldset>
 
                 </div>
 
