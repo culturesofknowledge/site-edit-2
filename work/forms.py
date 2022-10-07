@@ -14,6 +14,14 @@ from work.models import CofkCollectWork, CofkUnionWork, CofkWorkPersonMap
 
 log = logging.getLogger(__name__)
 
+original_calendar_choices = [
+    ('', 'Unknown'),
+    ('G', 'Gregorian'),
+    ('JM', 'Julian (year starting 25th Mar)'),
+    ('JJ', 'Julian (year starting 1st Jan)'),
+    ('O', 'Other'),
+]
+
 
 class CofkCollectWorkForm(forms.ModelForm):
     class Meta:
@@ -31,6 +39,18 @@ class WorkForm(forms.ModelForm):
     addressees_inferred = form_utils.ZeroOneCheckboxField(is_str=False)
     addressees_uncertain = form_utils.ZeroOneCheckboxField(is_str=False)
 
+    date_of_work_as_marked = forms.CharField(required=False)
+    date_of_work_std_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    date_of_work_std_year = form_utils.create_year_field()
+    date_of_work_std_month = form_utils.create_month_field()
+    date_of_work_std_day = form_utils.create_day_field()
+    date_of_work_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    date_of_work_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    date_of_work_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+
+    original_calendar = CharField(required=False,
+                                  widget=forms.RadioSelect(choices=original_calendar_choices))
+
     # extra field
     selected_author_id = forms.CharField(required=False)
     selected_addressee_id = forms.CharField(required=False)
@@ -45,6 +65,15 @@ class WorkForm(forms.ModelForm):
             'addressees_as_marked',
             'addressees_inferred',
             'addressees_uncertain',
+            'date_of_work_as_marked',
+            'date_of_work_std_is_range',
+            'date_of_work_std_year',
+            'date_of_work_std_month',
+            'date_of_work_std_day',
+            'date_of_work_inferred',
+            'date_of_work_uncertain',
+            'date_of_work_approx',
+            'original_calendar',
         )
 
 

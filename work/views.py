@@ -8,7 +8,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
 
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_WORK_IS_REPLY_TO, \
-    REL_TYPE_WORK_MATCHES
+    REL_TYPE_WORK_MATCHES, REL_TYPE_COMMENT_DATE
 from core.forms import CommentForm, WorkRecrefForm
 from core.helper import view_utils, model_utils, recref_utils
 from core.helper.view_utils import DefaultSearchView, FullFormHandler
@@ -57,6 +57,11 @@ class WorkFullFormHandler(FullFormHandler):
             CommentForm, post_data=request_data,
             prefix='addressee_comment',
             initial_list=model_utils.models_to_dict_list(tmp_work.addressee_comments),
+        )
+        self.date_comment_formset = view_utils.create_formset(
+            CommentForm, post_data=request_data,
+            prefix='date_comment',
+            initial_list=model_utils.models_to_dict_list(tmp_work.date_comments),
         )
 
         # letters
@@ -260,6 +265,8 @@ def save_full_form_handler(fhandler: WorkFullFormHandler, request):
                        REL_TYPE_COMMENT_AUTHOR)
     save_work_comments(work.work_id, request, fhandler.addressee_comment_formset,
                        REL_TYPE_COMMENT_ADDRESSEE)
+    save_work_comments(work.work_id, request, fhandler.date_comment_formset,
+                       REL_TYPE_COMMENT_DATE)
 
     # handle recref_handler
     for r in fhandler.all_recref_handlers:

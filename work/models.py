@@ -5,7 +5,7 @@ from typing import Iterable
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE
+from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_COMMENT_DATE
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 from core.models import Recref
@@ -81,6 +81,10 @@ class CofkUnionWork(models.Model, RecordTracker):
     @property
     def addressee_comments(self) -> Iterable['CofkUnionComment']:
         return self.find_comments_by_rel_type(REL_TYPE_COMMENT_ADDRESSEE)
+
+    @property
+    def date_comments(self) -> Iterable['CofkUnionComment']:
+        return self.find_comments_by_rel_type(REL_TYPE_COMMENT_DATE)
 
 
 class CofkWorkComment(Recref):

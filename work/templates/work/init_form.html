@@ -34,7 +34,7 @@
 
                         <div class="multi_rel_recref_container">
                             {{ author_formset.management_form }}
-                            {% for form in author_formset  %}
+                            {% for form in author_formset %}
                                 {{ form }}
                             {% endfor %}
                         </div>
@@ -59,7 +59,7 @@
 
                         <div class="multi_rel_recref_container">
                             {{ addressee_formset.management_form }}
-                            {% for form in addressee_formset  %}
+                            {% for form in addressee_formset %}
                                 {{ form }}
                             {% endfor %}
                         </div>
@@ -101,8 +101,79 @@
                     <h1>Work - Dates</h1>
                     <fieldset>
                         <legend>Dates</legend>
+                        <label>Date of work as marked:</label>
+                        {{ work_form.date_of_work_as_marked }}
+
+                        <div class="margin-bottom">
+                            {% include "core/component/common_form_choices.html" with label_text='Original calendar' choices_field=work_form.original_calendar %}
+                        </div>
+
+                        <fieldset>
+                            <legend>Date of work in standard format</legend>
+                            <div class="margin-bottom">
+                                {{ work_form.date_of_work_std_is_range }}
+                                <label for="{{ work_form.date_of_work_std_is_range.id_for_label }}">Date range?</label>
+                                <small>
+                                    Tick the 'Date range' box in either of the following cases:
+                                    <ul>
+                                        <li>
+                                            The work is known to have been written over a period of two or more days
+                                        </li>
+                                        <li>
+                                            The work cannot be precisely dated even to a single year
+                                        </li>
+                                    </ul>
+                                </small>
+                            </div>
+
+                            <div class="margin-bottom">
+                                <label>Date:</label>
+                                {% include 'core/component/form_three_date_fields.html' with day_field=work_form.date_of_work_std_day month_field=work_form.date_of_work_std_month year_field=work_form.date_of_work_std_year %}
+
+                                <span>
+                                    <small>
+                                    Leave any part or parts of the date blank if necessary.
+                                    </small>
+                                    <br/>
+                                    <br/>
+
+                                    <small>
+                                    If the original work was dated using the Julian calendar, please retain the Julian
+                                    day/month here. For example, if the date was marked as 8th January 1659/60 in the
+                                    original work, then enter the day here as '8' not '18'.
+                                    </small>
+                                    <br/>
+                                    <br/>
+
+                                    <small>
+                                    However, please do adjust the year for works dated using the form of Julian calendar
+                                    where the New Year began on 25th March. For example, 8th January 1659/60 should be
+                                    entered as 8-Jan-1660.
+                                    </small>
+                                    <br/>
+
+                                </span>
+                            </div>
+
+                            <div class="margin-bottom">
+                                Dates for ordering (these will normally be automatically generated as you enter day,
+                                month and year):
+                                <br/>
+                                <!-- KTODO -->
+                            </div>
+
+                        </fieldset>
+
+
+                        {% include "person/component/issues_with_date.html" with title='Issues with date of work:'  inferred=work_form.date_of_work_inferred  uncertain=work_form.date_of_work_uncertain  approx=work_form.date_of_work_approx %}
+
                     </fieldset>
+
+                    {% include "core/component/comment_publication_formset.html" with comment_formset=date_comment_formset comment_title='Notes on date' %}
+
+
                 </div>
+
 
                 <!-- ****** Places -->
                 <div class="tab-content tc-places">
