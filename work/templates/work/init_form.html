@@ -150,7 +150,10 @@
                                     where the New Year began on 25th March. For example, 8th January 1659/60 should be
                                     entered as 8-Jan-1660.
                                     </small>
+
                                     <br/>
+
+
 
                                 </span>
                             </div>
@@ -159,7 +162,11 @@
                                 Dates for ordering (these will normally be automatically generated as you enter day,
                                 month and year):
                                 <br/>
-                                <!-- KTODO -->
+                                <label>In original calendar:</label>
+                                {{ work_form.date_of_work_std }}
+
+                                <label>In Gregorian calendar:</label>
+                                {{ work_form.date_of_work_std_gregorian }}
                             </div>
 
                         </fieldset>
@@ -207,5 +214,126 @@
 
         </div>
     </div>
+
+
+
+
+    <script>
+
+
+        function cal_max_day_of_month(year_val, month_val) {
+            var max_day_of_month = 31;
+            switch (month_val) {
+                case 9:
+                case 4:
+                case 6:
+                case 11:
+                    max_day_of_month = 30;
+                    break;
+                case 2:
+                    max_day_of_month = 28;
+                    if (year_val % 4 === 0) {
+                        if (year_val % 100 > 0 || year_val % 400 === 0) {
+                            max_day_of_month = 29;
+                        }
+                    }
+                    break;
+            }
+            return max_day_of_month;
+        }
+
+        function pad_day_month_zero(val) {
+            return String(val).padStart(2, '0');
+        }
+
+        function to_date_str(year, month, day) {
+            return `${year}-${pad_day_month_zero(month)}-${pad_day_month_zero(day)}`
+        }
+
+        function cal_diff_days_by_calendar_code(calendar_code, year, month, day) {
+            var diffdays = 0;
+            if (calendar_code == "JM" || calendar_code == "JJ") {
+                diffdays = 10;
+                if (year > 1700) {
+                    diffdays = 11;
+                } else if (year == 1700 && month > 2) {
+                    diffdays = 11;
+                } else if (year == 1700 && month == 2 && day == 29) {
+                    diffdays = 11;
+                }
+            }
+            return diffdays;
+        }
+
+        function convert_date_by_calendar_code(calendar_code, year, month, day) {
+            let new_year = parseInt(year);
+            let new_month = parseInt(month);
+            let day_val = parseInt(day);
+            let new_day = day_val + cal_diff_days_by_calendar_code(calendar_code, new_year, new_month, day_val);
+            let max_day_of_month = cal_max_day_of_month(new_year, new_month);
+            if (new_day > max_day_of_month) {
+                new_day = new_day - max_day_of_month;
+                new_month++;
+                if (new_month > 12) {
+                    new_month = 1;
+                    new_year++;
+                    if (new_year > 9999) {
+                        new_year = 9999;
+                    }
+                }
+            }
+            return [new_year, new_month, new_day]
+        }
+
+        function get_selected_date() {
+            let year = $('#id_date_of_work_std_year').val() || 9999;
+            let month = $('#id_date_of_work_std_month').val() || 1;
+            let day = $('#id_date_of_work_std_day').val() || 1;
+            return [year, month, day]
+        }
+
+        function get_selected_calendar_code() {
+            return $('input[name=original_calendar]:checked').val();
+        }
+
+
+        function update_original_calendar() {
+            let [year, month, day] = get_selected_date();
+            $('#id_date_of_work_std').val(to_date_str(year, month, day));
+        }
+
+        function update_gregorian_calendar() {
+            let calendar_code = get_selected_calendar_code()
+            let [org_year, org_month, org_day] = get_selected_date();
+            let [new_year, new_month, new_day] = convert_date_by_calendar_code(
+                calendar_code, org_year, org_month, org_day,
+            );
+            $('#id_date_of_work_std_gregorian').val(to_date_str(new_year, new_month, new_day));
+        }
+
+
+        function setup_auto_calendar() {
+            $('input[name=original_calendar]').on('change', function (e) {
+                if (e.target.checked) {
+                    update_gregorian_calendar()
+                }
+            });
+
+
+            let update_all_calendar = function (e) {
+                update_original_calendar()
+                update_gregorian_calendar()
+            }
+
+            $('#id_date_of_work_std_month').on('change', update_all_calendar);
+            $('#id_date_of_work_std_day, #id_date_of_work_std_year').on('input', update_all_calendar)
+
+
+        }
+
+        $(function () {
+            setup_auto_calendar()
+        })
+    </script>
 
 {% endblock %}

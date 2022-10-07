@@ -30,6 +30,12 @@ class CofkCollectWorkForm(forms.ModelForm):
         # exclude = ['_id']
 
 
+def create_auto_date_field():
+    return forms.CharField(required=False,
+                           empty_value='9999-12-31',
+                           widget=forms.TextInput(dict(readonly='readonly')))
+
+
 class WorkForm(forms.ModelForm):
     authors_as_marked = forms.CharField(required=False)
     authors_inferred = form_utils.ZeroOneCheckboxField(is_str=False)
@@ -47,6 +53,9 @@ class WorkForm(forms.ModelForm):
     date_of_work_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_work_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_work_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+
+    date_of_work_std = create_auto_date_field()
+    date_of_work_std_gregorian = create_auto_date_field()
 
     original_calendar = CharField(required=False,
                                   widget=forms.RadioSelect(choices=original_calendar_choices))
@@ -74,6 +83,8 @@ class WorkForm(forms.ModelForm):
             'date_of_work_uncertain',
             'date_of_work_approx',
             'original_calendar',
+            'date_of_work_std',
+            'date_of_work_std_gregorian',
         )
 
 
