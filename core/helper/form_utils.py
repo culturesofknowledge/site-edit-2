@@ -4,6 +4,7 @@ from typing import Iterable
 
 from django import forms
 from django.db.models import TextChoices
+from django.forms import BoundField
 from django.template.loader import render_to_string
 
 from core.helper import widgets_utils
@@ -200,3 +201,19 @@ def create_year_field(required=False):
 def create_lookup_field(choices, required=False):
     return forms.CharField(required=required,
                            widget=forms.Select(choices=choices), )
+
+
+class SelectedRecrefField(forms.CharField):
+    def get_recref_name(self, target_id):
+        raise NotImplementedError()
+
+    def get_bound_field(self, form, field_name):
+        target_id = form.initial.get(field_name)
+        return RecrefSelectBound(form, self, field_name, self.get_recref_name(target_id))
+
+
+class RecrefSelectBound(BoundField):
+
+    def __init__(self, form, field, name, recref_name):
+        super().__init__(form, field, name)
+        self.recref_name = recref_name

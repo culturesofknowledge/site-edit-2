@@ -15,6 +15,7 @@ from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
 from core.helper.view_utils import CommonInitFormViewTemplate, ImageHandler, BasicSearchView, FullFormHandler
 from location.models import CofkUnionLocation
+from person import person_utils
 from person.forms import PersonForm, GeneralSearchFieldset
 from person.models import CofkUnionPerson, CofkPersonLocationMap, CofkPersonPersonMap, create_person_id
 
@@ -48,7 +49,10 @@ class PersonQuickInitView(PersonInitView):
 def return_quick_init(request, pk):
     person = CofkUnionPerson.objects.get(iperson_id=pk)
     return view_utils.render_return_quick_init(
-        request, 'Person', person.foaf_name, person.person_id, )
+        request, 'Person',
+        person_utils.get_recref_display_name(person),
+        person_utils.get_recref_target_id(person),
+    )
 
 
 class LocRecrefHandler(view_utils.MultiRecrefHandler):

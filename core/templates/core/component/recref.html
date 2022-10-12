@@ -4,7 +4,11 @@
     <div class="margin-bottom recref_main" recref_type="{{ recref_type }}">
         <label>{{ label }}</label>
         <div>
-            <input id="{{ fid }}_name" type="text" class="recref_text" readonly/>
+            <input id="{{ fid }}_name" type="text" class="recref_text" readonly
+                    {% if id_field.recref_name %}
+                   value="{{ id_field.recref_name }}"
+                    {% endif %}
+            />
             <input id="{{ fid }}" type="hidden" class="recref_id"
                    name="{{ id_field.html_name }}"
                     {% if id_field.value %}

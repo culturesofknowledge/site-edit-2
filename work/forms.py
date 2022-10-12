@@ -8,7 +8,10 @@ from django.shortcuts import get_object_or_404
 
 from core.forms import get_peron_full_form_url_by_pk
 from core.helper import view_utils, data_utils, form_utils
+from core.helper.form_utils import SelectedRecrefField
 from core.models import Recref
+from location import location_utils
+from location.models import CofkUnionLocation
 from person.models import CofkUnionPerson
 from work.models import CofkCollectWork, CofkUnionWork, CofkWorkPersonMap
 
@@ -36,6 +39,13 @@ def create_auto_date_field():
                            widget=forms.TextInput(dict(readonly='readonly')))
 
 
+class LocationRecrefField(SelectedRecrefField):
+    def get_recref_name(self, target_id):
+        loc = target_id and CofkUnionLocation.objects.get(location_id=target_id)
+        recref_name = location_utils.get_recref_display_name(loc)
+        return recref_name
+
+
 class WorkForm(forms.ModelForm):
     authors_as_marked = forms.CharField(required=False)
     authors_inferred = form_utils.ZeroOneCheckboxField(is_str=False)
@@ -60,9 +70,14 @@ class WorkForm(forms.ModelForm):
     original_calendar = CharField(required=False,
                                   widget=forms.RadioSelect(choices=original_calendar_choices))
 
+    origin_as_marked = CharField(required=False)
+    origin_inferred = form_utils.ZeroOneCheckboxField(is_str=False)
+    origin_uncertain = form_utils.ZeroOneCheckboxField(is_str=False)
+
     # extra field
     selected_author_id = forms.CharField(required=False)
     selected_addressee_id = forms.CharField(required=False)
+    selected_origin_location_id = LocationRecrefField(required=False)
 
     class Meta:
         model = CofkUnionWork
@@ -85,6 +100,10 @@ class WorkForm(forms.ModelForm):
             'original_calendar',
             'date_of_work_std',
             'date_of_work_std_gregorian',
+
+            'origin_as_marked',
+            'origin_inferred',
+            'origin_uncertain',
         )
 
 

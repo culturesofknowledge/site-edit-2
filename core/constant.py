@@ -7,3 +7,8 @@ REL_TYPE_COMMENT_DATE = 'refers_to_date'
 
 REL_TYPE_WORK_IS_REPLY_TO = 'is_reply_to'
 REL_TYPE_WORK_MATCHES = 'matches'
+
+REL_TYPE_WAS_SENT_TO = 'was_sent_to'
+REL_TYPE_WAS_SENT_FROM = 'was_sent_from'
+
+

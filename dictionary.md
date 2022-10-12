@@ -10,3 +10,4 @@
 | org    | Organisations           |
 | pson   | Person                  |
 | rel    | Relation / Relationship |
+| upsert | update or insert |

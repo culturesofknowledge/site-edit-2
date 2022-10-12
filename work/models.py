@@ -5,7 +5,8 @@ from typing import Iterable
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_COMMENT_DATE
+from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_COMMENT_DATE, \
+    REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 from core.models import Recref
@@ -86,6 +87,17 @@ class CofkUnionWork(models.Model, RecordTracker):
     def date_comments(self) -> Iterable['CofkUnionComment']:
         return self.find_comments_by_rel_type(REL_TYPE_COMMENT_DATE)
 
+    def find_location_by_rel_type(self, rel_type) -> 'CofkWorkLocationMap':
+        return self.cofkworklocationmap_set.filter(relationship_type=rel_type).first()
+
+    @property
+    def origin_location(self) -> 'CofkWorkLocationMap':
+        return self.find_location_by_rel_type(REL_TYPE_WAS_SENT_FROM)
+
+    @property
+    def destination_location(self) -> 'CofkWorkLocationMap':
+        return self.find_location_by_rel_type(REL_TYPE_WAS_SENT_TO)
+
 
 class CofkWorkComment(Recref):
     work = models.ForeignKey(CofkUnionWork, on_delete=models.CASCADE)
@@ -103,6 +115,29 @@ class CofkWorkWorkMap(Recref):
 
     class Meta(Recref.Meta):
         db_table = 'cofk_work_work_map'
+
+
+class CofkWorkPersonMap(Recref):
+    """
+    possible relationship_type [signed, created, sent]
+    """
+    work = models.ForeignKey(CofkUnionWork,
+                             on_delete=models.CASCADE)
+    person = models.ForeignKey("person.CofkUnionPerson",
+                               on_delete=models.CASCADE)
+
+    class Meta(Recref.Meta):
+        db_table = 'cofk_work_person_map'
+
+
+class CofkWorkLocationMap(Recref):
+    work = models.ForeignKey(CofkUnionWork,
+                             on_delete=models.CASCADE)
+    location = models.ForeignKey("location.CofkUnionLocation",
+                                 on_delete=models.CASCADE)
+
+    class Meta(Recref.Meta):
+        db_table = 'cofk_work_location_map'
 
 
 class CofkCollectWork(models.Model):
@@ -648,19 +683,6 @@ class CofkCollectWorkSummary(models.Model):
     class Meta:
         db_table = 'cofk_collect_work_summary'
         unique_together = (('upload', 'work_id_in_tool'),)
-
-
-class CofkWorkPersonMap(Recref):
-    """
-    possible relationship_type [signed, created, sent]
-    """
-    work = models.ForeignKey(CofkUnionWork,
-                             on_delete=models.CASCADE)
-    person = models.ForeignKey("person.CofkUnionPerson",
-                               on_delete=models.CASCADE)
-
-    class Meta(Recref.Meta):
-        db_table = 'cofk_work_person_map'
 
 
 def create_work_id(iwork_id) -> str:

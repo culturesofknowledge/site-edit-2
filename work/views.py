@@ -8,14 +8,16 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
 
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_WORK_IS_REPLY_TO, \
-    REL_TYPE_WORK_MATCHES, REL_TYPE_COMMENT_DATE
+    REL_TYPE_WORK_MATCHES, REL_TYPE_COMMENT_DATE, REL_TYPE_WAS_SENT_FROM
 from core.forms import CommentForm, WorkRecrefForm
 from core.helper import view_utils, model_utils, recref_utils
 from core.helper.view_utils import DefaultSearchView, FullFormHandler
 from person.models import CofkUnionPerson
+from work import work_utils
 from work.forms import WorkForm, WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     AuthorRelationChoices, AddresseeRelationChoices
-from work.models import CofkWorkPersonMap, CofkUnionWork, create_work_id, CofkWorkComment, CofkWorkWorkMap
+from work.models import CofkWorkPersonMap, CofkUnionWork, create_work_id, CofkWorkComment, CofkWorkWorkMap, \
+    CofkWorkLocationMap
 
 log = logging.getLogger(__name__)
 
@@ -31,7 +33,15 @@ class WorkFullFormHandler(FullFormHandler):
             self.work = get_object_or_404(CofkUnionWork, iwork_id=pk)
         else:
             self.work = None
-        self.work_form = WorkForm(request_data or None, instance=self.work)
+
+        work_form_initial = {}
+        if self.work is not None:
+            origin_location = self.work.origin_location
+            work_form_initial.update({
+                'selected_origin_location_id': origin_location and origin_location.location_id
+            })
+
+        self.work_form = WorkForm(request_data or None, instance=self.work, initial=work_form_initial)
 
         tmp_work = self.work or CofkUnionWork()
 
@@ -124,20 +134,36 @@ class WorkFullFormHandler(FullFormHandler):
 
 
 def create_work_person_map_if_field_exist(work_form: WorkForm, work, username,
-                                          selected_person_id,
+                                          selected_id_field_name,
                                           rel_type, ):
-    selected_person_id = work_form.cleaned_data.get(selected_person_id)
-    if not selected_person_id:
+    if not (_id := work_form.cleaned_data.get(selected_id_field_name)):
         return
 
     work_person_map = CofkWorkPersonMap()
-    work_person_map.person = get_object_or_404(CofkUnionPerson, pk=selected_person_id)
+    work_person_map.person = get_object_or_404(CofkUnionPerson, pk=_id)  # KTODO change to .person_id = ??
     work_person_map.work = work
     work_person_map.relationship_type = rel_type
     work_person_map.update_current_user_timestamp(username)
     work_person_map.save()
 
     return work_person_map
+
+
+def upsert_work_location_map_if_field_exist(work_form: WorkForm, work, username,
+                                            selected_id_field_name,
+                                            rel_type,
+                                            org_map=None):
+    if not (_id := work_form.cleaned_data.get(selected_id_field_name)):
+        return
+
+    work_location_map = org_map or CofkWorkLocationMap()
+    work_location_map.location_id = _id
+    work_location_map.work = work
+    work_location_map.relationship_type = rel_type
+    work_location_map.update_current_user_timestamp(username)
+    work_location_map.save()
+
+    return work_location_map
 
 
 class WorkInitView(LoginRequiredMixin, View):
@@ -170,7 +196,10 @@ class WorkQuickInitView(WorkInitView):
 def return_quick_init(request, pk):
     work = CofkUnionWork.objects.get(iwork_id=pk)
     return view_utils.render_return_quick_init(
-        request, 'Work', work.work_id, work.work_id)  # KTODO work.name
+        request, 'Work',
+        work_utils.get_recref_display_name(work),
+        work_utils.get_recref_target_id(work),
+    )
 
 
 @login_required
@@ -247,13 +276,19 @@ def save_full_form_handler(fhandler: WorkFullFormHandler, request):
     # handle selected_person_id
     create_work_person_map_if_field_exist(
         fhandler.work_form, work, request.user.username,
-        selected_person_id='selected_author_id',
+        selected_id_field_name='selected_author_id',
         rel_type=AuthorRelationChoices.CREATED,
     )
     create_work_person_map_if_field_exist(
         fhandler.work_form, work, request.user.username,
-        selected_person_id='selected_addressee_id',
+        selected_id_field_name='selected_addressee_id',
         rel_type=AddresseeRelationChoices.ADDRESSED_TO,
+    )
+    upsert_work_location_map_if_field_exist(
+        fhandler.work_form, work, request.user.username,
+        selected_id_field_name='selected_origin_location_id',
+        rel_type=REL_TYPE_WAS_SENT_FROM,
+        org_map=work.origin_location,
     )
 
     # handle author_formset

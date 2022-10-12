@@ -14,6 +14,7 @@ from core.helper.model_utils import RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
 from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate, ImageHandler
+from location import location_utils
 from location.forms import LocationForm, GeneralSearchFieldset
 from location.models import CofkUnionLocation
 
@@ -43,7 +44,10 @@ class LocationQuickInitView(LocationInitView):
 def return_quick_init(request, pk):
     location: CofkUnionLocation = CofkUnionLocation.objects.get(location_id=pk)
     return view_utils.render_return_quick_init(
-        request, 'Place', location.location_name, location.location_id, )
+        request, 'Place',
+        location_utils.get_recref_display_name(location),
+        location_utils.get_recref_target_id(location),
+        )
 
 
 def to_forms(form_or_formset: FormOrFormSet):

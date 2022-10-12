@@ -186,7 +186,19 @@
                 <div class="tab-content tc-places">
                     <h1>Work - Places</h1>
                     <fieldset>
-                        <legend>Places</legend>
+                        <legend>Origin</legend>
+
+                        <label>Origin as marked:</label>
+                        {{ work_form.origin_as_marked }}
+
+                        {% include "core/component/recref.html" with recref_type='location' id_field=work_form.selected_origin_location_id label='Origin (standard format):' %}
+
+                        {% include "core/component/common_checkbox.html" with field=work_form.origin_inferred name='Origin inferred' %}
+
+                        {% include "core/component/common_checkbox.html" with field=work_form.origin_uncertain  name='Origin uncertain' %}
+
+
+
                     </fieldset>
                 </div>
 
@@ -196,21 +208,6 @@
                 </div>
             </form>
 
-
-            {#            <h1 class="align-center">Location</h1>#}
-            {##}
-            {#            <form method="post">#}
-            {#                {% csrf_token %}#}
-            {##}
-            {#                <fieldset>#}
-            {#                    <legend>{{ form.form_title__ }}</legend>#}
-            {#                    {{ loc_form }}#}
-            {#                </fieldset>#}
-            {##}
-            {#                <div class="flex-col sticky-bottom">#}
-            {#                    <input type="submit" value="Submit">#}
-            {#                </div>#}
-            {#            </form>#}
 
         </div>
     </div>
