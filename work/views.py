@@ -8,10 +8,11 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
 
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_WORK_IS_REPLY_TO, \
-    REL_TYPE_WORK_MATCHES, REL_TYPE_COMMENT_DATE, REL_TYPE_WAS_SENT_FROM
-from core.forms import CommentForm, WorkRecrefForm
-from core.helper import view_utils, model_utils, recref_utils
-from core.helper.view_utils import DefaultSearchView, FullFormHandler
+    REL_TYPE_WORK_MATCHES, REL_TYPE_COMMENT_DATE, REL_TYPE_WAS_SENT_FROM, REL_TYPE_COMMENT_ORIGIN, \
+    REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO
+from core.forms import WorkRecrefForm
+from core.helper import view_utils, recref_utils
+from core.helper.view_utils import DefaultSearchView, FullFormHandler, CommentFormsetHandler
 from person.models import CofkUnionPerson
 from work import work_utils
 from work.forms import WorkForm, WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
@@ -20,6 +21,17 @@ from work.models import CofkWorkPersonMap, CofkUnionWork, create_work_id, CofkWo
     CofkWorkLocationMap
 
 log = logging.getLogger(__name__)
+
+
+class WorkCommentFormsetHandler(CommentFormsetHandler):
+    def __init__(self, prefix, request_data, rel_type, comments_query_fn, context_name=None):
+        super().__init__(prefix, request_data, rel_type, comments_query_fn,
+                         comment_class=CofkWorkComment, owner_id_name='work_id',
+                         context_name=context_name, )
+
+
+def get_location_id(model: models.Model):
+    return model and model.location_id
 
 
 class WorkFullFormHandler(FullFormHandler):
@@ -36,9 +48,9 @@ class WorkFullFormHandler(FullFormHandler):
 
         work_form_initial = {}
         if self.work is not None:
-            origin_location = self.work.origin_location
             work_form_initial.update({
-                'selected_origin_location_id': origin_location and origin_location.location_id
+                'selected_origin_location_id': get_location_id(self.work.origin_location),
+                'selected_destination_location_id': get_location_id(self.work.destination_location),
             })
 
         self.work_form = WorkForm(request_data or None, instance=self.work, initial=work_form_initial)
@@ -58,21 +70,36 @@ class WorkFullFormHandler(FullFormHandler):
         )
 
         # comments
-        self.author_comment_formset = view_utils.create_formset(
-            CommentForm, post_data=request_data,
+        self.add_comment_handler(WorkCommentFormsetHandler(
             prefix='author_comment',
-            initial_list=model_utils.models_to_dict_list(tmp_work.author_comments),
-        )
-        self.addressee_comment_formset = view_utils.create_formset(
-            CommentForm, post_data=request_data,
+            request_data=request_data,
+            rel_type=REL_TYPE_COMMENT_AUTHOR,
+            comments_query_fn=tmp_work.find_comments_by_rel_type,
+        ))
+        self.add_comment_handler(WorkCommentFormsetHandler(
             prefix='addressee_comment',
-            initial_list=model_utils.models_to_dict_list(tmp_work.addressee_comments),
-        )
-        self.date_comment_formset = view_utils.create_formset(
-            CommentForm, post_data=request_data,
+            request_data=request_data,
+            rel_type=REL_TYPE_COMMENT_ADDRESSEE,
+            comments_query_fn=tmp_work.find_comments_by_rel_type
+        ))
+        self.add_comment_handler(WorkCommentFormsetHandler(
             prefix='date_comment',
-            initial_list=model_utils.models_to_dict_list(tmp_work.date_comments),
-        )
+            request_data=request_data,
+            rel_type=REL_TYPE_COMMENT_DATE,
+            comments_query_fn=tmp_work.find_comments_by_rel_type
+        ))
+        self.add_comment_handler(WorkCommentFormsetHandler(
+            prefix='origin_comment',
+            request_data=request_data,
+            rel_type=REL_TYPE_COMMENT_ORIGIN,
+            comments_query_fn=tmp_work.find_comments_by_rel_type
+        ))
+        self.add_comment_handler(WorkCommentFormsetHandler(
+            prefix='destination_comment',
+            request_data=request_data,
+            rel_type=REL_TYPE_COMMENT_DESTINATION,
+            comments_query_fn=tmp_work.find_comments_by_rel_type
+        ))
 
         # letters
         self.earlier_letter_handler = EarlierLetterRecrefHandler(
@@ -238,20 +265,6 @@ def save_multi_rel_recref_formset(multi_rel_recref_formset, work, request):
         form.create_or_delete(work, request.user.username)
 
 
-def save_work_comments(work_id, request, comment_formset, rel_type):
-    view_utils.save_m2m_relation_records(
-        comment_formset,
-        lambda c: model_utils.get_or_create(
-            CofkWorkComment,
-            **dict(work_id=work_id,
-                   comment_id=c.comment_id,
-                   relationship_type=rel_type)
-        ),
-        request.user.username,
-        model_id_name='comment_id',
-    )
-
-
 def save_full_form_handler(fhandler: WorkFullFormHandler, request):
     # define form_formsets
     # KTODO make this list generic
@@ -290,18 +303,19 @@ def save_full_form_handler(fhandler: WorkFullFormHandler, request):
         rel_type=REL_TYPE_WAS_SENT_FROM,
         org_map=work.origin_location,
     )
+    upsert_work_location_map_if_field_exist(
+        fhandler.work_form, work, request.user.username,
+        selected_id_field_name='selected_destination_location_id',
+        rel_type=REL_TYPE_WAS_SENT_TO,
+        org_map=work.destination_location,
+    )
 
     # handle author_formset
     save_multi_rel_recref_formset(fhandler.author_formset, work, request)
     save_multi_rel_recref_formset(fhandler.addressee_formset, work, request)
 
-    # handle comments
-    save_work_comments(work.work_id, request, fhandler.author_comment_formset,
-                       REL_TYPE_COMMENT_AUTHOR)
-    save_work_comments(work.work_id, request, fhandler.addressee_comment_formset,
-                       REL_TYPE_COMMENT_ADDRESSEE)
-    save_work_comments(work.work_id, request, fhandler.date_comment_formset,
-                       REL_TYPE_COMMENT_DATE)
+    # handle all comments
+    fhandler.save_all_comment_formset(work.work_id, request)
 
     # handle recref_handler
     for r in fhandler.all_recref_handlers:

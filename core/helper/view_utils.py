@@ -1,3 +1,4 @@
+import itertools
 import logging
 import os
 from multiprocessing import Process
@@ -17,7 +18,7 @@ from django.views import View
 from django.views.generic import ListView
 
 import core.constant as core_constant
-from core.forms import ImageForm, UploadImageForm
+from core.forms import ImageForm, UploadImageForm, CommentForm
 from core.forms import RecrefForm
 from core.forms import build_search_components
 from core.helper import file_utils, email_utils
@@ -439,15 +440,19 @@ class ImageHandler:
 class FullFormHandler:
 
     def __init__(self, pk, *args, request_data=None, request=None, **kwargs):
+        self.comment_handlers: list[CommentFormsetHandler] = []
         self.load_data(pk, request_data=request_data, request=request, *args, **kwargs)
 
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
         raise NotImplementedError()
 
     def all_named_form_formset(self) -> Iterable[tuple[str, BaseForm | BaseFormSet]]:
-        attr_list = ((p, getattr(self, p)) for p in dir(self))
-        attr_list = ((p, a) for p, a in attr_list
-                     if isinstance(a, (BaseForm, BaseFormSet)))
+        attr_list = ((name, var) for name, var in self.__dict__.items()
+                     if isinstance(var, (BaseForm, BaseFormSet)))
+        attr_list = itertools.chain(
+            attr_list,
+            ((h.context_name, h.formset) for h in self.comment_handlers),
+        )
         return attr_list
 
     @property
@@ -466,6 +471,13 @@ class FullFormHandler:
             context.update(h.create_context())
         return context
 
+    def add_comment_handler(self, comment_handler: 'CommentFormsetHandler'):
+        self.comment_handlers.append(comment_handler)
+
+    def save_all_comment_formset(self, owner_id, request):
+        for c in self.comment_handlers:
+            c.save(owner_id, request)
+
 
 def save_m2m_relation_records(forms: Iterable[ModelForm],
                               recref_factory: Callable,
@@ -481,3 +493,41 @@ def save_m2m_relation_records(forms: Iterable[ModelForm],
         recref.update_current_user_timestamp(username)
         log.info(f'save m2m recref -- [{recref}][{r}]')
         recref.save()
+
+
+class CommentFormsetHandler:
+    def __init__(self, prefix, request_data,
+                 rel_type,
+                 comments_query_fn,
+                 comment_class: Type[Recref], owner_id_name,
+                 context_name=None):
+        self.context_name = context_name or f'{prefix}_formset'
+        self.rel_type = rel_type
+        self.formset = view_utils.create_formset(
+            CommentForm, post_data=request_data,
+            prefix=prefix,
+            initial_list=model_utils.models_to_dict_list(comments_query_fn(rel_type))
+        )
+        self.comment_class = comment_class
+        self.owner_id_name = owner_id_name
+
+    def save(self, owner_id, request):
+        save_comments_formset(
+            self.comment_class,
+            self.owner_id_name, owner_id, request,
+            self.formset, self.rel_type)
+
+
+def save_comments_formset(comment_class: Type[Recref], owner_id_name,
+                          owner_id, request, comment_formset, rel_type):
+    view_utils.save_m2m_relation_records(
+        comment_formset,
+        lambda c: model_utils.get_or_create(
+            comment_class,
+            **{owner_id_name: owner_id,
+               'comment_id': c.comment_id,
+               'relationship_type': rel_type}
+        ),
+        request.user.username,
+        model_id_name='comment_id',
+    )

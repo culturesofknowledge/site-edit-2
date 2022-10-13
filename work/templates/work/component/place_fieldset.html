@@ -1,0 +1,18 @@
+
+{% with cap_name=name|capfirst %}
+<fieldset>
+    <legend>{{ cap_name }}</legend>
+
+    <label>{{ cap_name }} as marked:</label>
+    {{ marked }}
+
+    {% include "core/component/recref.html" with recref_type='location' id_field=selected_id label=cap_name|add:' (standard format):' %}
+
+    {% include "core/component/common_checkbox.html" with field=inferred name=cap_name|add:' inferred' %}
+
+    {% include "core/component/common_checkbox.html" with field=uncertain  name=cap_name|add:' uncertain' %}
+
+    {% include "core/component/comment_publication_formset.html" with comment_formset=comment_formset comment_title='Notes on '|add:name %}
+</fieldset>
+
+{% endwith %}

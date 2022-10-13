@@ -99,7 +99,7 @@ class CofkUnionWork(models.Model, RecordTracker):
         return self.find_location_by_rel_type(REL_TYPE_WAS_SENT_TO)
 
 
-class CofkWorkComment(Recref):
+class CofkWorkComment(Recref):  # KTODO rename CofkWorkCommentMap
     work = models.ForeignKey(CofkUnionWork, on_delete=models.CASCADE)
     comment = models.ForeignKey('core.CofkUnionComment', on_delete=models.CASCADE)
 

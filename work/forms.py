@@ -74,10 +74,15 @@ class WorkForm(forms.ModelForm):
     origin_inferred = form_utils.ZeroOneCheckboxField(is_str=False)
     origin_uncertain = form_utils.ZeroOneCheckboxField(is_str=False)
 
+    destination_as_marked = CharField(required=False)
+    destination_inferred = form_utils.ZeroOneCheckboxField(is_str=False)
+    destination_uncertain = form_utils.ZeroOneCheckboxField(is_str=False)
+
     # extra field
     selected_author_id = forms.CharField(required=False)
     selected_addressee_id = forms.CharField(required=False)
     selected_origin_location_id = LocationRecrefField(required=False)
+    selected_destination_location_id = LocationRecrefField(required=False)
 
     class Meta:
         model = CofkUnionWork
@@ -104,6 +109,10 @@ class WorkForm(forms.ModelForm):
             'origin_as_marked',
             'origin_inferred',
             'origin_uncertain',
+
+            'destination_as_marked',
+            'destination_inferred',
+            'destination_uncertain',
         )
 
 
