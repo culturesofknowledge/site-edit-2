@@ -4,6 +4,7 @@ from typing import Optional, Type
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models
+from django.forms import Form
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
 
@@ -16,7 +17,7 @@ from core.helper.view_utils import DefaultSearchView, FullFormHandler, CommentFo
 from person.models import CofkUnionPerson
 from work import work_utils
 from work.forms import WorkForm, WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
-    AuthorRelationChoices, AddresseeRelationChoices
+    AuthorRelationChoices, AddresseeRelationChoices, ExtractPlacesForm
 from work.models import CofkWorkPersonMap, CofkUnionWork, create_work_id, CofkWorkComment, CofkWorkWorkMap, \
     CofkWorkLocationMap
 
@@ -49,14 +50,7 @@ class BasicWorkFFH(FullFormHandler):
         else:
             self.work = None
 
-        work_form_initial = {}
-        if self.work is not None:
-            work_form_initial.update({
-                'selected_origin_location_id': get_location_id(self.work.origin_location),
-                'selected_destination_location_id': get_location_id(self.work.destination_location),
-            })
-
-        self.work_form = WorkForm(request_data or None, instance=self.work, initial=work_form_initial)
+        self.work_form = WorkForm(request_data or None, instance=self.work)
 
     def render_form(self, request):
 
@@ -79,10 +73,65 @@ class BasicWorkFFH(FullFormHandler):
         # ----- save work
         work: CofkUnionWork = self.work_form.instance
         if not work.work_id:
-            work.work_id = create_work_id(work.iwork_id)
+            work.work_id = create_work_id(work.iwork_id) # KTODO fix
         work.save()
         log.info(f'save work {work}')  # KTODO fix iwork_id plus more than 1
         return work
+
+
+class PlacesFFH(BasicWorkFFH):
+    def __init__(self, pk, request_data=None, request=None, *args, **kwargs):
+        super().__init__(pk, 'work/places_form.html', *args, request_data=request_data, request=request, **kwargs)
+
+    def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
+        super().load_data(pk, request_data=request_data, request=request)
+
+        dates_form_initial = {}
+        if self.work is not None:
+            dates_form_initial.update({
+                'selected_origin_location_id': get_location_id(self.work.origin_location),
+                'selected_destination_location_id': get_location_id(self.work.destination_location),
+            })
+        self.places_form = ExtractPlacesForm(request_data, initial=dates_form_initial)
+
+        tmp_work = self.work or CofkUnionWork()
+
+        # comments
+        self.add_comment_handler(WorkCommentFormsetHandler(
+            prefix='origin_comment',
+            request_data=request_data,
+            rel_type=REL_TYPE_COMMENT_ORIGIN,
+            comments_query_fn=tmp_work.find_comments_by_rel_type
+        ))
+        self.add_comment_handler(WorkCommentFormsetHandler(
+            prefix='destination_comment',
+            request_data=request_data,
+            rel_type=REL_TYPE_COMMENT_DESTINATION,
+            comments_query_fn=tmp_work.find_comments_by_rel_type
+        ))
+        self.add_comment_handler(WorkCommentFormsetHandler(
+            prefix='route_comment',
+            request_data=request_data,
+            rel_type=REL_TYPE_COMMENT_ROUTE,
+            comments_query_fn=tmp_work.find_comments_by_rel_type
+        ))
+
+    def save(self, request):
+        work = self.save_work(request)
+        self.save_all_comment_formset(work.work_id, request)
+
+        upsert_work_location_map_if_field_exist(
+            self.places_form, work, request.user.username,
+            selected_id_field_name='selected_origin_location_id',
+            rel_type=REL_TYPE_WAS_SENT_FROM,
+            org_map=work.origin_location,
+        )
+        upsert_work_location_map_if_field_exist(
+            self.places_form, work, request.user.username,
+            selected_id_field_name='selected_destination_location_id',
+            rel_type=REL_TYPE_WAS_SENT_TO,
+            org_map=work.destination_location,
+        )
 
 
 class DatesFFH(BasicWorkFFH):
@@ -186,6 +235,7 @@ class CorrFFH(BasicWorkFFH):
 
 
 class WorkFullFormHandler(FullFormHandler):
+    # TOBEREMOVE
 
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
         if pk:
@@ -193,36 +243,9 @@ class WorkFullFormHandler(FullFormHandler):
         else:
             self.work = None
 
-        work_form_initial = {}
-        if self.work is not None:
-            work_form_initial.update({
-                'selected_origin_location_id': get_location_id(self.work.origin_location),
-                'selected_destination_location_id': get_location_id(self.work.destination_location),
-            })
-
         self.work_form = WorkForm(request_data or None, instance=self.work, initial=work_form_initial)
 
         tmp_work = self.work or CofkUnionWork()
-
-        # comments
-        self.add_comment_handler(WorkCommentFormsetHandler(
-            prefix='origin_comment',
-            request_data=request_data,
-            rel_type=REL_TYPE_COMMENT_ORIGIN,
-            comments_query_fn=tmp_work.find_comments_by_rel_type
-        ))
-        self.add_comment_handler(WorkCommentFormsetHandler(
-            prefix='destination_comment',
-            request_data=request_data,
-            rel_type=REL_TYPE_COMMENT_DESTINATION,
-            comments_query_fn=tmp_work.find_comments_by_rel_type
-        ))
-        self.add_comment_handler(WorkCommentFormsetHandler(
-            prefix='route_comment',
-            request_data=request_data,
-            rel_type=REL_TYPE_COMMENT_ROUTE,
-            comments_query_fn=tmp_work.find_comments_by_rel_type
-        ))
 
 
 def create_work_person_map_if_field_exist(work_form: WorkForm, work, username,
@@ -241,11 +264,11 @@ def create_work_person_map_if_field_exist(work_form: WorkForm, work, username,
     return work_person_map
 
 
-def upsert_work_location_map_if_field_exist(work_form: WorkForm, work, username,
+def upsert_work_location_map_if_field_exist(form: Form, work, username,
                                             selected_id_field_name,
                                             rel_type,
                                             org_map=None):
-    if not (_id := work_form.cleaned_data.get(selected_id_field_name)):
+    if not (_id := form.cleaned_data.get(selected_id_field_name)):
         return
 
     work_location_map = org_map or CofkWorkLocationMap()
@@ -309,6 +332,16 @@ class DatesView(BasicWorkFormView):
         return 'work:dates_form'
 
 
+class PlacesView(BasicWorkFormView):
+    @staticmethod
+    def create_fhandler(request, iwork_id=None):
+        return PlacesFFH(iwork_id, request_data=request.POST, request=request)
+
+    @property
+    def cur_vname(self):
+        return 'work:places_form'
+
+
 class WorkQuickInitView(CorrView):
     def resp_after_saved(self, request, fhandler):
         return redirect('work:return_quick_init', fhandler.work_form.instance.iwork_id)
@@ -365,18 +398,7 @@ def save_multi_rel_recref_formset(multi_rel_recref_formset, work, request):
 def save_full_form_handler(fhandler: WorkFullFormHandler, request):
     # TOBEREMOVE
     # handle selected_person_id
-    upsert_work_location_map_if_field_exist(
-        fhandler.work_form, work, request.user.username,
-        selected_id_field_name='selected_origin_location_id',
-        rel_type=REL_TYPE_WAS_SENT_FROM,
-        org_map=work.origin_location,
-    )
-    upsert_work_location_map_if_field_exist(
-        fhandler.work_form, work, request.user.username,
-        selected_id_field_name='selected_destination_location_id',
-        rel_type=REL_TYPE_WAS_SENT_TO,
-        org_map=work.destination_location,
-    )
+    pass
 
 
 class WorkSearchView(LoginRequiredMixin, DefaultSearchView):

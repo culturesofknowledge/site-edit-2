@@ -46,6 +46,11 @@ class LocationRecrefField(SelectedRecrefField):
         return recref_name
 
 
+class ExtractPlacesForm(forms.Form):
+    selected_origin_location_id = LocationRecrefField(required=False)
+    selected_destination_location_id = LocationRecrefField(required=False)
+
+
 class WorkForm(forms.ModelForm):
     authors_as_marked = forms.CharField(required=False)
     authors_inferred = form_utils.ZeroOneCheckboxField(is_str=False)
@@ -81,8 +86,6 @@ class WorkForm(forms.ModelForm):
     # extra field
     selected_author_id = forms.CharField(required=False)
     selected_addressee_id = forms.CharField(required=False)
-    selected_origin_location_id = LocationRecrefField(required=False)
-    selected_destination_location_id = LocationRecrefField(required=False)
 
     class Meta:
         model = CofkUnionWork
