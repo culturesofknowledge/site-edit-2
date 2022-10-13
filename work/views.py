@@ -9,7 +9,7 @@ from django.views import View
 
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_WORK_IS_REPLY_TO, \
     REL_TYPE_WORK_MATCHES, REL_TYPE_COMMENT_DATE, REL_TYPE_WAS_SENT_FROM, REL_TYPE_COMMENT_ORIGIN, \
-    REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO
+    REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_ROUTE
 from core.forms import WorkRecrefForm
 from core.helper import view_utils, recref_utils
 from core.helper.view_utils import DefaultSearchView, FullFormHandler, CommentFormsetHandler
@@ -100,6 +100,12 @@ class WorkFullFormHandler(FullFormHandler):
             rel_type=REL_TYPE_COMMENT_DESTINATION,
             comments_query_fn=tmp_work.find_comments_by_rel_type
         ))
+        self.add_comment_handler(WorkCommentFormsetHandler(
+            prefix='route_comment',
+            request_data=request_data,
+            rel_type=REL_TYPE_COMMENT_ROUTE,
+            comments_query_fn=tmp_work.find_comments_by_rel_type
+        ))
 
         # letters
         self.earlier_letter_handler = EarlierLetterRecrefHandler(
@@ -114,42 +120,6 @@ class WorkFullFormHandler(FullFormHandler):
             name='matching_letter',
             rel_type=REL_TYPE_WORK_MATCHES,
         )
-
-        # self.loc_handler = LocRecrefHandler(
-        #     request_data, model_list=self.person.cofkpersonlocationmap_set.iterator(), )
-        #
-        # self.org_handler = PersonRecrefHandler(request_data, person_type='organisation',
-        #                                        person=self.person)
-        # self.parent_handler = PersonRecrefHandler(request_data, person_type='parent',
-        #                                           person=self.person)
-        # self.children_handler = PersonRecrefHandler(request_data, person_type='children',
-        #                                             person=self.person)
-        #
-        # self.employer_handler = PersonRecrefHandler(request_data, person_type='employer',
-        #                                             person=self.person)
-        # self.employee_handler = PersonRecrefHandler(request_data, person_type='employee',
-        #                                             person=self.person)
-        # self.teacher_handler = PersonRecrefHandler(request_data, person_type='teacher',
-        #                                            person=self.person)
-        # self.student_handler = PersonRecrefHandler(request_data, person_type='student',
-        #                                            person=self.person)
-        # self.patron_handler = PersonRecrefHandler(request_data, person_type='patron',
-        #                                           person=self.person)
-        # self.protege_handler = PersonRecrefHandler(request_data, person_type='protege',
-        #                                            person=self.person)
-        # self.other_handler = PersonRecrefHandler(request_data, person_type='other',
-        #                                          name='person_other',
-        #                                          person=self.person)
-        #
-        # self.comment_formset = view_utils.create_formset(CommentForm, post_data=request_data,
-        #                                                  prefix='comment',
-        #                                                  initial_list=model_utils.related_manager_to_dict_list(
-        #                                                      self.person.comments), )
-        # self.res_formset = view_utils.create_formset(ResourceForm, post_data=request_data,
-        #                                              prefix='res',
-        #                                              initial_list=model_utils.related_manager_to_dict_list(
-        #                                                  self.person.resources), )
-        # self.img_handler = ImageHandler(request_data, request and request.FILES, self.person.images)
 
     def render_form(self, request):
 

@@ -188,6 +188,11 @@
                     {% include "work/component/place_fieldset.html" with name='origin' marked=work_form.origin_as_marked selected_id=work_form.selected_origin_location_id inferred=work_form.origin_inferred uncertain=work_form.origin_uncertain comment_formset=origin_comment_formset %}
                     {% include "work/component/place_fieldset.html" with name='destination' marked=work_form.destination_as_marked selected_id=work_form.selected_destination_location_id inferred=work_form.destination_inferred uncertain=work_form.destination_uncertain comment_formset=destination_comment_formset %}
 
+                    <fieldset>
+                        <legend>Route</legend>
+                        {% include "core/component/comment_publication_formset.html" with comment_formset=route_comment_formset comment_title='Route from origin to destination' %}
+                    </fieldset>
+
                 </div>
 
 
