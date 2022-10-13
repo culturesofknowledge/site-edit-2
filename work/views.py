@@ -34,8 +34,11 @@ def get_location_id(model: models.Model):
     return model and model.location_id
 
 
-class WorkFullFormHandler(FullFormHandler):
+# class DatesFFH(BasicWorkFFH):
+#     pass
 
+
+class BasicWorkFFH(FullFormHandler):
     def __init__(self, pk, template_name, request_data=None, request=None, *args, **kwargs):
         super().__init__(pk, *args, request_data=request_data, request=request, **kwargs)
         self.template_name = template_name
@@ -55,8 +58,44 @@ class WorkFullFormHandler(FullFormHandler):
 
         self.work_form = WorkForm(request_data or None, instance=self.work, initial=work_form_initial)
 
+    def render_form(self, request):
+
+        context = (
+                dict(self.all_named_form_formset())
+                | self.create_all_recref_context()
+        )
+        return render(request, self.template_name, context)
+
+    def is_invalid(self):
+        # define form_formsets
+        form_formsets = [*self.all_form_formset, ]
+        for h in self.all_recref_handlers:
+            form_formsets.extend([h.new_form, h.update_formset, ])
+
+        # ----- validate
+        return view_utils.any_invalid_with_log(form_formsets)
+
+    def save_work(self, request):
+        # ----- save work
+        work: CofkUnionWork = self.work_form.instance
+        if not work.work_id:
+            work.work_id = create_work_id(work.iwork_id)
+        work.save()
+        log.info(f'save work {work}')  # KTODO fix iwork_id plus more than 1
+        return work
+
+
+class CorrFFH(BasicWorkFFH):
+
+    def __init__(self, pk, request_data=None, request=None, *args, **kwargs):
+        super().__init__(pk, 'work/corr_form.html', *args, request_data=request_data, request=request, **kwargs)
+
+    def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
+        super().load_data(pk, request_data=request_data, request=request)
+
         tmp_work = self.work or CofkUnionWork()
 
+        # recref
         self.author_formset = WorkAuthorRecrefForm.create_formset_by_records(
             request_data,
             self.work.cofkworkpersonmap_set.iterator() if self.work else [],
@@ -69,7 +108,7 @@ class WorkFullFormHandler(FullFormHandler):
             prefix='work_addressee'
         )
 
-        # comments
+        # comment
         self.add_comment_handler(WorkCommentFormsetHandler(
             prefix='author_comment',
             request_data=request_data,
@@ -82,6 +121,68 @@ class WorkFullFormHandler(FullFormHandler):
             rel_type=REL_TYPE_COMMENT_ADDRESSEE,
             comments_query_fn=tmp_work.find_comments_by_rel_type
         ))
+
+        # letters
+        self.earlier_letter_handler = EarlierLetterRecrefHandler(
+            request_data,
+            tmp_work.work_from_set.filter(relationship_type=REL_TYPE_WORK_IS_REPLY_TO).iterator())
+        self.later_letter_handler = LaterLetterRecrefHandler(
+            request_data,
+            tmp_work.work_to_set.filter(relationship_type=REL_TYPE_WORK_IS_REPLY_TO).iterator())
+        self.matching_letter_handler = EarlierLetterRecrefHandler(
+            request_data,
+            tmp_work.work_from_set.filter(relationship_type=REL_TYPE_WORK_MATCHES).iterator(),
+            name='matching_letter',
+            rel_type=REL_TYPE_WORK_MATCHES,
+        )
+
+    def save(self, request):
+        work = self.save_work(request)
+
+        # save selected recref
+        create_work_person_map_if_field_exist(
+            self.work_form, work, request.user.username,
+            selected_id_field_name='selected_author_id',
+            rel_type=AuthorRelationChoices.CREATED,
+        )
+        create_work_person_map_if_field_exist(
+            self.work_form, work, request.user.username,
+            selected_id_field_name='selected_addressee_id',
+            rel_type=AddresseeRelationChoices.ADDRESSED_TO,
+        )
+
+        # handle author_formset
+        save_multi_rel_recref_formset(self.author_formset, work, request)
+        save_multi_rel_recref_formset(self.addressee_formset, work, request)
+
+        # handle all comments
+        self.save_all_comment_formset(work.work_id, request)
+
+        # handle recref_handler
+        for r in self.all_recref_handlers:
+            r.maintain_record(request, work)
+
+
+class WorkFullFormHandler(FullFormHandler):
+
+    def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
+        if pk:
+            self.work = get_object_or_404(CofkUnionWork, iwork_id=pk)
+        else:
+            self.work = None
+
+        work_form_initial = {}
+        if self.work is not None:
+            work_form_initial.update({
+                'selected_origin_location_id': get_location_id(self.work.origin_location),
+                'selected_destination_location_id': get_location_id(self.work.destination_location),
+            })
+
+        self.work_form = WorkForm(request_data or None, instance=self.work, initial=work_form_initial)
+
+        tmp_work = self.work or CofkUnionWork()
+
+        # comments
         self.add_comment_handler(WorkCommentFormsetHandler(
             prefix='date_comment',
             request_data=request_data,
@@ -106,28 +207,6 @@ class WorkFullFormHandler(FullFormHandler):
             rel_type=REL_TYPE_COMMENT_ROUTE,
             comments_query_fn=tmp_work.find_comments_by_rel_type
         ))
-
-        # letters
-        self.earlier_letter_handler = EarlierLetterRecrefHandler(
-            request_data,
-            tmp_work.work_from_set.filter(relationship_type=REL_TYPE_WORK_IS_REPLY_TO).iterator())
-        self.later_letter_handler = LaterLetterRecrefHandler(
-            request_data,
-            tmp_work.work_to_set.filter(relationship_type=REL_TYPE_WORK_IS_REPLY_TO).iterator())
-        self.matching_letter_handler = EarlierLetterRecrefHandler(
-            request_data,
-            tmp_work.work_from_set.filter(relationship_type=REL_TYPE_WORK_MATCHES).iterator(),
-            name='matching_letter',
-            rel_type=REL_TYPE_WORK_MATCHES,
-        )
-
-    def render_form(self, request):
-
-        context = (
-                dict(self.all_named_form_formset())
-                | self.create_all_recref_context()
-        )
-        return render(request, self.template_name, context)
 
 
 def create_work_person_map_if_field_exist(work_form: WorkForm, work, username,
@@ -163,6 +242,26 @@ def upsert_work_location_map_if_field_exist(work_form: WorkForm, work, username,
     return work_location_map
 
 
+class CorrView(LoginRequiredMixin, View):
+
+    @staticmethod
+    def create_fhandler(request, iwork_id=None):
+        return CorrFFH(iwork_id, request_data=request.POST, request=request)
+
+    def resp_after_saved(self, request, fhandler):
+        return redirect('work:corr_form', fhandler.work_form.instance.iwork_id)
+
+    def post(self, request, *args, **kwargs):
+        fhandler = self.create_fhandler(request)
+        if fhandler.is_invalid():
+            return fhandler.render_form(request)
+        fhandler.save(request)
+        return self.resp_after_saved(request, fhandler)
+
+    def get(self, request, iwork_id=None, *args, **kwargs):
+        return self.create_fhandler(request, iwork_id).render_form(request)
+
+
 class WorkInitView(LoginRequiredMixin, View):
 
     @staticmethod
@@ -184,7 +283,7 @@ class WorkInitView(LoginRequiredMixin, View):
         return self.create_fhandler(request).render_form(request)
 
 
-class WorkQuickInitView(WorkInitView):
+class WorkQuickInitView(CorrView):
     def resp_after_saved(self, request, fhandler):
         return redirect('work:return_quick_init', fhandler.work_form.instance.iwork_id)
 
@@ -236,26 +335,6 @@ def save_multi_rel_recref_formset(multi_rel_recref_formset, work, request):
 
 
 def save_full_form_handler(fhandler: WorkFullFormHandler, request):
-    # define form_formsets
-    # KTODO make this list generic
-    form_formsets = [*fhandler.all_form_formset,
-                     # fhandler.img_handler.img_form,
-                     # fhandler.img_handler.image_formset,
-                     ]
-    for h in fhandler.all_recref_handlers:
-        form_formsets.extend([h.new_form, h.update_formset, ])
-
-    # ----- validate
-    if view_utils.any_invalid_with_log(form_formsets):
-        return fhandler.render_form(request)
-
-    # ----- save
-    work: CofkUnionWork = fhandler.work_form.instance
-    if not work.work_id:
-        work.work_id = create_work_id(work.iwork_id)
-    work.save()
-    log.info(f'save work {work}')  # KTODO fix iwork_id plus more than 1
-
     # handle selected_person_id
     create_work_person_map_if_field_exist(
         fhandler.work_form, work, request.user.username,
@@ -279,17 +358,6 @@ def save_full_form_handler(fhandler: WorkFullFormHandler, request):
         rel_type=REL_TYPE_WAS_SENT_TO,
         org_map=work.destination_location,
     )
-
-    # handle author_formset
-    save_multi_rel_recref_formset(fhandler.author_formset, work, request)
-    save_multi_rel_recref_formset(fhandler.addressee_formset, work, request)
-
-    # handle all comments
-    fhandler.save_all_comment_formset(work.work_id, request)
-
-    # handle recref_handler
-    for r in fhandler.all_recref_handlers:
-        r.maintain_record(request, work)
 
 
 class WorkSearchView(LoginRequiredMixin, DefaultSearchView):

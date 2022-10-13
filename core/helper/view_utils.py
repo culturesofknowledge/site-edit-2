@@ -475,6 +475,7 @@ class FullFormHandler:
         self.comment_handlers.append(comment_handler)
 
     def save_all_comment_formset(self, owner_id, request):
+        # KTODO fix comment_id has_changed problem
         for c in self.comment_handlers:
             c.save(owner_id, request)
 
