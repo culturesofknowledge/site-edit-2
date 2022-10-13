@@ -2,14 +2,8 @@
 {% load static %}
 
 {% block head %}
-    <script src="{% static 'location/js/work_form.js' %}" defer></script>
     <script src="/static/core/js/recref_service.js"></script>
     <script src="{% static 'core/js/ref_publication_service.js' %}" defer></script>
-    <script defer>
-        document.addEventListener('DOMContentLoaded', (e) => {
-            setup_work_form_listener()
-        });
-    </script>
 {% endblock %}
 
 {% block content %}
@@ -20,9 +14,9 @@
                 {% csrf_token %}
 
                 <div class="row-no-margin">
-                    <button class="tablinks" content-selector=".tc-corr">Correspondents</button>
-                    <button class="tablinks" content-selector=".tc-dates">Dates</button>
-                    <button class="tablinks" content-selector=".tc-places">Places</button>
+                    <button type="submit" name="__goto" value="corr"> Correspondents</button>
+                    <button type="submit" name="__goto" value="dates"> Dates</button>
+                    <button type="submit" name="__goto" value="places">Places</button>
                 </div>
 
 
@@ -30,155 +24,10 @@
                 <div class="tab-content tc-corr">
                     {% block tabcontent %}
                     {% endblock %}
-                    {#                    <h1>Work - Correspondents</h1>#}
-                    {#                    <fieldset>#}
-                    {#                        <legend>Authors / senders</legend>#}
-                    {##}
-                    {#                        <div class="multi_rel_recref_container">#}
-                    {#                            {{ author_formset.management_form }}#}
-                    {#                            {% for form in author_formset %}#}
-                    {#                                {{ form }}#}
-                    {#                            {% endfor %}#}
-                    {#                        </div>#}
-                    {##}
-                    {#                        {% include "core/component/recref.html" with recref_type='person' id_field=work_form.selected_author_id label='Add another authro/sender:' %}#}
-                    {##}
-                    {#                        <label> Authors/sender as marked: </label>#}
-                    {#                        {{ work_form.authors_as_marked }}#}
-                    {##}
-                    {#                        <label> Issues with authors/senders: </label>#}
-                    {##}
-                    {#                        {% include "core/component/common_checkbox.html" with field=work_form.authors_inferred name='Authors / senders inferred' %}#}
-                    {##}
-                    {#                        {% include "core/component/common_checkbox.html" with field=work_form.authors_uncertain  name='Authors / senders uncertain' %}#}
-                    {##}
-                    {#                        {% include "core/component/comment_publication_formset.html" with comment_formset=author_comment_formset comment_title='Notes on authors/senders' %}#}
-                    {#                    </fieldset>#}
-                    {##}
-                    {##}
-                    {#                    <fieldset>#}
-                    {#                        <legend>Addressees</legend>#}
-                    {##}
-                    {#                        <div class="multi_rel_recref_container">#}
-                    {#                            {{ addressee_formset.management_form }}#}
-                    {#                            {% for form in addressee_formset %}#}
-                    {#                                {{ form }}#}
-                    {#                            {% endfor %}#}
-                    {#                        </div>#}
-                    {##}
-                    {#                        {% include "core/component/recref.html" with recref_type='person' id_field=work_form.selected_addressee_id label='Add another addressee:' %}#}
-                    {##}
-                    {#                        <label> Addressees as marked: </label>#}
-                    {#                        {{ work_form.addressees_as_marked }}#}
-                    {##}
-                    {#                        <label> Issues with addressees: </label>#}
-                    {##}
-                    {#                        {% include "core/component/common_checkbox.html" with field=work_form.addressees_inferred name='Addressees inferred' %}#}
-                    {##}
-                    {#                        {% include "core/component/common_checkbox.html" with field=work_form.addressees_uncertain  name='Addressees uncertain' %}#}
-                    {##}
-                    {#                        {% include "core/component/comment_publication_formset.html" with comment_formset=addressee_comment_formset comment_title='Notes on addressees' %}#}
-                    {##}
-                    {#                    </fieldset>#}
-                    {##}
-                    {#                    <fieldset>#}
-                    {#                        <legend>Earlier letters:</legend>#}
-                    {#                        {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_earlier_letter.update_formset new_form=recref_earlier_letter.new_form add_label='Add letter answered by this one:' no_date=True %}#}
-                    {#                    </fieldset>#}
-                    {##}
-                    {#                    <fieldset>#}
-                    {#                        <legend>Later letter</legend>#}
-                    {#                        {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_later_letter.update_formset new_form=recref_later_letter.new_form add_label='Add reply to this:' no_date=True %}#}
-                    {#                    </fieldset>#}
-                    {##}
-                    {#                    <fieldset>#}
-                    {#                        <legend>Matching letter</legend>#}
-                    {#                        {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_matching_letter.update_formset new_form=recref_matching_letter.new_form add_label='Add another match:' no_date=True %}#}
-                    {#                    </fieldset>#}
-
                 </div>
 
                 <!-- ****** Dates -->
                 <div class="tab-content tc-dates">
-                    <h1>Work - Dates</h1>
-                    <fieldset>
-                        <legend>Dates</legend>
-                        <label>Date of work as marked:</label>
-                        {{ work_form.date_of_work_as_marked }}
-
-                        <div class="margin-bottom">
-                            {% include "core/component/common_form_choices.html" with label_text='Original calendar' choices_field=work_form.original_calendar %}
-                        </div>
-
-                        <fieldset>
-                            <legend>Date of work in standard format</legend>
-                            <div class="margin-bottom">
-                                {{ work_form.date_of_work_std_is_range }}
-                                <label for="{{ work_form.date_of_work_std_is_range.id_for_label }}">Date range?</label>
-                                <small>
-                                    Tick the 'Date range' box in either of the following cases:
-                                    <ul>
-                                        <li>
-                                            The work is known to have been written over a period of two or more days
-                                        </li>
-                                        <li>
-                                            The work cannot be precisely dated even to a single year
-                                        </li>
-                                    </ul>
-                                </small>
-                            </div>
-
-                            <div class="margin-bottom">
-                                <label>Date:</label>
-                                {% include 'core/component/form_three_date_fields.html' with day_field=work_form.date_of_work_std_day month_field=work_form.date_of_work_std_month year_field=work_form.date_of_work_std_year %}
-
-                                <span>
-                                    <small>
-                                    Leave any part or parts of the date blank if necessary.
-                                    </small>
-                                    <br/>
-                                    <br/>
-
-                                    <small>
-                                    If the original work was dated using the Julian calendar, please retain the Julian
-                                    day/month here. For example, if the date was marked as 8th January 1659/60 in the
-                                    original work, then enter the day here as '8' not '18'.
-                                    </small>
-                                    <br/>
-                                    <br/>
-
-                                    <small>
-                                    However, please do adjust the year for works dated using the form of Julian calendar
-                                    where the New Year began on 25th March. For example, 8th January 1659/60 should be
-                                    entered as 8-Jan-1660.
-                                    </small>
-
-                                    <br/>
-
-
-
-                                </span>
-                            </div>
-
-                            <div class="margin-bottom">
-                                Dates for ordering (these will normally be automatically generated as you enter day,
-                                month and year):
-                                <br/>
-                                <label>In original calendar:</label>
-                                {{ work_form.date_of_work_std }}
-
-                                <label>In Gregorian calendar:</label>
-                                {{ work_form.date_of_work_std_gregorian }}
-                            </div>
-
-                        </fieldset>
-
-
-                        {% include "person/component/issues_with_date.html" with title='Issues with date of work:'  inferred=work_form.date_of_work_inferred  uncertain=work_form.date_of_work_uncertain  approx=work_form.date_of_work_approx %}
-
-                    </fieldset>
-
-                    {% include "core/component/comment_publication_formset.html" with comment_formset=date_comment_formset comment_title='Notes on date' %}
 
 
                 </div>
@@ -210,122 +59,5 @@
 
 
 
-    <script>
-
-
-        function cal_max_day_of_month(year_val, month_val) {
-            var max_day_of_month = 31;
-            switch (month_val) {
-                case 9:
-                case 4:
-                case 6:
-                case 11:
-                    max_day_of_month = 30;
-                    break;
-                case 2:
-                    max_day_of_month = 28;
-                    if (year_val % 4 === 0) {
-                        if (year_val % 100 > 0 || year_val % 400 === 0) {
-                            max_day_of_month = 29;
-                        }
-                    }
-                    break;
-            }
-            return max_day_of_month;
-        }
-
-        function pad_day_month_zero(val) {
-            return String(val).padStart(2, '0');
-        }
-
-        function to_date_str(year, month, day) {
-            return `${year}-${pad_day_month_zero(month)}-${pad_day_month_zero(day)}`
-        }
-
-        function cal_diff_days_by_calendar_code(calendar_code, year, month, day) {
-            var diffdays = 0;
-            if (calendar_code == "JM" || calendar_code == "JJ") {
-                diffdays = 10;
-                if (year > 1700) {
-                    diffdays = 11;
-                } else if (year == 1700 && month > 2) {
-                    diffdays = 11;
-                } else if (year == 1700 && month == 2 && day == 29) {
-                    diffdays = 11;
-                }
-            }
-            return diffdays;
-        }
-
-        function convert_date_by_calendar_code(calendar_code, year, month, day) {
-            let new_year = parseInt(year);
-            let new_month = parseInt(month);
-            let day_val = parseInt(day);
-            let new_day = day_val + cal_diff_days_by_calendar_code(calendar_code, new_year, new_month, day_val);
-            let max_day_of_month = cal_max_day_of_month(new_year, new_month);
-            if (new_day > max_day_of_month) {
-                new_day = new_day - max_day_of_month;
-                new_month++;
-                if (new_month > 12) {
-                    new_month = 1;
-                    new_year++;
-                    if (new_year > 9999) {
-                        new_year = 9999;
-                    }
-                }
-            }
-            return [new_year, new_month, new_day]
-        }
-
-        function get_selected_date() {
-            let year = $('#id_date_of_work_std_year').val() || 9999;
-            let month = $('#id_date_of_work_std_month').val() || 1;
-            let day = $('#id_date_of_work_std_day').val() || 1;
-            return [year, month, day]
-        }
-
-        function get_selected_calendar_code() {
-            return $('input[name=original_calendar]:checked').val();
-        }
-
-
-        function update_original_calendar() {
-            let [year, month, day] = get_selected_date();
-            $('#id_date_of_work_std').val(to_date_str(year, month, day));
-        }
-
-        function update_gregorian_calendar() {
-            let calendar_code = get_selected_calendar_code()
-            let [org_year, org_month, org_day] = get_selected_date();
-            let [new_year, new_month, new_day] = convert_date_by_calendar_code(
-                calendar_code, org_year, org_month, org_day,
-            );
-            $('#id_date_of_work_std_gregorian').val(to_date_str(new_year, new_month, new_day));
-        }
-
-
-        function setup_auto_calendar() {
-            $('input[name=original_calendar]').on('change', function (e) {
-                if (e.target.checked) {
-                    update_gregorian_calendar()
-                }
-            });
-
-
-            let update_all_calendar = function (e) {
-                update_original_calendar()
-                update_gregorian_calendar()
-            }
-
-            $('#id_date_of_work_std_month').on('change', update_all_calendar);
-            $('#id_date_of_work_std_day, #id_date_of_work_std_year').on('input', update_all_calendar)
-
-
-        }
-
-        $(function () {
-            setup_auto_calendar()
-        })
-    </script>
 
 {% endblock %}

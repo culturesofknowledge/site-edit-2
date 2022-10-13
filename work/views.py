@@ -85,6 +85,28 @@ class BasicWorkFFH(FullFormHandler):
         return work
 
 
+class DatesFFH(BasicWorkFFH):
+    def __init__(self, pk, request_data=None, request=None, *args, **kwargs):
+        super().__init__(pk, 'work/dates_form.html', *args, request_data=request_data, request=request, **kwargs)
+
+    def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
+        super().load_data(pk, request_data=request_data, request=request)
+
+        tmp_work = self.work or CofkUnionWork()
+
+        # comments
+        self.add_comment_handler(WorkCommentFormsetHandler(
+            prefix='date_comment',
+            request_data=request_data,
+            rel_type=REL_TYPE_COMMENT_DATE,
+            comments_query_fn=tmp_work.find_comments_by_rel_type
+        ))
+
+    def save(self, request):
+        work = self.save_work(request)
+        self.save_all_comment_formset(work.work_id, request)
+
+
 class CorrFFH(BasicWorkFFH):
 
     def __init__(self, pk, request_data=None, request=None, *args, **kwargs):
@@ -184,12 +206,6 @@ class WorkFullFormHandler(FullFormHandler):
 
         # comments
         self.add_comment_handler(WorkCommentFormsetHandler(
-            prefix='date_comment',
-            request_data=request_data,
-            rel_type=REL_TYPE_COMMENT_DATE,
-            comments_query_fn=tmp_work.find_comments_by_rel_type
-        ))
-        self.add_comment_handler(WorkCommentFormsetHandler(
             prefix='origin_comment',
             request_data=request_data,
             rel_type=REL_TYPE_COMMENT_ORIGIN,
@@ -242,14 +258,24 @@ def upsert_work_location_map_if_field_exist(work_form: WorkForm, work, username,
     return work_location_map
 
 
-class CorrView(LoginRequiredMixin, View):
-
+class BasicWorkFormView(LoginRequiredMixin, View):
     @staticmethod
     def create_fhandler(request, iwork_id=None):
-        return CorrFFH(iwork_id, request_data=request.POST, request=request)
+        raise NotImplementedError()
+
+    @property
+    def cur_vname(self):
+        raise NotImplementedError()
 
     def resp_after_saved(self, request, fhandler):
-        return redirect('work:corr_form', fhandler.work_form.instance.iwork_id)
+        goto = request.POST.get('__goto')
+        goto_vname_map = {
+            'corr': 'work:corr_form',
+            'dates': 'work:dates_form',
+            'places': 'work:places_form',
+        }
+        vname = goto_vname_map.get(goto, self.cur_vname)
+        return redirect(vname, fhandler.work_form.instance.iwork_id)
 
     def post(self, request, *args, **kwargs):
         fhandler = self.create_fhandler(request)
@@ -262,25 +288,25 @@ class CorrView(LoginRequiredMixin, View):
         return self.create_fhandler(request, iwork_id).render_form(request)
 
 
-class WorkInitView(LoginRequiredMixin, View):
+class CorrView(BasicWorkFormView):
 
     @staticmethod
-    def create_fhandler(request):
-        return WorkFullFormHandler(None, 'work/init_form.html',
-                                   request_data=request.POST, request=request)
+    def create_fhandler(request, iwork_id=None):
+        return CorrFFH(iwork_id, request_data=request.POST, request=request)
 
-    def resp_after_saved(self, request, fhandler):
-        return redirect('work:full_form', fhandler.work_form.instance.iwork_id)
+    @property
+    def cur_vname(self):
+        return 'work:corr_form'
 
-    def post(self, request, *args, **kwargs):
-        fhandler = self.create_fhandler(request)
-        if is_invalid(fhandler):
-            return fhandler.render_form(request)
-        save_full_form_handler(fhandler, request)
-        return self.resp_after_saved(request, fhandler)
 
-    def get(self, request, *args, **kwargs):
-        return self.create_fhandler(request).render_form(request)
+class DatesView(BasicWorkFormView):
+    @staticmethod
+    def create_fhandler(request, iwork_id=None):
+        return DatesFFH(iwork_id, request_data=request.POST, request=request)
+
+    @property
+    def cur_vname(self):
+        return 'work:dates_form'
 
 
 class WorkQuickInitView(CorrView):
@@ -300,6 +326,7 @@ def return_quick_init(request, pk):
 
 @login_required
 def full_form(request, iwork_id):
+    # TOBEREMOVE
     fhandler = WorkFullFormHandler(iwork_id, 'work/init_form.html',
                                    request_data=request.POST, request=request)
 
@@ -316,6 +343,7 @@ def full_form(request, iwork_id):
 
 
 def is_invalid(fhandler: WorkFullFormHandler, ):
+    # TOBEREMOVE
     # KTODO make this list generic
     form_formsets = [*fhandler.all_form_formset,
                      # fhandler.img_handler.img_form,
@@ -335,17 +363,8 @@ def save_multi_rel_recref_formset(multi_rel_recref_formset, work, request):
 
 
 def save_full_form_handler(fhandler: WorkFullFormHandler, request):
+    # TOBEREMOVE
     # handle selected_person_id
-    create_work_person_map_if_field_exist(
-        fhandler.work_form, work, request.user.username,
-        selected_id_field_name='selected_author_id',
-        rel_type=AuthorRelationChoices.CREATED,
-    )
-    create_work_person_map_if_field_exist(
-        fhandler.work_form, work, request.user.username,
-        selected_id_field_name='selected_addressee_id',
-        rel_type=AddresseeRelationChoices.ADDRESSED_TO,
-    )
     upsert_work_location_map_if_field_exist(
         fhandler.work_form, work, request.user.username,
         selected_id_field_name='selected_origin_location_id',
