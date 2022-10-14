@@ -1,0 +1,126 @@
+function cal_max_day_of_month(year_val, month_val) {
+    var max_day_of_month = 31;
+    switch (month_val) {
+        case 9:
+        case 4:
+        case 6:
+        case 11:
+            max_day_of_month = 30;
+            break;
+        case 2:
+            max_day_of_month = 28;
+            if (year_val % 4 === 0) {
+                if (year_val % 100 > 0 || year_val % 400 === 0) {
+                    max_day_of_month = 29;
+                }
+            }
+            break;
+    }
+    return max_day_of_month;
+}
+
+function pad_day_month_zero(val) {
+    return String(val).padStart(2, '0');
+}
+
+function to_date_str(year, month, day) {
+    return `${year}-${pad_day_month_zero(month)}-${pad_day_month_zero(day)}`
+}
+
+function cal_diff_days_by_calendar_code(calendar_code, year, month, day) {
+    var diffdays = 0;
+    if (calendar_code == "JM" || calendar_code == "JJ") {
+        diffdays = 10;
+        if (year > 1700) {
+            diffdays = 11;
+        } else if (year == 1700 && month > 2) {
+            diffdays = 11;
+        } else if (year == 1700 && month == 2 && day == 29) {
+            diffdays = 11;
+        }
+    }
+    return diffdays;
+}
+
+function convert_date_by_calendar_code(calendar_code, year, month, day) {
+    let new_year = parseInt(year);
+    let new_month = parseInt(month);
+    let day_val = parseInt(day);
+    let new_day = day_val + cal_diff_days_by_calendar_code(calendar_code, new_year, new_month, day_val);
+    let max_day_of_month = cal_max_day_of_month(new_year, new_month);
+    if (new_day > max_day_of_month) {
+        new_day = new_day - max_day_of_month;
+        new_month++;
+        if (new_month > 12) {
+            new_month = 1;
+            new_year++;
+            if (new_year > 9999) {
+                new_year = 9999;
+            }
+        }
+    }
+    return [new_year, new_month, new_day]
+}
+
+function AutoCalendar(year_selector,
+                      month_selector,
+                      day_selector,
+                      calendar_selector,
+                      normal_date_selector,
+                      gregorian_selector,) {
+
+    this.year_selector = year_selector;
+    this.month_selector = month_selector;
+    this.day_selector = day_selector;
+    this.calendar_selector = calendar_selector;
+    this.normal_date_selector = normal_date_selector;
+    this.gregorian_selector = gregorian_selector;
+
+
+    this.get_selected_date = function () {
+        // KTODO refactor as class, make sector more generic
+        let year = $(this.year_selector).val() || 9999;
+        let month = $(this.month_selector).val() || 1;
+        let day = $(this.day_selector).val() || 1;
+        return [year, month, day]
+    }
+
+    this.get_selected_calendar_code = function () {
+        return $(`${this.calendar_selector}:checked`).val();
+    }
+
+
+    this.update_original_calendar = function () {
+        let [year, month, day] = this.get_selected_date();
+        $(this.normal_date_selector).val(to_date_str(year, month, day));
+    }
+
+    this.update_gregorian_calendar = function () {
+        let calendar_code = this.get_selected_calendar_code()
+        let [org_year, org_month, org_day] = this.get_selected_date();
+        let [new_year, new_month, new_day] = convert_date_by_calendar_code(
+            calendar_code, org_year, org_month, org_day,
+        );
+        $(this.gregorian_selector).val(to_date_str(new_year, new_month, new_day));
+    }
+
+
+    this.setup_auto_calendar = function () {
+        self = this
+        $(this.calendar_selector).on('change', function (e) {
+            if (e.target.checked) {
+                self.update_gregorian_calendar()
+            }
+        });
+
+        let update_all_calendar = function (e) {
+            self.update_original_calendar()
+            self.update_gregorian_calendar()
+        }
+        $(this.month_selector).on('change', update_all_calendar);
+        $(`${this.day_selector}, ${this.year_selector}`).on('input', update_all_calendar)
+    }
+
+
+}
+
