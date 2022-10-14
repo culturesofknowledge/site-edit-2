@@ -1,0 +1,93 @@
+{% extends "core/emlo_logined.html" %}
+{% load static %}
+
+
+{% block content %}
+    <script src="{% static 'core/js/ref_publication_service.js' %}" defer></script>
+
+    <div class="row row--centered">
+        <div class="col col--1of2">
+            <div>
+                {{ inst_form.errors }}
+            </div>
+
+
+            <form method="post">
+                {% csrf_token %}
+
+                <fieldset>
+                    <legend>Institution</legend>
+                    <div class="margin-bottom">
+                        <label>Institution name</label>
+                        {{ inst_form.institution_name }}
+                        {{ inst_form.institution_name.errors }}
+                    </div>
+
+                    <div class="margin-bottom">
+                        <label>Alternative institution names</label>
+                        {{ inst_form.institution_synonyms }}
+                        {{ inst_form.institution_synonyms.errors }}
+                        <small>(Please use this field for different variations of the institution name, e.g. BL for British Library.
+                            You can also use this field to translate the name into different languages.
+                            Please put each alternative institution name on a separate line.)</small>
+                    </div>
+
+                    <div class="margin-bottom">
+                        <label>Editors' notes</label>
+                        {{ inst_form.editors_notes }}
+                        {{ inst_form.editors_notes.errors }}
+                        <small>(Notes for internal use.)</small>
+
+                        <div class="ref-publication-row" textbox_id="id_editors_notes"></div>
+
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>City</legend>
+                    <div class="margin-bottom">
+                        <label>City name</label>
+                        {{ inst_form.institution_city }}
+                        {{ inst_form.institution_city.errors }}
+                    </div>
+
+                    <div class="margin-bottom">
+                        <label>Alternative city names</label>
+                        {{ inst_form.institution_city_synonyms }}
+                        {{ inst_form.institution_city_synonyms.errors }}
+                        <small>(Please use this field to give the city name in other languages, if required.
+                            Please put each alternative city name on a separate line.)</small>
+                    </div>
+
+                </fieldset>
+
+                <fieldset>
+                    <legend>Country</legend>
+                    <div class="margin-bottom">
+                        <label>Country name</label>
+                        {{ inst_form.institution_country }}
+                        {{ inst_form.institution_country.errors }}
+                    </div>
+
+                    <div class="margin-bottom">
+                        <label>Alternative city names</label>
+                        {{ inst_form.institution_country_synonyms }}
+                        {{ inst_form.institution_country_synonyms.errors }}
+                        <small>(Please use this field to give the country name in other languages, if required.
+                            Please put each alternative country name on a separate line.)</small>
+                    </div>
+
+                </fieldset>
+
+
+                <div class="flex-col sticky-bottom">
+                    <input type="submit" value="Submit" class="btn">
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+
+{% endblock %}

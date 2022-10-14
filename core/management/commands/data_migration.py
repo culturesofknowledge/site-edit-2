@@ -16,10 +16,12 @@ from psycopg2.extras import DictCursor
 
 from core.helper import iter_utils
 from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType
+from institution.models import CofkCollectInstitution, CofkUnionInstitution
 from location.models import CofkUnionLocation
 from person.models import CofkPersonLocationMap, CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID, \
     CofkPersonPersonMap
-from uploader.models import CofkCollectStatus, Iso639LanguageCode, CofkLookupCatalogue
+from publication.models import CofkUnionPublication
+from uploader.models import CofkCollectStatus, Iso639LanguageCode, CofkLookupCatalogue, CofkCollectUpload
 from uploader.models import CofkUnionOrgType, CofkUnionImage
 
 log = logging.getLogger(__name__)
@@ -392,6 +394,23 @@ def no_duplicate_check(*args, **kwargs):
     return False
 
 
+def _val_handler_empty_str_null(row: dict):
+    for synonym in ['institution_synonyms', 'institution_city_synonyms', 'institution_country_synonyms',
+                    'editors_notes', 'address', 'longitude', 'latitude']:
+        if synonym in row and row[synonym] == '':
+            del row[synonym]
+
+    return row
+
+
+def _val_handler_upload__upload_status(row: dict):
+    if row['upload_status']:
+        row['upload_status'] = CofkCollectStatus.objects.get(pk=row['upload_status'])
+    else:
+        row['upload_status'] = None
+    return row
+
+
 def _val_handler_person__organisation_type(row: dict):
     if row['organisation_type']:
         row['organisation_type'] = CofkUnionOrgType.objects.get(pk=row['organisation_type'])
@@ -412,11 +431,18 @@ def data_migration(user, password, database, host, port):
         lambda: clone_rows_by_model_class(conn, CofkLookupCatalogue),
         lambda: clone_rows_by_model_class(conn, CofkLookupDocumentType),
         lambda: clone_rows_by_model_class(conn, Iso639LanguageCode),
-        lambda: clone_rows_by_model_class(conn, CofkCollectStatus),
-        lambda: clone_rows_by_model_class(conn, CofkUnionOrgType),
+        lambda: clone_rows_by_model_class(conn, CofkCollectStatus),  # Static lookup table
+        lambda: clone_rows_by_model_class(conn, CofkUnionOrgType),  # Static lookup table
         lambda: clone_rows_by_model_class(conn, CofkUnionResource),
         lambda: clone_rows_by_model_class(conn, CofkUnionComment),
         lambda: clone_rows_by_model_class(conn, CofkUnionImage),
+
+        # ### Uploads
+        lambda: clone_rows_by_model_class(conn, CofkCollectUpload,
+                                          col_val_handler_fn_list=[_val_handler_upload__upload_status]),
+
+        # ### Publication
+        lambda: clone_rows_by_model_class(conn, CofkUnionPublication),
 
         # ### Location
         lambda: clone_rows_by_model_class(conn, CofkUnionLocation),
@@ -446,6 +472,15 @@ def data_migration(user, password, database, host, port):
                                                CofkPersonPersonMap.related),
                               CofkPersonPersonMapFieldVal(),
                               ),
+
+        # ### Repositories/institutions
+        lambda: clone_rows_by_model_class(conn, CofkUnionInstitution,
+                                          col_val_handler_fn_list=[_val_handler_empty_str_null]),
+        lambda: clone_rows_by_model_class(conn, CofkCollectInstitution),
+        # lambda: clone_rows_by_model_class(conn, CofkCollectInstitution),
+
+
+
     ]
 
     for fn in clone_action_fn_list:

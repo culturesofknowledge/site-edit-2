@@ -33,6 +33,8 @@ def remove_all_records():
         sql_delete_all('cofk_union_location_comments'),
         sql_delete_all('cofk_union_location_images'),
         sql_delete_all('cofk_union_location_resources'),
+        sql_delete_all('cofk_person_location_map'),
+        sql_delete_all('cofk_union_person_resources'),
         sql_delete_all_by_model_class(CofkUnionLocation),
         sql_delete_all_by_model_class(CofkUnionResource),
     ]

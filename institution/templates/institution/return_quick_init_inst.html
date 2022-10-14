@@ -1,0 +1,48 @@
+{% extends "core/emlo_logined.html" %}
+{% load static %}
+
+
+{% block content %}
+    <h1>Following institution has been selected.</h1>
+
+    <input id="ref_id" type="hidden" value="{{ inst.institution_id }}"/>
+    <div class="margin-bottom">
+        <h3>Details</h3>
+        <div class="row-spaced">
+            <h3 class="selected_val">{{ inst.institution_name }}</h3>
+            <button class="select_btn"> Select</button>
+        </div>
+    </div>
+
+    {% if inst.institution_synonyms %}
+        <div class="margin-bottom">
+            <h3>Alternative names</h3>
+            <div class="row-spaced">
+                <h3 class="selected_val">{{ inst.institution_synonyms }}</h3>
+                <button class="select_btn"> Select</button>
+            </div>
+        </div>
+    {% endif %}
+
+    <button id="select_btn"> Cancel</button>
+
+    <script>
+        $(function () {
+            $('.select_btn').on('click', function (e) {
+            console.log({
+                    item_name: $(e.target.parentElement).find('.selected_val').html(),
+                    item_id: $('#ref_id').attr('value'),
+                });
+                window.opener.on_quick_init_completed({
+                    item_name: $(e.target.parentElement).find('.selected_val').html(),
+                    item_id: $('#ref_id').attr('value'),
+                })
+                //  window.close()
+            })
+            $('#cancel_btn').on('click', function () {
+                window.close()
+            })
+        })
+    </script>
+
+{% endblock %}

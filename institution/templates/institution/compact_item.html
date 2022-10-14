@@ -1,0 +1,31 @@
+{% extends 'core/component/common_compact_item.html' %}
+
+{% block compact_item_wrapper %}
+    {% with entry_id=record.institution_id %}
+        {{ block.super }}
+    {% endwith %}
+{% endblock %}
+
+<!-- {% block title_link %}
+    <a href="{% url 'person:full_form' record.institution_id %}">
+        {{ record.foaf_name }}
+    </a>
+{% endblock %} -->
+
+{% block left_content %}
+   <!-- {% include "core/component/compact_item/field_if_exist.html" with field_value=record.editors_notes title='Editor notes' icon_name='file-text' %}
+
+    {% include "core/component/compact_item/field_if_exist.html" with field_value=record.skos_altlabel title='Synonyms' icon_name='file-text' %}
+
+    {% include "core/component/compact_item/field_if_exist.html" with field_value=record.further_reading title='Further reading' %} -->
+{% endblock %}
+
+{% block right_content %}
+    <dt>Institution ID</dt>
+    <dd><a href="{% url 'institution:full_form' record.institution_id %}">#{{ record.institution_id }}</a></dd>
+
+    <!-- {% include "core/component/compact_item/last_edited_by.html" with record=record %}
+
+    {% include "core/component/compact_item/res_result.html" with resources=record.resources %} -->
+
+{% endblock %}
