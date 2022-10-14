@@ -78,7 +78,6 @@ function AutoCalendar(year_selector,
 
 
     this.get_selected_date = function () {
-        // KTODO refactor as class, make sector more generic
         let year = $(this.year_selector).val() || 9999;
         let month = $(this.month_selector).val() || 1;
         let day = $(this.day_selector).val() || 1;
