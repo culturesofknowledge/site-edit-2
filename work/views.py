@@ -4,7 +4,7 @@ from typing import Optional, Type
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models
-from django.forms import Form
+from django.forms import Form, ModelForm, BaseForm
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
 
@@ -16,8 +16,8 @@ from core.helper import view_utils, recref_utils
 from core.helper.view_utils import DefaultSearchView, FullFormHandler, CommentFormsetHandler
 from person.models import CofkUnionPerson
 from work import work_utils
-from work.forms import WorkForm, WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
-    AuthorRelationChoices, AddresseeRelationChoices, ExtractPlacesForm
+from work.forms import WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
+    AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm
 from work.models import CofkWorkPersonMap, CofkUnionWork, create_work_id, CofkWorkComment, CofkWorkWorkMap, \
     CofkWorkLocationMap
 
@@ -41,7 +41,9 @@ def get_location_id(model: models.Model):
 
 class BasicWorkFFH(FullFormHandler):
     def __init__(self, pk, template_name, request_data=None, request=None, *args, **kwargs):
-        super().__init__(pk, *args, request_data=request_data, request=request, **kwargs)
+        super().__init__(pk, *args,
+                         request_data=request_data or None,
+                         request=request, **kwargs)
         self.template_name = template_name
 
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
@@ -50,7 +52,7 @@ class BasicWorkFFH(FullFormHandler):
         else:
             self.work = None
 
-        self.work_form = WorkForm(request_data or None, instance=self.work)
+        self.safe_work = self.work or CofkUnionWork()  # KTODO iwork_id sequence number +1 by this ??
 
     def render_form(self, request):
 
@@ -69,11 +71,12 @@ class BasicWorkFFH(FullFormHandler):
         # ----- validate
         return view_utils.any_invalid_with_log(form_formsets)
 
-    def save_work(self, request):
+    def save_work(self, request, work_form: ModelForm):
         # ----- save work
-        work: CofkUnionWork = self.work_form.instance
+        work: CofkUnionWork = work_form.instance
+        log.debug(f'changed_data : {work_form.changed_data}')
         if not work.work_id:
-            work.work_id = create_work_id(work.iwork_id) # KTODO fix
+            work.work_id = create_work_id(work.iwork_id)  # KTODO fix
         work.save()
         log.info(f'save work {work}')  # KTODO fix iwork_id plus more than 1
         return work
@@ -92,32 +95,30 @@ class PlacesFFH(BasicWorkFFH):
                 'selected_origin_location_id': get_location_id(self.work.origin_location),
                 'selected_destination_location_id': get_location_id(self.work.destination_location),
             })
-        self.places_form = ExtractPlacesForm(request_data, initial=dates_form_initial)
-
-        tmp_work = self.work or CofkUnionWork()
+        self.places_form = PlacesForm(request_data, instance=self.work, initial=dates_form_initial)
 
         # comments
         self.add_comment_handler(WorkCommentFormsetHandler(
             prefix='origin_comment',
             request_data=request_data,
             rel_type=REL_TYPE_COMMENT_ORIGIN,
-            comments_query_fn=tmp_work.find_comments_by_rel_type
+            comments_query_fn=self.safe_work.find_comments_by_rel_type
         ))
         self.add_comment_handler(WorkCommentFormsetHandler(
             prefix='destination_comment',
             request_data=request_data,
             rel_type=REL_TYPE_COMMENT_DESTINATION,
-            comments_query_fn=tmp_work.find_comments_by_rel_type
+            comments_query_fn=self.safe_work.find_comments_by_rel_type
         ))
         self.add_comment_handler(WorkCommentFormsetHandler(
             prefix='route_comment',
             request_data=request_data,
             rel_type=REL_TYPE_COMMENT_ROUTE,
-            comments_query_fn=tmp_work.find_comments_by_rel_type
+            comments_query_fn=self.safe_work.find_comments_by_rel_type
         ))
 
     def save(self, request):
-        work = self.save_work(request)
+        work = self.save_work(request, self.places_form)
         self.save_all_comment_formset(work.work_id, request)
 
         upsert_work_location_map_if_field_exist(
@@ -141,18 +142,18 @@ class DatesFFH(BasicWorkFFH):
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
         super().load_data(pk, request_data=request_data, request=request)
 
-        tmp_work = self.work or CofkUnionWork()
+        self.dates_form = DatesForm(request_data, instance=self.work)
 
         # comments
         self.add_comment_handler(WorkCommentFormsetHandler(
             prefix='date_comment',
             request_data=request_data,
             rel_type=REL_TYPE_COMMENT_DATE,
-            comments_query_fn=tmp_work.find_comments_by_rel_type
+            comments_query_fn=self.safe_work.find_comments_by_rel_type
         ))
 
     def save(self, request):
-        work = self.save_work(request)
+        work = self.save_work(request, self.dates_form)
         self.save_all_comment_formset(work.work_id, request)
 
 
@@ -164,7 +165,7 @@ class CorrFFH(BasicWorkFFH):
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
         super().load_data(pk, request_data=request_data, request=request)
 
-        tmp_work = self.work or CofkUnionWork()
+        self.corr_form = CorrForm(request_data, instance=self.work)
 
         # recref
         self.author_formset = WorkAuthorRecrefForm.create_formset_by_records(
@@ -184,40 +185,40 @@ class CorrFFH(BasicWorkFFH):
             prefix='author_comment',
             request_data=request_data,
             rel_type=REL_TYPE_COMMENT_AUTHOR,
-            comments_query_fn=tmp_work.find_comments_by_rel_type,
+            comments_query_fn=self.safe_work.find_comments_by_rel_type,
         ))
         self.add_comment_handler(WorkCommentFormsetHandler(
             prefix='addressee_comment',
             request_data=request_data,
             rel_type=REL_TYPE_COMMENT_ADDRESSEE,
-            comments_query_fn=tmp_work.find_comments_by_rel_type
+            comments_query_fn=self.safe_work.find_comments_by_rel_type
         ))
 
         # letters
         self.earlier_letter_handler = EarlierLetterRecrefHandler(
             request_data,
-            tmp_work.work_from_set.filter(relationship_type=REL_TYPE_WORK_IS_REPLY_TO).iterator())
+            self.safe_work.work_from_set.filter(relationship_type=REL_TYPE_WORK_IS_REPLY_TO).iterator())
         self.later_letter_handler = LaterLetterRecrefHandler(
             request_data,
-            tmp_work.work_to_set.filter(relationship_type=REL_TYPE_WORK_IS_REPLY_TO).iterator())
+            self.safe_work.work_to_set.filter(relationship_type=REL_TYPE_WORK_IS_REPLY_TO).iterator())
         self.matching_letter_handler = EarlierLetterRecrefHandler(
             request_data,
-            tmp_work.work_from_set.filter(relationship_type=REL_TYPE_WORK_MATCHES).iterator(),
+            self.safe_work.work_from_set.filter(relationship_type=REL_TYPE_WORK_MATCHES).iterator(),
             name='matching_letter',
             rel_type=REL_TYPE_WORK_MATCHES,
         )
 
     def save(self, request):
-        work = self.save_work(request)
+        work = self.save_work(request, self.corr_form)
 
         # save selected recref
         create_work_person_map_if_field_exist(
-            self.work_form, work, request.user.username,
+            self.corr_form, work, request.user.username,
             selected_id_field_name='selected_author_id',
             rel_type=AuthorRelationChoices.CREATED,
         )
         create_work_person_map_if_field_exist(
-            self.work_form, work, request.user.username,
+            self.corr_form, work, request.user.username,
             selected_id_field_name='selected_addressee_id',
             rel_type=AddresseeRelationChoices.ADDRESSED_TO,
         )
@@ -248,10 +249,10 @@ class WorkFullFormHandler(FullFormHandler):
         tmp_work = self.work or CofkUnionWork()
 
 
-def create_work_person_map_if_field_exist(work_form: WorkForm, work, username,
+def create_work_person_map_if_field_exist(form: BaseForm, work, username,
                                           selected_id_field_name,
                                           rel_type, ):
-    if not (_id := work_form.cleaned_data.get(selected_id_field_name)):
+    if not (_id := form.cleaned_data.get(selected_id_field_name)):
         return
 
     work_person_map = CofkWorkPersonMap()
@@ -290,6 +291,13 @@ class BasicWorkFormView(LoginRequiredMixin, View):
     def cur_vname(self):
         raise NotImplementedError()
 
+    @staticmethod
+    def get_form_work_instance(fhandler: FullFormHandler) -> CofkUnionWork | None:
+        forms = fhandler.all_form_formset
+        works = (getattr(f, 'instance') for f in forms)
+        works = (i for i in works if isinstance(i, CofkUnionWork))
+        return next(works, None)
+
     def resp_after_saved(self, request, fhandler):
         goto = request.POST.get('__goto')
         goto_vname_map = {
@@ -298,10 +306,10 @@ class BasicWorkFormView(LoginRequiredMixin, View):
             'places': 'work:places_form',
         }
         vname = goto_vname_map.get(goto, self.cur_vname)
-        return redirect(vname, fhandler.work_form.instance.iwork_id)
+        return redirect(vname, self.get_form_work_instance(fhandler).iwork_id)
 
-    def post(self, request, *args, **kwargs):
-        fhandler = self.create_fhandler(request)
+    def post(self, request, iwork_id=None, *args, **kwargs):
+        fhandler = self.create_fhandler(request, iwork_id=iwork_id)
         if fhandler.is_invalid():
             return fhandler.render_form(request)
         fhandler.save(request)
@@ -344,7 +352,7 @@ class PlacesView(BasicWorkFormView):
 
 class WorkQuickInitView(CorrView):
     def resp_after_saved(self, request, fhandler):
-        return redirect('work:return_quick_init', fhandler.work_form.instance.iwork_id)
+        return redirect('work:return_quick_init', self.get_form_work_instance(fhandler).iwork_id)
 
 
 @login_required

@@ -4,17 +4,17 @@
     <fieldset>
         <legend>Dates</legend>
         <label>Date of work as marked:</label>
-        {{ work_form.date_of_work_as_marked }}
+        {{ dates_form.date_of_work_as_marked }}
 
         <div class="margin-bottom">
-            {% include "core/component/common_form_choices.html" with label_text='Original calendar' choices_field=work_form.original_calendar %}
+            {% include "core/component/common_form_choices.html" with label_text='Original calendar' choices_field=dates_form.original_calendar %}
         </div>
 
         <fieldset>
             <legend>Date of work in standard format</legend>
             <div class="margin-bottom">
-                {{ work_form.date_of_work_std_is_range }}
-                <label for="{{ work_form.date_of_work_std_is_range.id_for_label }}">Date range?</label>
+                {{ dates_form.date_of_work_std_is_range }}
+                <label for="{{ dates_form.date_of_work_std_is_range.id_for_label }}">Date range?</label>
                 <small>
                     Tick the 'Date range' box in either of the following cases:
                     <ul>
@@ -30,7 +30,7 @@
 
             <div class="margin-bottom">
                 <label>Date:</label>
-                {% include 'core/component/form_three_date_fields.html' with day_field=work_form.date_of_work_std_day month_field=work_form.date_of_work_std_month year_field=work_form.date_of_work_std_year %}
+                {% include 'core/component/form_three_date_fields.html' with day_field=dates_form.date_of_work_std_day month_field=dates_form.date_of_work_std_month year_field=dates_form.date_of_work_std_year %}
 
                 <span>
                     <small>
@@ -64,16 +64,16 @@
                 month and year):
                 <br/>
                 <label>In original calendar:</label>
-                {{ work_form.date_of_work_std }}
+                {{ dates_form.date_of_work_std }}
 
                 <label>In Gregorian calendar:</label>
-                {{ work_form.date_of_work_std_gregorian }}
+                {{ dates_form.date_of_work_std_gregorian }}
             </div>
 
         </fieldset>
 
 
-        {% include "person/component/issues_with_date.html" with title='Issues with date of work:'  inferred=work_form.date_of_work_inferred  uncertain=work_form.date_of_work_uncertain  approx=work_form.date_of_work_approx %}
+        {% include "person/component/issues_with_date.html" with title='Issues with date of work:'  inferred=dates_form.date_of_work_inferred  uncertain=dates_form.date_of_work_uncertain  approx=dates_form.date_of_work_approx %}
 
     </fieldset>
 

@@ -46,12 +46,7 @@ class LocationRecrefField(SelectedRecrefField):
         return recref_name
 
 
-class ExtractPlacesForm(forms.Form):
-    selected_origin_location_id = LocationRecrefField(required=False)
-    selected_destination_location_id = LocationRecrefField(required=False)
-
-
-class WorkForm(forms.ModelForm):
+class CorrForm(forms.ModelForm):
     authors_as_marked = forms.CharField(required=False)
     authors_inferred = form_utils.ZeroOneCheckboxField(is_str=False)
     authors_uncertain = form_utils.ZeroOneCheckboxField(is_str=False)
@@ -60,6 +55,24 @@ class WorkForm(forms.ModelForm):
     addressees_inferred = form_utils.ZeroOneCheckboxField(is_str=False)
     addressees_uncertain = form_utils.ZeroOneCheckboxField(is_str=False)
 
+    # extra field
+    selected_author_id = forms.CharField(required=False)
+    selected_addressee_id = forms.CharField(required=False)
+
+    class Meta:
+        model = CofkUnionWork
+        fields = (
+            'authors_as_marked',
+            'authors_inferred',
+            'authors_uncertain',
+
+            'addressees_as_marked',
+            'addressees_inferred',
+            'addressees_uncertain',
+        )
+
+
+class DatesForm(forms.ModelForm):
     date_of_work_as_marked = forms.CharField(required=False)
     date_of_work_std_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_work_std_year = form_utils.create_year_field()
@@ -71,32 +84,12 @@ class WorkForm(forms.ModelForm):
 
     date_of_work_std = create_auto_date_field()
     date_of_work_std_gregorian = create_auto_date_field()
-
     original_calendar = CharField(required=False,
                                   widget=forms.RadioSelect(choices=original_calendar_choices))
-
-    origin_as_marked = CharField(required=False)
-    origin_inferred = form_utils.ZeroOneCheckboxField(is_str=False)
-    origin_uncertain = form_utils.ZeroOneCheckboxField(is_str=False)
-
-    destination_as_marked = CharField(required=False)
-    destination_inferred = form_utils.ZeroOneCheckboxField(is_str=False)
-    destination_uncertain = form_utils.ZeroOneCheckboxField(is_str=False)
-
-    # extra field
-    selected_author_id = forms.CharField(required=False)
-    selected_addressee_id = forms.CharField(required=False)
 
     class Meta:
         model = CofkUnionWork
         fields = (
-            'description',
-            'authors_as_marked',
-            'authors_inferred',
-            'authors_uncertain',
-            'addressees_as_marked',
-            'addressees_inferred',
-            'addressees_uncertain',
             'date_of_work_as_marked',
             'date_of_work_std_is_range',
             'date_of_work_std_year',
@@ -105,14 +98,31 @@ class WorkForm(forms.ModelForm):
             'date_of_work_inferred',
             'date_of_work_uncertain',
             'date_of_work_approx',
-            'original_calendar',
             'date_of_work_std',
             'date_of_work_std_gregorian',
+            'original_calendar',
+        )
 
+
+class PlacesForm(forms.ModelForm):
+    origin_as_marked = CharField(required=False)
+    origin_inferred = form_utils.ZeroOneCheckboxField(is_str=False)
+    origin_uncertain = form_utils.ZeroOneCheckboxField(is_str=False)
+
+    destination_as_marked = CharField(required=False)
+    destination_inferred = form_utils.ZeroOneCheckboxField(is_str=False)
+    destination_uncertain = form_utils.ZeroOneCheckboxField(is_str=False)
+
+    # extract
+    selected_origin_location_id = LocationRecrefField(required=False)
+    selected_destination_location_id = LocationRecrefField(required=False)
+
+    class Meta:
+        model = CofkUnionWork
+        fields = (
             'origin_as_marked',
             'origin_inferred',
             'origin_uncertain',
-
             'destination_as_marked',
             'destination_inferred',
             'destination_uncertain',

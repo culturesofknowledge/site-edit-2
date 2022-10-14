@@ -11,16 +11,16 @@
             {% endfor %}
         </div>
 
-        {% include "core/component/recref.html" with recref_type='person' id_field=work_form.selected_author_id label='Add another authro/sender:' %}
+        {% include "core/component/recref.html" with recref_type='person' id_field=corr_form.selected_author_id label='Add another authro/sender:' %}
 
         <label> Authors/sender as marked: </label>
-        {{ work_form.authors_as_marked }}
+        {{ corr_form.authors_as_marked }}
 
         <label> Issues with authors/senders: </label>
 
-        {% include "core/component/common_checkbox.html" with field=work_form.authors_inferred name='Authors / senders inferred' %}
+        {% include "core/component/common_checkbox.html" with field=corr_form.authors_inferred name='Authors / senders inferred' %}
 
-        {% include "core/component/common_checkbox.html" with field=work_form.authors_uncertain  name='Authors / senders uncertain' %}
+        {% include "core/component/common_checkbox.html" with field=corr_form.authors_uncertain  name='Authors / senders uncertain' %}
 
         {% include "core/component/comment_publication_formset.html" with comment_formset=author_comment_formset comment_title='Notes on authors/senders' %}
     </fieldset>
@@ -36,16 +36,16 @@
             {% endfor %}
         </div>
 
-        {% include "core/component/recref.html" with recref_type='person' id_field=work_form.selected_addressee_id label='Add another addressee:' %}
+        {% include "core/component/recref.html" with recref_type='person' id_field=corr_form.selected_addressee_id label='Add another addressee:' %}
 
         <label> Addressees as marked: </label>
-        {{ work_form.addressees_as_marked }}
+        {{ corr_form.addressees_as_marked }}
 
         <label> Issues with addressees: </label>
 
-        {% include "core/component/common_checkbox.html" with field=work_form.addressees_inferred name='Addressees inferred' %}
+        {% include "core/component/common_checkbox.html" with field=corr_form.addressees_inferred name='Addressees inferred' %}
 
-        {% include "core/component/common_checkbox.html" with field=work_form.addressees_uncertain  name='Addressees uncertain' %}
+        {% include "core/component/common_checkbox.html" with field=corr_form.addressees_uncertain  name='Addressees uncertain' %}
 
         {% include "core/component/comment_publication_formset.html" with comment_formset=addressee_comment_formset comment_title='Notes on addressees' %}
 

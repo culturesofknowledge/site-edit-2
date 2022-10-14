@@ -441,7 +441,9 @@ class FullFormHandler:
 
     def __init__(self, pk, *args, request_data=None, request=None, **kwargs):
         self.comment_handlers: list[CommentFormsetHandler] = []
-        self.load_data(pk, request_data=request_data, request=request, *args, **kwargs)
+        self.load_data(pk,
+                       request_data=request_data or None,
+                       request=request, *args, **kwargs)
 
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
         raise NotImplementedError()
