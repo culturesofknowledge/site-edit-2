@@ -1,0 +1,76 @@
+<fieldset>
+    <legend>Dates</legend>
+    <label>Date of work as marked:</label>
+    {{ dates_form.date_of_work_as_marked }}
+
+    <div class="margin-bottom">
+        {% include "core/component/common_form_choices.html" with label_text='Original calendar' choices_field=dates_form.original_calendar %}
+    </div>
+
+    <fieldset>
+        <legend>Date of work in standard format</legend>
+        <div class="margin-bottom">
+            {{ dates_form.date_of_work_std_is_range }}
+            <label for="{{ dates_form.date_of_work_std_is_range.id_for_label }}">Date range?</label>
+            <small>
+                Tick the 'Date range' box in either of the following cases:
+                <ul>
+                    <li>
+                        The work is known to have been written over a period of two or more days
+                    </li>
+                    <li>
+                        The work cannot be precisely dated even to a single year
+                    </li>
+                </ul>
+            </small>
+        </div>
+
+        <div class="margin-bottom">
+            <label>Date:</label>
+            {% include 'core/component/form_three_date_fields.html' with day_field=dates_form.date_of_work_std_day month_field=dates_form.date_of_work_std_month year_field=dates_form.date_of_work_std_year %}
+
+            <span>
+                    <small>
+                    Leave any part or parts of the date blank if necessary.
+                    </small>
+                    <br/>
+                    <br/>
+
+                    <small>
+                    If the original work was dated using the Julian calendar, please retain the Julian
+                    day/month here. For example, if the date was marked as 8th January 1659/60 in the
+                    original work, then enter the day here as '8' not '18'.
+                    </small>
+                    <br/>
+                    <br/>
+
+                    <small>
+                    However, please do adjust the year for works dated using the form of Julian calendar
+                    where the New Year began on 25th March. For example, 8th January 1659/60 should be
+                    entered as 8-Jan-1660.
+                    </small>
+
+                    <br/>
+
+
+                </span>
+        </div>
+
+        <div class="margin-bottom">
+            Dates for ordering (these will normally be automatically generated as you enter day,
+            month and year):
+            <br/>
+            <label>In original calendar:</label>
+            {{ dates_form.date_of_work_std }}
+
+            <label>In Gregorian calendar:</label>
+            {{ dates_form.date_of_work_std_gregorian }}
+        </div>
+
+    </fieldset>
+
+
+    {% include "person/component/issues_with_date.html" with title='Issues with date of work:'  inferred=dates_form.date_of_work_inferred  uncertain=dates_form.date_of_work_uncertain  approx=dates_form.date_of_work_approx %}
+
+    {% include "core/component/comment_publication_formset.html" with comment_formset=date_comment_formset comment_title='Notes on date' %}
+</fieldset>
