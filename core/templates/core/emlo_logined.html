@@ -8,12 +8,10 @@
             <li class="menu-item">
                 <a href="/works/">Works</a>
             </li>
-            {% include "core/component/common_section_menu_item.html" with search_vname='person:search' init_vname='person:init_form' section_name='People' %}
-            {% include "core/component/common_section_menu_item.html" with search_vname='location:search' init_vname='location:init_form' section_name='Places' %}
-            <li class="menu-item">
-                <a href="/repositories/">Repositories</a>
-            </li>
-            {% include "core/component/common_section_menu_item.html" with search_vname='publication:search' init_vname='publication:init_form' section_name='Publications' %}
+            {% include "core/component/common_section_menu_item.html" with search_vname='person:search' init_vname='person:init_form' section_name='People' singular='person'  %}
+            {% include "core/component/common_section_menu_item.html" with search_vname='location:search' init_vname='location:init_form' section_name='Places' singular='place' %}
+            {% include "core/component/common_section_menu_item.html" with search_vname='institution:search' init_vname='institution:init_form' section_name='Repositories' singular='repository'  %}
+            {% include "core/component/common_section_menu_item.html" with search_vname='publication:search' init_vname='publication:init_form' section_name='Publications' singular='publication' %}
         </ul>
         <ul class="no-margin">
             <li class="menu-item">

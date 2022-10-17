@@ -176,6 +176,13 @@ label + input {
   display: block;
 }
 
+input[type="submit"] {
+  cursor: pointer;
+  background-color: $black;
+  color: $white;
+}
+
+
 button {
   padding: $space-xs $space-sm;
   cursor: pointer;

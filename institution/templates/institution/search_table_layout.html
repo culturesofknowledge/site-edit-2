@@ -1,0 +1,35 @@
+<table>
+    <thead>
+    <tr></tr>
+    <tr>
+        <!-- KTODO add more fields -->
+        <th>ID</th>
+        <th>Name</th>
+        <th>City</th>
+        <th>Country</th>
+    </tr>
+    </thead>
+    <tbody>
+
+    {% for r in search_results %}
+        <tr class="selectable_entry" entry_id="{{ r.institution_id }}">
+
+            <td>
+                <a href="{% url 'institution:full_form' r.institution_id %}">
+                    {{ r.institution_id }}
+                </a>
+            </td>
+            <td>
+                {{ r.institution_name }}
+            </td>
+            <td>
+                {{ r.institution_city }}
+            </td>
+            <td>
+                {{ r.institution_country }}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+
+</table>
