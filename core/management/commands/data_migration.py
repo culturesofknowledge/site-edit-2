@@ -476,6 +476,7 @@ def data_migration(user, password, database, host, port):
         # ### Repositories/institutions
         lambda: clone_rows_by_model_class(conn, CofkUnionInstitution,
                                           col_val_handler_fn_list=[_val_handler_empty_str_null]),
+        lambda: create_resources_relationship(conn, CofkUnionInstitution),
         lambda: clone_rows_by_model_class(conn, CofkCollectInstitution),
         # lambda: clone_rows_by_model_class(conn, CofkCollectInstitution),
 
