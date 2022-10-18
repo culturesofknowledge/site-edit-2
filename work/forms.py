@@ -12,6 +12,7 @@ from core.helper.form_utils import SelectedRecrefField
 from core.models import Recref
 from location import location_utils
 from location.models import CofkUnionLocation
+from manifestation.models import CofkUnionManifestation
 from person.models import CofkUnionPerson
 from work.models import CofkCollectWork, CofkUnionWork, CofkWorkPersonMap
 
@@ -23,6 +24,15 @@ original_calendar_choices = [
     ('JM', 'Julian (year starting 25th Mar)'),
     ('JJ', 'Julian (year starting 1st Jan)'),
     ('O', 'Other'),
+]
+manif_type_choices = [
+    ('ALS', 'Letter'),
+    ('D', 'Draft'),
+    ('DC', 'Digital copy'),
+    ('E', 'Extract'),
+    ('O', 'Other'),
+    ('P', 'Printed copy'),
+    ('S', 'Scribal copy'),
 ]
 
 
@@ -126,6 +136,93 @@ class PlacesForm(forms.ModelForm):
             'destination_as_marked',
             'destination_inferred',
             'destination_uncertain',
+        )
+
+
+class ManifForm(forms.ModelForm):
+    manifestation_type = forms.CharField(required=False,
+                                         widget=forms.Select(choices=manif_type_choices), )
+
+    # repository  # KTODO
+
+    id_number_or_shelfmark = forms.CharField(required=False)
+    printed_edition_details = forms.CharField(required=False, widget=forms.Textarea())
+
+    manifestation_creation_date_as_marked = forms.CharField(required=False)
+    manifestation_creation_date_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    manifestation_creation_date_year = form_utils.create_year_field()
+    manifestation_creation_date_month = form_utils.create_month_field()
+    manifestation_creation_date_day = form_utils.create_day_field()
+    manifestation_creation_date_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    manifestation_creation_date_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    manifestation_creation_date_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+
+    manifestation_creation_date = create_auto_date_field()
+    manifestation_creation_date_gregorian = create_auto_date_field()
+
+    manifestation_creation_calendar = CharField(required=False,
+                                                widget=forms.RadioSelect(choices=original_calendar_choices))
+
+    date_of_receipt_as_marked = forms.CharField(required=False)
+    manifestation_receipt_date_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    manifestation_receipt_date_year = form_utils.create_year_field()
+    manifestation_receipt_date_month = form_utils.create_month_field()
+    manifestation_receipt_date_day = form_utils.create_day_field()
+    manifestation_receipt_date_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    manifestation_receipt_date_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    manifestation_receipt_date_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+
+    manifestation_receipt_date = create_auto_date_field()
+    manifestation_receipt_date_gregorian = create_auto_date_field()
+
+    manifestation_receipt_calendar = CharField(required=False,
+                                               widget=forms.RadioSelect(choices=original_calendar_choices))
+
+    # date_of_work_as_marked = forms.CharField(required=False)
+    # date_of_work_std_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    # date_of_work_std_year = form_utils.create_year_field()
+    # date_of_work_std_month = form_utils.create_month_field()
+    # date_of_work_std_day = form_utils.create_day_field()
+    # date_of_work_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    # date_of_work_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    # date_of_work_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    #
+    # date_of_work_std = create_auto_date_field()
+    # date_of_work_std_gregorian = create_auto_date_field()
+    # original_calendar = CharField(required=False,
+    #                               widget=forms.RadioSelect(choices=original_calendar_choices))
+
+    class Meta:
+        model = CofkUnionManifestation
+        fields = (
+            'manifestation_type',
+            'id_number_or_shelfmark',
+            'printed_edition_details',
+
+            'manifestation_creation_date_as_marked',
+            'manifestation_creation_date_is_range',
+            'manifestation_creation_date_year',
+            'manifestation_creation_date_month',
+            'manifestation_creation_date_day',
+            'manifestation_creation_date_inferred',
+            'manifestation_creation_date_uncertain',
+            'manifestation_creation_date_approx',
+            'manifestation_creation_date',
+            'manifestation_creation_date_gregorian',
+            'manifestation_creation_calendar',
+
+            'date_of_receipt_as_marked',
+            'manifestation_receipt_date_is_range',
+            'manifestation_receipt_date_year',
+            'manifestation_receipt_date_month',
+            'manifestation_receipt_date_day',
+            'manifestation_receipt_date_inferred',
+            'manifestation_receipt_date_uncertain',
+            'manifestation_receipt_date_approx',
+            'manifestation_receipt_date',
+            'manifestation_receipt_date_gregorian',
+            'manifestation_receipt_calendar',
+
         )
 
 

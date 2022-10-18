@@ -1,4 +1,5 @@
 import logging
+from abc import ABC
 from typing import Optional, Type
 
 from django.contrib.auth.decorators import login_required
@@ -14,10 +15,11 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
 from core.forms import WorkRecrefForm
 from core.helper import view_utils, recref_utils
 from core.helper.view_utils import DefaultSearchView, FullFormHandler, CommentFormsetHandler
+from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, create_manif_id
 from person.models import CofkUnionPerson
 from work import work_utils
 from work.forms import WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
-    AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm
+    AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm
 from work.models import CofkWorkPersonMap, CofkUnionWork, create_work_id, CofkWorkComment, CofkWorkWorkMap, \
     CofkWorkLocationMap
 
@@ -28,6 +30,13 @@ class WorkCommentFormsetHandler(CommentFormsetHandler):
     def __init__(self, prefix, request_data, rel_type, comments_query_fn, context_name=None):
         super().__init__(prefix, request_data, rel_type, comments_query_fn,
                          comment_class=CofkWorkComment, owner_id_name='work_id',
+                         context_name=context_name, )
+
+
+class ManifCommentFormsetHandler(CommentFormsetHandler):
+    def __init__(self, prefix, request_data, rel_type, comments_query_fn, context_name=None):
+        super().__init__(prefix, request_data, rel_type, comments_query_fn,
+                         comment_class=CofkManifCommentMap, owner_id_name='manifestation_id',
                          context_name=context_name, )
 
 
@@ -235,18 +244,53 @@ class CorrFFH(BasicWorkFFH):
             r.maintain_record(request, work)
 
 
-class WorkFullFormHandler(FullFormHandler):
-    # TOBEREMOVE
+class ManifFFH(BasicWorkFFH):
+    def __init__(self, iwork_id, template_name, manif_id=None,
+                 request_data=None, request=None, *args, **kwargs):
+        super().__init__(iwork_id, template_name, *args,
+                         manif_id=manif_id, request_data=request_data, request=request, **kwargs)
 
-    def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
-        if pk:
-            self.work = get_object_or_404(CofkUnionWork, iwork_id=pk)
+    def load_data(self, iwork_id, *args,
+                  manif_id=None, request_data=None, request=None, **kwargs):
+        # super().load_data(iwork_id, request_data=request_data, request=request)
+
+        self.iwork_id = iwork_id
+
+        if manif_id:
+            self.manif = get_object_or_404(CofkUnionManifestation, manifestation_id=manif_id)
         else:
-            self.work = None
+            self.manif = None
+        self.safe_manif = self.manif or CofkUnionManifestation()
 
-        self.work_form = WorkForm(request_data or None, instance=self.work, initial=work_form_initial)
+        self.manif_form = ManifForm(request_data or None,
+                                    instance=self.manif)
 
-        tmp_work = self.work or CofkUnionWork()
+        # comments
+        self.add_comment_handler(ManifCommentFormsetHandler(
+            prefix='date_comment',
+            request_data=request_data,
+            rel_type=REL_TYPE_COMMENT_DATE,
+            comments_query_fn=self.safe_manif.find_comments_by_rel_type
+        ))
+        # self.add_comment_handler(ManifCommentFormsetHandler(
+        #     prefix='receipt_date_comment',
+        #     request_data=request_data,
+        #     rel_type=REL_TYPE_COMMENT_RECEIPT_DATE,
+        #     comments_query_fn=self.safe_manif.find_comments_by_rel_type
+        # ))
+
+    def save(self, request):
+
+        manif: CofkUnionManifestation = self.manif_form.instance
+        log.debug(f'changed_data : {self.manif_form.changed_data}')
+        manif.work = get_object_or_404(CofkUnionWork, iwork_id=self.iwork_id)
+        if not manif.manifestation_id:
+            manif.manifestation_id = create_manif_id(self.iwork_id)
+        manif.save()
+        log.info(f'save manif {manif}')  # KTODO fix iwork_id plus more than 1
+
+        # comments
+        self.save_all_comment_formset(manif.manifestation_id, request)
 
 
 def create_work_person_map_if_field_exist(form: BaseForm, work, username,
@@ -283,8 +327,15 @@ def upsert_work_location_map_if_field_exist(form: Form, work, username,
 
 
 class BasicWorkFormView(LoginRequiredMixin, View):
+    goto_vname_map = {
+        'corr': 'work:corr_form',
+        'dates': 'work:dates_form',
+        'places': 'work:places_form',
+        'manif': 'work:manif_init',
+    }
+
     @staticmethod
-    def create_fhandler(request, iwork_id=None):
+    def create_fhandler(request, iwork_id=None, *args, **kwargs):
         raise NotImplementedError()
 
     @property
@@ -300,29 +351,59 @@ class BasicWorkFormView(LoginRequiredMixin, View):
 
     def resp_after_saved(self, request, fhandler):
         goto = request.POST.get('__goto')
-        goto_vname_map = {
-            'corr': 'work:corr_form',
-            'dates': 'work:dates_form',
-            'places': 'work:places_form',
-        }
-        vname = goto_vname_map.get(goto, self.cur_vname)
+        vname = self.goto_vname_map.get(goto, self.cur_vname)
         return redirect(vname, self.get_form_work_instance(fhandler).iwork_id)
 
     def post(self, request, iwork_id=None, *args, **kwargs):
-        fhandler = self.create_fhandler(request, iwork_id=iwork_id)
+        fhandler = self.create_fhandler(request, iwork_id=iwork_id, *args, **kwargs)
         if fhandler.is_invalid():
             return fhandler.render_form(request)
         fhandler.save(request)
         return self.resp_after_saved(request, fhandler)
 
     def get(self, request, iwork_id=None, *args, **kwargs):
-        return self.create_fhandler(request, iwork_id).render_form(request)
+        return self.create_fhandler(request, iwork_id, *args, **kwargs).render_form(request)
+
+
+class BasicManifView(BasicWorkFormView, ABC):
+
+    def resp_after_saved(self, request, fhandler):
+        if '__goto' in request.POST:
+            return super().resp_after_saved(request, fhandler)
+
+        return redirect('work:manif_update',
+                        fhandler.manif_form.instance.work.iwork_id,
+                        fhandler.manif_form.instance.manifestation_id)
+
+
+class ManifInitView(BasicManifView):
+    @staticmethod
+    def create_fhandler(request, iwork_id=None, *args, **kwargs):
+        return ManifFFH(iwork_id, template_name='work/manif_init.html',
+                        request_data=request.POST or None,
+                        request=request)
+
+    @property
+    def cur_vname(self):
+        return 'work:manif_init'
+
+
+class ManifUpdateView(BasicManifView):
+    @staticmethod
+    def create_fhandler(request, iwork_id=None, *args, **kwargs):
+        return ManifFFH(iwork_id, template_name='work/manif_update.html',
+                        request_data=request.POST or None,
+                        request=request, *args, **kwargs)
+
+    @property
+    def cur_vname(self):
+        return 'work:manif_update'
 
 
 class CorrView(BasicWorkFormView):
 
     @staticmethod
-    def create_fhandler(request, iwork_id=None):
+    def create_fhandler(request, iwork_id=None, *args, **kwargs):
         return CorrFFH(iwork_id, request_data=request.POST, request=request)
 
     @property
@@ -332,7 +413,7 @@ class CorrView(BasicWorkFormView):
 
 class DatesView(BasicWorkFormView):
     @staticmethod
-    def create_fhandler(request, iwork_id=None):
+    def create_fhandler(request, iwork_id=None, *args, **kwargs):
         return DatesFFH(iwork_id, request_data=request.POST, request=request)
 
     @property
@@ -342,7 +423,7 @@ class DatesView(BasicWorkFormView):
 
 class PlacesView(BasicWorkFormView):
     @staticmethod
-    def create_fhandler(request, iwork_id=None):
+    def create_fhandler(request, iwork_id=None, *args, **kwargs):
         return PlacesFFH(iwork_id, request_data=request.POST, request=request)
 
     @property
@@ -365,48 +446,11 @@ def return_quick_init(request, pk):
     )
 
 
-@login_required
-def full_form(request, iwork_id):
-    # TOBEREMOVE
-    fhandler = WorkFullFormHandler(iwork_id, 'work/init_form.html',
-                                   request_data=request.POST, request=request)
-
-    if request.method == 'POST':
-        if is_invalid(fhandler):
-            return fhandler.render_form(request)
-        save_full_form_handler(fhandler, request)
-
-        # reload data
-        fhandler.load_data(iwork_id, request_data=None, request=request)
-
-    # KTODO
-    return fhandler.render_form(request)
-
-
-def is_invalid(fhandler: WorkFullFormHandler, ):
-    # TOBEREMOVE
-    # KTODO make this list generic
-    form_formsets = [*fhandler.all_form_formset,
-                     # fhandler.img_handler.img_form,
-                     # fhandler.img_handler.image_formset,
-                     ]
-    for h in fhandler.all_recref_handlers:
-        form_formsets.extend([h.new_form, h.update_formset, ])
-
-    return view_utils.any_invalid_with_log(form_formsets)
-
-
 def save_multi_rel_recref_formset(multi_rel_recref_formset, work, request):
     _forms = (f for f in multi_rel_recref_formset if f.has_changed())
     for form in _forms:
         form: WorkPersonRecrefForm
         form.create_or_delete(work, request.user.username)
-
-
-def save_full_form_handler(fhandler: WorkFullFormHandler, request):
-    # TOBEREMOVE
-    # handle selected_person_id
-    pass
 
 
 class WorkSearchView(LoginRequiredMixin, DefaultSearchView):

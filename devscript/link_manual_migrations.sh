@@ -5,13 +5,8 @@ if [ ! -f "manage.py" ]; then
   exit 99
 fi
 
-cd person/migrations
-ln -vsf ../manual_migrations/0*.py
 
-cd ../../
-cd uploader/migrations
-ln -vsf ../manual_migrations/0*.py
-
-cd ../../
-cd work/migrations
-ln -vsf ../manual_migrations/0*.py
+ln -vsfr person/manual_migrations/0*.py person/migrations/
+ln -vsfr uploader/manual_migrations/0*.py uploader/migrations/
+ln -vsfr work/manual_migrations/0*.py work/migrations/
+ln -vsfr manifestation/manual_migrations/0*.py manifestation/migrations/

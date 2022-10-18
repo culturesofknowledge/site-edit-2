@@ -1,0 +1,36 @@
+{% load static %}
+
+<fieldset>
+    <legend>Basic details</legend>
+    <label>Document type:</label>
+    {{ manif_form.manifestation_type }}
+
+    <label>Repository -- TODO:</label> <!-- KTODO -->
+
+    <label>ID number or shelfmark:</label>
+    {{ manif_form.id_number_or_shelfmark }}
+
+    <label>Or: </label>
+
+    {{ manif_form.printed_edition_details }}
+    <div class="ref-publication-row" textbox_id="{{ manif_form.printed_edition_details.id_for_label }}"></div>
+
+</fieldset>
+
+{% include "work/component/common_date_fields.html" with name='Manifestation' date_as_marked=manif_form.manifestation_creation_date_as_marked calendar_used=manif_form.manifestation_creation_calendar is_range=manif_form.manifestation_creation_date_is_range day_field=manif_form.manifestation_creation_date_day month_field=manif_form.manifestation_creation_date_month year_field=manif_form.manifestation_creation_date_year normal_date=manif_form.manifestation_creation_date gregorian_date=manif_form.manifestation_creation_date_gregorian inferred=manif_form.manifestation_creation_date_inferred  uncertain=manif_form.manifestation_creation_date_uncertain  approx=manif_form.manifestation_creation_date_approx date_comment_formset=date_comment_formset %}
+
+
+
+<script src="{% static 'core/js/auto_date_calendar.js' %}" defer></script>
+<script>
+    $(function () {
+        new AutoCalendar(
+            '#id_manifestation_creation_date_year',
+            '#id_manifestation_creation_date_month',
+            '#id_manifestation_creation_date_day',
+            'input[name=manifestation_creation_calendar]',
+            '#id_manifestation_creation_date',
+            '#id_manifestation_creation_date_gregorian',
+        ).setup_auto_calendar();
+    })
+</script>

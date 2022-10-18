@@ -3,7 +3,7 @@
 {% block tabcontent %}
     <h1>Work - Dates</h1>
 
-    {% include "work/component/common_date_fields.html" with name='work' date_as_marked=dates_form.date_of_work_as_marked calendar_used=dates_form.original_calendar is_range=dates_form.date_of_work_std_is_range day_field=dates_form.date_of_work_std_day month_field=dates_form.date_of_work_std_month year_field=dates_form.date_of_work_std_year normal_date=dates_form.date_of_work_std gregorian_date=dates_form.date_of_work_std_gregorian inferred=dates_form.date_of_work_inferred  uncertain=dates_form.date_of_work_uncertain  approx=dates_form.date_of_work_approx %}
+    {% include "work/component/common_date_fields.html" with name='work' date_as_marked=dates_form.date_of_work_as_marked calendar_used=dates_form.original_calendar is_range=dates_form.date_of_work_std_is_range day_field=dates_form.date_of_work_std_day month_field=dates_form.date_of_work_std_month year_field=dates_form.date_of_work_std_year normal_date=dates_form.date_of_work_std gregorian_date=dates_form.date_of_work_std_gregorian inferred=dates_form.date_of_work_inferred  uncertain=dates_form.date_of_work_uncertain  approx=dates_form.date_of_work_approx date_comment_formset=date_comment_formset %}
 
 
     <script src="{% static 'core/js/auto_date_calendar.js' %}" defer></script>

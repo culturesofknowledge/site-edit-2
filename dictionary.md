@@ -11,3 +11,4 @@
 | pson   | Person                  |
 | rel    | Relation / Relationship |
 | upsert | update or insert |
+| manif  | Manifestation |
