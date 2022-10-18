@@ -438,6 +438,12 @@ class ImageHandler:
 
 
 class FullFormHandler:
+    """ maintain collections of Form and Formset for View
+    developer can define instance of Form and Formset in `load_data`
+
+    this class provide many tools for View
+    like `all_named_form_formset`, `save_all_comment_formset`
+    """
 
     def __init__(self, pk, *args, request_data=None, request=None, **kwargs):
         self.comment_handlers: list[CommentFormsetHandler] = []
@@ -460,6 +466,10 @@ class FullFormHandler:
     @property
     def all_form_formset(self):
         return (ff for _, ff in self.all_named_form_formset())
+
+    def maintain_all_recref_records(self, request, parent_instance):
+        for recref_handler in self.all_recref_handlers:
+            recref_handler.maintain_record(request, parent_instance)
 
     @property
     def all_recref_handlers(self):

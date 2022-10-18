@@ -240,8 +240,7 @@ class CorrFFH(BasicWorkFFH):
         self.save_all_comment_formset(work.work_id, request)
 
         # handle recref_handler
-        for r in self.all_recref_handlers:
-            r.maintain_record(request, work)
+        self.maintain_all_recref_records(request, work)
 
 
 class ManifFFH(BasicWorkFFH):
@@ -291,6 +290,7 @@ class ManifFFH(BasicWorkFFH):
 
         # comments
         self.save_all_comment_formset(manif.manifestation_id, request)
+        self.maintain_all_recref_records(request, manif)
 
 
 def create_work_person_map_if_field_exist(form: BaseForm, work, username,

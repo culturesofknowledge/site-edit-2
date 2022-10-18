@@ -208,8 +208,7 @@ def full_form(request, iperson_id):
             return fhandler.render_form(request)
 
         # ------- save
-        for recref_handler in fhandler.all_recref_handlers:
-            recref_handler.maintain_record(request, fhandler.person_form.instance)
+        fhandler.maintain_all_recref_records(request, fhandler.person_form.instance)
 
         fhandler.person_form.save()
         view_utils.save_formset(fhandler.comment_formset, fhandler.person.comments,
