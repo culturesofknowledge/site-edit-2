@@ -15,4 +15,6 @@ REL_TYPE_WORK_MATCHES = 'matches'
 REL_TYPE_WAS_SENT_TO = 'was_sent_to'
 REL_TYPE_WAS_SENT_FROM = 'was_sent_from'
 
+REL_TYPE_FORMERLY_OWNED = 'formerly_owned'
+
 

@@ -11,12 +11,13 @@ from django.views import View
 
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_WORK_IS_REPLY_TO, \
     REL_TYPE_WORK_MATCHES, REL_TYPE_COMMENT_DATE, REL_TYPE_WAS_SENT_FROM, REL_TYPE_COMMENT_ORIGIN, \
-    REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_ROUTE
-from core.forms import WorkRecrefForm
+    REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_ROUTE, REL_TYPE_FORMERLY_OWNED
+from core.forms import WorkRecrefForm, PersonRecrefForm
 from core.helper import view_utils
 from core.helper.view_utils import DefaultSearchView, FullFormHandler, CommentFormsetHandler
 from core.models import Recref
-from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, create_manif_id
+from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, create_manif_id, CofkManifPersonMap
+from person import person_utils
 from person.models import CofkUnionPerson
 from work import work_utils
 from work.forms import WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
@@ -271,6 +272,13 @@ class ManifFFH(BasicWorkFFH):
         self.manif_form = ManifForm(request_data or None,
                                     instance=self.manif)
 
+        self.former_recref_handler = view_utils.MultiRecrefAdapterHandler(
+            request_data, name='former',
+            recref_adapter=ManifPersonRecrefAdapter(self.safe_manif),
+            recref_form_class=PersonRecrefForm,
+            rel_type=REL_TYPE_FORMERLY_OWNED,
+        )
+
         # comments
         self.add_comment_handler(ManifCommentFormsetHandler(
             prefix='date_comment',
@@ -352,7 +360,7 @@ class BasicWorkFormView(LoginRequiredMixin, View):
     @staticmethod
     def get_form_work_instance(fhandler: FullFormHandler) -> CofkUnionWork | None:
         forms = fhandler.all_form_formset
-        works = (getattr(f, 'instance') for f in forms)
+        works = (getattr(f, 'instance', None) for f in forms)
         works = (i for i in works if isinstance(i, CofkUnionWork))
         return next(works, None)
 
@@ -375,8 +383,9 @@ class BasicWorkFormView(LoginRequiredMixin, View):
 class BasicManifView(BasicWorkFormView, ABC):
 
     def resp_after_saved(self, request, fhandler):
-        if '__goto' in request.POST:
-            return super().resp_after_saved(request, fhandler)
+        if goto := request.POST.get('__goto'):
+            vname = self.goto_vname_map.get(goto, self.cur_vname)
+            return redirect(vname, fhandler.iwork_id)
 
         return redirect('work:manif_update',
                         fhandler.manif_form.instance.work.iwork_id,
@@ -519,3 +528,27 @@ class LaterLetterRecrefAdapter(WorkWorkRecrefAdapter):
 
     def target_id_name(self):
         return 'work_from_id'
+
+
+class ManifPersonRecrefAdapter(view_utils.RecrefFormAdapter):
+    def __init__(self, manif: CofkUnionManifestation):
+        self.manif = manif
+
+    def find_target_display_name_by_id(self, target_id):
+        return person_utils.get_recref_display_name(self.find_target_instance(target_id))
+
+    def recref_class(self) -> Type[Recref]:
+        return CofkManifPersonMap
+
+    def find_target_instance(self, target_id):
+        return CofkUnionPerson.objects.get(person_id=target_id)
+
+    def set_parent_target_instance(self, recref, parent, target):
+        recref.manifestation = parent
+        recref.person = target
+
+    def find_recref_records(self, rel_type):
+        return self.manif.cofkmanifpersonmap_set.filter(relationship_type=rel_type).iterator()
+
+    def target_id_name(self):
+        return 'person_id'

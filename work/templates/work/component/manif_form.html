@@ -21,6 +21,13 @@
 
 
 
+<fieldset>
+    <legend>Former owners</legend>
+
+    {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_former.update_formset new_form=recref_former.new_form add_label='Add former owner:' %}
+
+</fieldset>
+
 <script src="{% static 'core/js/auto_date_calendar.js' %}" defer></script>
 <script>
     $(function () {

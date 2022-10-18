@@ -15,6 +15,14 @@ class CofkManifCommentMap(Recref):
         db_table = 'cofk_manif_comment_map'
 
 
+class CofkManifPersonMap(Recref):
+    manifestation = models.ForeignKey('manifestation.CofkUnionManifestation', on_delete=models.CASCADE)
+    person = models.ForeignKey('person.CofkUnionPerson', on_delete=models.CASCADE)
+
+    class Meta(Recref.Meta):
+        db_table = 'cofk_manif_person_map'
+
+
 class CofkUnionManifestation(models.Model, RecordTracker):
     manifestation_id = models.CharField(primary_key=True, max_length=100)
     manifestation_type = models.CharField(max_length=3, default='')
