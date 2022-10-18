@@ -151,6 +151,8 @@ class CofkPersonPersonMap(Recref):
     related = models.ForeignKey(CofkUnionPerson,
                                 related_name='passive_relationships',
                                 on_delete=models.CASCADE)
+
+    # TOBEREMOVE should use relationship_type instance
     person_type = models.CharField(null=False, default='other', max_length=100)
 
     class Meta(Recref.Meta):

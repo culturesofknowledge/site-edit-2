@@ -1,4 +1,5 @@
 import logging
+import warnings
 from typing import Callable, Iterable, Type, Optional, Any, NoReturn
 
 from django.contrib.auth.decorators import login_required
@@ -83,7 +84,7 @@ class LocRecrefHandler(view_utils.MultiRecrefHandler):
             return None
 
         ps_loc.person = parent_instance
-        ps_loc.relationship_type = 'was_in_location'
+        ps_loc.relationship_type = 'was_in_location'  # KTODO support other type
         return ps_loc
 
 
@@ -95,6 +96,7 @@ class OrganisationRecrefConvertor:
 
 
 class PersonRecrefHandler(view_utils.MultiRecrefHandler):
+    warnings.warn('replace by PersonRecrefHandler2', DeprecationWarning)
 
     def __init__(self, request_data, person_type: str,
                  person: CofkUnionPerson,
@@ -126,7 +128,7 @@ class PersonRecrefHandler(view_utils.MultiRecrefHandler):
 
         recref.person = parent_instance
         recref.relationship_type = 'member_of'
-        recref.person_type = self.person_type
+        recref.person_type = self.person_type  # KTODO should use relationship_type instance
         return recref
 
 

@@ -21,7 +21,7 @@ import core.constant as core_constant
 from core.forms import ImageForm, UploadImageForm, CommentForm
 from core.forms import RecrefForm
 from core.forms import build_search_components
-from core.helper import file_utils, email_utils
+from core.helper import file_utils, email_utils, recref_utils
 from core.helper import model_utils
 from core.helper import view_utils
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
@@ -33,6 +33,27 @@ from uploader.models import CofkUnionImage
 
 register = template.Library()
 log = logging.getLogger(__name__)
+
+
+class RecrefFormAdapter:
+
+    def find_target_display_name_by_id(self, target_id):
+        raise NotImplementedError()
+
+    def recref_class(self) -> Type[Recref]:
+        raise NotImplementedError()
+
+    def find_target_instance(self, target_id):
+        raise NotImplementedError()
+
+    def set_parent_target_instance(self, recref, parent, target):
+        raise NotImplementedError()
+
+    def find_recref_records(self, rel_type):
+        raise NotImplementedError()
+
+    def target_id_name(self):
+        raise NotImplementedError()
 
 
 class BasicSearchView(ListView):
@@ -367,6 +388,36 @@ class MultiRecrefHandler:
                 ps_loc = self.recref_class.objects.get(pk=recref_id)
                 ps_loc = self.fill_common_recref_field(ps_loc, f.cleaned_data, request.user.username)
                 ps_loc.save()
+
+
+class MultiRecrefAdapterHandler(MultiRecrefHandler):
+    def __init__(self, request_data, name,
+                 recref_adapter: RecrefFormAdapter,
+                 recref_form_class,
+                 rel_type='is_reply_to',
+                 ):
+        self.recref_adapter = recref_adapter
+        self.rel_type = rel_type
+        initial_list = (m.__dict__ for m in self.recref_adapter.find_recref_records(self.rel_type))
+        initial_list = (recref_utils.convert_to_recref_form_dict(r, self.recref_adapter.target_id_name(),
+                                                                 self.recref_adapter.find_target_display_name_by_id)
+                        for r in initial_list)
+        super().__init__(request_data, name=name, initial_list=initial_list,
+                         recref_form_class=recref_form_class)
+
+    @property
+    def recref_class(self) -> Type[models.Model]:
+        return self.recref_adapter.recref_class()
+
+    def create_recref_by_new_form(self, target_id, parent_instance) -> Optional[models.Model]:
+        if not (target_instance := self.recref_adapter.find_target_instance(target_id)):
+            log.warning(f"create recref fail, work not found -- {target_id} ")
+            return None
+
+        recref = self.recref_class()
+        self.recref_adapter.set_parent_target_instance(recref, parent_instance, target_instance)
+        recref.relationship_type = self.rel_type
+        return recref
 
 
 def save_formset(forms: Iterable[ModelForm],

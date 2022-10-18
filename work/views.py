@@ -13,8 +13,9 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_WORK_MATCHES, REL_TYPE_COMMENT_DATE, REL_TYPE_WAS_SENT_FROM, REL_TYPE_COMMENT_ORIGIN, \
     REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_ROUTE
 from core.forms import WorkRecrefForm
-from core.helper import view_utils, recref_utils
+from core.helper import view_utils
 from core.helper.view_utils import DefaultSearchView, FullFormHandler, CommentFormsetHandler
+from core.models import Recref
 from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, create_manif_id
 from person.models import CofkUnionPerson
 from work import work_utils
@@ -204,16 +205,22 @@ class CorrFFH(BasicWorkFFH):
         ))
 
         # letters
-        self.earlier_letter_handler = EarlierLetterRecrefHandler(
-            request_data,
-            self.safe_work.work_from_set.filter(relationship_type=REL_TYPE_WORK_IS_REPLY_TO).iterator())
-        self.later_letter_handler = LaterLetterRecrefHandler(
-            request_data,
-            self.safe_work.work_to_set.filter(relationship_type=REL_TYPE_WORK_IS_REPLY_TO).iterator())
-        self.matching_letter_handler = EarlierLetterRecrefHandler(
-            request_data,
-            self.safe_work.work_from_set.filter(relationship_type=REL_TYPE_WORK_MATCHES).iterator(),
-            name='matching_letter',
+        self.earlier_letter_handler = view_utils.MultiRecrefAdapterHandler(
+            request_data, name='earlier_letter',
+            recref_adapter=EarlierLetterRecrefAdapter(self.safe_work),
+            recref_form_class=WorkRecrefForm,
+            rel_type=REL_TYPE_WORK_IS_REPLY_TO,
+        )
+        self.later_letter_handler = view_utils.MultiRecrefAdapterHandler(
+            request_data, name='later_letter',
+            recref_adapter=LaterLetterRecrefAdapter(self.safe_work),
+            recref_form_class=WorkRecrefForm,
+            rel_type=REL_TYPE_WORK_IS_REPLY_TO,
+        )
+        self.matching_letter_handler = view_utils.MultiRecrefAdapterHandler(
+            request_data, name='matching_letter',
+            recref_adapter=EarlierLetterRecrefAdapter(self.safe_work),
+            recref_form_class=WorkRecrefForm,
             rel_type=REL_TYPE_WORK_MATCHES,
         )
 
@@ -469,61 +476,46 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
 
 def find_work_rec_name(work_id) -> Optional[str]:
-    # KTODO tobe define
-    work = CofkUnionWork.objects.get(work_id=work_id)
-    return work and work.work_id
+    return work_utils.get_recref_display_name(CofkUnionWork.objects.get(work_id=work_id))
 
 
-class LetterRecrefHandler(view_utils.MultiRecrefHandler):
-    def __init__(self, request_data, model_list, name, target_id_name,
-                 rel_type='is_reply_to'):
-        initial_list = (m.__dict__ for m in model_list)
-        initial_list = (recref_utils.convert_to_recref_form_dict(r, target_id_name, find_work_rec_name)
-                        for r in initial_list)
-        self.rel_type = rel_type
-        super().__init__(request_data, name=name, initial_list=initial_list,
-                         recref_form_class=WorkRecrefForm)
+class WorkWorkRecrefAdapter(view_utils.RecrefFormAdapter, ABC):
 
-    @property
-    def recref_class(self) -> Type[models.Model]:
+    def find_target_display_name_by_id(self, target_id):
+        return find_work_rec_name(target_id)
+
+    def recref_class(self) -> Type[Recref]:
         return CofkWorkWorkMap
 
-    def define_work_from_to(self, parent_instance, target_instance):
-        """ define which one is work_from, work_to
-        :return : work_from, work_to
-        """
-        raise NotImplementedError()
-
-    def create_recref_by_new_form(self, target_id, parent_instance) -> Optional[models.Model]:
-        if not (target_instance := CofkUnionWork.objects.get(work_id=target_id)):
-            log.warning(f"create recref fail, work not found -- {target_id} ")
-            return None
-
-        work_work: CofkWorkWorkMap = CofkWorkWorkMap()
-        work_work.work_from, work_work.work_to = self.define_work_from_to(
-            parent_instance, target_instance)
-        work_work.relationship_type = self.rel_type
-        return work_work
+    def find_target_instance(self, target_id):
+        return CofkUnionWork.objects.get(work_id=target_id)
 
 
-class EarlierLetterRecrefHandler(LetterRecrefHandler):
-    def __init__(self, request_data, model_list, name='earlier_letter',
-                 rel_type=REL_TYPE_WORK_IS_REPLY_TO):
-        super().__init__(request_data, model_list, name=name,
-                         target_id_name='work_to_id',
-                         rel_type=rel_type, )
+class EarlierLetterRecrefAdapter(WorkWorkRecrefAdapter):
+    def __init__(self, work):
+        self.work = work
 
-    def define_work_from_to(self, parent_instance, target_instance):
-        return parent_instance, target_instance
+    def set_parent_target_instance(self, recref, parent, target):
+        recref.work_from = parent
+        recref.work_to = target
+
+    def find_recref_records(self, rel_type):
+        return self.work.work_from_set.filter(relationship_type=rel_type).iterator()
+
+    def target_id_name(self):
+        return 'work_to_id'
 
 
-class LaterLetterRecrefHandler(LetterRecrefHandler):
+class LaterLetterRecrefAdapter(WorkWorkRecrefAdapter):
+    def __init__(self, work):
+        self.work = work
 
-    def __init__(self, request_data, model_list, name='later_letter',
-                 rel_type=REL_TYPE_WORK_IS_REPLY_TO):
-        super().__init__(request_data, model_list, name=name,
-                         target_id_name='work_from_id',
-                         rel_type=rel_type)
+    def set_parent_target_instance(self, recref, parent, target):
+        recref.work_from = parent
+        recref.work_to = target
 
-    def define_work_from_to(self, parent_instance, target_instance):
-        return target_instance, parent_instance
+    def find_recref_records(self, rel_type):
+        return self.work.work_to_set.filter(relationship_type=rel_type).iterator()
+
+    def target_id_name(self):
+        return 'work_from_id'
