@@ -61,8 +61,7 @@ def clone_rows_by_model_class(conn, model_class: Type[Model],
                               col_val_handler_fn_list: list[Callable[[dict], dict]] = None,
                               seq_name='',
                               int_pk_col_name='pk',
-                              target_model_class=None,
-                              do_sequence=True
+                              target_model_class=None
                               ):
     """ most simple method to copy rows from old DB to new DB
     * assume all column name are same
@@ -90,20 +89,19 @@ def clone_rows_by_model_class(conn, model_class: Type[Model],
     log_save_records(f'{model_class.__module__}.{model_class.__name__}',
                      record_counter.cur_size())
 
-    if do_sequence:  # change sequence value
-        if seq_name == '':
-            seq_name = create_seq_col_name(model_class)
+    if seq_name == '':
+        seq_name = create_seq_col_name(model_class)
 
-        if seq_name and int_pk_col_name:
-            max_pk = list(model_class.objects.aggregate(Max(int_pk_col_name)).values())[0]
-            if isinstance(max_pk, str):
-                raise ValueError(f'max_pk should be int -- [{max_pk}][{type(max_pk)}]')
+    if seq_name and int_pk_col_name:
+        max_pk = list(model_class.objects.aggregate(Max(int_pk_col_name)).values())[0]
+        if isinstance(max_pk, str):
+            raise ValueError(f'max_pk should be int -- [{max_pk}][{type(max_pk)}]')
 
-            new_val = 10_000_000
-            if max_pk > new_val:
-                new_val = max_pk + new_val
+        new_val = 10_000_000
+        if max_pk > new_val:
+            new_val = max_pk + new_val
 
-            cur_conn.cursor().execute(f"select setval('{seq_name}', {new_val})")
+        cur_conn.cursor().execute(f"select setval('{seq_name}', {new_val})")
 
 
 def log_save_records(target, size):
@@ -528,8 +526,8 @@ def data_migration(user, password, database, host, port):
         # lambda: clone_rows_by_model_class(conn, CofkCollectInstitution),
         lambda: clone_rows_by_model_class(conn, CofkUser,
                                           col_val_handler_fn_list=[_val_handler_users],
-                                          target_model_class='cofk_users',
-                                          do_sequence=False),
+                                          seq_name=None,
+                                          target_model_class='cofk_users',),
         lambda: migrate_groups_and_permissions(conn, 'cofk_roles')
 
     ]
