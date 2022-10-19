@@ -35,6 +35,12 @@ manif_type_choices = [
     ('S', 'Scribal copy'),
 ]
 
+manif_letter_opened_choices = [
+    ('o', 'Opened'),
+    ('p', 'Partially opened'),
+    ('u', 'Unopened'),
+]
+
 
 class CofkCollectWorkForm(forms.ModelForm):
     class Meta:
@@ -195,6 +201,22 @@ class ManifForm(forms.ModelForm):
     # original_calendar = CharField(required=False,
     #                               widget=forms.RadioSelect(choices=original_calendar_choices))
 
+    opened = forms.CharField(required=False, widget=forms.Select(choices=manif_letter_opened_choices))
+    paper_size = forms.CharField(required=False)
+    stored_folded = forms.CharField(required=False)
+    paper_type_or_watermark = forms.CharField(required=False)
+    number_of_pages_of_document = forms.IntegerField(required=False)
+    seal = forms.CharField(required=False, widget=forms.Textarea(dict(rows='3')))
+    postage_marks = forms.CharField(required=False)
+    postage_costs_as_marked = forms.CharField(required=False)
+    postage_costs = forms.CharField(required=False)
+    address = forms.CharField(required=False, widget=forms.Textarea(dict(rows='3')))
+    routing_mark_stamp = forms.CharField(required=False, widget=forms.Textarea(dict(rows='3')))
+    routing_mark_ms = forms.CharField(required=False, widget=forms.Textarea(dict(rows='3')))
+    handling_instructions = forms.CharField(required=False, widget=forms.Textarea(dict(rows='3')))
+    endorsements = forms.CharField(required=False, widget=forms.Textarea(dict(rows='3')))
+    non_delivery_reason = forms.CharField(required=False)
+
     class Meta:
         model = CofkUnionManifestation
         fields = (
@@ -228,6 +250,22 @@ class ManifForm(forms.ModelForm):
 
             'non_letter_enclosures',
             'accompaniments',
+
+            'opened',
+            'paper_size',
+            'stored_folded',
+            'paper_type_or_watermark',
+            'number_of_pages_of_document',
+            'seal',
+            'postage_marks',
+            'postage_costs_as_marked',
+            'postage_costs',
+            'address',
+            'routing_mark_stamp',
+            'routing_mark_ms',
+            'handling_instructions',
+            'endorsements',
+            'non_delivery_reason',
 
         )
 

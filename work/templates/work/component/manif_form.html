@@ -53,6 +53,62 @@
 
 </fieldset>
 
+<fieldset>
+    <legend> Paper and markings:</legend>
+
+    <label>Letter opened:</label>
+    {{ manif_form.opened }}
+
+    <label>Paper size:</label>
+    {{ manif_form.paper_size }}
+    <span>(up to 500 characters)</span>
+
+
+    <label>Stored folded:</label>
+    {{ manif_form.stored_folded }}
+
+    <label>Paper type, watermark:</label>
+    {{ manif_form.paper_type_or_watermark }}
+    <span>(up to 500 characters)</span>
+
+    <label>Number of pages:</label>
+    {{ manif_form.number_of_pages_of_document  }}
+    <span>(whole numbers only)</span>
+
+    <label>Seal:</label>
+    {{ manif_form.seal }}
+
+    <label>Postage marks:</label>
+    {{ manif_form.postage_marks }}
+
+    <label>Postage costs as marked:</label>
+    {{ manif_form.postage_costs_as_marked }}
+
+    <label>Postage cost(s):</label>
+    {{ manif_form.postage_costs  }}
+
+    <label>Address:</label>
+    {{ manif_form.address }}
+
+    <label>Routing Mark (stamp):</label>
+    {{ manif_form.routing_mark_stamp  }}
+
+    <label>Routing Mark (MS):</label>
+    {{ manif_form.routing_mark_ms}}
+
+    <label>Handling Instructions:</label>
+    {{ manif_form.handling_instructions  }}
+
+    <label>Other endorsements:</label>
+    {{ manif_form.endorsements}}
+
+    <label>Reason for non-delivery:</label>
+    {{ manif_form.non_delivery_reason }}
+
+
+
+</fieldset>
+
 <script src="{% static 'core/js/auto_date_calendar.js' %}" defer></script>
 <script>
     $(function () {
