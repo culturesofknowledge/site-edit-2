@@ -178,6 +178,9 @@ class ManifForm(forms.ModelForm):
     manifestation_receipt_calendar = CharField(required=False,
                                                widget=forms.RadioSelect(choices=original_calendar_choices))
 
+    non_letter_enclosures = forms.CharField(required=False, widget=forms.Textarea(dict(rows='5')))
+    accompaniments = forms.CharField(required=False, widget=forms.Textarea(dict(rows='5')))
+
     # date_of_work_as_marked = forms.CharField(required=False)
     # date_of_work_std_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     # date_of_work_std_year = form_utils.create_year_field()
@@ -222,6 +225,9 @@ class ManifForm(forms.ModelForm):
             'manifestation_receipt_date',
             'manifestation_receipt_date_gregorian',
             'manifestation_receipt_calendar',
+
+            'non_letter_enclosures',
+            'accompaniments',
 
         )
 

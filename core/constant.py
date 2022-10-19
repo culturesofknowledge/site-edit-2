@@ -17,4 +17,6 @@ REL_TYPE_WAS_SENT_FROM = 'was_sent_from'
 
 REL_TYPE_FORMERLY_OWNED = 'formerly_owned'
 
+REL_TYPE_ENCLOSED_IN = 'enclosed_in'
+
 

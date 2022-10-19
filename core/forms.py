@@ -6,9 +6,10 @@ from django.conf import settings
 from django.forms import ModelForm, HiddenInput, IntegerField, Form
 from django.urls import reverse
 
-from core.helper import form_utils
+from core.helper import form_utils, model_utils
 from core.helper import widgets_utils
 from core.models import CofkUnionComment, CofkUnionResource
+from manifestation.models import CofkUnionManifestation
 from person.models import CofkUnionPerson
 from uploader.models import CofkUnionImage
 from work.models import CofkUnionWork
@@ -88,6 +89,21 @@ class WorkRecrefForm(RecrefForm):
     @property
     def target_url(self) -> str:
         return get_work_full_form_url_by_pk(self.initial.get('target_id'))
+
+
+class ManifRecrefForm(RecrefForm):
+
+    @property
+    def target_url(self) -> str:
+        manif_id = self.initial.get('target_id')
+        if not manif_id:
+            return ''
+
+        manif: CofkUnionManifestation = model_utils.get_safe(CofkUnionManifestation, pk=manif_id)
+        if not manif:
+            return ''
+
+        return reverse('work:manif_update', args=[manif.work.iwork_id, manif_id])
 
 
 class CommentForm(ModelForm):

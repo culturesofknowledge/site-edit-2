@@ -11,12 +11,15 @@ from django.views import View
 
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_WORK_IS_REPLY_TO, \
     REL_TYPE_WORK_MATCHES, REL_TYPE_COMMENT_DATE, REL_TYPE_WAS_SENT_FROM, REL_TYPE_COMMENT_ORIGIN, \
-    REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_ROUTE, REL_TYPE_FORMERLY_OWNED
-from core.forms import WorkRecrefForm, PersonRecrefForm
+    REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_ROUTE, REL_TYPE_FORMERLY_OWNED, \
+    REL_TYPE_ENCLOSED_IN
+from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm
 from core.helper import view_utils
 from core.helper.view_utils import DefaultSearchView, FullFormHandler, CommentFormsetHandler
 from core.models import Recref
-from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, create_manif_id, CofkManifPersonMap
+from manifestation import manif_utils
+from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, create_manif_id, CofkManifPersonMap, \
+    CofkManifManifMap
 from person import person_utils
 from person.models import CofkUnionPerson
 from work import work_utils
@@ -286,6 +289,22 @@ class ManifFFH(BasicWorkFFH):
             rel_type=REL_TYPE_COMMENT_DATE,
             comments_query_fn=self.safe_manif.find_comments_by_rel_type
         ))
+
+        # enclosures
+
+        self.enclosure_manif_handler = view_utils.MultiRecrefAdapterHandler(
+            request_data, name='enclosure_manif',
+            recref_adapter=EnclosureManifRecrefAdapter(self.safe_manif),
+            recref_form_class=ManifRecrefForm,
+            rel_type=REL_TYPE_ENCLOSED_IN,
+        )
+        self.enclosed_manif_handler = view_utils.MultiRecrefAdapterHandler(
+            request_data, name='enclosed_manif',
+            recref_adapter=EnclosedManifRecrefAdapter(self.safe_manif),
+            recref_form_class=ManifRecrefForm,
+            rel_type=REL_TYPE_ENCLOSED_IN,
+        )
+
         # self.add_comment_handler(ManifCommentFormsetHandler(
         #     prefix='receipt_date_comment',
         #     request_data=request_data,
@@ -528,6 +547,48 @@ class LaterLetterRecrefAdapter(WorkWorkRecrefAdapter):
 
     def target_id_name(self):
         return 'work_from_id'
+
+
+class ManifManifRecrefAdapter(view_utils.RecrefFormAdapter, ABC):
+
+    def find_target_display_name_by_id(self, target_id):
+        return manif_utils.get_recref_display_name(self.find_target_instance(target_id))
+
+    def recref_class(self) -> Type[Recref]:
+        return CofkManifManifMap
+
+    def find_target_instance(self, target_id):
+        return CofkUnionManifestation.objects.get(pk=target_id)
+
+
+class EnclosureManifRecrefAdapter(ManifManifRecrefAdapter):
+    def __init__(self, manif):
+        self.manif: CofkUnionManifestation = manif
+
+    def set_parent_target_instance(self, recref, parent, target):
+        recref.manif_from = parent
+        recref.manif_to = target
+
+    def find_recref_records(self, rel_type):
+        return self.manif.manif_from_set.filter(relationship_type=rel_type).iterator()
+
+    def target_id_name(self):
+        return 'manif_to_id'
+
+
+class EnclosedManifRecrefAdapter(ManifManifRecrefAdapter):
+    def __init__(self, manif):
+        self.manif: CofkUnionManifestation = manif
+
+    def set_parent_target_instance(self, recref, parent, target):
+        recref.manif_from = target
+        recref.manif_to = parent
+
+    def find_recref_records(self, rel_type):
+        return self.manif.manif_to_set.filter(relationship_type=rel_type).iterator()
+
+    def target_id_name(self):
+        return 'manif_from_id'
 
 
 class ManifPersonRecrefAdapter(view_utils.RecrefFormAdapter):

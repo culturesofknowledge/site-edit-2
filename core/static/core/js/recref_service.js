@@ -74,6 +74,11 @@ emlojs.recref_service = {
                     select_url: '/work/search?recref_mode=1',
                     create_url: '/work/quick_init',
                 }
+            } else if(recref_type === 'manif') {
+                urls = {
+                    select_url: '/manif/search?recref_mode=1',
+                    create_url: '/',  // manif have no create url
+                }
             }
             else{
                 console.log(`unknown recref_type [${recref_type}]`)

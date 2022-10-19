@@ -22,7 +22,7 @@
     {% endfor %}
 </div>
 
-{% include "core/component/recref.html" with recref_type=recref_type id_field=new_form.target_id label=add_label %}
+{% include "core/component/recref.html" with recref_type=recref_type id_field=new_form.target_id label=add_label hide_create_btn=hide_create_btn %}
 {% if not no_date %}
     <div class="inline-from-to">
         <label>Relevant dates:</label>

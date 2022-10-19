@@ -18,7 +18,9 @@
             <div class="button-row">
                 <button id="{{ fid }}_clean_btn" class="recref_clean">Clean</button>
                 <button id="{{ fid }}_select_btn" class="recref_select">Select</button>
+                {% if not hide_create_btn %}
                 <button id="{{ fid }}_create_btn" class="recref_create">Create</button>
+                {% endif %}
             </div>
         </div>
     </div>

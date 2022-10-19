@@ -138,5 +138,15 @@ class CofkCollectImageOfManif(models.Model):
         db_table = 'cofk_collect_image_of_manif'
 
 
+class CofkManifManifMap(Recref):
+    manif_from = models.ForeignKey(CofkUnionManifestation, on_delete=models.CASCADE,
+                                   related_name='manif_from_set', )
+    manif_to = models.ForeignKey(CofkUnionManifestation, on_delete=models.CASCADE,
+                                 related_name='manif_to_set', )
+
+    class Meta(Recref.Meta):
+        db_table = 'cofk_manif_manif_map'
+
+
 def create_manif_id(iwork_id) -> str:
     return f'W{iwork_id}-{model_utils.next_seq_safe("cofk_union_manif_manif_id_seq")}'

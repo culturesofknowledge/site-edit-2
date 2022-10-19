@@ -20,11 +20,36 @@
 {% include "work/component/common_date_fields.html" with name='Manifestation' date_as_marked=manif_form.manifestation_creation_date_as_marked calendar_used=manif_form.manifestation_creation_calendar is_range=manif_form.manifestation_creation_date_is_range day_field=manif_form.manifestation_creation_date_day month_field=manif_form.manifestation_creation_date_month year_field=manif_form.manifestation_creation_date_year normal_date=manif_form.manifestation_creation_date gregorian_date=manif_form.manifestation_creation_date_gregorian inferred=manif_form.manifestation_creation_date_inferred  uncertain=manif_form.manifestation_creation_date_uncertain  approx=manif_form.manifestation_creation_date_approx date_comment_formset=date_comment_formset %}
 
 
-
 <fieldset>
     <legend>Former owners</legend>
 
     {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_former.update_formset new_form=recref_former.new_form add_label='Add former owner:' %}
+
+</fieldset>
+
+
+<fieldset>
+    <legend>Enclosures (letters and other types of enclosure)</legend>
+    <span>
+        Note: when entering enclosure details, please treat any work/manifestation on the Cultures of Knowledge system as a letter.
+    </span>
+
+    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosure_manif.update_formset new_form=recref_enclosure_manif.new_form add_label='Add another enclosed letter:' hide_create_btn=True no_date=True %}
+
+    <span>OTHER TYPES of enclosure, e.g. money, books, samples of minerals:</span>
+    <label> Details of enclosures other than letters </label>
+    {{ manif_form.non_letter_enclosures }}
+
+    <label> Details of attached or accompanying materials </label>
+    {{ manif_form.accompaniments }}
+
+</fieldset>
+
+
+<fieldset>
+    <legend>Letters in which this one was enclosed</legend>
+
+    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosed_manif.update_formset new_form=recref_enclosed_manif.new_form add_label='Add another enclosing letter:' hide_create_btn=True no_date=True %}
 
 </fieldset>
 
