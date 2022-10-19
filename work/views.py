@@ -12,7 +12,7 @@ from django.views import View
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_WORK_IS_REPLY_TO, \
     REL_TYPE_WORK_MATCHES, REL_TYPE_COMMENT_DATE, REL_TYPE_WAS_SENT_FROM, REL_TYPE_COMMENT_ORIGIN, \
     REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_ROUTE, REL_TYPE_FORMERLY_OWNED, \
-    REL_TYPE_ENCLOSED_IN
+    REL_TYPE_ENCLOSED_IN, REL_TYPE_COMMENT_RECEIPT_DATE
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm
 from core.helper import view_utils
 from core.helper.view_utils import DefaultSearchView, FullFormHandler, CommentFormsetHandler
@@ -289,6 +289,12 @@ class ManifFFH(BasicWorkFFH):
             rel_type=REL_TYPE_COMMENT_DATE,
             comments_query_fn=self.safe_manif.find_comments_by_rel_type
         ))
+        self.add_comment_handler(ManifCommentFormsetHandler(
+            prefix='receipt_date_comment',
+            request_data=request_data,
+            rel_type=REL_TYPE_COMMENT_RECEIPT_DATE,
+            comments_query_fn=self.safe_manif.find_comments_by_rel_type
+        ))
 
         # enclosures
 
@@ -305,12 +311,6 @@ class ManifFFH(BasicWorkFFH):
             rel_type=REL_TYPE_ENCLOSED_IN,
         )
 
-        # self.add_comment_handler(ManifCommentFormsetHandler(
-        #     prefix='receipt_date_comment',
-        #     request_data=request_data,
-        #     rel_type=REL_TYPE_COMMENT_RECEIPT_DATE,
-        #     comments_query_fn=self.safe_manif.find_comments_by_rel_type
-        # ))
 
     def save(self, request):
 
