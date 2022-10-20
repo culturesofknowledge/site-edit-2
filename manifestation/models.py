@@ -68,6 +68,8 @@ class CofkUnionManifestation(models.Model, RecordTracker):
 
     class Meta:
         db_table = 'cofk_union_manifestation'
+        permissions = [('export_cofkunionmanifestation', 'Can export manifestations'),
+                       ('merge_cofkunionmanifestation', 'Can merge locations')]
 
 
 class CofkCollectManifestation(models.Model):

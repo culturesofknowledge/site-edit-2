@@ -12,3 +12,5 @@ class CofkUnionPublication(models.Model):
 
     class Meta:
         db_table = 'cofk_union_publication'
+        permissions = [('export_cofkunionpublication', 'Can export publications'),
+                       ('merge_cofkunionpublication', 'Can merge publications')]

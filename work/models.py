@@ -60,6 +60,8 @@ class CofkUnionWork(models.Model, RecordTracker):
 
     class Meta:
         db_table = 'cofk_union_work'
+        permissions = [('export_cofkunionwork', 'Can export works'),
+                       ('merge_cofkunionwork', 'Can merge works')]
 
 
 class CofkCollectWork(models.Model):

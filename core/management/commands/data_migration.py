@@ -439,7 +439,8 @@ def migrate_groups_and_permissions(conn, target_model:str):
     rows = find_rows_by_db_table(conn, target_model)
     # All the entity types to which permissions are given
     content_types = [CofkUnionWork, CofkUnionPerson, CofkUnionLocation, CofkUnionComment,
-                     CofkUnionResource, CofkUnionInstitution, CofkUnionManifestation, CofkUnionPublication]
+                     CofkUnionResource, CofkUnionInstitution, CofkUnionManifestation, CofkUnionPublication,
+                     CofkCollectUpload]
 
     groups = {}
 
@@ -452,6 +453,7 @@ def migrate_groups_and_permissions(conn, target_model:str):
             permissions = Permission.objects.filter(content_type=content_type)
 
             for p in permissions:
+                print(p.codename)
                 if (g.name == 'reviewer' or g.name == 'cofkviewer') and p.codename.startswith('view_'):
                     g.permissions.add(p)
                 elif g.name == 'cofkeditor' and (p.codename.startswith('view_') or p.codename.startswith('change_')):
@@ -531,6 +533,12 @@ def data_migration(user, password, database, host, port):
         lambda: migrate_groups_and_permissions(conn, 'cofk_roles')
 
     ]
+
+    clone_action_fn_list = [ lambda: clone_rows_by_model_class(conn, CofkUser,
+                                          col_val_handler_fn_list=[_val_handler_users],
+                                          seq_name=None,
+                                          target_model_class='cofk_users',),
+        lambda: migrate_groups_and_permissions(conn, 'cofk_roles')]
 
     for fn in clone_action_fn_list:
         fn()

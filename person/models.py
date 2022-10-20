@@ -134,6 +134,8 @@ class CofkUnionPerson(models.Model, RecordTracker):
 
     class Meta:
         db_table = 'cofk_union_person'
+        permissions = [('export_cofkunionperson', 'Can export people'),
+                       ('merge_cofkunionperson', 'Can merge people')]
 
 
 class CofkPersonLocationMap(Recref):

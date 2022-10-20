@@ -48,6 +48,8 @@ class CofkUnionInstitution(models.Model, RecordTracker):
 
     class Meta:
         db_table = 'cofk_union_institution'
+        permissions = [('export_cofkunioninstitution', 'Can export institutions'),
+                       ('merge_cofkunioninstitution', 'Can merge institutions')]
 
 
 class CofkCollectInstitutionResource(models.Model):

@@ -67,6 +67,8 @@ class CofkUnionLocation(models.Model, RecordTracker):
 
     class Meta:
         db_table = 'cofk_union_location'
+        permissions = [('export_cofkunionlocation', 'Can export locations'),
+                       ('merge_cofkunionlocation', 'Can merge locations')]
 
 
 class CofkCollectLocationResource(models.Model):
