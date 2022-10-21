@@ -3,7 +3,10 @@
 {% block content %}
 
     <h1> {{ title }} </h1>
+
+    {% if total_record  %}
     <button id="fieldset-toggle" class="btn">Toggle</button>
+    {% endif %}
 
     {% for to_user_msg in to_user_messages %}
         <h1>{{ to_user_msg }}</h1>
@@ -23,13 +26,21 @@
                     {{ query_fieldset }}
                 {% endfor %}
                 <div class="flex-col sticky-bottom">
-                    <button type="submit" name="__form_action" value="search" class="sticky-btn">Search</button>
+                    <div class="actionbox">
+                        <button type="button" name="__form_reset" value="clear" class="sticky-btn inline_btn" onclick="location.href = location.origin + location.pathname">Clear</button>
+                        <button type="submit" name="__form_action" value="search" class="sticky-btn inline_btn">Search</button>
+                    </div>
                 </div>
             </aside>
 
 
             <div id="query-result" class="col col--2of3">
+                {% if total_record == 0 %}
+                <h2>No results</h2>
+                {% else %}
                 <h2>{{ total_record | floatformat:'g' }} {{ total_record|pluralize:entity }} found</h2>
+
+
 
                 <!-- Search components (e.g. sort by, records per page) -->
                 {{ search_components }}
@@ -79,6 +90,8 @@
                 </aside>
 
                 {{ results_renderer | safe }}
+
+                {% endif %}
 
             </div>
 
