@@ -8,6 +8,8 @@ from typing import Type, Callable, Iterable, Any
 import django.db.utils
 import psycopg2
 import psycopg2.errors
+from django.contrib.auth.models import Group, Permission
+from django.contrib.contenttypes.models import ContentType
 from django.core.management import BaseCommand
 from django.db import connection as cur_conn
 from django.db.models import Model, Max, fields
@@ -16,11 +18,16 @@ from psycopg2.extras import DictCursor
 
 from core.helper import iter_utils
 from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType
+from institution.models import CofkCollectInstitution, CofkUnionInstitution
 from location.models import CofkUnionLocation
+from login.models import CofkUser
+from manifestation.models import CofkUnionManifestation
 from person.models import CofkPersonLocationMap, CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID, \
     CofkPersonPersonMap
-from uploader.models import CofkCollectStatus, Iso639LanguageCode, CofkLookupCatalogue
+from publication.models import CofkUnionPublication
+from uploader.models import CofkCollectStatus, Iso639LanguageCode, CofkLookupCatalogue, CofkCollectUpload
 from uploader.models import CofkUnionOrgType, CofkUnionImage
+from work.models import CofkUnionWork
 
 log = logging.getLogger(__name__)
 
@@ -54,6 +61,7 @@ def clone_rows_by_model_class(conn, model_class: Type[Model],
                               col_val_handler_fn_list: list[Callable[[dict], dict]] = None,
                               seq_name='',
                               int_pk_col_name='pk',
+                              target_model_class=None
                               ):
     """ most simple method to copy rows from old DB to new DB
     * assume all column name are same
@@ -65,7 +73,11 @@ def clone_rows_by_model_class(conn, model_class: Type[Model],
 
     record_counter = iter_utils.RecordCounter()
 
-    rows = find_rows_by_db_table(conn, model_class._meta.db_table)
+    if target_model_class:
+        rows = find_rows_by_db_table(conn, target_model_class)
+    else:
+        rows = find_rows_by_db_table(conn, model_class._meta.db_table)
+
     rows = map(dict, rows)
     if col_val_handler_fn_list:
         for _fn in col_val_handler_fn_list:
@@ -77,7 +89,6 @@ def clone_rows_by_model_class(conn, model_class: Type[Model],
     log_save_records(f'{model_class.__module__}.{model_class.__name__}',
                      record_counter.cur_size())
 
-    # change sequence value
     if seq_name == '':
         seq_name = create_seq_col_name(model_class)
 
@@ -392,12 +403,66 @@ def no_duplicate_check(*args, **kwargs):
     return False
 
 
+def _val_handler_users(row: dict):
+    row['password'] = row.pop('pw')
+    row['is_active'] = row.pop('active')
+
+    return row
+
+
+def _val_handler_empty_str_null(row: dict):
+    for synonym in ['institution_synonyms', 'institution_city_synonyms', 'institution_country_synonyms',
+                    'editors_notes', 'address', 'longitude', 'latitude']:
+        if synonym in row and row[synonym] == '':
+            del row[synonym]
+
+    return row
+
+
+def _val_handler_upload__upload_status(row: dict):
+    if row['upload_status']:
+        row['upload_status'] = CofkCollectStatus.objects.get(pk=row['upload_status'])
+    else:
+        row['upload_status'] = None
+    return row
+
+
 def _val_handler_person__organisation_type(row: dict):
     if row['organisation_type']:
         row['organisation_type'] = CofkUnionOrgType.objects.get(pk=row['organisation_type'])
     else:
         row['organisation_type'] = None
     return row
+
+
+def migrate_groups_and_permissions(conn, target_model:str):
+    rows = find_rows_by_db_table(conn, target_model)
+    # All the entity types to which permissions are given
+    content_types = [CofkUnionWork, CofkUnionPerson, CofkUnionLocation, CofkUnionComment,
+                     CofkUnionResource, CofkUnionInstitution, CofkUnionManifestation, CofkUnionPublication]
+
+    groups = {}
+
+    for r in [dict(r) for r in rows]:
+        g = Group.objects.get_or_create(name=r['role_code'])[0]
+        groups[r['role_id']] = g
+
+        for ct in content_types:
+            content_type = ContentType.objects.get_for_model(ct)
+            permissions = Permission.objects.filter(content_type=content_type)
+
+            for p in permissions:
+                if (g.name == 'reviewer' or g.name == 'cofkviewer') and p.codename.startswith('view_'):
+                    g.permissions.add(p)
+                elif g.name == 'cofkeditor' and (p.codename.startswith('view_') or p.codename.startswith('change_')):
+                    g.permissions.add(p)
+                elif g.name == 'super':
+                    g.permissions.add(p)
+
+    rows = find_rows_by_db_table(conn, 'cofk_user_roles')
+
+    for r in rows:
+        groups[r[1]].user_set.add(CofkUser.objects.get_by_natural_key(r[0]))
 
 
 def data_migration(user, password, database, host, port):
@@ -412,11 +477,18 @@ def data_migration(user, password, database, host, port):
         lambda: clone_rows_by_model_class(conn, CofkLookupCatalogue),
         lambda: clone_rows_by_model_class(conn, CofkLookupDocumentType),
         lambda: clone_rows_by_model_class(conn, Iso639LanguageCode),
-        lambda: clone_rows_by_model_class(conn, CofkCollectStatus),
-        lambda: clone_rows_by_model_class(conn, CofkUnionOrgType),
+        lambda: clone_rows_by_model_class(conn, CofkCollectStatus),  # Static lookup table
+        lambda: clone_rows_by_model_class(conn, CofkUnionOrgType),  # Static lookup table
         lambda: clone_rows_by_model_class(conn, CofkUnionResource),
         lambda: clone_rows_by_model_class(conn, CofkUnionComment),
         lambda: clone_rows_by_model_class(conn, CofkUnionImage),
+
+        # ### Uploads
+        lambda: clone_rows_by_model_class(conn, CofkCollectUpload,
+                                          col_val_handler_fn_list=[_val_handler_upload__upload_status]),
+
+        # ### Publication
+        lambda: clone_rows_by_model_class(conn, CofkUnionPublication),
 
         # ### Location
         lambda: clone_rows_by_model_class(conn, CofkUnionLocation),
@@ -446,6 +518,18 @@ def data_migration(user, password, database, host, port):
                                                CofkPersonPersonMap.related),
                               CofkPersonPersonMapFieldVal(),
                               ),
+
+        # ### Repositories/institutions
+        lambda: clone_rows_by_model_class(conn, CofkUnionInstitution,
+                                          col_val_handler_fn_list=[_val_handler_empty_str_null]),
+        lambda: create_resources_relationship(conn, CofkUnionInstitution),
+        # lambda: clone_rows_by_model_class(conn, CofkCollectInstitution),
+        lambda: clone_rows_by_model_class(conn, CofkUser,
+                                          col_val_handler_fn_list=[_val_handler_users],
+                                          seq_name=None,
+                                          target_model_class='cofk_users',),
+        lambda: migrate_groups_and_permissions(conn, 'cofk_roles')
+
     ]
 
     for fn in clone_action_fn_list:

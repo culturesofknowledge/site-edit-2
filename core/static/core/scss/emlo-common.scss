@@ -31,6 +31,9 @@
   display: inline;
 }
 
+tr.selectable_entry:hover {
+    background: $faint-grey;
+}
 
 .selectable_entry.selected {
   background-color: gray;
@@ -143,7 +146,12 @@
 
   button {
     margin-left: $space-xs;
+    margin-right: $space-xs;
   }
+  /*button:hover {
+    background-color: $light-grey;
+    color: $black;
+  }*/
 }
 
 .flex-row-wrap { // TOBEREMOVE that same as .row

@@ -29,11 +29,11 @@ class CofkCollectInstitution(models.Model):
 class CofkUnionInstitution(models.Model, RecordTracker):
     institution_id = models.AutoField(primary_key=True)
     institution_name = models.TextField()
-    institution_synonyms = models.TextField()
+    institution_synonyms = models.TextField(blank=True, null=True)
     institution_city = models.TextField()
-    institution_city_synonyms = models.TextField()
+    institution_city_synonyms = models.TextField(blank=True, null=True)
     institution_country = models.TextField()
-    institution_country_synonyms = models.TextField()
+    institution_country_synonyms = models.TextField(blank=True, null=True)
     creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
     change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
@@ -43,6 +43,8 @@ class CofkUnionInstitution(models.Model, RecordTracker):
     address = models.CharField(max_length=1000, blank=True, null=True)
     latitude = models.CharField(max_length=20, blank=True, null=True)
     longitude = models.CharField(max_length=20, blank=True, null=True)
+
+    resources = models.ManyToManyField('core.CofkUnionResource')
 
     class Meta:
         db_table = 'cofk_union_institution'
