@@ -118,8 +118,13 @@ class CofkCollectManifestation(models.Model):
 
 
 class CofkUnionLanguageOfManifestation(models.Model):
-    manifestation = models.OneToOneField(CofkUnionManifestation, models.DO_NOTHING, primary_key=True)
-    language_code = models.ForeignKey('uploader.Iso639LanguageCode', models.DO_NOTHING, db_column='language_code')
+    lang_manif_id = models.AutoField(primary_key=True)
+    manifestation = models.ForeignKey(CofkUnionManifestation, models.DO_NOTHING,
+                                      related_name='language_set')
+    language_code = models.ForeignKey('uploader.Iso639LanguageCode', models.DO_NOTHING,
+                                      db_column='language_code',
+                                      to_field='code_639_3'
+                                      )
     notes = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:

@@ -13,3 +13,19 @@ def create_common_checkbox(**attrs):
 
 class NewDateInput(widgets.Input):
     input_type = "date"
+
+
+class Datalist(widgets.ChoiceWidget):
+    template_name = 'core/widget/datalist.html'
+    option_template_name = "django/forms/widgets/select_option.html"
+
+    def __init__(self, attrs=None, choices=()):
+        # attrs = {'id': datalist_id} or attrs or {}
+        super().__init__(attrs)
+        self.choices = list(choices)
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context["widget"]["choices"] = self.choices
+        return context
+

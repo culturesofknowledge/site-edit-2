@@ -12,3 +12,4 @@
 | rel    | Relation / Relationship |
 | upsert | update or insert |
 | manif  | Manifestation |
+| lang   | language |

@@ -72,7 +72,7 @@
     <span>(up to 500 characters)</span>
 
     <label>Number of pages:</label>
-    {{ manif_form.number_of_pages_of_document  }}
+    {{ manif_form.number_of_pages_of_document }}
     <span>(whole numbers only)</span>
 
     <label>Seal:</label>
@@ -85,31 +85,108 @@
     {{ manif_form.postage_costs_as_marked }}
 
     <label>Postage cost(s):</label>
-    {{ manif_form.postage_costs  }}
+    {{ manif_form.postage_costs }}
 
     <label>Address:</label>
     {{ manif_form.address }}
 
     <label>Routing Mark (stamp):</label>
-    {{ manif_form.routing_mark_stamp  }}
+    {{ manif_form.routing_mark_stamp }}
 
     <label>Routing Mark (MS):</label>
-    {{ manif_form.routing_mark_ms}}
+    {{ manif_form.routing_mark_ms }}
 
     <label>Handling Instructions:</label>
-    {{ manif_form.handling_instructions  }}
+    {{ manif_form.handling_instructions }}
 
     <label>Other endorsements:</label>
-    {{ manif_form.endorsements}}
+    {{ manif_form.endorsements }}
 
     <label>Reason for non-delivery:</label>
     {{ manif_form.non_delivery_reason }}
 
 
-
 </fieldset>
 
 {% include "work/component/common_date_fields.html" with name='receipt' date_as_marked=manif_form.date_of_receipt_as_marked calendar_used=manif_form.manifestation_receipt_calendar is_range=manif_form.manifestation_receipt_date_is_range day_field=manif_form.manifestation_receipt_date_day month_field=manif_form.manifestation_receipt_date_month year_field=manif_form.manifestation_receipt_date_year normal_date=manif_form.manifestation_receipt_date gregorian_date=manif_form.manifestation_receipt_date_gregorian inferred=manif_form.manifestation_receipt_date_inferred  uncertain=manif_form.manifestation_receipt_date_uncertain  approx=manif_form.manifestation_receipt_date_approx date_comment_formset=receipt_date_comment_formset %}
+
+<fieldset>
+    <legend>Language of manifestation:</legend>
+    <label>Language</label>
+    {{ edit_lang_formset.management_form }}
+    {% for form in edit_lang_formset %}
+        <label>{{ form.lang_name.value }}  </label>
+        {{ form.lang_name }}
+        {{ form.notes }}
+        {{ form.lang_rec_id }}
+        {{ form.is_del }}
+        <label for="{{ form.is_del.id_for_label }}" >delete?</label>
+    {% endfor %}
+
+
+    <div class="lang_div" formset_name="new_lang">
+        <label>New Language:</label>
+        {{ manif_form.new_language }}
+        {{ manif_form.language_list }}
+        <button class="lang_add_btn">+</button>
+        <div class="old_lang_div"></div>
+        <div class="new_lang_div"></div>
+    </div>
+</fieldset>
+
+<script>
+    function on_lang_del_click(e) {
+        e.preventDefault();
+        $(e.target.parentElement).remove();
+    }
+
+    function get_next_lang_idx(new_lang_div_jqe) {
+        if (new_lang_div_jqe.children().length == 0) {
+            return 1;
+        }
+        let ids = new_lang_div_jqe.find('input[name][type=text]').map(function () {
+            let _name = $(this).attr('name')
+            let _idx = /.+?-(\d+)/.exec(_name)[1]
+            return parseInt(_idx)
+        }).get()
+        return Math.max(...ids) + 1
+    }
+
+    function setup_add_lang() {
+        $('.lang_add_btn').on('click', function (e) {
+            e.preventDefault();
+            let lang_div_jqe = $(e.target.parentElement);
+            let selected_lang_jqe = lang_div_jqe.find('input[type=text]');
+            let selected_lang = selected_lang_jqe.val()
+            if (!selected_lang) {
+                return
+            }
+            // let formset_name = lang_div_jqe.attr('formset_name')
+            // let lang_idx = get_next_lang_idx(lang_div_jqe.find('.new_lang_div'))
+
+            let new_lang_div = lang_div_jqe.find('.new_lang_div');
+            let new_lang = $('<div class="row-no-margin"></div>')
+            new_lang.append(`<label>${selected_lang}</label>`)
+            new_lang.append(`<input name="lang_name" type="hidden" value="${selected_lang}" />`)
+            new_lang.append(`<input name="lang_note" type="text" />`)
+            // new_lang.append(`<input name="${formset_name}-${lang_idx}-lang_name" type="hidden" // value="${selected_lang}" />`)
+            // new_lang.append(`<input name="${formset_name}-${lang_idx}-note" type="text" />`)
+            let del_btn_jqe = $('<button class="lang_del_btn">Del</button>')
+            del_btn_jqe.on('click', on_lang_del_click)
+            new_lang.append(del_btn_jqe)
+
+            new_lang_div.append(new_lang)
+            selected_lang_jqe.val('')
+        })
+        $('.lang_del_btn').on('click', on_lang_del_click)
+
+    }
+
+    $(function () {
+        setup_add_lang()
+    });
+
+</script>
 
 <script src="{% static 'core/js/auto_date_calendar.js' %}" defer></script>
 <script>

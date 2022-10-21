@@ -3,7 +3,8 @@ import logging
 from django.conf import settings
 from django.core.management import BaseCommand
 
-from core.helper import email_utils, model_utils
+from core.forms import CommentForm
+from core.helper import email_utils, model_utils, view_utils
 from core.models import CofkUnionResource, CofkUnionComment
 from location import fixtures
 from location.models import CofkUnionLocation
@@ -15,7 +16,25 @@ class Command(BaseCommand):
     help = 'playground for try some python code'
 
     def handle(self, *args, **options):
-        main4()
+        main6()
+
+def main6():
+    # new_lang_formset = view_utils.create_formset(
+    #     LangForm,
+    #     prefix='new_lang',
+    #     extra=0,
+    #     # initial_list=model_utils.models_to_dict_list(comments_query_fn(rel_type))
+    # )
+    comment_formset = view_utils.create_formset(CommentForm,
+                                                prefix='loc_comment',
+                                                initial_list=[], )
+    breakpoint()
+    print(comment_formset.is_valid())
+    print(comment_formset.errors)
+    # print(new_lang_formset.is_valid())
+    # print(new_lang_formset.errors)
+
+    print('xkxjkxjkxjk')
 
 
 def main1():

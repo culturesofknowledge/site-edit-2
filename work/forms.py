@@ -7,8 +7,9 @@ from django.forms import CharField
 from django.shortcuts import get_object_or_404
 
 from core.forms import get_peron_full_form_url_by_pk
-from core.helper import view_utils, data_utils, form_utils
+from core.helper import view_utils, data_utils, form_utils, widgets_utils
 from core.helper.form_utils import SelectedRecrefField
+from core.helper.lang_utils import language_choices
 from core.models import Recref
 from location import location_utils
 from location.models import CofkUnionLocation
@@ -40,6 +41,8 @@ manif_letter_opened_choices = [
     ('p', 'Partially opened'),
     ('u', 'Unopened'),
 ]
+
+
 
 
 class CofkCollectWorkForm(forms.ModelForm):
@@ -187,6 +190,9 @@ class ManifForm(forms.ModelForm):
     non_letter_enclosures = forms.CharField(required=False, widget=forms.Textarea(dict(rows='5')))
     accompaniments = forms.CharField(required=False, widget=forms.Textarea(dict(rows='5')))
 
+    # lang_note = forms.MultipleChoiceField(required=False)
+    # lang_name = forms.MultipleChoiceField(required=False)
+
     # date_of_work_as_marked = forms.CharField(required=False)
     # date_of_work_std_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     # date_of_work_std_year = form_utils.create_year_field()
@@ -216,6 +222,14 @@ class ManifForm(forms.ModelForm):
     handling_instructions = forms.CharField(required=False, widget=forms.Textarea(dict(rows='3')))
     endorsements = forms.CharField(required=False, widget=forms.Textarea(dict(rows='3')))
     non_delivery_reason = forms.CharField(required=False)
+
+    manifestation_is_translation = form_utils.ZeroOneCheckboxField(is_str=False)
+
+    new_language = forms.CharField(required=False, widget=forms.TextInput({
+        'list': 'id_language_list',
+    }))
+
+    language_list = forms.Field(required=False, widget=widgets_utils.Datalist(choices=language_choices))
 
     class Meta:
         model = CofkUnionManifestation
@@ -266,6 +280,8 @@ class ManifForm(forms.ModelForm):
             'handling_instructions',
             'endorsements',
             'non_delivery_reason',
+
+            'manifestation_is_translation',
 
         )
 

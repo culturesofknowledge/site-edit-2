@@ -14,12 +14,13 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_ROUTE, REL_TYPE_FORMERLY_OWNED, \
     REL_TYPE_ENCLOSED_IN, REL_TYPE_COMMENT_RECEIPT_DATE
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm
-from core.helper import view_utils
+from core.helper import view_utils, lang_utils
+from core.helper.lang_utils import LangModelAdapter
 from core.helper.view_utils import DefaultSearchView, FullFormHandler, CommentFormsetHandler
 from core.models import Recref
 from manifestation import manif_utils
 from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, create_manif_id, CofkManifPersonMap, \
-    CofkManifManifMap
+    CofkManifManifMap, CofkUnionLanguageOfManifestation
 from person import person_utils
 from person.models import CofkUnionPerson
 from work import work_utils
@@ -77,13 +78,12 @@ class BasicWorkFFH(FullFormHandler):
         return render(request, self.template_name, context)
 
     def is_invalid(self):
-        # define form_formsets
-        form_formsets = [*self.all_form_formset, ]
-        for h in self.all_recref_handlers:
-            form_formsets.extend([h.new_form, h.update_formset, ])
-
-        # ----- validate
+        form_formsets = (f for f in self.every_form_formset if f.has_changed())
         return view_utils.any_invalid_with_log(form_formsets)
+
+    def prepare_cleaned_data(self):
+        for f in self.every_form_formset:
+            f.is_valid()
 
     def save_work(self, request, work_form: ModelForm):
         # ----- save work
@@ -282,6 +282,12 @@ class ManifFFH(BasicWorkFFH):
             rel_type=REL_TYPE_FORMERLY_OWNED,
         )
 
+        self.edit_lang_formset = lang_utils.create_lang_formset(
+            self.safe_manif.language_set.iterator(),
+            lang_rec_id_name='lang_manif_id',
+            request_data=request_data,
+            prefix='edit_lang')
+
         # comments
         self.add_comment_handler(ManifCommentFormsetHandler(
             prefix='date_comment',
@@ -297,7 +303,6 @@ class ManifFFH(BasicWorkFFH):
         ))
 
         # enclosures
-
         self.enclosure_manif_handler = view_utils.MultiRecrefAdapterHandler(
             request_data, name='enclosure_manif',
             recref_adapter=EnclosureManifRecrefAdapter(self.safe_manif),
@@ -310,7 +315,6 @@ class ManifFFH(BasicWorkFFH):
             recref_form_class=ManifRecrefForm,
             rel_type=REL_TYPE_ENCLOSED_IN,
         )
-
 
     def save(self, request):
 
@@ -325,6 +329,21 @@ class ManifFFH(BasicWorkFFH):
         # comments
         self.save_all_comment_formset(manif.manifestation_id, request)
         self.maintain_all_recref_records(request, manif)
+
+        lang_utils.maintain_lang_records(self.edit_lang_formset,
+                                         lambda pk: CofkUnionLanguageOfManifestation.objects.get(pk=pk))
+
+        lang_utils.add_new_lang_record(request.POST.getlist('lang_note'),
+                                       request.POST.getlist('lang_name'),
+                                       manif.manifestation_id,
+                                       ManifLangModelAdapter(), )
+
+
+class ManifLangModelAdapter(LangModelAdapter):
+    def create_instance_by_owner_id(self, owner_id):
+        m = CofkUnionLanguageOfManifestation()
+        m.manifestation_id = owner_id
+        return m
 
 
 def create_work_person_map_if_field_exist(form: BaseForm, work, username,
@@ -392,6 +411,7 @@ class BasicWorkFormView(LoginRequiredMixin, View):
         fhandler = self.create_fhandler(request, iwork_id=iwork_id, *args, **kwargs)
         if fhandler.is_invalid():
             return fhandler.render_form(request)
+        fhandler.prepare_cleaned_data()
         fhandler.save(request)
         return self.resp_after_saved(request, fhandler)
 

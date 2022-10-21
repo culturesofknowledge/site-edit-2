@@ -518,6 +518,16 @@ class FullFormHandler:
     def all_form_formset(self):
         return (ff for _, ff in self.all_named_form_formset())
 
+    @property
+    def every_form_formset(self):
+        # KTODO can this function replace all_form_formset ??
+        return itertools.chain(
+            self.all_form_formset,
+            itertools.chain.from_iterable(
+                (h.new_form, h.update_formset) for h in self.all_recref_handlers
+            )
+        )
+
     def maintain_all_recref_records(self, request, parent_instance):
         for recref_handler in self.all_recref_handlers:
             recref_handler.maintain_record(request, parent_instance)
