@@ -14,7 +14,7 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_ROUTE, REL_TYPE_FORMERLY_OWNED, \
     REL_TYPE_ENCLOSED_IN, REL_TYPE_COMMENT_RECEIPT_DATE, REL_TYPE_COMMENT_REFERS_TO
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm
-from core.helper import view_utils, lang_utils
+from core.helper import view_utils, lang_utils, model_utils
 from core.helper.lang_utils import LangModelAdapter
 from core.helper.view_utils import DefaultSearchView, FullFormHandler, CommentFormsetHandler, RecrefFormAdapter, \
     ImageHandler
@@ -317,6 +317,17 @@ class ManifFFH(BasicWorkFFH):
 
         self.img_handler = ImageHandler(request_data, request and request.FILES, self.safe_manif.images)
 
+    def create_context(self):
+        context = super().create_context()
+        context['iwork_id'] = self.iwork_id
+        if self.manif:
+            context['manif_id'] = self.manif.manifestation_id
+
+        if work := model_utils.get_safe(CofkUnionWork, iwork_id=self.iwork_id):
+            context['manif_set'] = work.cofkunionmanifestation_set.iterator()
+
+        return context
+
     def save(self, request):
 
         manif: CofkUnionManifestation = self.manif_form.instance
@@ -345,6 +356,11 @@ class ManifFFH(BasicWorkFFH):
                                      recref_adapter=ManifPersonRecrefForm.create_recref_adapter())
         save_multi_rel_recref_formset(self.scribe_recref_formset, manif, request)
         self.img_handler.save(request)
+
+        # handle remove manif list
+        for _manif_id in request.POST.getlist('del_manif_id_list'):
+            log.info(f'del manif -- [{_manif_id}]')
+            get_object_or_404(CofkUnionManifestation, pk=_manif_id).delete()
 
 
 class ManifLangModelAdapter(LangModelAdapter):
@@ -460,7 +476,7 @@ class ManifInitView(BasicManifView):
     def create_fhandler(request, iwork_id=None, *args, **kwargs):
         return ManifFFH(iwork_id, template_name='work/manif_init.html',
                         request_data=request.POST or None,
-                        request=request)
+                        request=request, *args, **kwargs)
 
     @property
     def cur_vname(self):
@@ -468,9 +484,10 @@ class ManifInitView(BasicManifView):
 
 
 class ManifUpdateView(BasicManifView):
+    # KTODO merge to ManifInitView
     @staticmethod
     def create_fhandler(request, iwork_id=None, *args, **kwargs):
-        return ManifFFH(iwork_id, template_name='work/manif_update.html',
+        return ManifFFH(iwork_id, template_name='work/manif_init.html',
                         request_data=request.POST or None,
                         request=request, *args, **kwargs)
 
