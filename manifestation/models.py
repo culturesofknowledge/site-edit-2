@@ -87,6 +87,7 @@ class CofkUnionManifestation(models.Model, RecordTracker):
 
     # relation
     work = models.ForeignKey('work.CofkUnionWork', models.CASCADE, null=True)
+    images = models.ManyToManyField('uploader.CofkUnionImage')
 
     class Meta:
         db_table = 'cofk_union_manifestation'

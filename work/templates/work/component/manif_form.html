@@ -175,6 +175,10 @@
     </div>
     {% include "core/component/recref.html" with recref_type='person' id_field=manif_form.selected_scribe_id label='Add scribe:' %}
 
+</fieldset>
+<fieldset>
+    <legend>Images</legend>
+    {% include "core/component/image_formset.html" with img_handler=img_handler %}
 
 </fieldset>
 
@@ -235,6 +239,7 @@
 <script src="{% static 'core/js/auto_date_calendar.js' %}" defer></script>
 <script>
     $(function () {
+        setup_url_checker()
         new AutoCalendar(
             '#id_manifestation_creation_date_year',
             '#id_manifestation_creation_date_month',

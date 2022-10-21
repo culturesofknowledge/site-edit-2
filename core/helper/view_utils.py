@@ -510,6 +510,10 @@ class FullFormHandler:
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
         raise NotImplementedError()
 
+    def all_image_handlers(self) -> Iterable[tuple[str, ImageHandler]]:
+        return ((name, var) for name, var in self.__dict__.items()
+                if isinstance(var, ImageHandler))
+
     def all_named_form_formset(self) -> Iterable[tuple[str, BaseForm | BaseFormSet]]:
         attr_list = ((name, var) for name, var in self.__dict__.items()
                      if isinstance(var, (BaseForm, BaseFormSet)))
@@ -530,7 +534,10 @@ class FullFormHandler:
             self.all_form_formset,
             itertools.chain.from_iterable(
                 (h.new_form, h.update_formset) for h in self.all_recref_handlers
-            )
+            ),
+            itertools.chain.from_iterable(
+                (h.img_form, h.image_formset) for _, h in self.all_image_handlers()
+            ),
         )
 
     def maintain_all_recref_records(self, request, parent_instance):
@@ -556,6 +563,24 @@ class FullFormHandler:
         # KTODO fix comment_id has_changed problem
         for c in self.comment_handlers:
             c.save(owner_id, request)
+
+    def create_context(self):
+        context = (
+                dict(self.all_named_form_formset())
+                | self.create_all_recref_context()
+        )
+        for _, img_handler in self.all_image_handlers():
+            context.update(img_handler.create_context())
+
+        return context
+
+    def is_invalid(self):
+        form_formsets = (f for f in self.every_form_formset if f.has_changed())
+        return view_utils.any_invalid_with_log(form_formsets)
+
+    def prepare_cleaned_data(self):
+        for f in self.every_form_formset:
+            f.is_valid()
 
 
 def save_m2m_relation_records(forms: Iterable[ModelForm],

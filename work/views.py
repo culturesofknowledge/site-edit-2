@@ -16,7 +16,8 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm
 from core.helper import view_utils, lang_utils
 from core.helper.lang_utils import LangModelAdapter
-from core.helper.view_utils import DefaultSearchView, FullFormHandler, CommentFormsetHandler, RecrefFormAdapter
+from core.helper.view_utils import DefaultSearchView, FullFormHandler, CommentFormsetHandler, RecrefFormAdapter, \
+    ImageHandler
 from core.models import Recref
 from manifestation import manif_utils
 from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, create_manif_id, CofkManifManifMap, \
@@ -70,20 +71,7 @@ class BasicWorkFFH(FullFormHandler):
         self.safe_work = self.work or CofkUnionWork()  # KTODO iwork_id sequence number +1 by this ??
 
     def render_form(self, request):
-
-        context = (
-                dict(self.all_named_form_formset())
-                | self.create_all_recref_context()
-        )
-        return render(request, self.template_name, context)
-
-    def is_invalid(self):
-        form_formsets = (f for f in self.every_form_formset if f.has_changed())
-        return view_utils.any_invalid_with_log(form_formsets)
-
-    def prepare_cleaned_data(self):
-        for f in self.every_form_formset:
-            f.is_valid()
+        return render(request, self.template_name, self.create_context())
 
     def save_work(self, request, work_form: ModelForm):
         # ----- save work
@@ -327,6 +315,8 @@ class ManifFFH(BasicWorkFFH):
             rel_type=REL_TYPE_ENCLOSED_IN,
         )
 
+        self.img_handler = ImageHandler(request_data, request and request.FILES, self.safe_manif.images)
+
     def save(self, request):
 
         manif: CofkUnionManifestation = self.manif_form.instance
@@ -354,6 +344,7 @@ class ManifFFH(BasicWorkFFH):
                                      rel_type=ScribeRelationChoices.HANDWROTE,
                                      recref_adapter=ManifPersonRecrefForm.create_recref_adapter())
         save_multi_rel_recref_formset(self.scribe_recref_formset, manif, request)
+        self.img_handler.save(request)
 
 
 class ManifLangModelAdapter(LangModelAdapter):
