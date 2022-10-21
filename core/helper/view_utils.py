@@ -55,10 +55,12 @@ class RecrefFormAdapter:
     def target_id_name(self):
         raise NotImplementedError()
 
-    def create_recref(self, rel_type, parent_instance, target_instance):
+    def create_recref(self, rel_type, parent_instance, target_instance, username=None):
         recref = self.recref_class()()
         self.set_parent_target_instance(recref, parent_instance, target_instance)
         recref.relationship_type = rel_type
+        if username:
+            recref.update_current_user_timestamp(username)
         return recref
 
 

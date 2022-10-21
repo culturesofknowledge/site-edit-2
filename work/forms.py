@@ -234,6 +234,9 @@ class ManifForm(forms.ModelForm):
     manifestation_incipit = forms.CharField(required=False, widget=forms.Textarea(dict(rows='3')))
     manifestation_excipit = forms.CharField(required=False, widget=forms.Textarea(dict(rows='3')))
 
+    # extra fields
+    selected_scribe_id = forms.CharField(required=False)
+
     class Meta:
         model = CofkUnionManifestation
         fields = (
@@ -305,6 +308,11 @@ class AuthorRelationChoices(TextChoices):
 class AddresseeRelationChoices(TextChoices):
     ADDRESSED_TO = 'was_addressed_to', 'Recipient'
     INTENDED_FOR = 'intended_for', 'Intended recipient'
+
+
+class ScribeRelationChoices(TextChoices):
+    HANDWROTE = 'handwrote', 'Handwrite'
+    PARTLY_HANDWROTE = 'partly_handwrote', 'Partly handwrote'
 
 
 class RelationField(CharField):
@@ -414,9 +422,31 @@ class MultiRelRecrefForm(forms.Form):
         return formset
 
 
-# class TargetPersonRecrefForm(MultiRelRecrefForm):
+class TargetPersonRecrefForm(MultiRelRecrefForm):
+    @property
+    def target_url(self):
+        return get_peron_full_form_url_by_pk(self.initial.get('target_id'))
 
-class WorkPersonRecrefForm(MultiRelRecrefForm):
+    @classmethod
+    def get_target_id(cls, recref):
+        return recref.person_id
+
+
+class ManifPersonRecrefForm(TargetPersonRecrefForm):
+    relationship_types = RelationField(ScribeRelationChoices)
+
+    @classmethod
+    def create_recref_adapter(cls, *args, **kwargs) -> RecrefFormAdapter:
+        return ManifPersonRecrefAdapter(*args, **kwargs)
+
+    def find_recref_list_by_target_id(self, host_model: Model, target_id):
+        return host_model.cofkmanifpersonmap_set.filter(
+            person_id=target_id,
+            relationship_type__in=self.get_rel_type_choices_values(),
+        )
+
+
+class WorkPersonRecrefForm(TargetPersonRecrefForm):
 
     @classmethod
     def create_recref_adapter(cls, *args, **kwargs) -> RecrefFormAdapter:
@@ -427,14 +457,6 @@ class WorkPersonRecrefForm(MultiRelRecrefForm):
             person_id=target_id,
             relationship_type__in=self.get_rel_type_choices_values(),
         )
-
-    @property
-    def target_url(self):
-        return get_peron_full_form_url_by_pk(self.initial.get('target_id'))
-
-    @classmethod
-    def get_target_id(cls, recref):
-        return recref.person_id
 
 
 class TargetPersonRecrefAdapter(view_utils.RecrefFormAdapter, ABC):

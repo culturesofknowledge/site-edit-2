@@ -16,7 +16,7 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm
 from core.helper import view_utils, lang_utils
 from core.helper.lang_utils import LangModelAdapter
-from core.helper.view_utils import DefaultSearchView, FullFormHandler, CommentFormsetHandler
+from core.helper.view_utils import DefaultSearchView, FullFormHandler, CommentFormsetHandler, RecrefFormAdapter
 from core.models import Recref
 from manifestation import manif_utils
 from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, create_manif_id, CofkManifManifMap, \
@@ -25,7 +25,7 @@ from person.models import CofkUnionPerson
 from work import work_utils
 from work.forms import WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \
-    ManifPersonRecrefAdapter
+    ManifPersonRecrefAdapter, ManifPersonRecrefForm, ScribeRelationChoices
 from work.models import CofkWorkPersonMap, CofkUnionWork, create_work_id, CofkWorkComment, CofkWorkWorkMap, \
     CofkWorkLocationMap
 
@@ -281,6 +281,11 @@ class ManifFFH(BasicWorkFFH):
             recref_form_class=PersonRecrefForm,
             rel_type=REL_TYPE_FORMERLY_OWNED,
         )
+        self.scribe_recref_formset = ManifPersonRecrefForm.create_formset_by_records(
+            request_data,
+            self.safe_manif.cofkmanifpersonmap_set.iterator(),
+            prefix='scribe'
+        )
 
         self.edit_lang_formset = lang_utils.create_lang_formset(
             self.safe_manif.language_set.iterator(),
@@ -344,6 +349,10 @@ class ManifFFH(BasicWorkFFH):
                                        manif.manifestation_id,
                                        ManifLangModelAdapter(), )
 
+        create_recref_if_field_exist(self.manif_form, manif, request.user.username,
+                                     selected_id_field_name='selected_scribe_id',
+                                     rel_type=ScribeRelationChoices.HANDWROTE,
+                                     recref_adapter=ManifPersonRecrefForm.create_recref_adapter())
         save_multi_rel_recref_formset(self.scribe_recref_formset, manif, request)
 
 
@@ -352,6 +361,22 @@ class ManifLangModelAdapter(LangModelAdapter):
         m = CofkUnionLanguageOfManifestation()
         m.manifestation_id = owner_id
         return m
+
+
+def create_recref_if_field_exist(form: BaseForm, work, username,
+                                 selected_id_field_name,
+                                 rel_type,
+                                 recref_adapter: RecrefFormAdapter,
+                                 ):
+    if not (_id := form.cleaned_data.get(selected_id_field_name)):
+        return
+
+    recref = recref_adapter.create_recref(rel_type,
+                                          parent_instance=work,
+                                          target_instance=recref_adapter.find_target_instance(_id),
+                                          username=username)
+    recref.save()
+    return recref
 
 
 def create_work_person_map_if_field_exist(form: BaseForm, work, username,

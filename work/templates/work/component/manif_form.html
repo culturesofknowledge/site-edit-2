@@ -161,9 +161,20 @@
 
 </fieldset>
 
+{% include "core/component/comment_publication_formset.html" with comment_formset=manif_comment_formset comment_title='Notes on manifestation' %}
+
 
 <fieldset>
-    <legend> Notes on manifestation </legend>
+    <legend>Scribe/hand</legend>
+
+    <div class="multi_rel_recref_container">
+        {{ scribe_recref_formset.management_form }}
+        {% for form in scribe_recref_formset %}
+            {{ form }}
+        {% endfor %}
+    </div>
+    {% include "core/component/recref.html" with recref_type='person' id_field=manif_form.selected_scribe_id label='Add scribe:' %}
+
 
 </fieldset>
 
