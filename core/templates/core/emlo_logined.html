@@ -5,6 +5,11 @@
     <nav class="flex-space-between">
         <!-- TODO value of  href to be define  -->
         <ul class="no-padding no-margin">
+            {% if request.path != '/login/dashboard'  %}
+            <li class="menu-item">
+                <a href="/"><i data-feather="home"></i></a>
+            </li>
+            {% endif %}
             <li class="menu-item">
                 <a href="/works/">Works</a>
             </li>
@@ -14,6 +19,17 @@
             {% include "core/component/common_section_menu_item.html" with search_vname='publication:search' init_vname='publication:init_form' section_name='Publications' singular='publication' %}
         </ul>
         <ul class="no-margin">
+            <li class="menu-item">
+                <a href="{% url 'uploader:upload_form' %}">Uploads</a>
+                <ul class='unstyled-list no-margin menu-subitem'>
+                    <a href=''>
+                        <li> Search</li>
+                    </a>
+                    <a href=''>
+                        <li>Add a new {{ singular }}</li>
+                    </a>
+                </ul>
+            </li>
             <li class="menu-item">
                 <a href="/audit/">Audit</a>
             </li>

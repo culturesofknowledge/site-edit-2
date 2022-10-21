@@ -3,7 +3,7 @@
 {% block content %}
 
     <h1> {{ title }} </h1>
-    <button id="fieldset-toggle">Toggle</button>
+    <button id="fieldset-toggle" class="btn">Toggle</button>
 
     {% for to_user_msg in to_user_messages %}
         <h1>{{ to_user_msg }}</h1>
@@ -23,7 +23,7 @@
                     {{ query_fieldset }}
                 {% endfor %}
                 <div class="flex-col sticky-bottom">
-                    <button type="submit" name="__form_action" value="search">Search</button>
+                    <button type="submit" name="__form_action" value="search" class="btn">Search</button>
                 </div>
             </aside>
 
