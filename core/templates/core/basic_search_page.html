@@ -23,13 +23,13 @@
                     {{ query_fieldset }}
                 {% endfor %}
                 <div class="flex-col sticky-bottom">
-                    <button type="submit" name="__form_action" value="search" class="btn">Search</button>
+                    <button type="submit" name="__form_action" value="search" class="sticky-btn">Search</button>
                 </div>
             </aside>
 
 
             <div id="query-result" class="col col--2of3">
-                <h2>{{ total_record | floatformat:'g' }} {{ title }}s found</h2>
+                <h2>{{ total_record | floatformat:'g' }} {{ total_record|pluralize:entity }} found</h2>
 
                 <!-- Search components (e.g. sort by, records per page) -->
                 {{ search_components }}

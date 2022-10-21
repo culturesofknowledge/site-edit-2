@@ -241,8 +241,8 @@ def full_form(request, iperson_id):
 class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
-    def title(self) -> str:
-        return 'Person'
+    def entity(self) -> str:
+        return 'person,people'
 
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
