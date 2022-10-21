@@ -531,6 +531,11 @@ input, select, textarea {
 label + input {
   display: block; }
 
+input[type="submit"] {
+  cursor: pointer;
+  background-color: #24201e;
+  color: white; }
+
 button {
   padding: calc(.5 * 1rem) calc(.75 * 1rem);
   cursor: pointer;
@@ -584,7 +589,8 @@ input[type="radio"] + label {
   transition: 200ms all ease-in-out; }
   .btn:hover, .btn:focus, .btn:active {
     background-color: rgba(36, 32, 30, 0.15);
-    border-color: rgba(36, 32, 30, 0.15); }
+    border-color: rgba(36, 32, 30, 0.15);
+    color: #24201e; }
 
 .btn--primary {
   background-color: #172854;
@@ -706,6 +712,9 @@ input[type="radio"] + label {
 .inline_btn {
   display: inline; }
 
+tr.selectable_entry:hover {
+  background: #f2f2f2; }
+
 .selectable_entry.selected {
   background-color: gray; }
 
@@ -776,9 +785,14 @@ input[type="radio"] + label {
     margin-right: calc(.5 * 1rem); }
 
 .ref-publication-row {
-  margin: calc(.25 * 1rem); }
+  margin: calc(.25 * 1rem);
+  /*button:hover {
+    background-color: $light-grey;
+    color: $black;
+  }*/ }
   .ref-publication-row button {
-    margin-left: calc(.5 * 1rem); }
+    margin-left: calc(.5 * 1rem);
+    margin-right: calc(.5 * 1rem); }
 
 .flex-row-wrap {
   display: flex;
