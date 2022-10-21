@@ -55,6 +55,12 @@ class RecrefFormAdapter:
     def target_id_name(self):
         raise NotImplementedError()
 
+    def create_recref(self, rel_type, parent_instance, target_instance):
+        recref = self.recref_class()()
+        self.set_parent_target_instance(recref, parent_instance, target_instance)
+        recref.relationship_type = rel_type
+        return recref
+
 
 class BasicSearchView(ListView):
     """
@@ -414,10 +420,7 @@ class MultiRecrefAdapterHandler(MultiRecrefHandler):
             log.warning(f"create recref fail, work not found -- {target_id} ")
             return None
 
-        recref = self.recref_class()
-        self.recref_adapter.set_parent_target_instance(recref, parent_instance, target_instance)
-        recref.relationship_type = self.rel_type
-        return recref
+        return self.recref_adapter.create_recref(self.rel_type, parent_instance, target_instance)
 
 
 def save_formset(forms: Iterable[ModelForm],

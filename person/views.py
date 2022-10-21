@@ -96,7 +96,7 @@ class OrganisationRecrefConvertor:
 
 
 class PersonRecrefHandler(view_utils.MultiRecrefHandler):
-    warnings.warn('replace by PersonRecrefHandler2', DeprecationWarning)
+    # KTODO use view_utils.MultiRecrefAdapterHandler
 
     def __init__(self, request_data, person_type: str,
                  person: CofkUnionPerson,

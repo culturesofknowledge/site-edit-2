@@ -1,19 +1,21 @@
 import logging
+from abc import ABC
 from typing import Iterable, Type
 
 from django import forms
 from django.db.models import TextChoices, Choices, Model
 from django.forms import CharField
-from django.shortcuts import get_object_or_404
 
 from core.forms import get_peron_full_form_url_by_pk
 from core.helper import view_utils, data_utils, form_utils, widgets_utils
 from core.helper.form_utils import SelectedRecrefField
 from core.helper.lang_utils import language_choices
+from core.helper.view_utils import RecrefFormAdapter
 from core.models import Recref
 from location import location_utils
 from location.models import CofkUnionLocation
-from manifestation.models import CofkUnionManifestation
+from manifestation.models import CofkUnionManifestation, CofkManifPersonMap
+from person import person_utils
 from person.models import CofkUnionPerson
 from work.models import CofkCollectWork, CofkUnionWork, CofkWorkPersonMap
 
@@ -41,8 +43,6 @@ manif_letter_opened_choices = [
     ('p', 'Partially opened'),
     ('u', 'Unopened'),
 ]
-
-
 
 
 class CofkCollectWorkForm(forms.ModelForm):
@@ -234,7 +234,6 @@ class ManifForm(forms.ModelForm):
     manifestation_incipit = forms.CharField(required=False, widget=forms.Textarea(dict(rows='3')))
     manifestation_excipit = forms.CharField(required=False, widget=forms.Textarea(dict(rows='3')))
 
-
     class Meta:
         model = CofkUnionManifestation
         fields = (
@@ -344,6 +343,10 @@ class MultiRelRecrefForm(forms.Form):
     relationship_types = RelationField(UndefinedRelationChoices)
 
     @classmethod
+    def create_recref_adapter(cls, *args, **kwargs) -> RecrefFormAdapter:
+        raise NotImplementedError()
+
+    @classmethod
     def get_rel_type_choices_values(cls):
         return cls.base_fields['relationship_types'].choices_class.values
 
@@ -352,20 +355,10 @@ class MultiRelRecrefForm(forms.Form):
         raise NotImplementedError()
 
     @classmethod
-    def get_target_name(cls, recref: Recref):
-        raise NotImplementedError()
-
-    @classmethod
     def get_target_id(cls, recref: Recref):
         raise NotImplementedError()
 
     def find_recref_list_by_target_id(self, host_model: Model, target_id):
-        raise NotImplementedError()
-
-    def find_target_model(self, target_id):
-        raise NotImplementedError()
-
-    def create_recref(self, host_model, target_model) -> Recref:
         raise NotImplementedError()
 
     def create_or_delete(self, host_model: Model, username):
@@ -376,6 +369,7 @@ class MultiRelRecrefForm(forms.Form):
             logging.warning(f'[{self.__class__.__name__}] do nothing is invalid')
             return
 
+        recref_adapter = self.create_recref_adapter(host_model)
         data: dict = self.cleaned_data
         selected_rel_types = set(data['relationship_types'])
 
@@ -389,23 +383,25 @@ class MultiRelRecrefForm(forms.Form):
 
         # add checked relation
         new_types = selected_rel_types - {m.relationship_type for m in org_maps}
-        target_model = self.find_target_model(data['target_id'])
+        target_model = recref_adapter.find_target_instance(data['target_id'])
         for new_type in new_types:
-            work_person_map = self.create_recref(host_model, target_model)
-            work_person_map.relationship_type = new_type
-            work_person_map.update_current_user_timestamp(username)
-            work_person_map.save()
-            log.info(f'add new [{target_model}][{work_person_map}]')
+            recref = recref_adapter.create_recref(new_type, host_model, target_model)
+            recref.update_current_user_timestamp(username)
+            recref.save()
+            log.info(f'add new [{target_model}][{recref}]')
 
     @classmethod
     def create_formset_by_records(cls, post_data,
                                   records: Iterable[Recref], prefix):
         initial_list = []
+        recref_adapter = cls.create_recref_adapter()
         records = (r for r in records if r.relationship_type in cls.get_rel_type_choices_values())
         for person_id, recref_list in data_utils.group_by(records, lambda r: cls.get_target_id(r)).items():
             recref_list: list[Recref]
             initial_list.append({
-                'name': cls.get_target_name(recref_list[0]),
+                'name': recref_adapter.find_target_display_name_by_id(
+                    getattr(recref_list[0], recref_adapter.target_id_name())
+                ),
                 'target_id': person_id,
                 'relationship_types': {m.relationship_type for m in recref_list},
             })
@@ -418,7 +414,13 @@ class MultiRelRecrefForm(forms.Form):
         return formset
 
 
+# class TargetPersonRecrefForm(MultiRelRecrefForm):
+
 class WorkPersonRecrefForm(MultiRelRecrefForm):
+
+    @classmethod
+    def create_recref_adapter(cls, *args, **kwargs) -> RecrefFormAdapter:
+        return WorkPersonRecrefAdapter(*args, **kwargs)
 
     def find_recref_list_by_target_id(self, host_model: Model, target_id):
         return host_model.cofkworkpersonmap_set.filter(
@@ -431,21 +433,80 @@ class WorkPersonRecrefForm(MultiRelRecrefForm):
         return get_peron_full_form_url_by_pk(self.initial.get('target_id'))
 
     @classmethod
-    def get_target_name(cls, recref):
-        return recref.person.foaf_name
-
-    @classmethod
     def get_target_id(cls, recref):
         return recref.person_id
 
-    def find_target_model(self, target_id):
-        return get_object_or_404(CofkUnionPerson, pk=target_id)
 
-    def create_recref(self, host_model, target_model) -> Recref:
-        work_person_map = CofkWorkPersonMap()
-        work_person_map.work = host_model
-        work_person_map.person = target_model
-        return work_person_map
+class TargetPersonRecrefAdapter(view_utils.RecrefFormAdapter, ABC):
+    def find_target_display_name_by_id(self, target_id):
+        return person_utils.get_recref_display_name(self.find_target_instance(target_id))
+
+    def find_target_instance(self, target_id):
+        return CofkUnionPerson.objects.get(person_id=target_id)
+
+
+class WorkPersonRecrefAdapter(TargetPersonRecrefAdapter):
+
+    def __init__(self, recref=None):
+        self.recref: CofkUnionWork = recref
+
+    def recref_class(self) -> Type[Recref]:
+        return CofkWorkPersonMap
+
+    def set_parent_target_instance(self, recref, parent, target):
+        recref.work = parent
+        recref.person = target
+
+    def find_recref_records(self, rel_type):
+        return self.recref.cofkworkpersonmap_set.filter(relationship_type=rel_type).iterator()
+
+    def target_id_name(self):
+        return 'person_id'
+
+
+class ManifPersonRecrefAdapter(TargetPersonRecrefAdapter):
+
+    def __init__(self, recref=None):
+        self.recref: CofkUnionManifestation = recref
+
+    def recref_class(self) -> Type[Recref]:
+        return CofkManifPersonMap
+
+    def set_parent_target_instance(self, recref, parent, target):
+        recref.manifestation = parent
+        recref.person = target
+
+    def find_recref_records(self, rel_type):
+        return self.recref.cofkmanifpersonmap_set.filter(relationship_type=rel_type).iterator()
+
+    def target_id_name(self):
+        return 'person_id'
+
+
+# class ManifPersonRecrefForm(MultiRelRecrefForm):
+#     recref_adapter = ManifPersonRecrefAdapter(None)
+#
+#     @property
+#     def target_url(self):
+#         return get_peron_full_form_url_by_pk(self.initial.get('target_id'))
+#
+#     @classmethod
+#     def get_target_name(cls, recref: Recref):
+#         return person_utils.get_recref_display_name(recref)
+#
+#     @classmethod
+#     def get_target_id(cls, recref: Recref):
+#         cls.recref_adapter.target_id_name()
+#         pass
+#
+#     def find_recref_list_by_target_id(self, host_model: Model, target_id):
+#         pass
+#
+#     def find_target_model(self, target_id):
+#         pass
+#
+#     def create_recref(self, host_model, target_model) -> Recref:
+#         pass
 
 
 class WorkAuthorRecrefForm(WorkPersonRecrefForm):
