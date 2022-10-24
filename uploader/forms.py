@@ -14,5 +14,6 @@ class CofkCollectUploadForm(forms.ModelForm):
         fields = ('upload_file', )
         # exclude = ['_id']
         widgets = {
-            'upload_file': forms.FileInput(attrs={'accept': excelMimeTypes})
+            'upload_file': forms.FileInput(attrs={'accept': excelMimeTypes,
+                                                  'class': 'btn'})
         }

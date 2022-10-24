@@ -91,6 +91,8 @@
 
                 {{ results_renderer | safe }}
 
+                {% include 'core/component/pagination.html' %}
+
                 {% endif %}
 
             </div>
@@ -102,19 +104,8 @@
     <form id="merge_form" action="{{ merge_page_url }}"></form>
 
     <!-- Pagination -->
-    <div class="pagination">
-    <span class="page-links">
-        {% if page_obj.has_previous %}
-            <a id="id_previous_page" href="#!" page="{{ page_obj.previous_page_number }}"> previous </a>
-        {% endif %}
-        <span class="page-current">
-            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
-        </span>
-        {% if page_obj.has_next %}
-            <a id="id_next_page" href="#!" page="{{ page_obj.next_page_number }}">next</a>
-        {% endif %}
-    </span>
-    </div>
+
+
 
     <!-- script -->
     <script>

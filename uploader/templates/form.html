@@ -2,13 +2,15 @@
 
 {% block content %}
 
-<form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
+<div style="width: 300px">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
 
-    {{ form.as_p }}
+        {{ form.upload_file }}
 
-    <input type="submit">
-</form>
+        <button type="submit" class="btn" style="width: 300px;">Upload</button>
+    </form>
+</div>
 
 {% if report %}
 <ol class="unstyled-list">
@@ -73,7 +75,7 @@
 </ol>
 {% endif %}
 
-<table border="1" class="uploads">
+<table>
     <tr>
         <th>ID</th>
         <th>Date/time</th>
@@ -97,7 +99,7 @@
         <td>{{ upload.works_accepted }}</td>
         <td>{{ upload.works_rejected }}</td>
         <td>{{ upload.upload_status }}</td>
-        <td><form action="/upload/{{ upload.upload_id }}"><input type="submit" value="Review"></form></td>
+        <td><form action="/upload/{{ upload.upload_id }}"><button type="submit" class="btn">Review</button></form></td>
         <!--<td><input type="button" value="Export"></td>-->
 
     </tr>
