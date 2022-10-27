@@ -21,6 +21,7 @@ from person.models import CofkPersonLocationMap, CofkUnionPerson, SEQ_NAME_COFKU
     CofkPersonPersonMap
 from uploader.models import CofkCollectStatus, Iso639LanguageCode, CofkLookupCatalogue
 from uploader.models import CofkUnionOrgType, CofkUnionImage
+from work.models import CofkUnionWork
 
 log = logging.getLogger(__name__)
 
@@ -400,6 +401,14 @@ def _val_handler_person__organisation_type(row: dict):
     return row
 
 
+def _val_handler_work__catalogue(row: dict):
+    if row['original_catalogue']:
+        row['original_catalogue'] = CofkLookupCatalogue.objects.get(catalogue_code=row['original_catalogue'])
+    else:
+        row['original_catalogue'] = None
+    return row
+
+
 def data_migration(user, password, database, host, port):
     warnings.filterwarnings('ignore',
                             '.*DateTimeField .+ received a naive datetime .+ while time zone support is active.*')
@@ -446,6 +455,9 @@ def data_migration(user, password, database, host, port):
                                                CofkPersonPersonMap.related),
                               CofkPersonPersonMapFieldVal(),
                               ),
+
+        # ### Work
+        lambda: clone_rows_by_model_class(conn, CofkUnionWork, col_val_handler_fn_list=[_val_handler_work__catalogue]),
     ]
 
     for fn in clone_action_fn_list:
