@@ -668,6 +668,14 @@ input[type="radio"] + label {
 .search-results__abstract {
   color: rgba(36, 32, 30, 0.75); }
 
+.alert-octagon {
+  width: 24px;
+  height: 38px;
+  stroke: red;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round; }
+
 .page-header {
   margin: 0 -1.5vw calc(1.5 * 1rem);
   padding: calc(.5 * 1rem) 0; }

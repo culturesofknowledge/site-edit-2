@@ -1,6 +1,7 @@
 import logging
 from abc import ABC
-from typing import Optional, Type
+from collections.abc import Callable
+from typing import Optional, Type, Iterable
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -13,7 +14,7 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_WORK_MATCHES, REL_TYPE_COMMENT_DATE, REL_TYPE_WAS_SENT_FROM, REL_TYPE_COMMENT_ORIGIN, \
     REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_ROUTE, REL_TYPE_FORMERLY_OWNED
 from core.forms import WorkRecrefForm, PersonRecrefForm
-from core.helper import view_utils
+from core.helper import view_utils, renderer_utils, query_utils
 from core.helper.view_utils import DefaultSearchView, FullFormHandler, CommentFormsetHandler
 from core.models import Recref
 from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, create_manif_id, CofkManifPersonMap
@@ -21,7 +22,7 @@ from person import person_utils
 from person.models import CofkUnionPerson
 from work import work_utils
 from work.forms import WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
-    AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm
+    AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, GeneralSearchFieldset
 from work.models import CofkWorkPersonMap, CofkUnionWork, create_work_id, CofkWorkComment, CofkWorkWorkMap, \
     CofkWorkLocationMap
 
@@ -475,13 +476,48 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     def title(self) -> str:
         return 'Work'
 
+    @property
+    def sort_by_choices(self) -> list[tuple[str, str]]:
+        return [
+            ('-date_of_work_as_marked', 'Date for ordering desc',),
+            ('date_of_work_as_marked', 'Date for ordering asc',),
+        ]
+
     def get_queryset(self):
-        queryset = CofkUnionPerson.objects.all()
+        queryset = CofkUnionWork.objects.all()
+
+        field_fn_maps = {}
+
+        queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
+        queries.extend(
+            query_utils.create_queries_by_lookup_field(self.request_data, [
+               'description', 'iwork_id'
+            ])
+        )
+
+        if queries:
+            queryset = queryset.filter(query_utils.all_queries_match(queries))
+
+        if sort_by := self.get_sort_by():
+            queryset = queryset.order_by(sort_by)
         return queryset
+
+    @property
+    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+        return renderer_utils.create_table_search_results_renderer('work/search_table_layout.html')
 
     @property
     def return_quick_init_vname(self) -> str:
         return 'work:return_quick_init'
+
+    @property
+    def query_fieldset_list(self) -> Iterable:
+        default_values = {
+            'foaf_name_lookup': 'starts_with',
+        }
+        request_data = default_values | self.request_data.dict()
+
+        return [GeneralSearchFieldset(request_data)]
 
 
 def find_work_rec_name(work_id) -> Optional[str]:

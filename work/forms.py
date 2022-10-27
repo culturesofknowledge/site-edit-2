@@ -7,7 +7,7 @@ from django.forms import CharField
 from django.shortcuts import get_object_or_404
 
 from core.forms import get_peron_full_form_url_by_pk
-from core.helper import view_utils, data_utils, form_utils
+from core.helper import view_utils, data_utils, form_utils, widgets_utils
 from core.helper.form_utils import SelectedRecrefField
 from core.models import Recref
 from location import location_utils
@@ -387,3 +387,53 @@ class WorkAuthorRecrefForm(WorkPersonRecrefForm):
 
 class WorkAddresseeRecrefForm(WorkPersonRecrefForm):
     relationship_types = RelationField(AddresseeRelationChoices)
+
+
+class GeneralSearchFieldset(forms.Form):
+    title = 'General'
+    template_name = 'work/component/work_search_fieldset.html'
+
+    description = forms.CharField(required=False)
+    description_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    iwork_id = forms.IntegerField(required=False)
+    iwork_id_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
+
+    foaf_name = forms.CharField(required=False)
+    foaf_name_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    birth_year_from = form_utils.create_year_field()
+    birth_year_to = form_utils.create_year_field()
+
+    death_year_from = form_utils.create_year_field()
+    death_year_to = form_utils.create_year_field()
+
+    flourished_year_from = form_utils.create_year_field()
+    flourished_year_to = form_utils.create_year_field()
+
+    gender = forms.CharField(required=False, widget=forms.Select(
+        choices=[
+            (None, 'All'),
+            ('M', 'Male'),
+            ('F', 'Female'),
+            ('U', 'Unknown or not applicable'),
+        ]
+    ))
+
+    person_or_group = forms.CharField(required=False, widget=forms.Select(choices=[
+        (None, 'All'),
+        ('P', 'Person'),
+        ('G', 'Group'),
+    ]))
+
+    editors_notes = forms.CharField(required=False)
+    editors_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    further_reading = forms.CharField(required=False)
+    further_reading_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    change_timestamp_from = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
+    change_timestamp_to = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
+
+    change_user = forms.CharField(required=False)
+    change_user_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)

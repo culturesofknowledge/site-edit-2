@@ -1,0 +1,10 @@
+{% load exclamation %}
+
+{% if work|exclamation != '' %}
+
+<div style="width: 38px;" data-tippy-content="{{ work|exclamation }}">
+    <span class="alert-octagon" data-feather="alert-octagon" aria-hidden="true"></span>
+
+</div>
+
+{% endif %}
