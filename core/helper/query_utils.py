@@ -93,6 +93,8 @@ choices_lookup_map = {
     'not_equal_to': cond_not(lookups.Exact),
     'is_blank': is_blank,
     'not_blank': cond_not(is_blank),
+    'less_than': lookups.LessThan,
+    'greater_than': lookups.GreaterThan,
     None: lookups.Exact,
     '': lookups.Exact,
 }
