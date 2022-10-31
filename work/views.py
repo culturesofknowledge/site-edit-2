@@ -602,18 +602,6 @@ def find_work_rec_name(work_id) -> Optional[str]:
     return work_utils.get_recref_display_name(CofkUnionWork.objects.get(work_id=work_id))
 
 
-class WorkWorkRecrefAdapter(view_utils.RecrefFormAdapter, ABC):
-
-    def find_target_display_name_by_id(self, target_id):
-        return find_work_rec_name(target_id)
-
-    def recref_class(self) -> Type[Recref]:
-        return CofkWorkWorkMap
-
-    def find_target_instance(self, target_id):
-        return CofkUnionWork.objects.get(work_id=target_id)
-
-
 class WorkLocRecrefAdapter(RecrefFormAdapter):
     def __init__(self, parent):
         self.parent: CofkUnionWork = parent
@@ -637,6 +625,18 @@ class WorkLocRecrefAdapter(RecrefFormAdapter):
 
     def target_id_name(self):
         return 'location_id'
+
+
+class WorkWorkRecrefAdapter(view_utils.RecrefFormAdapter, ABC):
+
+    def find_target_display_name_by_id(self, target_id):
+        return find_work_rec_name(target_id)
+
+    def recref_class(self) -> Type[Recref]:
+        return CofkWorkWorkMap
+
+    def find_target_instance(self, target_id):
+        return CofkUnionWork.objects.get(work_id=target_id)
 
 
 class EarlierLetterRecrefAdapter(WorkWorkRecrefAdapter):
