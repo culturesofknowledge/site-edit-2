@@ -9,8 +9,8 @@ urlpatterns = [
     path(f'form/<int:iwork_id>/corr', views.CorrView.as_view(), name='corr_form'),
     path(f'form/<int:iwork_id>/dates', views.DatesView.as_view(), name='dates_form'),
     path(f'form/<int:iwork_id>/places', views.PlacesView.as_view(), name='places_form'),
-    path(f'form/<int:iwork_id>/manif', views.ManifInitView.as_view(), name='manif_init'),
-    path(f'form/<int:iwork_id>/manif/<str:manif_id>', views.ManifUpdateView.as_view(), name='manif_update'),
+    path(f'form/<int:iwork_id>/manif', views.ManifView.as_view(), name='manif_init'),
+    path(f'form/<int:iwork_id>/manif/<str:manif_id>', views.ManifView.as_view(), name='manif_update'),
 ]
 urlpatterns.extend(
     url_utils.create_common_urls_for_section(

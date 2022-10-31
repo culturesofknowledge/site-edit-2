@@ -521,41 +521,25 @@ class BasicWorkFormView(LoginRequiredMixin, View):
         return self.create_fhandler(request, iwork_id, *args, **kwargs).render_form(request)
 
 
-class BasicManifView(BasicWorkFormView, ABC):
+class ManifView(BasicWorkFormView):
+    @property
+    def cur_vname(self):
+        return 'work:manif_init'
+
+    @staticmethod
+    def create_fhandler(request, iwork_id=None, *args, **kwargs):
+        return ManifFFH(iwork_id, template_name='work/manif_base.html',
+                        request_data=request.POST or None,
+                        request=request, *args, **kwargs)
 
     def resp_after_saved(self, request, fhandler):
         if goto := request.POST.get('__goto'):
-            vname = self.goto_vname_map.get(goto, self.cur_vname)
+            vname = self.goto_vname_map.get(goto, 'work:manif_init')
             return redirect(vname, fhandler.iwork_id)
 
         return redirect('work:manif_update',
                         fhandler.manif_form.instance.work.iwork_id,
                         fhandler.manif_form.instance.manifestation_id)
-
-
-class ManifInitView(BasicManifView):
-    @staticmethod
-    def create_fhandler(request, iwork_id=None, *args, **kwargs):
-        return ManifFFH(iwork_id, template_name='work/manif_init.html',
-                        request_data=request.POST or None,
-                        request=request, *args, **kwargs)
-
-    @property
-    def cur_vname(self):
-        return 'work:manif_init'
-
-
-class ManifUpdateView(BasicManifView):
-    # KTODO merge to ManifInitView
-    @staticmethod
-    def create_fhandler(request, iwork_id=None, *args, **kwargs):
-        return ManifFFH(iwork_id, template_name='work/manif_init.html',
-                        request_data=request.POST or None,
-                        request=request, *args, **kwargs)
-
-    @property
-    def cur_vname(self):
-        return 'work:manif_update'
 
 
 class CorrView(BasicWorkFormView):
