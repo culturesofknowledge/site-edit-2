@@ -154,5 +154,15 @@ class CofkManifManifMap(Recref):
         db_table = 'cofk_manif_manif_map'
 
 
+class CofkManifInstMap(Recref):
+    manif = models.ForeignKey(CofkUnionManifestation,
+                              on_delete=models.CASCADE)
+    inst = models.ForeignKey("institution.CofkUnionInstitution",
+                             on_delete=models.CASCADE)
+
+    class Meta(Recref.Meta):
+        db_table = 'cofk_manif_inst_map'
+
+
 def create_manif_id(iwork_id) -> str:
     return f'W{iwork_id}-{model_utils.next_seq_safe("cofk_union_manif_manif_id_seq")}'

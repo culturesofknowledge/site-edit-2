@@ -12,18 +12,20 @@ from django.views import View
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_WORK_IS_REPLY_TO, \
     REL_TYPE_WORK_MATCHES, REL_TYPE_COMMENT_DATE, REL_TYPE_WAS_SENT_FROM, REL_TYPE_COMMENT_ORIGIN, \
     REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_ROUTE, REL_TYPE_FORMERLY_OWNED, \
-    REL_TYPE_ENCLOSED_IN, REL_TYPE_COMMENT_RECEIPT_DATE, REL_TYPE_COMMENT_REFERS_TO
+    REL_TYPE_ENCLOSED_IN, REL_TYPE_COMMENT_RECEIPT_DATE, REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_STORED_IN
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm
 from core.helper import view_utils, lang_utils, model_utils, recref_utils
 from core.helper.lang_utils import LangModelAdapter
 from core.helper.view_utils import DefaultSearchView, FullFormHandler, CommentFormsetHandler, RecrefFormAdapter, \
     ImageHandler
 from core.models import Recref
+from institution import inst_utils
+from institution.models import CofkUnionInstitution
 from location import location_utils
 from location.models import CofkUnionLocation
 from manifestation import manif_utils
 from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, create_manif_id, CofkManifManifMap, \
-    CofkUnionLanguageOfManifestation
+    CofkUnionLanguageOfManifestation, CofkManifInstMap
 from person.models import CofkUnionPerson
 from work import work_utils
 from work.forms import WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
@@ -309,10 +311,22 @@ class ManifFFH(BasicWorkFFH):
             self.manif = get_object_or_404(CofkUnionManifestation, manifestation_id=manif_id)
         else:
             self.manif = None
+
+        self.inst_handler = SingleRecrefHandler(
+            form_field_name='selected_inst_id',
+            rel_type=REL_TYPE_STORED_IN,
+            create_recref_adapter_fn=ManifInstRecrefAdapter,
+        )
+
         self.safe_manif = self.manif or CofkUnionManifestation()
 
+        manif_form_initial = {}
+        if self.manif is not None:
+            manif_form_initial.update(
+                self.inst_handler.create_init_dict(self.manif)
+            )
         self.manif_form = ManifForm(request_data or None,
-                                    instance=self.manif)
+                                    instance=self.manif, initial=manif_form_initial)
 
         self.former_recref_handler = view_utils.MultiRecrefAdapterHandler(
             request_data, name='former',
@@ -412,6 +426,9 @@ class ManifFFH(BasicWorkFFH):
         for _manif_id in request.POST.getlist('del_manif_id_list'):
             log.info(f'del manif -- [{_manif_id}]')
             get_object_or_404(CofkUnionManifestation, pk=_manif_id).delete()
+
+        self.inst_handler.upsert_recref_if_field_exist(
+            self.manif_form, manif, request.user.username)
 
 
 class ManifLangModelAdapter(LangModelAdapter):
@@ -603,7 +620,7 @@ def find_work_rec_name(work_id) -> Optional[str]:
 
 
 class WorkLocRecrefAdapter(RecrefFormAdapter):
-    def __init__(self, parent):
+    def __init__(self, parent=None):
         self.parent: CofkUnionWork = parent
 
     def find_target_display_name_by_id(self, target_id):
@@ -613,7 +630,7 @@ class WorkLocRecrefAdapter(RecrefFormAdapter):
         return CofkWorkLocationMap
 
     def find_target_instance(self, target_id):
-        return CofkUnionLocation.objects.get(location_id=target_id)
+        return model_utils.get_safe(CofkUnionLocation, location_id=target_id)
 
     def set_parent_target_instance(self, recref, parent, target):
         recref: CofkWorkLocationMap
@@ -625,6 +642,31 @@ class WorkLocRecrefAdapter(RecrefFormAdapter):
 
     def target_id_name(self):
         return 'location_id'
+
+
+class ManifInstRecrefAdapter(RecrefFormAdapter):
+    def __init__(self, parent=None):
+        self.parent: CofkUnionManifestation = parent
+
+    def find_target_display_name_by_id(self, target_id):
+        return inst_utils.get_recref_display_name(self.find_target_instance(target_id))
+
+    def recref_class(self) -> Type[Recref]:
+        return CofkManifInstMap
+
+    def find_target_instance(self, target_id):
+        return model_utils.get_safe(CofkUnionInstitution, institution_id=target_id)
+
+    def set_parent_target_instance(self, recref, parent, target):
+        recref: CofkManifInstMap
+        recref.manif = parent
+        recref.inst = target
+
+    def find_recref_records(self, rel_type):
+        return self.parent.cofkmanifinstmap_set.filter(relationship_type=rel_type).iterator()
+
+    def target_id_name(self):
+        return 'inst_id'
 
 
 class WorkWorkRecrefAdapter(view_utils.RecrefFormAdapter, ABC):

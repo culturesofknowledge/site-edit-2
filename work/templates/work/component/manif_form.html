@@ -5,7 +5,8 @@
     <label>Document type:</label>
     {{ manif_form.manifestation_type }}
 
-    <label>Repository -- TODO:</label> <!-- KTODO -->
+    {% include "core/component/recref.html" with recref_type='inst' id_field=manif_form.selected_inst_id label='Repository' %}
+
 
     <label>ID number or shelfmark:</label>
     {{ manif_form.id_number_or_shelfmark }}

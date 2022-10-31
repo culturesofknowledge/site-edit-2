@@ -60,9 +60,15 @@ def create_auto_date_field():
 
 class LocationRecrefField(SelectedRecrefField):
     def get_recref_name(self, target_id):
-        loc = target_id and CofkUnionLocation.objects.get(location_id=target_id)
-        recref_name = location_utils.get_recref_display_name(loc)
-        return recref_name
+        from work.views import WorkLocRecrefAdapter
+        return WorkLocRecrefAdapter().find_target_display_name_by_id(target_id)
+
+
+class InstRecrefField(SelectedRecrefField):
+    def get_recref_name(self, target_id):
+        from work.views import ManifInstRecrefAdapter
+        return ManifInstRecrefAdapter().find_target_display_name_by_id(target_id)
+
 
 
 class CorrForm(forms.ModelForm):
@@ -236,6 +242,7 @@ class ManifForm(forms.ModelForm):
 
     # extra fields
     selected_scribe_id = forms.CharField(required=False)
+    selected_inst_id = InstRecrefField(required=False)
 
     class Meta:
         model = CofkUnionManifestation
