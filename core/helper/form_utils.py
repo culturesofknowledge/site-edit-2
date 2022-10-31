@@ -217,3 +217,11 @@ class RecrefSelectBound(BoundField):
     def __init__(self, form, field, name, recref_name):
         super().__init__(form, field, name)
         self.recref_name = recref_name
+
+
+class CharSelectField(forms.CharField):
+    def __init__(self, choices, required=False, **kwargs):
+        super().__init__(required=required,
+                         widget=forms.Select(choices=choices),
+                         initial=choices[0][0],   # this can avoid invalid changed_data
+                         **kwargs)

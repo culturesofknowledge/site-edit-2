@@ -406,11 +406,22 @@ class ManifFFH(BasicWorkFFH):
 
     def save(self, request):
 
+        # handle remove manif list
+        for _manif_id in request.POST.getlist('del_manif_id_list'):
+            log.info(f'del manif -- [{_manif_id}]')
+            get_object_or_404(CofkUnionManifestation, pk=_manif_id).delete()
+
+        # handle save
         manif: CofkUnionManifestation = self.manif_form.instance
+        if not manif.manifestation_id and not self.manif_form.has_changed():
+            log.debug('ignore save new manif, if manif_form has no changed')
+            return
+
         log.debug(f'changed_data : {self.manif_form.changed_data}')
         manif.work = get_object_or_404(CofkUnionWork, iwork_id=self.iwork_id)
         if not manif.manifestation_id:
             manif.manifestation_id = create_manif_id(self.iwork_id)
+
         manif.save()
         log.info(f'save manif {manif}')  # KTODO fix iwork_id plus more than 1
 
@@ -433,10 +444,6 @@ class ManifFFH(BasicWorkFFH):
         save_multi_rel_recref_formset(self.scribe_recref_formset, manif, request)
         self.img_handler.save(request)
 
-        # handle remove manif list
-        for _manif_id in request.POST.getlist('del_manif_id_list'):
-            log.info(f'del manif -- [{_manif_id}]')
-            get_object_or_404(CofkUnionManifestation, pk=_manif_id).delete()
 
         self.inst_handler.upsert_recref_if_field_exist(
             self.manif_form, manif, request.user.username)
@@ -533,7 +540,7 @@ class ManifView(BasicWorkFormView):
                         request=request, *args, **kwargs)
 
     def resp_after_saved(self, request, fhandler):
-        if goto := request.POST.get('__goto'):
+        if goto := request.POST.get('__goto') or not fhandler.manif_form.instance.manifestation_id:
             vname = self.goto_vname_map.get(goto, 'work:manif_init')
             return redirect(vname, fhandler.iwork_id)
 

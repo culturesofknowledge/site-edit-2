@@ -23,3 +23,5 @@ REL_TYPE_ENCLOSED_IN = 'enclosed_in'
 REL_TYPE_HANDWROTE = 'handwrote'
 
 REL_TYPE_STORED_IN = 'stored_in'
+
+DEFAULT_EMPTY_DATE_STR = '9999-12-31'

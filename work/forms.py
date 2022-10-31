@@ -6,14 +6,13 @@ from django import forms
 from django.db.models import TextChoices, Choices, Model
 from django.forms import CharField
 
+from core.constant import DEFAULT_EMPTY_DATE_STR
 from core.forms import get_peron_full_form_url_by_pk
 from core.helper import view_utils, data_utils, form_utils, widgets_utils
 from core.helper.form_utils import SelectedRecrefField
 from core.helper.lang_utils import language_choices
 from core.helper.view_utils import RecrefFormAdapter
 from core.models import Recref
-from location import location_utils
-from location.models import CofkUnionLocation
 from manifestation.models import CofkUnionManifestation, CofkManifPersonMap
 from person import person_utils
 from person.models import CofkUnionPerson
@@ -54,7 +53,8 @@ class CofkCollectWorkForm(forms.ModelForm):
 
 def create_auto_date_field():
     return forms.CharField(required=False,
-                           empty_value='9999-12-31',
+                           initial=DEFAULT_EMPTY_DATE_STR,
+                           empty_value=DEFAULT_EMPTY_DATE_STR,
                            widget=forms.TextInput(dict(readonly='readonly')))
 
 
@@ -155,10 +155,7 @@ class PlacesForm(forms.ModelForm):
 
 
 class ManifForm(forms.ModelForm):
-    manifestation_type = forms.CharField(required=False,
-                                         widget=forms.Select(choices=manif_type_choices), )
-
-    # repository  # KTODO
+    manifestation_type = form_utils.CharSelectField(choices=manif_type_choices)
 
     id_number_or_shelfmark = forms.CharField(required=False)
     printed_edition_details = forms.CharField(required=False, widget=forms.Textarea())
@@ -213,7 +210,7 @@ class ManifForm(forms.ModelForm):
     # original_calendar = CharField(required=False,
     #                               widget=forms.RadioSelect(choices=original_calendar_choices))
 
-    opened = forms.CharField(required=False, widget=forms.Select(choices=manif_letter_opened_choices))
+    opened = form_utils.CharSelectField(choices=manif_letter_opened_choices)
     paper_size = forms.CharField(required=False)
     stored_folded = forms.CharField(required=False)
     paper_type_or_watermark = forms.CharField(required=False)
