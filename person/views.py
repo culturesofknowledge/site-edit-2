@@ -181,12 +181,7 @@ class PersonFullFormHandler(FullFormHandler):
         self.img_handler = ImageHandler(request_data, request and request.FILES, self.person.images)
 
     def render_form(self, request):
-        context = (
-                dict(self.all_named_form_formset())
-                | self.img_handler.create_context()
-                | self.create_all_recref_context()
-        )
-        return render(request, 'person/full_form.html', context)
+        return render(request, 'person/full_form.html', self.create_context())
 
 
 @login_required
@@ -196,17 +191,8 @@ def full_form(request, iperson_id):
     # handle form submit
     if request.POST:
 
-        # define form_formsets
-        # KTODO make this list generic
-        form_formsets = [*fhandler.all_form_formset,
-                         fhandler.img_handler.img_form,
-                         fhandler.img_handler.image_formset,
-                         ]
-        for h in fhandler.all_recref_handlers:
-            form_formsets.extend([h.new_form, h.update_formset, ])
-
         # ----- validate
-        if view_utils.any_invalid_with_log(form_formsets):
+        if fhandler.is_invalid():
             return fhandler.render_form(request)
 
         # ------- save

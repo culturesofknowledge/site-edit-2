@@ -506,7 +506,7 @@ class BasicWorkFormView(LoginRequiredMixin, View):
 
     @staticmethod
     def get_form_work_instance(fhandler: FullFormHandler) -> CofkUnionWork | None:
-        forms = fhandler.all_form_formset
+        forms = fhandler.every_form_formset
         works = (getattr(f, 'instance', None) for f in forms)
         works = (i for i in works if isinstance(i, CofkUnionWork))
         return next(works, None)

@@ -531,7 +531,10 @@ class FullFormHandler:
         return ((name, var) for name, var in self.__dict__.items()
                 if isinstance(var, ImageHandler))
 
-    def all_named_form_formset(self) -> Iterable[tuple[str, BaseForm | BaseFormSet]]:
+    def find_all_named_form_formset(self) -> Iterable[tuple[str, BaseForm | BaseFormSet]]:
+        """
+        find all variables in full_form_handler that is BaseForm or BaseFormSet
+        """
         attr_list = ((name, var) for name, var in self.__dict__.items()
                      if isinstance(var, (BaseForm, BaseFormSet)))
         attr_list = itertools.chain(
@@ -541,14 +544,9 @@ class FullFormHandler:
         return attr_list
 
     @property
-    def all_form_formset(self):
-        return (ff for _, ff in self.all_named_form_formset())
-
-    @property
     def every_form_formset(self):
-        # KTODO can this function replace all_form_formset ??
         return itertools.chain(
-            self.all_form_formset,
+            (ff for _, ff in self.find_all_named_form_formset()),
             itertools.chain.from_iterable(
                 (h.new_form, h.update_formset) for h in self.all_recref_handlers
             ),
@@ -583,7 +581,7 @@ class FullFormHandler:
 
     def create_context(self):
         context = (
-                dict(self.all_named_form_formset())
+                dict(self.find_all_named_form_formset())
                 | self.create_all_recref_context()
         )
         for _, img_handler in self.all_image_handlers():
