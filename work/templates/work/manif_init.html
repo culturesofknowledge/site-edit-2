@@ -48,8 +48,13 @@
                 <td> {{ manif.manifestation_type }} </td>
                 <td> <!-- KTODO Image --> </td>
                 <td>
-
-                    <!-- KTODO Further details -->
+                    {% if manif.lang_list_str %}
+                        <span>Language of this manifestation: </span>
+                        {{ manif.lang_list_str }}
+                    {% endif %}
+                    {% if manif.manifestation_is_translation  %}
+                        <span>Manifestation is translation.</span>
+                    {% endif %}
                 </td>
             </tr>
 

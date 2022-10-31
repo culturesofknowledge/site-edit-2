@@ -391,9 +391,13 @@ class ManifFFH(BasicWorkFFH):
         if work := model_utils.get_safe(CofkUnionWork, iwork_id=self.iwork_id):
             manif_set = []
             for _manif in work.cofkunionmanifestation_set.iterator():
+                _manif: CofkUnionManifestation
                 inst = _manif.find_selected_inst()
                 inst = inst and inst.inst
                 _manif.inst_display_name = inst_utils.get_recref_display_name(inst)
+                _manif.lang_list_str = ', '.join(
+                    (l.language_code.language_name for l in _manif.language_set.iterator())
+                )
                 manif_set.append(_manif)
 
             context['manif_set'] = manif_set
