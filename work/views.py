@@ -389,7 +389,14 @@ class ManifFFH(BasicWorkFFH):
             context['manif_id'] = self.manif.manifestation_id
 
         if work := model_utils.get_safe(CofkUnionWork, iwork_id=self.iwork_id):
-            context['manif_set'] = work.cofkunionmanifestation_set.iterator()
+            manif_set = []
+            for _manif in work.cofkunionmanifestation_set.iterator():
+                inst = _manif.find_selected_inst()
+                inst = inst and inst.inst
+                _manif.inst_display_name = inst_utils.get_recref_display_name(inst)
+                manif_set.append(_manif)
+
+            context['manif_set'] = manif_set
 
         return context
 

@@ -41,11 +41,16 @@
                     <input id="del_manif_{{ manif.manifestation_id }}" name="del_manif_id_list" type="checkbox" value="{{ manif.manifestation_id }}" />
                     <label for="del_manif_{{ manif.manifestation_id }}"></label>
                 </td>
-                <td> <!-- KTODO Repository --> </td>
+                <td>
+                    {{ manif.inst_display_name }}
+                </td>
                 <td> {{ manif.id_number_or_shelfmark }} </td>
                 <td> {{ manif.manifestation_type }} </td>
                 <td> <!-- KTODO Image --> </td>
-                <td> <!-- KTODO Further details --> </td>
+                <td>
+
+                    <!-- KTODO Further details -->
+                </td>
             </tr>
 
         {% endfor %}

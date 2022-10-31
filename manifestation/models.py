@@ -1,7 +1,8 @@
-from typing import Iterable
+from typing import Iterable, Optional
 
 from django.db import models
 
+from core.constant import REL_TYPE_STORED_IN
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 from core.models import Recref
@@ -94,6 +95,9 @@ class CofkUnionManifestation(models.Model, RecordTracker):
 
     def find_comments_by_rel_type(self, rel_type) -> Iterable['CofkUnionComment']:
         return (r.comment for r in self.cofkmanifcommentmap_set.filter(relationship_type=rel_type))
+
+    def find_selected_inst(self) -> Optional['CofkManifInstMap']:
+        return self.cofkmanifinstmap_set.filter(relationship_type=REL_TYPE_STORED_IN).first()
 
 
 class CofkCollectManifestation(models.Model):
