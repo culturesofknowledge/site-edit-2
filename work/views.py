@@ -14,11 +14,13 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_ROUTE, REL_TYPE_FORMERLY_OWNED, \
     REL_TYPE_ENCLOSED_IN, REL_TYPE_COMMENT_RECEIPT_DATE, REL_TYPE_COMMENT_REFERS_TO
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm
-from core.helper import view_utils, lang_utils, model_utils
+from core.helper import view_utils, lang_utils, model_utils, recref_utils
 from core.helper.lang_utils import LangModelAdapter
 from core.helper.view_utils import DefaultSearchView, FullFormHandler, CommentFormsetHandler, RecrefFormAdapter, \
     ImageHandler
 from core.models import Recref
+from location import location_utils
+from location.models import CofkUnionLocation
 from manifestation import manif_utils
 from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, create_manif_id, CofkManifManifMap, \
     CofkUnionLanguageOfManifestation
@@ -84,6 +86,50 @@ class BasicWorkFFH(FullFormHandler):
         return work
 
 
+class SingleRecrefHandler:
+    """
+    some recref only allow select one target in frontend
+    this class help you to load(init) and save for single recref situation
+    """
+
+    def __init__(self, form_field_name, rel_type, create_recref_adapter_fn):
+        self.form_field_name = form_field_name
+        self.rel_type = rel_type
+        self.create_recref_adapter = create_recref_adapter_fn
+
+    def create_init_dict(self, parent: models.Model):
+        recref_adapter = self.create_recref_adapter(parent)
+        recref = self._find_recref_by_parent(parent, recref_adapter=recref_adapter)
+        return {
+            self.form_field_name: recref_adapter.get_target_id(recref),
+        }
+
+    def _find_recref_by_parent(self, parent, recref_adapter=None):
+        recref_adapter = recref_adapter or self.create_recref_adapter(parent)
+        recref = next(recref_adapter.find_recref_records(self.rel_type), None)
+        return recref
+
+    def upsert_recref_if_field_exist(self, form: Form, parent, username,
+                                     ):
+        if not (target_id := form.cleaned_data.get(self.form_field_name)):
+            log.debug(f'value of form_field_name not found [{self.form_field_name=}] ')
+            return
+
+        recref_adapter = self.create_recref_adapter(parent)
+        recref_adapter.target_id_name()
+        recref = recref_utils.upsert_recref_by_target_id(
+            target_id, recref_adapter.find_target_instance,
+            rel_type=self.rel_type,
+            parent_instance=parent,
+            create_recref_fn=recref_adapter.recref_class(),
+            set_parent_target_instance_fn=recref_adapter.set_parent_target_instance,
+            org_recref=self._find_recref_by_parent(parent, recref_adapter),
+            username=username,
+        )
+        recref.save()
+        return recref
+
+
 class PlacesFFH(BasicWorkFFH):
     def __init__(self, pk, request_data=None, request=None, *args, **kwargs):
         super().__init__(pk, 'work/places_form.html', *args, request_data=request_data, request=request, **kwargs)
@@ -91,12 +137,23 @@ class PlacesFFH(BasicWorkFFH):
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
         super().load_data(pk, request_data=request_data, request=request)
 
+        self.origin_loc_handler = SingleRecrefHandler(
+            form_field_name='selected_origin_location_id',
+            rel_type=REL_TYPE_WAS_SENT_FROM,
+            create_recref_adapter_fn=WorkLocRecrefAdapter,
+        )
+        self.destination_loc_handler = SingleRecrefHandler(
+            form_field_name='selected_destination_location_id',
+            rel_type=REL_TYPE_WAS_SENT_TO,
+            create_recref_adapter_fn=WorkLocRecrefAdapter,
+        )
+
         dates_form_initial = {}
         if self.work is not None:
-            dates_form_initial.update({
-                'selected_origin_location_id': get_location_id(self.work.origin_location),
-                'selected_destination_location_id': get_location_id(self.work.destination_location),
-            })
+            dates_form_initial.update(
+                self.origin_loc_handler.create_init_dict(self.work)
+                | self.destination_loc_handler.create_init_dict(self.work)
+            )
         self.places_form = PlacesForm(request_data, instance=self.work, initial=dates_form_initial)
 
         # comments
@@ -123,17 +180,11 @@ class PlacesFFH(BasicWorkFFH):
         work = self.save_work(request, self.places_form)
         self.save_all_comment_formset(work.work_id, request)
 
-        upsert_work_location_map_if_field_exist(
-            self.places_form, work, request.user.username,
-            selected_id_field_name='selected_origin_location_id',
-            rel_type=REL_TYPE_WAS_SENT_FROM,
-            org_map=work.origin_location,
+        self.origin_loc_handler.upsert_recref_if_field_exist(
+            self.places_form, work, request.user.username
         )
-        upsert_work_location_map_if_field_exist(
-            self.places_form, work, request.user.username,
-            selected_id_field_name='selected_destination_location_id',
-            rel_type=REL_TYPE_WAS_SENT_TO,
-            org_map=work.destination_location,
+        self.destination_loc_handler.upsert_recref_if_field_exist(
+            self.places_form, work, request.user.username
         )
 
 
@@ -378,7 +429,7 @@ def create_recref_if_field_exist(form: BaseForm, work, username,
     if not (_id := form.cleaned_data.get(selected_id_field_name)):
         return
 
-    recref = recref_adapter.create_recref(rel_type,
+    recref = recref_adapter.upsert_recref(rel_type,
                                           parent_instance=work,
                                           target_instance=recref_adapter.find_target_instance(_id),
                                           username=username)
@@ -400,23 +451,6 @@ def create_work_person_map_if_field_exist(form: BaseForm, work, username,
     work_person_map.save()
 
     return work_person_map
-
-
-def upsert_work_location_map_if_field_exist(form: Form, work, username,
-                                            selected_id_field_name,
-                                            rel_type,
-                                            org_map=None):
-    if not (_id := form.cleaned_data.get(selected_id_field_name)):
-        return
-
-    work_location_map = org_map or CofkWorkLocationMap()
-    work_location_map.location_id = _id
-    work_location_map.work = work
-    work_location_map.relationship_type = rel_type
-    work_location_map.update_current_user_timestamp(username)
-    work_location_map.save()
-
-    return work_location_map
 
 
 class BasicWorkFormView(LoginRequiredMixin, View):
@@ -578,6 +612,31 @@ class WorkWorkRecrefAdapter(view_utils.RecrefFormAdapter, ABC):
 
     def find_target_instance(self, target_id):
         return CofkUnionWork.objects.get(work_id=target_id)
+
+
+class WorkLocRecrefAdapter(RecrefFormAdapter):
+    def __init__(self, parent):
+        self.parent: CofkUnionWork = parent
+
+    def find_target_display_name_by_id(self, target_id):
+        return location_utils.get_recref_display_name(self.find_target_instance(target_id))
+
+    def recref_class(self) -> Type[Recref]:
+        return CofkWorkLocationMap
+
+    def find_target_instance(self, target_id):
+        return CofkUnionLocation.objects.get(location_id=target_id)
+
+    def set_parent_target_instance(self, recref, parent, target):
+        recref: CofkWorkLocationMap
+        recref.work = parent
+        recref.location = target
+
+    def find_recref_records(self, rel_type):
+        return self.parent.cofkworklocationmap_set.filter(relationship_type=rel_type).iterator()
+
+    def target_id_name(self):
+        return 'location_id'
 
 
 class EarlierLetterRecrefAdapter(WorkWorkRecrefAdapter):

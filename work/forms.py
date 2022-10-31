@@ -393,7 +393,7 @@ class MultiRelRecrefForm(forms.Form):
         new_types = selected_rel_types - {m.relationship_type for m in org_maps}
         target_model = recref_adapter.find_target_instance(data['target_id'])
         for new_type in new_types:
-            recref = recref_adapter.create_recref(new_type, host_model, target_model)
+            recref = recref_adapter.upsert_recref(new_type, host_model, target_model)
             recref.update_current_user_timestamp(username)
             recref.save()
             log.info(f'add new [{target_model}][{recref}]')
@@ -408,7 +408,7 @@ class MultiRelRecrefForm(forms.Form):
             recref_list: list[Recref]
             initial_list.append({
                 'name': recref_adapter.find_target_display_name_by_id(
-                    getattr(recref_list[0], recref_adapter.target_id_name())
+                    recref_adapter.get_target_id(recref_list[0])
                 ),
                 'target_id': person_id,
                 'relationship_types': {m.relationship_type for m in recref_list},

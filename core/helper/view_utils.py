@@ -55,13 +55,28 @@ class RecrefFormAdapter:
     def target_id_name(self):
         raise NotImplementedError()
 
-    def create_recref(self, rel_type, parent_instance, target_instance, username=None):
-        recref = self.recref_class()()
-        self.set_parent_target_instance(recref, parent_instance, target_instance)
-        recref.relationship_type = rel_type
-        if username:
-            recref.update_current_user_timestamp(username)
-        return recref
+    def get_target_id(self, recref: Recref):
+        if recref is None:
+            return None
+
+        target_id_name = self.target_id_name()
+        if not hasattr(recref, target_id_name):
+            log.warning(f'target_id_name not found in recref [{target_id_name=}]')
+            return None
+
+        return getattr(recref, target_id_name, None)
+
+    def upsert_recref(self, rel_type, parent_instance, target_instance,
+                      username=None,
+                      org_recref=None,
+                      ):
+        return recref_utils.upsert_recref(
+            rel_type, parent_instance, target_instance,
+            create_recref_fn=self.recref_class(),
+            set_parent_target_instance_fn=self.set_parent_target_instance,
+            username=username,
+            org_recref=org_recref,
+        )
 
 
 class BasicSearchView(ListView):
@@ -417,12 +432,14 @@ class MultiRecrefAdapterHandler(MultiRecrefHandler):
     def recref_class(self) -> Type[models.Model]:
         return self.recref_adapter.recref_class()
 
-    def create_recref_by_new_form(self, target_id, parent_instance) -> Optional[models.Model]:
-        if not (target_instance := self.recref_adapter.find_target_instance(target_id)):
-            log.warning(f"create recref fail, work not found -- {target_id} ")
-            return None
-
-        return self.recref_adapter.create_recref(self.rel_type, parent_instance, target_instance)
+    def create_recref_by_new_form(self, target_id, parent_instance) -> Optional[Recref]:
+        return recref_utils.upsert_recref_by_target_id(
+            target_id, self.recref_adapter.find_target_instance,
+            rel_type=self.rel_type,
+            parent_instance=parent_instance,
+            create_recref_fn=self.recref_class(),
+            set_parent_target_instance_fn=self.recref_adapter.set_parent_target_instance,
+        )
 
 
 def save_formset(forms: Iterable[ModelForm],
