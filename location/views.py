@@ -8,15 +8,18 @@ from django.forms import BaseForm, BaseFormSet, ModelForm
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView
 
+from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_IS_RELATED_TO
 from core.forms import CommentForm, ResourceForm
 from core.helper import model_utils, view_utils, renderer_utils, query_utils, download_csv_utils
 from core.helper.model_utils import RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
-from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate, ImageHandler
+from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate, ImageHandler, RecrefFormsetHandler, \
+    RecrefFormAdapter, TargetCommentRecrefAdapter, TargetResourceRecrefAdapter
+from core.models import Recref
 from location import location_utils
 from location.forms import LocationForm, GeneralSearchFieldset
-from location.models import CofkUnionLocation
+from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap
 
 log = logging.getLogger(__name__)
 FormOrFormSet = Union[BaseForm, BaseFormSet]
@@ -47,7 +50,7 @@ def return_quick_init(request, pk):
         request, 'Place',
         location_utils.get_recref_display_name(location),
         location_utils.get_recref_target_id(location),
-        )
+    )
 
 
 def to_forms(form_or_formset: FormOrFormSet):
@@ -91,26 +94,31 @@ def full_form(request, location_id):
 
     loc_form = LocationForm(request.POST or None, instance=loc)
 
-    res_formset = view_utils.create_formset(ResourceForm, post_data=request.POST,
-                                            prefix='loc_res',
-                                            initial_list=model_utils.related_manager_to_dict_list(loc.resources), )
-    comment_formset = view_utils.create_formset(CommentForm, post_data=request.POST,
-                                                prefix='loc_comment',
-                                                initial_list=model_utils.related_manager_to_dict_list(loc.comments), )
+    res_handler = LocationResourceFormsetHandler(prefix='res',
+                                                 request_data=request.POST or None,
+                                                 form=ResourceForm,
+                                                 rel_type=REL_TYPE_IS_RELATED_TO,
+                                                 parent=loc)
+    comment_handler = LocationCommentFormsetHandler(prefix='comment',
+                                                    request_data=request.POST or None,
+                                                    form=CommentForm,
+                                                    rel_type=REL_TYPE_COMMENT_REFERS_TO,
+                                                    parent=loc)
+
     img_handler = ImageHandler(request.POST, request.FILES, loc.images)
 
     def _render_full_form():
 
         return render(request, 'location/full_form.html',
                       {'loc_form': loc_form,
-                       'res_formset': res_formset,
-                       'comment_formset': comment_formset,
+                       res_handler.context_name: res_handler.formset,
+                       comment_handler.context_name: comment_handler.formset,
                        'loc_id': location_id,
                        } | img_handler.create_context()
                       )
 
     if request.method == 'POST':
-        form_formsets = [loc_form, res_formset, comment_formset, img_handler.image_formset,
+        form_formsets = [loc_form, res_handler.formset, comment_handler.formset, img_handler.image_formset,
                          img_handler.img_form]
 
         if view_utils.any_invalid_with_log(form_formsets):
@@ -120,8 +128,8 @@ def full_form(request, location_id):
         update_current_user_timestamp(request.user.username, form_formsets)
 
         # save formset
-        view_utils.save_formset(res_formset, loc.resources, model_id_name='resource_id')
-        view_utils.save_formset(comment_formset, loc.comments, model_id_name='comment_id')
+        res_handler.save(loc, request)
+        comment_handler.save(loc, request)
         img_handler.save(request)
 
         loc_form.save()
@@ -268,3 +276,51 @@ class LocationDownloadCsvHandler(DownloadCsvHandler):
             obj.change_user,
         )
         return values
+
+
+class LocationCommentFormsetHandler(RecrefFormsetHandler):
+    def create_recref_adapter(self, parent) -> RecrefFormAdapter:
+        return LocationCommentRecrefAdapter(parent)
+
+    def find_org_recref_fn(self, parent, target) -> Recref | None:
+        return CofkLocationCommentMap.objects.filter(location=parent, comment=target).first()
+
+
+class LocationCommentRecrefAdapter(TargetCommentRecrefAdapter):
+    def __init__(self, parent):
+        self.parent: CofkUnionLocation = parent
+
+    def recref_class(self) -> Type[Recref]:
+        return CofkLocationCommentMap
+
+    def set_parent_target_instance(self, recref, parent, target):
+        recref: CofkLocationCommentMap
+        recref.location = parent
+        recref.comment = target
+
+    def find_recref_records(self, rel_type):
+        return self.find_recref_records_by_related_manger(self.parent.cofklocationcommentmap_set, rel_type)
+
+
+class LocationResourceFormsetHandler(RecrefFormsetHandler):
+    def create_recref_adapter(self, parent) -> RecrefFormAdapter:
+        return LocationResourceRecrefAdapter(parent)
+
+    def find_org_recref_fn(self, parent, target) -> Recref | None:
+        return CofkLocationResourceMap.objects.filter(location=parent, resource=target).first()
+
+
+class LocationResourceRecrefAdapter(TargetResourceRecrefAdapter):
+    def __init__(self, parent):
+        self.parent: CofkUnionLocation = parent
+
+    def recref_class(self) -> Type[Recref]:
+        return CofkLocationResourceMap
+
+    def set_parent_target_instance(self, recref, parent, target):
+        recref: CofkLocationResourceMap
+        recref.location = parent
+        recref.resource = target
+
+    def find_recref_records(self, rel_type):
+        return self.find_recref_records_by_related_manger(self.parent.cofklocationresourcemap_set, rel_type)

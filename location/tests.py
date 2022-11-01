@@ -39,8 +39,8 @@ class LocationFormTests(EmloSeleniumTestCase):
         loc_a.save()
 
         m2m_tester = MultiM2MTester(m2m_tester_list=[
-            ResourceM2MTester(self, loc_a.resources, formset_prefix='loc_res'),
-            CommentM2MTester(self, loc_a.comments, formset_prefix='loc_comment'),
+            ResourceM2MTester(self, loc_a.resources, formset_prefix='res'),
+            CommentM2MTester(self, loc_a.comments, formset_prefix='comment'),
         ])
 
         # update web page
