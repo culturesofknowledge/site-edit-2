@@ -163,7 +163,7 @@ class ResourceM2MTester(SimpleM2MTester):
         super().__init__(selenium_test, related_manager, formset_prefix, model_dict)
 
     def assert_fn(self):
-        self.selenium_test.assertEqual(self.related_manager.last().resource_name,
+        self.selenium_test.assertEqual(self.related_manager.last().resource.resource_name,
                                        self.model_dict['resource_name'])
 
 
@@ -175,7 +175,7 @@ class CommentM2MTester(SimpleM2MTester):
         super().__init__(selenium_test, related_manager, formset_prefix, model_dict)
 
     def assert_fn(self):
-        self.selenium_test.assertEqual(self.related_manager.last().comment,
+        self.selenium_test.assertEqual(self.related_manager.last().comment.comment,
                                        self.model_dict['comment'])
 
 

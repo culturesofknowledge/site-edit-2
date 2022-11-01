@@ -43,8 +43,8 @@ class PersonInitFormTest(EmloSeleniumTestCase):
         pson_a.save()
 
         m2m_tester = MultiM2MTester(m2m_tester_list=[
-            ResourceM2MTester(self, pson_a.resources, formset_prefix='res'),
-            CommentM2MTester(self, pson_a.comments, formset_prefix='comment'),
+            ResourceM2MTester(self, pson_a.cofkpersonresourcemap_set, formset_prefix='res'),
+            CommentM2MTester(self, pson_a.cofkpersoncommentmap_set, formset_prefix='comment'),
         ])
 
         url = self.create_full_form_url(pson_a.iperson_id)
