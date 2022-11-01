@@ -15,7 +15,9 @@ def exclamation(work: CofkUnionWork):
 
         if work.date_of_work_uncertain:
             tooltip.append('Date of work UNCERTAIN')
-        tooltip.append(f'(Date of work as marked: {work.date_of_work_as_marked})')
+
+        if work.date_of_work_as_marked:
+            tooltip.append(f'(Date of work as marked: {work.date_of_work_as_marked})')
 
     if work.origin_inferred or work.origin_uncertain:
         if work.origin_inferred:
@@ -23,7 +25,9 @@ def exclamation(work: CofkUnionWork):
 
         if work.origin_uncertain:
             tooltip.append('Origin UNCERTAIN')
-        tooltip.append(f'(Origin as marked: {work.origin_as_marked})')
+
+        if work.origin_as_marked:
+            tooltip.append(f'(Origin as marked: {work.origin_as_marked})')
 
     if work.authors_inferred or work.authors_uncertain:
         if work.authors_inferred:
@@ -31,7 +35,9 @@ def exclamation(work: CofkUnionWork):
 
         if work.authors_uncertain:
             tooltip.append('Author UNCERTAIN')
-        tooltip.append(f'(Author as marked: {work.authors_as_marked})')
+
+        if work.authors_as_marked:
+            tooltip.append(f'(Author as marked: {work.authors_as_marked})')
 
     if work.addressees_inferred or work.addressees_uncertain:
         if work.addressees_inferred:
@@ -39,7 +45,9 @@ def exclamation(work: CofkUnionWork):
 
         if work.addressees_uncertain:
             tooltip.append('Addressee UNCERTAIN')
-        tooltip.append(f'(Addressee as marked: {work.addressees_as_marked})')
+
+        if work.addressees_as_marked:
+            tooltip.append(f'(Addressee as marked: {work.addressees_as_marked})')
 
     if work.destination_inferred or work.destination_uncertain:
         if work.destination_inferred:
@@ -47,6 +55,8 @@ def exclamation(work: CofkUnionWork):
 
         if work.destination_uncertain:
             tooltip.append('Destination UNCERTAIN')
-        tooltip.append(f'(Destination as marked: {work.destination_as_marked})')
 
-    return ' '.join(tooltip)
+        if work.destination_as_marked:
+            tooltip.append(f'(Destination as marked: {work.destination_as_marked})')
+
+    return ', '.join(tooltip)

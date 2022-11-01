@@ -3,7 +3,7 @@ from typing import Iterable, Type
 
 from django import forms
 from django.db.models import TextChoices, Choices, Model
-from django.forms import CharField
+from django.forms import CharField, Field
 from django.shortcuts import get_object_or_404
 
 from core.forms import get_peron_full_form_url_by_pk
@@ -389,9 +389,9 @@ class WorkAddresseeRecrefForm(WorkPersonRecrefForm):
     relationship_types = RelationField(AddresseeRelationChoices)
 
 
-class GeneralSearchFieldset(forms.Form):
-    title = 'General'
-    template_name = 'work/component/work_search_fieldset.html'
+class CompactSearchFieldset(forms.Form):
+    title = 'Compact Search'
+    template_name = 'work/component/work_compact_search_fieldset.html'
 
     description = forms.CharField(required=False)
     description_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
@@ -399,17 +399,20 @@ class GeneralSearchFieldset(forms.Form):
     iwork_id = forms.IntegerField(required=False)
     iwork_id_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
+    date_of_work_as_marked = forms.CharField(required=False)
+    date_of_work_as_marked_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
     foaf_name = forms.CharField(required=False)
     foaf_name_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    birth_year_from = form_utils.create_year_field()
-    birth_year_to = form_utils.create_year_field()
+    year_from = form_utils.create_year_field()
+    year_to = form_utils.create_year_field()
 
-    death_year_from = form_utils.create_year_field()
-    death_year_to = form_utils.create_year_field()
+    month_from = form_utils.create_month_field()
+    month_to = form_utils.create_month_field()
 
-    flourished_year_from = form_utils.create_year_field()
-    flourished_year_to = form_utils.create_year_field()
+    day_from = form_utils.create_day_field()
+    day_to = form_utils.create_day_field()
 
     gender = forms.CharField(required=False, widget=forms.Select(
         choices=[
@@ -436,4 +439,167 @@ class GeneralSearchFieldset(forms.Form):
     change_timestamp_to = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
 
     change_user = forms.CharField(required=False)
+    change_user_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+
+class SearchFieldSetField:
+    def __init__(self, field: Field, lookup: Field, description: str):
+        self.field = field
+        self.lookup = lookup
+        self.description = description
+
+
+class ExpandedSearchFieldset(forms.Form):
+    title = 'Expanded Search'
+    template_name = 'work/component/work_expanded_search_fieldset.html'
+
+    description = forms.CharField(required=False,
+                                  help_text="This is in the style 'DD Mon YYYY: Author/Sender (place) to"
+                                            " Addressee (place)', e.g. 8 Mar 1693: Bulkeley, Sir Richard"
+                                            " (Dunlaven, County Wicklow) to Lister, Martin (Old Palace"
+                                            " Yard, Westminster).")
+    description_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    editors_notes = forms.CharField(required=False)
+    editors_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    sender_or_recipient = forms.CharField(required=False,
+                                          help_text="Enter part or all of the name of either the author/sender or the"
+                                                    " addressee to find all letters either to or from a particular"
+                                                    " person.")
+    sender_or_recipient_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    sender_or_recipient_search_fields = 'creators_searchable,addressees_searchable'
+
+    origin_or_destination = forms.CharField(required=False,
+                                            help_text="The place to or from which a letter was sent, in standard"
+                                                      " modern format.")
+    origin_or_destination_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    origin_or_destination_search_fields = "places_to_searchable,places_from_searchable"
+
+    date_of_work_as_marked = forms.CharField(required=False,
+                                             help_text="This field could contain the actual words marked within the "
+                                                       "letter, such as 'ipsis Kalendis Decembribus C I. I. CCVI', or"
+                                                       " a modern researcher's notation such as 'n.d.'")
+    date_of_work_as_marked_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    author = forms.CharField(required=False)
+    author_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    date_of_work_std_year = forms.IntegerField(required=False, min_value=1000, max_value=1850,
+                                               help_text="Year in which work was created. (Use 'is blank' option in "
+                                                         "Advanced Search to find works without year.)")
+    date_of_work_std_year_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
+
+    date_of_work_std_month = forms.IntegerField(required=False, min_value=1, max_value=12,
+                                                help_text="Month (1-12) in which work was created. (Use 'is blank' "
+                                                          "option to find works without month.)")
+    date_of_work_std_month_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
+
+    date_of_work_std_day = forms.IntegerField(required=False, min_value=1, max_value=31,
+                                              help_text="Day on which work was created. (Use 'is blank' option to "
+                                                        "find works without day.)")
+    date_of_work_std_day_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
+
+    date_of_work_std_from = forms.CharField(required=False)
+    date_of_work_std_to = forms.CharField(required=False)
+    date_of_work_std_info = "To find works from a specified period, enter dates 'from' and 'to' as YYYY or" \
+                            " DD/MM/YYYY. Either end of the date-range may be left blank, e.g. <ul><li>From 1633'" \
+                            " to find works dated from 1st January 1633 onwards</li><li>'To 1634' to find works dated up" \
+                            " to 31st December 1634</li></ul>"
+
+    creators_searchable = forms.CharField(required=False)
+    creators_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    notes_on_authors = forms.CharField(required=False)
+    notes_on_authors_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    places_from_searchable = forms.CharField(required=False,
+                                             help_text='The place from which a letter was sent, in standard '
+                                                       'modern format.')
+    places_from_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    origin_as_marked = forms.CharField(required=False)
+    origin_as_marked_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    addressee = forms.CharField(required=False)
+    addressee_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    places_to_searchable = forms.CharField(required=False,
+                                           help_text='The place to which a letter was sent, in standard modern format.')
+    places_to_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    destination_as_marked = forms.CharField(required=False)
+    destination_as_marked_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    flags = forms.CharField(required=False,
+                            help_text="May contain the words 'Date of work', 'Author/sender', 'Addressee', 'Origin' "
+                                      "and/or 'Destination', followed by 'INFERRED', 'UNCERTAIN' or, in the case of "
+                                      "date, 'APPROXIMATE'. E.g. Author/sender INFERRED.")
+    flags_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    images = forms.CharField(required=False, help_text='Contains filenames of any scanned images of manifestations.')
+    images_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    manifestations = forms.CharField(required=False,
+                                     help_text='<p>The Manifestations field contains a very brief summary of all the '
+                                               'manifestations of a work. This summary includes document type plus '
+                                               'either repository and shelfmark or printed edition details.</p><p><i>You can '
+                                               'search on both document type and repository at once if you wish, but '
+                                               'please remember, document type comes first in the summary, then '
+                                               'repository, so you need to enter your search terms in that same order. '
+                                               'Also, if entering multiple search terms, you need to separate them '
+                                               'using the wildcard % (percent-sign).</i></p>'
+                                               '<div>Document type:<select style="width: unset;"><option>Test</option></select></div>'
+                                               '<div>Repository:<select style="width: unset;"><option>Test</option></select></div>')
+    manifestations_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    related_resources = forms.CharField(required=False)
+    related_resources_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    language_of_work = forms.CharField(required=False)
+    language_of_work_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    subjects = forms.CharField(required=False)
+    subjects_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    abstracts = forms.CharField(required=False,
+                                help_text='Contains a summary of the contents of the work')
+    abstracts_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    people_mentioned = forms.CharField(required=False,
+                                       help_text='This field contains a list of people mentioned within a work.')
+    people_mentioned_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    keywords = forms.CharField(required=False,
+                               help_text='This field contains keywords, plus a list of places '
+                                         'and works mentioned within a work.')
+    keywords_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    general_notes = forms.CharField(required=False)
+    general_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    original_catalogue = forms.CharField(required=False,
+                                         help_text='<select><option>Possible values</option></select>')
+    original_catalogue_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    accession_code = forms.CharField(required=False,
+                                     help_text='Typically contains the name of the researcher who contributed the data.')
+    accession_code_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    # work_to_be_deleted = form_utils.ZeroOneCheckboxField()
+    work_to_be_deleted = forms.CharField(required=False,
+                                         help_text="Yes or No. If 'Yes', the record is marked for deletion.")
+    work_to_be_deleted_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    work_id = forms.CharField(required=False,
+                              help_text='The unique ID for the record within the current CofK database.')
+    work_id_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    last_edit_from = forms.CharField(required=False)
+    last_edit_to = forms.CharField(required=False)
+    last_edit_info = "Enter as dd/mm/yyyy hh:mm or dd/mm/yyyy (please note: dd/mm/yyyy counts as the very " \
+                     "start of a day)."
+
+    change_user = forms.CharField(required=False,
+                                  help_text='Username of the person who last changed the record.')
     change_user_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)

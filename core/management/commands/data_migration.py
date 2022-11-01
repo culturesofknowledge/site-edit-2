@@ -21,7 +21,7 @@ from person.models import CofkPersonLocationMap, CofkUnionPerson, SEQ_NAME_COFKU
     CofkPersonPersonMap
 from uploader.models import CofkCollectStatus, Iso639LanguageCode, CofkLookupCatalogue
 from uploader.models import CofkUnionOrgType, CofkUnionImage
-from work.models import CofkUnionWork
+from work.models import CofkUnionWork, CofkUnionQueryableWork
 
 log = logging.getLogger(__name__)
 
@@ -457,8 +457,11 @@ def data_migration(user, password, database, host, port):
                               ),
 
         # ### Work
+        lambda: clone_rows_by_model_class(conn, CofkUnionQueryableWork),
         lambda: clone_rows_by_model_class(conn, CofkUnionWork, col_val_handler_fn_list=[_val_handler_work__catalogue]),
     ]
+
+    clone_action_fn_list = [lambda: clone_rows_by_model_class(conn, CofkUnionQueryableWork, seq_name=None),]
 
     for fn in clone_action_fn_list:
         fn()

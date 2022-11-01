@@ -1,6 +1,6 @@
 {% load static %}
 {% load sass_tags %}
-
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -46,8 +46,11 @@
 
 <script>
 
-// Note does not work when content is zoomed
-tippy('[data-tippy-content]', {placement: 'top-start',});
+    t = tippy('[data-tippy-content]',
+     {  placement: 'top-start',
+        appendTo: document.body,
+        allowHTML: true,
+        interactive: true });
 
 </script>
 

@@ -513,6 +513,7 @@ input[readonly] {
   background: gainsboro; }
 
 label {
+  display: inline-block;
   font-weight: 600;
   font-weight: 700;
   letter-spacing: 0.045em; }

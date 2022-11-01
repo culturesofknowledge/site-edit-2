@@ -22,9 +22,10 @@ from person import person_utils
 from person.models import CofkUnionPerson
 from work import work_utils
 from work.forms import WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
-    AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, GeneralSearchFieldset
+    AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \
+    CompactSearchFieldset, ExpandedSearchFieldset
 from work.models import CofkWorkPersonMap, CofkUnionWork, create_work_id, CofkWorkComment, CofkWorkWorkMap, \
-    CofkWorkLocationMap
+    CofkWorkLocationMap, CofkUnionQueryableWork
 
 log = logging.getLogger(__name__)
 
@@ -484,14 +485,15 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         ]
 
     def get_queryset(self):
-        queryset = CofkUnionWork.objects.all()
+        queryset = CofkUnionQueryableWork.objects.all()
 
         field_fn_maps = {}
 
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
         queries.extend(
             query_utils.create_queries_by_lookup_field(self.request_data, [
-               'description', 'iwork_id'
+                'description', 'iwork_id', 'editors_notes', 'date_of_work_as_marked', 'sender_or_recipient',
+                'origin_or_destination'
             ])
         )
 
@@ -512,12 +514,23 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def query_fieldset_list(self) -> Iterable:
+        # log.info(self.get_context_data())
         default_values = {
             'foaf_name_lookup': 'starts_with',
         }
         request_data = default_values | self.request_data.dict()
 
-        return [GeneralSearchFieldset(request_data)]
+        return [CompactSearchFieldset(request_data)]
+
+    @property
+    def expanded_query_fieldset_list(self) -> Iterable:
+        # log.info(self.get_context_data())
+        default_values = {
+            'foaf_name_lookup': 'starts_with',
+        }
+        request_data = default_values | self.request_data.dict()
+
+        return [ExpandedSearchFieldset(request_data)]
 
 
 def find_work_rec_name(work_id) -> Optional[str]:

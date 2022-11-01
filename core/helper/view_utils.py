@@ -60,7 +60,7 @@ class BasicSearchView(ListView):
     """
     Helper for you to build common style of search page for emlo editor
     """
-    paginate_by = 10
+    paginate_by = 100
     template_name = 'core/basic_search_page.html'
     context_object_name = 'records'
 
@@ -70,6 +70,13 @@ class BasicSearchView(ListView):
         return iterable form that can render search fieldset for searching
         """
         raise NotImplementedError()
+
+    @property
+    def expanded_query_fieldset_list(self) -> Iterable:
+        """
+        return iterable form for expanded view that can render search fieldset for searching
+        """
+        return self.query_fieldset_list
 
     @property
     def title(self) -> str:
@@ -141,7 +148,9 @@ class BasicSearchView(ListView):
                             if is_compact_layout
                             else self.table_search_results_renderer_factory)
 
-        context.update({'query_fieldset_list': self.query_fieldset_list,
+        query_fieldset_list = self.query_fieldset_list if is_compact_layout else self.expanded_query_fieldset_list
+
+        context.update({'query_fieldset_list': query_fieldset_list,
                         'search_components': search_components_factory(default_search_components_dict |
                                                                        self.request_data.dict()),
                         'total_record': self.get_queryset().count(),
