@@ -493,7 +493,7 @@ def data_migration(user, password, database, host, port):
         # ### Location
         lambda: clone_rows_by_model_class(conn, CofkUnionLocation),
         # m2m location
-        lambda: create_resources_relationship(conn, CofkUnionLocation),
+        lambda: create_resources_relationship(conn, CofkUnionLocation),  # KTODO fix comment as recref
         lambda: create_comments_relationship(conn, CofkUnionLocation),  # KTODO fix comment as recref
 
         # ### Person
@@ -505,7 +505,7 @@ def data_migration(user, password, database, host, port):
         ),
         # m2m person
         lambda: create_comments_relationship(conn, CofkUnionPerson),  # KTODO fix comment as recref
-        lambda: create_resources_relationship(conn, CofkUnionPerson),
+        lambda: create_resources_relationship(conn, CofkUnionPerson),  # KTODO fix comment as recref
         lambda: create_images_relationship(conn, CofkUnionPerson),
         lambda: create_recref(conn,
                               RecrefIdFieldVal(CofkPersonLocationMap,

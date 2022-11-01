@@ -9,19 +9,19 @@ from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual, Exact
 from django.forms import BaseForm
 from django.shortcuts import render, redirect, get_object_or_404
 
-from core.constant import REL_TYPE_COMMENT_REFERS_TO
+from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_IS_RELATED_TO
 from core.forms import CommentForm, ResourceForm, LocRecrefForm, PersonRecrefForm
-from core.helper import renderer_utils, view_utils, model_utils, query_utils, download_csv_utils, recref_utils
+from core.helper import renderer_utils, view_utils, query_utils, download_csv_utils, recref_utils
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
 from core.helper.view_utils import CommonInitFormViewTemplate, ImageHandler, BasicSearchView, FullFormHandler, \
-    RecrefFormsetHandler, RecrefFormAdapter, TargetCommentRecrefAdapter
+    RecrefFormsetHandler, RecrefFormAdapter, TargetCommentRecrefAdapter, TargetResourceRecrefAdapter
 from core.models import Recref
 from location.models import CofkUnionLocation
 from person import person_utils
 from person.forms import PersonForm, GeneralSearchFieldset
 from person.models import CofkUnionPerson, CofkPersonLocationMap, CofkPersonPersonMap, create_person_id, \
-    CofkPersonCommentMap
+    CofkPersonCommentMap, CofkPersonResourceMap
 
 log = logging.getLogger(__name__)
 
@@ -181,10 +181,13 @@ class PersonFullFormHandler(FullFormHandler):
             parent=self.person,
         ))
 
-        self.res_formset = view_utils.create_formset(ResourceForm, post_data=request_data,
-                                                     prefix='res',
-                                                     initial_list=model_utils.related_manager_to_dict_list(
-                                                         self.person.resources), )
+        self.add_recref_formset_handler(PersonResourceFormsetHandler(
+            prefix='res',
+            request_data=request_data,
+            form=ResourceForm,
+            rel_type=REL_TYPE_IS_RELATED_TO,
+            parent=self.person,
+        ))
         self.img_handler = ImageHandler(request_data, request and request.FILES, self.person.images)
 
     def render_form(self, request):
@@ -207,8 +210,6 @@ def full_form(request, iperson_id):
 
         fhandler.person_form.save()
         fhandler.save_all_recref_formset(fhandler.person, request)
-        view_utils.save_formset(fhandler.res_formset, fhandler.person.resources,
-                                model_id_name='resource_id')
         fhandler.img_handler.save(request)
 
         # KTODO save birthplace, deathplace
@@ -373,3 +374,27 @@ class PersonCommentRecrefAdapter(TargetCommentRecrefAdapter):
 
     def find_recref_records(self, rel_type):
         return self.find_recref_records_by_related_manger(self.parent.cofkpersoncommentmap_set, rel_type)
+
+
+class PersonResourceFormsetHandler(RecrefFormsetHandler):
+    def create_recref_adapter(self, parent) -> RecrefFormAdapter:
+        return PersonResourceRecrefAdapter(parent)
+
+    def find_org_recref_fn(self, parent, target) -> Recref | None:
+        return CofkPersonResourceMap.objects.filter(person=parent, resource=target).first()
+
+
+class PersonResourceRecrefAdapter(TargetResourceRecrefAdapter):
+    def __init__(self, parent):
+        self.parent: CofkUnionPerson = parent
+
+    def recref_class(self) -> Type[Recref]:
+        return CofkPersonResourceMap
+
+    def set_parent_target_instance(self, recref, parent, target):
+        recref: CofkPersonResourceMap
+        recref.person = parent
+        recref.resource = target
+
+    def find_recref_records(self, rel_type):
+        return self.find_recref_records_by_related_manger(self.parent.cofkpersonresourcemap_set, rel_type)

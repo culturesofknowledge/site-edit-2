@@ -27,7 +27,7 @@ from core.helper import model_utils
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
     demo_table_search_results_renderer
 from core.helper.view_components import DownloadCsvHandler
-from core.models import Recref, CofkUnionComment
+from core.models import Recref, CofkUnionComment, CofkUnionResource
 from core.services import media_service
 from uploader.models import CofkUnionImage
 
@@ -678,6 +678,18 @@ class TargetCommentRecrefAdapter(RecrefFormAdapter, ABC):
 
     def target_id_name(self):
         return 'comment_id'
+
+
+class TargetResourceRecrefAdapter(RecrefFormAdapter, ABC):
+    def find_target_display_name_by_id(self, target_id):
+        c: CofkUnionResource = self.find_target_instance(target_id)
+        return c and c.resource_name
+
+    def find_target_instance(self, target_id):
+        return model_utils.get_safe(CofkUnionResource, resource_id=target_id)
+
+    def target_id_name(self):
+        return 'resource_id'
 
 # class CommentFormsetHandler:
 #     def __init__(self, prefix, request_data,
