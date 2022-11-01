@@ -11,6 +11,7 @@ urlpatterns = [
     path(f'form/<int:iwork_id>/places', views.PlacesView.as_view(), name='places_form'),
     path(f'form/<int:iwork_id>/manif', views.ManifView.as_view(), name='manif_init'),
     path(f'form/<int:iwork_id>/manif/<str:manif_id>', views.ManifView.as_view(), name='manif_update'),
+    path(f'form/<int:iwork_id>/resources', views.ResourcesView.as_view(), name='resources_form'),
 ]
 urlpatterns.extend(
     url_utils.create_common_urls_for_section(

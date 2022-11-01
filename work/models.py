@@ -107,6 +107,14 @@ class CofkWorkCommentMap(Recref):
         db_table = 'cofk_work_comment_map'
 
 
+class CofkWorkResourceMap(Recref):
+    work = models.ForeignKey(CofkUnionWork, on_delete=models.CASCADE)
+    resource = models.ForeignKey('core.CofkUnionResource', on_delete=models.CASCADE)
+
+    class Meta(Recref.Meta):
+        db_table = 'cofk_work_resource_map'
+
+
 class CofkWorkWorkMap(Recref):
     work_from = models.ForeignKey(CofkUnionWork, on_delete=models.CASCADE,
                                   related_name='work_from_set', )

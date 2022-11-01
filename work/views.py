@@ -12,12 +12,13 @@ from django.views import View
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_WORK_IS_REPLY_TO, \
     REL_TYPE_WORK_MATCHES, REL_TYPE_COMMENT_DATE, REL_TYPE_WAS_SENT_FROM, REL_TYPE_COMMENT_ORIGIN, \
     REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_ROUTE, REL_TYPE_FORMERLY_OWNED, \
-    REL_TYPE_ENCLOSED_IN, REL_TYPE_COMMENT_RECEIPT_DATE, REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_STORED_IN
-from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm
+    REL_TYPE_ENCLOSED_IN, REL_TYPE_COMMENT_RECEIPT_DATE, REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_STORED_IN, \
+    REL_TYPE_IS_RELATED_TO
+from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, ResourceForm
 from core.helper import view_utils, lang_utils, model_utils, recref_utils
 from core.helper.lang_utils import LangModelAdapter
 from core.helper.view_utils import DefaultSearchView, FullFormHandler, RecrefFormAdapter, \
-    ImageHandler, RecrefFormsetHandler, TargetCommentRecrefAdapter
+    ImageHandler, RecrefFormsetHandler, TargetCommentRecrefAdapter, TargetResourceRecrefAdapter
 from core.models import Recref
 from institution import inst_utils
 from institution.models import CofkUnionInstitution
@@ -32,7 +33,7 @@ from work.forms import WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddressee
     AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \
     ManifPersonRecrefAdapter, ManifPersonRecrefForm, ScribeRelationChoices
 from work.models import CofkWorkPersonMap, CofkUnionWork, create_work_id, CofkWorkCommentMap, CofkWorkWorkMap, \
-    CofkWorkLocationMap
+    CofkWorkLocationMap, CofkWorkResourceMap
 
 log = logging.getLogger(__name__)
 
@@ -439,6 +440,24 @@ class ManifFFH(BasicWorkFFH):
             self.manif_form, manif, request.user.username)
 
 
+class ResourcesFFH(BasicWorkFFH):
+    def __init__(self, pk, request_data=None, request=None, *args, **kwargs):
+        super().__init__(pk, 'work/resources_form.html', *args, request_data=request_data, request=request, **kwargs)
+
+    def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
+        super().load_data(pk, request_data=request_data, request=request)
+        self.add_recref_formset_handler(WorkResourceFormsetHandler(
+            prefix='res',
+            request_data=request_data,
+            form=ResourceForm,
+            rel_type=REL_TYPE_IS_RELATED_TO,
+            parent=self.work,
+        ))
+
+    def save(self, request):
+        self.save_all_recref_formset(self.work, request)
+
+
 class ManifLangModelAdapter(LangModelAdapter):
     def create_instance_by_owner_id(self, owner_id):
         m = CofkUnionLanguageOfManifestation()
@@ -484,6 +503,7 @@ class BasicWorkFormView(LoginRequiredMixin, View):
         'dates': 'work:dates_form',
         'places': 'work:places_form',
         'manif': 'work:manif_init',
+        'resources': 'work:resources_form',
     }
 
     @staticmethod
@@ -495,11 +515,11 @@ class BasicWorkFormView(LoginRequiredMixin, View):
         raise NotImplementedError()
 
     @staticmethod
-    def get_form_work_instance(fhandler: FullFormHandler) -> CofkUnionWork | None:
+    def get_form_work_instance(fhandler: BasicWorkFFH) -> CofkUnionWork | None:
         forms = fhandler.every_form_formset
         works = (getattr(f, 'instance', None) for f in forms)
         works = (i for i in works if isinstance(i, CofkUnionWork))
-        return next(works, None)
+        return next(works, fhandler.work)
 
     def resp_after_saved(self, request, fhandler):
         goto = request.POST.get('__goto')
@@ -568,6 +588,16 @@ class PlacesView(BasicWorkFormView):
     @property
     def cur_vname(self):
         return 'work:places_form'
+
+
+class ResourcesView(BasicWorkFormView):
+    @staticmethod
+    def create_fhandler(request, iwork_id=None, *args, **kwargs):
+        return ResourcesFFH(iwork_id, request_data=request.POST, request=request)
+
+    @property
+    def cur_vname(self):
+        return 'work:resources_form'
 
 
 class WorkQuickInitView(CorrView):
@@ -792,3 +822,27 @@ class ManifCommentRecrefAdapter(TargetCommentRecrefAdapter):
 
     def find_recref_records(self, rel_type):
         return self.find_recref_records_by_related_manger(self.parent.cofkmanifcommentmap_set, rel_type)
+
+
+class WorkResourceFormsetHandler(RecrefFormsetHandler):
+    def create_recref_adapter(self, parent) -> RecrefFormAdapter:
+        return WorkResourceRecrefAdapter(parent)
+
+    def find_org_recref_fn(self, parent, target) -> Recref | None:
+        return CofkWorkResourceMap.objects.filter(work=parent, resource=target).first()
+
+
+class WorkResourceRecrefAdapter(TargetResourceRecrefAdapter):
+    def __init__(self, parent):
+        self.parent: CofkUnionWork = parent
+
+    def recref_class(self) -> Type[Recref]:
+        return CofkWorkResourceMap
+
+    def set_parent_target_instance(self, recref, parent, target):
+        recref: CofkWorkResourceMap
+        recref.work = parent
+        recref.resource = target
+
+    def find_recref_records(self, rel_type):
+        return self.find_recref_records_by_related_manger(self.parent.cofkworkresourcemap_set, rel_type)

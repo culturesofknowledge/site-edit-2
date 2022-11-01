@@ -1,0 +1,26 @@
+{% extends "work/basic_form.html" %}
+{% load static %}
+{% block tabcontent %}
+    <h1>Work - Resources</h1>
+    {% include "core/component/resource_formset.html" with res_formset=res_formset %}
+
+    <script>
+        $(function () {
+            setup_url_checker();
+            setup_standtext([
+                'Aubrey catalogue',
+                'Bodleian card catalogue',
+                'Comenius catalogue',
+                'Hartlib catalogue',
+                'Lhwyd catalogue',
+                'Lister catalogue',
+                'Oldenburg catalogue',
+                'Selden catalogue',
+                'Wallis catalogue',
+                'Wikidata ID',
+                'Wikipedia',
+            ]);
+        })
+    </script>
+
+{% endblock %}
