@@ -78,7 +78,7 @@ class RecrefFormAdapter:
             org_recref=org_recref,
         )
 
-    def find_all_recref_by_related_manger(self, related_manger, rel_type):
+    def find_recref_records_by_related_manger(self, related_manger, rel_type):
         return related_manger.filter(relationship_type=rel_type).iterator()
 
     def find_all_targets_by_rel_type(self, rel_type) -> Iterable[models.Model]:
@@ -583,7 +583,7 @@ class FullFormHandler:
     def add_recref_formset_handler(self, recref_formset_handler: 'RecrefFormsetHandler'):
         self.recref_formset_handlers.append(recref_formset_handler)
 
-    def save_all_comment_formset(self, parent, request):
+    def save_all_recref_formset(self, parent, request):
         # KTODO fix comment_id has_changed problem
         for c in self.recref_formset_handlers:
             c.save(parent, request)

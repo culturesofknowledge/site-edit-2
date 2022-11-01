@@ -435,7 +435,7 @@ def _val_handler_person__organisation_type(row: dict):
     return row
 
 
-def migrate_groups_and_permissions(conn, target_model:str):
+def migrate_groups_and_permissions(conn, target_model: str):
     rows = find_rows_by_db_table(conn, target_model)
     # All the entity types to which permissions are given
     content_types = [CofkUnionWork, CofkUnionPerson, CofkUnionLocation, CofkUnionComment,
@@ -494,7 +494,7 @@ def data_migration(user, password, database, host, port):
         lambda: clone_rows_by_model_class(conn, CofkUnionLocation),
         # m2m location
         lambda: create_resources_relationship(conn, CofkUnionLocation),
-        lambda: create_comments_relationship(conn, CofkUnionLocation),
+        lambda: create_comments_relationship(conn, CofkUnionLocation),  # KTODO fix comment as recref
 
         # ### Person
         lambda: clone_rows_by_model_class(
@@ -504,7 +504,7 @@ def data_migration(user, password, database, host, port):
             int_pk_col_name='iperson_id',
         ),
         # m2m person
-        lambda: create_comments_relationship(conn, CofkUnionPerson),
+        lambda: create_comments_relationship(conn, CofkUnionPerson),  # KTODO fix comment as recref
         lambda: create_resources_relationship(conn, CofkUnionPerson),
         lambda: create_images_relationship(conn, CofkUnionPerson),
         lambda: create_recref(conn,
@@ -527,7 +527,7 @@ def data_migration(user, password, database, host, port):
         lambda: clone_rows_by_model_class(conn, CofkUser,
                                           col_val_handler_fn_list=[_val_handler_users],
                                           seq_name=None,
-                                          target_model_class='cofk_users',),
+                                          target_model_class='cofk_users', ),
         lambda: migrate_groups_and_permissions(conn, 'cofk_roles')
 
     ]

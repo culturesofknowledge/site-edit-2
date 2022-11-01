@@ -165,7 +165,7 @@ class PlacesFFH(BasicWorkFFH):
 
     def save(self, request):
         work = self.save_work(request, self.places_form)
-        self.save_all_comment_formset(work, request)
+        self.save_all_recref_formset(work, request)
 
         self.origin_loc_handler.upsert_recref_if_field_exist(
             self.places_form, work, request.user.username
@@ -195,7 +195,7 @@ class DatesFFH(BasicWorkFFH):
 
     def save(self, request):
         work = self.save_work(request, self.dates_form)
-        self.save_all_comment_formset(work, request)
+        self.save_all_recref_formset(work, request)
 
 
 class CorrFFH(BasicWorkFFH):
@@ -277,7 +277,7 @@ class CorrFFH(BasicWorkFFH):
         save_multi_rel_recref_formset(self.addressee_formset, work, request)
 
         # handle all comments
-        self.save_all_comment_formset(work, request)
+        self.save_all_recref_formset(work, request)
 
         # handle recref_handler
         self.maintain_all_recref_records(request, work)
@@ -417,7 +417,7 @@ class ManifFFH(BasicWorkFFH):
         log.info(f'save manif {manif}')  # KTODO fix iwork_id plus more than 1
 
         # comments
-        self.save_all_comment_formset(manif, request)
+        self.save_all_recref_formset(manif, request)
         self.maintain_all_recref_records(request, manif)
 
         lang_utils.maintain_lang_records(self.edit_lang_formset,
@@ -767,7 +767,7 @@ class WorkCommentRecrefAdapter(TargetCommentRecrefAdapter):
         recref.comment = target
 
     def find_recref_records(self, rel_type):
-        return self.find_all_recref_by_related_manger(self.parent.cofkworkcommentmap_set, rel_type)
+        return self.find_recref_records_by_related_manger(self.parent.cofkworkcommentmap_set, rel_type)
 
 
 class ManifCommentFormsetHandler(RecrefFormsetHandler):
@@ -791,4 +791,4 @@ class ManifCommentRecrefAdapter(TargetCommentRecrefAdapter):
         recref.comment = target
 
     def find_recref_records(self, rel_type):
-        return self.find_all_recref_by_related_manger(self.parent.cofkmanifcommentmap_set, rel_type)
+        return self.find_recref_records_by_related_manger(self.parent.cofkmanifcommentmap_set, rel_type)
