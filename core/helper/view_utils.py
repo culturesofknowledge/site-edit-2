@@ -23,7 +23,6 @@ from core.forms import RecrefForm
 from core.forms import build_search_components
 from core.helper import file_utils, email_utils, recref_utils
 from core.helper import model_utils
-from core.helper import view_utils
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
     demo_table_search_results_renderer
 from core.helper.view_components import DownloadCsvHandler
@@ -357,10 +356,10 @@ class MultiRecrefHandler:
 
         self.name = name
         self.new_form = recref_form_class(request_data or None, prefix=f'new_{name}')
-        self.update_formset = view_utils.create_formset(recref_form_class, post_data=request_data,
-                                                        prefix=f'recref_{name}',
-                                                        initial_list=initial_list,
-                                                        extra=0, )
+        self.update_formset = create_formset(recref_form_class, post_data=request_data,
+                                             prefix=f'recref_{name}',
+                                             initial_list=initial_list,
+                                             extra=0, )
 
     def create_context(self) -> dict:
         return {
@@ -477,7 +476,7 @@ class ImageHandler:
     def __init__(self, request_data, request_files,
                  img_related_manager):
         self.img_related_manager = img_related_manager
-        self.image_formset = view_utils.create_formset(
+        self.image_formset = create_formset(
             ImageForm, post_data=request_data,
             prefix='image',
             initial_list=model_utils.related_manager_to_dict_list(
@@ -496,7 +495,7 @@ class ImageHandler:
     def save(self, request):
         image_formset = (f for f in self.image_formset if f.is_valid())
         image_formset = (f for f in image_formset if f.cleaned_data.get('image_filename'))
-        view_utils.save_formset(image_formset, self.img_related_manager, model_id_name='image_id')
+        save_formset(image_formset, self.img_related_manager, model_id_name='image_id')
 
         # save if user uploaded an image
         if uploaded_img_file := self.img_form.cleaned_data.get('selected_image'):
@@ -562,7 +561,7 @@ class FullFormHandler:
     @property
     def all_recref_handlers(self):
         attr_list = (getattr(self, p) for p in dir(self))
-        attr_list = (a for a in attr_list if isinstance(a, view_utils.MultiRecrefHandler))
+        attr_list = (a for a in attr_list if isinstance(a, MultiRecrefHandler))
         return attr_list
 
     def create_all_recref_context(self) -> dict:
@@ -591,7 +590,7 @@ class FullFormHandler:
 
     def is_invalid(self):
         form_formsets = (f for f in self.every_form_formset if f.has_changed())
-        return view_utils.any_invalid_with_log(form_formsets)
+        return any_invalid_with_log(form_formsets)
 
     def prepare_cleaned_data(self):
         for f in self.every_form_formset:
@@ -623,7 +622,7 @@ class CommentFormsetHandler:
                  context_name=None):
         self.context_name = context_name or f'{prefix}_formset'
         self.rel_type = rel_type
-        self.formset = view_utils.create_formset(
+        self.formset = create_formset(
             CommentForm, post_data=request_data,
             prefix=prefix,
             initial_list=model_utils.models_to_dict_list(comments_query_fn(rel_type))
@@ -640,7 +639,7 @@ class CommentFormsetHandler:
 
 def save_comments_formset(comment_class: Type[Recref], owner_id_name,
                           owner_id, request, comment_formset, rel_type):
-    view_utils.save_m2m_relation_records(
+    save_m2m_relation_records(
         comment_formset,
         lambda c: model_utils.get_or_create(
             comment_class,
