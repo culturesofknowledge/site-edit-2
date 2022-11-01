@@ -188,8 +188,9 @@ class DatesFFH(BasicWorkFFH):
         self.add_recref_formset_handler(WorkCommentFormsetHandler(
             prefix='date_comment',
             request_data=request_data,
+            form=CommentForm,
             rel_type=REL_TYPE_COMMENT_DATE,
-            comments_query_fn=self.safe_work.find_comments_by_rel_type
+            parent=self.safe_work,
         ))
 
     def save(self, request):
