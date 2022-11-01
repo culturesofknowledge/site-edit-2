@@ -13,11 +13,11 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_WORK_MATCHES, REL_TYPE_COMMENT_DATE, REL_TYPE_WAS_SENT_FROM, REL_TYPE_COMMENT_ORIGIN, \
     REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_ROUTE, REL_TYPE_FORMERLY_OWNED, \
     REL_TYPE_ENCLOSED_IN, REL_TYPE_COMMENT_RECEIPT_DATE, REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_STORED_IN
-from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm
+from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm
 from core.helper import view_utils, lang_utils, model_utils, recref_utils
 from core.helper.lang_utils import LangModelAdapter
-from core.helper.view_utils import DefaultSearchView, FullFormHandler, CommentFormsetHandler, RecrefFormAdapter, \
-    ImageHandler
+from core.helper.view_utils import DefaultSearchView, FullFormHandler, RecrefFormAdapter, \
+    ImageHandler, RecrefFormsetHandler, TargetCommentRecrefAdapter
 from core.models import Recref
 from institution import inst_utils
 from institution.models import CofkUnionInstitution
@@ -31,32 +31,14 @@ from work import work_utils
 from work.forms import WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \
     ManifPersonRecrefAdapter, ManifPersonRecrefForm, ScribeRelationChoices
-from work.models import CofkWorkPersonMap, CofkUnionWork, create_work_id, CofkWorkComment, CofkWorkWorkMap, \
+from work.models import CofkWorkPersonMap, CofkUnionWork, create_work_id, CofkWorkCommentMap, CofkWorkWorkMap, \
     CofkWorkLocationMap
 
 log = logging.getLogger(__name__)
 
 
-class WorkCommentFormsetHandler(CommentFormsetHandler):
-    def __init__(self, prefix, request_data, rel_type, comments_query_fn, context_name=None):
-        super().__init__(prefix, request_data, rel_type, comments_query_fn,
-                         comment_class=CofkWorkComment, owner_id_name='work_id',
-                         context_name=context_name, )
-
-
-class ManifCommentFormsetHandler(CommentFormsetHandler):
-    def __init__(self, prefix, request_data, rel_type, comments_query_fn, context_name=None):
-        super().__init__(prefix, request_data, rel_type, comments_query_fn,
-                         comment_class=CofkManifCommentMap, owner_id_name='manifestation_id',
-                         context_name=context_name, )
-
-
 def get_location_id(model: models.Model):
     return model and model.location_id
-
-
-# class DatesFFH(BasicWorkFFH):
-#     pass
 
 
 class BasicWorkFFH(FullFormHandler):
@@ -159,28 +141,31 @@ class PlacesFFH(BasicWorkFFH):
         self.places_form = PlacesForm(request_data, instance=self.work, initial=dates_form_initial)
 
         # comments
-        self.add_comment_handler(WorkCommentFormsetHandler(
+        self.add_recref_formset_handler(WorkCommentFormsetHandler(
             prefix='origin_comment',
             request_data=request_data,
+            form=CommentForm,
             rel_type=REL_TYPE_COMMENT_ORIGIN,
-            comments_query_fn=self.safe_work.find_comments_by_rel_type
+            parent=self.safe_work,
         ))
-        self.add_comment_handler(WorkCommentFormsetHandler(
+        self.add_recref_formset_handler(WorkCommentFormsetHandler(
             prefix='destination_comment',
             request_data=request_data,
+            form=CommentForm,
             rel_type=REL_TYPE_COMMENT_DESTINATION,
-            comments_query_fn=self.safe_work.find_comments_by_rel_type
+            parent=self.safe_work,
         ))
-        self.add_comment_handler(WorkCommentFormsetHandler(
+        self.add_recref_formset_handler(WorkCommentFormsetHandler(
             prefix='route_comment',
             request_data=request_data,
+            form=CommentForm,
             rel_type=REL_TYPE_COMMENT_ROUTE,
-            comments_query_fn=self.safe_work.find_comments_by_rel_type
+            parent=self.safe_work,
         ))
 
     def save(self, request):
         work = self.save_work(request, self.places_form)
-        self.save_all_comment_formset(work.work_id, request)
+        self.save_all_comment_formset(work, request)
 
         self.origin_loc_handler.upsert_recref_if_field_exist(
             self.places_form, work, request.user.username
@@ -200,7 +185,7 @@ class DatesFFH(BasicWorkFFH):
         self.dates_form = DatesForm(request_data, instance=self.work)
 
         # comments
-        self.add_comment_handler(WorkCommentFormsetHandler(
+        self.add_recref_formset_handler(WorkCommentFormsetHandler(
             prefix='date_comment',
             request_data=request_data,
             rel_type=REL_TYPE_COMMENT_DATE,
@@ -209,7 +194,7 @@ class DatesFFH(BasicWorkFFH):
 
     def save(self, request):
         work = self.save_work(request, self.dates_form)
-        self.save_all_comment_formset(work.work_id, request)
+        self.save_all_comment_formset(work, request)
 
 
 class CorrFFH(BasicWorkFFH):
@@ -236,17 +221,19 @@ class CorrFFH(BasicWorkFFH):
         )
 
         # comment
-        self.add_comment_handler(WorkCommentFormsetHandler(
+        self.add_recref_formset_handler(WorkCommentFormsetHandler(
             prefix='author_comment',
             request_data=request_data,
+            form=CommentForm,
             rel_type=REL_TYPE_COMMENT_AUTHOR,
-            comments_query_fn=self.safe_work.find_comments_by_rel_type,
+            parent=self.safe_work,
         ))
-        self.add_comment_handler(WorkCommentFormsetHandler(
+        self.add_recref_formset_handler(WorkCommentFormsetHandler(
             prefix='addressee_comment',
             request_data=request_data,
+            form=CommentForm,
             rel_type=REL_TYPE_COMMENT_ADDRESSEE,
-            comments_query_fn=self.safe_work.find_comments_by_rel_type
+            parent=self.safe_work,
         ))
 
         # letters
@@ -289,7 +276,7 @@ class CorrFFH(BasicWorkFFH):
         save_multi_rel_recref_formset(self.addressee_formset, work, request)
 
         # handle all comments
-        self.save_all_comment_formset(work.work_id, request)
+        self.save_all_comment_formset(work, request)
 
         # handle recref_handler
         self.maintain_all_recref_records(request, work)
@@ -347,23 +334,26 @@ class ManifFFH(BasicWorkFFH):
             prefix='edit_lang')
 
         # comments
-        self.add_comment_handler(ManifCommentFormsetHandler(
+        self.add_recref_formset_handler(ManifCommentFormsetHandler(
             prefix='date_comment',
             request_data=request_data,
+            form=CommentForm,
             rel_type=REL_TYPE_COMMENT_DATE,
-            comments_query_fn=self.safe_manif.find_comments_by_rel_type
+            parent=self.safe_manif,
         ))
-        self.add_comment_handler(ManifCommentFormsetHandler(
+        self.add_recref_formset_handler(ManifCommentFormsetHandler(
             prefix='receipt_date_comment',
             request_data=request_data,
+            form=CommentForm,
             rel_type=REL_TYPE_COMMENT_RECEIPT_DATE,
-            comments_query_fn=self.safe_manif.find_comments_by_rel_type
+            parent=self.safe_manif,
         ))
-        self.add_comment_handler(ManifCommentFormsetHandler(
+        self.add_recref_formset_handler(ManifCommentFormsetHandler(
             prefix='manif_comment',
             request_data=request_data,
+            form=CommentForm,
             rel_type=REL_TYPE_COMMENT_REFERS_TO,
-            comments_query_fn=self.safe_manif.find_comments_by_rel_type
+            parent=self.safe_manif,
         ))
 
         # enclosures
@@ -426,7 +416,7 @@ class ManifFFH(BasicWorkFFH):
         log.info(f'save manif {manif}')  # KTODO fix iwork_id plus more than 1
 
         # comments
-        self.save_all_comment_formset(manif.manifestation_id, request)
+        self.save_all_comment_formset(manif, request)
         self.maintain_all_recref_records(request, manif)
 
         lang_utils.maintain_lang_records(self.edit_lang_formset,
@@ -443,7 +433,6 @@ class ManifFFH(BasicWorkFFH):
                                      recref_adapter=ManifPersonRecrefForm.create_recref_adapter())
         save_multi_rel_recref_formset(self.scribe_recref_formset, manif, request)
         self.img_handler.save(request)
-
 
         self.inst_handler.upsert_recref_if_field_exist(
             self.manif_form, manif, request.user.username)
@@ -753,3 +742,52 @@ class EnclosedManifRecrefAdapter(ManifManifRecrefAdapter):
 
     def target_id_name(self):
         return 'manif_from_id'
+
+
+class WorkCommentFormsetHandler(RecrefFormsetHandler):
+
+    def create_recref_adapter(self, parent) -> RecrefFormAdapter:
+        return WorkCommentRecrefAdapter(parent)
+
+    def find_org_recref_fn(self, parent, target) -> Recref | None:
+        return CofkWorkCommentMap.objects.filter(work=parent, comment=target).first()
+
+
+class WorkCommentRecrefAdapter(TargetCommentRecrefAdapter):
+    def __init__(self, parent):
+        self.parent: CofkUnionWork = parent
+
+    def recref_class(self) -> Type[Recref]:
+        return CofkWorkCommentMap
+
+    def set_parent_target_instance(self, recref, parent, target):
+        recref: CofkWorkCommentMap
+        recref.work = parent
+        recref.comment = target
+
+    def find_recref_records(self, rel_type):
+        return self.find_all_recref_by_related_manger(self.parent.cofkworkcommentmap_set, rel_type)
+
+
+class ManifCommentFormsetHandler(RecrefFormsetHandler):
+    def create_recref_adapter(self, parent) -> RecrefFormAdapter:
+        return ManifCommentRecrefAdapter(parent)
+
+    def find_org_recref_fn(self, parent, target) -> Recref | None:
+        return CofkManifCommentMap.objects.filter(manifestation=parent, comment=target).first()
+
+
+class ManifCommentRecrefAdapter(TargetCommentRecrefAdapter):
+    def __init__(self, parent):
+        self.parent: CofkUnionManifestation = parent
+
+    def recref_class(self) -> Type[Recref]:
+        return CofkManifCommentMap
+
+    def set_parent_target_instance(self, recref, parent, target):
+        recref: CofkManifCommentMap
+        recref.manifestation = parent
+        recref.comment = target
+
+    def find_recref_records(self, rel_type):
+        return self.find_all_recref_by_related_manger(self.parent.cofkmanifcommentmap_set, rel_type)

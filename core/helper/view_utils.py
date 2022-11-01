@@ -1,6 +1,7 @@
 import itertools
 import logging
 import os
+from abc import ABC
 from multiprocessing import Process
 from typing import Iterable, Type, Callable
 from typing import NoReturn
@@ -18,7 +19,7 @@ from django.views import View
 from django.views.generic import ListView
 
 import core.constant as core_constant
-from core.forms import ImageForm, UploadImageForm, CommentForm
+from core.forms import ImageForm, UploadImageForm
 from core.forms import RecrefForm
 from core.forms import build_search_components
 from core.helper import file_utils, email_utils, recref_utils
@@ -26,7 +27,7 @@ from core.helper import model_utils
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
     demo_table_search_results_renderer
 from core.helper.view_components import DownloadCsvHandler
-from core.models import Recref
+from core.models import Recref, CofkUnionComment
 from core.services import media_service
 from uploader.models import CofkUnionImage
 
@@ -76,6 +77,14 @@ class RecrefFormAdapter:
             username=username,
             org_recref=org_recref,
         )
+
+    def find_all_recref_by_related_manger(self, related_manger, rel_type):
+        return related_manger.filter(relationship_type=rel_type).iterator()
+
+    def find_all_targets_by_rel_type(self, rel_type) -> Iterable[models.Model]:
+        target_id_list = (self.get_target_id(r) for r in self.find_recref_records(rel_type))
+        targets = (self.find_target_instance(i) for i in target_id_list)
+        return targets
 
 
 class BasicSearchView(ListView):
@@ -498,6 +507,7 @@ class ImageHandler:
         save_formset(image_formset, self.img_related_manager, model_id_name='image_id')
 
         # save if user uploaded an image
+        self.img_form.is_valid()
         if uploaded_img_file := self.img_form.cleaned_data.get('selected_image'):
             file_path = media_service.save_uploaded_img(uploaded_img_file)
             file_url = media_service.get_img_url_by_file_path(file_path)
@@ -518,7 +528,7 @@ class FullFormHandler:
     """
 
     def __init__(self, pk, *args, request_data=None, request=None, **kwargs):
-        self.comment_handlers: list[CommentFormsetHandler] = []
+        self.recref_formset_handlers: list[RecrefFormsetHandler] = []
         self.load_data(pk,
                        request_data=request_data or None,
                        request=request, *args, **kwargs)
@@ -538,7 +548,7 @@ class FullFormHandler:
                      if isinstance(var, (BaseForm, BaseFormSet)))
         attr_list = itertools.chain(
             attr_list,
-            ((h.context_name, h.formset) for h in self.comment_handlers),
+            ((h.context_name, h.formset) for h in self.recref_formset_handlers),
         )
         return attr_list
 
@@ -570,13 +580,13 @@ class FullFormHandler:
             context.update(h.create_context())
         return context
 
-    def add_comment_handler(self, comment_handler: 'CommentFormsetHandler'):
-        self.comment_handlers.append(comment_handler)
+    def add_recref_formset_handler(self, recref_formset_handler: 'RecrefFormsetHandler'):
+        self.recref_formset_handlers.append(recref_formset_handler)
 
-    def save_all_comment_formset(self, owner_id, request):
+    def save_all_comment_formset(self, parent, request):
         # KTODO fix comment_id has_changed problem
-        for c in self.comment_handlers:
-            c.save(owner_id, request)
+        for c in self.recref_formset_handlers:
+            c.save(parent, request)
 
     def create_context(self):
         context = (
@@ -607,46 +617,93 @@ def save_m2m_relation_records(forms: Iterable[ModelForm],
     save_formset(forms, model_id_name=model_id_name,
                  form_id_name=form_id_name)  # KTODO change extract mode_id_name
 
-    for r in (f.instance for f in forms):
-        recref = recref_factory(r)
+    for target in (f.instance for f in forms):
+        recref = recref_factory(target)
         recref.update_current_user_timestamp(username)
-        log.info(f'save m2m recref -- [{recref}][{r}]')
+        log.info(f'save m2m recref -- [{recref}][{target}]')
         recref.save()
 
 
-class CommentFormsetHandler:
+class RecrefFormsetHandler:
     def __init__(self, prefix, request_data,
+                 form,
                  rel_type,
-                 comments_query_fn,
-                 comment_class: Type[Recref], owner_id_name,
-                 context_name=None):
+                 parent: models.Model,
+                 context_name=None,
+                 ):
+        recref_adapter = self.create_recref_adapter(parent)
         self.context_name = context_name or f'{prefix}_formset'
         self.rel_type = rel_type
         self.formset = create_formset(
-            CommentForm, post_data=request_data,
+            form, post_data=request_data,
             prefix=prefix,
-            initial_list=model_utils.models_to_dict_list(comments_query_fn(rel_type))
+            initial_list=model_utils.models_to_dict_list(
+                recref_adapter.find_all_targets_by_rel_type(rel_type)
+            )
         )
-        self.comment_class = comment_class
-        self.owner_id_name = owner_id_name
 
-    def save(self, owner_id, request):
-        save_comments_formset(
-            self.comment_class,
-            self.owner_id_name, owner_id, request,
-            self.formset, self.rel_type)
+    def create_recref_adapter(self, parent) -> RecrefFormAdapter:
+        raise NotImplementedError()
+
+    def find_org_recref_fn(self, parent, target) -> Recref | None:
+        raise NotImplementedError()
+
+    def save(self, parent, request):
+        recref_adapter: RecrefFormAdapter = self.create_recref_adapter(parent)
+        forms = [f for f in self.formset if f.has_changed()]
+        save_formset(forms, model_id_name=recref_adapter.target_id_name())
+
+        for target in (f.instance for f in forms):
+            org_recref = self.find_org_recref_fn(
+                parent=parent,
+                target=target,
+            )
+
+            recref = recref_adapter.upsert_recref(self.rel_type, parent,
+                                                  target,
+                                                  username=request.user.username,
+                                                  org_recref=org_recref,
+                                                  )
+            recref.save()
+            log.info(f'save m2m recref -- [{recref}][{target}]')
 
 
-def save_comments_formset(comment_class: Type[Recref], owner_id_name,
-                          owner_id, request, comment_formset, rel_type):
-    save_m2m_relation_records(
-        comment_formset,
-        lambda c: model_utils.get_or_create(
-            comment_class,
-            **{owner_id_name: owner_id,
-               'comment_id': c.comment_id,
-               'relationship_type': rel_type}
-        ),
-        request.user.username,
-        model_id_name='comment_id',
-    )
+class TargetCommentRecrefAdapter(RecrefFormAdapter, ABC):
+    def find_target_display_name_by_id(self, target_id):
+        c: CofkUnionComment = self.find_target_instance(target_id)
+        return c and c.comment
+
+    def find_target_instance(self, target_id):
+        return model_utils.get_safe(CofkUnionComment, comment_id=target_id)
+
+    def target_id_name(self):
+        return 'comment_id'
+
+# class CommentFormsetHandler:
+#     def __init__(self, prefix, request_data,
+#                  rel_type,
+#                  comments_query_fn,
+#                  comment_class: Type[Recref], owner_id_name,
+#                  context_name=None):
+#         self.context_name = context_name or f'{prefix}_formset'
+#         self.rel_type = rel_type
+#         self.formset = create_formset(
+#             CommentForm, post_data=request_data,
+#             prefix=prefix,
+#             initial_list=model_utils.models_to_dict_list(comments_query_fn(rel_type))
+#         )
+#         self.comment_class = comment_class
+#         self.owner_id_name = owner_id_name
+#
+#     def save(self, owner_id, request):
+#         save_m2m_relation_records(
+#             self.formset,
+#             lambda c: model_utils.get_or_create(
+#                 self.comment_class,
+#                 **{self.owner_id_name: owner_id,
+#                    'comment_id': c.comment_id,
+#                    'relationship_type': self.rel_type}
+#             ),
+#             request.user.username,
+#             model_id_name='comment_id',
+#         )
