@@ -105,7 +105,7 @@ function AutoCalendar(year_selector,
 
 
     this.setup_auto_calendar = function () {
-        self = this
+        let self = this
         $(this.calendar_selector).on('change', function (e) {
             if (e.target.checked) {
                 self.update_gregorian_calendar()
