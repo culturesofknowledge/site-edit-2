@@ -603,11 +603,12 @@ def save_m2m_relation_records(forms: Iterable[ModelForm],
                               username,
                               model_id_name,
                               form_id_name=None, ):
+    # KTODO try this to make sure it support related resources
+    forms = [f for f in forms if f.has_changed()]
     save_formset(forms, model_id_name=model_id_name,
                  form_id_name=form_id_name)  # KTODO change extract mode_id_name
 
-    records = (f.instance for f in forms if f.has_changed())
-    for r in records:
+    for r in (f.instance for f in forms):
         recref = recref_factory(r)
         recref.update_current_user_timestamp(username)
         log.info(f'save m2m recref -- [{recref}][{r}]')
