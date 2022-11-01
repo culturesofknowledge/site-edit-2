@@ -437,7 +437,7 @@ class MultiRecrefAdapterHandler(MultiRecrefHandler):
                          recref_form_class=recref_form_class)
 
     @property
-    def recref_class(self) -> Type[models.Model]:
+    def recref_class(self) -> Type[Recref]:
         return self.recref_adapter.recref_class()
 
     def create_recref_by_new_form(self, target_id, parent_instance) -> Optional[Recref]:
@@ -445,7 +445,7 @@ class MultiRecrefAdapterHandler(MultiRecrefHandler):
             target_id, self.recref_adapter.find_target_instance,
             rel_type=self.rel_type,
             parent_instance=parent_instance,
-            create_recref_fn=self.recref_class(),
+            create_recref_fn=self.recref_class,
             set_parent_target_instance_fn=self.recref_adapter.set_parent_target_instance,
         )
 
