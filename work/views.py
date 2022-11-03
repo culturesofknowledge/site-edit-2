@@ -33,7 +33,7 @@ from work.forms import WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddressee
     AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \
     ManifPersonRecrefAdapter, ManifPersonRecrefForm, ScribeRelationChoices, DetailsForm
 from work.models import CofkWorkPersonMap, CofkUnionWork, create_work_id, CofkWorkCommentMap, CofkWorkWorkMap, \
-    CofkWorkLocationMap, CofkWorkResourceMap
+    CofkWorkLocationMap, CofkWorkResourceMap, CofkUnionLanguageOfWork
 
 log = logging.getLogger(__name__)
 
@@ -422,6 +422,7 @@ class ManifFFH(BasicWorkFFH):
         self.save_all_recref_formset(manif, request)
         self.maintain_all_recref_records(request, manif)
 
+        # language
         lang_utils.maintain_lang_records(self.edit_lang_formset,
                                          lambda pk: CofkUnionLanguageOfManifestation.objects.get(pk=pk))
 
@@ -468,8 +469,25 @@ class DetailsFFH(BasicWorkFFH):
 
         self.details_form = DetailsForm(request_data, instance=self.work)
 
+        # language
+        self.new_lang_form = NewLangForm()
+        self.lang_formset = lang_utils.create_lang_formset(
+            self.safe_work.language_set.iterator(),
+            lang_rec_id_name='lang_work_id',
+            request_data=request_data,
+            prefix='lang')
+
     def save(self, request):
         work = self.save_work(request, self.details_form)
+
+        # language
+        lang_utils.maintain_lang_records(self.lang_formset,
+                                         lambda pk: CofkUnionLanguageOfWork.objects.get(pk=pk))
+
+        lang_utils.add_new_lang_record(request.POST.getlist('lang_note'),
+                                       request.POST.getlist('lang_name'),
+                                       work.work_id,
+                                       WorkLangModelAdapter(), )
 
         # self.save_all_recref_formset(self.work, request)
 
@@ -478,6 +496,14 @@ class ManifLangModelAdapter(LangModelAdapter):
     def create_instance_by_owner_id(self, owner_id):
         m = CofkUnionLanguageOfManifestation()
         m.manifestation_id = owner_id
+        return m
+
+
+class WorkLangModelAdapter(LangModelAdapter):
+
+    def create_instance_by_owner_id(self, owner_id):
+        m = CofkUnionLanguageOfWork()
+        m.work_id = owner_id
         return m
 
 

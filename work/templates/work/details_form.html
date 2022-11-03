@@ -9,9 +9,10 @@
         <label>Editors' notes</label>
         {{ details_form.editors_notes }}
     </fieldset>
+
     <fieldset>
-        <legend>Language</legend>
-        <!-- KTODO -->
+        <legend>Language(s):</legend>
+        {% include "core/component/lang_section.html" with lang_formset=lang_formset new_lang_form=new_lang_form %}
     </fieldset>
 
     <fieldset>
@@ -60,6 +61,12 @@
     </fieldset>
 
 
+    <script src="{% static 'core/js/lang_service.js' %}" defer></script>
+    <script>
+        $(function () {
+            setup_add_lang();
+        })
+    </script>
 
 
 

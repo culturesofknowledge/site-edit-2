@@ -574,8 +574,12 @@ class CofkCollectWorkResource(models.Model):
 
 
 class CofkUnionLanguageOfWork(models.Model):
-    work = models.OneToOneField('CofkUnionWork', models.DO_NOTHING, primary_key=True)
-    language_code = models.ForeignKey('uploader.Iso639LanguageCode', models.DO_NOTHING, db_column='language_code')
+    lang_work_id = models.AutoField(primary_key=True)
+    work = models.ForeignKey(CofkUnionWork, models.DO_NOTHING, related_name='language_set')
+    language_code = models.ForeignKey('uploader.Iso639LanguageCode', models.DO_NOTHING,
+                                      db_column='language_code',
+                                      to_field='code_639_3',
+                                      )
     notes = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
