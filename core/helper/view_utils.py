@@ -546,10 +546,6 @@ class FullFormHandler:
         """
         attr_list = ((name, var) for name, var in self.__dict__.items()
                      if isinstance(var, (BaseForm, BaseFormSet)))
-        attr_list = itertools.chain(
-            attr_list,
-            ((h.context_name, h.formset) for h in self.recref_formset_handlers),
-        )
         return attr_list
 
     @property
@@ -562,6 +558,7 @@ class FullFormHandler:
             itertools.chain.from_iterable(
                 (h.img_form, h.image_formset) for _, h in self.all_image_handlers()
             ),
+            ((h.context_name, h.formset) for h in self.recref_formset_handlers),
         )
 
     def maintain_all_recref_records(self, request, parent_instance):
@@ -574,12 +571,6 @@ class FullFormHandler:
         attr_list = (a for a in attr_list if isinstance(a, MultiRecrefHandler))
         return attr_list
 
-    def create_all_recref_context(self) -> dict:
-        context = {}
-        for h in self.all_recref_handlers:
-            context.update(h.create_context())
-        return context
-
     def add_recref_formset_handler(self, recref_formset_handler: 'RecrefFormsetHandler'):
         self.recref_formset_handlers.append(recref_formset_handler)
 
@@ -589,12 +580,13 @@ class FullFormHandler:
             c.save(parent, request)
 
     def create_context(self):
-        context = (
-                dict(self.find_all_named_form_formset())
-                | self.create_all_recref_context()
-        )
+        context = dict(self.find_all_named_form_formset())
         for _, img_handler in self.all_image_handlers():
             context.update(img_handler.create_context())
+        for h in self.all_recref_handlers:
+            context.update(h.create_context())
+        context.update({h.context_name: h.formset
+                        for h in self.recref_formset_handlers})
 
         return context
 
