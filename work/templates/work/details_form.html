@@ -42,22 +42,25 @@
 
     <fieldset>
         <legend>People mentioned</legend>
-        <!-- KTODO -->
+
+        {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_people.update_formset new_form=recref_people.new_form add_label='Add person mentioned:' no_date=True %}
+
+        {% include "core/component/comment_publication_formset.html" with comment_formset=people_comment_formset %}
     </fieldset>
 
     <fieldset>
         <legend>Places mentioned</legend>
-        <!-- KTODO -->
+        {% include "core/component/create_update_recref.html" with recref_type='location' recref_formset=recref_place.update_formset new_form=recref_place.new_form add_label='Add place mentioned:' no_date=True %}
     </fieldset>
 
     <fieldset>
         <legend>Works mentioned</legend>
-        <!-- KTODO -->
+        {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_work.update_formset new_form=recref_work.new_form add_label='Add work mentioned:' no_date=True %}
     </fieldset>
 
     <fieldset>
         <legend>General notes on work</legend>
-        <!-- KTODO -->
+        {% include "core/component/comment_publication_formset.html" with comment_formset=general_comment_formset %}
     </fieldset>
 
 

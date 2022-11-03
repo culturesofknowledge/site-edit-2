@@ -13,8 +13,9 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_WORK_MATCHES, REL_TYPE_COMMENT_DATE, REL_TYPE_WAS_SENT_FROM, REL_TYPE_COMMENT_ORIGIN, \
     REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_ROUTE, REL_TYPE_FORMERLY_OWNED, \
     REL_TYPE_ENCLOSED_IN, REL_TYPE_COMMENT_RECEIPT_DATE, REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_STORED_IN, \
-    REL_TYPE_IS_RELATED_TO
-from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, ResourceForm
+    REL_TYPE_IS_RELATED_TO, REL_TYPE_PEOPLE_MENTIONED_IN_WORK, REL_TYPE_MENTION, REL_TYPE_MENTION_PLACE, \
+    REL_TYPE_MENTION_WORK
+from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, ResourceForm, LocRecrefForm
 from core.helper import view_utils, lang_utils, model_utils, recref_utils
 from core.helper.lang_utils import LangModelAdapter, NewLangForm
 from core.helper.view_utils import DefaultSearchView, FullFormHandler, RecrefFormAdapter, \
@@ -31,7 +32,7 @@ from person.models import CofkUnionPerson
 from work import work_utils
 from work.forms import WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \
-    ManifPersonRecrefAdapter, ManifPersonRecrefForm, ScribeRelationChoices, DetailsForm
+    ManifPersonRecrefAdapter, ManifPersonRecrefForm, ScribeRelationChoices, DetailsForm, WorkPersonRecrefAdapter
 from work.models import CofkWorkPersonMap, CofkUnionWork, create_work_id, CofkWorkCommentMap, CofkWorkWorkMap, \
     CofkWorkLocationMap, CofkWorkResourceMap, CofkUnionLanguageOfWork
 
@@ -469,6 +470,42 @@ class DetailsFFH(BasicWorkFFH):
 
         self.details_form = DetailsForm(request_data, instance=self.work)
 
+        # comment
+        self.add_recref_formset_handler(WorkCommentFormsetHandler(
+            prefix='people_comment',
+            request_data=request_data,
+            form=CommentForm,
+            rel_type=REL_TYPE_PEOPLE_MENTIONED_IN_WORK,
+            parent=self.safe_work,
+        ))
+        self.add_recref_formset_handler(WorkCommentFormsetHandler(
+            prefix='general_comment',
+            request_data=request_data,
+            form=CommentForm,
+            rel_type=REL_TYPE_COMMENT_REFERS_TO,
+            parent=self.safe_work,
+        ))
+
+        # related recref
+        self.people_recref_handler = view_utils.MultiRecrefAdapterHandler(
+            request_data, name='people',
+            recref_adapter=WorkPersonRecrefAdapter(self.safe_work),
+            recref_form_class=PersonRecrefForm,
+            rel_type=REL_TYPE_MENTION,
+        )
+        self.place_recref_handler = view_utils.MultiRecrefAdapterHandler(
+            request_data, name='place',
+            recref_adapter=WorkLocRecrefAdapter(self.safe_work),
+            recref_form_class=LocRecrefForm,
+            rel_type=REL_TYPE_MENTION_PLACE,
+        )
+        self.work_recref_handler = view_utils.MultiRecrefAdapterHandler(
+            request_data, name='work',
+            recref_adapter=EarlierLetterRecrefAdapter(self.safe_work),
+            recref_form_class=WorkRecrefForm,
+            rel_type=REL_TYPE_MENTION_WORK,
+        )
+
         # language
         self.new_lang_form = NewLangForm()
         self.lang_formset = lang_utils.create_lang_formset(
@@ -488,6 +525,9 @@ class DetailsFFH(BasicWorkFFH):
                                        request.POST.getlist('lang_name'),
                                        work.work_id,
                                        WorkLangModelAdapter(), )
+
+        self.save_all_recref_formset(work, request)
+        self.maintain_all_recref_records(request, work)
 
         # self.save_all_recref_formset(self.work, request)
 

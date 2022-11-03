@@ -485,6 +485,9 @@ class TargetPersonRecrefAdapter(view_utils.RecrefFormAdapter, ABC):
     def find_target_instance(self, target_id):
         return CofkUnionPerson.objects.get(person_id=target_id)
 
+    def target_id_name(self):
+        return 'person_id'
+
 
 class WorkPersonRecrefAdapter(TargetPersonRecrefAdapter):
 
@@ -501,9 +504,6 @@ class WorkPersonRecrefAdapter(TargetPersonRecrefAdapter):
     def find_recref_records(self, rel_type):
         return self.recref.cofkworkpersonmap_set.filter(relationship_type=rel_type).iterator()
 
-    def target_id_name(self):
-        return 'person_id'
-
 
 class ManifPersonRecrefAdapter(TargetPersonRecrefAdapter):
 
@@ -519,9 +519,6 @@ class ManifPersonRecrefAdapter(TargetPersonRecrefAdapter):
 
     def find_recref_records(self, rel_type):
         return self.recref.cofkmanifpersonmap_set.filter(relationship_type=rel_type).iterator()
-
-    def target_id_name(self):
-        return 'person_id'
 
 
 # class ManifPersonRecrefForm(MultiRelRecrefForm):
