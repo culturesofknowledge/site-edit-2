@@ -1,0 +1,66 @@
+{% extends "work/basic_form.html" %}
+{% load static %}
+{% block tabcontent %}
+    <fieldset>
+        <label>Source of data:</label>
+        {{ details_form.accession_code }}
+        <span>(max. 250 characters)</span>
+
+        <label>Editors' notes</label>
+        {{ details_form.editors_notes }}
+    </fieldset>
+    <fieldset>
+        <legend>Language</legend>
+        <!-- KTODO -->
+    </fieldset>
+
+    <fieldset>
+        <legend>Incipit and explicit</legend>
+
+        <label>Incipit</label>
+        {{ details_form.incipit }}
+
+        <label>Explicit</label>
+        {{ details_form.explicit }}
+
+        <label>Postscript</label>
+        {{ details_form.ps }}
+    </fieldset>
+
+    <fieldset>
+        <legend>Abstract, subjects and keywords</legend>
+        <label>Abstract</label>
+        {{ details_form.abstract }}
+
+        <label>Subject(s):</label>
+        <!-- KTODO -->
+
+        <label>Keywords (ideally separated by semi-colons)</label>
+        {{ details_form.keywords }}
+    </fieldset>
+
+    <fieldset>
+        <legend>People mentioned</legend>
+        <!-- KTODO -->
+    </fieldset>
+
+    <fieldset>
+        <legend>Places mentioned</legend>
+        <!-- KTODO -->
+    </fieldset>
+
+    <fieldset>
+        <legend>Works mentioned</legend>
+        <!-- KTODO -->
+    </fieldset>
+
+    <fieldset>
+        <legend>General notes on work</legend>
+        <!-- KTODO -->
+    </fieldset>
+
+
+
+
+
+{% endblock %}

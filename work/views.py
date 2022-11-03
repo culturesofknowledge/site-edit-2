@@ -31,7 +31,7 @@ from person.models import CofkUnionPerson
 from work import work_utils
 from work.forms import WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \
-    ManifPersonRecrefAdapter, ManifPersonRecrefForm, ScribeRelationChoices
+    ManifPersonRecrefAdapter, ManifPersonRecrefForm, ScribeRelationChoices, DetailsForm
 from work.models import CofkWorkPersonMap, CofkUnionWork, create_work_id, CofkWorkCommentMap, CofkWorkWorkMap, \
     CofkWorkLocationMap, CofkWorkResourceMap
 
@@ -458,6 +458,21 @@ class ResourcesFFH(BasicWorkFFH):
         self.save_all_recref_formset(self.work, request)
 
 
+class DetailsFFH(BasicWorkFFH):
+    def __init__(self, pk, request_data=None, request=None, *args, **kwargs):
+        super().__init__(pk, 'work/details_form.html', *args, request_data=request_data, request=request, **kwargs)
+
+    def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
+        super().load_data(pk, request_data=request_data, request=request)
+
+        self.details_form = DetailsForm(request_data, instance=self.work)
+
+    def save(self, request):
+        work = self.save_work(request, self.details_form)
+
+        # self.save_all_recref_formset(self.work, request)
+
+
 class ManifLangModelAdapter(LangModelAdapter):
     def create_instance_by_owner_id(self, owner_id):
         m = CofkUnionLanguageOfManifestation()
@@ -504,6 +519,8 @@ class BasicWorkFormView(LoginRequiredMixin, View):
         'places': 'work:places_form',
         'manif': 'work:manif_init',
         'resources': 'work:resources_form',
+        'details': 'work:details_form',
+        'overview': 'work:overview_form',
     }
 
     @staticmethod
@@ -598,6 +615,17 @@ class ResourcesView(BasicWorkFormView):
     @property
     def cur_vname(self):
         return 'work:resources_form'
+
+
+class DetailsView(BasicWorkFormView):
+
+    @staticmethod
+    def create_fhandler(request, iwork_id=None, *args, **kwargs):
+        return DetailsFFH(iwork_id, request_data=request.POST, request=request)
+
+    @property
+    def cur_vname(self):
+        return 'work:details_form'
 
 
 class WorkQuickInitView(CorrView):

@@ -70,7 +70,6 @@ class InstRecrefField(SelectedRecrefField):
         return ManifInstRecrefAdapter().find_target_display_name_by_id(target_id)
 
 
-
 class CorrForm(forms.ModelForm):
     authors_as_marked = forms.CharField(required=False)
     authors_inferred = form_utils.ZeroOneCheckboxField(is_str=False)
@@ -151,6 +150,28 @@ class PlacesForm(forms.ModelForm):
             'destination_as_marked',
             'destination_inferred',
             'destination_uncertain',
+        )
+
+
+class DetailsForm(forms.ModelForm):
+    accession_code = CharField(required=False)
+    editors_notes = CharField(required=False, widget=forms.Textarea(dict(rows='3')))
+    incipit = CharField(required=False, widget=forms.Textarea(dict(rows='3')))
+    explicit = CharField(required=False, widget=forms.Textarea(dict(rows='3')))
+    ps = CharField(required=False, widget=forms.Textarea(dict(rows='3')))
+    abstract = CharField(required=False, widget=forms.Textarea(dict(rows='4')))
+    keywords = CharField(required=False, widget=forms.Textarea(dict(rows='3')))
+
+    class Meta:
+        model = CofkUnionWork
+        fields = (
+            'accession_code',
+            'editors_notes',
+            'incipit',
+            'explicit',
+            'ps',
+            'abstract',
+            'keywords',
         )
 
 
