@@ -111,6 +111,7 @@
 
 {% include "work/component/common_date_fields.html" with name='receipt' date_as_marked=manif_form.date_of_receipt_as_marked calendar_used=manif_form.manifestation_receipt_calendar is_range=manif_form.manifestation_receipt_date_is_range day_field=manif_form.manifestation_receipt_date_day month_field=manif_form.manifestation_receipt_date_month year_field=manif_form.manifestation_receipt_date_year normal_date=manif_form.manifestation_receipt_date gregorian_date=manif_form.manifestation_receipt_date_gregorian inferred=manif_form.manifestation_receipt_date_inferred  uncertain=manif_form.manifestation_receipt_date_uncertain  approx=manif_form.manifestation_receipt_date_approx date_comment_formset=receipt_date_comment_formset %}
 
+
 <fieldset>
     <legend>Language of manifestation:</legend>
     {{ manif_form.manifestation_is_translation }}
@@ -119,36 +120,9 @@
         (It is not necessary to enter language, incipit and explicit of manifestation if they are the same as those of
         the original work.)
         <br/>
-        If a language you require is not displayed below, you can add it to the list: Add further possible languages
-
-        <br/>
-        <br/>
-        If the languages you want are already displayed below, tick one or more checkboxes to select as many as
-        required, then click Save. You can also enter very brief notes on the selected languages using the input fields
-        below each checkbox, for example if you wanted to specify that a text is mainly in one language but there are
-        just a few words in another language.
     </small>
+    {% include "core/component/lang_section.html" with lang_formset=edit_lang_formset new_lang_form=new_lang_form %}
 
-
-    {{ edit_lang_formset.management_form }}
-    {% for form in edit_lang_formset %}
-        <label>{{ form.lang_name.value }}  </label>
-        {{ form.lang_name }}
-        {{ form.notes }}
-        {{ form.lang_rec_id }}
-        {{ form.is_del }}
-        <label for="{{ form.is_del.id_for_label }}">delete?</label>
-    {% endfor %}
-
-
-    <div class="lang_div" formset_name="new_lang">
-        <label>New Language:</label>
-        {{ manif_form.new_language }}
-        {{ manif_form.language_list }}
-        <button class="lang_add_btn">+</button>
-        <div class="old_lang_div"></div>
-        <div class="new_lang_div"></div>
-    </div>
 </fieldset>
 
 <fieldset>

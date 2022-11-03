@@ -16,7 +16,7 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_IS_RELATED_TO
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, ResourceForm
 from core.helper import view_utils, lang_utils, model_utils, recref_utils
-from core.helper.lang_utils import LangModelAdapter
+from core.helper.lang_utils import LangModelAdapter, NewLangForm
 from core.helper.view_utils import DefaultSearchView, FullFormHandler, RecrefFormAdapter, \
     ImageHandler, RecrefFormsetHandler, TargetCommentRecrefAdapter, TargetResourceRecrefAdapter
 from core.models import Recref
@@ -316,6 +316,7 @@ class ManifFFH(BasicWorkFFH):
             )
         self.manif_form = ManifForm(request_data or None,
                                     instance=self.manif, initial=manif_form_initial)
+        self.new_lang_form = NewLangForm()
 
         self.former_recref_handler = view_utils.MultiRecrefAdapterHandler(
             request_data, name='former',

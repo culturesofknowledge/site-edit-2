@@ -3,7 +3,7 @@ from typing import Iterable
 
 from django import forms
 
-from core.helper import view_utils, model_utils, form_utils
+from core.helper import view_utils, model_utils, form_utils, widgets_utils
 
 log = logging.getLogger(__name__)
 
@@ -84,6 +84,14 @@ class LangForm(forms.Form):
     lang_name = forms.CharField(required=False, widget=forms.HiddenInput())
     is_del = form_utils.ZeroOneCheckboxField(is_str=False)
     lang_rec_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
+
+
+class NewLangForm(forms.Form):
+    new_language = forms.CharField(required=False, widget=forms.TextInput({
+        'list': 'id_language_list',
+    }))
+
+    language_list = forms.Field(required=False, widget=widgets_utils.Datalist(choices=language_choices))
 
 
 def add_new_lang_record(note_list: Iterable[str], lang_name_list: Iterable[str],

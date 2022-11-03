@@ -558,7 +558,7 @@ class FullFormHandler:
             itertools.chain.from_iterable(
                 (h.img_form, h.image_formset) for _, h in self.all_image_handlers()
             ),
-            ((h.context_name, h.formset) for h in self.recref_formset_handlers),
+            (h.formset for h in self.recref_formset_handlers),
         )
 
     def maintain_all_recref_records(self, request, parent_instance):

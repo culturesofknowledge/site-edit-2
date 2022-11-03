@@ -249,12 +249,6 @@ class ManifForm(forms.ModelForm):
 
     manifestation_is_translation = form_utils.ZeroOneCheckboxField(is_str=False)
 
-    new_language = forms.CharField(required=False, widget=forms.TextInput({
-        'list': 'id_language_list',
-    }))
-
-    language_list = forms.Field(required=False, widget=widgets_utils.Datalist(choices=language_choices))
-
     manifestation_incipit = forms.CharField(required=False, widget=forms.Textarea(dict(rows='3')))
     manifestation_excipit = forms.CharField(required=False, widget=forms.Textarea(dict(rows='3')))
 
