@@ -180,6 +180,10 @@ class PlacesFFH(BasicWorkFFH):
         ))
 
     def save(self, request):
+        if not self.is_any_changed():
+            log.debug('skip save places when no changed')
+            return
+
         work = self.save_work(request, self.places_form)
         self.save_all_recref_formset(work, request)
 
@@ -210,6 +214,10 @@ class DatesFFH(BasicWorkFFH):
         ))
 
     def save(self, request):
+        if not self.is_any_changed():
+            log.debug('skip save dates when no changed')
+            return
+
         work = self.save_work(request, self.dates_form)
         self.save_all_recref_formset(work, request)
 
@@ -476,6 +484,9 @@ class ResourcesFFH(BasicWorkFFH):
         ))
 
     def save(self, request):
+        if not self.is_any_changed():
+            log.debug('skip save resources when no changed')
+            return
         self.save_all_recref_formset(self.work, request)
 
 
@@ -540,6 +551,9 @@ class DetailsFFH(BasicWorkFFH):
         return context
 
     def save(self, request):
+        if not self.is_any_changed():
+            log.debug('skip save details when no changed')
+            return
         work = self.save_work(request, self.details_form)
 
         # language
