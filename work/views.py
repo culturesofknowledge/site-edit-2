@@ -704,6 +704,16 @@ class DetailsView(BasicWorkFormView):
         return 'work:details_form'
 
 
+@login_required()
+def overview_view(request, iwork_id):
+    work = get_object_or_404(CofkUnionWork, iwork_id=iwork_id)
+    context = dict(
+        work=work,
+        work_display_name= work_utils.get_recref_display_name(work),
+    )
+    return render(request, 'work/overview_form.html', context)
+
+
 class WorkQuickInitView(CorrView):
     def resp_after_saved(self, request, fhandler):
         return redirect('work:return_quick_init', self.get_form_work_instance(fhandler).iwork_id)

@@ -13,7 +13,7 @@ urlpatterns = [
     path(f'form/<int:iwork_id>/manif/<str:manif_id>', views.ManifView.as_view(), name='manif_update'),
     path(f'form/<int:iwork_id>/resources', views.ResourcesView.as_view(), name='resources_form'),
     path(f'form/<int:iwork_id>/details', views.DetailsView.as_view(), name='details_form'),
-    path(f'form/<int:iwork_id>/overview', views.ResourcesView.as_view(), name='overview_form'),  # KTODO
+    path(f'form/<int:iwork_id>/overview', views.overview_view, name='overview_form'),
 ]
 urlpatterns.extend(
     url_utils.create_common_urls_for_section(

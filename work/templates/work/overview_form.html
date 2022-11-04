@@ -1,0 +1,21 @@
+{% extends "work/basic_form.html" %}
+{% load static %}
+{% block tabcontent %}
+    <span>You can have the following summary sent to you by email as a spreadsheet TODO <!-- KTODO --></span>
+    <h3>General:</h3>
+    <div class="row-no-margin">
+        <span class="overview-label">Work ID</span>
+        <span class="overview-value"> {{ work.iwork_id }}  </span>
+    </div>
+    <div class="row-no-margin">
+        <span class="overview-label">Description</span>
+        <span class="overview-value"> {{ work.iwork_id }}  </span>
+    </div>
+
+    <style>
+        .overview-label {
+            width: 150px;
+        }
+    </style>
+
+{% endblock %}
