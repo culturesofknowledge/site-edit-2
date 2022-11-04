@@ -314,6 +314,10 @@ class ManifForm(forms.ModelForm):
         )
 
 
+class CatalogueForm(forms.Form):
+    catalogue = forms.CharField(required=False, widget=forms.Select())
+
+
 class UndefinedRelationChoices(TextChoices):
     UNDEFINED = 'undefined', 'Undefined'
 

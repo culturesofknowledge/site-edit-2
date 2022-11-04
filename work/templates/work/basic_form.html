@@ -13,6 +13,9 @@
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
 
+                <label>Original catalogue:</label>
+                {{ catalogue_form.catalogue }}
+
                 <div class="row-no-margin">
                     <button type="submit" name="__goto" value="corr">Correspondents</button>
                     <button type="submit" name="__goto" value="dates">Dates</button>

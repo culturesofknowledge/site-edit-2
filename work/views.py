@@ -29,11 +29,12 @@ from manifestation import manif_utils
 from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, create_manif_id, CofkManifManifMap, \
     CofkUnionLanguageOfManifestation, CofkManifInstMap
 from person.models import CofkUnionPerson
-from uploader.models import CofkUnionSubject
+from uploader.models import CofkUnionSubject, CofkLookupCatalogue
 from work import work_utils
 from work.forms import WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \
-    ManifPersonRecrefAdapter, ManifPersonRecrefForm, ScribeRelationChoices, DetailsForm, WorkPersonRecrefAdapter
+    ManifPersonRecrefAdapter, ManifPersonRecrefForm, ScribeRelationChoices, DetailsForm, WorkPersonRecrefAdapter, \
+    CatalogueForm
 from work.models import CofkWorkPersonMap, CofkUnionWork, create_work_id, CofkWorkCommentMap, CofkWorkWorkMap, \
     CofkWorkLocationMap, CofkWorkResourceMap, CofkUnionLanguageOfWork, CofkWorkSubjectMap
 
@@ -64,6 +65,13 @@ class BasicWorkFFH(FullFormHandler):
 
         self.safe_work = self.work or CofkUnionWork()  # KTODO iwork_id sequence number +1 by this ??
 
+        self.catalogue_form = CatalogueForm(request_data, initial={
+            'catalogue': self.safe_work.original_catalogue_id
+        })
+        self.catalogue_form.fields['catalogue'].widget.choices = [(None, '')] + [
+            (c.catalogue_id, c.catalogue_name) for c in CofkLookupCatalogue.objects.all()
+        ]
+
     def create_context(self):
         context = super().create_context()
         context.update({
@@ -80,9 +88,19 @@ class BasicWorkFFH(FullFormHandler):
         log.debug(f'changed_data : {work_form.changed_data}')
         if not work.work_id:
             work.work_id = create_work_id(work.iwork_id)  # KTODO fix
+
+        # handle catalogue
+        self.catalogue_form.is_valid()
+        cat_id = self.catalogue_form.cleaned_data.get('catalogue')
+        if cat_id and work.original_catalogue_id != cat_id:
+            log.info('change original_catalogue_id from [{}] to [{}]'.format(
+                work.original_catalogue_id, cat_id))
+            work.original_catalogue_id = cat_id
+
         work.save()
         log.info(f'save work {work}')  # KTODO fix iwork_id plus more than 1
         self.saved_work = work
+
         return work
 
 
@@ -319,9 +337,7 @@ class ManifFFH(BasicWorkFFH):
 
     def load_data(self, iwork_id, *args,
                   manif_id=None, request_data=None, request=None, **kwargs):
-        # super().load_data(iwork_id, request_data=request_data, request=request)
-
-        self.iwork_id = iwork_id
+        super().load_data(iwork_id, request_data=request_data, request=request)
 
         if manif_id:
             self.manif = get_object_or_404(CofkUnionManifestation, manifestation_id=manif_id)
@@ -404,11 +420,10 @@ class ManifFFH(BasicWorkFFH):
 
     def create_context(self):
         context = super().create_context()
-        context['iwork_id'] = self.iwork_id
         if self.manif:
             context['manif_id'] = self.manif.manifestation_id
 
-        if work := model_utils.get_safe(CofkUnionWork, iwork_id=self.iwork_id):
+        if work := model_utils.get_safe(CofkUnionWork, iwork_id=self.request_iwork_id):
             manif_set = []
             for _manif in work.cofkunionmanifestation_set.iterator():
                 _manif: CofkUnionManifestation
@@ -438,9 +453,9 @@ class ManifFFH(BasicWorkFFH):
             return
 
         log.debug(f'changed_data : {self.manif_form.changed_data}')
-        manif.work = get_object_or_404(CofkUnionWork, iwork_id=self.iwork_id)
+        manif.work = get_object_or_404(CofkUnionWork, iwork_id=self.request_iwork_id)
         if not manif.manifestation_id:
-            manif.manifestation_id = create_manif_id(self.iwork_id)
+            manif.manifestation_id = create_manif_id(self.request_iwork_id)
 
         manif.save()
         log.info(f'save manif {manif}')  # KTODO fix iwork_id plus more than 1
@@ -684,7 +699,7 @@ class ManifView(BasicWorkFormView):
     def resp_after_saved(self, request, fhandler):
         if goto := request.POST.get('__goto') or not fhandler.manif_form.instance.manifestation_id:
             vname = self.goto_vname_map.get(goto, 'work:manif_init')
-            return redirect(vname, fhandler.iwork_id)
+            return redirect(vname, fhandler.request_iwork_id)
 
         return redirect('work:manif_update',
                         fhandler.manif_form.instance.work.iwork_id,
