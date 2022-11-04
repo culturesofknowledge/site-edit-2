@@ -52,12 +52,20 @@ class BasicWorkFFH(FullFormHandler):
         self.template_name = template_name
 
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
-        if pk:
-            self.work = get_object_or_404(CofkUnionWork, iwork_id=pk)
+        self.request_iwork_id = pk
+        if self.request_iwork_id:
+            self.work = get_object_or_404(CofkUnionWork, iwork_id=self.request_iwork_id)
         else:
             self.work = None
 
         self.safe_work = self.work or CofkUnionWork()  # KTODO iwork_id sequence number +1 by this ??
+
+    def create_context(self):
+        context = super().create_context()
+        context.update({
+            'iwork_id': self.request_iwork_id
+        })
+        return context
 
     def render_form(self, request):
         return render(request, self.template_name, self.create_context())
@@ -709,7 +717,7 @@ def overview_view(request, iwork_id):
     work = get_object_or_404(CofkUnionWork, iwork_id=iwork_id)
     context = dict(
         work=work,
-        work_display_name= work_utils.get_recref_display_name(work),
+        work_display_name=work_utils.get_recref_display_name(work),
     )
     return render(request, 'work/overview_form.html', context)
 
