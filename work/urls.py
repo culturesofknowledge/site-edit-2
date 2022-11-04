@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, re_path
 
 from core.helper import url_utils
 from login.views import example_dashboard
@@ -6,8 +6,7 @@ from . import views
 
 app_name = 'work'
 urlpatterns = [
-    path('form/corr/<int:iwork_id>', views.CorrView.as_view(), name='corr_form'),
-    path('form/corr/', views.CorrView.as_view(), name='corr_form'),
+    re_path('form/corr/(?P<iwork_id>[0-9]+)?\\Z', views.CorrView.as_view(), name='corr_form'),
     path('form/dates/<int:iwork_id>', views.DatesView.as_view(), name='dates_form'),
     path('form/places/<int:iwork_id>', views.PlacesView.as_view(), name='places_form'),
     path('form/manif/<int:iwork_id>', views.ManifView.as_view(), name='manif_init'),

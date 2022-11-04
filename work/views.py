@@ -46,10 +46,14 @@ def get_location_id(model: models.Model):
 
 class BasicWorkFFH(FullFormHandler):
     def __init__(self, pk, template_name, request_data=None, request=None, *args, **kwargs):
+        self.request_iwork_id = None
         super().__init__(pk, *args,
                          request_data=request_data or None,
                          request=request, **kwargs)
         self.template_name = template_name
+
+        # this variable will be assigned after **valid POST request** saved work
+        self.saved_work = None
 
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
         self.request_iwork_id = pk
@@ -78,6 +82,7 @@ class BasicWorkFFH(FullFormHandler):
             work.work_id = create_work_id(work.iwork_id)  # KTODO fix
         work.save()
         log.info(f'save work {work}')  # KTODO fix iwork_id plus more than 1
+        self.saved_work = work
         return work
 
 
@@ -269,6 +274,10 @@ class CorrFFH(BasicWorkFFH):
         )
 
     def save(self, request):
+        if not self.is_any_changed():
+            log.debug('skip save corr when no changed')
+            return
+
         work = self.save_work(request, self.corr_form)
 
         # save selected recref
@@ -625,7 +634,15 @@ class BasicWorkFormView(LoginRequiredMixin, View):
     def resp_after_saved(self, request, fhandler):
         goto = request.POST.get('__goto')
         vname = self.goto_vname_map.get(goto, self.cur_vname)
-        return redirect(vname, self.get_form_work_instance(fhandler).iwork_id)
+
+        iwork_id = fhandler.request_iwork_id
+        if fhandler.saved_work:
+            iwork_id = fhandler.saved_work.iwork_id
+
+        params = {}
+        if iwork_id:
+            params = dict(iwork_id=iwork_id)
+        return redirect(vname, **params)
 
     def post(self, request, iwork_id=None, *args, **kwargs):
         fhandler = self.create_fhandler(request, iwork_id=iwork_id, *args, **kwargs)

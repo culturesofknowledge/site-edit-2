@@ -565,6 +565,14 @@ class FullFormHandler:
             (h.formset for h in self.recref_formset_handlers),
         )
 
+    def is_any_changed(self):
+        for f in self.every_form_formset:
+            if f.has_changed():
+                log.debug(f'form or formset changed [{f.__class__.__name__}][{f.changed_data}]')
+                return True
+
+        return False
+
     def maintain_all_recref_records(self, request, parent_instance):
         for recref_handler in self.all_recref_handlers:
             recref_handler.maintain_record(request, parent_instance)
