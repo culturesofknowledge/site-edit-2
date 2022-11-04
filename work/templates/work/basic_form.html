@@ -12,6 +12,9 @@
         <div class="col col--1of2">
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
+                {% if work_display_name %}
+                    <h4>{{ work_display_name }}</h4>
+                {% endif %}
 
                 <label>Original catalogue:</label>
                 {{ catalogue_form.catalogue }}

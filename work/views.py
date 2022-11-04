@@ -77,6 +77,8 @@ class BasicWorkFFH(FullFormHandler):
         context.update({
             'iwork_id': self.request_iwork_id
         })
+        if self.work:
+            context['work_display_name'] = work_utils.get_recref_display_name(self.work)
         return context
 
     def render_form(self, request):

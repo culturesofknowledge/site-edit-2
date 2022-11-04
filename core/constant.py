@@ -33,4 +33,7 @@ REL_TYPE_IS_RELATED_TO = 'is_related_to'
 
 REL_TYPE_DEALS_WITH = 'deals_with'
 
+REL_TYPE_CREATED = 'created'
+REL_TYPE_WAS_ADDRESSED_TO = 'was_addressed_to'
+
 DEFAULT_EMPTY_DATE_STR = '9999-12-31'

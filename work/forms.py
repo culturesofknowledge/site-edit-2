@@ -6,11 +6,10 @@ from django import forms
 from django.db.models import TextChoices, Choices, Model
 from django.forms import CharField
 
-from core.constant import DEFAULT_EMPTY_DATE_STR
+from core.constant import DEFAULT_EMPTY_DATE_STR, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO
 from core.forms import get_peron_full_form_url_by_pk
-from core.helper import view_utils, data_utils, form_utils, widgets_utils
+from core.helper import view_utils, data_utils, form_utils
 from core.helper.form_utils import SelectedRecrefField
-from core.helper.lang_utils import language_choices
 from core.helper.view_utils import RecrefFormAdapter
 from core.models import Recref
 from manifestation.models import CofkUnionManifestation, CofkManifPersonMap
@@ -323,13 +322,13 @@ class UndefinedRelationChoices(TextChoices):
 
 
 class AuthorRelationChoices(TextChoices):
-    CREATED = 'created', 'Creator'
+    CREATED = REL_TYPE_CREATED, 'Creator'
     SENT = 'sent', 'Sender'
     SIGNED = 'signed', 'Signatory'
 
 
 class AddresseeRelationChoices(TextChoices):
-    ADDRESSED_TO = 'was_addressed_to', 'Recipient'
+    ADDRESSED_TO = REL_TYPE_WAS_ADDRESSED_TO, 'Recipient'
     INTENDED_FOR = 'intended_for', 'Intended recipient'
 
 
