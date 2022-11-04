@@ -34,7 +34,9 @@
         {{ details_form.abstract }}
 
         <label>Subject(s):</label>
-        <!-- KTODO -->
+        {% for s in subjects %}
+            {{ s }}
+        {% endfor %}
 
         <label>Keywords (ideally separated by semi-colons)</label>
         {{ details_form.keywords }}

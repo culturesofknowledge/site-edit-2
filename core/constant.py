@@ -31,4 +31,6 @@ REL_TYPE_STORED_IN = 'stored_in'
 
 REL_TYPE_IS_RELATED_TO = 'is_related_to'
 
+REL_TYPE_DEALS_WITH = 'deals_with'
+
 DEFAULT_EMPTY_DATE_STR = '9999-12-31'

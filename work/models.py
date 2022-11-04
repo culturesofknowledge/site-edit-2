@@ -125,6 +125,14 @@ class CofkWorkWorkMap(Recref):
         db_table = 'cofk_work_work_map'
 
 
+class CofkWorkSubjectMap(Recref):
+    work = models.ForeignKey(CofkUnionWork, on_delete=models.CASCADE)
+    subject = models.ForeignKey("uploader.CofkUnionSubject", on_delete=models.CASCADE)
+
+    class Meta(Recref.Meta):
+        db_table = 'cofk_work_subject_map'
+
+
 class CofkWorkPersonMap(Recref):
     """
     possible relationship_type [signed, created, sent]

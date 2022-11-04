@@ -14,6 +14,7 @@ from django.db import models
 from django.forms import ModelForm, BaseForm, BaseFormSet
 from django.forms import formset_factory
 from django.shortcuts import render
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.views import View
 from django.views.generic import ListView
@@ -29,7 +30,7 @@ from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompact
 from core.helper.view_components import DownloadCsvHandler
 from core.models import Recref, CofkUnionComment, CofkUnionResource
 from core.services import media_service
-from uploader.models import CofkUnionImage
+from uploader.models import CofkUnionImage, CofkUnionSubject
 
 register = template.Library()
 log = logging.getLogger(__name__)
@@ -81,8 +82,11 @@ class RecrefFormAdapter:
     def find_recref_records_by_related_manger(self, related_manger, rel_type):
         return related_manger.filter(relationship_type=rel_type).iterator()
 
+    def find_targets_id_list(self, rel_type):
+        return (self.get_target_id(r) for r in self.find_recref_records(rel_type))
+
     def find_all_targets_by_rel_type(self, rel_type) -> Iterable[models.Model]:
-        target_id_list = (self.get_target_id(r) for r in self.find_recref_records(rel_type))
+        target_id_list = self.find_targets_id_list(rel_type)
         targets = (self.find_target_instance(i) for i in target_id_list)
         return targets
 
@@ -666,31 +670,72 @@ class TargetResourceRecrefAdapter(RecrefFormAdapter, ABC):
     def target_id_name(self):
         return 'resource_id'
 
-# class CommentFormsetHandler:
-#     def __init__(self, prefix, request_data,
-#                  rel_type,
-#                  comments_query_fn,
-#                  comment_class: Type[Recref], owner_id_name,
-#                  context_name=None):
-#         self.context_name = context_name or f'{prefix}_formset'
-#         self.rel_type = rel_type
-#         self.formset = create_formset(
-#             CommentForm, post_data=request_data,
-#             prefix=prefix,
-#             initial_list=model_utils.models_to_dict_list(comments_query_fn(rel_type))
-#         )
-#         self.comment_class = comment_class
-#         self.owner_id_name = owner_id_name
-#
-#     def save(self, owner_id, request):
-#         save_m2m_relation_records(
-#             self.formset,
-#             lambda c: model_utils.get_or_create(
-#                 self.comment_class,
-#                 **{self.owner_id_name: owner_id,
-#                    'comment_id': c.comment_id,
-#                    'relationship_type': self.rel_type}
-#             ),
-#             request.user.username,
-#             model_id_name='comment_id',
-#         )
+
+class SubjectUI:
+    def __init__(self, subject_id, desc, is_selected, name='subjects'):
+        self.subject_id = subject_id
+        self.desc = desc
+        self.is_selected = is_selected
+        self.name = name
+
+    def __call__(self, *args, **kwargs):
+        context = {
+            'subject_id': self.subject_id,
+            'desc': self.desc,
+            'is_selected': self.is_selected,
+            'name': self.name,
+        }
+        return render_to_string('core/component/subject_checkbox.html', context)
+
+
+class SubjectHandler:
+
+    def __init__(self, recref_adapter: RecrefFormAdapter,
+                 rel_type=core_constant.REL_TYPE_DEALS_WITH,
+                 subject_name='subjects'):
+        self.recref_adapter = recref_adapter
+        self.rel_type = rel_type
+        self.subject_name = subject_name
+
+    def _create_ui_data(self, subject: CofkUnionSubject, selected_id_list):
+        return SubjectUI(
+            subject_id=subject.subject_id,
+            desc=subject.subject_desc,
+            is_selected=subject.subject_id in selected_id_list,
+            name=self.subject_name,
+        )
+
+    def create_context(self):
+        selected_id_list = set(self.recref_adapter.find_targets_id_list(self.rel_type))
+        return {
+            'subjects': (self._create_ui_data(s, selected_id_list) for s in CofkUnionSubject.objects.all()),
+        }
+
+    def get_selected_subject_id_list(self, request):
+        return request.POST.getlist(self.subject_name)
+
+    def save(self, request, parent):
+        self.recref_adapter.parent = parent
+
+        org_recref_list = list(self.recref_adapter.find_recref_records(self.rel_type))
+        selected_id_list = {int(s) for s in self.get_selected_subject_id_list(request)}
+
+        # delete
+        for recref in org_recref_list:
+            target_id = self.recref_adapter.get_target_id(recref)
+            if target_id in selected_id_list:
+                continue
+
+            log.info(f'remove subject [{parent}][{target_id}][{recref.pk}]')
+            recref.delete()
+
+        # add
+        org_id_list = {self.recref_adapter.get_target_id(r) for r in org_recref_list}
+        for new_subject_id in selected_id_list - org_id_list:
+            log.info(f'add subject [{parent}][{new_subject_id}]')
+            if not (target := self.recref_adapter.find_target_instance(new_subject_id)):
+                raise ValueError(f'not found [{new_subject_id}]')
+
+            recref = self.recref_adapter.upsert_recref(self.rel_type, parent, target,
+                                                       username=request.user.username)
+            recref.save()

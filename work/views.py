@@ -19,7 +19,7 @@ from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, Commen
 from core.helper import view_utils, lang_utils, model_utils, recref_utils
 from core.helper.lang_utils import LangModelAdapter, NewLangForm
 from core.helper.view_utils import DefaultSearchView, FullFormHandler, RecrefFormAdapter, \
-    ImageHandler, RecrefFormsetHandler, TargetCommentRecrefAdapter, TargetResourceRecrefAdapter
+    ImageHandler, RecrefFormsetHandler, TargetCommentRecrefAdapter, TargetResourceRecrefAdapter, SubjectHandler
 from core.models import Recref
 from institution import inst_utils
 from institution.models import CofkUnionInstitution
@@ -29,12 +29,13 @@ from manifestation import manif_utils
 from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, create_manif_id, CofkManifManifMap, \
     CofkUnionLanguageOfManifestation, CofkManifInstMap
 from person.models import CofkUnionPerson
+from uploader.models import CofkUnionSubject
 from work import work_utils
 from work.forms import WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \
     ManifPersonRecrefAdapter, ManifPersonRecrefForm, ScribeRelationChoices, DetailsForm, WorkPersonRecrefAdapter
 from work.models import CofkWorkPersonMap, CofkUnionWork, create_work_id, CofkWorkCommentMap, CofkWorkWorkMap, \
-    CofkWorkLocationMap, CofkWorkResourceMap, CofkUnionLanguageOfWork
+    CofkWorkLocationMap, CofkWorkResourceMap, CofkUnionLanguageOfWork, CofkWorkSubjectMap
 
 log = logging.getLogger(__name__)
 
@@ -514,6 +515,13 @@ class DetailsFFH(BasicWorkFFH):
             request_data=request_data,
             prefix='lang')
 
+        self.subject_handler = SubjectHandler(WorkSubjectRecrefAdapter(self.safe_work))
+
+    def create_context(self):
+        context: dict = super().create_context()
+        context.update(self.subject_handler.create_context())
+        return context
+
     def save(self, request):
         work = self.save_work(request, self.details_form)
 
@@ -528,6 +536,7 @@ class DetailsFFH(BasicWorkFFH):
 
         self.save_all_recref_formset(work, request)
         self.maintain_all_recref_records(request, work)
+        self.subject_handler.save(request, work)
 
         # self.save_all_recref_formset(self.work, request)
 
@@ -784,6 +793,32 @@ class ManifInstRecrefAdapter(RecrefFormAdapter):
 
     def target_id_name(self):
         return 'inst_id'
+
+
+class WorkSubjectRecrefAdapter(RecrefFormAdapter):
+    def __init__(self, parent=None):
+        self.parent: CofkUnionSubject = parent
+
+    def find_target_display_name_by_id(self, target_id):
+        s = self.find_target_instance(target_id)
+        return s and s.subject_desc
+
+    def recref_class(self) -> Type[Recref]:
+        return CofkWorkSubjectMap
+
+    def find_target_instance(self, target_id):
+        return model_utils.get_safe(CofkUnionSubject, subject_id=target_id)
+
+    def set_parent_target_instance(self, recref, parent, target):
+        recref: CofkWorkSubjectMap
+        recref.work = parent
+        recref.subject = target
+
+    def find_recref_records(self, rel_type):
+        return self.find_recref_records_by_related_manger(self.parent.cofkworksubjectmap_set, rel_type)
+
+    def target_id_name(self):
+        return 'subject_id'
 
 
 class WorkWorkRecrefAdapter(view_utils.RecrefFormAdapter, ABC):
