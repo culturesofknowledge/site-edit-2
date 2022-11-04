@@ -568,7 +568,13 @@ class FullFormHandler:
     def is_any_changed(self):
         for f in self.every_form_formset:
             if f.has_changed():
-                log.debug(f'form or formset changed [{f.__class__.__name__}][{f.changed_data}]')
+                if isinstance(f, BaseFormSet):
+                    changed_data = set(itertools.chain.from_iterable(
+                        _f.changed_data for _f in f.forms
+                    ))
+                else:
+                    changed_data = f.changed_data
+                log.debug(f'form or formset changed [{f.__class__.__name__}][{changed_data}]')
                 return True
 
         return False
