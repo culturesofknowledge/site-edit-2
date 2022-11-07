@@ -20,35 +20,41 @@ def get_recref_display_name(work: CofkUnionWork):
     else:
         work_date_str = 'Unknown date'
 
-    from_person_str = find_related_person_as_display_name(work.cofkworkpersonmap_set, REL_TYPE_CREATED)
+    from_person_str = join_names(find_related_person_names(work, REL_TYPE_CREATED))
     from_person_str = from_person_str or 'unknown author/sender'
-    to_person_str = find_related_person_as_display_name(work.cofkworkpersonmap_set, REL_TYPE_WAS_ADDRESSED_TO)
+    to_person_str = join_names(find_related_person_names(work, REL_TYPE_WAS_ADDRESSED_TO))
     to_person_str = to_person_str or 'unknown addressee'
 
-    from_location_str = find_related_location_as_display_name(work.cofkworklocationmap_set, REL_TYPE_WAS_SENT_FROM)
-    to_location_str = find_related_location_as_display_name(work.cofkworklocationmap_set, REL_TYPE_WAS_SENT_TO)
+    from_location_str = find_related_location_as_display_name(work, REL_TYPE_WAS_SENT_FROM)
+    to_location_str = find_related_location_as_display_name(work, REL_TYPE_WAS_SENT_TO)
 
     return f'{work_date_str}: {from_person_str}{from_location_str} to {to_person_str}{to_location_str}'
 
 
-def find_related_person_as_display_name(related_manager, rel_type):
-    return ' ~ '.join(
-        person_utils.get_recref_display_name(r.person)
-        for r in related_manager.filter(relationship_type=rel_type)
-    )
+def join_names(names):
+    return ' ~ '.join(names)
 
 
-def find_related_location_as_display_name(related_manager, rel_type):
-    name = ' ~ '.join(
-        location_utils.get_recref_display_name(r.location)
-        for r in related_manager.filter(relationship_type=rel_type)
-    )
-    if name:
-        name = f'({name})'
-    else:
-        name = ''
+def find_related_person_names(work: CofkUnionWork, rel_type):
+    return (person_utils.get_recref_display_name(r.person)
+            for r in work.cofkworkpersonmap_set.filter(relationship_type=rel_type))
+
+
+def find_related_location_names(work: CofkUnionWork, rel_type):
+    return (person_utils.get_recref_display_name(r.person)
+            for r in work.cofkworklocationmap_set.filter(relationship_type=rel_type))
+
+
+def find_related_location_as_display_name(work: CofkUnionWork, rel_type):
+    name = join_names(find_related_location_names(work, rel_type))
+    name = f'({name})' if name else ''
     return name
 
 
 def get_recref_target_id(work: CofkUnionWork):
     return work and work.work_id
+
+
+def find_related_comment_names(work: CofkUnionWork, rel_type):
+    return (note.comment.comment for note
+            in work.cofkworkcommentmap_set.filter(relationship_type=rel_type))

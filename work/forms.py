@@ -6,6 +6,7 @@ from django import forms
 from django.db.models import TextChoices, Choices, Model
 from django.forms import CharField
 
+from core import constant
 from core.constant import DEFAULT_EMPTY_DATE_STR, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO
 from core.forms import get_peron_full_form_url_by_pk
 from core.helper import view_utils, data_utils, form_utils
@@ -341,13 +342,13 @@ class UndefinedRelationChoices(TextChoices):
 
 class AuthorRelationChoices(TextChoices):
     CREATED = REL_TYPE_CREATED, 'Creator'
-    SENT = 'sent', 'Sender'
-    SIGNED = 'signed', 'Signatory'
+    SENT = constant.REL_TYPE_SENT, 'Sender'
+    SIGNED = constant.REL_TYPE_SIGNED, 'Signatory'
 
 
 class AddresseeRelationChoices(TextChoices):
     ADDRESSED_TO = REL_TYPE_WAS_ADDRESSED_TO, 'Recipient'
-    INTENDED_FOR = 'intended_for', 'Intended recipient'
+    INTENDED_FOR = constant.REL_TYPE_INTENDED_FOR, 'Intended recipient'
 
 
 class ScribeRelationChoices(TextChoices):

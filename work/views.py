@@ -9,6 +9,7 @@ from django.forms import Form, ModelForm, BaseForm
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
 
+from core import constant
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_WORK_IS_REPLY_TO, \
     REL_TYPE_WORK_MATCHES, REL_TYPE_COMMENT_DATE, REL_TYPE_WAS_SENT_FROM, REL_TYPE_COMMENT_ORIGIN, \
     REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_ROUTE, REL_TYPE_FORMERLY_OWNED, \
@@ -28,6 +29,7 @@ from location.models import CofkUnionLocation
 from manifestation import manif_utils
 from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, create_manif_id, CofkManifManifMap, \
     CofkUnionLanguageOfManifestation, CofkManifInstMap
+from person import person_utils
 from person.models import CofkUnionPerson
 from uploader.models import CofkUnionSubject, CofkLookupCatalogue
 from work import work_utils
@@ -760,12 +762,28 @@ class DetailsView(BasicWorkFormView):
         return 'work:details_form'
 
 
+def get_overview_persons_names_by_rel_type(work: CofkUnionWork, rel_type):
+    return (person_utils.get_recref_display_name(p) for p in
+            work.cofkworkpersonmap_set.filter(relationship_type=rel_type))
+
+
 @login_required()
 def overview_view(request, iwork_id):
     work = get_object_or_404(CofkUnionWork, iwork_id=iwork_id)
+
     context = dict(
         work=work,
         work_display_name=work_utils.get_recref_display_name(work),
+        notes_work=work_utils.find_related_comment_names(work, REL_TYPE_COMMENT_DATE),
+        notes_author=work_utils.find_related_comment_names(work, REL_TYPE_COMMENT_AUTHOR),
+        notes_addressee=work_utils.find_related_comment_names(work, REL_TYPE_COMMENT_ADDRESSEE),
+        author_names=work_utils.find_related_person_names(work, constant.REL_TYPE_CREATED),
+        sender_names=work_utils.find_related_person_names(work, constant.REL_TYPE_SENT),
+        signed_names=work_utils.find_related_person_names(work, constant.REL_TYPE_SIGNED),
+
+        recipient_names=work_utils.find_related_person_names(work, constant.REL_TYPE_WAS_ADDRESSED_TO),
+        intended_names=work_utils.find_related_person_names(work, constant.REL_TYPE_INTENDED_FOR),
+
     )
     return render(request, 'work/overview_form.html', context)
 

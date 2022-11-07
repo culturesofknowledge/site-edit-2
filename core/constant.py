@@ -34,6 +34,10 @@ REL_TYPE_IS_RELATED_TO = 'is_related_to'
 REL_TYPE_DEALS_WITH = 'deals_with'
 
 REL_TYPE_CREATED = 'created'
+REL_TYPE_SENT = 'sent'
+REL_TYPE_SIGNED = 'signed'
+
 REL_TYPE_WAS_ADDRESSED_TO = 'was_addressed_to'
+REL_TYPE_INTENDED_FOR = 'intended_for'
 
 DEFAULT_EMPTY_DATE_STR = '9999-12-31'
