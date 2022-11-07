@@ -191,6 +191,9 @@ class ManifForm(forms.ModelForm):
     manifestation_creation_date_year = form_utils.create_year_field()
     manifestation_creation_date_month = form_utils.create_month_field()
     manifestation_creation_date_day = form_utils.create_day_field()
+    manifestation_creation_date2_year = form_utils.create_year_field()
+    manifestation_creation_date2_month = form_utils.create_month_field()
+    manifestation_creation_date2_day = form_utils.create_day_field()
     manifestation_creation_date_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     manifestation_creation_date_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     manifestation_creation_date_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
@@ -206,6 +209,9 @@ class ManifForm(forms.ModelForm):
     manifestation_receipt_date_year = form_utils.create_year_field()
     manifestation_receipt_date_month = form_utils.create_month_field()
     manifestation_receipt_date_day = form_utils.create_day_field()
+    manifestation_receipt_date2_year = form_utils.create_year_field()
+    manifestation_receipt_date2_month = form_utils.create_month_field()
+    manifestation_receipt_date2_day = form_utils.create_day_field()
     manifestation_receipt_date_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     manifestation_receipt_date_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     manifestation_receipt_date_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
@@ -273,6 +279,9 @@ class ManifForm(forms.ModelForm):
             'manifestation_creation_date_year',
             'manifestation_creation_date_month',
             'manifestation_creation_date_day',
+            'manifestation_creation_date2_year',
+            'manifestation_creation_date2_month',
+            'manifestation_creation_date2_day',
             'manifestation_creation_date_inferred',
             'manifestation_creation_date_uncertain',
             'manifestation_creation_date_approx',
@@ -285,6 +294,9 @@ class ManifForm(forms.ModelForm):
             'manifestation_receipt_date_year',
             'manifestation_receipt_date_month',
             'manifestation_receipt_date_day',
+            'manifestation_receipt_date2_year',
+            'manifestation_receipt_date2_month',
+            'manifestation_receipt_date2_day',
             'manifestation_receipt_date_inferred',
             'manifestation_receipt_date_uncertain',
             'manifestation_receipt_date_approx',

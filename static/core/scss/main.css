@@ -812,4 +812,7 @@ tr.selectable_entry:hover {
   .multi_rel_recref_container > .grid-item {
     background-color: #f2f2f2; }
 
+.autodate-div .from-div {
+  margin-right: 20px; }
+
 /*# sourceMappingURL=main.css.map */
