@@ -62,36 +62,36 @@ function convert_date_by_calendar_code(calendar_code, year, month, day) {
     return [new_year, new_month, new_day]
 }
 
-function AutoCalendar(year_selector,
-                      month_selector,
-                      day_selector,
-                      calendar_selector,
-                      normal_date_selector,
-                      gregorian_selector,) {
+function AutoCalendar(year_jqe,
+                      month_jqe,
+                      day_jqe,
+                      calendar_jqe,
+                      normal_date_jqe,
+                      gregorian_jqe,) {
 
-    this.year_selector = year_selector;
-    this.month_selector = month_selector;
-    this.day_selector = day_selector;
-    this.calendar_selector = calendar_selector;
-    this.normal_date_selector = normal_date_selector;
-    this.gregorian_selector = gregorian_selector;
+    this.year_jqe = year_jqe;
+    this.month_jqe = month_jqe;
+    this.day_jqe = day_jqe;
+    this.calendar_jqe = calendar_jqe;
+    this.normal_date_jqe = normal_date_jqe;
+    this.gregorian_jqe = gregorian_jqe;
 
 
     this.get_selected_date = function () {
-        let year = $(this.year_selector).val() || 9999;
-        let month = $(this.month_selector).val() || 1;
-        let day = $(this.day_selector).val() || 1;
+        let year = this.year_jqe.val() || 9999;
+        let month = this.month_jqe.val() || 1;
+        let day = this.day_jqe.val() || 1;
         return [year, month, day]
     }
 
     this.get_selected_calendar_code = function () {
-        return $(`${this.calendar_selector}:checked`).val();
+        return this.calendar_jqe.parent().find('input:checked').val();
     }
 
 
     this.update_original_calendar = function () {
         let [year, month, day] = this.get_selected_date();
-        $(this.normal_date_selector).val(to_date_str(year, month, day));
+        this.normal_date_jqe.val(to_date_str(year, month, day));
     }
 
     this.update_gregorian_calendar = function () {
@@ -100,13 +100,13 @@ function AutoCalendar(year_selector,
         let [new_year, new_month, new_day] = convert_date_by_calendar_code(
             calendar_code, org_year, org_month, org_day,
         );
-        $(this.gregorian_selector).val(to_date_str(new_year, new_month, new_day));
+        this.gregorian_jqe.val(to_date_str(new_year, new_month, new_day));
     }
 
 
     this.setup_auto_calendar = function () {
         let self = this
-        $(this.calendar_selector).on('change', function (e) {
+        this.calendar_jqe.on('change', function (e) {
             if (e.target.checked) {
                 self.update_gregorian_calendar()
             }
@@ -116,10 +116,55 @@ function AutoCalendar(year_selector,
             self.update_original_calendar()
             self.update_gregorian_calendar()
         }
-        $(this.month_selector).on('change', update_all_calendar);
-        $(`${this.day_selector}, ${this.year_selector}`).on('input', update_all_calendar)
+        this.month_jqe.on('change', update_all_calendar);
+        this.day_jqe.on('input', update_all_calendar)
+        this.year_jqe.on('input', update_all_calendar)
     }
 
 
 }
 
+function maintain_is_range(autodate_div_jqe, is_range_jqe) {
+    if (is_range_jqe.is(":checked")) {
+        autodate_div_jqe.find('.to-div').show();
+        autodate_div_jqe.find('.from-label').text('From:')
+    } else {
+        autodate_div_jqe.find('.to-div').hide();
+        autodate_div_jqe.find('.from-label').text('Date:')
+    }
+}
+
+
+function setup_autodate_div(autodate_div_selector) {
+    let autodate_div_jqe = $(autodate_div_selector);
+
+    // setup is_range
+    let is_range_jqe = autodate_div_jqe.find('.is-range-div input');
+    is_range_jqe.change(function (e) {
+        maintain_is_range(autodate_div_jqe, is_range_jqe);
+    });
+    maintain_is_range(autodate_div_jqe, is_range_jqe);
+
+    // setup from date
+    new AutoCalendar(
+        autodate_div_jqe.find('.from-div .ad-year'),
+        autodate_div_jqe.find('.from-div .ad-month'),
+        autodate_div_jqe.find('.from-div .ad-day'),
+        autodate_div_jqe.find('.calendar-div input'),
+        autodate_div_jqe.find('.original-calendar-div input'),
+        autodate_div_jqe.find('.gregorian-calendar-div input'),
+    ).setup_auto_calendar();
+
+
+    // setup to date
+    new AutoCalendar(
+        autodate_div_jqe.find('.to-div .ad-year'),
+        autodate_div_jqe.find('.to-div .ad-month'),
+        autodate_div_jqe.find('.to-div .ad-day'),
+        autodate_div_jqe.find('.calendar-div input'),
+        autodate_div_jqe.find('.original-calendar-div input'),
+        autodate_div_jqe.find('.gregorian-calendar-div input'),
+    ).setup_auto_calendar();
+
+
+}

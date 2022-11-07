@@ -177,13 +177,18 @@ def create_day_field(required=False):
                                       'type': 'number',
                                       'min': 1,
                                       'max': 31,
+                                      'class': 'ad-day',
                                   }
                               ))
 
 
 def create_month_field(required=False):
     return forms.IntegerField(required=required,
-                              widget=forms.Select(choices=short_month_choices))
+                              widget=forms.Select(choices=short_month_choices,
+                                                  attrs={
+                                                      'class': 'ad-month',
+                                                  }
+                                                  ))
 
 
 def create_year_field(required=False):
@@ -194,6 +199,7 @@ def create_year_field(required=False):
                                       'type': 'number',
                                       'min': 1,
                                       'max': 9999,
+                                      'class': 'ad-year',
                                   }
                               ))
 
@@ -223,5 +229,5 @@ class CharSelectField(forms.CharField):
     def __init__(self, choices, required=False, **kwargs):
         super().__init__(required=required,
                          widget=forms.Select(choices=choices),
-                         initial=choices[0][0],   # this can avoid invalid changed_data
+                         initial=choices[0][0],  # this can avoid invalid changed_data
                          **kwargs)

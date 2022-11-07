@@ -1,18 +1,20 @@
 <!-- remember to import auto_date_calendar.js and run setup_auto_calendar -->
-<fieldset>
+<fieldset id="{{ autodate_id }}">
     <legend>{{ name|capfirst }} date</legend>
     <label>Date of {{ name }} as marked:</label>
     {{ date_as_marked }}
 
-    <div class="margin-bottom">
+    <div class="margin-bottom calendar-div">
         {% include "core/component/common_form_choices.html" with label_text='Calendar used' choices_field=calendar_used %}
     </div>
 
     <fieldset>
         <legend>Date of {{ name }} in standard format</legend>
         <div class="margin-bottom">
-            {{ is_range }}
-            <label for="{{ is_range.id_for_label }}">Date range?</label>
+            <div class="is-range-div">
+                {{ is_range }}
+                <label for="{{ is_range.id_for_label }}">Date range?</label>
+            </div>
             <small>
                 Tick the 'Date range' box in either of the following cases:
                 <ul>
@@ -27,8 +29,17 @@
         </div>
 
         <div class="margin-bottom">
-            <label>Date:</label>
-            {% include 'core/component/form_three_date_fields.html' with day_field=day_field month_field=month_field year_field=year_field %}
+            <div class="row-no-margin">
+                <div class="from-div">
+                    <label class="from-label">Date:</label>
+                    {% include 'core/component/form_three_date_fields.html' with day_field=day_field month_field=month_field year_field=year_field %}
+                </div>
+
+                <div class="to-div">
+                    <label class="to-label">To:</label>
+                    {% include 'core/component/form_three_date_fields.html' with day_field=day_field2 month_field=month_field2 year_field=year_field2 %}
+                </div>
+            </div>
 
             <span>
                     <small>
@@ -61,11 +72,15 @@
             Dates for ordering (these will normally be automatically generated as you enter day,
             month and year):
             <br/>
-            <label>In original calendar:</label>
-            {{ normal_date }}
+            <div class="original-calendar-div">
+                <label>In original calendar:</label>
+                {{ normal_date }}
+            </div>
 
-            <label>In Gregorian calendar:</label>
-            {{ gregorian_date }}
+            <div class="gregorian-calendar-div">
+                <label>In Gregorian calendar:</label>
+                {{ gregorian_date }}
+            </div>
         </div>
 
     </fieldset>
