@@ -2,20 +2,208 @@
 {% load static %}
 {% block tabcontent %}
     <span>You can have the following summary sent to you by email as a spreadsheet TODO <!-- KTODO --></span>
+
     <h3>General:</h3>
-    <div class="row-no-margin">
-        <span class="overview-label">Work ID</span>
-        <span class="overview-value"> {{ work.iwork_id }}  </span>
-    </div>
-    <div class="row-no-margin">
-        <span class="overview-label">Description</span>
-        <span class="overview-value"> {{ work.iwork_id }}  </span>
+    <div class="overview-table">
+        <span class="col-label">Work ID:</span>
+        <span> {{ work.iwork_id }}  </span>
+
+        <span class="col-label">Description:</span>
+        <span> {{ work_display_name }}  </span>
+
+        <span class="col-label">Original catalogue:</span>
+        <span> {{ work.original_catalogue.catalogue_name }}  </span>
+
+        <span class="col-label">Record to be deleted:</span>
+        <span> {{ work.original_catalogue.work_to_be_deleted }}  </span>
     </div>
 
+    <h3>Date of work:</h3>
+    <div class="overview-table">
+        <span class="col-label">Date of work as marked</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Original calendar</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Date of work is range</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Year</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Month</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Day</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Date of work inferred</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Date of work uncertain</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Date of work approx</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Notes on date of work</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Date for ordering (in original calendar)</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Date for ordering (Gregorian)</span>
+        <span> {{ work.iwork_id }} </span>
+    </div>
+
+
+    <h3>Authors/senders:</h3>
+    <div class="overview-table">
+        <span class="col-label">Authors (standard format)</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Senders (standard format)</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Signatories (standard format)</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Authors/senders as marked</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Notes on authors/senders</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Authors/senders inferred</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Authors/senders uncertain</span>
+        <span> {{ work.iwork_id }} </span>
+    </div>
+
+
+    <h3>Addressees:</h3>
+    <div class="overview-table">
+        <span class="col-label">Recipients (standard format)</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Intended recipients (standard format)</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Addressees as marked</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Notes on addressees</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Addressees inferred</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Addressees uncertain</span>
+        <span> {{ work.iwork_id }} </span>
+
+    </div>
+
+    <h3>Replies:</h3>
+    <div class="overview-table">
+        <span class="col-label">Reply to</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Answered by</span>
+        <span> {{ work.iwork_id }} </span>
+    </div>
+
+
+    <h3>Place of origin</h3>
+    <div class="overview-table">
+        <span class="col-label">Place from which sent (standard format)</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Origin as marked</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Origin inferred</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Origin uncertain</span>
+        <span> {{ work.iwork_id }} </span>
+    </div>
+
+
+    <h4>Destination </h4>
+    <div class="overview-table">
+        <span class="col-label">Place to which sent (standard format)</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Destination as marked</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Destination inferred</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Destination uncertain</span>
+        <span> {{ work.iwork_id }} </span>
+    </div>
+
+
+    <h4>Language and content</h4>
+    <div class="overview-table">
+        <span class="col-label">Language of work</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Work is translation</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Incipit</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Explicit</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Postscript</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Subjects</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Abstract</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Keywords</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">People mentioned</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Notes on people mentioned</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Places mentioned</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Works mentioned</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Works that mention this one</span>
+        <span> {{ work.iwork_id }} </span>
+    </div>
+
+
+    <h4>Manifestations</h4>
+    <div class="overview-table">
+        <span class="col-label">Repository</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Id number or shelfmark</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Manifestation receipt calendar</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Manifestation receipt date inferred</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Manifestation receipt date uncertain</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Manifestation receipt date approx</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Manifestation notes</span>
+        <span> {{ work.iwork_id }} </span>
+    </div>
+
+
+    <h4>Further details and links</h4>
+    <div class="overview-table">
+        <span class="col-label">General notes</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Related resources</span>
+        <span> {{ work.iwork_id }} </span>
+    </div>
+
+    <h4>System information</h4>
+    <div class="overview-table">
+        <span class="col-label">Alternative work ID (for internal system use):	cofk_union_work-iwork_id</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Creation date/time:	2013-11-01 13</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Created by user</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Date/time of last change:	2022-11-04 14</span>
+        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Changed by user</span>
+        <span> {{ work.iwork_id }} </span>
+    </div>
+
+
+
+
     <style>
-        .overview-label {
-            width: 150px;
+        .overview-table {
+            display: grid;
+            column-gap: 10px;
+            grid-template-columns: 30% 70%;
         }
+
+        .col-label {
+            text-align: right;
+        }
+
     </style>
 
 {% endblock %}
