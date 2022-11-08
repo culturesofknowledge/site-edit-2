@@ -43,7 +43,7 @@ def find_related_person_names(work: CofkUnionWork, rel_type):
 
 
 def find_related_location_names(work: CofkUnionWork, rel_type):
-    return (person_utils.get_recref_display_name(r.person)
+    return (location_utils.get_recref_display_name(r.location)
             for r in work.cofkworklocationmap_set.filter(relationship_type=rel_type))
 
 
