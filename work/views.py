@@ -1006,8 +1006,8 @@ class LaterLetterRecrefAdapter(WorkWorkRecrefAdapter):
         self.work = work
 
     def set_parent_target_instance(self, recref, parent, target):
-        recref.work_from = parent
-        recref.work_to = target
+        recref.work_from = target
+        recref.work_to = parent
 
     def find_recref_records(self, rel_type):
         return self.work.work_to_set.filter(relationship_type=rel_type).iterator()
