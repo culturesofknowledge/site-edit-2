@@ -4,7 +4,7 @@
 {% block tabcontent %}
     <span>You can have the following summary sent to you by email as a spreadsheet TODO <!-- KTODO --></span>
 
-    <h3>General:</h3>
+    <h2>General:</h2>
     <div class="overview-table">
         <span class="col-label">Work ID:</span>
         <span> {{ work.iwork_id }}  </span>
@@ -21,7 +21,7 @@
         </span>
     </div>
 
-    <h3>Date of work:</h3>
+    <h2>Date of work:</h2>
     <div class="overview-table">
         <span class="col-label">Date of work as marked</span>
         <span> {{ work.date_of_work_as_marked }} </span>
@@ -71,7 +71,7 @@
     </div>
 
 
-    <h3>Authors/senders:</h3>
+    <h2>Authors/senders:</h2>
     <div class="overview-table">
         <span class="col-label">Authors (standard format)</span>
         <ul class="no-margin">
@@ -93,16 +93,16 @@
         </ul>
         <span class="col-label">Authors/senders inferred</span>
         <span>
-            {% include 'core/component/strong_yes_no.html' with values=work.authors_inferred %}
+            {% include 'core/component/strong_yes_no.html' with val=work.authors_inferred %}
         </span>
         <span class="col-label">Authors/senders uncertain</span>
         <span>
-            {% include 'core/component/strong_yes_no.html' with values=work.authors_uncertain  %}
+            {% include 'core/component/strong_yes_no.html' with val=work.authors_uncertain  %}
         </span>
     </div>
 
 
-    <h3>Addressees:</h3>
+    <h2>Addressees:</h2>
     <div class="overview-table">
         <span class="col-label">Recipients (standard format)</span>
         <ul class="no-margin">
@@ -120,55 +120,67 @@
         </ul>
         <span class="col-label">Addressees inferred</span>
         <span>
-            {% include 'core/component/strong_yes_no.html' with values=work.addressees_inferred %}
+            {% include 'core/component/strong_yes_no.html' with val=work.addressees_inferred %}
         </span>
         <span class="col-label">Addressees uncertain</span>
         <span>
-            {% include 'core/component/strong_yes_no.html' with values=work.addressees_uncertain %}
+            {% include 'core/component/strong_yes_no.html' with val=work.addressees_uncertain %}
         </span>
 
     </div>
 
-    <h3>Replies:</h3>
+    <h2>Replies:</h2>
     <div class="overview-table">
         <span class="col-label">Reply to</span>
         <ul class="no-margin">
             {% include 'work/component/overview/link_list.html' with values=reply_to_link_list %}
         </ul>
         <span class="col-label">Answered by</span>
-        <span>
+        <ul class="no-margin">
             {% include 'work/component/overview/link_list.html' with values=answered_link_list %}
+        </ul>
+    </div>
+
+
+    <h2>Place of origin</h2>
+    <div class="overview-table">
+        <span class="col-label">Place from which sent (standard format)</span>
+        <span>
+            {% include 'work/component/overview/link_list.html' with values=origin_link_list %}
+        </span>
+        <span class="col-label">Origin as marked</span>
+        <span> {{ work.origin_as_marked }} </span>
+        <span class="col-label">Origin inferred</span>
+        <span>
+            {% include 'core/component/strong_yes_no.html' with val=work.origin_inferred %}
+        </span>
+        <span class="col-label">Origin uncertain</span>
+        <span>
+            {% include 'core/component/strong_yes_no.html' with val=work.origin_uncertain %}
         </span>
     </div>
 
 
-    <h3>Place of origin</h3>
-    <div class="overview-table">
-        <span class="col-label">Place from which sent (standard format)</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">Origin as marked</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">Origin inferred</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">Origin uncertain</span>
-        <span> {{ work.iwork_id }} </span>
-    </div>
-
-
-    <h4>Destination </h4>
+    <h2>Destination </h2>
     <div class="overview-table">
         <span class="col-label">Place to which sent (standard format)</span>
-        <span> {{ work.iwork_id }} </span>
+        <span>
+            {% include 'work/component/overview/link_list.html' with values=destination_link_list %}
+        </span>
         <span class="col-label">Destination as marked</span>
-        <span> {{ work.iwork_id }} </span>
+        <span> {{ work.destination_as_marked }} </span>
         <span class="col-label">Destination inferred</span>
-        <span> {{ work.iwork_id }} </span>
+        <span>
+            {% include 'core/component/strong_yes_no.html' with val=work.destination_inferred %}
+        </span>
         <span class="col-label">Destination uncertain</span>
-        <span> {{ work.iwork_id }} </span>
+        <span>
+            {% include 'core/component/strong_yes_no.html' with val=work.destination_uncertain %}
+        </span>
     </div>
 
 
-    <h4>Language and content</h4>
+    <h2>Language and content</h2>
     <div class="overview-table">
         <span class="col-label">Language of work</span>
         <span> {{ work.iwork_id }} </span>
@@ -199,7 +211,7 @@
     </div>
 
 
-    <h4>Manifestations</h4>
+    <h2>Manifestations</h2>
     <div class="overview-table">
         <span class="col-label">Repository</span>
         <span> {{ work.iwork_id }} </span>
@@ -218,7 +230,7 @@
     </div>
 
 
-    <h4>Further details and links</h4>
+    <h2>Further details and links</h2>
     <div class="overview-table">
         <span class="col-label">General notes</span>
         <span> {{ work.iwork_id }} </span>
@@ -226,7 +238,7 @@
         <span> {{ work.iwork_id }} </span>
     </div>
 
-    <h4>System information</h4>
+    <h2>System information</h2>
     <div class="overview-table">
         <span class="col-label">Alternative work ID (for internal system use):	cofk_union_work-iwork_id</span>
         <span> {{ work.iwork_id }} </span>

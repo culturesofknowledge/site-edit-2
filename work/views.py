@@ -815,6 +815,19 @@ class WorkLinkData(LinkData):
         return work_utils.get_form_url(self.model.iwork_id)
 
 
+class LocationLinkData(LinkData):
+    def __init__(self, model):
+        self.model: CofkUnionLocation = model
+
+    @property
+    def name(self):
+        return location_utils.get_recref_display_name(self.model)
+
+    @property
+    def link(self):
+        return location_utils.get_form_url(self.model.location_id)
+
+
 def to_link_data_list(link_data_factory, related_manager, rel_type):
     return (link_data_factory(m) for m in related_manager.filter(relationship_type=rel_type))
 
@@ -851,6 +864,11 @@ def overview_view(request, iwork_id):
                             work.work_from_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)),
         answered_link_list=(WorkLinkData(r.work_from) for r in
                             work.work_to_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)),
+
+        origin_link_list=(LocationLinkData(r.location) for r in
+                          work.cofkworklocationmap_set.filter(relationship_type=constant.REL_TYPE_WAS_SENT_FROM)),
+        destination_link_list=(LocationLinkData(r.location) for r in
+                               work.cofkworklocationmap_set.filter(relationship_type=constant.REL_TYPE_WAS_SENT_TO)),
 
     )
 
