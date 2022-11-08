@@ -19,12 +19,16 @@ function cal_max_day_of_month(year_val, month_val) {
     return max_day_of_month;
 }
 
+function pad_year_zero(val) {
+    return String(val).padStart(4, '0');
+}
+
 function pad_day_month_zero(val) {
     return String(val).padStart(2, '0');
 }
 
 function to_date_str(year, month, day) {
-    return `${year}-${pad_day_month_zero(month)}-${pad_day_month_zero(day)}`
+    return `${pad_year_zero(year)}-${pad_day_month_zero(month)}-${pad_day_month_zero(day)}`
 }
 
 function cal_diff_days_by_calendar_code(calendar_code, year, month, day) {
