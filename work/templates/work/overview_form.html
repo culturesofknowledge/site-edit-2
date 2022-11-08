@@ -75,15 +75,15 @@
     <div class="overview-table">
         <span class="col-label">Authors (standard format)</span>
         <ul class="no-margin">
-            {% include 'core/component/li_list.html' with values=author_names %}
+            {% include 'work/component/overview/link_list.html' with values=author_link_list %}
         </ul>
         <span class="col-label">Senders (standard format)</span>
         <ul class="no-margin">
-            {% include 'core/component/li_list.html' with values=sender_names %}
+            {% include 'work/component/overview/link_list.html' with values=sender_link_list %}
         </ul>
         <span class="col-label">Signatories (standard format)</span>
         <ul class="no-margin">
-            {% include 'core/component/li_list.html' with values=signed_names %}
+            {% include 'work/component/overview/link_list.html' with values=signed_link_list %}
         </ul>
         <span class="col-label">Authors/senders as marked</span>
         <span> {{ work.authors_as_marked }} </span>
@@ -92,9 +92,13 @@
             {% include 'core/component/li_list.html' with values=notes_author %}
         </ul>
         <span class="col-label">Authors/senders inferred</span>
-        <span> {{ work.iwork_id }} </span>
+        <span>
+            {% include 'core/component/strong_yes_no.html' with values=work.authors_inferred %}
+        </span>
         <span class="col-label">Authors/senders uncertain</span>
-        <span> {{ work.iwork_id }} </span>
+        <span>
+            {% include 'core/component/strong_yes_no.html' with values=work.authors_uncertain  %}
+        </span>
     </div>
 
 
@@ -102,11 +106,11 @@
     <div class="overview-table">
         <span class="col-label">Recipients (standard format)</span>
         <ul class="no-margin">
-            {% include 'core/component/li_list.html' with values=recipient_names %}
+            {% include 'work/component/overview/link_list.html' with values=recipient_link_list %}
         </ul>
         <span class="col-label">Intended recipients (standard format)</span>
         <ul class="no-margin">
-            {% include 'core/component/li_list.html' with values=intended_names %}
+            {% include 'work/component/overview/link_list.html' with values=intended_link_list %}
         </ul>
         <span class="col-label">Addressees as marked</span>
         <span> {{ work.addressees_as_marked }} </span>
@@ -129,13 +133,12 @@
     <div class="overview-table">
         <span class="col-label">Reply to</span>
         <ul class="no-margin">
-            {% include 'core/component/li_list.html' with values=intended_names %}
+            {% include 'work/component/overview/link_list.html' with values=reply_to_link_list %}
         </ul>
-        <span>
-            {{ work.iwork_id }}
-        </span>
         <span class="col-label">Answered by</span>
-        <span> {{ work.iwork_id }} </span>
+        <span>
+            {% include 'work/component/overview/link_list.html' with values=answered_link_list %}
+        </span>
     </div>
 
 

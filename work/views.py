@@ -638,16 +638,33 @@ def create_work_person_map_if_field_exist(form: BaseForm, work, username,
     return work_person_map
 
 
+class GotoVname:
+    def __init__(self):
+        self.goto_vname_map = {
+            'corr': 'work:corr_form',
+            'dates': 'work:dates_form',
+            'places': 'work:places_form',
+            'manif': 'work:manif_init',
+            'resources': 'work:resources_form',
+            'details': 'work:details_form',
+            'overview': 'work:overview_form',
+        }
+
+    def get_vname_by_request_data(self, request_data, cur_vname=None):
+        goto = request_data.get('__goto')
+        vname = self.goto_vname_map.get(goto, cur_vname)
+        return vname
+
+    def redirect_by_goto(self, request_data, cur_vname=None, iwork_id=None, params=None):
+        params = params or {}
+        if iwork_id:
+            params['iwork_id'] = iwork_id
+
+        vname = self.get_vname_by_request_data(request_data, cur_vname=cur_vname)
+        return redirect(vname, **params)
+
+
 class BasicWorkFormView(LoginRequiredMixin, View):
-    goto_vname_map = {
-        'corr': 'work:corr_form',
-        'dates': 'work:dates_form',
-        'places': 'work:places_form',
-        'manif': 'work:manif_init',
-        'resources': 'work:resources_form',
-        'details': 'work:details_form',
-        'overview': 'work:overview_form',
-    }
 
     @staticmethod
     def create_fhandler(request, iwork_id=None, *args, **kwargs):
@@ -665,17 +682,12 @@ class BasicWorkFormView(LoginRequiredMixin, View):
         return next(works, fhandler.work)
 
     def resp_after_saved(self, request, fhandler):
-        goto = request.POST.get('__goto')
-        vname = self.goto_vname_map.get(goto, self.cur_vname)
 
         iwork_id = fhandler.request_iwork_id
         if fhandler.saved_work:
             iwork_id = fhandler.saved_work.iwork_id
 
-        params = {}
-        if iwork_id:
-            params = dict(iwork_id=iwork_id)
-        return redirect(vname, **params)
+        return GotoVname().redirect_by_goto(request.POST, cur_vname=self.cur_vname, iwork_id=iwork_id)
 
     def post(self, request, iwork_id=None, *args, **kwargs):
         fhandler = self.create_fhandler(request, iwork_id=iwork_id, *args, **kwargs)
@@ -767,24 +779,81 @@ def get_overview_persons_names_by_rel_type(work: CofkUnionWork, rel_type):
             work.cofkworkpersonmap_set.filter(relationship_type=rel_type))
 
 
+class LinkData:
+    @property
+    def name(self):
+        raise NotImplementedError()
+
+    @property
+    def link(self):
+        raise NotImplementedError()
+
+
+class PersonLinkData(LinkData):
+    def __init__(self, model):
+        self.model: CofkUnionPerson = model
+
+    @property
+    def name(self):
+        return person_utils.get_recref_display_name(self.model)
+
+    @property
+    def link(self):
+        return person_utils.get_form_url(self.model.iperson_id)
+
+
+class WorkLinkData(LinkData):
+    def __init__(self, model):
+        self.model: CofkUnionWork = model
+
+    @property
+    def name(self):
+        return work_utils.get_recref_display_name(self.model)
+
+    @property
+    def link(self):
+        return work_utils.get_form_url(self.model.iwork_id)
+
+
+def to_link_data_list(link_data_factory, related_manager, rel_type):
+    return (link_data_factory(m) for m in related_manager.filter(relationship_type=rel_type))
+
+
 @login_required()
 def overview_view(request, iwork_id):
+    if request.POST:
+        return GotoVname().redirect_by_goto(request.POST, cur_vname='work:overview_form', iwork_id=iwork_id)
+
     work = get_object_or_404(CofkUnionWork, iwork_id=iwork_id)
 
     context = dict(
+        iwork_id=work.iwork_id,
         work=work,
         work_display_name=work_utils.get_recref_display_name(work),
+
         notes_work=work_utils.find_related_comment_names(work, REL_TYPE_COMMENT_DATE),
         notes_author=work_utils.find_related_comment_names(work, REL_TYPE_COMMENT_AUTHOR),
         notes_addressee=work_utils.find_related_comment_names(work, REL_TYPE_COMMENT_ADDRESSEE),
-        author_names=work_utils.find_related_person_names(work, constant.REL_TYPE_CREATED),
-        sender_names=work_utils.find_related_person_names(work, constant.REL_TYPE_SENT),
-        signed_names=work_utils.find_related_person_names(work, constant.REL_TYPE_SIGNED),
 
-        recipient_names=work_utils.find_related_person_names(work, constant.REL_TYPE_WAS_ADDRESSED_TO),
-        intended_names=work_utils.find_related_person_names(work, constant.REL_TYPE_INTENDED_FOR),
+        author_link_list=(PersonLinkData(r.person) for r in
+                          work.cofkworkpersonmap_set.filter(relationship_type=constant.REL_TYPE_CREATED)),
+        sender_link_list=(PersonLinkData(r.person) for r in
+                          work.cofkworkpersonmap_set.filter(relationship_type=constant.REL_TYPE_SENT)),
+        signed_link_list=(PersonLinkData(r.person) for r in
+                          work.cofkworkpersonmap_set.filter(relationship_type=constant.REL_TYPE_SIGNED)),
+
+        recipient_link_list=(PersonLinkData(r.person) for r in
+                             work.cofkworkpersonmap_set.filter(relationship_type=constant.REL_TYPE_WAS_ADDRESSED_TO)),
+        intended_link_list=(PersonLinkData(r.person) for r in
+                            work.cofkworkpersonmap_set.filter(relationship_type=constant.REL_TYPE_INTENDED_FOR)),
+
+        reply_to_link_list=(WorkLinkData(r.work_to) for r in
+                            work.work_from_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)),
+        answered_link_list=(WorkLinkData(r.work_from) for r in
+                            work.work_to_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)),
 
     )
+
     return render(request, 'work/overview_form.html', context)
 
 

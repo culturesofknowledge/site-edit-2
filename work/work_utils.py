@@ -1,5 +1,7 @@
 from datetime import date
 
+from django.urls import reverse
+
 from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO
 from location import location_utils
 from person import person_utils
@@ -58,3 +60,7 @@ def get_recref_target_id(work: CofkUnionWork):
 def find_related_comment_names(work: CofkUnionWork, rel_type):
     return (note.comment.comment for note
             in work.cofkworkcommentmap_set.filter(relationship_type=rel_type))
+
+
+def get_form_url(iwork_id):
+    return reverse('work:full_form', args=[iwork_id])
