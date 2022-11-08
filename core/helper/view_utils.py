@@ -338,7 +338,7 @@ def render_return_quick_init(request, name, item_name, item_id):
 def any_invalid_with_log(form_formsets: Iterable):
     for f in form_formsets:
         if not f.is_valid():
-            log.debug(f'form is invalid [{f}] -- [{getattr(f, "error_messages", None)}]')
+            log.debug(f'form is invalid [{type(f)}] -- [{getattr(f, "error_messages", None)}] -- [{repr(getattr(f, "errors", None))}]')
             return True
 
     return False
