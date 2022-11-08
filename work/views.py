@@ -36,7 +36,7 @@ from work import work_utils
 from work.forms import WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \
     ManifPersonRecrefAdapter, ManifPersonRecrefForm, ScribeRelationChoices, DetailsForm, WorkPersonRecrefAdapter, \
-    CatalogueForm
+    CatalogueForm, manif_type_choices, original_calendar_choices
 from work.models import CofkWorkPersonMap, CofkUnionWork, create_work_id, CofkWorkCommentMap, CofkWorkWorkMap, \
     CofkWorkLocationMap, CofkWorkResourceMap, CofkUnionLanguageOfWork, CofkWorkSubjectMap
 
@@ -101,6 +101,7 @@ class BasicWorkFFH(FullFormHandler):
                 work.original_catalogue_id, cat_id))
             work.original_catalogue_id = cat_id
 
+        work.update_current_user_timestamp(request.user.username)
         work.save()
         log.info(f'save work {work}')  # KTODO fix iwork_id plus more than 1
         self.saved_work = work
@@ -713,8 +714,8 @@ class ManifView(BasicWorkFormView):
                         request=request, *args, **kwargs)
 
     def resp_after_saved(self, request, fhandler):
-        if goto := request.POST.get('__goto') or not fhandler.manif_form.instance.manifestation_id:
-            vname = self.goto_vname_map.get(goto, 'work:manif_init')
+        if vname := GotoVname().get_vname_by_request_data(
+                request.POST) or not fhandler.manif_form.instance.manifestation_id:
             return redirect(vname, fhandler.request_iwork_id)
 
         return redirect('work:manif_update',
@@ -832,6 +833,37 @@ def to_link_data_list(link_data_factory, related_manager, rel_type):
     return (link_data_factory(m) for m in related_manager.filter(relationship_type=rel_type))
 
 
+def _to_lang_str(lang: CofkUnionLanguageOfWork):
+    lang_str = lang.language_code.language_name
+    if lang.notes:
+        lang_str = lang_str + f' ({lang.notes})'
+    return lang_str
+
+
+def to_person_link_list(work, rel_type):
+    return (PersonLinkData(r.person) for r in
+            work.cofkworkpersonmap_set.filter(relationship_type=rel_type))
+
+
+def to_location_link_list(work, rel_type):
+    return (LocationLinkData(r.location) for r in
+            work.cofkworklocationmap_set.filter(relationship_type=rel_type))
+
+
+def to_calendar_display(calendar: str):
+    return dict(original_calendar_choices).get(calendar, 'Unknown')
+
+
+def to_overview_manif(manif: CofkUnionManifestation):
+    if repo := manif.cofkmanifinstmap_set.first():
+        manif.repo_name = repo.inst.institution_name
+
+    manif.type_display_name = dict(manif_type_choices).get(manif.manifestation_type, '')
+    manif.manifestation_receipt_calendar_display = to_calendar_display(manif.manifestation_receipt_calendar)
+
+    return manif
+
+
 @login_required()
 def overview_view(request, iwork_id):
     if request.POST:
@@ -847,29 +879,37 @@ def overview_view(request, iwork_id):
         notes_work=work_utils.find_related_comment_names(work, REL_TYPE_COMMENT_DATE),
         notes_author=work_utils.find_related_comment_names(work, REL_TYPE_COMMENT_AUTHOR),
         notes_addressee=work_utils.find_related_comment_names(work, REL_TYPE_COMMENT_ADDRESSEE),
+        notes_people=work_utils.find_related_comment_names(work, REL_TYPE_PEOPLE_MENTIONED_IN_WORK),
+        notes_general=work_utils.find_related_comment_names(work, REL_TYPE_COMMENT_REFERS_TO),
 
-        author_link_list=(PersonLinkData(r.person) for r in
-                          work.cofkworkpersonmap_set.filter(relationship_type=constant.REL_TYPE_CREATED)),
-        sender_link_list=(PersonLinkData(r.person) for r in
-                          work.cofkworkpersonmap_set.filter(relationship_type=constant.REL_TYPE_SENT)),
-        signed_link_list=(PersonLinkData(r.person) for r in
-                          work.cofkworkpersonmap_set.filter(relationship_type=constant.REL_TYPE_SIGNED)),
+        author_link_list=to_person_link_list(work, constant.REL_TYPE_CREATED),
+        sender_link_list=to_person_link_list(work, constant.REL_TYPE_SENT),
+        signed_link_list=to_person_link_list(work, constant.REL_TYPE_SIGNED),
 
-        recipient_link_list=(PersonLinkData(r.person) for r in
-                             work.cofkworkpersonmap_set.filter(relationship_type=constant.REL_TYPE_WAS_ADDRESSED_TO)),
-        intended_link_list=(PersonLinkData(r.person) for r in
-                            work.cofkworkpersonmap_set.filter(relationship_type=constant.REL_TYPE_INTENDED_FOR)),
+        recipient_link_list=to_person_link_list(work, constant.REL_TYPE_WAS_ADDRESSED_TO),
+        intended_link_list=to_person_link_list(work, constant.REL_TYPE_INTENDED_FOR),
 
-        reply_to_link_list=(WorkLinkData(r.work_to) for r in
-                            work.work_from_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)),
-        answered_link_list=(WorkLinkData(r.work_from) for r in
-                            work.work_to_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)),
+        reply_to_link_list=[WorkLinkData(r.work_to) for r in
+                            work.work_from_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)],
+        answered_link_list=[WorkLinkData(r.work_from) for r in
+                            work.work_to_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)],
+        matches_link_list=[WorkLinkData(r.work_to) for r in
+                           work.work_from_set.filter(relationship_type=constant.REL_TYPE_WORK_MATCHES)],
 
-        origin_link_list=(LocationLinkData(r.location) for r in
-                          work.cofkworklocationmap_set.filter(relationship_type=constant.REL_TYPE_WAS_SENT_FROM)),
-        destination_link_list=(LocationLinkData(r.location) for r in
-                               work.cofkworklocationmap_set.filter(relationship_type=constant.REL_TYPE_WAS_SENT_TO)),
+        origin_link_list=to_location_link_list(work, constant.REL_TYPE_WAS_SENT_FROM),
+        destination_link_list=to_location_link_list(work, constant.REL_TYPE_WAS_SENT_TO),
 
+        language=', '.join(map(_to_lang_str, work.language_set.iterator())),
+        subjects=', '.join(w.subject.subject_desc for w in work.cofkworksubjectmap_set.iterator()),
+
+        people_link_list=to_person_link_list(work, constant.REL_TYPE_MENTION),
+        places_link_list=to_location_link_list(work, constant.REL_TYPE_MENTION_PLACE),
+        work_mention_link_list=(WorkLinkData(r.work_to) for r in
+                                work.work_from_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
+        work_be_mention_link_list=(WorkLinkData(r.work_from) for r in
+                                   work.work_to_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
+        manif_set=list(map(to_overview_manif, work.cofkunionmanifestation_set.iterator())),
+        original_calendar_display=to_calendar_display(work.original_calendar),
     )
 
     return render(request, 'work/overview_form.html', context)

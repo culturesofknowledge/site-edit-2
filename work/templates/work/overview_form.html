@@ -17,112 +17,112 @@
 
         <span class="col-label">Record to be deleted:</span>
         <span>
-            {% include "core/component/strong_yes_no.html" with val=work.work_to_be_deleted  %}
+            {% include "core/component/strong_yes_no.html" with val=work.work_to_be_deleted %}
         </span>
     </div>
 
     <h2>Date of work:</h2>
     <div class="overview-table">
-        <span class="col-label">Date of work as marked</span>
+        <span class="col-label">Date of work as marked:</span>
         <span> {{ work.date_of_work_as_marked }} </span>
-        <span class="col-label">Original calendar</span>
-        <span> {{ work.original_calendar }} </span>
-        <span class="col-label">Date of work is range</span>
+        <span class="col-label">Original calendar:</span>
+        <span> {{ original_calendar_display }} </span>
+        <span class="col-label">Date of work is range:</span>
         <span>
-            {% include "core/component/strong_yes_no.html" with val=work.date_of_work_std_is_range  %}
+            {% include "core/component/strong_yes_no.html" with val=work.date_of_work_std_is_range %}
         </span>
 
         {% if work.date_of_work_std_is_range %}
-            <span class="col-label">From Year </span>
+            <span class="col-label">From Year:</span>
             <span> {{ work.date_of_work_std_year }} </span>
-            <span class="col-label">From Month</span>
+            <span class="col-label">From Month:</span>
             <span> {{ work.date_of_work_std_month }} </span>
-            <span class="col-label">From Day</span>
+            <span class="col-label">From Day:</span>
             <span> {{ work.date_of_work_std_day }} </span>
-            <span class="col-label">To Year </span>
+            <span class="col-label">To Year:</span>
             <span> {{ work.date_of_work2_std_year }} </span>
-            <span class="col-label">To Month</span>
+            <span class="col-label">To Month:</span>
             <span> {{ work.date_of_work2_std_month }} </span>
-            <span class="col-label">To Day</span>
+            <span class="col-label">To Day:</span>
             <span> {{ work.date_of_work2_std_day }} </span>
         {% else %}
-            <span class="col-label">Year </span>
+            <span class="col-label">Year:</span>
             <span> {{ work.date_of_work_std_year }} </span>
-            <span class="col-label">Month</span>
+            <span class="col-label">Month:</span>
             <span> {{ work.date_of_work_std_month }} </span>
-            <span class="col-label">Day</span>
+            <span class="col-label">Day:</span>
             <span> {{ work.date_of_work_std_day }} </span>
         {% endif %}
 
-        <span class="col-label">Date of work inferred</span>
+        <span class="col-label">Date of work inferred:</span>
         {% include "core/component/strong_yes_no.html" with val=work.date_of_work_inferred %}
-        <span class="col-label">Date of work uncertain</span>
+        <span class="col-label">Date of work uncertain:</span>
         {% include "core/component/strong_yes_no.html" with val=work.date_of_work_uncertain %}
-        <span class="col-label">Date of work approx</span>
+        <span class="col-label">Date of work approx:</span>
         {% include "core/component/strong_yes_no.html" with val=work.date_of_work_approx %}
-        <span class="col-label">Notes on date of work</span>
+        <span class="col-label">Notes on date of work:</span>
         <ul class="no-margin">
             {% include 'core/component/li_list.html' with values=notes_work %}
         </ul>
-        <span class="col-label">Date for ordering (in original calendar)</span>
+        <span class="col-label">Date for ordering (in original calendar):</span>
         <span> {{ work.date_of_work_std }} </span>
-        <span class="col-label">Date for ordering (Gregorian)</span>
+        <span class="col-label">Date for ordering (Gregorian):</span>
         <span> {{ work.date_of_work_std_gregorian }}</span>
     </div>
 
 
     <h2>Authors/senders:</h2>
     <div class="overview-table">
-        <span class="col-label">Authors (standard format)</span>
+        <span class="col-label">Authors (standard format):</span>
         <ul class="no-margin">
             {% include 'work/component/overview/link_list.html' with values=author_link_list %}
         </ul>
-        <span class="col-label">Senders (standard format)</span>
+        <span class="col-label">Senders (standard format):</span>
         <ul class="no-margin">
             {% include 'work/component/overview/link_list.html' with values=sender_link_list %}
         </ul>
-        <span class="col-label">Signatories (standard format)</span>
+        <span class="col-label">Signatories (standard format):</span>
         <ul class="no-margin">
             {% include 'work/component/overview/link_list.html' with values=signed_link_list %}
         </ul>
-        <span class="col-label">Authors/senders as marked</span>
+        <span class="col-label">Authors/senders as marked:</span>
         <span> {{ work.authors_as_marked }} </span>
-        <span class="col-label">Notes on authors/senders</span>
+        <span class="col-label">Notes on authors/senders:</span>
         <ul class="no-margin">
             {% include 'core/component/li_list.html' with values=notes_author %}
         </ul>
-        <span class="col-label">Authors/senders inferred</span>
+        <span class="col-label">Authors/senders inferred:</span>
         <span>
             {% include 'core/component/strong_yes_no.html' with val=work.authors_inferred %}
         </span>
-        <span class="col-label">Authors/senders uncertain</span>
+        <span class="col-label">Authors/senders uncertain:</span>
         <span>
-            {% include 'core/component/strong_yes_no.html' with val=work.authors_uncertain  %}
+            {% include 'core/component/strong_yes_no.html' with val=work.authors_uncertain %}
         </span>
     </div>
 
 
     <h2>Addressees:</h2>
     <div class="overview-table">
-        <span class="col-label">Recipients (standard format)</span>
+        <span class="col-label">Recipients (standard format):</span>
         <ul class="no-margin">
             {% include 'work/component/overview/link_list.html' with values=recipient_link_list %}
         </ul>
-        <span class="col-label">Intended recipients (standard format)</span>
+        <span class="col-label">Intended recipients (standard format):</span>
         <ul class="no-margin">
             {% include 'work/component/overview/link_list.html' with values=intended_link_list %}
         </ul>
-        <span class="col-label">Addressees as marked</span>
+        <span class="col-label">Addressees as marked:</span>
         <span> {{ work.addressees_as_marked }} </span>
-        <span class="col-label">Notes on addressees</span>
+        <span class="col-label">Notes on addressees:</span>
         <ul class="no-margin">
             {% include 'core/component/li_list.html' with values=notes_addressee %}
         </ul>
-        <span class="col-label">Addressees inferred</span>
+        <span class="col-label">Addressees inferred:</span>
         <span>
             {% include 'core/component/strong_yes_no.html' with val=work.addressees_inferred %}
         </span>
-        <span class="col-label">Addressees uncertain</span>
+        <span class="col-label">Addressees uncertain:</span>
         <span>
             {% include 'core/component/strong_yes_no.html' with val=work.addressees_uncertain %}
         </span>
@@ -131,11 +131,11 @@
 
     <h2>Replies:</h2>
     <div class="overview-table">
-        <span class="col-label">Reply to</span>
+        <span class="col-label">Reply to:</span>
         <ul class="no-margin">
             {% include 'work/component/overview/link_list.html' with values=reply_to_link_list %}
         </ul>
-        <span class="col-label">Answered by</span>
+        <span class="col-label">Answered by:</span>
         <ul class="no-margin">
             {% include 'work/component/overview/link_list.html' with values=answered_link_list %}
         </ul>
@@ -144,17 +144,17 @@
 
     <h2>Place of origin</h2>
     <div class="overview-table">
-        <span class="col-label">Place from which sent (standard format)</span>
+        <span class="col-label">Place from which sent (standard format):</span>
         <span>
             {% include 'work/component/overview/link_list.html' with values=origin_link_list %}
         </span>
-        <span class="col-label">Origin as marked</span>
+        <span class="col-label">Origin as marked:</span>
         <span> {{ work.origin_as_marked }} </span>
-        <span class="col-label">Origin inferred</span>
+        <span class="col-label">Origin inferred:</span>
         <span>
             {% include 'core/component/strong_yes_no.html' with val=work.origin_inferred %}
         </span>
-        <span class="col-label">Origin uncertain</span>
+        <span class="col-label">Origin uncertain:</span>
         <span>
             {% include 'core/component/strong_yes_no.html' with val=work.origin_uncertain %}
         </span>
@@ -163,17 +163,17 @@
 
     <h2>Destination </h2>
     <div class="overview-table">
-        <span class="col-label">Place to which sent (standard format)</span>
+        <span class="col-label">Place to which sent (standard format):</span>
         <span>
             {% include 'work/component/overview/link_list.html' with values=destination_link_list %}
         </span>
-        <span class="col-label">Destination as marked</span>
+        <span class="col-label">Destination as marked:</span>
         <span> {{ work.destination_as_marked }} </span>
-        <span class="col-label">Destination inferred</span>
+        <span class="col-label">Destination inferred:</span>
         <span>
             {% include 'core/component/strong_yes_no.html' with val=work.destination_inferred %}
         </span>
-        <span class="col-label">Destination uncertain</span>
+        <span class="col-label">Destination uncertain:</span>
         <span>
             {% include 'core/component/strong_yes_no.html' with val=work.destination_uncertain %}
         </span>
@@ -182,74 +182,135 @@
 
     <h2>Language and content</h2>
     <div class="overview-table">
-        <span class="col-label">Language of work</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">Work is translation</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">Incipit</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">Explicit</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">Postscript</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">Subjects</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">Abstract</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">Keywords</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">People mentioned</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">Notes on people mentioned</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">Places mentioned</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">Works mentioned</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">Works that mention this one</span>
-        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Language of work:</span>
+        <span>
+            {{ language }}
+        </span>
+        <span class="col-label">Work is translation:</span>
+        <span>
+            {% include 'core/component/strong_yes_no.html' with val=work.work_is_translation %}
+        </span>
+        <span class="col-label">Incipit:</span>
+        <span> {{ work.incipit }} </span>
+        <span class="col-label">Explicit:</span>
+        <span> {{ work.explicit }} </span>
+        <span class="col-label">Postscript:</span>
+        <span> {{ work.ps }} </span>
+        <span class="col-label">Subjects:</span>
+        <span> {{ subjects }} </span>
+        <span class="col-label">Abstract:</span>
+        <span> {{ work.abstract }} </span>
+        <span class="col-label">Keywords:</span>
+        <span> {{ work.keywords }} </span>
+        <span class="col-label">People mentioned:</span>
+        <span>
+            {% include 'work/component/overview/link_list.html' with values=people_link_list %}
+        </span>
+        <span class="col-label">Notes on people mentioned:</span>
+        <span>
+            {% include 'core/component/li_list.html' with values=notes_people %}
+        </span>
+        <span class="col-label">Places mentioned:</span>
+        <span>
+            {% include 'work/component/overview/link_list.html' with values=places_link_list %}
+        </span>
+        <span class="col-label">Works mentioned:</span>
+        <span>
+            {% include 'work/component/overview/link_list.html' with values=work_mention_link_list %}
+        </span>
+        <span class="col-label">Works that mention this one:</span>
+        <span>
+            {% include 'work/component/overview/link_list.html' with values=work_be_mention_link_list %}
+        </span>
     </div>
 
 
-    <h2>Manifestations</h2>
-    <div class="overview-table">
-        <span class="col-label">Repository</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">Id number or shelfmark</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">Manifestation receipt calendar</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">Manifestation receipt date inferred</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">Manifestation receipt date uncertain</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">Manifestation receipt date approx</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">Manifestation notes</span>
-        <span> {{ work.iwork_id }} </span>
-    </div>
+
+    {% if manif_set %}
+        <h2>Manifestations</h2>
+    {% endif %}
+    {% for m in manif_set %}
+        <div class="overview-table">
+            <span class="col-label"></span>
+            <span>
+                <strong>
+                    {{ m.type_display_name }}
+                </strong>
+            </span>
+            <span class="col-label">Repository:</span>
+            <span> {{ m.repo_name }} </span>
+            <span class="col-label">Id number or shelfmark:</span>
+            <span> {{ m.id_number_or_shelfmark }} </span>
+            <span class="col-label">Manifestation creation date:</span>
+            <span> {{ m.manifestation_creation_date }} </span>
+            <span class="col-label">Manifestation creation date gregorian:</span>
+            <span> {{ m.manifestation_creation_date_gregorian }} </span>
+            <span class="col-label">Manifestation creation date year:</span>
+            <span> {{ m.manifestation_creation_date_year|default_if_none:'' }} </span>
+            <span class="col-label">Manifestation creation date month:</span>
+            <span> {{ m.manifestation_creation_date_month|default_if_none:''  }} </span>
+            <span class="col-label">Manifestation creation date day:</span>
+            <span> {{ m.manifestation_creation_date_day|default_if_none:''  }} </span>
+            <span class="col-label">Manifestation receipt calendar:</span>
+            <span> {{ m.manifestation_receipt_calendar_display }} </span>
+            <span class="col-label">Manifestation receipt date:</span>
+            <span> {{ m.manifestation_receipt_date }} </span>
+            <span class="col-label">Manifestation receipt date gregorian:</span>
+            <span> {{ m.manifestation_receipt_date_gregorian }} </span>
+            <span class="col-label">Manifestation receipt date year:</span>
+            <span> {{ m.manifestation_receipt_date_year|default_if_none:''  }} </span>
+            <span class="col-label">Manifestation receipt date month:</span>
+            <span> {{ m.manifestation_receipt_date_month|default_if_none:''  }} </span>
+            <span class="col-label">Manifestation receipt date day:</span>
+            <span> {{ m.manifestation_receipt_date_day|default_if_none:''  }} </span>
+            <span class="col-label">Manifestation receipt date inferred:</span>
+            <span>
+                {% include 'core/component/strong_yes_no.html' with val=m.manifestation_receipt_date_inferred %}
+            </span>
+            <span class="col-label">Manifestation receipt date uncertain:</span>
+            <span>
+                {% include 'core/component/strong_yes_no.html' with val=m.manifestation_receipt_date_uncertain %}
+            </span>
+            <span class="col-label">Manifestation receipt date approx:</span>
+            <span>
+                {% include 'core/component/strong_yes_no.html' with val=m.manifestation_receipt_date_approx %}
+            </span>
+        </div>
+    {% endfor %}
 
 
     <h2>Further details and links</h2>
     <div class="overview-table">
-        <span class="col-label">General notes</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">Related resources</span>
-        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">General notes:</span>
+        <span>
+            {% include 'core/component/li_list.html' with values=notes_general %}
+        </span>
+        <span class="col-label">Reply to:</span>
+        <ul class="no-margin">
+            {% include 'work/component/overview/link_list.html' with values=reply_to_link_list %}
+        </ul>
+        <span class="col-label">Answered by:</span>
+        <ul class="no-margin">
+            {% include 'work/component/overview/link_list.html' with values=answered_link_list %}
+        </ul>
+        <span class="col-label">Matches:</span>
+        <ul class="no-margin">
+            {% include 'work/component/overview/link_list.html' with values=matches_link_list %}
+        </ul>
     </div>
 
     <h2>System information</h2>
     <div class="overview-table">
-        <span class="col-label">Alternative work ID (for internal system use):	cofk_union_work-iwork_id</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">Creation date/time:	2013-11-01 13</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">Created by user</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">Date/time of last change:	2022-11-04 14</span>
-        <span> {{ work.iwork_id }} </span>
-        <span class="col-label">Changed by user</span>
-        <span> {{ work.iwork_id }} </span>
+        <span class="col-label">Alternative work ID (for internal system use):</span>
+        <span> {{ work.work_id }} </span>
+        <span class="col-label">Creation date/time:</span>
+        <span> {{ work.creation_timestamp }} </span>
+        <span class="col-label">Created by user:</span>
+        <span> {{ work.creation_user }} </span>
+        <span class="col-label">Date/time of last change:</span>
+        <span> {{ work.change_timestamp }} </span>
+        <span class="col-label">Changed by user:</span>
+        <span> {{ work.change_user }} </span>
     </div>
 
 
