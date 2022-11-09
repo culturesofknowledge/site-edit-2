@@ -1,21 +1,25 @@
+import logging
 import re
 from typing import Iterable, Type, Any
 
 from django.conf import settings
+from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.db import models
 from django.db.models import Model
-from django.test import LiveServerTestCase
 from django.urls import reverse
 from selenium import webdriver
 from selenium.webdriver import DesiredCapabilities
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.select import Select
 
 import core.fixtures
 from core.helper.view_utils import BasicSearchView
 from login.models import CofkUser
 
+log = logging.getLogger(__name__)
 
-class EmloSeleniumTestCase(LiveServerTestCase):
+
+class EmloSeleniumTestCase(StaticLiveServerTestCase):
     @classmethod
     def setUpClass(cls):
         cls.host = settings.TEST_WEB_HOST
@@ -31,6 +35,7 @@ class EmloSeleniumTestCase(LiveServerTestCase):
             desired_capabilities=DesiredCapabilities.CHROME,
             options=options,
         )
+        cls.selenium.maximize_window()  # avoid something is not clickable
         cls.selenium.implicitly_wait(10)
 
         cls.login_user = CofkUser()
@@ -289,23 +294,20 @@ class FieldValTester:
             ele = self.test_case.find_element_by_css(f'#id_{field_name}')
             yield ele, val
 
-    def click_checkboxes(self):
-        for field_name, _ in self.field_values:
-            self.test_case.find_element_by_css(f'#id_{field_name}').click()
+    def fill(self):
+        for ele, val in self.get_element_val_list():
+            ele_type = ele.get_attribute('type')
+            if ele_type == 'checkbox':
+                ele.click()
+            elif ele_type == 'text' or ele.tag_name == 'textarea':
+                ele.send_keys(val)
+            elif ele.tag_name == 'select':
+                Select(ele).select_by_value(str(val))
+            else:
+                log.warning(f'unexpected input element [{ele.tag_name}][{ele_type}]')
+                ele.send_keys(val)
 
     def assert_all(self, model: models.Model):
         for field_name, expected_val in self.field_values:
             with self.test_case.subTest(field_name=field_name):
                 self.test_case.assertEqual(getattr(model, field_name), expected_val)
-
-
-class FieldCheckboxTester(FieldValTester):
-    def click_checkboxes(self):
-        for ele, _ in self.get_element_val_list():
-            ele.click()
-
-
-class InputBoxTester(FieldValTester):
-    def fill(self):
-        for ele, val in self.get_element_val_list():
-            ele.send_keys(val)
