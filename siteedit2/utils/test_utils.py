@@ -1,7 +1,8 @@
 import re
-from typing import Iterable, Type
+from typing import Iterable, Type, Any
 
 from django.conf import settings
+from django.db import models
 from django.db.models import Model
 from django.test import LiveServerTestCase
 from django.urls import reverse
@@ -80,6 +81,9 @@ class EmloSeleniumTestCase(LiveServerTestCase):
 
     def goto_vname(self, vname):
         self.selenium.get(self.get_url_by_viewname(vname))
+
+    def click_submit(self):
+        self.selenium.find_element(By.CSS_SELECTOR, 'input[type=submit]').click()
 
 
 def get_selected_radio_val(elements):
@@ -271,3 +275,37 @@ class CommonSearchTests:
         size_titles = list(size_titles)
         self.test_case.assertEqual(len(size_titles), 1)
         self.test_case.assertEqual(size_titles[0][0], f'{num_total}')
+
+
+class FieldValTester:
+    def __init__(self,
+                 test_case: EmloSeleniumTestCase,
+                 field_values: list[tuple[str, Any]]):
+        self.test_case = test_case
+        self.field_values = field_values
+
+    def get_element_val_list(self):
+        for field_name, val in self.field_values:
+            ele = self.test_case.find_element_by_css(f'#id_{field_name}')
+            yield ele, val
+
+    def click_checkboxes(self):
+        for field_name, _ in self.field_values:
+            self.test_case.find_element_by_css(f'#id_{field_name}').click()
+
+    def assert_all(self, model: models.Model):
+        for field_name, expected_val in self.field_values:
+            with self.test_case.subTest(field_name=field_name):
+                self.test_case.assertEqual(getattr(model, field_name), expected_val)
+
+
+class FieldCheckboxTester(FieldValTester):
+    def click_checkboxes(self):
+        for ele, _ in self.get_element_val_list():
+            ele.click()
+
+
+class InputBoxTester(FieldValTester):
+    def fill(self):
+        for ele, val in self.get_element_val_list():
+            ele.send_keys(val)
