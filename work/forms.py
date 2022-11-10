@@ -1,5 +1,4 @@
 import logging
-from abc import ABC
 from typing import Iterable, Type
 
 from django import forms
@@ -10,12 +9,10 @@ from core import constant
 from core.constant import DEFAULT_EMPTY_DATE_STR, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO
 from core.forms import get_peron_full_form_url_by_pk
 from core.helper import view_utils, data_utils, form_utils
+from core.helper.common_recref_adapter import RecrefFormAdapter, TargetPersonRecrefAdapter
 from core.helper.form_utils import SelectedRecrefField
-from core.helper.view_utils import RecrefFormAdapter
 from core.models import Recref
 from manifestation.models import CofkUnionManifestation, CofkManifPersonMap
-from person import person_utils
-from person.models import CofkUnionPerson
 from work.models import CofkCollectWork, CofkUnionWork, CofkWorkPersonMap
 
 log = logging.getLogger(__name__)
@@ -498,17 +495,6 @@ class WorkPersonRecrefForm(TargetPersonRecrefForm):
             person_id=target_id,
             relationship_type__in=self.get_rel_type_choices_values(),
         )
-
-
-class TargetPersonRecrefAdapter(view_utils.RecrefFormAdapter, ABC):
-    def find_target_display_name_by_id(self, target_id):
-        return person_utils.get_recref_display_name(self.find_target_instance(target_id))
-
-    def find_target_instance(self, target_id):
-        return CofkUnionPerson.objects.get(person_id=target_id)
-
-    def target_id_name(self):
-        return 'person_id'
 
 
 class WorkPersonRecrefAdapter(TargetPersonRecrefAdapter):

@@ -15,7 +15,8 @@ from core.helper import renderer_utils, view_utils, query_utils, download_csv_ut
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
 from core.helper.view_utils import CommonInitFormViewTemplate, ImageHandler, BasicSearchView, FullFormHandler, \
-    RecrefFormsetHandler, RecrefFormAdapter, TargetCommentRecrefAdapter, TargetResourceRecrefAdapter
+    RecrefFormsetHandler
+from core.helper.common_recref_adapter import RecrefFormAdapter, TargetCommentRecrefAdapter, TargetResourceRecrefAdapter
 from core.models import Recref
 from location.models import CofkUnionLocation
 from person import person_utils

@@ -10,12 +10,12 @@ from django.views.generic import ListView
 
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_IS_RELATED_TO
 from core.forms import CommentForm, ResourceForm
-from core.helper import model_utils, view_utils, renderer_utils, query_utils, download_csv_utils
+from core.helper import view_utils, renderer_utils, query_utils, download_csv_utils
+from core.helper.common_recref_adapter import RecrefFormAdapter, TargetCommentRecrefAdapter, TargetResourceRecrefAdapter
 from core.helper.model_utils import RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
-from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate, ImageHandler, RecrefFormsetHandler, \
-    RecrefFormAdapter, TargetCommentRecrefAdapter, TargetResourceRecrefAdapter
+from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate, ImageHandler, RecrefFormsetHandler
 from core.models import Recref
 from location import location_utils
 from location.forms import LocationForm, GeneralSearchFieldset

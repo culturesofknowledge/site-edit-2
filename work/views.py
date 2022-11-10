@@ -19,8 +19,9 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, ResourceForm, LocRecrefForm
 from core.helper import view_utils, lang_utils, model_utils, recref_utils
 from core.helper.lang_utils import LangModelAdapter, NewLangForm
-from core.helper.view_utils import DefaultSearchView, FullFormHandler, RecrefFormAdapter, \
-    ImageHandler, RecrefFormsetHandler, TargetCommentRecrefAdapter, TargetResourceRecrefAdapter, SubjectHandler
+from core.helper.view_utils import DefaultSearchView, FullFormHandler, ImageHandler, RecrefFormsetHandler, \
+    SubjectHandler
+from core.helper.common_recref_adapter import RecrefFormAdapter, TargetCommentRecrefAdapter, TargetResourceRecrefAdapter
 from core.models import Recref
 from institution import inst_utils
 from institution.models import CofkUnionInstitution
@@ -1032,7 +1033,7 @@ class WorkSubjectRecrefAdapter(RecrefFormAdapter):
         return 'subject_id'
 
 
-class WorkWorkRecrefAdapter(view_utils.RecrefFormAdapter, ABC):
+class WorkWorkRecrefAdapter(RecrefFormAdapter, ABC):
 
     def find_target_display_name_by_id(self, target_id):
         return find_work_rec_name(target_id)
@@ -1074,7 +1075,7 @@ class LaterLetterRecrefAdapter(WorkWorkRecrefAdapter):
         return 'work_from_id'
 
 
-class ManifManifRecrefAdapter(view_utils.RecrefFormAdapter, ABC):
+class ManifManifRecrefAdapter(RecrefFormAdapter, ABC):
 
     def find_target_display_name_by_id(self, target_id):
         return manif_utils.get_recref_display_name(self.find_target_instance(target_id))
