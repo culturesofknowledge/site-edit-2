@@ -14,7 +14,7 @@ class LocationFormTests(EmloSeleniumTestCase):
     # KTODO test upload images
 
     def test_create_location(self):
-        self.selenium.get(self.get_url_by_viewname('location:init_form'))
+        self.goto_vname('location:init_form')
 
         self.fill_form_by_dict(location.fixtures.location_dict_a.items(),
                                exclude_fields=['location_name'], )
@@ -28,7 +28,7 @@ class LocationFormTests(EmloSeleniumTestCase):
         loc_a = location.fixtures.create_location_a()
         loc_a.save()
         url = self.get_url_by_viewname('location:full_form',
-                                       kwargs={'location_id': loc_a.location_id})
+                                       location_id=loc_a.location_id)
         test_utils.simple_test_full_form__GET(
             self, loc_a,
             url, ['editors_notes', 'element_1_eg_room', 'element_4_eg_city', 'latitude']
@@ -45,7 +45,7 @@ class LocationFormTests(EmloSeleniumTestCase):
 
         # update web page
         url = self.get_url_by_viewname('location:full_form',
-                                       kwargs={'location_id': loc_a.location_id})
+                                       location_id=loc_a.location_id)
         self.selenium.get(url)
 
         # fill m2m

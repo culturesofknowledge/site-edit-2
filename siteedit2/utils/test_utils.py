@@ -218,7 +218,7 @@ class CommonSearchTests:
 
     def switch_layout(self, layout_val):
         # assume selenium already in search page
-        self.test_case.selenium.find_element(value=layout_val).click()
+        self.test_case.js_click(f'#{layout_val}')
 
     def goto_search_page(self):
         self.test_case.goto_vname(self.search_vname)
