@@ -90,6 +90,10 @@ class EmloSeleniumTestCase(StaticLiveServerTestCase):
     def click_submit(self):
         self.selenium.find_element(By.CSS_SELECTOR, 'input[type=submit]').click()
 
+    def js_click(self, selector):
+        script = f"document.querySelector('{selector}').click(); "
+        self.selenium.execute_script(script)
+
 
 def get_selected_radio_val(elements):
     for ele in elements:
@@ -299,7 +303,11 @@ class FieldValTester:
             log.debug(f'fill: {ele.get_attribute("id")}')
             ele_type = ele.get_attribute('type')
             if ele_type == 'checkbox':
-                ele.click()
+                if ele.is_displayed():
+                    ele.click()
+                else:
+                    self.test_case.js_click(f'label[for={ele.get_attribute("id")}]')
+
             elif ele_type == 'text' or ele.tag_name == 'textarea':
                 ele.send_keys(val)
             elif ele.tag_name == 'select':

@@ -185,7 +185,7 @@ class WorkFormTests(EmloSeleniumTestCase):
         for lang in input_lang_list:
             lang_ele.send_keys(lang)
             lang_ele.send_keys(Keys.ESCAPE)
-            self.find_element_by_css(add_selector).click()
+            self.js_click(add_selector)
 
     def test_details__create(self):
         self.prepare_language_data()
@@ -230,7 +230,7 @@ class WorkFormTests(EmloSeleniumTestCase):
         self.prepare_language_data()
 
         work = self.save_work(CofkUnionWork())
-        input_lang_list = ['English', ]
+        input_lang_list = {'English', }
 
         self.goto_vname('work:manif_init', iwork_id=work.iwork_id)
         iwork_id = self.get_id_by_url_pattern(r'/work/form/manif/(\d+)')
@@ -238,26 +238,15 @@ class WorkFormTests(EmloSeleniumTestCase):
 
         self.selenium.maximize_window()
 
-        # self.selenium.save_screenshot('/tmp/debug.png')
-        # self.find_element_by_css('button.lang_add_btn').screenshot('/tmp/debug.png')
-        # self.selenium.set_window_position(390, 5300)
-        # Actions
-
-        # self.selenium.execute_script('arguments[0].scrollIntoView(true);', self.find_element_by_css('button.lang_add_btn'))
-        # self.selenium.execute_script(f'window.scrollTo(390, 5300)')
-        # ActionChains(self.selenium).move_to_element(self.find_element_by_css('button.lang_add_btn')).perform()
-        # ActionChains(self.selenium).move_by_offset(0, 200)
-        # self.selenium.save_screenshot('/tmp/debug.png')
-
         field_val_tester = FieldValTester(self, [
             ('manifestation_type', 'E'),
             ('printed_edition_details', 'xkxkx'),
             ('manifestation_creation_date_month', 4),
-            # ('manifestation_creation_date_approx', 1),
+            ('manifestation_creation_date_approx', 1),
             ('accompaniments', 'asdjask'),
             ('routing_mark_stamp', 'ksksk'),
             ('endorsements', 'zzzz'),
-            # ('manifestation_is_translation', 1),
+            ('manifestation_is_translation', 1),
         ])
         field_val_tester.fill()
 
@@ -266,13 +255,17 @@ class WorkFormTests(EmloSeleniumTestCase):
         self.click_submit()
 
         # assert work object
-        manif_id = re.findall(r'/work/form/manif/(\d+)/(\d+)', self.selenium.current_url)
+        manif_id = re.findall(r'/work/form/manif/(\d+)/([^/]+)', self.selenium.current_url)
         self.assertTrue(manif_id)
         manif_id = manif_id[0][1]
         manif = CofkUnionManifestation.objects.filter(manifestation_id=manif_id).first()
         self.assertIsNotNone(manif)
 
         field_val_tester.assert_all(manif)
+        self.assertSetEqual(
+            {l.language_code.language_name for l in manif.language_set.iterator()},
+            input_lang_list
+        )
 
         # unchanged field
         self.assertEqual(manif.manifestation_excipit, '')
