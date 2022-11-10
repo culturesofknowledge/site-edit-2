@@ -8,6 +8,7 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_PEOPLE_MENTIONED_IN_WORK
 from siteedit2.utils.test_utils import EmloSeleniumTestCase, FieldValTester
 from uploader.models import Iso639LanguageCode
+from work import work_utils
 from work.models import CofkUnionWork
 
 
@@ -22,6 +23,32 @@ class WorkFormTests(EmloSeleniumTestCase):
         self.assertTrue(iwork_id)
         iwork_id = iwork_id[0]
         return iwork_id
+
+    def test_switch_tab_without_save(self):
+        org_size = CofkUnionWork.objects.count()
+
+        def _assert_url_case(url_endswith):
+            self.assertTrue(self.selenium.current_url.endswith(url_endswith))
+
+            # should have not CofkUnionWork created after change tab
+            self.assertEqual(CofkUnionWork.objects.count(), org_size)
+
+        self.goto_vname('work:corr_form')
+        _assert_url_case('/work/form/corr/')
+
+        self.goto_vname('work:dates_form')
+        _assert_url_case('/work/form/dates/')
+
+        self.goto_vname('work:places_form')
+        _assert_url_case('/work/form/places/')
+
+        self.goto_vname('work:details_form')
+        _assert_url_case('/work/form/details/')
+
+    def save_work(self, work: CofkUnionWork):
+        work.work_id = work_utils.create_work_id(work.iwork_id)
+        work.update_current_user_timestamp('test_user')
+        work.save()
 
     def test_corr__create(self):
         self.goto_vname('work:corr_form')
@@ -51,26 +78,35 @@ class WorkFormTests(EmloSeleniumTestCase):
         self.assertEqual(work.cofkworkcommentmap_set.filter(relationship_type=REL_TYPE_COMMENT_ADDRESSEE)
                          .count(), 0)
 
-    def test_switch_tab_without_save(self):
-        org_size = CofkUnionWork.objects.count()
+    def test_corr__update(self):
 
-        def _assert_url_case(url_endswith):
-            self.assertTrue(self.selenium.current_url.endswith(url_endswith))
+        work = CofkUnionWork()
+        work.authors_uncertain = 1
+        work.authors_as_marked = 'xxxxxx'
+        self.save_work(work)
 
-            # should have not CofkUnionWork created after change tab
-            self.assertEqual(CofkUnionWork.objects.count(), org_size)
+        self.goto_vname('work:corr_form', iwork_id=work.iwork_id)
 
-        self.goto_vname('work:corr_form')
-        _assert_url_case('/work/form/corr/')
+        authors_as_marked_ele = self.find_element_by_css('#id_authors_as_marked')
 
-        self.goto_vname('work:dates_form')
-        _assert_url_case('/work/form/dates/')
+        # assert db data have be loaded
+        self.assertEqual(
+            authors_as_marked_ele.get_attribute('value'),
+            work.authors_as_marked,
+        )
+        self.assertIsNone(self.find_element_by_css('#id_authors_inferred').get_attribute('checked'))
+        self.assertIsNotNone(self.find_element_by_css('#id_authors_uncertain').get_attribute('checked'))
 
-        self.goto_vname('work:places_form')
-        _assert_url_case('/work/form/places/')
+        # edit for and submit
+        input_authors_as_marked = 'wwwwwww'
+        authors_as_marked_ele.clear()
+        authors_as_marked_ele.send_keys(input_authors_as_marked)
 
-        self.goto_vname('work:details_form')
-        _assert_url_case('/work/form/details/')
+        self.click_submit()
+
+        # assert db updated
+        work.refresh_from_db()
+        work.authors_as_marked = input_authors_as_marked
 
     def test_detes__create(self):
         self.goto_vname('work:dates_form')

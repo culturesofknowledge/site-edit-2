@@ -59,8 +59,8 @@ class EmloSeleniumTestCase(StaticLiveServerTestCase):
         cls.selenium.quit()
         super().tearDownClass()
 
-    def get_url_by_viewname(self, viewname, **kwargs):
-        return self.live_server_url + reverse(viewname, **kwargs)
+    def get_url_by_viewname(self, viewname, *args, **kwargs):
+        return self.live_server_url + reverse(viewname, args=args, kwargs=kwargs)
 
     def fill_form_by_dict(self,
                           model_dict: dict,
@@ -84,8 +84,8 @@ class EmloSeleniumTestCase(StaticLiveServerTestCase):
     def find_element_by_css(self, css_selector):
         return self.selenium.find_element(by=By.CSS_SELECTOR, value=css_selector)
 
-    def goto_vname(self, vname):
-        self.selenium.get(self.get_url_by_viewname(vname))
+    def goto_vname(self, vname, *args, **kwargs):
+        self.selenium.get(self.get_url_by_viewname(vname, *args, **kwargs))
 
     def click_submit(self):
         self.selenium.find_element(By.CSS_SELECTOR, 'input[type=submit]').click()

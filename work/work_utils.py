@@ -64,3 +64,7 @@ def find_related_comment_names(work: CofkUnionWork, rel_type):
 
 def get_form_url(iwork_id):
     return reverse('work:full_form', args=[iwork_id])
+
+
+def create_work_id(iwork_id) -> str:
+    return f'cofk_union_work-iwork_id:{iwork_id}'

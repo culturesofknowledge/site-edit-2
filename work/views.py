@@ -37,7 +37,7 @@ from work.forms import WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddressee
     AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \
     ManifPersonRecrefAdapter, ManifPersonRecrefForm, ScribeRelationChoices, DetailsForm, WorkPersonRecrefAdapter, \
     CatalogueForm, manif_type_choices, original_calendar_choices
-from work.models import CofkWorkPersonMap, CofkUnionWork, create_work_id, CofkWorkCommentMap, CofkWorkWorkMap, \
+from work.models import CofkWorkPersonMap, CofkUnionWork, CofkWorkCommentMap, CofkWorkWorkMap, \
     CofkWorkLocationMap, CofkWorkResourceMap, CofkUnionLanguageOfWork, CofkWorkSubjectMap
 
 log = logging.getLogger(__name__)
@@ -91,7 +91,7 @@ class BasicWorkFFH(FullFormHandler):
         work: CofkUnionWork = work_form.instance
         log.debug(f'changed_data : {work_form.changed_data}')
         if not work.work_id:
-            work.work_id = create_work_id(work.iwork_id)  # KTODO fix
+            work.work_id = work_utils.create_work_id(work.iwork_id)
 
         # handle catalogue
         self.catalogue_form.is_valid()

@@ -703,7 +703,3 @@ class CofkCollectWorkSummary(models.Model):
     class Meta:
         db_table = 'cofk_collect_work_summary'
         unique_together = (('upload', 'work_id_in_tool'),)
-
-
-def create_work_id(iwork_id) -> str:
-    return f'cofk_union_work-iwork_id:{iwork_id}'
