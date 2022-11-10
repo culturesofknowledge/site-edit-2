@@ -1,4 +1,5 @@
 import logging
+from abc import ABC
 from typing import Callable, Iterable, Type, Optional, Any, NoReturn
 
 from django.contrib.auth.decorators import login_required
@@ -9,14 +10,16 @@ from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual, Exact
 from django.forms import BaseForm
 from django.shortcuts import render, redirect, get_object_or_404
 
+from core import constant
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_IS_RELATED_TO
 from core.forms import CommentForm, ResourceForm, LocRecrefForm, PersonRecrefForm
 from core.helper import renderer_utils, view_utils, query_utils, download_csv_utils, recref_utils
+from core.helper.common_recref_adapter import RecrefFormAdapter, TargetCommentRecrefAdapter, \
+    TargetResourceRecrefAdapter, TargetPersonRecrefAdapter
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
 from core.helper.view_utils import CommonInitFormViewTemplate, ImageHandler, BasicSearchView, FullFormHandler, \
     RecrefFormsetHandler
-from core.helper.common_recref_adapter import RecrefFormAdapter, TargetCommentRecrefAdapter, TargetResourceRecrefAdapter
 from core.models import Recref
 from location.models import CofkUnionLocation
 from person import person_utils
@@ -142,7 +145,7 @@ def _get_other_persons_by_type(person: CofkUnionPerson, person_type: str) -> Ite
     return persons
 
 
-class PersonFullFormHandler(FullFormHandler):
+class PersonFFH(FullFormHandler):
 
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
         self.person = get_object_or_404(CofkUnionPerson, iperson_id=pk)
@@ -151,12 +154,27 @@ class PersonFullFormHandler(FullFormHandler):
         self.loc_handler = LocRecrefHandler(
             request_data, model_list=self.person.cofkpersonlocationmap_set.iterator(), )
 
+        # KTODO
+        self.parent_handler = view_utils.MultiRecrefAdapterHandler(
+            request_data, name='parent',
+            recref_adapter=ActivePersonRecrefAdapter(self.person),
+            recref_form_class=PersonRecrefForm,
+            rel_type=constant.REL_TYPE_PARENT_OF,
+        )
+
+        self.children_handler = view_utils.MultiRecrefAdapterHandler(
+            request_data, name='children',
+            recref_adapter=PassivePersonRecrefAdapter(self.person),
+            recref_form_class=PersonRecrefForm,
+            rel_type=constant.REL_TYPE_PARENT_OF,
+        )
+
         self.org_handler = PersonRecrefHandler(request_data, person_type='organisation',
                                                person=self.person)
-        self.parent_handler = PersonRecrefHandler(request_data, person_type='parent',
-                                                  person=self.person)
-        self.children_handler = PersonRecrefHandler(request_data, person_type='children',
-                                                    person=self.person)
+        # self.parent_handler = PersonRecrefHandler(request_data, person_type='parent',
+        #                                           person=self.person)
+        # self.children_handler = PersonRecrefHandler(request_data, person_type='children',
+        #                                             person=self.person)
 
         self.employer_handler = PersonRecrefHandler(request_data, person_type='employer',
                                                     person=self.person)
@@ -197,7 +215,7 @@ class PersonFullFormHandler(FullFormHandler):
 
 @login_required
 def full_form(request, iperson_id):
-    fhandler = PersonFullFormHandler(iperson_id, request_data=request.POST, request=request)
+    fhandler = PersonFFH(iperson_id, request_data=request.POST, request=request)
 
     # handle form submit
     if request.POST:
@@ -399,3 +417,39 @@ class PersonResourceRecrefAdapter(TargetResourceRecrefAdapter):
 
     def find_recref_records(self, rel_type):
         return self.find_recref_records_by_related_manger(self.parent.cofkpersonresourcemap_set, rel_type)
+
+
+class PersonPersonRecrefAdapter(TargetPersonRecrefAdapter, ABC):
+    def __init__(self, parent):
+        self.parent: CofkUnionPerson = parent
+
+    def recref_class(self) -> Type[Recref]:
+        return CofkPersonPersonMap
+
+
+class ActivePersonRecrefAdapter(PersonPersonRecrefAdapter):
+
+    def set_parent_target_instance(self, recref, parent, target):
+        recref: CofkPersonPersonMap
+        recref.person = parent
+        recref.related = target
+
+    def find_recref_records(self, rel_type):
+        return self.find_recref_records_by_related_manger(self.parent.active_relationships, rel_type)
+
+    def target_id_name(self):
+        return 'related_id'
+
+
+class PassivePersonRecrefAdapter(PersonPersonRecrefAdapter):
+
+    def set_parent_target_instance(self, recref, parent, target):
+        recref: CofkPersonPersonMap
+        recref.person = target
+        recref.related = parent
+
+    def find_recref_records(self, rel_type):
+        return self.find_recref_records_by_related_manger(self.parent.passive_relationships, rel_type)
+
+    def target_id_name(self):
+        return 'person_id'

@@ -40,4 +40,7 @@ REL_TYPE_SIGNED = 'signed'
 REL_TYPE_WAS_ADDRESSED_TO = 'was_addressed_to'
 REL_TYPE_INTENDED_FOR = 'intended_for'
 
+# rel_type person
+REL_TYPE_PARENT_OF = 'parent_of'
+
 DEFAULT_EMPTY_DATE_STR = '9999-12-31'

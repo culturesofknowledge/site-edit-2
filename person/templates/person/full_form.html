@@ -33,12 +33,12 @@
 
         <fieldset>
             <legend>Parents</legend>
-            {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_parent.update_formset new_form=recref_parent.new_form add_label='Add parent:' %}
+            {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_parent.update_formset new_form=recref_parent.new_form add_label='Add parent:' no_date=True %}
         </fieldset>
 
         <fieldset>
             <legend>Children</legend>
-            {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_children.update_formset new_form=recref_children.new_form add_label='Add child:' %}
+            {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_children.update_formset new_form=recref_children.new_form add_label='Add child:' no_date=True %}
         </fieldset>
 
         <fieldset>
