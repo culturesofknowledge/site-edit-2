@@ -296,6 +296,7 @@ class FieldValTester:
 
     def fill(self):
         for ele, val in self.get_element_val_list():
+            log.debug(f'fill: {ele.get_attribute("id")}')
             ele_type = ele.get_attribute('type')
             if ele_type == 'checkbox':
                 ele.click()

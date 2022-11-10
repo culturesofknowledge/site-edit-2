@@ -6,6 +6,7 @@ from core import fixtures
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_COMMENT_DATE, \
     REL_TYPE_COMMENT_DESTINATION, REL_TYPE_COMMENT_ROUTE, REL_TYPE_COMMENT_ORIGIN, REL_TYPE_COMMENT_REFERS_TO, \
     REL_TYPE_PEOPLE_MENTIONED_IN_WORK
+from manifestation.models import CofkUnionManifestation
 from siteedit2.utils.test_utils import EmloSeleniumTestCase, FieldValTester
 from uploader.models import Iso639LanguageCode
 from work import work_utils
@@ -49,6 +50,7 @@ class WorkFormTests(EmloSeleniumTestCase):
         work.work_id = work_utils.create_work_id(work.iwork_id)
         work.update_current_user_timestamp('test_user')
         work.save()
+        return work
 
     def test_corr__create(self):
         self.goto_vname('work:corr_form')
@@ -170,10 +172,23 @@ class WorkFormTests(EmloSeleniumTestCase):
         self.assertEqual(work.cofkworkcommentmap_set.filter(relationship_type=REL_TYPE_COMMENT_ORIGIN)
                          .count(), 0)
 
-    def test_details__create(self):
-        for lang_dict in [fixtures.lang_dict_eng, fixtures.lang_dict_ara]:
-            lang = Iso639LanguageCode(**lang_dict)
+    def prepare_language_data(self):
+        lang_list = [Iso639LanguageCode(**lang_dict)
+                     for lang_dict in [fixtures.lang_dict_eng, fixtures.lang_dict_ara]]
+        for lang in lang_list:
             lang.save()
+        return lang_list
+
+    def select_languages(self, input_lang_list, lang_selector,
+                         add_selector='button.lang_add_btn'):
+        lang_ele = self.find_element_by_css(lang_selector)
+        for lang in input_lang_list:
+            lang_ele.send_keys(lang)
+            lang_ele.send_keys(Keys.ESCAPE)
+            self.find_element_by_css(add_selector).click()
+
+    def test_details__create(self):
+        self.prepare_language_data()
 
         self.goto_vname('work:details_form')
 
@@ -188,11 +203,7 @@ class WorkFormTests(EmloSeleniumTestCase):
         self.find_element_by_css('#id_people_comment-0-comment').send_keys('xxxxxx')
 
         # select language
-        lang_ele = self.find_element_by_css('#id_new_language')
-        for lang in input_lang_list:
-            lang_ele.send_keys(lang)
-            lang_ele.send_keys(Keys.ESCAPE)
-            self.find_element_by_css('button.lang_add_btn').click()
+        self.select_languages(input_lang_list, '#id_new_language')
 
         self.click_submit()
 
@@ -214,3 +225,57 @@ class WorkFormTests(EmloSeleniumTestCase):
         self.assertEqual(work.explicit, '')
         self.assertEqual(work.cofkworkcommentmap_set.filter(relationship_type=REL_TYPE_COMMENT_REFERS_TO)
                          .count(), 0)
+
+    def test_manif__create(self):
+        self.prepare_language_data()
+
+        work = self.save_work(CofkUnionWork())
+        input_lang_list = ['English', ]
+
+        self.goto_vname('work:manif_init', iwork_id=work.iwork_id)
+        iwork_id = self.get_id_by_url_pattern(r'/work/form/manif/(\d+)')
+        self.assertEqual(iwork_id and int(iwork_id), work.iwork_id)
+
+        self.selenium.maximize_window()
+
+        # self.selenium.save_screenshot('/tmp/debug.png')
+        # self.find_element_by_css('button.lang_add_btn').screenshot('/tmp/debug.png')
+        # self.selenium.set_window_position(390, 5300)
+        # Actions
+
+        # self.selenium.execute_script('arguments[0].scrollIntoView(true);', self.find_element_by_css('button.lang_add_btn'))
+        # self.selenium.execute_script(f'window.scrollTo(390, 5300)')
+        # ActionChains(self.selenium).move_to_element(self.find_element_by_css('button.lang_add_btn')).perform()
+        # ActionChains(self.selenium).move_by_offset(0, 200)
+        # self.selenium.save_screenshot('/tmp/debug.png')
+
+        field_val_tester = FieldValTester(self, [
+            ('manifestation_type', 'E'),
+            ('printed_edition_details', 'xkxkx'),
+            ('manifestation_creation_date_month', 4),
+            # ('manifestation_creation_date_approx', 1),
+            ('accompaniments', 'asdjask'),
+            ('routing_mark_stamp', 'ksksk'),
+            ('endorsements', 'zzzz'),
+            # ('manifestation_is_translation', 1),
+        ])
+        field_val_tester.fill()
+
+        self.select_languages(input_lang_list, '#id_new_language')
+
+        self.click_submit()
+
+        # assert work object
+        manif_id = re.findall(r'/work/form/manif/(\d+)/(\d+)', self.selenium.current_url)
+        self.assertTrue(manif_id)
+        manif_id = manif_id[0][1]
+        manif = CofkUnionManifestation.objects.filter(manifestation_id=manif_id).first()
+        self.assertIsNotNone(manif)
+
+        field_val_tester.assert_all(manif)
+
+        # unchanged field
+        self.assertEqual(manif.manifestation_excipit, '')
+        self.assertEqual(manif.manifestation_incipit, '')
+        self.assertEqual(manif.non_letter_enclosures, '')
+        self.assertEqual(manif.manifestation_creation_date_inferred, 0)
