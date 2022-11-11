@@ -154,6 +154,18 @@ class PersonFFH(FullFormHandler):
         self.loc_handler = LocRecrefHandler(
             request_data, model_list=self.person.cofkpersonlocationmap_set.iterator(), )
 
+        self.org_handler = view_utils.MultiRecrefAdapterHandler(
+            request_data, name='organisation',
+            recref_adapter=ActivePersonRecrefAdapter(self.person),
+            recref_form_class=PersonRecrefForm,
+            rel_type=constant.REL_TYPE_MEMBER_OF,
+        )
+        self.member_handler = view_utils.MultiRecrefAdapterHandler(
+            request_data, name='member',
+            recref_adapter=PassivePersonRecrefAdapter(self.person),
+            recref_form_class=PersonRecrefForm,
+            rel_type=constant.REL_TYPE_MEMBER_OF,
+        )
         self.parent_handler = view_utils.MultiRecrefAdapterHandler(
             request_data, name='parent',
             recref_adapter=ActivePersonRecrefAdapter(self.person),
@@ -209,10 +221,6 @@ class PersonFFH(FullFormHandler):
             self.person.active_relationships.iterator() if self.person else [],
             prefix='person_other'
         )
-
-        # KTODO
-        self.org_handler = PersonRecrefHandler(request_data, person_type='organisation',
-                                               person=self.person)
 
         self.add_recref_formset_handler(PersonCommentFormsetHandler(
             prefix='comment',

@@ -23,9 +23,13 @@
     <fieldset id="header_member">
         <legend>Members:</legend>
         <!-- KTODO for Memberes -->
-        <span>
+        {% if is_organisation == 'Y' %}
+            {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_member.update_formset new_form=recref_member.new_form add_label='Add member:' %}
+        {% else %}
+            <span>
             This record refers to a person not an organisation. Members can only be entered for organisations.
         </span>
+        {% endif %}
     </fieldset>
 
     <fieldset id="header_related_others">

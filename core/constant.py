@@ -41,6 +41,7 @@ REL_TYPE_WAS_ADDRESSED_TO = 'was_addressed_to'
 REL_TYPE_INTENDED_FOR = 'intended_for'
 
 # rel_type person
+REL_TYPE_MEMBER_OF = 'member_of'
 REL_TYPE_PARENT_OF = 'parent_of'
 REL_TYPE_EMPLOYED = 'employed'
 REL_TYPE_TAUGHT = 'taught'
