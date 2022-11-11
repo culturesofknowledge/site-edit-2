@@ -154,40 +154,61 @@ class PersonFFH(FullFormHandler):
         self.loc_handler = LocRecrefHandler(
             request_data, model_list=self.person.cofkpersonlocationmap_set.iterator(), )
 
-        # KTODO
         self.parent_handler = view_utils.MultiRecrefAdapterHandler(
             request_data, name='parent',
             recref_adapter=ActivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_PARENT_OF,
         )
-
         self.children_handler = view_utils.MultiRecrefAdapterHandler(
             request_data, name='children',
             recref_adapter=PassivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_PARENT_OF,
         )
+        self.employer_handler = view_utils.MultiRecrefAdapterHandler(
+            request_data, name='employer',
+            recref_adapter=ActivePersonRecrefAdapter(self.person),
+            recref_form_class=PersonRecrefForm,
+            rel_type=constant.REL_TYPE_EMPLOYED,
+        )
+        self.employee_handler = view_utils.MultiRecrefAdapterHandler(
+            request_data, name='employee',
+            recref_adapter=PassivePersonRecrefAdapter(self.person),
+            recref_form_class=PersonRecrefForm,
+            rel_type=constant.REL_TYPE_EMPLOYED,
+        )
 
+        self.teacher_handler = view_utils.MultiRecrefAdapterHandler(
+            request_data, name='teacher',
+            recref_adapter=ActivePersonRecrefAdapter(self.person),
+            recref_form_class=PersonRecrefForm,
+            rel_type=constant.REL_TYPE_TAUGHT,
+        )
+        self.student_handler = view_utils.MultiRecrefAdapterHandler(
+            request_data, name='student',
+            recref_adapter=PassivePersonRecrefAdapter(self.person),
+            recref_form_class=PersonRecrefForm,
+            rel_type=constant.REL_TYPE_TAUGHT,
+        )
+
+        self.patron_handler = view_utils.MultiRecrefAdapterHandler(
+            request_data, name='patron',
+            recref_adapter=ActivePersonRecrefAdapter(self.person),
+            recref_form_class=PersonRecrefForm,
+            rel_type=constant.REL_TYPE_WAS_PATRON_OF,
+        )
+        self.protege_handler = view_utils.MultiRecrefAdapterHandler(
+            request_data, name='protege',
+            recref_adapter=PassivePersonRecrefAdapter(self.person),
+            recref_form_class=PersonRecrefForm,
+            rel_type=constant.REL_TYPE_WAS_PATRON_OF,
+        )
+
+        # KTODO
         self.org_handler = PersonRecrefHandler(request_data, person_type='organisation',
                                                person=self.person)
-        # self.parent_handler = PersonRecrefHandler(request_data, person_type='parent',
-        #                                           person=self.person)
-        # self.children_handler = PersonRecrefHandler(request_data, person_type='children',
-        #                                             person=self.person)
 
-        self.employer_handler = PersonRecrefHandler(request_data, person_type='employer',
-                                                    person=self.person)
-        self.employee_handler = PersonRecrefHandler(request_data, person_type='employee',
-                                                    person=self.person)
-        self.teacher_handler = PersonRecrefHandler(request_data, person_type='teacher',
-                                                   person=self.person)
-        self.student_handler = PersonRecrefHandler(request_data, person_type='student',
-                                                   person=self.person)
-        self.patron_handler = PersonRecrefHandler(request_data, person_type='patron',
-                                                  person=self.person)
-        self.protege_handler = PersonRecrefHandler(request_data, person_type='protege',
-                                                   person=self.person)
         self.other_handler = PersonRecrefHandler(request_data, person_type='other',
                                                  name='person_other',
                                                  person=self.person)
