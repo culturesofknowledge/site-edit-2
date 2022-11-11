@@ -1,8 +1,10 @@
 import logging
 
 from django import forms
+from django.db.models import TextChoices
 from django.forms import ModelForm, CharField
 
+from core import constant
 from core.helper import form_utils, widgets_utils
 from person.models import CofkUnionPerson
 
@@ -223,3 +225,18 @@ class GeneralSearchFieldset(forms.Form):
 
     change_user = forms.CharField(required=False)
     change_user_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+
+class PersonOtherRelationChoices(TextChoices):
+    UNSPECIFIED_RELATIONSHIP_WITH = constant.REL_TYPE_UNSPECIFIED_RELATIONSHIP_WITH, 'Unspecified Relationship With'
+    ACQUAINTANCE_OF = constant.REL_TYPE_ACQUAINTANCE_OF, 'Acquaintance Of'
+    WAS_BUSINESS_ASSOCIATE = constant.REL_TYPE_WAS_BUSINESS_ASSOCIATE, 'Was A Business Associate Of'
+    COLLABORATED_WITH = constant.REL_TYPE_COLLABORATED_WITH, 'Collaborated With'
+    COLLEAGUE_OF = constant.REL_TYPE_COLLEAGUE_OF, 'Colleague Of'
+    FRIEND_OF = constant.REL_TYPE_FRIEND_OF, 'Friend Of'
+    RELATIVE_OF = constant.REL_TYPE_RELATIVE_OF, 'Relative Of'
+    SIBLING_OF = constant.REL_TYPE_SIBLING_OF, 'Sibling Of'
+    SPOUSE_OF = constant.REL_TYPE_SPOUSE_OF, 'Spouse Of'
+
+# class PersonOtherRecrefForm(WorkPersonRecrefForm):
+#     relationship_types = RelationField(PersonOtherRelationChoices)

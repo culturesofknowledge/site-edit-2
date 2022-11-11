@@ -204,6 +204,11 @@ class PersonFFH(FullFormHandler):
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_WAS_PATRON_OF,
         )
+        # self.other_formset = PersonOtherRecrefForm.create_formset_by_records(
+        #     request_data,
+        #     self.work.cofkworkpersonmap_set.iterator() if self.work else [],
+        #     prefix='work_author'
+        # )
 
         # KTODO
         self.org_handler = PersonRecrefHandler(request_data, person_type='organisation',

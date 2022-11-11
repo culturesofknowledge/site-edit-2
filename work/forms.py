@@ -1,16 +1,15 @@
 import logging
-from typing import Iterable, Type
+from typing import Type
 
 from django import forms
-from django.db.models import TextChoices, Choices, Model
+from django.db.models import TextChoices, Model
 from django.forms import CharField
 
 from core import constant
 from core.constant import DEFAULT_EMPTY_DATE_STR, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO
-from core.forms import get_peron_full_form_url_by_pk
-from core.helper import view_utils, data_utils, form_utils
+from core.helper import form_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter, TargetPersonRecrefAdapter
-from core.helper.form_utils import SelectedRecrefField
+from core.helper.form_utils import SelectedRecrefField, RelationField, TargetPersonMRRForm
 from core.models import Recref
 from manifestation.models import CofkUnionManifestation, CofkManifPersonMap
 from work.models import CofkCollectWork, CofkUnionWork, CofkWorkPersonMap
@@ -333,10 +332,6 @@ class CatalogueForm(forms.Form):
     catalogue = forms.CharField(required=False, widget=forms.Select())
 
 
-class UndefinedRelationChoices(TextChoices):
-    UNDEFINED = 'undefined', 'Undefined'
-
-
 class AuthorRelationChoices(TextChoices):
     CREATED = REL_TYPE_CREATED, 'Creator'
     SENT = constant.REL_TYPE_SENT, 'Sender'
@@ -353,124 +348,7 @@ class ScribeRelationChoices(TextChoices):
     PARTLY_HANDWROTE = 'partly_handwrote', 'Partly handwrote'
 
 
-class RelationField(CharField):
-
-    def __init__(self, choices_class: Type[Choices], *args, **kwargs):
-        self.choices_class = choices_class
-        widget = forms.CheckboxSelectMultiple(
-            choices=self.choices_class.choices
-        )
-        super().__init__(*args, required=False, widget=widget, **kwargs)
-
-    def prepare_value(self, value):
-        """
-        value: should be list of relation_types
-        """
-        value: list[str] = super().prepare_value(value)
-        selected_values = set(value)
-        possible_values = set(self.choices_class.values)
-
-        unexpected_values = selected_values - possible_values
-        if unexpected_values:
-            logging.warning(f'unexpected relationship_type [{unexpected_values}] ')
-
-        selected_values = selected_values & possible_values
-        return list(selected_values)
-
-    def clean(self, user_input_values):
-        return user_input_values  # return as list
-
-
-class MultiRelRecrefForm(forms.Form):
-    template_name = 'work/component/multi_rel_recref_form.html'  # KTODO rename to multi_rel_recref_form.html
-
-    name = forms.CharField(required=False)
-    target_id = forms.CharField(required=False, widget=forms.HiddenInput())
-    relationship_types = RelationField(UndefinedRelationChoices)
-
-    @classmethod
-    def create_recref_adapter(cls, *args, **kwargs) -> RecrefFormAdapter:
-        raise NotImplementedError()
-
-    @classmethod
-    def get_rel_type_choices_values(cls):
-        return cls.base_fields['relationship_types'].choices_class.values
-
-    @property
-    def target_url(self):
-        raise NotImplementedError()
-
-    @classmethod
-    def get_target_id(cls, recref: Recref):
-        raise NotImplementedError()
-
-    def find_recref_list_by_target_id(self, host_model: Model, target_id):
-        raise NotImplementedError()
-
-    def create_or_delete(self, host_model: Model, username):
-        """
-        create or delete
-        """
-        if not self.is_valid():
-            logging.warning(f'[{self.__class__.__name__}] do nothing is invalid')
-            return
-
-        recref_adapter = self.create_recref_adapter(host_model)
-        data: dict = self.cleaned_data
-        selected_rel_types = set(data['relationship_types'])
-
-        org_maps: list[Recref] = list(self.find_recref_list_by_target_id(host_model, data['target_id']))
-
-        # delete unchecked relation
-        _maps = (m for m in org_maps if m.relationship_type not in selected_rel_types)
-        for m in _maps:
-            log.info(f'delete [{m.relationship_type}][{m}]')
-            m.delete()
-
-        # add checked relation
-        new_types = selected_rel_types - {m.relationship_type for m in org_maps}
-        target_model = recref_adapter.find_target_instance(data['target_id'])
-        for new_type in new_types:
-            recref = recref_adapter.upsert_recref(new_type, host_model, target_model)
-            recref.update_current_user_timestamp(username)
-            recref.save()
-            log.info(f'add new [{target_model}][{recref}]')
-
-    @classmethod
-    def create_formset_by_records(cls, post_data,
-                                  records: Iterable[Recref], prefix):
-        initial_list = []
-        recref_adapter = cls.create_recref_adapter()
-        records = (r for r in records if r.relationship_type in cls.get_rel_type_choices_values())
-        for person_id, recref_list in data_utils.group_by(records, lambda r: cls.get_target_id(r)).items():
-            recref_list: list[Recref]
-            initial_list.append({
-                'name': recref_adapter.find_target_display_name_by_id(
-                    recref_adapter.get_target_id(recref_list[0])
-                ),
-                'target_id': person_id,
-                'relationship_types': {m.relationship_type for m in recref_list},
-            })
-
-        formset = view_utils.create_formset(
-            cls, post_data=post_data, prefix=prefix,
-            initial_list=initial_list,
-            extra=0,
-        )
-        return formset
-
-
-class TargetPersonRecrefForm(MultiRelRecrefForm):
-    @property
-    def target_url(self):
-        return get_peron_full_form_url_by_pk(self.initial.get('target_id'))
-
-    @classmethod
-    def get_target_id(cls, recref):
-        return recref.person_id
-
-
-class ManifPersonRecrefForm(TargetPersonRecrefForm):
+class ManifPersonMRRForm(TargetPersonMRRForm):
     relationship_types = RelationField(ScribeRelationChoices)
 
     @classmethod
@@ -484,7 +362,7 @@ class ManifPersonRecrefForm(TargetPersonRecrefForm):
         )
 
 
-class WorkPersonRecrefForm(TargetPersonRecrefForm):
+class WorkPersonMRRForm(TargetPersonMRRForm):
 
     @classmethod
     def create_recref_adapter(cls, *args, **kwargs) -> RecrefFormAdapter:
@@ -555,9 +433,9 @@ class ManifPersonRecrefAdapter(TargetPersonRecrefAdapter):
 #         pass
 
 
-class WorkAuthorRecrefForm(WorkPersonRecrefForm):
+class WorkAuthorRecrefForm(WorkPersonMRRForm):
     relationship_types = RelationField(AuthorRelationChoices)
 
 
-class WorkAddresseeRecrefForm(WorkPersonRecrefForm):
+class WorkAddresseeRecrefForm(WorkPersonMRRForm):
     relationship_types = RelationField(AddresseeRelationChoices)

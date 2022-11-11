@@ -34,9 +34,9 @@ from person import person_utils
 from person.models import CofkUnionPerson
 from uploader.models import CofkUnionSubject, CofkLookupCatalogue
 from work import work_utils
-from work.forms import WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
+from work.forms import WorkPersonMRRForm, WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \
-    ManifPersonRecrefAdapter, ManifPersonRecrefForm, ScribeRelationChoices, DetailsForm, WorkPersonRecrefAdapter, \
+    ManifPersonRecrefAdapter, ManifPersonMRRForm, ScribeRelationChoices, DetailsForm, WorkPersonRecrefAdapter, \
     CatalogueForm, manif_type_choices, original_calendar_choices
 from work.models import CofkWorkPersonMap, CofkUnionWork, CofkWorkCommentMap, CofkWorkWorkMap, \
     CofkWorkLocationMap, CofkWorkResourceMap, CofkUnionLanguageOfWork, CofkWorkSubjectMap
@@ -373,7 +373,7 @@ class ManifFFH(BasicWorkFFH):
             recref_form_class=PersonRecrefForm,
             rel_type=REL_TYPE_FORMERLY_OWNED,
         )
-        self.scribe_recref_formset = ManifPersonRecrefForm.create_formset_by_records(
+        self.scribe_recref_formset = ManifPersonMRRForm.create_formset_by_records(
             request_data,
             self.safe_manif.cofkmanifpersonmap_set.iterator(),
             prefix='scribe'
@@ -482,7 +482,7 @@ class ManifFFH(BasicWorkFFH):
         create_recref_if_field_exist(self.manif_form, manif, request.user.username,
                                      selected_id_field_name='selected_scribe_id',
                                      rel_type=ScribeRelationChoices.HANDWROTE,
-                                     recref_adapter=ManifPersonRecrefForm.create_recref_adapter())
+                                     recref_adapter=ManifPersonMRRForm.create_recref_adapter())
         save_multi_rel_recref_formset(self.scribe_recref_formset, manif, request)
         self.img_handler.save(request)
 
@@ -934,7 +934,7 @@ def return_quick_init(request, pk):
 def save_multi_rel_recref_formset(multi_rel_recref_formset, work, request):
     _forms = (f for f in multi_rel_recref_formset if f.has_changed())
     for form in _forms:
-        form: WorkPersonRecrefForm
+        form: WorkPersonMRRForm
         form.create_or_delete(work, request.user.username)
 
 
