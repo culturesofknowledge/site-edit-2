@@ -7,9 +7,9 @@ from core.helper import form_utils, model_utils
 from core.helper import widgets_utils
 from core.models import CofkUnionComment, CofkUnionResource
 from manifestation.models import CofkUnionManifestation
-from person.person_utils import get_checked_form_url_by_pk
+from person import person_utils
 from uploader.models import CofkUnionImage
-from work.work_utils import get_checked_form_url_by_pk
+from work import work_utils
 
 
 def build_search_components(sort_by_choices: list[tuple[str, str]]):
@@ -48,7 +48,7 @@ class RecrefForm(forms.Form):
 class PersonRecrefForm(RecrefForm):
     @property
     def target_url(self) -> str:
-        return get_checked_form_url_by_pk(self.initial.get('target_id'))
+        return person_utils.get_checked_form_url_by_pk(self.initial.get('target_id'))
 
 
 class LocRecrefForm(RecrefForm):
@@ -60,7 +60,7 @@ class LocRecrefForm(RecrefForm):
 class WorkRecrefForm(RecrefForm):
     @property
     def target_url(self) -> str:
-        return get_checked_form_url_by_pk(self.initial.get('target_id'))
+        return work_utils.get_checked_form_url_by_pk(self.initial.get('target_id'))
 
 
 class ManifRecrefForm(RecrefForm):
