@@ -4,12 +4,7 @@
     <fieldset>
         <legend>Authors / senders</legend>
 
-        <div class="multi_rel_recref_container">
-            {{ author_formset.management_form }}
-            {% for form in author_formset %}
-                {{ form }}
-            {% endfor %}
-        </div>
+        {% include "core/component/common_multi_rel_recref_formset.html" with multi_rel_recref_formset=author_formset %}
 
         {% include "core/component/recref.html" with recref_type='person' id_field=corr_form.selected_author_id label='Add another authro/sender:' %}
 
@@ -29,12 +24,7 @@
     <fieldset>
         <legend>Addressees</legend>
 
-        <div class="multi_rel_recref_container">
-            {{ addressee_formset.management_form }}
-            {% for form in addressee_formset %}
-                {{ form }}
-            {% endfor %}
-        </div>
+        {% include "core/component/common_multi_rel_recref_formset.html" with multi_rel_recref_formset=addressee_formset %}
 
         {% include "core/component/recref.html" with recref_type='person' id_field=corr_form.selected_addressee_id label='Add another addressee:' %}
 
