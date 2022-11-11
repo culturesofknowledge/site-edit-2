@@ -22,8 +22,7 @@
 
     <fieldset id="header_member">
         <legend>Members:</legend>
-        <!-- KTODO for Memberes -->
-        {% if is_organisation == 'Y' %}
+        {% if person_form.is_organisation.value == 'Y' %}
             {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_member.update_formset new_form=recref_member.new_form add_label='Add member:' %}
         {% else %}
             <span>
