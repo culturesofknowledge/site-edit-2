@@ -13,7 +13,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from core import constant
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_IS_RELATED_TO
 from core.forms import CommentForm, ResourceForm, LocRecrefForm, PersonRecrefForm
-from core.helper import renderer_utils, view_utils, query_utils, download_csv_utils, recref_utils
+from core.helper import renderer_utils, view_utils, query_utils, download_csv_utils, recref_utils, form_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter, TargetCommentRecrefAdapter, \
     TargetResourceRecrefAdapter, TargetPersonRecrefAdapter
 from core.helper.renderer_utils import CompactSearchResultsRenderer
@@ -23,7 +23,7 @@ from core.helper.view_utils import CommonInitFormViewTemplate, ImageHandler, Bas
 from core.models import Recref
 from location.models import CofkUnionLocation
 from person import person_utils
-from person.forms import PersonForm, GeneralSearchFieldset
+from person.forms import PersonForm, GeneralSearchFieldset, PersonOtherRecrefForm
 from person.models import CofkUnionPerson, CofkPersonLocationMap, CofkPersonPersonMap, create_person_id, \
     CofkPersonCommentMap, CofkPersonResourceMap
 
@@ -204,19 +204,15 @@ class PersonFFH(FullFormHandler):
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_WAS_PATRON_OF,
         )
-        # self.other_formset = PersonOtherRecrefForm.create_formset_by_records(
-        #     request_data,
-        #     self.work.cofkworkpersonmap_set.iterator() if self.work else [],
-        #     prefix='work_author'
-        # )
+        self.person_other_formset = PersonOtherRecrefForm.create_formset_by_records(
+            request_data,
+            self.person.active_relationships.iterator() if self.person else [],
+            prefix='person_other'
+        )
 
         # KTODO
         self.org_handler = PersonRecrefHandler(request_data, person_type='organisation',
                                                person=self.person)
-
-        self.other_handler = PersonRecrefHandler(request_data, person_type='other',
-                                                 name='person_other',
-                                                 person=self.person)
 
         self.add_recref_formset_handler(PersonCommentFormsetHandler(
             prefix='comment',
@@ -256,6 +252,13 @@ def full_form(request, iperson_id):
         fhandler.person_form.save()
         fhandler.save_all_recref_formset(fhandler.person, request)
         fhandler.img_handler.save(request)
+        form_utils.save_multi_rel_recref_formset(fhandler.person_other_formset, fhandler.person_form.instance, request)
+        recref_utils.create_recref_if_field_exist(fhandler.person_form,
+                                                  fhandler.person_form.instance,
+                                                  request.user.username,
+                                                  selected_id_field_name='selected_other_id',
+                                                  rel_type=constant.REL_TYPE_UNSPECIFIED_RELATIONSHIP_WITH,
+                                                  recref_adapter=PersonOtherRecrefForm.create_recref_adapter())
 
         # KTODO save birthplace, deathplace
         # KTODo save roles_titles
@@ -446,7 +449,7 @@ class PersonResourceRecrefAdapter(TargetResourceRecrefAdapter):
 
 
 class PersonPersonRecrefAdapter(TargetPersonRecrefAdapter, ABC):
-    def __init__(self, parent):
+    def __init__(self, parent=None):
         self.parent: CofkUnionPerson = parent
 
     def recref_class(self) -> Type[Recref]:

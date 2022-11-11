@@ -73,7 +73,7 @@
 
         <fieldset>
             <legend>Other relationships</legend>
-            {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_person_other.update_formset new_form=recref_person_other.new_form add_label='Add related person:' %}
+            {% include "core/component/common_multi_rel_recref_formset.html" with multi_rel_recref_formset=person_other_formset  recref_type='person' id_field=person_form.selected_other_id label_add='Add another related person:' %}
         </fieldset>
 
     </fieldset>

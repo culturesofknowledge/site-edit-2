@@ -289,7 +289,8 @@ class MultiRelRecrefForm(forms.Form):
 
     @classmethod
     def get_target_id(cls, recref: Recref):
-        raise NotImplementedError()
+        recref_adapter = cls.create_recref_adapter()
+        return recref_adapter.get_target_id(recref)
 
     def find_recref_list_by_target_id(self, host_model: Model, target_id):
         raise NotImplementedError()
@@ -318,8 +319,7 @@ class MultiRelRecrefForm(forms.Form):
         new_types = selected_rel_types - {m.relationship_type for m in org_maps}
         target_model = recref_adapter.find_target_instance(data['target_id'])
         for new_type in new_types:
-            recref = recref_adapter.upsert_recref(new_type, host_model, target_model)
-            recref.update_current_user_timestamp(username)
+            recref = recref_adapter.upsert_recref(new_type, host_model, target_model, username=username)
             recref.save()
             log.info(f'add new [{target_model}][{recref}]')
 
@@ -352,6 +352,9 @@ class TargetPersonMRRForm(MultiRelRecrefForm):
     def target_url(self):
         return person_utils.get_checked_form_url_by_pk(self.initial.get('target_id'))
 
-    @classmethod
-    def get_target_id(cls, recref):
-        return recref.person_id
+
+def save_multi_rel_recref_formset(multi_rel_recref_formset, parent, request):
+    _forms = (f for f in multi_rel_recref_formset if f.has_changed())
+    for form in _forms:
+        form: MultiRelRecrefForm
+        form.create_or_delete(parent, request.user.username)

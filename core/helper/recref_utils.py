@@ -1,6 +1,8 @@
 import logging
 from typing import Callable, Any, Optional
 
+from django.forms import BaseForm
+
 from core.models import Recref
 
 log = logging.getLogger(__name__)
@@ -50,3 +52,21 @@ def upsert_recref_by_target_id(target_id,
         username=username,
         org_recref=org_recref,
     )
+
+
+def create_recref_if_field_exist(form: BaseForm, parent, username,
+                                 selected_id_field_name,
+                                 rel_type,
+                                 recref_adapter: 'RecrefFormAdapter',
+                                 ):
+    if not (_id := form.cleaned_data.get(selected_id_field_name)):
+        return
+
+    target = recref_adapter.find_target_instance(_id)
+    recref = recref_adapter.upsert_recref(rel_type,
+                                          parent_instance=parent,
+                                          target_instance=target,
+                                          username=username)
+    recref.save()
+    log.info(f'add new [{target}][{recref}]')
+    return recref

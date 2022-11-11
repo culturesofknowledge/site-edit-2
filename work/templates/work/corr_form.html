@@ -4,9 +4,7 @@
     <fieldset>
         <legend>Authors / senders</legend>
 
-        {% include "core/component/common_multi_rel_recref_formset.html" with multi_rel_recref_formset=author_formset %}
-
-        {% include "core/component/recref.html" with recref_type='person' id_field=corr_form.selected_author_id label='Add another authro/sender:' %}
+        {% include "core/component/common_multi_rel_recref_formset.html" with multi_rel_recref_formset=author_formset recref_type='person' id_field=corr_form.selected_author_id label_add='Add another authro/sender:' %}
 
         <label> Authors/sender as marked: </label>
         {{ corr_form.authors_as_marked }}
@@ -24,9 +22,7 @@
     <fieldset>
         <legend>Addressees</legend>
 
-        {% include "core/component/common_multi_rel_recref_formset.html" with multi_rel_recref_formset=addressee_formset %}
-
-        {% include "core/component/recref.html" with recref_type='person' id_field=corr_form.selected_addressee_id label='Add another addressee:' %}
+        {% include "core/component/common_multi_rel_recref_formset.html" with multi_rel_recref_formset=addressee_formset recref_type='person' id_field=corr_form.selected_addressee_id label_add='Add another addressee:'%}
 
         <label> Addressees as marked: </label>
         {{ corr_form.addressees_as_marked }}

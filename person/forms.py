@@ -1,11 +1,13 @@
 import logging
 
 from django import forms
-from django.db.models import TextChoices
+from django.db.models import TextChoices, Model
 from django.forms import ModelForm, CharField
 
 from core import constant
 from core.helper import form_utils, widgets_utils
+from core.helper.common_recref_adapter import RecrefFormAdapter
+from core.helper.form_utils import RelationField, TargetPersonMRRForm
 from person.models import CofkUnionPerson
 
 log = logging.getLogger(__name__)
@@ -115,6 +117,9 @@ class PersonForm(ModelForm):
     birth_place = forms.CharField(required=False, widget=forms.HiddenInput())
     death_place = forms.CharField(required=False, widget=forms.HiddenInput())
     other_place = forms.CharField(required=False, widget=forms.HiddenInput())
+
+    # extra field
+    selected_other_id = forms.CharField(required=False)
 
     class Meta:
         model = CofkUnionPerson
@@ -238,5 +243,18 @@ class PersonOtherRelationChoices(TextChoices):
     SIBLING_OF = constant.REL_TYPE_SIBLING_OF, 'Sibling Of'
     SPOUSE_OF = constant.REL_TYPE_SPOUSE_OF, 'Spouse Of'
 
-# class PersonOtherRecrefForm(WorkPersonRecrefForm):
-#     relationship_types = RelationField(PersonOtherRelationChoices)
+
+class PersonOtherRecrefForm(TargetPersonMRRForm):
+    relationship_types = RelationField(PersonOtherRelationChoices)
+
+    @classmethod
+    def create_recref_adapter(cls, *args, **kwargs) -> RecrefFormAdapter:
+        from person.views import ActivePersonRecrefAdapter
+        return ActivePersonRecrefAdapter(*args, **kwargs)
+
+    def find_recref_list_by_target_id(self, parent: Model, target_id):
+        parent: CofkUnionPerson
+        return parent.active_relationships.filter(
+            person_id=target_id,
+            relationship_type__in=self.get_rel_type_choices_values(),
+        )

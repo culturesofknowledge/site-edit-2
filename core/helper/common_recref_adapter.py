@@ -9,7 +9,8 @@ from core.models import Recref, CofkUnionComment, CofkUnionResource
 from person import person_utils
 from person.models import CofkUnionPerson
 
-log =logging.getLogger(__name__)
+log = logging.getLogger(__name__)
+
 
 class RecrefFormAdapter:
 
