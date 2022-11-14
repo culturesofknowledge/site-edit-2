@@ -1,6 +1,7 @@
 import logging
 from abc import ABC
-from typing import Optional, Type
+from collections.abc import Callable
+from typing import Optional, Type, Iterable
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -17,7 +18,7 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_IS_RELATED_TO, REL_TYPE_PEOPLE_MENTIONED_IN_WORK, REL_TYPE_MENTION, REL_TYPE_MENTION_PLACE, \
     REL_TYPE_MENTION_WORK
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, ResourceForm, LocRecrefForm
-from core.helper import view_utils, lang_utils, model_utils, recref_utils
+from core.helper import view_utils, lang_utils, model_utils, recref_utils, query_utils, renderer_utils
 from core.helper.lang_utils import LangModelAdapter, NewLangForm
 from core.helper.view_utils import DefaultSearchView, FullFormHandler, RecrefFormAdapter, \
     ImageHandler, RecrefFormsetHandler, TargetCommentRecrefAdapter, TargetResourceRecrefAdapter, SubjectHandler
@@ -36,9 +37,9 @@ from work import work_utils
 from work.forms import WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \
     ManifPersonRecrefAdapter, ManifPersonRecrefForm, ScribeRelationChoices, DetailsForm, WorkPersonRecrefAdapter, \
-    CatalogueForm, manif_type_choices, original_calendar_choices
+    CatalogueForm, manif_type_choices, original_calendar_choices, CompactSearchFieldset, ExpandedSearchFieldset
 from work.models import CofkWorkPersonMap, CofkUnionWork, CofkWorkCommentMap, CofkWorkWorkMap, \
-    CofkWorkLocationMap, CofkWorkResourceMap, CofkUnionLanguageOfWork, CofkWorkSubjectMap
+    CofkWorkLocationMap, CofkWorkResourceMap, CofkUnionLanguageOfWork, CofkWorkSubjectMap, CofkUnionQueryableWork
 
 log = logging.getLogger(__name__)
 
@@ -943,13 +944,60 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     def title(self) -> str:
         return 'Work'
 
+    @property
+    def sort_by_choices(self) -> list[tuple[str, str]]:
+        return [
+            ('-date_of_work_as_marked', 'Date for ordering desc',),
+            ('date_of_work_as_marked', 'Date for ordering asc',),
+        ]
+
     def get_queryset(self):
-        queryset = CofkUnionPerson.objects.all()
+        queryset = CofkUnionQueryableWork.objects.all()
+
+        field_fn_maps = {}
+
+        queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
+        queries.extend(
+            query_utils.create_queries_by_lookup_field(self.request_data, [
+                'description', 'iwork_id', 'editors_notes', 'date_of_work_as_marked', 'sender_or_recipient',
+                'origin_or_destination'
+            ])
+        )
+
+        if queries:
+            queryset = queryset.filter(query_utils.all_queries_match(queries))
+
+        if sort_by := self.get_sort_by():
+            queryset = queryset.order_by(sort_by)
         return queryset
+
+    @property
+    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+        return renderer_utils.create_table_search_results_renderer('work/search_table_layout.html')
 
     @property
     def return_quick_init_vname(self) -> str:
         return 'work:return_quick_init'
+
+    @property
+    def query_fieldset_list(self) -> Iterable:
+        # log.info(self.get_context_data())
+        default_values = {
+            'foaf_name_lookup': 'starts_with',
+        }
+        request_data = default_values | self.request_data.dict()
+
+        return [CompactSearchFieldset(request_data)]
+
+    @property
+    def expanded_query_fieldset_list(self) -> Iterable:
+        # log.info(self.get_context_data())
+        default_values = {
+            'foaf_name_lookup': 'starts_with',
+        }
+        request_data = default_values | self.request_data.dict()
+
+        return [ExpandedSearchFieldset(request_data)]
 
 
 def find_work_rec_name(work_id) -> Optional[str]:

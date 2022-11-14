@@ -28,7 +28,7 @@ from publication.models import CofkUnionPublication
 from uploader.models import CofkCollectStatus, Iso639LanguageCode, CofkLookupCatalogue, CofkCollectUpload, \
     CofkUnionSubject
 from uploader.models import CofkUnionOrgType, CofkUnionImage
-from work.models import CofkUnionWork
+from work.models import CofkUnionWork, CofkUnionQueryableWork
 
 log = logging.getLogger(__name__)
 
@@ -465,6 +465,13 @@ def migrate_groups_and_permissions(conn, target_model: str):
     for r in rows:
         groups[r[1]].user_set.add(CofkUser.objects.get_by_natural_key(r[0]))
 
+def _val_handler_work__catalogue(row: dict):
+    if row['original_catalogue']:
+        row['original_catalogue'] = CofkLookupCatalogue.objects.get(catalogue_code=row['original_catalogue'])
+    else:
+        row['original_catalogue'] = None
+    return row
+
 
 def data_migration(user, password, database, host, port):
     warnings.filterwarnings('ignore',
@@ -520,7 +527,6 @@ def data_migration(user, password, database, host, port):
                                                CofkPersonPersonMap.related),
                               CofkPersonPersonMapFieldVal(),
                               ),
-
         # ### Repositories/institutions
         lambda: clone_rows_by_model_class(conn, CofkUnionInstitution,
                                           col_val_handler_fn_list=[_val_handler_empty_str_null]),
@@ -530,9 +536,14 @@ def data_migration(user, password, database, host, port):
                                           col_val_handler_fn_list=[_val_handler_users],
                                           seq_name=None,
                                           target_model_class='cofk_users', ),
-        lambda: migrate_groups_and_permissions(conn, 'cofk_roles')
+        lambda: migrate_groups_and_permissions(conn, 'cofk_roles'),
 
+        # ### Work
+        lambda: clone_rows_by_model_class(conn, CofkUnionQueryableWork),
+        lambda: clone_rows_by_model_class(conn, CofkUnionWork, col_val_handler_fn_list=[_val_handler_work__catalogue]),
     ]
+
+    # clone_action_fn_list = [lambda: clone_rows_by_model_class(conn, CofkUnionQueryableWork, seq_name=None),]
 
     for fn in clone_action_fn_list:
         fn()

@@ -1,0 +1,28 @@
+<fieldset>
+    <legend>{{ form.title }}</legend>
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.description field_lookup=form.description_lookup field_info="This is in the style 'DD Mon YYYY: Author/Sender (place) to Addressee (place)', e.g. 8 Mar 1693: Bulkeley, Sir Richard (Dunlaven, County Wicklow) to Lister, Martin (Old Palace Yard, Westminster)." %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.iwork_id field_lookup=form.iwork_id_lookup  %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_as_marked field_lookup=form.date_of_work_as_marked_lookup field_info="This field could contain the actual words marked within the letter, such as 'ipsis Kalendis Decembribus C I. I. CCVI', or a modern researcher's notation such as 'n.d.'" %}
+
+    {% include "core/component/search_fieldset/from_to_year.html" with title='Year' from_field=form.year_from to_field=form.year_to field_info="Year in which work was created. (Use 'is blank' option in Advanced Search to find works without year.)"  %}
+    {% include "core/component/search_fieldset/from_to_year.html" with title='Month' from_field=form.month_from to_field=form.month_to %}
+    {% include "core/component/search_fieldset/from_to_year.html" with title='Day' from_field=form.day_from to_field=form.day_to %}
+<!--
+
+
+    {% include "core/component/common_field_layout.html" with field=form.gender %}
+
+    {% include "core/component/common_field_layout.html" with field=form.person_or_group %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.editors_notes field_lookup=form.editors_notes_lookup %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.further_reading field_lookup=form.further_reading_lookup %}
+
+    {% include "core/component/search_fieldset/from_to_year.html" with title='Change timestamp' from_field=form.change_timestamp_from to_field=form.change_timestamp_to %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.change_user field_lookup=form.change_user_lookup %}
+-->
+</fieldset>
