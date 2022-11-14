@@ -8,5 +8,23 @@
     </label>
 </div>
 <div class="grid-item">
-    {% include "core/component/common_form_choices.html" with label_text='' choices_field=form.relationship_types %}
+        {% for recref_form in form.get_recref_forms %}
+            <div class="sub-recref-form">
+                <div>
+                    {{ recref_form.recref_id }}
+                    {{ recref_form.is_selected }}
+                    <label for="{{ recref_form.is_selected.id_for_label }}"> {{ recref_form.rel_type_label }} </label>
+                </div>
+
+                {% if not form.no_date %}
+                    <div class="inline-from-to">
+                        <span>From:</span>
+                        {{ recref_form.from_date }}
+                        <span>To:</span>
+                        {{ recref_form.to_date }}
+                    </div>
+                {% endif %}
+
+            </div>
+        {% endfor %}
 </div>

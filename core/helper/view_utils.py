@@ -283,7 +283,9 @@ def render_return_quick_init(request, name, item_name, item_id):
 def any_invalid_with_log(form_formsets: Iterable):
     for f in form_formsets:
         if not f.is_valid():
-            log.debug(f'form is invalid [{type(f)}] -- [{getattr(f, "error_messages", None)}] -- [{repr(getattr(f, "errors", None))}]')
+            log.debug(f'form is invalid [{type(f)}] '
+                      f'-- [{getattr(f, "error_messages", None)}] '
+                      f'-- [{repr(getattr(f, "errors", None))}]')
             return True
 
     return False
@@ -331,13 +333,6 @@ class MultiRecrefHandler:
     def recref_class(self) -> Type[models.Model]:
         raise NotImplementedError()
 
-    @staticmethod
-    def fill_common_recref_field(recref, cleaned_data, username):
-        recref.to_date = cleaned_data.get('to_date')
-        recref.from_date = cleaned_data.get('from_date')
-        recref.update_current_user_timestamp(username)
-        return recref
-
     def create_recref_by_new_form(self, target_id, parent_instance) -> Optional[Recref]:
         raise NotImplementedError()
 
@@ -350,7 +345,8 @@ class MultiRecrefHandler:
         self.new_form.is_valid()
         if target_id := self.new_form.cleaned_data.get('target_id'):
             if recref := self.create_recref_by_new_form(target_id, parent_instance):
-                recref = self.fill_common_recref_field(recref, self.new_form.cleaned_data, request.user.username)
+                recref = recref_utils.fill_common_recref_field(recref, self.new_form.cleaned_data,
+                                                               request.user.username)
                 recref.save()
                 log.info(f'create new recref [{recref}]')
 
@@ -366,7 +362,7 @@ class MultiRecrefHandler:
             else:
                 log.info(f'update recref [{recref_id=}]')
                 ps_loc = self.recref_class.objects.get(pk=recref_id)
-                ps_loc = self.fill_common_recref_field(ps_loc, f.cleaned_data, request.user.username)
+                ps_loc = recref_utils.fill_common_recref_field(ps_loc, f.cleaned_data, request.user.username)
                 ps_loc.save()
 
 

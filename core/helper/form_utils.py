@@ -7,7 +7,7 @@ from django.db.models import TextChoices, Choices, Model
 from django.forms import BoundField, CharField
 from django.template.loader import render_to_string
 
-from core.helper import widgets_utils, data_utils, view_utils
+from core.helper import widgets_utils, data_utils, view_utils, recref_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.models import Recref
 from person import person_utils
@@ -268,12 +268,77 @@ class UndefinedRelationChoices(TextChoices):
     UNDEFINED = 'undefined', 'Undefined'
 
 
+class SubRecrefForm(forms.Form):
+    rel_type = 'unknown rel_type'
+    rel_type_label = 'unknown rel_type_label'
+    recref_id = forms.CharField(required=False, widget=forms.HiddenInput())
+    from_date = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
+    to_date = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
+    is_selected = ZeroOneCheckboxField(required=False, is_str=False)
+
+
 class MultiRelRecrefForm(forms.Form):
     template_name = 'core/component/multi_rel_recref_form.html'
+    no_date = True
 
     name = forms.CharField(required=False)
     target_id = forms.CharField(required=False, widget=forms.HiddenInput())
     relationship_types = RelationField(UndefinedRelationChoices)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        def _get_initial_recref(_rel_type):
+            for _recref in self.initial.get('recref_list', []):
+                if _recref.relationship_type == _rel_type:
+                    return _recref
+            return None
+
+        self.recref_forms = []
+        for rel_type, rel_type_label in self.base_fields['relationship_types'].choices_class.choices:
+            initial = {}
+            if initial_recref := _get_initial_recref(rel_type):
+                initial_recref: Recref
+                initial = {
+                    'recref_id': initial_recref.recref_id,
+                    'from_date': initial_recref.from_date,
+                    'to_date': initial_recref.to_date,
+                    'is_selected': 1,
+                }
+            recref_form = SubRecrefForm(initial=initial)
+            recref_form.rel_type = rel_type
+            recref_form.rel_type_label = rel_type_label
+            self.recref_forms.append(recref_form)
+
+        # register subform's fields for this form
+        for recref_form in self.recref_forms:
+            for new_field_name, field_name in self._yield_subform_field_names(recref_form.rel_type):
+                self.fields[new_field_name] = recref_form.base_fields[field_name]
+                if field_name in recref_form.initial:
+                    self.initial[new_field_name] = recref_form.initial[field_name]
+
+    def clean(self):
+        super().clean()
+        recref_list = []
+        for recref_form in self.recref_forms:
+            recref_data = {field_name: self.cleaned_data.get(new_field_name) for new_field_name, field_name in
+                           self._yield_subform_field_names(recref_form.rel_type)}
+            recref_data['rel_type'] = recref_form.rel_type
+            recref_list.append(recref_data)
+
+        self.cleaned_data['recref_list'] = recref_list
+        return self.cleaned_data
+
+    def _yield_subform_field_names(self, rel_type):
+        for field_name in ['recref_id', 'from_date', 'to_date', 'is_selected', ]:
+            yield f'{rel_type}_{field_name}', field_name
+
+    def get_recref_forms(self):
+        for recref_form in self.recref_forms:
+            fake_form = {field_name: self[new_field_name]
+                         for new_field_name, field_name in self._yield_subform_field_names(recref_form.rel_type)}
+            fake_form['rel_type_label'] = recref_form.rel_type_label
+            yield fake_form
 
     @classmethod
     def create_recref_adapter(cls, *args, **kwargs) -> RecrefFormAdapter:
@@ -305,23 +370,46 @@ class MultiRelRecrefForm(forms.Form):
 
         recref_adapter = self.create_recref_adapter(host_model)
         data: dict = self.cleaned_data
-        selected_rel_types = set(data['relationship_types'])
-
-        org_maps: list[Recref] = list(self.find_recref_list_by_target_id(host_model, data['target_id']))
+        recref_list = data['recref_list']
+        target_model = recref_adapter.find_target_instance(data['target_id'])
 
         # delete unchecked relation
-        _maps = (m for m in org_maps if m.relationship_type not in selected_rel_types)
-        for m in _maps:
-            log.info(f'delete [{m.relationship_type}][{m}]')
-            m.delete()
+        del_recref_list = (recref for recref in recref_list
+                           if recref.get('recref_id') and not recref.get('is_selected'))
+        for recref_data in del_recref_list:
+            db_recref = recref_adapter.recref_class().objects.filter(recref_id=recref_data['recref_id']).first()
+            if db_recref:
+                log.info(f'delete [{db_recref.relationship_type}][{db_recref}]')
+                db_recref.delete()
+            else:
+                log.info(f'skip delete recref not found [{recref_data["rel_type"]}][{recref_data["recref_id"]}]')
 
         # add checked relation
-        new_types = selected_rel_types - {m.relationship_type for m in org_maps}
-        target_model = recref_adapter.find_target_instance(data['target_id'])
-        for new_type in new_types:
-            recref = recref_adapter.upsert_recref(new_type, host_model, target_model, username=username)
+        new_recref_list = (recref for recref in recref_list
+                           if not recref.get('recref_id') and recref.get('is_selected'))
+        for recref_data in new_recref_list:
+            recref = recref_adapter.upsert_recref(recref_data['rel_type'], host_model, target_model, username=username)
+            recref = recref_utils.fill_common_recref_field(recref, recref_data, username)
             recref.save()
             log.info(f'add new [{target_model}][{recref}]')
+
+        # update date from to
+        if self.no_date:
+            update_recref_list = []
+        else:
+            update_recref_list = (recref for recref in recref_list
+                                  if recref.get('recref_id') and recref.get('is_selected'))
+        for recref_data in update_recref_list:
+            db_recref = recref_adapter.recref_class().objects.filter(recref_id=recref_data['recref_id']).first()
+            if db_recref:
+                if (db_recref.from_date != recref_data['from_date'] or
+                        db_recref.to_date != recref_data['to_date']):
+                    log.info(f'update [{db_recref.relationship_type}][{db_recref}]')
+                    db_recref.from_date = recref_data['from_date']
+                    db_recref.to_date = recref_data['to_date']
+                    db_recref.save()
+            else:
+                log.info(f'skip update recref not found [{recref_data["rel_type"]}][{recref_data["recref_id"]}]')
 
     @classmethod
     def create_formset_by_records(cls, post_data,
@@ -336,7 +424,7 @@ class MultiRelRecrefForm(forms.Form):
                     recref_adapter.get_target_id(recref_list[0])
                 ),
                 'target_id': person_id,
-                'relationship_types': {m.relationship_type for m in recref_list},
+                'recref_list': recref_list,
             })
 
         formset = view_utils.create_formset(

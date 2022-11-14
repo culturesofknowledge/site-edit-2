@@ -70,3 +70,10 @@ def create_recref_if_field_exist(form: BaseForm, parent, username,
     recref.save()
     log.info(f'add new [{target}][{recref}]')
     return recref
+
+
+def fill_common_recref_field(recref: Recref, cleaned_data: dict, username):
+    recref.to_date = cleaned_data.get('to_date')
+    recref.from_date = cleaned_data.get('from_date')
+    recref.update_current_user_timestamp(username)
+    return recref
