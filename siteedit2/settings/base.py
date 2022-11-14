@@ -127,6 +127,12 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+debug_log_setting = {
+    'level': 'DEBUG',
+    'handlers': ['console'],
+    'propagate': True,
+}
+
 # Logging
 LOGGING = {
     'version': 1,
@@ -155,17 +161,9 @@ LOGGING = {
         }
     },
     'loggers': {
-        'location': {
-            'level': 'DEBUG',
-            'handlers': ['console'],
-            'propagate': True,
-        },
-        'uploader': {
-            'level': 'DEBUG',
-            'handlers': ['console'],
-            'propagate': True,
-        }
-    }
+        'uploader': debug_log_setting,
+    },
+    'root': debug_log_setting,
 }
 
 # Internationalization

@@ -1,0 +1,172 @@
+{% load static %}
+
+<fieldset>
+    <legend>Basic details</legend>
+    <label>Document type:</label>
+    {{ manif_form.manifestation_type }}
+
+    {% include "core/component/recref.html" with recref_type='inst' id_field=manif_form.selected_inst_id label='Repository' %}
+
+
+    <label>ID number or shelfmark:</label>
+    {{ manif_form.id_number_or_shelfmark }}
+
+    <label>Or: </label>
+
+    {{ manif_form.printed_edition_details }}
+    <div class="ref-publication-row" textbox_id="{{ manif_form.printed_edition_details.id_for_label }}"></div>
+
+</fieldset>
+
+
+{% include "work/component/common_date_fields.html" with autodate_id='autodate_creation'  name='manifestation' date_as_marked=manif_form.manifestation_creation_date_as_marked calendar_used=manif_form.manifestation_creation_calendar is_range=manif_form.manifestation_creation_date_is_range day_field=manif_form.manifestation_creation_date_day month_field=manif_form.manifestation_creation_date_month year_field=manif_form.manifestation_creation_date_year day_field2=manif_form.manifestation_creation_date2_day month_field2=manif_form.manifestation_creation_date2_month year_field2=manif_form.manifestation_creation_date2_year normal_date=manif_form.manifestation_creation_date gregorian_date=manif_form.manifestation_creation_date_gregorian inferred=manif_form.manifestation_creation_date_inferred  uncertain=manif_form.manifestation_creation_date_uncertain  approx=manif_form.manifestation_creation_date_approx date_comment_formset=date_comment_formset %}
+
+
+<fieldset>
+    <legend>Former owners</legend>
+
+    {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_former.update_formset new_form=recref_former.new_form add_label='Add former owner:' %}
+
+</fieldset>
+
+
+<fieldset>
+    <legend>Enclosures (letters and other types of enclosure)</legend>
+    <span>
+        Note: when entering enclosure details, please treat any work/manifestation on the Cultures of Knowledge system as a letter.
+    </span>
+
+    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosure_manif.update_formset new_form=recref_enclosure_manif.new_form add_label='Add another enclosed letter:' hide_create_btn=True no_date=True %}
+
+    <span>OTHER TYPES of enclosure, e.g. money, books, samples of minerals:</span>
+    <label> Details of enclosures other than letters </label>
+    {{ manif_form.non_letter_enclosures }}
+
+    <label> Details of attached or accompanying materials </label>
+    {{ manif_form.accompaniments }}
+
+</fieldset>
+
+
+<fieldset>
+    <legend>Letters in which this one was enclosed</legend>
+
+    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosed_manif.update_formset new_form=recref_enclosed_manif.new_form add_label='Add another enclosing letter:' hide_create_btn=True no_date=True %}
+
+</fieldset>
+
+<fieldset>
+    <legend> Paper and markings:</legend>
+
+    <label>Letter opened:</label>
+    {{ manif_form.opened }}
+
+    <label>Paper size:</label>
+    {{ manif_form.paper_size }}
+    <span>(up to 500 characters)</span>
+
+
+    <label>Stored folded:</label>
+    {{ manif_form.stored_folded }}
+
+    <label>Paper type, watermark:</label>
+    {{ manif_form.paper_type_or_watermark }}
+    <span>(up to 500 characters)</span>
+
+    <label>Number of pages:</label>
+    {{ manif_form.number_of_pages_of_document }}
+    <span>(whole numbers only)</span>
+
+    <label>Seal:</label>
+    {{ manif_form.seal }}
+
+    <label>Postage marks:</label>
+    {{ manif_form.postage_marks }}
+
+    <label>Postage costs as marked:</label>
+    {{ manif_form.postage_costs_as_marked }}
+
+    <label>Postage cost(s):</label>
+    {{ manif_form.postage_costs }}
+
+    <label>Address:</label>
+    {{ manif_form.address }}
+
+    <label>Routing Mark (stamp):</label>
+    {{ manif_form.routing_mark_stamp }}
+
+    <label>Routing Mark (MS):</label>
+    {{ manif_form.routing_mark_ms }}
+
+    <label>Handling Instructions:</label>
+    {{ manif_form.handling_instructions }}
+
+    <label>Other endorsements:</label>
+    {{ manif_form.endorsements }}
+
+    <label>Reason for non-delivery:</label>
+    {{ manif_form.non_delivery_reason }}
+
+
+</fieldset>
+
+{% include "work/component/common_date_fields.html" with autodate_id='autodate_receipt' name='receipt' date_as_marked=manif_form.date_of_receipt_as_marked calendar_used=manif_form.manifestation_receipt_calendar is_range=manif_form.manifestation_receipt_date_is_range day_field=manif_form.manifestation_receipt_date_day month_field=manif_form.manifestation_receipt_date_month year_field=manif_form.manifestation_receipt_date_year day_field2=manif_form.manifestation_receipt_date2_day month_field2=manif_form.manifestation_receipt_date2_month year_field2=manif_form.manifestation_receipt_date2_year normal_date=manif_form.manifestation_receipt_date gregorian_date=manif_form.manifestation_receipt_date_gregorian inferred=manif_form.manifestation_receipt_date_inferred  uncertain=manif_form.manifestation_receipt_date_uncertain  approx=manif_form.manifestation_receipt_date_approx date_comment_formset=receipt_date_comment_formset %}
+
+
+<fieldset>
+    <legend>Language of manifestation:</legend>
+    {{ manif_form.manifestation_is_translation }}
+    <label for="{{ manif_form.manifestation_is_translation.id_for_label }}"> Manifestation is translation </label>
+    <small>
+        (It is not necessary to enter language, incipit and explicit of manifestation if they are the same as those of
+        the original work.)
+        <br/>
+    </small>
+    {% include "core/component/lang_section.html" with lang_formset=edit_lang_formset new_lang_form=new_lang_form %}
+
+</fieldset>
+
+<fieldset>
+    <legend>Incipit and explicit:</legend>
+
+    <label>Manifestation incipit</label>
+    {{ manif_form.manifestation_incipit }}
+
+    <label>Manifestation explicit</label>
+    {{ manif_form.manifestation_excipit }}
+
+</fieldset>
+
+{% include "core/component/comment_publication_formset.html" with comment_formset=manif_comment_formset comment_title='Notes on manifestation' %}
+
+
+<fieldset>
+    <legend>Scribe/hand</legend>
+
+    <div class="multi_rel_recref_container">
+        {{ scribe_recref_formset.management_form }}
+        {% for form in scribe_recref_formset %}
+            {{ form }}
+        {% endfor %}
+    </div>
+    {% include "core/component/recref.html" with recref_type='person' id_field=manif_form.selected_scribe_id label='Add scribe:' %}
+
+</fieldset>
+<fieldset>
+    <legend>Images</legend>
+    {% include "core/component/image_formset.html" with img_handler=img_handler %}
+
+</fieldset>
+
+
+<script src="{% static 'core/js/auto_date_calendar.js' %}" defer></script>
+<script src="{% static 'core/js/lang_service.js' %}" defer></script>
+<script>
+    $(function () {
+        setup_add_lang();
+        setup_url_checker();
+
+        setup_autodate_div('#autodate_creation');
+        setup_autodate_div('#autodate_receipt');
+    })
+</script>

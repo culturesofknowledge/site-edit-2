@@ -4,7 +4,11 @@
     <div class="margin-bottom recref_main" recref_type="{{ recref_type }}">
         <label>{{ label }}</label>
         <div>
-            <input id="{{ fid }}_name" type="text" class="recref_text" readonly/>
+            <input id="{{ fid }}_name" type="text" class="recref_text" readonly
+                    {% if id_field.recref_name %}
+                   value="{{ id_field.recref_name }}"
+                    {% endif %}
+            />
             <input id="{{ fid }}" type="hidden" class="recref_id"
                    name="{{ id_field.html_name }}"
                     {% if id_field.value %}
@@ -14,7 +18,9 @@
             <div class="button-row">
                 <button id="{{ fid }}_clean_btn" class="recref_clean">Clean</button>
                 <button id="{{ fid }}_select_btn" class="recref_select">Select</button>
+                {% if not hide_create_btn %}
                 <button id="{{ fid }}_create_btn" class="recref_create">Create</button>
+                {% endif %}
             </div>
         </div>
     </div>

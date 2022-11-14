@@ -1,0 +1,73 @@
+{% extends "work/basic_form.html" %}
+{% load static %}
+
+{% block tabcontent %}
+    <h1>Work - Manifestation</h1>
+    <div>
+        <span>Add new manifestation:</span>
+        <a class="btn" href="{% url 'work:manif_init' iwork_id %}">
+            New
+        </a>
+    </div>
+    Existing manifestation  <!-- KTODO -->
+
+    <table>
+        <thead>
+        <tr>
+            <td>Edit</td>
+            <td>Del</td>
+            <td>Repository</td>
+            <td>ID / shelfmark / printed edition</td>
+            <td>Document type</td>
+            <td>Image</td>
+            <td>Further details</td>
+        </tr>
+        </thead>
+
+        <tbody>
+        {% for manif in manif_set %}
+            <tr>
+                <td>
+
+                    {% if manif_id == manif.manifestation_id %}
+                        <strong>Editing --> </strong>
+                    {% else %}
+                        <a class="btn" href="{% url 'work:manif_update' iwork_id manif.manifestation_id %}">
+                            Edit
+                        </a>
+                    {% endif %}
+                </td>
+                <td>
+                    <input id="del_manif_{{ manif.manifestation_id }}" name="del_manif_id_list" type="checkbox" value="{{ manif.manifestation_id }}" />
+                    <label for="del_manif_{{ manif.manifestation_id }}"></label>
+                </td>
+                <td>
+                    {{ manif.inst_display_name }}
+                </td>
+                <td> {{ manif.id_number_or_shelfmark }} </td>
+                <td> {{ manif.manifestation_type }} </td>
+                <td> <!-- KTODO Image --> </td>
+                <td>
+                    {% if manif.lang_list_str %}
+                        <span>Language of this manifestation: </span>
+                        {{ manif.lang_list_str }}
+                    {% endif %}
+                    {% if manif.manifestation_is_translation  %}
+                        <span>Manifestation is translation.</span>
+                    {% endif %}
+                </td>
+            </tr>
+
+        {% endfor %}
+
+        </tbody>
+
+    </table>
+
+
+
+    <div id="form-content">
+        {% include "work/component/manif_form.html" %}
+    </div>
+
+{% endblock %}

@@ -1,65 +1,159 @@
+import functools
 from datetime import datetime
+from typing import Iterable
 
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_COMMENT_DATE, \
+    REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
+from core.models import Recref
 from uploader.models import CofkCollectUpload, CofkCollectStatus
+
+SEQ_NAME_COFKUNIONWORK__IWORK_ID = 'cofk_union_person_iwork_id_seq'
 
 
 class CofkUnionWork(models.Model, RecordTracker):
     work_id = models.CharField(primary_key=True, max_length=100)
     description = models.TextField(blank=True, null=True)
     date_of_work_as_marked = models.CharField(max_length=250, blank=True, null=True)
-    original_calendar = models.CharField(max_length=2)
-    date_of_work_std = models.CharField(max_length=12, blank=True, null=True)
-    date_of_work_std_gregorian = models.CharField(max_length=12, blank=True, null=True)
+    original_calendar = models.CharField(max_length=2, default='')
+    date_of_work_std = models.CharField(max_length=12, blank=True, null=True, default='9999-12-31')
+    date_of_work_std_gregorian = models.CharField(max_length=12, blank=True, null=True, default='9999-12-31')
     date_of_work_std_year = models.IntegerField(blank=True, null=True)
     date_of_work_std_month = models.IntegerField(blank=True, null=True)
     date_of_work_std_day = models.IntegerField(blank=True, null=True)
     date_of_work2_std_year = models.IntegerField(blank=True, null=True)
     date_of_work2_std_month = models.IntegerField(blank=True, null=True)
     date_of_work2_std_day = models.IntegerField(blank=True, null=True)
-    date_of_work_std_is_range = models.SmallIntegerField()
-    date_of_work_inferred = models.SmallIntegerField()
-    date_of_work_uncertain = models.SmallIntegerField()
-    date_of_work_approx = models.SmallIntegerField()
+    date_of_work_std_is_range = models.SmallIntegerField(default=0)
+    date_of_work_inferred = models.SmallIntegerField(default=0)
+    date_of_work_uncertain = models.SmallIntegerField(default=0)
+    date_of_work_approx = models.SmallIntegerField(default=0)
     authors_as_marked = models.TextField(blank=True, null=True)
     addressees_as_marked = models.TextField(blank=True, null=True)
-    authors_inferred = models.SmallIntegerField()
-    authors_uncertain = models.SmallIntegerField()
-    addressees_inferred = models.SmallIntegerField()
-    addressees_uncertain = models.SmallIntegerField()
+    authors_inferred = models.SmallIntegerField(default=0)
+    authors_uncertain = models.SmallIntegerField(default=0)
+    addressees_inferred = models.SmallIntegerField(default=0)
+    addressees_uncertain = models.SmallIntegerField(default=0)
     destination_as_marked = models.TextField(blank=True, null=True)
     origin_as_marked = models.TextField(blank=True, null=True)
-    destination_inferred = models.SmallIntegerField()
-    destination_uncertain = models.SmallIntegerField()
-    origin_inferred = models.SmallIntegerField()
-    origin_uncertain = models.SmallIntegerField()
+    destination_inferred = models.SmallIntegerField(default=0)
+    destination_uncertain = models.SmallIntegerField(default=0)
+    origin_inferred = models.SmallIntegerField(default=0)
+    origin_uncertain = models.SmallIntegerField(default=0)
     abstract = models.TextField(blank=True, null=True)
     keywords = models.TextField(blank=True, null=True)
     language_of_work = models.CharField(max_length=255, blank=True, null=True)
-    work_is_translation = models.SmallIntegerField()
+    work_is_translation = models.SmallIntegerField(default=0)
     incipit = models.TextField(blank=True, null=True)
     explicit = models.TextField(blank=True, null=True)
     ps = models.TextField(blank=True, null=True)
     original_catalogue = models.ForeignKey("uploader.CofkLookupCatalogue", models.DO_NOTHING,
-                                           db_column='original_catalogue', blank=True, null=True)
+                                           db_column='original_catalogue', blank=True, null=True,
+                                           default='')
     accession_code = models.CharField(max_length=1000, blank=True, null=True)
-    work_to_be_deleted = models.SmallIntegerField()
-    iwork_id = models.IntegerField()
+    work_to_be_deleted = models.SmallIntegerField(default=0)
+    iwork_id = models.IntegerField(
+        default=functools.partial(model_utils.next_seq_safe, SEQ_NAME_COFKUNIONWORK__IWORK_ID),
+        unique=True,
+    )
     editors_notes = models.TextField(blank=True, null=True)
-    edit_status = models.CharField(max_length=3)
-    relevant_to_cofk = models.CharField(max_length=3)
+    edit_status = models.CharField(max_length=3, default='')
+    relevant_to_cofk = models.CharField(max_length=3, default='Y')
     creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
     change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     change_user = models.CharField(max_length=50)
-    uuid = models.UUIDField(blank=True, null=True)
+    uuid = models.UUIDField(blank=True, null=True, default=model_utils.default_uuid)
 
     class Meta:
         db_table = 'cofk_union_work'
+
+    def find_comments_by_rel_type(self, rel_type) -> Iterable['CofkUnionComment']:
+        return (r.comment for r in self.cofkworkcomment_set.filter(relationship_type=rel_type))
+
+    @property
+    def author_comments(self) -> Iterable['CofkUnionComment']:
+        return self.find_comments_by_rel_type(REL_TYPE_COMMENT_AUTHOR)
+
+    @property
+    def addressee_comments(self) -> Iterable['CofkUnionComment']:
+        return self.find_comments_by_rel_type(REL_TYPE_COMMENT_ADDRESSEE)
+
+    @property
+    def date_comments(self) -> Iterable['CofkUnionComment']:
+        return self.find_comments_by_rel_type(REL_TYPE_COMMENT_DATE)
+
+    def find_location_by_rel_type(self, rel_type) -> 'CofkWorkLocationMap':
+        return self.cofkworklocationmap_set.filter(relationship_type=rel_type).first()
+
+    @property
+    def origin_location(self) -> 'CofkWorkLocationMap':
+        return self.find_location_by_rel_type(REL_TYPE_WAS_SENT_FROM)
+
+    @property
+    def destination_location(self) -> 'CofkWorkLocationMap':
+        return self.find_location_by_rel_type(REL_TYPE_WAS_SENT_TO)
+
+
+class CofkWorkCommentMap(Recref):
+    work = models.ForeignKey(CofkUnionWork, on_delete=models.CASCADE)
+    comment = models.ForeignKey('core.CofkUnionComment', on_delete=models.CASCADE)
+
+    class Meta(Recref.Meta):
+        db_table = 'cofk_work_comment_map'
+
+
+class CofkWorkResourceMap(Recref):
+    work = models.ForeignKey(CofkUnionWork, on_delete=models.CASCADE)
+    resource = models.ForeignKey('core.CofkUnionResource', on_delete=models.CASCADE)
+
+    class Meta(Recref.Meta):
+        db_table = 'cofk_work_resource_map'
+
+
+class CofkWorkWorkMap(Recref):
+    work_from = models.ForeignKey(CofkUnionWork, on_delete=models.CASCADE,
+                                  related_name='work_from_set', )
+    work_to = models.ForeignKey(CofkUnionWork, on_delete=models.CASCADE,
+                                related_name='work_to_set', )
+
+    class Meta(Recref.Meta):
+        db_table = 'cofk_work_work_map'
+
+
+class CofkWorkSubjectMap(Recref):
+    work = models.ForeignKey(CofkUnionWork, on_delete=models.CASCADE)
+    subject = models.ForeignKey("uploader.CofkUnionSubject", on_delete=models.CASCADE)
+
+    class Meta(Recref.Meta):
+        db_table = 'cofk_work_subject_map'
+
+
+class CofkWorkPersonMap(Recref):
+    """
+    possible relationship_type [signed, created, sent]
+    """
+    work = models.ForeignKey(CofkUnionWork,
+                             on_delete=models.CASCADE)
+    person = models.ForeignKey("person.CofkUnionPerson",
+                               on_delete=models.CASCADE)
+
+    class Meta(Recref.Meta):
+        db_table = 'cofk_work_person_map'
+
+
+class CofkWorkLocationMap(Recref):
+    work = models.ForeignKey(CofkUnionWork,
+                             on_delete=models.CASCADE)
+    location = models.ForeignKey("location.CofkUnionLocation",
+                                 on_delete=models.CASCADE)
+
+    class Meta(Recref.Meta):
+        db_table = 'cofk_work_location_map'
 
 
 class CofkCollectWork(models.Model):
@@ -95,7 +189,7 @@ class CofkCollectWork(models.Model):
     destination_inferred = models.SmallIntegerField()
     destination_uncertain = models.SmallIntegerField()
     # origin_id = models.IntegerField(blank=True, null=True)
-    origin = models.ForeignKey('CofkCollectOriginOfWork', models.CASCADE, blank=True,  null=True)
+    origin = models.ForeignKey('CofkCollectOriginOfWork', models.CASCADE, blank=True, null=True)
     origin_as_marked = models.TextField(blank=True, null=True)
     origin_inferred = models.SmallIntegerField()
     origin_uncertain = models.SmallIntegerField()
@@ -173,9 +267,9 @@ class CofkCollectWork(models.Model):
             self.clean_date(self.date_of_work2_std_day, 'date_of_work2_std_day', self.date_of_work2_std_month)
 
             first_date = datetime(self.date_of_work_std_year,
-                                           self.date_of_work_std_month, self.date_of_work_std_day)
+                                  self.date_of_work_std_month, self.date_of_work_std_day)
             second_date = datetime(self.date_of_work2_std_year,
-                                            self.date_of_work2_std_month, self.date_of_work2_std_day)
+                                   self.date_of_work2_std_month, self.date_of_work2_std_day)
             if first_date >= second_date:
                 self.add_error('%(field1)s-%(field2)s: The start date in a date range can not be after the end date',
                                {'field1': 'date_of_work', 'field2': 'date_of_work2'})
@@ -229,7 +323,7 @@ class CofkCollectWork(models.Model):
     @property
     def date_of_work_std(self):
         try:
-            return datetime(self.date_of_work_std_year, self.date_of_work_std_month, self.date_of_work_std_day)\
+            return datetime(self.date_of_work_std_year, self.date_of_work_std_month, self.date_of_work_std_day) \
                 .strftime("%d %b %Y")
         except Exception:
             pass
@@ -237,7 +331,7 @@ class CofkCollectWork(models.Model):
     @property
     def date_of_work2_std(self):
         try:
-            return datetime(self.date_of_work2_std_year, self.date_of_work2_std_month, self.date_of_work2_std_day)\
+            return datetime(self.date_of_work2_std_year, self.date_of_work2_std_month, self.date_of_work2_std_day) \
                 .strftime("%d %b %Y")
         except Exception:
             pass
@@ -256,7 +350,7 @@ class CofkCollectWork(models.Model):
         if self.original_calendar == 'G':
             return 'Gregorian'
         elif self.original_calendar == 'J':
-            return 'Julian' # This will switch to "JJ" after accepted, see review.php
+            return 'Julian'  # This will switch to "JJ" after accepted, see review.php
         elif self.original_calendar == 'JJ':
             return 'Julian (January year start)'
         elif self.original_calendar == 'JM':
@@ -291,7 +385,7 @@ class CofkCollectWork(models.Model):
             issues.append('uncertain')
 
         return ', '.join(issues)
-    
+
     @property
     def display_destination_issues(self):
         issues = []
@@ -488,8 +582,12 @@ class CofkCollectWorkResource(models.Model):
 
 
 class CofkUnionLanguageOfWork(models.Model):
-    work = models.OneToOneField('CofkUnionWork', models.DO_NOTHING, primary_key=True)
-    language_code = models.ForeignKey('uploader.Iso639LanguageCode', models.DO_NOTHING, db_column='language_code')
+    lang_work_id = models.AutoField(primary_key=True)
+    work = models.ForeignKey(CofkUnionWork, models.DO_NOTHING, related_name='language_set')
+    language_code = models.ForeignKey('uploader.Iso639LanguageCode', models.DO_NOTHING,
+                                      db_column='language_code',
+                                      to_field='code_639_3',
+                                      )
     notes = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:

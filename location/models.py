@@ -4,6 +4,7 @@ from core.helper import model_utils
 # KTODO Researchers' notes for front-end display
 # KTODO Related resources
 from core.helper.model_utils import RecordTracker
+from core.models import Recref
 
 
 class CofkCollectLocation(models.Model):
@@ -80,3 +81,19 @@ class CofkCollectLocationResource(models.Model):
     class Meta:
         db_table = 'cofk_collect_location_resource'
         unique_together = (('upload', 'resource_id'),)
+
+
+class CofkLocationCommentMap(Recref):
+    location = models.ForeignKey(CofkUnionLocation, on_delete=models.CASCADE)
+    comment = models.ForeignKey('core.CofkUnionComment', on_delete=models.CASCADE)
+
+    class Meta(Recref.Meta):
+        db_table = 'cofk_location_comment_map'
+
+
+class CofkLocationResourceMap(Recref):
+    location = models.ForeignKey(CofkUnionLocation, on_delete=models.CASCADE)
+    resource = models.ForeignKey('core.CofkUnionResource', on_delete=models.CASCADE)
+
+    class Meta(Recref.Meta):
+        db_table = 'cofk_location_resource_map'

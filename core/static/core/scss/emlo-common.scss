@@ -179,3 +179,19 @@ tr.selectable_entry:hover {
     @extend .col--2of5;
   }
 }
+
+
+.multi_rel_recref_container {
+  display: grid;
+  grid-template-columns: 65% 35%;
+  grid-row-gap: 8px;
+  width: 70%;
+
+  & > .grid-item {
+    background-color: #f2f2f2;
+  }
+}
+
+.autodate-div .from-div {
+  margin-right: 20px;
+}

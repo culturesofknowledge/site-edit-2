@@ -128,8 +128,8 @@ class CofkUnionPerson(models.Model, RecordTracker):
                                        through='person.CofkPersonLocationMap',
                                        through_fields=('person', 'location'))
 
-    comments = models.ManyToManyField('core.CofkUnionComment')
-    resources = models.ManyToManyField('core.CofkUnionResource')
+    comments = models.ManyToManyField('core.CofkUnionComment')  # TOBEREMOVE
+    resources = models.ManyToManyField('core.CofkUnionResource')  # TOBEREMOVE
     images = models.ManyToManyField('uploader.CofkUnionImage')
 
     class Meta:
@@ -151,10 +151,28 @@ class CofkPersonPersonMap(Recref):
     related = models.ForeignKey(CofkUnionPerson,
                                 related_name='passive_relationships',
                                 on_delete=models.CASCADE)
+
+    # TOBEREMOVE should use relationship_type instance
     person_type = models.CharField(null=False, default='other', max_length=100)
 
     class Meta(Recref.Meta):
         db_table = 'cofk_person_person_map'
+
+
+class CofkPersonCommentMap(Recref):
+    person = models.ForeignKey(CofkUnionPerson, on_delete=models.CASCADE)
+    comment = models.ForeignKey('core.CofkUnionComment', on_delete=models.CASCADE)
+
+    class Meta(Recref.Meta):
+        db_table = 'cofk_person_comment_map'
+
+
+class CofkPersonResourceMap(Recref):
+    person = models.ForeignKey(CofkUnionPerson, on_delete=models.CASCADE)
+    resource = models.ForeignKey('core.CofkUnionResource', on_delete=models.CASCADE)
+
+    class Meta(Recref.Meta):
+        db_table = 'cofk_person_resource_map'
 
 
 class CofkCollectOccupationOfPerson(models.Model):
@@ -194,3 +212,7 @@ class CofkUnionPersonSummary(models.Model):
 
     class Meta:
         db_table = 'cofk_union_person_summary'
+
+
+def create_person_id(iperson_id) -> str:
+    return f'cofk_union_person-iperson_id:{iperson_id}'

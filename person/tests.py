@@ -11,8 +11,7 @@ from siteedit2.utils.test_utils import EmloSeleniumTestCase, simple_test_create_
 class PersonInitFormTest(EmloSeleniumTestCase):
 
     def create_full_form_url(self, iperson_id):
-        return self.get_url_by_viewname(
-            'person:full_form', kwargs={'iperson_id': iperson_id})
+        return self.get_url_by_viewname('person:full_form', iperson_id=iperson_id)
 
     def test_create_person(self):
         self.selenium.get(self.get_url_by_viewname('person:init_form'))
@@ -43,8 +42,8 @@ class PersonInitFormTest(EmloSeleniumTestCase):
         pson_a.save()
 
         m2m_tester = MultiM2MTester(m2m_tester_list=[
-            ResourceM2MTester(self, pson_a.resources, formset_prefix='res'),
-            CommentM2MTester(self, pson_a.comments, formset_prefix='comment'),
+            ResourceM2MTester(self, pson_a.cofkpersonresourcemap_set, formset_prefix='res'),
+            CommentM2MTester(self, pson_a.cofkpersoncommentmap_set, formset_prefix='comment'),
         ])
 
         url = self.create_full_form_url(pson_a.iperson_id)

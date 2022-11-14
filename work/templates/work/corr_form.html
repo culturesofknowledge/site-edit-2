@@ -1,0 +1,69 @@
+{% extends "work/basic_form.html" %}
+{% block tabcontent %}
+    <h1>Work - Correspondents</h1>
+    <fieldset>
+        <legend>Authors / senders</legend>
+
+        <div class="multi_rel_recref_container">
+            {{ author_formset.management_form }}
+            {% for form in author_formset %}
+                {{ form }}
+            {% endfor %}
+        </div>
+
+        {% include "core/component/recref.html" with recref_type='person' id_field=corr_form.selected_author_id label='Add another authro/sender:' %}
+
+        <label> Authors/sender as marked: </label>
+        {{ corr_form.authors_as_marked }}
+
+        <label> Issues with authors/senders: </label>
+
+        {% include "core/component/common_checkbox.html" with field=corr_form.authors_inferred name='Authors / senders inferred' %}
+
+        {% include "core/component/common_checkbox.html" with field=corr_form.authors_uncertain  name='Authors / senders uncertain' %}
+
+        {% include "core/component/comment_publication_formset.html" with comment_formset=author_comment_formset comment_title='Notes on authors/senders' %}
+    </fieldset>
+
+
+    <fieldset>
+        <legend>Addressees</legend>
+
+        <div class="multi_rel_recref_container">
+            {{ addressee_formset.management_form }}
+            {% for form in addressee_formset %}
+                {{ form }}
+            {% endfor %}
+        </div>
+
+        {% include "core/component/recref.html" with recref_type='person' id_field=corr_form.selected_addressee_id label='Add another addressee:' %}
+
+        <label> Addressees as marked: </label>
+        {{ corr_form.addressees_as_marked }}
+
+        <label> Issues with addressees: </label>
+
+        {% include "core/component/common_checkbox.html" with field=corr_form.addressees_inferred name='Addressees inferred' %}
+
+        {% include "core/component/common_checkbox.html" with field=corr_form.addressees_uncertain  name='Addressees uncertain' %}
+
+        {% include "core/component/comment_publication_formset.html" with comment_formset=addressee_comment_formset comment_title='Notes on addressees' %}
+
+    </fieldset>
+
+    <fieldset>
+        <legend>Earlier letters:</legend>
+        {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_earlier_letter.update_formset new_form=recref_earlier_letter.new_form add_label='Add letter answered by this one:' no_date=True %}
+    </fieldset>
+
+    <fieldset>
+        <legend>Later letter</legend>
+        {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_later_letter.update_formset new_form=recref_later_letter.new_form add_label='Add reply to this:' no_date=True %}
+    </fieldset>
+
+    <fieldset>
+        <legend>Matching letter</legend>
+        {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_matching_letter.update_formset new_form=recref_matching_letter.new_form add_label='Add another match:' no_date=True %}
+    </fieldset>
+
+{% endblock %}

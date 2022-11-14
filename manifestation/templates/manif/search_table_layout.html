@@ -1,0 +1,55 @@
+<table>
+    <colgroup>
+        <col style="min-width: 100px">
+        <col style="min-width: 200px"> <!-- name -->
+        <col>
+        <col>
+        <col>
+        <col>
+        <col>
+        <col>
+        <col>
+        <col>
+        <col>
+        <col>
+        <col>
+        <col>
+        <col>
+    </colgroup>
+    <thead>
+    <tr></tr>
+    <tr>
+        <!-- KTODO add more fields -->
+        <th>ID</th>
+        <th>Manifestation Type</th>
+        <th>id_number_or_shelfmark</th>
+        <th>printed_edition_details</th>
+    </tr>
+    </thead>
+    <tbody>
+
+    {% for r in search_results %}
+        <tr class="selectable_entry" entry_id="{{ r.manifestation_id }}">
+            <td>
+                <a href="{% url 'work:manif_update' r.work.iwork_id r.manifestation_id %}">
+                    {{ r.manifestation_id }}
+                </a>
+            </td>
+
+            <td>
+                {{ r.manifestation_type }}
+            </td>
+
+            <td>
+                {{ r.id_number_or_shelfmark }}
+            </td>
+
+            <td>
+                {{ r.printed_edition_details }}
+            </td>
+
+        </tr>
+    {% endfor %}
+    </tbody>
+
+</table>

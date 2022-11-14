@@ -1,0 +1,13 @@
+{% extends "work/basic_form.html" %}
+{% block tabcontent %}
+    <h1>Work - Places</h1>
+    {% include "work/component/place_fieldset.html" with name='origin' marked=places_form.origin_as_marked selected_id=places_form.selected_origin_location_id inferred=places_form.origin_inferred uncertain=places_form.origin_uncertain comment_formset=origin_comment_formset %}
+    {% include "work/component/place_fieldset.html" with name='destination' marked=places_form.destination_as_marked selected_id=places_form.selected_destination_location_id inferred=places_form.destination_inferred uncertain=places_form.destination_uncertain comment_formset=destination_comment_formset %}
+
+    <fieldset>
+        <legend>Route</legend>
+        {% include "core/component/comment_publication_formset.html" with comment_formset=route_comment_formset comment_title='Route from origin to destination' %}
+    </fieldset>
+
+
+{% endblock %}
