@@ -941,8 +941,8 @@ def save_multi_rel_recref_formset(multi_rel_recref_formset, work, request):
 class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
-    def title(self) -> str:
-        return 'Work'
+    def entity(self) -> str:
+        return 'work,works'
 
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:

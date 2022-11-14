@@ -107,6 +107,12 @@ class BasicSearchView(ListView):
         raise NotImplementedError()
 
     @property
+    def entity(self) -> str:
+        """
+        return str containing singular and plural for entity separated by a comma
+        """
+        raise NotImplementedError()
+
     def expanded_query_fieldset_list(self) -> Iterable:
         """
         return iterable form for expanded view that can render search fieldset for searching
@@ -189,7 +195,8 @@ class BasicSearchView(ListView):
                         'search_components': search_components_factory(default_search_components_dict |
                                                                        self.request_data.dict()),
                         'total_record': self.get_queryset().count(),
-                        'title': self.title or '',
+                        'entity': self.entity or '',
+                        'title': self.entity.split(',')[1].title() if self.entity else 'Title',
                         'results_renderer': results_renderer(context[self.context_object_name]),
                         'is_compact_layout': is_compact_layout,
                         'to_user_messages': getattr(self, 'to_user_messages', []),
@@ -265,8 +272,8 @@ class DefaultSearchView(BasicSearchView):
         return []
 
     @property
-    def title(self) -> str:
-        return '__TITLE__'
+    def entity(self) -> str:
+        return '__ENTITIES__,__ENTITY__'
 
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:

@@ -99,13 +99,11 @@
                 {% endblock %}
 
 
-                <div class="flex-col sticky-bottom">
-                    <input type="submit" value="Submit">
-                </div>
+                {% include "core/component/actionbox.html" %}
 
             </form>
             <div class="flex-col fixed-right-bottom">
-                <h4>Table of content</h4>
+                <h4>Table of contents</h4>
                 <a href="#header_person">Notes</a>
                 <a href="#header_synonyms">Synonyms</a>
                 <a href="#header_roles">Roles</a>

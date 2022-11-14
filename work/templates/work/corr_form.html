@@ -11,7 +11,7 @@
             {% endfor %}
         </div>
 
-        {% include "core/component/recref.html" with recref_type='person' id_field=corr_form.selected_author_id label='Add another authro/sender:' %}
+        {% include "core/component/recref.html" with recref_type='person' id_field=corr_form.selected_author_id label='Add another author/sender:' %}
 
         <label> Authors/sender as marked: </label>
         {{ corr_form.authors_as_marked }}
