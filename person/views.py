@@ -9,14 +9,19 @@ from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual, Exact
 from django.forms import BaseForm
 from django.shortcuts import render, redirect, get_object_or_404
 
-from core.forms import CommentForm, ResourceForm
-from core.helper import renderer_utils, view_utils, model_utils, query_utils, download_csv_utils
+from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_IS_RELATED_TO
+from core.forms import CommentForm, ResourceForm, LocRecrefForm, PersonRecrefForm
+from core.helper import renderer_utils, view_utils, query_utils, download_csv_utils, recref_utils
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
-from core.helper.view_utils import CommonInitFormViewTemplate, ImageHandler, BasicSearchView
+from core.helper.view_utils import CommonInitFormViewTemplate, ImageHandler, BasicSearchView, FullFormHandler, \
+    RecrefFormsetHandler, RecrefFormAdapter, TargetCommentRecrefAdapter, TargetResourceRecrefAdapter
+from core.models import Recref
 from location.models import CofkUnionLocation
+from person import person_utils
 from person.forms import PersonForm, GeneralSearchFieldset
-from person.models import CofkUnionPerson, CofkPersonLocationMap, CofkPersonPersonMap
+from person.models import CofkUnionPerson, CofkPersonLocationMap, CofkPersonPersonMap, create_person_id, \
+    CofkPersonCommentMap, CofkPersonResourceMap
 
 log = logging.getLogger(__name__)
 
@@ -34,7 +39,8 @@ class PersonInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
         return PersonForm
 
     def on_form_changed(self, request, form) -> NoReturn:
-        form.instance.person_id = f'cofk_union_person-iperson_id:{form.instance.iperson_id}'
+        form.instance.person_id = create_person_id(form.instance.iperson_id)
+        # KTODO handle form.instance.roles
         return super().on_form_changed(request, form)
 
 
@@ -46,20 +52,11 @@ class PersonQuickInitView(PersonInitView):
 @login_required
 def return_quick_init(request, pk):
     person = CofkUnionPerson.objects.get(iperson_id=pk)
-    return view_utils.redirect_return_quick_init(
-        request, 'Person', person.foaf_name, person.iperson_id, )
-
-
-def convert_to_recref_form_dict(record_dict: dict, target_id_name: str,
-                                find_rec_name_by_id_fn: Callable[[Any], str]) -> dict:
-    target_id = record_dict.get(target_id_name, '')
-    record_dict['target_id'] = target_id
-    if (rec_name := find_rec_name_by_id_fn(target_id)) is None:
-        log.warning(f"[{target_id_name}] record not found -- [{target_id}]")
-    else:
-        record_dict['rec_name'] = rec_name
-
-    return record_dict
+    return view_utils.render_return_quick_init(
+        request, 'Person',
+        person_utils.get_recref_display_name(person),
+        person_utils.get_recref_target_id(person),
+    )
 
 
 class LocRecrefHandler(view_utils.MultiRecrefHandler):
@@ -70,17 +67,18 @@ class LocRecrefHandler(view_utils.MultiRecrefHandler):
             return loc and loc.location_name
 
         initial_list = (m.__dict__ for m in model_list)
-        initial_list = (convert_to_recref_form_dict(r, 'location_id', _find_rec_name_by_id)
+        initial_list = (recref_utils.convert_to_recref_form_dict(r, 'location_id', _find_rec_name_by_id)
                         for r in initial_list)
 
         name = name or 'loc'
-        super().__init__(request_data, name=name, initial_list=initial_list)
+        super().__init__(request_data, name=name, initial_list=initial_list,
+                         recref_form_class=LocRecrefForm)
 
     @property
     def recref_class(self) -> Type[models.Model]:
         return CofkPersonLocationMap
 
-    def create_recref_by_new_form(self, target_id, new_form, parent_instance) -> Optional[models.Model]:
+    def create_recref_by_new_form(self, target_id, parent_instance) -> Optional[models.Model]:
         ps_loc: CofkPersonLocationMap = CofkPersonLocationMap()
         ps_loc.location = CofkUnionLocation.objects.get(location_id=target_id)
         if not ps_loc.location:
@@ -89,7 +87,7 @@ class LocRecrefHandler(view_utils.MultiRecrefHandler):
             return None
 
         ps_loc.person = parent_instance
-        ps_loc.relationship_type = 'was_in_location'
+        ps_loc.relationship_type = 'was_in_location'  # KTODO support other type
         return ps_loc
 
 
@@ -101,6 +99,7 @@ class OrganisationRecrefConvertor:
 
 
 class PersonRecrefHandler(view_utils.MultiRecrefHandler):
+    # KTODO use view_utils.MultiRecrefAdapterHandler
 
     def __init__(self, request_data, person_type: str,
                  person: CofkUnionPerson,
@@ -110,20 +109,21 @@ class PersonRecrefHandler(view_utils.MultiRecrefHandler):
             return record and record.foaf_name
 
         initial_list = (m.__dict__ for m in _get_other_persons_by_type(person, person_type))
-        initial_list = (convert_to_recref_form_dict(r, 'related_id', _find_rec_name_by_id)
+        initial_list = (recref_utils.convert_to_recref_form_dict(r, 'related_id', _find_rec_name_by_id)
                         for r in initial_list)
 
         name = name or person_type
-        super().__init__(request_data, name=name, initial_list=initial_list)
+        super().__init__(request_data, name=name, initial_list=initial_list,
+                         recref_form_class=PersonRecrefForm)
         self.person_type = person_type
 
     @property
     def recref_class(self) -> Type[models.Model]:
         return CofkPersonPersonMap
 
-    def create_recref_by_new_form(self, target_id, new_form, parent_instance) -> Optional[models.Model]:
+    def create_recref_by_new_form(self, target_id, parent_instance) -> Optional[models.Model]:
         recref: CofkPersonPersonMap = CofkPersonPersonMap()
-        recref.related = CofkUnionPerson.objects.get(iperson_id=target_id)
+        recref.related = CofkUnionPerson.objects.get(pk=target_id)
         if not recref.related:
             # KTODO can we put it to validate function?
             log.warning(f"person not found -- {target_id} ")
@@ -131,7 +131,7 @@ class PersonRecrefHandler(view_utils.MultiRecrefHandler):
 
         recref.person = parent_instance
         recref.relationship_type = 'member_of'
-        recref.person_type = self.person_type
+        recref.person_type = self.person_type  # KTODO should use relationship_type instance
         return recref
 
 
@@ -141,12 +141,11 @@ def _get_other_persons_by_type(person: CofkUnionPerson, person_type: str) -> Ite
     return persons
 
 
-class PersonFullFormHandler:
-    def __init__(self, iperson_id, request):
-        self.load_data(iperson_id, request_data=request.POST, request=request)
+class PersonFullFormHandler(FullFormHandler):
 
-    def load_data(self, iperson_id, request_data=None, request=None, ):
-        self.person = get_object_or_404(CofkUnionPerson, iperson_id=iperson_id)
+    def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
+        self.person = get_object_or_404(CofkUnionPerson, iperson_id=pk)
+        # KTODO handle self.person.roles, roles_titles
         self.person_form = PersonForm(request_data or None, instance=self.person)
         self.loc_handler = LocRecrefHandler(
             request_data, model_list=self.person.cofkpersonlocationmap_set.iterator(), )
@@ -174,63 +173,47 @@ class PersonFullFormHandler:
                                                  name='person_other',
                                                  person=self.person)
 
-        self.comment_formset = view_utils.create_formset(CommentForm, post_data=request_data,
-                                                         prefix='comment',
-                                                         initial_list=model_utils.related_manager_to_dict_list(
-                                                             self.person.comments), )
-        self.res_formset = view_utils.create_formset(ResourceForm, post_data=request_data,
-                                                     prefix='res',
-                                                     initial_list=model_utils.related_manager_to_dict_list(
-                                                         self.person.resources), )
+        self.add_recref_formset_handler(PersonCommentFormsetHandler(
+            prefix='comment',
+            request_data=request_data,
+            form=CommentForm,
+            rel_type=REL_TYPE_COMMENT_REFERS_TO,
+            parent=self.person,
+        ))
+
+        self.add_recref_formset_handler(PersonResourceFormsetHandler(
+            prefix='res',
+            request_data=request_data,
+            form=ResourceForm,
+            rel_type=REL_TYPE_IS_RELATED_TO,
+            parent=self.person,
+        ))
         self.img_handler = ImageHandler(request_data, request and request.FILES, self.person.images)
 
-    @property
-    def all_recref_handlers(self):
-        attr_list = (getattr(self, p) for p in dir(self))
-        attr_list = (a for a in attr_list if isinstance(a, view_utils.MultiRecrefHandler))
-        return attr_list
-
     def render_form(self, request):
-        context = {
-                      'person_form': self.person_form,
-                      'comment_formset': self.comment_formset,
-                      'res_formset': self.res_formset,
-                  } | self.img_handler.create_context()
-        for h in self.all_recref_handlers:
-            context.update(h.create_context())
-        return render(request, 'person/full_form.html', context)
+        return render(request, 'person/full_form.html', self.create_context())
 
 
 @login_required
 def full_form(request, iperson_id):
-    fhandler = PersonFullFormHandler(iperson_id, request)
+    fhandler = PersonFullFormHandler(iperson_id, request_data=request.POST, request=request)
 
     # handle form submit
     if request.POST:
 
-        # define form_formsets
-        # KTODO make this list generic
-        form_formsets = [fhandler.person_form, fhandler.comment_formset, fhandler.res_formset,
-                         fhandler.img_handler.img_form,
-                         fhandler.img_handler.image_formset,
-                         ]
-        for h in fhandler.all_recref_handlers:
-            form_formsets.extend([h.new_form, h.update_formset, ])
-
         # ----- validate
-        if view_utils.any_invalid_with_log(form_formsets):
+        if fhandler.is_invalid():
             return fhandler.render_form(request)
 
         # ------- save
-        for recref_handler in fhandler.all_recref_handlers:
-            recref_handler.maintain_record(request, fhandler.person_form.instance)
+        fhandler.maintain_all_recref_records(request, fhandler.person_form.instance)
 
         fhandler.person_form.save()
-        view_utils.save_formset(fhandler.comment_formset, fhandler.person.comments,
-                                model_id_name='comment_id')
-        view_utils.save_formset(fhandler.res_formset, fhandler.person.resources,
-                                model_id_name='resource_id')
+        fhandler.save_all_recref_formset(fhandler.person, request)
         fhandler.img_handler.save(request)
+
+        # KTODO save birthplace, deathplace
+        # KTODo save roles_titles
 
         # reload all form data for rendering
         fhandler.load_data(iperson_id, request_data=None)
@@ -260,10 +243,6 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         return 'person:return_quick_init'
 
     def get_queryset(self):
-        # KTODO
-
-        # KTODO person_or_group
-
         field_fn_maps = {
             'gender': lambda f, v: Exact(F(f), '' if v == 'U' else v),
             'person_or_group': lambda _, v: Exact(F('is_organisation'), 'Y' if v == 'G' else ''),
@@ -371,3 +350,51 @@ class PersonDownloadCsvHandler(DownloadCsvHandler):
             obj.change_user,
         ]
         return values
+
+
+class PersonCommentFormsetHandler(RecrefFormsetHandler):
+    def create_recref_adapter(self, parent) -> RecrefFormAdapter:
+        return PersonCommentRecrefAdapter(parent)
+
+    def find_org_recref_fn(self, parent, target) -> Recref | None:
+        return CofkPersonCommentMap.objects.filter(person=parent, comment=target).first()
+
+
+class PersonCommentRecrefAdapter(TargetCommentRecrefAdapter):
+    def __init__(self, parent):
+        self.parent: CofkUnionPerson = parent
+
+    def recref_class(self) -> Type[Recref]:
+        return CofkPersonCommentMap
+
+    def set_parent_target_instance(self, recref, parent, target):
+        recref: CofkPersonCommentMap
+        recref.person = parent
+        recref.comment = target
+
+    def find_recref_records(self, rel_type):
+        return self.find_recref_records_by_related_manger(self.parent.cofkpersoncommentmap_set, rel_type)
+
+
+class PersonResourceFormsetHandler(RecrefFormsetHandler):
+    def create_recref_adapter(self, parent) -> RecrefFormAdapter:
+        return PersonResourceRecrefAdapter(parent)
+
+    def find_org_recref_fn(self, parent, target) -> Recref | None:
+        return CofkPersonResourceMap.objects.filter(person=parent, resource=target).first()
+
+
+class PersonResourceRecrefAdapter(TargetResourceRecrefAdapter):
+    def __init__(self, parent):
+        self.parent: CofkUnionPerson = parent
+
+    def recref_class(self) -> Type[Recref]:
+        return CofkPersonResourceMap
+
+    def set_parent_target_instance(self, recref, parent, target):
+        recref: CofkPersonResourceMap
+        recref.person = parent
+        recref.resource = target
+
+    def find_recref_records(self, rel_type):
+        return self.find_recref_records_by_related_manger(self.parent.cofkpersonresourcemap_set, rel_type)

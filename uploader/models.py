@@ -133,7 +133,7 @@ class CofkUnionSubject(models.Model):
 
 
 class Iso639LanguageCode(models.Model):
-    code_639_3 = models.CharField(max_length=3)
+    code_639_3 = models.CharField(max_length=3, unique=True)
     code_639_1 = models.CharField(max_length=2)
     language_name = models.CharField(max_length=100)
     language_id = models.AutoField(primary_key=True)

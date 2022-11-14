@@ -30,6 +30,8 @@ urlpatterns = [
     path('person/', include('person.urls')),
     path('publication/', include('publication.urls')),
     path('upload/', include('uploader.urls')),
+    path('manif/', include('manifestation.urls')),
+    path('work/', include('work.urls')),
 ]
 
 urlpatterns += static(settings.MEDIA_URL + 'img',

@@ -1,0 +1,9 @@
+{% for v in values %}
+    <li
+            {% if class %}
+                class="{{ class }}"
+            {% endif %}
+    >
+        {{ v }}
+    </li>
+{% endfor %}

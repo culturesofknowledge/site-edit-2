@@ -69,6 +69,21 @@ emlojs.recref_service = {
                     select_url: '/person/search?recref_mode=1',
                     create_url: '/person/quick_init',
                 }
+            } else if(recref_type === 'work') {
+                urls = {
+                    select_url: '/work/search?recref_mode=1',
+                    create_url: '/work/quick_init',
+                }
+            } else if(recref_type === 'manif') {
+                urls = {
+                    select_url: '/manif/search?recref_mode=1',
+                    create_url: '/',  // manif have no create url
+                }
+            } else if(recref_type === 'inst') {
+                urls = {
+                    select_url: '/repositories/search?recref_mode=1',
+                    create_url: '/repositories/quick_init',
+                }
             }
             else{
                 console.log(`unknown recref_type [${recref_type}]`)

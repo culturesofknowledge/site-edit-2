@@ -1,5 +1,7 @@
+import itertools
 import logging
 import os
+from abc import ABC
 from multiprocessing import Process
 from typing import Iterable, Type, Callable
 from typing import NoReturn
@@ -9,9 +11,10 @@ from urllib.parse import urlencode
 from django import template
 from django.conf import settings
 from django.db import models
-from django.forms import ModelForm
+from django.forms import ModelForm, BaseForm, BaseFormSet
 from django.forms import formset_factory
 from django.shortcuts import render
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.views import View
 from django.views.generic import ListView
@@ -20,18 +23,72 @@ import core.constant as core_constant
 from core.forms import ImageForm, UploadImageForm
 from core.forms import RecrefForm
 from core.forms import build_search_components
-from core.helper import file_utils, email_utils
+from core.helper import file_utils, email_utils, recref_utils
 from core.helper import model_utils
-from core.helper import view_utils
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
     demo_table_search_results_renderer
 from core.helper.view_components import DownloadCsvHandler
-from core.models import Recref
+from core.models import Recref, CofkUnionComment, CofkUnionResource
 from core.services import media_service
-from uploader.models import CofkUnionImage
+from uploader.models import CofkUnionImage, CofkUnionSubject
 
 register = template.Library()
 log = logging.getLogger(__name__)
+
+
+class RecrefFormAdapter:
+
+    def find_target_display_name_by_id(self, target_id):
+        raise NotImplementedError()
+
+    def recref_class(self) -> Type[Recref]:
+        raise NotImplementedError()
+
+    def find_target_instance(self, target_id):
+        raise NotImplementedError()
+
+    def set_parent_target_instance(self, recref, parent, target):
+        raise NotImplementedError()
+
+    def find_recref_records(self, rel_type):
+        raise NotImplementedError()
+
+    def target_id_name(self):
+        raise NotImplementedError()
+
+    def get_target_id(self, recref: Recref):
+        if recref is None:
+            return None
+
+        target_id_name = self.target_id_name()
+        if not hasattr(recref, target_id_name):
+            log.warning(f'target_id_name not found in recref [{target_id_name=}]')
+            return None
+
+        return getattr(recref, target_id_name, None)
+
+    def upsert_recref(self, rel_type, parent_instance, target_instance,
+                      username=None,
+                      org_recref=None,
+                      ):
+        return recref_utils.upsert_recref(
+            rel_type, parent_instance, target_instance,
+            create_recref_fn=self.recref_class(),
+            set_parent_target_instance_fn=self.set_parent_target_instance,
+            username=username,
+            org_recref=org_recref,
+        )
+
+    def find_recref_records_by_related_manger(self, related_manger, rel_type):
+        return related_manger.filter(relationship_type=rel_type).iterator()
+
+    def find_targets_id_list(self, rel_type):
+        return (self.get_target_id(r) for r in self.find_recref_records(rel_type))
+
+    def find_all_targets_by_rel_type(self, rel_type) -> Iterable[models.Model]:
+        target_id_list = self.find_targets_id_list(rel_type)
+        targets = (self.find_target_instance(i) for i in target_id_list)
+        return targets
 
 
 class BasicSearchView(ListView):
@@ -274,7 +331,7 @@ class CommonInitFormViewTemplate(View):
         return self.resp_form_page(request, form)
 
 
-def redirect_return_quick_init(request, name, item_name, item_id):
+def render_return_quick_init(request, name, item_name, item_id):
     return render(request, 'core/return_quick_init.html', {
         'name': name,
         'item_name': item_name,
@@ -285,7 +342,7 @@ def redirect_return_quick_init(request, name, item_name, item_id):
 def any_invalid_with_log(form_formsets: Iterable):
     for f in form_formsets:
         if not f.is_valid():
-            log.debug(f'form is invalid [{f}] -- [{f.error_messages}]')
+            log.debug(f'form is invalid [{type(f)}] -- [{getattr(f, "error_messages", None)}] -- [{repr(getattr(f, "errors", None))}]')
             return True
 
     return False
@@ -310,14 +367,16 @@ class MultiRecrefHandler:
     * create form and formset
     """
 
-    def __init__(self, request_data, name, initial_list=None):
+    def __init__(self, request_data, name,
+                 recref_form_class: Type[RecrefForm] = RecrefForm,
+                 initial_list=None):
 
         self.name = name
-        self.new_form = RecrefForm(request_data or None, prefix=f'new_{name}')
-        self.update_formset = view_utils.create_formset(RecrefForm, post_data=request_data,
-                                                        prefix=f'recref_{name}',
-                                                        initial_list=initial_list,
-                                                        extra=0, )
+        self.new_form = recref_form_class(request_data or None, prefix=f'new_{name}')
+        self.update_formset = create_formset(recref_form_class, post_data=request_data,
+                                             prefix=f'recref_{name}',
+                                             initial_list=initial_list,
+                                             extra=0, )
 
     def create_context(self) -> dict:
         return {
@@ -338,7 +397,7 @@ class MultiRecrefHandler:
         recref.update_current_user_timestamp(username)
         return recref
 
-    def create_recref_by_new_form(self, target_id, new_form, parent_instance) -> Optional[Recref]:
+    def create_recref_by_new_form(self, target_id, parent_instance) -> Optional[Recref]:
         raise NotImplementedError()
 
     def maintain_record(self, request, parent_instance):
@@ -349,21 +408,54 @@ class MultiRecrefHandler:
         # save new_form
         self.new_form.is_valid()
         if target_id := self.new_form.cleaned_data.get('target_id'):
-            if recref := self.create_recref_by_new_form(target_id, self.new_form, parent_instance):
+            if recref := self.create_recref_by_new_form(target_id, parent_instance):
                 recref = self.fill_common_recref_field(recref, self.new_form.cleaned_data, request.user.username)
                 recref.save()
+                log.info(f'create new recref [{recref}]')
 
         # update update_formset
         target_changed_fields = {'to_date', 'from_date', 'is_delete'}
         _forms = (f for f in self.update_formset if not target_changed_fields.isdisjoint(f.changed_data))
         for f in _forms:
             f.is_valid()
+            recref_id = f.cleaned_data['recref_id']
             if f.cleaned_data['is_delete']:
-                self.recref_class.objects.filter(pk=f.cleaned_data['recref_id']).delete()
+                log.info(f'remove recref [{recref_id=}]')
+                self.recref_class.objects.filter(pk=recref_id).delete()
             else:
-                ps_loc = self.recref_class.objects.get(pk=f.cleaned_data['recref_id'])
+                log.info(f'update recref [{recref_id=}]')
+                ps_loc = self.recref_class.objects.get(pk=recref_id)
                 ps_loc = self.fill_common_recref_field(ps_loc, f.cleaned_data, request.user.username)
                 ps_loc.save()
+
+
+class MultiRecrefAdapterHandler(MultiRecrefHandler):
+    def __init__(self, request_data, name,
+                 recref_adapter: RecrefFormAdapter,
+                 recref_form_class,
+                 rel_type='is_reply_to',
+                 ):
+        self.recref_adapter = recref_adapter
+        self.rel_type = rel_type
+        initial_list = (m.__dict__ for m in self.recref_adapter.find_recref_records(self.rel_type))
+        initial_list = (recref_utils.convert_to_recref_form_dict(r, self.recref_adapter.target_id_name(),
+                                                                 self.recref_adapter.find_target_display_name_by_id)
+                        for r in initial_list)
+        super().__init__(request_data, name=name, initial_list=initial_list,
+                         recref_form_class=recref_form_class)
+
+    @property
+    def recref_class(self) -> Type[Recref]:
+        return self.recref_adapter.recref_class()
+
+    def create_recref_by_new_form(self, target_id, parent_instance) -> Optional[Recref]:
+        return recref_utils.upsert_recref_by_target_id(
+            target_id, self.recref_adapter.find_target_instance,
+            rel_type=self.rel_type,
+            parent_instance=parent_instance,
+            create_recref_fn=self.recref_class,
+            set_parent_target_instance_fn=self.recref_adapter.set_parent_target_instance,
+        )
 
 
 def save_formset(forms: Iterable[ModelForm],
@@ -389,6 +481,7 @@ def save_formset(forms: Iterable[ModelForm],
                 log.warning(f'mode_id_name[{model_id_name}] not found in form.instance')
 
         # save form
+        log.info(f'form save -- [{form.instance}]')
         form.save()
 
         # bind many-to-many relation
@@ -400,7 +493,7 @@ class ImageHandler:
     def __init__(self, request_data, request_files,
                  img_related_manager):
         self.img_related_manager = img_related_manager
-        self.image_formset = view_utils.create_formset(
+        self.image_formset = create_formset(
             ImageForm, post_data=request_data,
             prefix='image',
             initial_list=model_utils.related_manager_to_dict_list(
@@ -419,9 +512,10 @@ class ImageHandler:
     def save(self, request):
         image_formset = (f for f in self.image_formset if f.is_valid())
         image_formset = (f for f in image_formset if f.cleaned_data.get('image_filename'))
-        view_utils.save_formset(image_formset, self.img_related_manager, model_id_name='image_id')
+        save_formset(image_formset, self.img_related_manager, model_id_name='image_id')
 
         # save if user uploaded an image
+        self.img_form.is_valid()
         if uploaded_img_file := self.img_form.cleaned_data.get('selected_image'):
             file_path = media_service.save_uploaded_img(uploaded_img_file)
             file_url = media_service.get_img_url_by_file_path(file_path)
@@ -431,3 +525,235 @@ class ImageHandler:
             img_obj.update_current_user_timestamp(request.user.username)
             img_obj.save()
             self.img_related_manager.add(img_obj)
+
+
+class FullFormHandler:
+    """ maintain collections of Form and Formset for View
+    developer can define instance of Form and Formset in `load_data`
+
+    this class provide many tools for View
+    like `all_named_form_formset`, `save_all_comment_formset`
+    """
+
+    def __init__(self, pk, *args, request_data=None, request=None, **kwargs):
+        self.recref_formset_handlers: list[RecrefFormsetHandler] = []
+        self.load_data(pk,
+                       request_data=request_data or None,
+                       request=request, *args, **kwargs)
+
+    def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
+        raise NotImplementedError()
+
+    def all_image_handlers(self) -> Iterable[tuple[str, ImageHandler]]:
+        return ((name, var) for name, var in self.__dict__.items()
+                if isinstance(var, ImageHandler))
+
+    def find_all_named_form_formset(self) -> Iterable[tuple[str, BaseForm | BaseFormSet]]:
+        """
+        find all variables in full_form_handler that is BaseForm or BaseFormSet
+        """
+        attr_list = ((name, var) for name, var in self.__dict__.items()
+                     if isinstance(var, (BaseForm, BaseFormSet)))
+        return attr_list
+
+    @property
+    def every_form_formset(self):
+        return itertools.chain(
+            (ff for _, ff in self.find_all_named_form_formset()),
+            itertools.chain.from_iterable(
+                (h.new_form, h.update_formset) for h in self.all_recref_handlers
+            ),
+            itertools.chain.from_iterable(
+                (h.img_form, h.image_formset) for _, h in self.all_image_handlers()
+            ),
+            (h.formset for h in self.recref_formset_handlers),
+        )
+
+    def is_any_changed(self):
+        for f in self.every_form_formset:
+            if f.has_changed():
+                if isinstance(f, BaseFormSet):
+                    changed_data = set(itertools.chain.from_iterable(
+                        _f.changed_data for _f in f.forms
+                    ))
+                else:
+                    changed_data = f.changed_data
+                log.debug(f'form or formset changed [{f.__class__.__name__}][{changed_data}]')
+                return True
+
+        return False
+
+    def maintain_all_recref_records(self, request, parent_instance):
+        for recref_handler in self.all_recref_handlers:
+            recref_handler.maintain_record(request, parent_instance)
+
+    @property
+    def all_recref_handlers(self):
+        attr_list = (getattr(self, p) for p in dir(self))
+        attr_list = (a for a in attr_list if isinstance(a, MultiRecrefHandler))
+        return attr_list
+
+    def add_recref_formset_handler(self, recref_formset_handler: 'RecrefFormsetHandler'):
+        self.recref_formset_handlers.append(recref_formset_handler)
+
+    def save_all_recref_formset(self, parent, request):
+        # KTODO fix comment_id has_changed problem
+        for c in self.recref_formset_handlers:
+            c.save(parent, request)
+
+    def create_context(self):
+        context = dict(self.find_all_named_form_formset())
+        for _, img_handler in self.all_image_handlers():
+            context.update(img_handler.create_context())
+        for h in self.all_recref_handlers:
+            context.update(h.create_context())
+        context.update({h.context_name: h.formset
+                        for h in self.recref_formset_handlers})
+
+        return context
+
+    def is_invalid(self):
+        form_formsets = (f for f in self.every_form_formset if f.has_changed())
+        return any_invalid_with_log(form_formsets)
+
+    def prepare_cleaned_data(self):
+        for f in self.every_form_formset:
+            f.is_valid()
+
+
+class RecrefFormsetHandler:
+    def __init__(self, prefix, request_data,
+                 form,
+                 rel_type,
+                 parent: models.Model,
+                 context_name=None,
+                 ):
+        recref_adapter = self.create_recref_adapter(parent)
+        self.context_name = context_name or f'{prefix}_formset'
+        self.rel_type = rel_type
+        self.formset = create_formset(
+            form, post_data=request_data,
+            prefix=prefix,
+            initial_list=model_utils.models_to_dict_list(
+                recref_adapter.find_all_targets_by_rel_type(rel_type)
+            )
+        )
+
+    def create_recref_adapter(self, parent) -> RecrefFormAdapter:
+        raise NotImplementedError()
+
+    def find_org_recref_fn(self, parent, target) -> Recref | None:
+        raise NotImplementedError()
+
+    def save(self, parent, request):
+        recref_adapter: RecrefFormAdapter = self.create_recref_adapter(parent)
+        forms = [f for f in self.formset if f.has_changed()]
+        save_formset(forms, model_id_name=recref_adapter.target_id_name())
+
+        for target in (f.instance for f in forms):
+            org_recref = self.find_org_recref_fn(
+                parent=parent,
+                target=target,
+            )
+
+            recref = recref_adapter.upsert_recref(self.rel_type, parent,
+                                                  target,
+                                                  username=request.user.username,
+                                                  org_recref=org_recref,
+                                                  )
+            recref.save()
+            log.info(f'save m2m recref -- [{recref}][{target}]')
+
+
+class TargetCommentRecrefAdapter(RecrefFormAdapter, ABC):
+    def find_target_display_name_by_id(self, target_id):
+        c: CofkUnionComment = self.find_target_instance(target_id)
+        return c and c.comment
+
+    def find_target_instance(self, target_id):
+        return model_utils.get_safe(CofkUnionComment, comment_id=target_id)
+
+    def target_id_name(self):
+        return 'comment_id'
+
+
+class TargetResourceRecrefAdapter(RecrefFormAdapter, ABC):
+    def find_target_display_name_by_id(self, target_id):
+        c: CofkUnionResource = self.find_target_instance(target_id)
+        return c and c.resource_name
+
+    def find_target_instance(self, target_id):
+        return model_utils.get_safe(CofkUnionResource, resource_id=target_id)
+
+    def target_id_name(self):
+        return 'resource_id'
+
+
+class SubjectUI:
+    def __init__(self, subject_id, desc, is_selected, name='subjects'):
+        self.subject_id = subject_id
+        self.desc = desc
+        self.is_selected = is_selected
+        self.name = name
+
+    def __call__(self, *args, **kwargs):
+        context = {
+            'subject_id': self.subject_id,
+            'desc': self.desc,
+            'is_selected': self.is_selected,
+            'name': self.name,
+        }
+        return render_to_string('core/component/subject_checkbox.html', context)
+
+
+class SubjectHandler:
+
+    def __init__(self, recref_adapter: RecrefFormAdapter,
+                 rel_type=core_constant.REL_TYPE_DEALS_WITH,
+                 subject_name='subjects'):
+        self.recref_adapter = recref_adapter
+        self.rel_type = rel_type
+        self.subject_name = subject_name
+
+    def _create_ui_data(self, subject: CofkUnionSubject, selected_id_list):
+        return SubjectUI(
+            subject_id=subject.subject_id,
+            desc=subject.subject_desc,
+            is_selected=subject.subject_id in selected_id_list,
+            name=self.subject_name,
+        )
+
+    def create_context(self):
+        selected_id_list = set(self.recref_adapter.find_targets_id_list(self.rel_type))
+        return {
+            'subjects': (self._create_ui_data(s, selected_id_list) for s in CofkUnionSubject.objects.all()),
+        }
+
+    def get_selected_subject_id_list(self, request):
+        return request.POST.getlist(self.subject_name)
+
+    def save(self, request, parent):
+        self.recref_adapter.parent = parent
+
+        org_recref_list = list(self.recref_adapter.find_recref_records(self.rel_type))
+        selected_id_list = {int(s) for s in self.get_selected_subject_id_list(request)}
+
+        # delete
+        for recref in org_recref_list:
+            target_id = self.recref_adapter.get_target_id(recref)
+            if target_id in selected_id_list:
+                continue
+
+            log.info(f'remove subject [{parent}][{target_id}][{recref.pk}]')
+            recref.delete()
+
+        # add
+        org_id_list = {self.recref_adapter.get_target_id(r) for r in org_recref_list}
+        for new_subject_id in selected_id_list - org_id_list:
+            log.info(f'add subject [{parent}][{new_subject_id}]')
+            if not (target := self.recref_adapter.find_target_instance(new_subject_id)):
+                raise ValueError(f'not found [{new_subject_id}]')
+
+            recref = self.recref_adapter.upsert_recref(self.rel_type, parent, target,
+                                                       username=request.user.username)
+            recref.save()

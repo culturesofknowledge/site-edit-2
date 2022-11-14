@@ -1,0 +1,8 @@
+<input id="subject_{{ subject_id }}" name="{{ name }}" type="checkbox"
+       value="{{ subject_id }}"
+        {% if is_selected %}
+       checked="checked"
+        {% endif %}
+/>
+<label for="subject_{{ subject_id }}">{{ desc }}</label>
+

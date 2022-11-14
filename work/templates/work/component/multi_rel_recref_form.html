@@ -1,0 +1,12 @@
+{{ form.target_id }}
+
+<div class="grid-item">
+    <label>
+        <a href="{{ form.target_url }}" target="_blank">
+            {{ form.name.value }}
+        </a>
+    </label>
+</div>
+<div class="grid-item">
+    {% include "core/component/common_form_choices.html" with label_text='' choices_field=form.relationship_types %}
+</div>

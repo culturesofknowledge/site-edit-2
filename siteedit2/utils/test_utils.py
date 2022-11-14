@@ -1,20 +1,25 @@
+import logging
 import re
-from typing import Iterable, Type
+from typing import Iterable, Type, Any
 
 from django.conf import settings
+from django.contrib.staticfiles.testing import StaticLiveServerTestCase
+from django.db import models
 from django.db.models import Model
-from django.test import LiveServerTestCase
 from django.urls import reverse
 from selenium import webdriver
 from selenium.webdriver import DesiredCapabilities
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.select import Select
 
 import core.fixtures
 from core.helper.view_utils import BasicSearchView
 from login.models import CofkUser
 
+log = logging.getLogger(__name__)
 
-class EmloSeleniumTestCase(LiveServerTestCase):
+
+class EmloSeleniumTestCase(StaticLiveServerTestCase):
     @classmethod
     def setUpClass(cls):
         cls.host = settings.TEST_WEB_HOST
@@ -30,6 +35,7 @@ class EmloSeleniumTestCase(LiveServerTestCase):
             desired_capabilities=DesiredCapabilities.CHROME,
             options=options,
         )
+        cls.selenium.maximize_window()  # avoid something is not clickable
         cls.selenium.implicitly_wait(10)
 
         cls.login_user = CofkUser()
@@ -53,8 +59,8 @@ class EmloSeleniumTestCase(LiveServerTestCase):
         cls.selenium.quit()
         super().tearDownClass()
 
-    def get_url_by_viewname(self, viewname, **kwargs):
-        return self.live_server_url + reverse(viewname, **kwargs)
+    def get_url_by_viewname(self, viewname, *args, **kwargs):
+        return self.live_server_url + reverse(viewname, args=args, kwargs=kwargs)
 
     def fill_form_by_dict(self,
                           model_dict: dict,
@@ -78,8 +84,15 @@ class EmloSeleniumTestCase(LiveServerTestCase):
     def find_element_by_css(self, css_selector):
         return self.selenium.find_element(by=By.CSS_SELECTOR, value=css_selector)
 
-    def goto_vname(self, vname):
-        self.selenium.get(self.get_url_by_viewname(vname))
+    def goto_vname(self, vname, *args, **kwargs):
+        self.selenium.get(self.get_url_by_viewname(vname, *args, **kwargs))
+
+    def click_submit(self):
+        self.selenium.find_element(By.CSS_SELECTOR, 'input[type=submit]').click()
+
+    def js_click(self, selector):
+        script = f"document.querySelector('{selector}').click(); "
+        self.selenium.execute_script(script)
 
 
 def get_selected_radio_val(elements):
@@ -163,7 +176,7 @@ class ResourceM2MTester(SimpleM2MTester):
         super().__init__(selenium_test, related_manager, formset_prefix, model_dict)
 
     def assert_fn(self):
-        self.selenium_test.assertEqual(self.related_manager.last().resource_name,
+        self.selenium_test.assertEqual(self.related_manager.last().resource.resource_name,
                                        self.model_dict['resource_name'])
 
 
@@ -175,7 +188,7 @@ class CommentM2MTester(SimpleM2MTester):
         super().__init__(selenium_test, related_manager, formset_prefix, model_dict)
 
     def assert_fn(self):
-        self.selenium_test.assertEqual(self.related_manager.last().comment,
+        self.selenium_test.assertEqual(self.related_manager.last().comment.comment,
                                        self.model_dict['comment'])
 
 
@@ -205,7 +218,7 @@ class CommonSearchTests:
 
     def switch_layout(self, layout_val):
         # assume selenium already in search page
-        self.test_case.selenium.find_element(value=layout_val).click()
+        self.test_case.js_click(f'#{layout_val}')
 
     def goto_search_page(self):
         self.test_case.goto_vname(self.search_vname)
@@ -271,3 +284,39 @@ class CommonSearchTests:
         size_titles = list(size_titles)
         self.test_case.assertEqual(len(size_titles), 1)
         self.test_case.assertEqual(size_titles[0][0], f'{num_total}')
+
+
+class FieldValTester:
+    def __init__(self,
+                 test_case: EmloSeleniumTestCase,
+                 field_values: list[tuple[str, Any]]):
+        self.test_case = test_case
+        self.field_values = field_values
+
+    def get_element_val_list(self):
+        for field_name, val in self.field_values:
+            ele = self.test_case.find_element_by_css(f'#id_{field_name}')
+            yield ele, val
+
+    def fill(self):
+        for ele, val in self.get_element_val_list():
+            log.debug(f'fill: {ele.get_attribute("id")}')
+            ele_type = ele.get_attribute('type')
+            if ele_type == 'checkbox':
+                if ele.is_displayed():
+                    ele.click()
+                else:
+                    self.test_case.js_click(f'label[for={ele.get_attribute("id")}]')
+
+            elif ele_type == 'text' or ele.tag_name == 'textarea':
+                ele.send_keys(val)
+            elif ele.tag_name == 'select':
+                Select(ele).select_by_value(str(val))
+            else:
+                log.warning(f'unexpected input element [{ele.tag_name}][{ele_type}]')
+                ele.send_keys(val)
+
+    def assert_all(self, model: models.Model):
+        for field_name, expected_val in self.field_values:
+            with self.test_case.subTest(field_name=field_name):
+                self.test_case.assertEqual(getattr(model, field_name), expected_val)

@@ -5,9 +5,10 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.forms import ModelForm
 from django.shortcuts import render, redirect, get_object_or_404
 
-from core.helper import renderer_utils, query_utils
+from core.helper import renderer_utils, query_utils, view_utils
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView
+from institution import inst_utils
 from institution.forms import InstitutionForm, GeneralSearchFieldset
 from institution.models import CofkUnionInstitution
 
@@ -110,7 +111,9 @@ class InstQuickInitView(InstInitView):
 
 @login_required
 def return_quick_init(request, pk):
-    inst = CofkUnionInstitution.objects.get(pk=pk)
-    return render(request, 'institution/return_quick_init_inst.html', {
-        'inst': inst,
-    })
+    inst: CofkUnionInstitution = CofkUnionInstitution.objects.get(institution_id=pk)
+    return view_utils.render_return_quick_init(
+        request, 'Repositories',
+        inst_utils.get_recref_display_name(inst),
+        inst_utils.get_recref_target_id(inst),
+    )

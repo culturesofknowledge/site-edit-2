@@ -1,11 +1,18 @@
+import functools
+import logging
+
 from django import forms
 from django.conf import settings
 from django.forms import ModelForm, HiddenInput, IntegerField, Form
+from django.urls import reverse
 
-from core.helper import form_utils
+from core.helper import form_utils, model_utils
 from core.helper import widgets_utils
 from core.models import CofkUnionComment, CofkUnionResource
+from manifestation.models import CofkUnionManifestation
+from person.models import CofkUnionPerson
 from uploader.models import CofkUnionImage
+from work.models import CofkUnionWork
 
 
 def build_search_components(sort_by_choices: list[tuple[str, str]]):
@@ -36,6 +43,68 @@ class RecrefForm(forms.Form):
     to_date = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
     is_delete = form_utils.ZeroOneCheckboxField(required=False, is_str=False)
 
+    @property
+    def target_url(self) -> str:
+        return ''  # tobe define by subclass
+
+
+def log_no_url(fn):
+    @functools.wraps(fn)
+    def _wrap(*args, **kwargs):
+        url = fn(*args, **kwargs)
+        if url is None:
+            logging.warning(f'{fn.__name__} failed, person not found [{args}]')
+            return ''
+
+        return url
+
+    return _wrap
+
+
+@log_no_url
+def get_peron_full_form_url_by_pk(pk):
+    if person := CofkUnionPerson.objects.get(pk=pk):
+        return reverse('person:full_form', args=[person.iperson_id])
+
+
+@log_no_url
+def get_work_full_form_url_by_pk(pk):
+    if work := CofkUnionWork.objects.get(pk=pk):
+        return reverse('work:full_form', args=[work.iwork_id])
+
+
+class PersonRecrefForm(RecrefForm):
+    @property
+    def target_url(self) -> str:
+        return get_peron_full_form_url_by_pk(self.initial.get('target_id'))
+
+
+class LocRecrefForm(RecrefForm):
+    @property
+    def target_url(self) -> str:
+        return reverse('location:full_form', args=[self.initial.get('target_id')])
+
+
+class WorkRecrefForm(RecrefForm):
+    @property
+    def target_url(self) -> str:
+        return get_work_full_form_url_by_pk(self.initial.get('target_id'))
+
+
+class ManifRecrefForm(RecrefForm):
+
+    @property
+    def target_url(self) -> str:
+        manif_id = self.initial.get('target_id')
+        if not manif_id:
+            return ''
+
+        manif: CofkUnionManifestation = model_utils.get_safe(CofkUnionManifestation, pk=manif_id)
+        if not manif:
+            return ''
+
+        return reverse('work:manif_update', args=[manif.work.iwork_id, manif_id])
+
 
 class CommentForm(ModelForm):
     comment_id = IntegerField(required=False, widget=HiddenInput())
@@ -46,6 +115,8 @@ class CommentForm(ModelForm):
     change_user = forms.CharField(required=False, widget=HiddenInput())
 
     record_tracker_label = form_utils.record_tracker_label_fn_factory('Note')
+
+    comment = forms.CharField(required=True, widget=forms.Textarea(dict(rows='5')))
 
     class Meta:
         model = CofkUnionComment

@@ -4,6 +4,7 @@ from typing import Iterable
 
 from django import forms
 from django.db.models import TextChoices
+from django.forms import BoundField
 from django.template.loader import render_to_string
 
 from core.helper import widgets_utils
@@ -171,22 +172,62 @@ class EqualSimpleLookupChoices(TextChoices):
 def create_day_field(required=False):
     return forms.IntegerField(required=required, min_value=1, max_value=31,
                               widget=forms.TextInput(
-                                  attrs={'placeholder': 'DD'}
+                                  attrs={
+                                      'placeholder': 'DD',
+                                      'type': 'number',
+                                      'min': 1,
+                                      'max': 31,
+                                      'class': 'ad-day',
+                                  }
                               ))
 
 
 def create_month_field(required=False):
     return forms.IntegerField(required=required,
-                              widget=forms.Select(choices=short_month_choices))
+                              widget=forms.Select(choices=short_month_choices,
+                                                  attrs={
+                                                      'class': 'ad-month',
+                                                  }
+                                                  ))
 
 
 def create_year_field(required=False):
     return forms.IntegerField(required=required, min_value=1, max_value=9999,
                               widget=forms.TextInput(
-                                  attrs={'placeholder': 'YYYY'}
+                                  attrs={
+                                      'placeholder': 'YYYY',
+                                      'type': 'number',
+                                      'min': 1,
+                                      'max': 9999,
+                                      'class': 'ad-year',
+                                  }
                               ))
 
 
 def create_lookup_field(choices, required=False):
     return forms.CharField(required=required,
                            widget=forms.Select(choices=choices), )
+
+
+class SelectedRecrefField(forms.CharField):
+    def get_recref_name(self, target_id):
+        raise NotImplementedError()
+
+    def get_bound_field(self, form, field_name):
+        target_id = form.initial.get(field_name)
+        return RecrefSelectBound(form, self, field_name, self.get_recref_name(target_id))
+
+
+class RecrefSelectBound(BoundField):
+
+    def __init__(self, form, field, name, recref_name):
+        super().__init__(form, field, name)
+        self.recref_name = recref_name
+
+
+class CharSelectField(forms.CharField):
+    def __init__(self, choices, required=False, **kwargs):
+        super().__init__(required=required,
+                         widget=forms.Select(choices=choices),
+                         initial=choices[0][0],  # this can avoid invalid changed_data
+                         **kwargs)

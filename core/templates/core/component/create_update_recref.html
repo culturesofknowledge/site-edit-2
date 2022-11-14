@@ -4,11 +4,17 @@
         <div class="inline-from-to">
             {{ form.recref_id }}
             {{ form.target_id }}
-            <label> {{ form.rec_name.value }}  </label>
-            <small>From:</small>
-            {{ form.from_date }}
-            <small>To:</small>
-            {{ form.to_date }}
+            <label>
+                <a href="{{ form.target_url }}" target="_blank">
+                    {{ form.rec_name.value }}
+                </a>
+            </label>
+            {% if not no_date %}
+                <small>From:</small>
+                {{ form.from_date }}
+                <small>To:</small>
+                {{ form.to_date }}
+            {% endif %}
 
             {{ form.is_delete }}
             <label for="{{ form.is_delete.id_for_label }}">Delete</label>
@@ -16,11 +22,13 @@
     {% endfor %}
 </div>
 
-{% include "core/component/recref.html" with recref_type=recref_type id_field=new_form.target_id label=add_label %}
-<div class="inline-from-to">
-    <label>Relevant dates:</label>
-    <small>From:</small>
-    {{ new_form.from_date }}
-    <small>To:</small>
-    {{ new_form.to_date }}
-</div>
+{% include "core/component/recref.html" with recref_type=recref_type id_field=new_form.target_id label=add_label hide_create_btn=hide_create_btn %}
+{% if not no_date %}
+    <div class="inline-from-to">
+        <label>Relevant dates:</label>
+        <small>From:</small>
+        {{ new_form.from_date }}
+        <small>To:</small>
+        {{ new_form.to_date }}
+    </div>
+{% endif %}
