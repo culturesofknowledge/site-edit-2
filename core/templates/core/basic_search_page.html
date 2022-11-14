@@ -91,6 +91,8 @@
 
                 {{ results_renderer | safe }}
 
+                <!-- Pagination -->
+
                 {% include 'core/component/pagination.html' %}
 
                 {% endif %}
@@ -102,10 +104,6 @@
     </form>
 
     <form id="merge_form" action="{{ merge_page_url }}"></form>
-
-    <!-- Pagination -->
-
-
 
     <!-- script -->
     <script>

@@ -227,7 +227,11 @@
 .fixed-right-bottom {
   position: fixed;
   bottom: 0;
-  right: 20px; }
+  right: 20px;
+  padding: 2em; }
+
+.fixed-right-bottom a:hover, .fixed-right-bottom a:focus, .fixed-right-bottom a:active {
+  font-weight: bold; }
 
 .hiding {
   display: none; }
@@ -513,6 +517,7 @@ input[readonly] {
   background: gainsboro; }
 
 label {
+  display: inline-block;
   font-weight: 600;
   font-weight: 700;
   letter-spacing: 0.045em; }
@@ -561,7 +566,8 @@ input[type="radio"] {
     height: calc(.75 * 1rem);
     line-height: 1.25;
     transition: all 0.35s;
-    border: 1px solid #24201e; }
+    border: 1px solid #24201e;
+    margin-left: calc(.25 * 1rem); }
   input[type="checkbox"]:checked + label,
   input[type="radio"]:checked + label {
     color: #172854; }
@@ -590,6 +596,16 @@ input[type="radio"] + label {
   .btn:hover, .btn:focus, .btn:active {
     background-color: rgba(36, 32, 30, 0.15);
     border-color: rgba(36, 32, 30, 0.15);
+    color: #24201e; }
+
+.sticky-btn {
+  padding: calc(.25 * 1rem) calc(.5 * 1rem);
+  border: 1px solid;
+  border-radius: calc(.25 * 1rem);
+  transition: 200ms all ease-in-out; }
+  .sticky-btn:hover, .sticky-btn:focus, .sticky-btn:active {
+    background-color: #f2f2f2;
+    border-color: rgba(36, 32, 30, 0.85);
     color: #24201e; }
 
 .btn--primary {
@@ -673,6 +689,22 @@ input[type="radio"] + label {
 
 .search-results__abstract {
   color: rgba(36, 32, 30, 0.75); }
+
+.alert-octagon {
+  width: 24px;
+  height: 38px;
+  stroke: red;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round; }
+
+.actionbox {
+  margin: auto;
+  width: 50%;
+  text-align: center; }
+
+.pagination {
+  padding: calc(.75 * 1rem) 1rem calc(.75 * 1rem) 0; }
 
 .page-header {
   margin: 0 -1.5vw calc(1.5 * 1rem);
