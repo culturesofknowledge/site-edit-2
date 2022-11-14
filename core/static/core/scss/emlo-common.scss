@@ -184,7 +184,7 @@ tr.selectable_entry:hover {
 
 .multi_rel_recref_container {
   display: grid;
-  grid-template-columns: 30% 70%;
+  grid-template-columns: 1fr 2fr;
   grid-row-gap: 8px;
   width: 100%;
   font-size: $typescale-7;
@@ -196,13 +196,18 @@ tr.selectable_entry:hover {
 
 .sub-recref-form {
   display: grid;
-  grid-template-columns: 20% 80%;
-  width: 500px;
+  grid-template-columns: 1fr 2fr;
+  width: 100%;
 
   input[type=date] {
     width: 100px;
   }
+
+  div:only-child {
+    width: 500px;
+  }
 }
+
 
 .autodate-div .from-div {
   margin-right: 20px;

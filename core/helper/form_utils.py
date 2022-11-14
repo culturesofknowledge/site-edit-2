@@ -280,10 +280,10 @@ class SubRecrefForm(forms.Form):
 class MultiRelRecrefForm(forms.Form):
     template_name = 'core/component/multi_rel_recref_form.html'
     no_date = True
+    relationship_types = UndefinedRelationChoices
 
     name = forms.CharField(required=False)
     target_id = forms.CharField(required=False, widget=forms.HiddenInput())
-    relationship_types = RelationField(UndefinedRelationChoices)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -295,7 +295,7 @@ class MultiRelRecrefForm(forms.Form):
             return None
 
         self.recref_forms = []
-        for rel_type, rel_type_label in self.base_fields['relationship_types'].choices_class.choices:
+        for rel_type, rel_type_label in self.relationship_types.choices:
             initial = {}
             if initial_recref := _get_initial_recref(rel_type):
                 initial_recref: Recref
@@ -346,7 +346,7 @@ class MultiRelRecrefForm(forms.Form):
 
     @classmethod
     def get_rel_type_choices_values(cls):
-        return cls.base_fields['relationship_types'].choices_class.values
+        return cls.relationship_types.values
 
     @property
     def target_url(self):

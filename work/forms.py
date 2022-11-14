@@ -349,7 +349,8 @@ class ScribeRelationChoices(TextChoices):
 
 
 class ManifPersonMRRForm(TargetPersonMRRForm):
-    relationship_types = RelationField(ScribeRelationChoices)
+    relationship_types = ScribeRelationChoices
+    no_date = True
 
     @classmethod
     def create_recref_adapter(cls, *args, **kwargs) -> RecrefFormAdapter:
@@ -363,6 +364,7 @@ class ManifPersonMRRForm(TargetPersonMRRForm):
 
 
 class WorkPersonMRRForm(TargetPersonMRRForm):
+    no_date = True
 
     @classmethod
     def create_recref_adapter(cls, *args, **kwargs) -> RecrefFormAdapter:
@@ -434,8 +436,8 @@ class ManifPersonRecrefAdapter(TargetPersonRecrefAdapter):
 
 
 class WorkAuthorRecrefForm(WorkPersonMRRForm):
-    relationship_types = RelationField(AuthorRelationChoices)
+    relationship_types = AuthorRelationChoices
 
 
 class WorkAddresseeRecrefForm(WorkPersonMRRForm):
-    relationship_types = RelationField(AddresseeRelationChoices)
+    relationship_types = AddresseeRelationChoices

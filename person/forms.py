@@ -245,7 +245,8 @@ class PersonOtherRelationChoices(TextChoices):
 
 
 class PersonOtherRecrefForm(TargetPersonMRRForm):
-    relationship_types = RelationField(PersonOtherRelationChoices)
+    no_date = False
+    relationship_types = PersonOtherRelationChoices
 
     @classmethod
     def create_recref_adapter(cls, *args, **kwargs) -> RecrefFormAdapter:
