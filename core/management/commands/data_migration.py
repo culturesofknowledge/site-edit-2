@@ -539,8 +539,8 @@ def data_migration(user, password, database, host, port):
         lambda: migrate_groups_and_permissions(conn, 'cofk_roles'),
 
         # ### Work
-        lambda: clone_rows_by_model_class(conn, CofkUnionQueryableWork),
         lambda: clone_rows_by_model_class(conn, CofkUnionWork, col_val_handler_fn_list=[_val_handler_work__catalogue]),
+        lambda: clone_rows_by_model_class(conn, CofkUnionQueryableWork),
     ]
 
     # clone_action_fn_list = [lambda: clone_rows_by_model_class(conn, CofkUnionQueryableWork, seq_name=None),]
