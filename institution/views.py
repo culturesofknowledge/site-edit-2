@@ -23,8 +23,10 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
-            ('-change_timestamp', 'Change Timestamp desc',),
+            ('institution_name', 'Institution name asc',),
+            ('-institution_name', 'Institution name desc',),
             ('change_timestamp', 'Change Timestamp asc',),
+            ('-change_timestamp', 'Change Timestamp desc',),
         ]
 
     @property
