@@ -1,0 +1,10 @@
+#footer-list li a img {
+  height: 5vw;
+  width: auto;
+  margin-right: 4em;
+
+}
+
+#footer-list li:last-child a img {
+  margin-right: unset;
+}
