@@ -11,6 +11,19 @@
   }
 }
 
+.sticky-btn {
+  padding: $space-xxs $space-xs;
+  border: 1px solid;
+  border-radius: $space-xxs;
+  transition: 200ms all ease-in-out;
+
+  &:hover, &:focus, &:active {
+    background-color: $faint-grey;
+    border-color: $black-85;
+    color: $black;
+  }
+}
+
 .btn--primary {
   background-color: $midnight;
   color: $white;

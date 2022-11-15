@@ -1,10 +1,10 @@
 {% load static %}
 {% load sass_tags %}
-
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Union Catalogue Editing Interface: Main menu</title>
 
     <link href="{% sass_src 'core/scss/main.scss' %}" rel="stylesheet" type="text/css" />
     <script src="/static/core/js/jquery-3.6.0.min.js"></script>
@@ -38,6 +38,20 @@
 
     <!-- feature icon -->
     feather.replace()
+</script>
+
+<!-- Tooltip  -->
+<script src="https://unpkg.com/@popperjs/core@2"></script>
+<script src="https://unpkg.com/tippy.js@6"></script>
+
+<script>
+
+    t = tippy('[data-tippy-content]',
+     {  placement: 'top-start',
+        appendTo: document.body,
+        allowHTML: true,
+        interactive: true });
+
 </script>
 
 </body>

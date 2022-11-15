@@ -1,4 +1,11 @@
 <label> {{ title }} </label>
+
+{% if field_info %}
+<div style="display: inline;" data-tippy-content="{{ field_info }}">
+    <span data-feather="info" aria-hidden="true"></span>
+</div>
+{% endif %}
+
 <div class="row-from-to">
     <small>From</small>
     {{ from_field }}

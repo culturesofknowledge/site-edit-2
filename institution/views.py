@@ -16,8 +16,8 @@ from institution.models import CofkUnionInstitution
 class InstSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
-    def title(self) -> str:
-        return 'Institution'
+    def entity(self) -> str:
+        return 'institution,institutions'
 
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
