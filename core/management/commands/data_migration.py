@@ -18,12 +18,12 @@ from psycopg2.extras import DictCursor
 
 from core.helper import iter_utils
 from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType
-from institution.models import CofkCollectInstitution, CofkUnionInstitution
-from location.models import CofkUnionLocation
+from institution.models import CofkUnionInstitution
+from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap
 from login.models import CofkUser
 from manifestation.models import CofkUnionManifestation
 from person.models import CofkPersonLocationMap, CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID, \
-    CofkPersonPersonMap
+    CofkPersonPersonMap, CofkPersonCommentMap, CofkPersonResourceMap
 from publication.models import CofkUnionPublication
 from uploader.models import CofkCollectStatus, Iso639LanguageCode, CofkLookupCatalogue, CofkCollectUpload, \
     CofkUnionSubject
@@ -502,8 +502,16 @@ def data_migration(user, password, database, host, port):
         # ### Location
         lambda: clone_rows_by_model_class(conn, CofkUnionLocation),
         # m2m location
-        lambda: create_resources_relationship(conn, CofkUnionLocation),  # KTODO fix comment as recref
-        lambda: create_comments_relationship(conn, CofkUnionLocation),  # KTODO fix comment as recref
+        lambda: create_recref(conn,
+                              RecrefIdFieldVal(CofkLocationCommentMap,
+                                               CofkLocationCommentMap.comment,
+                                               CofkLocationCommentMap.location),
+                              ),
+        lambda: create_recref(conn,
+                              RecrefIdFieldVal(CofkLocationResourceMap,
+                                               CofkLocationResourceMap.location,
+                                               CofkLocationResourceMap.resource),
+                              ),
 
         # ### Person
         lambda: clone_rows_by_model_class(
@@ -525,8 +533,18 @@ def data_migration(user, password, database, host, port):
                               RecrefIdFieldVal(CofkPersonPersonMap,
                                                CofkPersonPersonMap.person,
                                                CofkPersonPersonMap.related),
-                              CofkPersonPersonMapFieldVal(),
                               ),
+        lambda: create_recref(conn,
+                              RecrefIdFieldVal(CofkPersonCommentMap,
+                                               CofkPersonCommentMap.comment,
+                                               CofkPersonCommentMap.person,),
+                              ),
+        lambda: create_recref(conn,
+                              RecrefIdFieldVal(CofkPersonResourceMap,
+                                               CofkPersonResourceMap.person,
+                                               CofkPersonResourceMap.resource),
+                              ),
+
         # ### Repositories/institutions
         lambda: clone_rows_by_model_class(conn, CofkUnionInstitution,
                                           col_val_handler_fn_list=[_val_handler_empty_str_null]),
