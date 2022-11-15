@@ -297,7 +297,15 @@
   position: fixed;
   bottom: 0;
   right: 20px;
+  padding: 2em;
 }
+
+.fixed-right-bottom a {
+    &:hover, &:focus, &:active {
+        font-weight: bold;
+    }
+}
+
 
 .hiding {
   display: none;

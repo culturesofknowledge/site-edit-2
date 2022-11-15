@@ -142,7 +142,7 @@ class IntLookupChoices(TextChoices):
     NOT_EQUAL_TO = 'not_equal_to', 'not equal to (!=)',
 
     LESS_THAN = 'less_than', 'less than (<)'
-    GREATER_THAN = 'great_than', 'great than (>)'
+    GREATER_THAN = 'greater_than', 'greater than (>)'
 
     IS_BLANK = 'is_blank', 'is blank',
     NOT_BLANK = 'not_blank', 'not blank',

@@ -200,8 +200,8 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
         return queryset
 
     @property
-    def title(self) -> str:
-        return 'Location'
+    def entity(self) -> str:
+        return 'location,locations'
 
     @property
     def merge_page_vname(self) -> str:
