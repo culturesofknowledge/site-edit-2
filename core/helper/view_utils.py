@@ -195,6 +195,7 @@ class BasicSearchView(ListView):
                         'search_components': search_components_factory(default_search_components_dict |
                                                                        self.request_data.dict()),
                         'total_record': self.get_queryset().count(),
+                        'query': self.request.META['QUERY_STRING'],
                         'entity': self.entity or '',
                         'title': self.entity.split(',')[1].title() if self.entity else 'Title',
                         'results_renderer': results_renderer(context[self.context_object_name]),

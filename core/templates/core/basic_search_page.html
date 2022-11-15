@@ -36,7 +36,9 @@
 
             <div id="query-result" class="col col--2of3">
                 {% if total_record == 0 %}
-                <h2>No results</h2>
+                    {% if query %}
+                        <h2>No results</h2>
+                    {% endif %}
                 {% else %}
                 <h2>{{ total_record | floatformat:'g' }} {{ total_record|pluralize:entity }} found</h2>
 

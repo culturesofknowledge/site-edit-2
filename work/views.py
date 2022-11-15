@@ -952,8 +952,6 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         ]
 
     def get_queryset(self):
-        queryset = CofkUnionQueryableWork.objects.all()
-
         field_fn_maps = {}
 
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
@@ -971,7 +969,9 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         )
 
         if queries:
-            queryset = queryset.filter(query_utils.all_queries_match(queries))
+            queryset = CofkUnionQueryableWork.objects.filter(query_utils.all_queries_match(queries))
+        else:
+            return CofkUnionQueryableWork.objects.none()
 
         if sort_by := self.get_sort_by():
             queryset = queryset.order_by(sort_by)
