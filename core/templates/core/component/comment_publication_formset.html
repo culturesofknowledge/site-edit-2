@@ -2,33 +2,33 @@
 
 {% load cl_filters %}
 {{ comment_formset.management_form }}
-<fieldset>
-    <legend
-            {% if header_property %}
-                {{ header_property }}
+
+{% with header_id=header_id|default:'header_comment' %}
+    <fieldset>
+        <legend
+                id="{{ header_id }}"
+                class="{{ header_class|default:'toc-item' }}"
+        >
+            {% if comment_title %}
+                {{ comment_title }}
             {% else %}
-                id="header_comment" class="toc-item"
+                Notes
             {% endif %}
-    >
-        {% if comment_title %}
-            {{ comment_title }}
-        {% else %}
-            Notes
-        {% endif %}
-    </legend>
-    {% for form in comment_formset|reverse_list %}
-        <div>
-            <label id="header_comment_{{ forloop.counter0 }}" class="toc-sub-item"  >
-                {% if forloop.first %}
-                    New note:
-                {% else %}
-                    Existing note:
-                {% endif %}
-            </label>
-            {{ form.comment }}
-            {{ form.comment_id }}
-            {{ form.record_tracker_label }}
-            <div class="ref-publication-row" textbox_id="{{ form.comment.id_for_label }}"></div>
-        </div>
-    {% endfor %}
-</fieldset>
+        </legend>
+        {% for form in comment_formset|reverse_list %}
+            <div>
+                <label id="{{ header_id }}_{{ forloop.counter0 }}" class="toc-sub-item">
+                    {% if forloop.first %}
+                        New note
+                    {% else %}
+                        Existing note
+                    {% endif %}
+                </label>
+                {{ form.comment }}
+                {{ form.comment_id }}
+                {{ form.record_tracker_label }}
+                <div class="ref-publication-row" textbox_id="{{ form.comment.id_for_label }}"></div>
+            </div>
+        {% endfor %}
+    </fieldset>
+{% endwith %}

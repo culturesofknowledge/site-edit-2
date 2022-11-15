@@ -30,7 +30,7 @@ function build_table_of_content_ui() {
     toc_btn.on('click', toggle_table_of_content);
 
 
-    let title = $('<h3>Table of Content</h3>')
+    let title = $('<button>Table of Content</button>')
     title.on('click', toggle_table_of_content);
 
     let body = $('<div id="toc-body" class="flex-col">')

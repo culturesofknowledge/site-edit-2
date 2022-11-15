@@ -4,7 +4,7 @@
 {% block tabcontent %}
     <span>You can have the following summary sent to you by email as a spreadsheet TODO <!-- KTODO --></span>
 
-    <h2>General:</h2>
+    <h2 id="header_general" class="toc-item">General</h2>
     <div class="overview-table">
         <span class="col-label">Work ID:</span>
         <span> {{ work.iwork_id }}  </span>
@@ -21,7 +21,7 @@
         </span>
     </div>
 
-    <h2>Date of work:</h2>
+    <h2 id="header_date" class="toc-item">Date of work</h2>
     <div class="overview-table">
         <span class="col-label">Date of work as marked:</span>
         <span> {{ work.date_of_work_as_marked }} </span>
@@ -71,7 +71,7 @@
     </div>
 
 
-    <h2>Authors/senders:</h2>
+    <h2 id="header_author" class="toc-item">Authors/senders</h2>
     <div class="overview-table">
         <span class="col-label">Authors (standard format):</span>
         <ul class="no-margin">
@@ -102,7 +102,7 @@
     </div>
 
 
-    <h2>Addressees:</h2>
+    <h2 id="header_addressees" class="toc-item">Addressees</h2>
     <div class="overview-table">
         <span class="col-label">Recipients (standard format):</span>
         <ul class="no-margin">
@@ -129,7 +129,7 @@
 
     </div>
 
-    <h2>Replies:</h2>
+    <h2 id="header_replies" class="toc-item">Replies</h2>
     <div class="overview-table">
         <span class="col-label">Reply to:</span>
         <ul class="no-margin">
@@ -142,7 +142,7 @@
     </div>
 
 
-    <h2>Place of origin</h2>
+    <h2 id="header_place" class="toc-item">Place of origin</h2>
     <div class="overview-table">
         <span class="col-label">Place from which sent (standard format):</span>
         <span>
@@ -161,7 +161,7 @@
     </div>
 
 
-    <h2>Destination </h2>
+    <h2 id="header_destination" class="toc-item">Destination </h2>
     <div class="overview-table">
         <span class="col-label">Place to which sent (standard format):</span>
         <span>
@@ -180,7 +180,7 @@
     </div>
 
 
-    <h2>Language and content</h2>
+    <h2 id="header_language" class="toc-item">Language and content</h2>
     <div class="overview-table">
         <span class="col-label">Language of work:</span>
         <span>
@@ -227,7 +227,7 @@
 
 
     {% if manif_set %}
-        <h2>Manifestations</h2>
+        <h2 id="header_manif" class="toc-item">Manifestations</h2>
     {% endif %}
     {% for m in manif_set %}
         <div class="overview-table">
@@ -279,7 +279,7 @@
     {% endfor %}
 
 
-    <h2>Further details and links</h2>
+    <h2 id="header_further_details" class="toc-item">Further details and links</h2>
     <div class="overview-table">
         <span class="col-label">General notes:</span>
         <span>
@@ -299,7 +299,7 @@
         </ul>
     </div>
 
-    <h2>System information</h2>
+    <h2 id="header_system_info" class="toc-item">System information</h2>
     <div class="overview-table">
         <span class="col-label">Alternative work ID (for internal system use):</span>
         <span> {{ work.work_id }} </span>

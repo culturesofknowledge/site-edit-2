@@ -5,6 +5,7 @@
 {% block head %}
     <script src="{% static 'location/js/init_loc_form.js' %}" defer></script>
     <script src="{% static 'core/js/ref_publication_service.js' %}" defer></script>
+    <script src="{% static 'core/js/table_of_content_service.js' %}" defer></script>
     <script defer>
 
         $(function () {
@@ -14,6 +15,7 @@
                 'GeoNames', 'TGN', 'Wikidata ID', 'Wikipeda',
             ]);
             setup_checkbox_position()
+            setup_table_of_content();
         })
     </script>
 {% endblock %}
@@ -27,7 +29,7 @@
                 {% csrf_token %}
                 <h1>Location </h1>
                 <fieldset>
-                    <legend>{{ loc_form.form_title__ }}</legend>
+                    <legend id="header_init_{{ forloop.counter0 }}" class="toc-item">{{ loc_form.form_title__ }}</legend>
                     {{ loc_form }}
                 </fieldset>
 
@@ -48,13 +50,6 @@
                     <input type="submit" value="Submit">
                 </div>
             </form>
-            <div class="flex-col fixed-right-bottom">
-                <h4>Table of content</h4>
-                <a href="#header_location">Location</a>
-                <a href="#header_researcher_note">Researcher' note</a>
-                <a href="#header_resource">Resource</a>
-                <a href="#header_image">Image</a>
-            </div>
         </div>
     </div>
     <!-- KTODO delete record button >

@@ -1,6 +1,7 @@
 <!-- remember to import auto_date_calendar.js and run setup_auto_calendar -->
+{% with header_id='header_'|add:name %}
 <fieldset id="{{ autodate_id }}" class="autodate-div">
-    <legend>{{ name|capfirst }} date</legend>
+    <legend id="{{ header_id }}" class="toc-item">{{ name|capfirst }} date</legend>
     <label>Date of {{ name }} as marked:</label>
     {{ date_as_marked }}
 
@@ -9,7 +10,7 @@
     </div>
 
     <fieldset>
-        <legend>Date of {{ name }} in standard format</legend>
+        <legend id="{{ header_id|add:'_date' }}" class="toc-sub-item">Date of {{ name }} in standard format</legend>
         <div class="margin-bottom">
             <div class="is-range-div">
                 {{ is_range }}
@@ -88,5 +89,6 @@
 
     {% include "person/component/issues_with_date.html" with title='Issues with date of '|add:name|add:':'  inferred=inferred  uncertain=uncertain  approx=approx %}
 
-    {% include "core/component/comment_publication_formset.html" with comment_formset=date_comment_formset comment_title='Notes on '|add:name|add:' date' %}
+    {% include "core/component/comment_publication_formset.html" with comment_formset=date_comment_formset comment_title='Notes on '|add:name|add:' date' header_id=header_id|add:'_comment' header_class="toc-sub-item" %}
 </fieldset>
+{% endwith %}
