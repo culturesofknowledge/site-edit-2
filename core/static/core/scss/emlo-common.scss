@@ -212,3 +212,18 @@ tr.selectable_entry:hover {
 .autodate-div .from-div {
   margin-right: 20px;
 }
+
+#toc-body {
+  max-width: 400px;
+  background-color: #DCDFE5;
+  font-size: $typescale-5a;
+
+  li {
+    font-size: $typescale-6;
+  }
+
+  .toc-cur-item {
+    font-weight: bold;
+  }
+
+}

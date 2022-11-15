@@ -5,7 +5,13 @@ Remember call setup_url_checker, setup_standtext functions
 {{ res_formset.management_form }}
 {% for form in res_formset|reverse_list %}
     <fieldset>
-        <legend>
+        <legend
+                {% if header_property %}
+                    {{ header_property }}
+                {% else %}
+                    id="header_resource" class="toc-item"
+                {% endif %}
+        >
             {% if forloop.first %}
                 Add a new resource
             {% else %}

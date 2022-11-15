@@ -825,4 +825,13 @@ tr.selectable_entry:hover {
 .autodate-div .from-div {
   margin-right: 20px; }
 
+#toc-body {
+  max-width: 400px;
+  background-color: #DCDFE5;
+  font-size: 1em; }
+  #toc-body li {
+    font-size: 0.833em; }
+  #toc-body .toc-cur-item {
+    font-weight: bold; }
+
 /*# sourceMappingURL=main.css.map */
