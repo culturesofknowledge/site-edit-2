@@ -1,0 +1,16 @@
+#toc-body {
+  max-width: 400px;
+  background-color: #DCDFE5;
+  font-size: $typescale-5a;
+  padding: 1em;
+  min-width: 260px;
+
+  li {
+    font-size: $typescale-6;
+  }
+
+  .toc-cur-item {
+    font-weight: bold;
+  }
+
+}

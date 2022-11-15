@@ -2,7 +2,13 @@
 
 {% load cl_filters %}
 <div>
-    <h1 id="header_image">Images: </h1>
+    <h1
+            {% if header_property %}
+                {{ header_property }}
+            {% else %}
+                id="header_image" class="toc-item"
+            {% endif %}
+    >Images</h1>
     <div>
         Copyright law must be respected at all times. You must ensure that all necessary permissions
         have been
@@ -39,7 +45,13 @@
 
 
         <fieldset>
-            <legend>
+            <legend
+                    {% if header_property %}
+                        {{ header_property }}
+                    {% else %}
+                        id="header_image" class="sub-toc-item"
+                    {% endif %}
+            >
                 {% if forloop.first %}
                     Enter new image details:
                 {% else %}

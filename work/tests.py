@@ -255,7 +255,7 @@ class WorkFormTests(EmloSeleniumTestCase):
         self.click_submit()
 
         # assert work object
-        manif_id = re.findall(r'/work/form/manif/(\d+)/([^/]+)', self.selenium.current_url)
+        manif_id = re.findall(r'/work/form/manif/(\d+)/([^/#]+)', self.selenium.current_url)
         self.assertTrue(manif_id)
         manif_id = manif_id[0][1]
         manif = CofkUnionManifestation.objects.filter(manifestation_id=manif_id).first()

@@ -16,8 +16,8 @@
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
 
-                <fieldset id="header_person">
-                    <legend>Core fields and editors' notes:</legend>
+                <fieldset>
+                    <legend id="header_person" class="toc-item">Core fields and editors' notes</legend>
                     <div class="margin-bottom">
                         <label>Primary name*</label>
                         {{ person_form.foaf_name }}
@@ -45,8 +45,8 @@
                 </fieldset>
 
 
-                <fieldset id="header_synonyms">
-                    <legend>Synonyms:</legend>
+                <fieldset>
+                    <legend id="header_synonyms" class="toc-item">Synonyms</legend>
                     <div class="margin-bottom">
                         <label>Alternative names and spellings:</label>
                         {{ person_form.skos_altlabel }}
@@ -59,8 +59,8 @@
                     </div>
 
                 </fieldset>
-                <fieldset id="header_roles">
-                    <legend>Roles/titles:</legend>
+                <fieldset>
+                    <legend id="header_roles" class="toc-item">Roles/titles</legend>
                     <div class="choices-container">
                         {% include "core/component/common_form_choices.html" with label_text='Professional categories' choices_field=person_form.roles_titles %}
                     </div>
@@ -76,8 +76,8 @@
                     </small>
                 </fieldset>
 
-                <fieldset id="header_dates">
-                    <legend>Dates:</legend>
+                <fieldset>
+                    <legend id="header_dates" class="toc-item">Dates</legend>
 
                     {% include "person/component/date_fields.html" with title_name='date of birth' calendar=person_form.date_of_birth_calendar  is_range=person_form.date_of_birth_is_range  inferred=person_form.date_of_birth_inferred  uncertain=person_form.date_of_birth_uncertain  approx=person_form.date_of_birth_approx day_field=person_form.date_of_birth_day month_field=person_form.date_of_birth_month year_field=person_form.date_of_birth_year %}
                     {% include "person/component/date_fields.html" with title_name='date of death' calendar=person_form.date_of_death_calendar  is_range=person_form.date_of_death_is_range  inferred=person_form.date_of_death_inferred  uncertain=person_form.date_of_death_uncertain  approx=person_form.date_of_death_approx day_field=person_form.date_of_death_day month_field=person_form.date_of_death_month year_field=person_form.date_of_death_year %}
@@ -85,8 +85,8 @@
 
                 </fieldset>
 
-                <fieldset id="header_further_reading">
-                    <legend>Further reading:</legend>
+                <fieldset>
+                    <legend id="header_further_reading" class="toc-item">Further reading</legend>
                     <div class="margin-bottom">
                         <label>Bibliographical information:</label>
                         {{ person_form.further_reading }}
@@ -102,19 +102,16 @@
                 {% include "core/component/actionbox.html" %}
 
             </form>
-            <div class="flex-col fixed-right-bottom">
-                <h4>Table of contents</h4>
-                <a href="#header_person">Notes</a>
-                <a href="#header_synonyms">Synonyms</a>
-                <a href="#header_roles">Roles</a>
-                <a href="#header_dates">Dates</a>
-                <a href="#header_further_reading">Further reading</a>
-                {% block more_table_of_content %}
-                {% endblock %}
-            </div>
 
         </div>
     </div>
 
+
+    <script src="{% static 'core/js/table_of_content_service.js' %}" defer></script>
+    <script>
+    $(function (){
+        setup_table_of_content();
+    });
+    </script>
 
 {% endblock %}

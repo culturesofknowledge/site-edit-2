@@ -5,8 +5,8 @@
     {% include "work/component/place_fieldset.html" with name='destination' marked=places_form.destination_as_marked selected_id=places_form.selected_destination_location_id inferred=places_form.destination_inferred uncertain=places_form.destination_uncertain comment_formset=destination_comment_formset %}
 
     <fieldset>
-        <legend>Route</legend>
-        {% include "core/component/comment_publication_formset.html" with comment_formset=route_comment_formset comment_title='Route from origin to destination' %}
+        <legend id="header_route" class="toc-item">Route</legend>
+        {% include "core/component/comment_publication_formset.html" with comment_formset=route_comment_formset comment_title='Route from origin to destination' header_id='header_route_comment' header_class='toc-sub-item' %}
     </fieldset>
 
 

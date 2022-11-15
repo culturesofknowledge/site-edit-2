@@ -31,51 +31,51 @@
         {% endif %}
     </fieldset>
 
-    <fieldset id="header_related_others">
-        <legend>Relationships with others</legend>
+    <fieldset>
+        <legend id="header_related_others" class="toc-item">Relationships with others</legend>
 
         <fieldset>
-            <legend>Parents</legend>
+            <legend id="header_parents" class="toc-sub-item">Parents</legend>
             {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_parent.update_formset new_form=recref_parent.new_form add_label='Add parent:' no_date=True %}
         </fieldset>
 
         <fieldset>
-            <legend>Children</legend>
+            <legend id="header_children" class="toc-sub-item">Children</legend>
             {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_children.update_formset new_form=recref_children.new_form add_label='Add child:' no_date=True %}
         </fieldset>
 
         <fieldset>
-            <legend>Employers</legend>
+            <legend id="header_employers" class="toc-sub-item">Employers</legend>
             {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_employer.update_formset new_form=recref_employer.new_form add_label='Add employer:' %}
         </fieldset>
 
         <fieldset>
-            <legend>Employees</legend>
+            <legend id="header_employees" class="toc-sub-item">Employees</legend>
             {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_employee.update_formset new_form=recref_employee.new_form add_label='Add employee:' %}
         </fieldset>
 
         <fieldset>
-            <legend>Teachers</legend>
+            <legend id="header_teachers" class="toc-sub-item">Teachers</legend>
             {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_teacher.update_formset new_form=recref_teacher.new_form add_label='Add teacher:' %}
         </fieldset>
 
         <fieldset>
-            <legend>Students</legend>
+            <legend id="header_students" class="toc-sub-item">Students</legend>
             {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_student.update_formset new_form=recref_student.new_form add_label='Add student:' %}
         </fieldset>
 
         <fieldset>
-            <legend>Patrons</legend>
+            <legend id="header_patrons" class="toc-sub-item">Patrons</legend>
             {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_patron.update_formset new_form=recref_patron.new_form add_label='Add patron:' %}
         </fieldset>
 
         <fieldset>
-            <legend>Protégés</legend>
+            <legend id="header_proteges" class="toc-sub-item">Protégés</legend>
             {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_protege.update_formset new_form=recref_protege.new_form add_label='Add protege:' %}
         </fieldset>
 
         <fieldset>
-            <legend>Other relationships</legend>
+            <legend id="header_other_relationships" class="toc-sub-item">Other relationships</legend>
             {% include "core/component/common_multi_rel_recref_formset.html" with multi_rel_recref_formset=person_other_formset  recref_type='person' id_field=person_form.selected_other_id label_add='Add another related person:' %}
         </fieldset>
 

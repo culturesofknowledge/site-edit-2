@@ -2,7 +2,7 @@
 {% block tabcontent %}
     <h1>Work - Correspondents</h1>
     <fieldset>
-        <legend>Authors / senders</legend>
+        <legend id="header_author" class="toc-item">Authors / senders</legend>
 
         {% include "core/component/common_multi_rel_recref_formset.html" with multi_rel_recref_formset=author_formset recref_type='person' id_field=corr_form.selected_author_id label_add='Add another author/sender:' %}
 
@@ -15,12 +15,12 @@
 
         {% include "core/component/common_checkbox.html" with field=corr_form.authors_uncertain  name='Authors / senders uncertain' %}
 
-        {% include "core/component/comment_publication_formset.html" with comment_formset=author_comment_formset comment_title='Notes on authors/senders' %}
+        {% include "core/component/comment_publication_formset.html" with comment_formset=author_comment_formset comment_title='Notes on authors/senders' header_id='header_comment_author' header_class='toc-sub-item' %}
     </fieldset>
 
 
     <fieldset>
-        <legend>Addressees</legend>
+        <legend id="header_addressees" class="toc-item">Addressees</legend>
 
         {% include "core/component/common_multi_rel_recref_formset.html" with multi_rel_recref_formset=addressee_formset recref_type='person' id_field=corr_form.selected_addressee_id label_add='Add another addressee:'%}
 
@@ -33,22 +33,22 @@
 
         {% include "core/component/common_checkbox.html" with field=corr_form.addressees_uncertain  name='Addressees uncertain' %}
 
-        {% include "core/component/comment_publication_formset.html" with comment_formset=addressee_comment_formset comment_title='Notes on addressees' %}
+        {% include "core/component/comment_publication_formset.html" with comment_formset=addressee_comment_formset comment_title='Notes on addressees' header_id='header_comment_addressee' header_class='toc-sub-item' %}
 
     </fieldset>
 
     <fieldset>
-        <legend>Earlier letters:</legend>
+        <legend id="header_earlier_letter" class="toc-item">Earlier letter</legend>
         {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_earlier_letter.update_formset new_form=recref_earlier_letter.new_form add_label='Add letter answered by this one:' no_date=True %}
     </fieldset>
 
     <fieldset>
-        <legend>Later letter</legend>
+        <legend id="header_later_letter" class="toc-item">Later letter</legend>
         {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_later_letter.update_formset new_form=recref_later_letter.new_form add_label='Add reply to this:' no_date=True %}
     </fieldset>
 
     <fieldset>
-        <legend>Matching letter</legend>
+        <legend id="header_matching" class="toc-item">Matching letter</legend>
         {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_matching_letter.update_formset new_form=recref_matching_letter.new_form add_label='Add another match:' no_date=True %}
     </fieldset>
 

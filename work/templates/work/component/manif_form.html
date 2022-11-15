@@ -1,7 +1,7 @@
 {% load static %}
 
 <fieldset>
-    <legend>Basic details</legend>
+    <legend id="header_basic_details" class="toc-item">Basic details</legend>
     <label>Document type:</label>
     {{ manif_form.manifestation_type }}
 
@@ -23,7 +23,7 @@
 
 
 <fieldset>
-    <legend>Former owners</legend>
+    <legend id="header_former_owners" class="toc-item">Former owners</legend>
 
     {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_former.update_formset new_form=recref_former.new_form add_label='Add former owner:' %}
 
@@ -31,7 +31,7 @@
 
 
 <fieldset>
-    <legend>Enclosures (letters and other types of enclosure)</legend>
+    <legend id="header_enclosures" class="toc-item">Enclosures (letters and other types of enclosure)</legend>
     <span>
         Note: when entering enclosure details, please treat any work/manifestation on the Cultures of Knowledge system as a letter.
     </span>
@@ -49,14 +49,14 @@
 
 
 <fieldset>
-    <legend>Letters in which this one was enclosed</legend>
+    <legend id="header_letters" class="toc-item">Letters in which this one was enclosed</legend>
 
     {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosed_manif.update_formset new_form=recref_enclosed_manif.new_form add_label='Add another enclosing letter:' hide_create_btn=True no_date=True %}
 
 </fieldset>
 
 <fieldset>
-    <legend> Paper and markings:</legend>
+    <legend id="header_paper_and_markings" class="toc-item"> Paper and markings</legend>
 
     <label>Letter opened:</label>
     {{ manif_form.opened }}
@@ -114,7 +114,7 @@
 
 
 <fieldset>
-    <legend>Language of manifestation:</legend>
+    <legend id="header_language" class="toc-item">Language of manifestation</legend>
     {{ manif_form.manifestation_is_translation }}
     <label for="{{ manif_form.manifestation_is_translation.id_for_label }}"> Manifestation is translation </label>
     <small>
@@ -127,7 +127,7 @@
 </fieldset>
 
 <fieldset>
-    <legend>Incipit and explicit:</legend>
+    <legend id="header_incipit" class="toc-item">Incipit and explicit</legend>
 
     <label>Manifestation incipit</label>
     {{ manif_form.manifestation_incipit }}
@@ -141,7 +141,7 @@
 
 
 <fieldset>
-    <legend>Scribe/hand</legend>
+    <legend id="header_scribe" class="toc-item">Scribe/hand</legend>
 
     <div class="multi_rel_recref_container">
         {{ scribe_recref_formset.management_form }}

@@ -4,6 +4,12 @@
 {% block head %}
     <script src="/static/core/js/recref_service.js"></script>
     <script src="{% static 'core/js/ref_publication_service.js' %}" defer></script>
+    <script src="{% static 'core/js/table_of_content_service.js' %}" defer></script>
+    <script>
+        $(function (){
+            setup_table_of_content();
+        });
+    </script>
 {% endblock %}
 
 {% block content %}
