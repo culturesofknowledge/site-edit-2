@@ -88,7 +88,7 @@ class EmloSeleniumTestCase(StaticLiveServerTestCase):
         self.selenium.get(self.get_url_by_viewname(vname, *args, **kwargs))
 
     def click_submit(self):
-        self.selenium.find_element(By.CSS_SELECTOR, 'input[type=submit]').click()
+        self.selenium.find_element(By.CSS_SELECTOR, 'button[type=submit].sticky-btn').click()
 
     def js_click(self, selector):
         script = f"document.querySelector('{selector}').click(); "
@@ -129,7 +129,7 @@ def simple_test_create_form(selenium_test: EmloSeleniumTestCase,
                             model_class: Type[Model]):
     org_size = model_class.objects.count()
 
-    submit_btn = selenium_test.selenium.find_element(By.CSS_SELECTOR, 'input[type=submit]')
+    submit_btn = selenium_test.selenium.find_element(By.CSS_SELECTOR, '[type=submit]')
     submit_btn.click()
 
     # check new should be created in db

@@ -56,7 +56,7 @@ class PersonInitFormTest(EmloSeleniumTestCase):
 
         m2m_tester.fill()
 
-        self.selenium.find_element(By.CSS_SELECTOR, 'input[type=submit]').click()
+        self.click_submit()
 
         # assert result after form submit
         pson_a.refresh_from_db()
