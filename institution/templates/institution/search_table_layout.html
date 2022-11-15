@@ -5,8 +5,16 @@
         <!-- KTODO add more fields -->
         <th>ID</th>
         <th>Name</th>
+        <th>Alternative institution names</th>
         <th>City</th>
+        <th>Alternative city names</th>
         <th>Country</th>
+        <th>Alternative country names</th>
+        <th>Related resources</th>
+        <th>Editors' notes</th>
+        <th>Images</th>
+        <!--<th>Merge</th>-->
+        <th>Change timestamp</th>
     </tr>
     </thead>
     <tbody>
@@ -23,10 +31,39 @@
                 {{ r.institution_name }}
             </td>
             <td>
+                {% if r.institution_synonyms %}
+                {{ r.institution_synonyms }}
+                {% endif %}
+            </td>
+            <td>
                 {{ r.institution_city }}
             </td>
             <td>
+                {% if r.institution_city_synonyms %}
+                {{ r.institution_city_synonyms }}
+                {% endif %}
+            </td>
+            <td>
                 {{ r.institution_country }}
+            </td>
+            <td>
+                {% if r.institution_country_synonyms %}
+                {{ r.institution_country_synonyms }}
+                {% endif %}
+            </td>
+            <td>
+                {{ r.resource }}
+            </td>
+            <td>
+                {% if r.editors_notes %}
+                {{ r.editors_notes }}
+                {% endif %}
+            </td>
+            <td>
+                ?
+            </td>
+            <td>
+                {{ r.change_timestamp }}
             </td>
         </tr>
     {% endfor %}

@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import Callable, Iterable, Type
 
 from django.contrib.auth.decorators import login_required
@@ -13,7 +14,7 @@ from institution.forms import InstitutionForm, GeneralSearchFieldset
 from institution.models import CofkUnionInstitution
 
 
-class InstSearchView(LoginRequiredMixin, DefaultSearchView):
+class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
 
     @property
     def entity(self) -> str:
@@ -40,10 +41,17 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView):
 
         # queries for like_fields
         field_fn_maps = {
-            'institution_id': query_utils.create_eq_query,
+            #'institution_id': query_utils.create_eq_query,
         }
 
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
+        queries.extend(
+            query_utils.create_queries_by_lookup_field(self.request_data, [
+                'institution_name', 'institution_synonyms', 'editors_notes', 'institution_city',
+                'institution_city_synonyms', 'institution_country', 'institution_country_synonyms',
+                'resource', 'change_user', 'institution_id'
+            ])
+        )
 
         if queries:
             queryset = queryset.filter(query_utils.all_queries_match(queries))
