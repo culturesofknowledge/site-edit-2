@@ -102,43 +102,6 @@ class OrganisationRecrefConvertor:
         return 'location_id'
 
 
-class PersonRecrefHandler(view_utils.MultiRecrefHandler):
-    # KTODO use view_utils.MultiRecrefAdapterHandler
-
-    def __init__(self, request_data, person_type: str,
-                 person: CofkUnionPerson,
-                 name=None, ):
-        def _find_rec_name_by_id(target_id) -> Optional[str]:
-            record = CofkUnionPerson.objects.get(pk=target_id)
-            return record and record.foaf_name
-
-        initial_list = (m.__dict__ for m in _get_other_persons_by_type(person, person_type))
-        initial_list = (recref_utils.convert_to_recref_form_dict(r, 'related_id', _find_rec_name_by_id)
-                        for r in initial_list)
-
-        name = name or person_type
-        super().__init__(request_data, name=name, initial_list=initial_list,
-                         recref_form_class=PersonRecrefForm)
-        self.person_type = person_type
-
-    @property
-    def recref_class(self) -> Type[models.Model]:
-        return CofkPersonPersonMap
-
-    def create_recref_by_new_form(self, target_id, parent_instance) -> Optional[models.Model]:
-        recref: CofkPersonPersonMap = CofkPersonPersonMap()
-        recref.related = CofkUnionPerson.objects.get(pk=target_id)
-        if not recref.related:
-            # KTODO can we put it to validate function?
-            log.warning(f"person not found -- {target_id} ")
-            return None
-
-        recref.person = parent_instance
-        recref.relationship_type = 'member_of'
-        recref.person_type = self.person_type  # KTODO should use relationship_type instance
-        return recref
-
-
 def _get_other_persons_by_type(person: CofkUnionPerson, person_type: str) -> Iterable[CofkPersonPersonMap]:
     persons = (p for p in person.active_relationships.iterator()
                if p.person_type == person_type)
