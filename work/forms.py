@@ -1,21 +1,18 @@
 import logging
-from abc import ABC
-from typing import Iterable, Type
+from typing import Type
 
 from django import forms
-from django.db.models import TextChoices, Choices, Model
+from django.db.models import TextChoices, Model
 from django.forms import CharField, Field
 
 from core import constant
 from core.constant import DEFAULT_EMPTY_DATE_STR, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO
-from core.forms import get_peron_full_form_url_by_pk
-from core.helper import view_utils, data_utils, form_utils, widgets_utils
-from core.helper.form_utils import SelectedRecrefField
-from core.helper.view_utils import RecrefFormAdapter
+from core.helper import form_utils
+from core.helper import widgets_utils
+from core.helper.common_recref_adapter import RecrefFormAdapter, TargetPersonRecrefAdapter
+from core.helper.form_utils import SelectedRecrefField, TargetPersonMRRForm
 from core.models import Recref
 from manifestation.models import CofkUnionManifestation, CofkManifPersonMap
-from person import person_utils
-from person.models import CofkUnionPerson
 from work.models import CofkCollectWork, CofkUnionWork, CofkWorkPersonMap
 
 log = logging.getLogger(__name__)
@@ -336,10 +333,6 @@ class CatalogueForm(forms.Form):
     catalogue = forms.CharField(required=False, widget=forms.Select())
 
 
-class UndefinedRelationChoices(TextChoices):
-    UNDEFINED = 'undefined', 'Undefined'
-
-
 class AuthorRelationChoices(TextChoices):
     CREATED = REL_TYPE_CREATED, 'Creator'
     SENT = constant.REL_TYPE_SENT, 'Sender'
@@ -356,125 +349,9 @@ class ScribeRelationChoices(TextChoices):
     PARTLY_HANDWROTE = 'partly_handwrote', 'Partly handwrote'
 
 
-class RelationField(CharField):
-
-    def __init__(self, choices_class: Type[Choices], *args, **kwargs):
-        self.choices_class = choices_class
-        widget = forms.CheckboxSelectMultiple(
-            choices=self.choices_class.choices
-        )
-        super().__init__(*args, required=False, widget=widget, **kwargs)
-
-    def prepare_value(self, value):
-        """
-        value: should be list of relation_types
-        """
-        value: list[str] = super().prepare_value(value)
-        selected_values = set(value)
-        possible_values = set(self.choices_class.values)
-
-        unexpected_values = selected_values - possible_values
-        if unexpected_values:
-            logging.warning(f'unexpected relationship_type [{unexpected_values}] ')
-
-        selected_values = selected_values & possible_values
-        return list(selected_values)
-
-    def clean(self, user_input_values):
-        return user_input_values  # return as list
-
-
-class MultiRelRecrefForm(forms.Form):
-    template_name = 'work/component/multi_rel_recref_form.html'  # KTODO rename to multi_rel_recref_form.html
-
-    name = forms.CharField(required=False)
-    target_id = forms.CharField(required=False, widget=forms.HiddenInput())
-    relationship_types = RelationField(UndefinedRelationChoices)
-
-    @classmethod
-    def create_recref_adapter(cls, *args, **kwargs) -> RecrefFormAdapter:
-        raise NotImplementedError()
-
-    @classmethod
-    def get_rel_type_choices_values(cls):
-        return cls.base_fields['relationship_types'].choices_class.values
-
-    @property
-    def target_url(self):
-        raise NotImplementedError()
-
-    @classmethod
-    def get_target_id(cls, recref: Recref):
-        raise NotImplementedError()
-
-    def find_recref_list_by_target_id(self, host_model: Model, target_id):
-        raise NotImplementedError()
-
-    def create_or_delete(self, host_model: Model, username):
-        """
-        create or delete
-        """
-        if not self.is_valid():
-            logging.warning(f'[{self.__class__.__name__}] do nothing is invalid')
-            return
-
-        recref_adapter = self.create_recref_adapter(host_model)
-        data: dict = self.cleaned_data
-        selected_rel_types = set(data['relationship_types'])
-
-        org_maps: list[Recref] = list(self.find_recref_list_by_target_id(host_model, data['target_id']))
-
-        # delete unchecked relation
-        _maps = (m for m in org_maps if m.relationship_type not in selected_rel_types)
-        for m in _maps:
-            log.info(f'delete [{m.relationship_type}][{m}]')
-            m.delete()
-
-        # add checked relation
-        new_types = selected_rel_types - {m.relationship_type for m in org_maps}
-        target_model = recref_adapter.find_target_instance(data['target_id'])
-        for new_type in new_types:
-            recref = recref_adapter.upsert_recref(new_type, host_model, target_model)
-            recref.update_current_user_timestamp(username)
-            recref.save()
-            log.info(f'add new [{target_model}][{recref}]')
-
-    @classmethod
-    def create_formset_by_records(cls, post_data,
-                                  records: Iterable[Recref], prefix):
-        initial_list = []
-        recref_adapter = cls.create_recref_adapter()
-        records = (r for r in records if r.relationship_type in cls.get_rel_type_choices_values())
-        for person_id, recref_list in data_utils.group_by(records, lambda r: cls.get_target_id(r)).items():
-            recref_list: list[Recref]
-            initial_list.append({
-                'name': recref_adapter.find_target_display_name_by_id(
-                    recref_adapter.get_target_id(recref_list[0])
-                ),
-                'target_id': person_id,
-                'relationship_types': {m.relationship_type for m in recref_list},
-            })
-
-        formset = view_utils.create_formset(
-            cls, post_data=post_data, prefix=prefix,
-            initial_list=initial_list,
-            extra=0,
-        )
-        return formset
-
-
-class TargetPersonRecrefForm(MultiRelRecrefForm):
-    @property
-    def target_url(self):
-        return get_peron_full_form_url_by_pk(self.initial.get('target_id'))
-
-    @classmethod
-    def get_target_id(cls, recref):
-        return recref.person_id
-
-
-class ManifPersonRecrefForm(TargetPersonRecrefForm):
-    relationship_types = RelationField(ScribeRelationChoices)
+class ManifPersonMRRForm(TargetPersonMRRForm):
+    relationship_types = ScribeRelationChoices
+    no_date = True
 
     @classmethod
     def create_recref_adapter(cls, *args, **kwargs) -> RecrefFormAdapter:
@@ -487,7 +364,8 @@ class ManifPersonRecrefForm(TargetPersonRecrefForm):
         )
 
 
-class WorkPersonRecrefForm(TargetPersonRecrefForm):
+class WorkPersonMRRForm(TargetPersonMRRForm):
+    no_date = True
 
     @classmethod
     def create_recref_adapter(cls, *args, **kwargs) -> RecrefFormAdapter:
@@ -498,17 +376,6 @@ class WorkPersonRecrefForm(TargetPersonRecrefForm):
             person_id=target_id,
             relationship_type__in=self.get_rel_type_choices_values(),
         )
-
-
-class TargetPersonRecrefAdapter(view_utils.RecrefFormAdapter, ABC):
-    def find_target_display_name_by_id(self, target_id):
-        return person_utils.get_recref_display_name(self.find_target_instance(target_id))
-
-    def find_target_instance(self, target_id):
-        return CofkUnionPerson.objects.get(person_id=target_id)
-
-    def target_id_name(self):
-        return 'person_id'
 
 
 class WorkPersonRecrefAdapter(TargetPersonRecrefAdapter):
@@ -569,16 +436,16 @@ class ManifPersonRecrefAdapter(TargetPersonRecrefAdapter):
 #         pass
 
 
-class WorkAuthorRecrefForm(WorkPersonRecrefForm):
-    relationship_types = RelationField(AuthorRelationChoices)
+class WorkAuthorRecrefForm(WorkPersonMRRForm):
+    relationship_types = AuthorRelationChoices
 
 
-class WorkAddresseeRecrefForm(WorkPersonRecrefForm):
-    relationship_types = RelationField(AddresseeRelationChoices)
+class WorkAddresseeRecrefForm(WorkPersonMRRForm):
+    relationship_types = AddresseeRelationChoices
 
 
-description_help_text = "This is in the style 'DD Mon YYYY: Author/Sender (place) to"\
-                        " Addressee (place)', e.g. 8 Mar 1693: Bulkeley, Sir Richard"\
+description_help_text = "This is in the style 'DD Mon YYYY: Author/Sender (place) to" \
+                        " Addressee (place)', e.g. 8 Mar 1693: Bulkeley, Sir Richard" \
                         " (Dunlaven, County Wicklow) to Lister, Martin (Old Palace Yard, Westminster)."
 year_help_text = "Year in which work was created." \
                  " (Use 'is blank' option in Advanced Search to find works without year.)"
@@ -588,26 +455,26 @@ date_of_work_help_text = "To find works from a specified period, enter dates 'fr
                          " DD/MM/YYYY. Either end of the date-range may be left blank, e.g. <ul><li>From 1633'" \
                          " to find works dated from 1st January 1633 onwards</li><li>'To 1634' to find works dated up" \
                          " to 31st December 1634</li></ul>"
-sender_recipient_help_text = "Enter part or all of the name of either the author/sender or the"\
+sender_recipient_help_text = "Enter part or all of the name of either the author/sender or the" \
                              " addressee to find all letters either to or from a particular person."
 origin_destination_help_text = "The place to or from which a letter was sent, in standard modern format."
 places_from_searchable = 'The place from which a letter was sent, in standard modern format.'
 places_to_searchable = 'The place to which a letter was sent, in standard modern format.'
-flags_help_text = "May contain the words 'Date of work', 'Author/sender', 'Addressee', 'Origin' "\
+flags_help_text = "May contain the words 'Date of work', 'Author/sender', 'Addressee', 'Origin' " \
                   "and/or 'Destination', followed by 'INFERRED', 'UNCERTAIN' or, in the case of date," \
                   " 'APPROXIMATE'. E.g. Author/sender INFERRED."
-date_as_marked_help_text = "This field could contain the actual words marked within the "\
-                           "letter, such as 'ipsis Kalendis Decembribus C I. I. CCVI', or"\
+date_as_marked_help_text = "This field could contain the actual words marked within the " \
+                           "letter, such as 'ipsis Kalendis Decembribus C I. I. CCVI', or" \
                            " a modern researcher's notation such as 'n.d.'"
-manif_help_text = '<p>The Manifestations field contains a very brief summary of all the '\
-                  'manifestations of a work. This summary includes document type plus '\
-                  'either repository and shelfmark or printed edition details.</p><p><i>You can '\
-                  'search on both document type and repository at once if you wish, but '\
-                  'please remember, document type comes first in the summary, then '\
-                  'repository, so you need to enter your search terms in that same order. '\
-                  'Also, if entering multiple search terms, you need to separate them '\
-                  'using the wildcard % (percent-sign).</i></p>'\
-                  '<div>Document type:<select style="width: unset;"><option>Test</option></select></div>'\
+manif_help_text = '<p>The Manifestations field contains a very brief summary of all the ' \
+                  'manifestations of a work. This summary includes document type plus ' \
+                  'either repository and shelfmark or printed edition details.</p><p><i>You can ' \
+                  'search on both document type and repository at once if you wish, but ' \
+                  'please remember, document type comes first in the summary, then ' \
+                  'repository, so you need to enter your search terms in that same order. ' \
+                  'Also, if entering multiple search terms, you need to separate them ' \
+                  'using the wildcard % (percent-sign).</i></p>' \
+                  '<div>Document type:<select style="width: unset;"><option>Test</option></select></div>' \
                   '<div>Repository:<select style="width: unset;"><option>Test</option></select></div>'
 img_help_text = 'Contains filenames of any scanned images of manifestations.'
 abstr_help_text = 'Contains a summary of the contents of the work'
@@ -678,7 +545,7 @@ class CompactSearchFieldset(forms.Form):
     images = forms.CharField(required=False, help_text=img_help_text)
     images_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    manifestations = forms.CharField(required=False,  help_text=manif_help_text)
+    manifestations = forms.CharField(required=False, help_text=manif_help_text)
     manifestations_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     related_resources = forms.CharField(required=False)
@@ -821,7 +688,7 @@ class ExpandedSearchFieldset(forms.Form):
     general_notes = forms.CharField(required=False)
     general_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    original_catalogue = forms.CharField(required=False,  help_text=og_help_text)
+    original_catalogue = forms.CharField(required=False, help_text=og_help_text)
     original_catalogue_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     accession_code = forms.CharField(required=False, help_text=acc_help_text)

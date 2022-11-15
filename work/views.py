@@ -19,9 +19,12 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_MENTION_WORK
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, ResourceForm, LocRecrefForm
 from core.helper import view_utils, lang_utils, model_utils, recref_utils, query_utils, renderer_utils
+from core.helper.common_recref_adapter import RecrefFormAdapter, TargetResourceRecrefAdapter, TargetCommentRecrefAdapter
+from core.helper.form_utils import save_multi_rel_recref_formset
 from core.helper.lang_utils import LangModelAdapter, NewLangForm
-from core.helper.view_utils import DefaultSearchView, FullFormHandler, RecrefFormAdapter, \
-    ImageHandler, RecrefFormsetHandler, TargetCommentRecrefAdapter, TargetResourceRecrefAdapter, SubjectHandler
+from core.helper.recref_utils import create_recref_if_field_exist
+from core.helper.view_utils import DefaultSearchView, FullFormHandler, ImageHandler, RecrefFormsetHandler, \
+    SubjectHandler
 from core.models import Recref
 from institution import inst_utils
 from institution.models import CofkUnionInstitution
@@ -34,10 +37,12 @@ from person import person_utils
 from person.models import CofkUnionPerson
 from uploader.models import CofkUnionSubject, CofkLookupCatalogue
 from work import work_utils
-from work.forms import WorkPersonRecrefForm, WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
+from work.forms import WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \
-    ManifPersonRecrefAdapter, ManifPersonRecrefForm, ScribeRelationChoices, DetailsForm, WorkPersonRecrefAdapter, \
-    CatalogueForm, manif_type_choices, original_calendar_choices, CompactSearchFieldset, ExpandedSearchFieldset
+    ManifPersonRecrefAdapter, ScribeRelationChoices, \
+    DetailsForm, WorkPersonRecrefAdapter, \
+    CatalogueForm, manif_type_choices, original_calendar_choices, CompactSearchFieldset, ExpandedSearchFieldset, \
+    ManifPersonMRRForm
 from work.models import CofkWorkPersonMap, CofkUnionWork, CofkWorkCommentMap, CofkWorkWorkMap, \
     CofkWorkLocationMap, CofkWorkResourceMap, CofkUnionLanguageOfWork, CofkWorkSubjectMap, CofkUnionQueryableWork
 
@@ -373,7 +378,7 @@ class ManifFFH(BasicWorkFFH):
             recref_form_class=PersonRecrefForm,
             rel_type=REL_TYPE_FORMERLY_OWNED,
         )
-        self.scribe_recref_formset = ManifPersonRecrefForm.create_formset_by_records(
+        self.scribe_recref_formset = ManifPersonMRRForm.create_formset_by_records(
             request_data,
             self.safe_manif.cofkmanifpersonmap_set.iterator(),
             prefix='scribe'
@@ -482,7 +487,7 @@ class ManifFFH(BasicWorkFFH):
         create_recref_if_field_exist(self.manif_form, manif, request.user.username,
                                      selected_id_field_name='selected_scribe_id',
                                      rel_type=ScribeRelationChoices.HANDWROTE,
-                                     recref_adapter=ManifPersonRecrefForm.create_recref_adapter())
+                                     recref_adapter=ManifPersonMRRForm.create_recref_adapter())
         save_multi_rel_recref_formset(self.scribe_recref_formset, manif, request)
         self.img_handler.save(request)
 
@@ -606,22 +611,6 @@ class WorkLangModelAdapter(LangModelAdapter):
         m = CofkUnionLanguageOfWork()
         m.work_id = owner_id
         return m
-
-
-def create_recref_if_field_exist(form: BaseForm, work, username,
-                                 selected_id_field_name,
-                                 rel_type,
-                                 recref_adapter: RecrefFormAdapter,
-                                 ):
-    if not (_id := form.cleaned_data.get(selected_id_field_name)):
-        return
-
-    recref = recref_adapter.upsert_recref(rel_type,
-                                          parent_instance=work,
-                                          target_instance=recref_adapter.find_target_instance(_id),
-                                          username=username)
-    recref.save()
-    return recref
 
 
 def create_work_person_map_if_field_exist(form: BaseForm, work, username,
@@ -931,13 +920,6 @@ def return_quick_init(request, pk):
     )
 
 
-def save_multi_rel_recref_formset(multi_rel_recref_formset, work, request):
-    _forms = (f for f in multi_rel_recref_formset if f.has_changed())
-    for form in _forms:
-        form: WorkPersonRecrefForm
-        form.create_or_delete(work, request.user.username)
-
-
 class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
@@ -1086,7 +1068,7 @@ class WorkSubjectRecrefAdapter(RecrefFormAdapter):
         return 'subject_id'
 
 
-class WorkWorkRecrefAdapter(view_utils.RecrefFormAdapter, ABC):
+class WorkWorkRecrefAdapter(RecrefFormAdapter, ABC):
 
     def find_target_display_name_by_id(self, target_id):
         return find_work_rec_name(target_id)
@@ -1128,7 +1110,7 @@ class LaterLetterRecrefAdapter(WorkWorkRecrefAdapter):
         return 'work_from_id'
 
 
-class ManifManifRecrefAdapter(view_utils.RecrefFormAdapter, ABC):
+class ManifManifRecrefAdapter(RecrefFormAdapter, ABC):
 
     def find_target_display_name_by_id(self, target_id):
         return manif_utils.get_recref_display_name(self.find_target_instance(target_id))

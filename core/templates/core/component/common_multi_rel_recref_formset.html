@@ -1,0 +1,8 @@
+<div class="multi_rel_recref_container">
+    {{ multi_rel_recref_formset.management_form }}
+    {% for form in multi_rel_recref_formset %}
+        {{ form }}
+    {% endfor %}
+</div>
+
+{% include "core/component/recref.html" with recref_type=recref_type id_field=id_field label=label_add %}

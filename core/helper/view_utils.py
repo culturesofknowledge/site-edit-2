@@ -1,7 +1,6 @@
 import itertools
 import logging
 import os
-from abc import ABC
 from multiprocessing import Process
 from typing import Iterable, Type, Callable
 from typing import NoReturn
@@ -25,70 +24,16 @@ from core.forms import RecrefForm
 from core.forms import build_search_components
 from core.helper import file_utils, email_utils, recref_utils
 from core.helper import model_utils
+from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
     demo_table_search_results_renderer
 from core.helper.view_components import DownloadCsvHandler
-from core.models import Recref, CofkUnionComment, CofkUnionResource
+from core.models import Recref
 from core.services import media_service
 from uploader.models import CofkUnionImage, CofkUnionSubject
 
 register = template.Library()
 log = logging.getLogger(__name__)
-
-
-class RecrefFormAdapter:
-
-    def find_target_display_name_by_id(self, target_id):
-        raise NotImplementedError()
-
-    def recref_class(self) -> Type[Recref]:
-        raise NotImplementedError()
-
-    def find_target_instance(self, target_id):
-        raise NotImplementedError()
-
-    def set_parent_target_instance(self, recref, parent, target):
-        raise NotImplementedError()
-
-    def find_recref_records(self, rel_type):
-        raise NotImplementedError()
-
-    def target_id_name(self):
-        raise NotImplementedError()
-
-    def get_target_id(self, recref: Recref):
-        if recref is None:
-            return None
-
-        target_id_name = self.target_id_name()
-        if not hasattr(recref, target_id_name):
-            log.warning(f'target_id_name not found in recref [{target_id_name=}]')
-            return None
-
-        return getattr(recref, target_id_name, None)
-
-    def upsert_recref(self, rel_type, parent_instance, target_instance,
-                      username=None,
-                      org_recref=None,
-                      ):
-        return recref_utils.upsert_recref(
-            rel_type, parent_instance, target_instance,
-            create_recref_fn=self.recref_class(),
-            set_parent_target_instance_fn=self.set_parent_target_instance,
-            username=username,
-            org_recref=org_recref,
-        )
-
-    def find_recref_records_by_related_manger(self, related_manger, rel_type):
-        return related_manger.filter(relationship_type=rel_type).iterator()
-
-    def find_targets_id_list(self, rel_type):
-        return (self.get_target_id(r) for r in self.find_recref_records(rel_type))
-
-    def find_all_targets_by_rel_type(self, rel_type) -> Iterable[models.Model]:
-        target_id_list = self.find_targets_id_list(rel_type)
-        targets = (self.find_target_instance(i) for i in target_id_list)
-        return targets
 
 
 class BasicSearchView(ListView):
@@ -354,7 +299,9 @@ def render_return_quick_init(request, name, item_name, item_id):
 def any_invalid_with_log(form_formsets: Iterable):
     for f in form_formsets:
         if not f.is_valid():
-            log.debug(f'form is invalid [{type(f)}] -- [{getattr(f, "error_messages", None)}] -- [{repr(getattr(f, "errors", None))}]')
+            log.debug(f'form is invalid [{type(f)}] '
+                      f'-- [{getattr(f, "error_messages", None)}] '
+                      f'-- [{repr(getattr(f, "errors", None))}]')
             return True
 
     return False
@@ -402,13 +349,6 @@ class MultiRecrefHandler:
     def recref_class(self) -> Type[models.Model]:
         raise NotImplementedError()
 
-    @staticmethod
-    def fill_common_recref_field(recref, cleaned_data, username):
-        recref.to_date = cleaned_data.get('to_date')
-        recref.from_date = cleaned_data.get('from_date')
-        recref.update_current_user_timestamp(username)
-        return recref
-
     def create_recref_by_new_form(self, target_id, parent_instance) -> Optional[Recref]:
         raise NotImplementedError()
 
@@ -421,7 +361,8 @@ class MultiRecrefHandler:
         self.new_form.is_valid()
         if target_id := self.new_form.cleaned_data.get('target_id'):
             if recref := self.create_recref_by_new_form(target_id, parent_instance):
-                recref = self.fill_common_recref_field(recref, self.new_form.cleaned_data, request.user.username)
+                recref = recref_utils.fill_common_recref_field(recref, self.new_form.cleaned_data,
+                                                               request.user.username)
                 recref.save()
                 log.info(f'create new recref [{recref}]')
 
@@ -437,7 +378,7 @@ class MultiRecrefHandler:
             else:
                 log.info(f'update recref [{recref_id=}]')
                 ps_loc = self.recref_class.objects.get(pk=recref_id)
-                ps_loc = self.fill_common_recref_field(ps_loc, f.cleaned_data, request.user.username)
+                ps_loc = recref_utils.fill_common_recref_field(ps_loc, f.cleaned_data, request.user.username)
                 ps_loc.save()
 
 
@@ -675,30 +616,6 @@ class RecrefFormsetHandler:
                                                   )
             recref.save()
             log.info(f'save m2m recref -- [{recref}][{target}]')
-
-
-class TargetCommentRecrefAdapter(RecrefFormAdapter, ABC):
-    def find_target_display_name_by_id(self, target_id):
-        c: CofkUnionComment = self.find_target_instance(target_id)
-        return c and c.comment
-
-    def find_target_instance(self, target_id):
-        return model_utils.get_safe(CofkUnionComment, comment_id=target_id)
-
-    def target_id_name(self):
-        return 'comment_id'
-
-
-class TargetResourceRecrefAdapter(RecrefFormAdapter, ABC):
-    def find_target_display_name_by_id(self, target_id):
-        c: CofkUnionResource = self.find_target_instance(target_id)
-        return c and c.resource_name
-
-    def find_target_instance(self, target_id):
-        return model_utils.get_safe(CofkUnionResource, resource_id=target_id)
-
-    def target_id_name(self):
-        return 'resource_id'
 
 
 class SubjectUI:

@@ -22,10 +22,13 @@
 
     <fieldset id="header_member">
         <legend>Members:</legend>
-        <!-- KTODO for Memberes -->
-        <span>
+        {% if person_form.is_organisation.value == 'Y' %}
+            {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_member.update_formset new_form=recref_member.new_form add_label='Add member:' %}
+        {% else %}
+            <span>
             This record refers to a person not an organisation. Members can only be entered for organisations.
         </span>
+        {% endif %}
     </fieldset>
 
     <fieldset id="header_related_others">
@@ -33,12 +36,12 @@
 
         <fieldset>
             <legend>Parents</legend>
-            {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_parent.update_formset new_form=recref_parent.new_form add_label='Add parent:' %}
+            {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_parent.update_formset new_form=recref_parent.new_form add_label='Add parent:' no_date=True %}
         </fieldset>
 
         <fieldset>
             <legend>Children</legend>
-            {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_children.update_formset new_form=recref_children.new_form add_label='Add child:' %}
+            {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_children.update_formset new_form=recref_children.new_form add_label='Add child:' no_date=True %}
         </fieldset>
 
         <fieldset>
@@ -73,7 +76,7 @@
 
         <fieldset>
             <legend>Other relationships</legend>
-            {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_person_other.update_formset new_form=recref_person_other.new_form add_label='Add related person:' %}
+            {% include "core/component/common_multi_rel_recref_formset.html" with multi_rel_recref_formset=person_other_formset  recref_type='person' id_field=person_form.selected_other_id label_add='Add another related person:' %}
         </fieldset>
 
     </fieldset>

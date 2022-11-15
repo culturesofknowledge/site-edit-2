@@ -40,4 +40,23 @@ REL_TYPE_SIGNED = 'signed'
 REL_TYPE_WAS_ADDRESSED_TO = 'was_addressed_to'
 REL_TYPE_INTENDED_FOR = 'intended_for'
 
+# rel_type person
+REL_TYPE_MEMBER_OF = 'member_of'
+REL_TYPE_PARENT_OF = 'parent_of'
+REL_TYPE_EMPLOYED = 'employed'
+REL_TYPE_TAUGHT = 'taught'
+REL_TYPE_WAS_PATRON_OF = 'was_patron_of'
+
+
+REL_TYPE_UNSPECIFIED_RELATIONSHIP_WITH = 'unspecified_relationship_with'
+REL_TYPE_ACQUAINTANCE_OF = 'acquaintance_of'
+REL_TYPE_WAS_BUSINESS_ASSOCIATE = 'was_a_business_associate_of'
+REL_TYPE_COLLABORATED_WITH = 'collaborated_with'
+REL_TYPE_COLLEAGUE_OF = 'colleague_of'
+REL_TYPE_FRIEND_OF = 'friend_of'
+REL_TYPE_RELATIVE_OF = 'relative_of'
+REL_TYPE_SIBLING_OF = 'sibling_of'
+REL_TYPE_SPOUSE_OF = 'spouse_of'
+
+
 DEFAULT_EMPTY_DATE_STR = '9999-12-31'

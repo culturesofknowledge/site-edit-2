@@ -152,9 +152,6 @@ class CofkPersonPersonMap(Recref):
                                 related_name='passive_relationships',
                                 on_delete=models.CASCADE)
 
-    # TOBEREMOVE should use relationship_type instance
-    person_type = models.CharField(null=False, default='other', max_length=100)
-
     class Meta(Recref.Meta):
         db_table = 'cofk_person_person_map'
 

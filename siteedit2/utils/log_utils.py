@@ -1,3 +1,4 @@
+import functools
 import logging
 import re
 
@@ -37,3 +38,16 @@ class ColorFormatter(logging.Formatter):
 
 detailed_web_fmt = '%(asctime)s %(levelname).4s [\x1b[1;32m%(threadName)s\x1b[0m] - %(message)s \t\x1b[1;36m--- [%(module)s.%(funcName)s:%(lineno)d]\x1b[0m'
 detailed_web_formatter = ColorFormatter(detailed_web_fmt, '%Y%m%d %H%M%S')
+
+
+def log_no_url(fn):
+    @functools.wraps(fn)
+    def _wrap(*args, **kwargs):
+        url = fn(*args, **kwargs)
+        if url is None:
+            logging.warning(f'{fn.__name__} failed, person not found [{args}]')
+            return ''
+
+        return url
+
+    return _wrap
