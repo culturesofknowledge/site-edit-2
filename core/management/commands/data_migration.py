@@ -481,17 +481,14 @@ def _val_handler_manif__work_id(row: dict, conn):
     return row
 
 
-def create_clone_recref_fn(conn,
-                           recref_class: Type[Model],
-                           left_field: ForwardManyToOneDescriptor,
-                           right_field: ForwardManyToOneDescriptor):
-    def _fn():
-        return create_recref(
-            conn,
-            RecrefIdFieldVal(recref_class, left_field, right_field),
-        )
-
-    return _fn
+def clone_recref_simple(conn,
+                        recref_class: Type[Model],
+                        left_field: ForwardManyToOneDescriptor,
+                        right_field: ForwardManyToOneDescriptor):
+    return create_recref(
+        conn,
+        RecrefIdFieldVal(recref_class, left_field, right_field),
+    )
 
 
 def data_migration(user, password, database, host, port):
@@ -502,114 +499,110 @@ def data_migration(user, password, database, host, port):
                             user=user, host=host, port=port)
     print(conn)
 
-    clone_action_fn_list = [
-        lambda: clone_rows_by_model_class(conn, CofkLookupCatalogue),
-        lambda: clone_rows_by_model_class(conn, CofkLookupDocumentType),
-        lambda: clone_rows_by_model_class(conn, Iso639LanguageCode),
-        lambda: clone_rows_by_model_class(conn, CofkCollectStatus),  # Static lookup table
-        lambda: clone_rows_by_model_class(conn, CofkUnionOrgType),  # Static lookup table
-        lambda: clone_rows_by_model_class(conn, CofkUnionResource),
-        lambda: clone_rows_by_model_class(conn, CofkUnionComment),
-        lambda: clone_rows_by_model_class(conn, CofkUnionImage),
-        lambda: clone_rows_by_model_class(conn, CofkUnionSubject),
+    clone_rows_by_model_class(conn, CofkLookupCatalogue)
+    clone_rows_by_model_class(conn, CofkLookupDocumentType)
+    clone_rows_by_model_class(conn, Iso639LanguageCode)
+    clone_rows_by_model_class(conn, CofkCollectStatus)  # Static lookup table
+    clone_rows_by_model_class(conn, CofkUnionOrgType)  # Static lookup table
+    clone_rows_by_model_class(conn, CofkUnionResource)
+    clone_rows_by_model_class(conn, CofkUnionComment)
+    clone_rows_by_model_class(conn, CofkUnionImage)
+    clone_rows_by_model_class(conn, CofkUnionSubject)
 
-        # ### Uploads
-        lambda: clone_rows_by_model_class(conn, CofkCollectUpload,
-                                          col_val_handler_fn_list=[_val_handler_upload__upload_status]),
+    # ### Uploads
+    clone_rows_by_model_class(conn, CofkCollectUpload,
+                              col_val_handler_fn_list=[_val_handler_upload__upload_status])
 
-        # ### Publication
-        lambda: clone_rows_by_model_class(conn, CofkUnionPublication),
+    # ### Publication
+    clone_rows_by_model_class(conn, CofkUnionPublication)
 
-        # ### Location
-        lambda: clone_rows_by_model_class(conn, CofkUnionLocation),
-        # m2m location
-        create_clone_recref_fn(conn, CofkLocationCommentMap,
-                               CofkLocationCommentMap.comment,
-                               CofkLocationCommentMap.location),
-        create_clone_recref_fn(conn, CofkLocationResourceMap,
-                               CofkLocationResourceMap.location,
-                               CofkLocationResourceMap.resource),
+    # ### Location
+    clone_rows_by_model_class(conn, CofkUnionLocation)
+    # m2m location
+    clone_recref_simple(conn, CofkLocationCommentMap,
+                        CofkLocationCommentMap.comment,
+                        CofkLocationCommentMap.location)
+    clone_recref_simple(conn, CofkLocationResourceMap,
+                        CofkLocationResourceMap.location,
+                        CofkLocationResourceMap.resource)
 
-        # ### Person
-        lambda: clone_rows_by_model_class(
-            conn, CofkUnionPerson,
-            col_val_handler_fn_list=[_val_handler_person__organisation_type, ],
-            seq_name=SEQ_NAME_COFKUNIONPERSION__IPERSON_ID,
-            int_pk_col_name='iperson_id',
-        ),
-        # m2m person
-        lambda: create_images_relationship(conn, CofkUnionPerson),
-        create_clone_recref_fn(conn, CofkPersonLocationMap,
-                               CofkPersonLocationMap.person,
-                               CofkPersonLocationMap.location),
-        create_clone_recref_fn(conn, CofkPersonPersonMap,
-                               CofkPersonPersonMap.person,
-                               CofkPersonPersonMap.related),
-        create_clone_recref_fn(conn, CofkPersonCommentMap,
-                               CofkPersonCommentMap.comment,
-                               CofkPersonCommentMap.person, ),
-        create_clone_recref_fn(conn, CofkPersonResourceMap,
-                               CofkPersonResourceMap.person,
-                               CofkPersonResourceMap.resource),
+    # ### Person
+    clone_rows_by_model_class(
+        conn, CofkUnionPerson,
+        col_val_handler_fn_list=[_val_handler_person__organisation_type, ],
+        seq_name=SEQ_NAME_COFKUNIONPERSION__IPERSON_ID,
+        int_pk_col_name='iperson_id',
+    )
+    # m2m person
+    create_images_relationship(conn, CofkUnionPerson)
+    clone_recref_simple(conn, CofkPersonLocationMap,
+                        CofkPersonLocationMap.person,
+                        CofkPersonLocationMap.location)
+    clone_recref_simple(conn, CofkPersonPersonMap,
+                        CofkPersonPersonMap.person,
+                        CofkPersonPersonMap.related)
+    clone_recref_simple(conn, CofkPersonCommentMap,
+                        CofkPersonCommentMap.comment,
+                        CofkPersonCommentMap.person, )
+    clone_recref_simple(conn, CofkPersonResourceMap,
+                        CofkPersonResourceMap.person,
+                        CofkPersonResourceMap.resource)
 
-        # ### Repositories/institutions
-        lambda: clone_rows_by_model_class(conn, CofkUnionInstitution,
-                                          col_val_handler_fn_list=[_val_handler_empty_str_null]),
-        lambda: create_resources_relationship(conn, CofkUnionInstitution),  # KTODO fix resources as recref
-        # lambda: clone_rows_by_model_class(conn, CofkCollectInstitution),
-        lambda: clone_rows_by_model_class(conn, CofkUser,
-                                          col_val_handler_fn_list=[_val_handler_users],
-                                          seq_name=None,
-                                          target_model_class='cofk_users', ),
-        lambda: migrate_groups_and_permissions(conn, 'cofk_roles'),
+    # ### Repositories/institutions
+    clone_rows_by_model_class(conn, CofkUnionInstitution,
+                              col_val_handler_fn_list=[_val_handler_empty_str_null])
+    create_resources_relationship(conn, CofkUnionInstitution)  # KTODO fix resources as recref
+    # clone_rows_by_model_class(conn, CofkCollectInstitution)
+    clone_rows_by_model_class(conn, CofkUser,
+                              col_val_handler_fn_list=[_val_handler_users],
+                              seq_name=None,
+                              target_model_class='cofk_users', )
+    migrate_groups_and_permissions(conn, 'cofk_roles')
 
-        # ### Work
-        lambda: clone_rows_by_model_class(conn, CofkUnionWork,
-                                          col_val_handler_fn_list=[_val_handler_work__catalogue],
-                                          seq_name=work_models.SEQ_NAME_COFKUNIONWORK__IWORK_ID,
-                                          int_pk_col_name='iwork_id', ),
-        lambda: clone_rows_by_model_class(conn, CofkUnionQueryableWork),
-        # m2m work
-        lambda: create_images_relationship(conn, CofkUnionWork),
-        create_clone_recref_fn(conn, work_models.CofkWorkCommentMap,
-                               work_models.CofkWorkCommentMap.comment,
-                               work_models.CofkWorkCommentMap.work),
-        create_clone_recref_fn(conn, work_models.CofkWorkResourceMap,
-                               work_models.CofkWorkResourceMap.work,
-                               work_models.CofkWorkResourceMap.resource),
-        create_clone_recref_fn(conn, work_models.CofkWorkWorkMap,
-                               work_models.CofkWorkWorkMap.work_from,
-                               work_models.CofkWorkWorkMap.work_to),
-        create_clone_recref_fn(conn, work_models.CofkWorkSubjectMap,
-                               work_models.CofkWorkSubjectMap.work,
-                               work_models.CofkWorkSubjectMap.subject),
-        create_clone_recref_fn(conn, work_models.CofkWorkPersonMap,
-                               work_models.CofkWorkPersonMap.work,
-                               work_models.CofkWorkPersonMap.person),
-        create_clone_recref_fn(conn, work_models.CofkWorkLocationMap,
-                               work_models.CofkWorkLocationMap.work,
-                               work_models.CofkWorkLocationMap.location),
+    # ### Work
+    clone_rows_by_model_class(conn, CofkUnionWork,
+                              col_val_handler_fn_list=[_val_handler_work__catalogue],
+                              seq_name=work_models.SEQ_NAME_COFKUNIONWORK__IWORK_ID,
+                              int_pk_col_name='iwork_id', )
+    clone_rows_by_model_class(conn, CofkUnionQueryableWork, seq_name=None)
+    # m2m work
+    create_images_relationship(conn, CofkUnionWork)
+    clone_recref_simple(conn, work_models.CofkWorkCommentMap,
+                        work_models.CofkWorkCommentMap.comment,
+                        work_models.CofkWorkCommentMap.work)
+    clone_recref_simple(conn, work_models.CofkWorkResourceMap,
+                        work_models.CofkWorkResourceMap.work,
+                        work_models.CofkWorkResourceMap.resource)
+    clone_recref_simple(conn, work_models.CofkWorkWorkMap,
+                        work_models.CofkWorkWorkMap.work_from,
+                        work_models.CofkWorkWorkMap.work_to)
+    clone_recref_simple(conn, work_models.CofkWorkSubjectMap,
+                        work_models.CofkWorkSubjectMap.work,
+                        work_models.CofkWorkSubjectMap.subject)
+    clone_recref_simple(conn, work_models.CofkWorkPersonMap,
+                        work_models.CofkWorkPersonMap.work,
+                        work_models.CofkWorkPersonMap.person)
+    clone_recref_simple(conn, work_models.CofkWorkLocationMap,
+                        work_models.CofkWorkLocationMap.work,
+                        work_models.CofkWorkLocationMap.location)
 
-        # ### manif
-        lambda: clone_rows_by_model_class(conn, CofkUnionManifestation,
-                                          col_val_handler_fn_list=[_val_handler_manif__work_id]),
-        # m2m manif
-        lambda: create_images_relationship(conn, CofkUnionManifestation),
-        create_clone_recref_fn(conn, manif_models.CofkManifManifMap,
-                               manif_models.CofkManifManifMap.manif_from,
-                               manif_models.CofkManifManifMap.manif_to),
-        create_clone_recref_fn(conn, manif_models.CofkManifCommentMap,
-                               manif_models.CofkManifCommentMap.comment,
-                               manif_models.CofkManifCommentMap.manifestation),
-        create_clone_recref_fn(conn, manif_models.CofkManifPersonMap,
-                               manif_models.CofkManifPersonMap.person,
-                               manif_models.CofkManifPersonMap.manifestation),
-        create_clone_recref_fn(conn, manif_models.CofkManifInstMap,
-                               manif_models.CofkManifInstMap.manif,
-                               manif_models.CofkManifInstMap.inst),
-    ]
-
-    for fn in clone_action_fn_list:
-        fn()
+    # ### manif
+    clone_rows_by_model_class(conn, CofkUnionManifestation,
+                              col_val_handler_fn_list=[_val_handler_manif__work_id],
+                              seq_name=None)
+    # m2m manif
+    create_images_relationship(conn, CofkUnionManifestation)
+    clone_recref_simple(conn, manif_models.CofkManifManifMap,
+                        manif_models.CofkManifManifMap.manif_from,
+                        manif_models.CofkManifManifMap.manif_to)
+    clone_recref_simple(conn, manif_models.CofkManifCommentMap,
+                        manif_models.CofkManifCommentMap.comment,
+                        manif_models.CofkManifCommentMap.manifestation)
+    clone_recref_simple(conn, manif_models.CofkManifPersonMap,
+                        manif_models.CofkManifPersonMap.person,
+                        manif_models.CofkManifPersonMap.manifestation)
+    clone_recref_simple(conn, manif_models.CofkManifInstMap,
+                        manif_models.CofkManifInstMap.manif,
+                        manif_models.CofkManifInstMap.inst)
 
     conn.close()
