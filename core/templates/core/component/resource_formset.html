@@ -2,24 +2,31 @@
 Remember call setup_url_checker, setup_standtext functions
 -->
 {% load cl_filters %}
-{{ res_formset.management_form }}
-{% for form in res_formset|reverse_list %}
-    <fieldset>
-        <legend
-                {% if header_property %}
-                    {{ header_property }}
-                {% else %}
-                    id="header_resource" class="toc-item"
-                {% endif %}
-        >
-            {% if forloop.first %}
-                Add a new resource
-            {% else %}
-                Resource no. {{ forloop.counter0 }}. {{ form.resource_name.value }}
-            {% endif %}
-        </legend>
-        {{ form }}
-        {{ form.record_tracker_label }}
 
+{% with header_id=header_id|default:'header_res' %}
+    <fieldset>
+        <legend id="{{ header_id }}"
+                class="{{ header_class|default:'toc-item' }}">
+            Resources
+        </legend>
+
+        {{ res_formset.management_form }}
+        {% for form in res_formset|reverse_list %}
+            <fieldset>
+                <legend id="{{ header_id }}_{{ forloop.counter0 }}"
+                        class="toc-sub-item">
+
+                    {% if forloop.first %}
+                        Add a new resource
+                    {% else %}
+                        Resource no. {{ forloop.counter0 }}. {{ form.resource_name.value }}
+                    {% endif %}
+                </legend>
+                {{ form }}
+                {{ form.record_tracker_label }}
+
+            </fieldset>
+
+        {% endfor %}
     </fieldset>
-{% endfor %}
+{% endwith %}
