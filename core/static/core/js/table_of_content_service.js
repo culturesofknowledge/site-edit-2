@@ -24,7 +24,7 @@ function toggle_table_of_content(){
 
 
 function build_table_of_content_ui() {
-    let container = $('<div class="fixed-right-bottom">')
+    let container = $('<div id="toc-div">')
     container.append()
     let toc_btn = $('<button id="toc-btn" >Table of Content</button>')
     toc_btn.on('click', toggle_table_of_content);
