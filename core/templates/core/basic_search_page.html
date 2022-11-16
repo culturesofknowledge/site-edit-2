@@ -27,12 +27,8 @@
                 {% for query_fieldset in query_fieldset_list %}
                     {{ query_fieldset }}
                 {% endfor %}
-                <div class="flex-col sticky-bottom">
-                    <div class="actionbox">
-                        <button type="button" name="__form_reset" value="clear" class="sticky-btn inline_btn" onclick="location.href = location.origin + location.pathname">Clear</button>
-                        <button type="submit" name="__form_action" value="search" class="sticky-btn inline_btn">Search</button>
-                    </div>
-                </div>
+
+                {% include "core/component/actionbox.html" with submit_title='Search' %}
             </aside>
 
 
