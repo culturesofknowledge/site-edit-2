@@ -52,7 +52,7 @@
                 {% endif %}
             </td>
             <td>
-                {{ r.resource }}
+                {% include "core/component/search_table_layout/res_result.html" with resources=r.resources %}
             </td>
             <td>
                 {% if r.editors_notes %}
