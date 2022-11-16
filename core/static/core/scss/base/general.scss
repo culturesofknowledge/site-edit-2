@@ -88,7 +88,8 @@ hr {
 table {
   width: 100%;
   font-size: small;
-  border-collapse: collapse;
+  border-collapse: separate; /* can not collapse borders if they are to appear when sticky header is scrolled */
+  border-spacing: 0;
 }
 
 thead tr {
@@ -97,10 +98,15 @@ thead tr {
   }
 
   + tr {
-    border-bottom: 1px solid $black-25;
+    /*border-bottom: 1px solid $black;*/
 
     th {
       font-weight: 700;
+      position: sticky;
+      top: 50px;
+      z-index: 99;
+      border-bottom: 1px solid $black;
+      background-color: $white;
     }
   }
 }
@@ -112,18 +118,20 @@ tr {
 tbody {
   color: $dark-grey;
 
-  tr {
+  /*tr {
     border-bottom: 1px solid $black-25;
-  }
+  }*/
 }
 
 th, td {
-  padding: $space-sm $space-unit $space-sm 0;
-  border-collapse: collapse;
+  padding: $space-sm $space-unit $space-sm;
   vertical-align: top;
+  border-right: 1px solid $black-25;
+  border-bottom: 1px solid $black-25;
 
   &:last-of-type {
     padding-right: 0;
+    border-right: unset;
   }
 }
 
