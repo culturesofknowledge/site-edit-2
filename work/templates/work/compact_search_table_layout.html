@@ -24,7 +24,6 @@
     {% for r in search_results %}
         <tr class="selectable_entry" entry_id="{{ r.publication_id }}">
 
-
             <td>
                 {{ r.description }}
             </td>
@@ -52,10 +51,17 @@
                 {% endif %}
             </td>
             <td>
-                {{ r.iwork_id }}
+                <a href="{% url 'work:overview_form' r.iwork_id %}"
+                   title="Full details of record no. {{ r.iwork_id }}" target="_blank">{{ r.iwork_id }}</a>
+                <br/>
+                <br/>
+                <button class="btn inline_btn" type="button"
+                        onclick="window.open('{% url 'work:full_form' r.iwork_id %}', '_blank').focus();">Edit</button>
             </td>
             <td>
-                {{ r.change_timestamp }}
+                {{ r.change_timestamp }} by {{ r.change_user }}<br/>
+                Source: {{ r.accession_code }}<br/>
+                [{{ r.catalogue}}]
             </td>
         </tr>
     {% endfor %}

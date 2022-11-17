@@ -10,9 +10,14 @@ link_pattern = re.compile(r'(xxxCofkLinkStartxxx)(xxxCofkHrefStartxxx)(.*?)(xxxC
 
 @register.filter
 def render_queryable_resources(values: str):
-    html = '<ul>'
-    for link in re.findall(link_pattern, values):
-        html += f'<li><a href="{link[2]}">{link[4]}</a></li>'
-    html += '</ul>'
+    resources = re.findall(link_pattern, values)
+
+    if len(resources) > 1:
+        html = '<ul>'
+        for link in resources:
+            html += f'<li><a href="{link[2]}">{link[4]}</a></li>'
+        html += '</ul>'
+    else:
+        html = f'<a href="{resources[0][2]}">{resources[0][4]}</a>'
 
     return mark_safe(html)

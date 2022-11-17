@@ -23,7 +23,6 @@ from core.helper.common_recref_adapter import RecrefFormAdapter, TargetResourceR
 from core.helper.form_utils import save_multi_rel_recref_formset
 from core.helper.lang_utils import LangModelAdapter, NewLangForm
 from core.helper.recref_utils import create_recref_if_field_exist
-from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_utils import DefaultSearchView, FullFormHandler, ImageHandler, RecrefFormsetHandler, \
     SubjectHandler
 from core.models import Recref
