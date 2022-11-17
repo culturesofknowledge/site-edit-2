@@ -34,7 +34,7 @@
                             correspondent was a group or organisation.)</small>
                     </div>
 
-                    <div class="margin-bottom">
+                    <div class="org-type-div margin-bottom" style="display: none">
                         <label>Type of group</label>
                         {{ person_form.organisation_type  }}
                         <small>Further details of a group's purpose or role can be given in the professions/titles field.</small>
@@ -116,8 +116,22 @@
 
     <script src="{% static 'core/js/table_of_content_service.js' %}" defer></script>
     <script>
+
+    function setup_is_org_checkbox(){
+        $('#id_is_organisation').change(function (e) {
+            let org_type_div_jqe = $('.org-type-div');
+            if ($(e.target).is(":checked")) {
+                org_type_div_jqe.show()
+            } else {
+                org_type_div_jqe.hide()
+            }
+        })
+
+    }
+
     $(function (){
         setup_table_of_content();
+        setup_is_org_checkbox();
     });
     </script>
 
