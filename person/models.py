@@ -64,7 +64,6 @@ class CofkCollectPerson(models.Model):
 
 
 class CofkUnionPerson(models.Model, RecordTracker):
-    # KTODO value of person_id is very special, what is purpose of this field
     person_id = models.CharField(primary_key=True, max_length=100)
     foaf_name = models.CharField(max_length=200)
     skos_altlabel = models.TextField(blank=True, null=True)
@@ -85,7 +84,7 @@ class CofkUnionPerson(models.Model, RecordTracker):
     date_of_death_uncertain = models.SmallIntegerField(default=0)
     date_of_death_approx = models.SmallIntegerField(default=0)
     gender = models.CharField(max_length=1)
-    is_organisation = models.CharField(max_length=1)  # KTODO value should be Y or empty
+    is_organisation = models.CharField(max_length=1)
     iperson_id = models.IntegerField(
         default=functools.partial(model_utils.next_seq_safe, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID),
         unique=True,
