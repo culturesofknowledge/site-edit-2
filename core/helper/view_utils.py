@@ -661,24 +661,32 @@ class SubjectHandler:
     def get_selected_subject_id_list(self, request):
         return request.POST.getlist(self.subject_name)
 
+    def find_changed_list(self, request):
+        org_recref_list = list(self.recref_adapter.find_recref_records(self.rel_type))
+        org_id_list = {self.recref_adapter.get_target_id(r) for r in org_recref_list}
+
+        selected_id_list = {int(s) for s in self.get_selected_subject_id_list(request)}
+        del_recref_list = [recref for recref in org_recref_list
+                           if self.recref_adapter.get_target_id(recref) not in selected_id_list]
+        new_id_set = selected_id_list - org_id_list
+        return new_id_set, del_recref_list
+
+    def has_changed(self, request):
+        new_id_set, del_recref_list = self.find_changed_list(request)
+        return new_id_set or del_recref_list
+
     def save(self, request, parent):
         self.recref_adapter.parent = parent
 
-        org_recref_list = list(self.recref_adapter.find_recref_records(self.rel_type))
-        selected_id_list = {int(s) for s in self.get_selected_subject_id_list(request)}
+        new_id_set, del_recref_list = self.find_changed_list(request)
 
         # delete
-        for recref in org_recref_list:
-            target_id = self.recref_adapter.get_target_id(recref)
-            if target_id in selected_id_list:
-                continue
-
-            log.info(f'remove subject [{parent}][{target_id}][{recref.pk}]')
+        for recref in del_recref_list:
+            log.info(f'remove subject [{parent}][{recref.pk}]')
             recref.delete()
 
         # add
-        org_id_list = {self.recref_adapter.get_target_id(r) for r in org_recref_list}
-        for new_subject_id in selected_id_list - org_id_list:
+        for new_subject_id in new_id_set:
             log.info(f'add subject [{parent}][{new_subject_id}]')
             if not (target := self.recref_adapter.find_target_instance(new_subject_id)):
                 raise ValueError(f'not found [{new_subject_id}]')
