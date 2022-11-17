@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+{% load cl_filters render_queryable_resources render_queryable_images render_queryable_manif %}
+
+>>>>>>> 3439985 (Expanded search work results, fix render_queryable_resources.py)
 <script>
     let tippies = [];
 
@@ -7,9 +12,13 @@
     <thead>
     <tr></tr>
     <tr>
-        <th>Description</th>
+        <th>Editor's notes</th>
         <th>Date for ordering</th>
-        <td></td>
+        <th>Author/Sender</th>
+        <th>Origin</th>
+        <th>Addressee</th>
+        <th>Destination</th>
+        <th></th>
         <th>Images</th>
         <th>Manifestations</th>
         <th>Related resources</th>
@@ -22,31 +31,70 @@
     {% for r in search_results %}
         <tr class="selectable_entry" entry_id="{{ r.iwork_id }}">
 
-
             <td>
-                <a href="{% url 'work:corr_form' r.iwork_id %}">
-                    {{ r.description }}
-                </a>
+                {% if r.editors_notes %}
+                {{ r.editors_notes }}
+                {% endif %}
             </td>
             <td>
-                {{ r.date_of_work_as_marked }}<
+                {% if r.date_of_work_as_marked %}
+                {{ r.date_of_work_as_marked }}
+                {% endif %}
+            </td>
+             <td>
+                {% if r.creators_for_display %}
+                {{ r.creators_for_display }}
+                {% endif %}
+            </td>
+             <td>
+                {% if r.places_from_for_display %}
+                {{ r.places_from_for_display }}
+                {% endif %}
+            </td>
+             <td>
+                {% if r.addressees_for_display %}
+                {{ r.addressees_for_display }}
+                {% endif %}
+            </td>
+             <td>
+                {% if r.places_to_for_display %}
+                {{ r.places_to_for_display }}
+                {% endif %}
             </td>
             <td>
                 {% include 'work/component/exclamation.html' with work=r %}
             </td>
             <td>
-                ?
+                {% if r.images %}
+                    {{ r.images|render_queryable_images }}
+                {% endif %}
             </td>
             <td>
-                ?
+                {% if r.manifestations_for_display %}
+                    {{ r.manifestations_for_display|render_queryable_manif }}
+                {% endif %}
             </td>
             <td>
+                {% if r.related_resources %}
+                    {{ r.related_resources|render_queryable_resources }}
+                {% endif %}
+            </td>
+            <td>
+                <a href="{% url 'work:overview_form' r.iwork_id %}"
+                   title="Full details of record no. {{ r.iwork_id }}" target="_blank">{{ r.iwork_id }}</a>
+                <br/>
+                <br/>
+                <button class="btn inline_btn" type="button"
+                        onclick="window.open('{% url 'work:full_form' r.iwork_id %}', '_blank').focus();">Edit</button>
+                <!--
                 <a href="{% url 'work:corr_form' r.iwork_id %}">
                     {{ r.iwork_id }}
-                </a>
+                </a> -->
             </td>
             <td>
-                {{ r.change_timestamp }}
+                {{ r.change_timestamp }} by {{ r.change_user }}<br/>
+                Source: {{ r.accession_code }}<br/>
+                [{{ r.catalogue}}]
             </td>
         </tr>
     {% endfor %}
