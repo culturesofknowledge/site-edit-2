@@ -175,6 +175,14 @@ class CofkPersonResourceMap(Recref):
         db_table = 'cofk_person_resource_map'
 
 
+class CofkPersonRoleMap(Recref):
+    person = models.ForeignKey(CofkUnionPerson, on_delete=models.CASCADE)
+    role = models.ForeignKey('uploader.CofkUnionRoleCategory', on_delete=models.CASCADE)
+
+    class Meta(Recref.Meta):
+        db_table = 'cofk_person_role_map'
+
+
 class CofkCollectOccupationOfPerson(models.Model):
     upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
     occupation_of_person_id = models.IntegerField()

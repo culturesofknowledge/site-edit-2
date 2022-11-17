@@ -30,7 +30,7 @@ from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompact
 from core.helper.view_components import DownloadCsvHandler
 from core.models import Recref
 from core.services import media_service
-from uploader.models import CofkUnionImage, CofkUnionSubject
+from uploader.models import CofkUnionImage, CofkUnionSubject, CofkUnionRoleCategory
 
 register = template.Library()
 log = logging.getLogger(__name__)
@@ -711,3 +711,14 @@ class SubjectHandler(RecrefCheckboxHandler):
     def get_target_id_label(self, target):
         target: CofkUnionSubject
         return target.subject_id, target.subject_desc
+
+
+class RoleCategoryHandler(RecrefCheckboxHandler):
+    def __init__(self, recref_adapter: RecrefFormAdapter,
+                 rel_type: str = core_constant.REL_TYPE_MEMBER_OF,
+                 name: str = 'roles', ):
+        super().__init__(recref_adapter, rel_type, name, CofkUnionRoleCategory)
+
+    def get_target_id_label(self, target):
+        target: CofkUnionRoleCategory
+        return target.role_category_id, target.role_category_desc

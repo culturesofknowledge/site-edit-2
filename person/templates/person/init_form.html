@@ -69,7 +69,9 @@
                 <fieldset>
                     <legend id="header_roles" class="toc-item">Roles/titles</legend>
                     <div class="choices-container">
-                        {% include "core/component/common_form_choices.html" with label_text='Professional categories' choices_field=person_form.roles_titles %}
+                        {% for s in roles %}
+                            {{ s }}
+                        {% endfor %}
                     </div>
                     <div class="margin-bottom">
                         <label>Further details of roles / titles:</label>
