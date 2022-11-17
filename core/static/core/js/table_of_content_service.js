@@ -8,6 +8,7 @@ function isElementInViewpoint(ele) {
     let window_jqe = $(window)
     var viewportTop = window_jqe.scrollTop();
     var viewportBottom = viewportTop + window_jqe.height();
+    viewportBottom = viewportBottom - 100;  // avoid select toc if too bottom
 
     return elementBottom > viewportTop && elementTop < viewportBottom;
 }
@@ -44,7 +45,6 @@ function build_table_of_content_ui() {
         } else {
             link_jqe = $(`<a href="#${ele.id}">${ele.textContent}</a>`)
         }
-        // debugger
         body.append(link_jqe)
     });
 
