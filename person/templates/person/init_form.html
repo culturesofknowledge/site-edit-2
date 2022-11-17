@@ -33,6 +33,13 @@
                         <small> (Leave this checkbox blank if the correspondent was an individual person; tick if the
                             correspondent was a group or organisation.)</small>
                     </div>
+
+                    <div class="margin-bottom">
+                        <label>Type of group</label>
+                        {{ person_form.organisation_type  }}
+                        <small>Further details of a group's purpose or role can be given in the professions/titles field.</small>
+                    </div>
+
                     <div class="margin-bottom">
                         <label>Editors' notes</label>
                         {{ person_form.editors_notes }}

@@ -1,4 +1,5 @@
 import logging
+from typing import Iterable
 
 from django import forms
 from django.db.models import TextChoices, Model
@@ -9,6 +10,7 @@ from core.helper import form_utils, widgets_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.form_utils import TargetPersonMRRForm
 from person.models import CofkUnionPerson
+from uploader.models import CofkUnionOrgType
 
 log = logging.getLogger(__name__)
 
@@ -42,6 +44,28 @@ class YesEmptyCheckboxField(forms.CharField):
     def clean(self, value):
         new_value = super().clean(value)
         return 'Y' if new_value == 'True' else ''
+
+
+class OrgTypeField(forms.IntegerField):
+    def __init__(self, **kwargs):
+        widget = forms.Select()
+        super().__init__(widget=widget, **kwargs)
+
+    def reload_choices(self):
+        self.widget.choices = [
+            (None, ''),
+            *self.find_org_type_choices()
+        ]
+
+    def find_org_type_choices(self) -> Iterable[tuple[int, str]]:
+        for o in CofkUnionOrgType.objects.iterator():
+            yield o.org_type_id, o.org_type_desc
+
+    def clean(self, value):
+        org_type_id = super().clean(value)
+        if org_type_id is not None:
+            return CofkUnionOrgType.objects.get(pk=org_type_id)
+        return org_type_id
 
 
 class PersonForm(ModelForm):
@@ -117,6 +141,7 @@ class PersonForm(ModelForm):
     birth_place = forms.CharField(required=False, widget=forms.HiddenInput())
     death_place = forms.CharField(required=False, widget=forms.HiddenInput())
     other_place = forms.CharField(required=False, widget=forms.HiddenInput())
+    organisation_type = OrgTypeField(required=False)
 
     # extra field
     selected_other_id = forms.CharField(required=False)
@@ -161,6 +186,8 @@ class PersonForm(ModelForm):
             'date_of_birth_is_range',
             'date_of_death_is_range',
             'flourished_is_range',
+
+            'organisation_type',
 
         )
 

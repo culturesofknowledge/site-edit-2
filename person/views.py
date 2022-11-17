@@ -114,6 +114,8 @@ class PersonFFH(FullFormHandler):
         self.person = get_object_or_404(CofkUnionPerson, iperson_id=pk)
         # KTODO handle self.person.roles, roles_titles
         self.person_form = PersonForm(request_data or None, instance=self.person)
+        self.person_form.base_fields['organisation_type'].reload_choices()
+
         self.loc_handler = LocRecrefHandler(
             request_data, model_list=self.person.cofkpersonlocationmap_set.iterator(), )
 
