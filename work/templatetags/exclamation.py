@@ -1,12 +1,12 @@
 from django import template
 
-from work.models import CofkUnionWork
+from work.models import CofkUnionQueryableWork
 
 register = template.Library()
 
 
 @register.filter
-def exclamation(work: CofkUnionWork):
+def exclamation(work: CofkUnionQueryableWork):
     tooltip = []
 
     if work.date_of_work_inferred or work.date_of_work_uncertain:

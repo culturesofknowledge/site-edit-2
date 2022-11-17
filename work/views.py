@@ -23,6 +23,7 @@ from core.helper.common_recref_adapter import RecrefFormAdapter, TargetResourceR
 from core.helper.form_utils import save_multi_rel_recref_formset
 from core.helper.lang_utils import LangModelAdapter, NewLangForm
 from core.helper.recref_utils import create_recref_if_field_exist
+from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_utils import DefaultSearchView, FullFormHandler, ImageHandler, RecrefFormsetHandler, \
     SubjectHandler
 from core.models import Recref
@@ -962,7 +963,12 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
-        return renderer_utils.create_table_search_results_renderer('work/search_table_layout.html')
+        return renderer_utils.create_table_search_results_renderer('work/expanded_search_table_layout.html')
+
+    @property
+    def compact_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+        # Compact search results for works are also table formatted
+        return renderer_utils.create_table_search_results_renderer('work/compact_search_table_layout.html')
 
     @property
     def return_quick_init_vname(self) -> str:
