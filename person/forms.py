@@ -4,6 +4,7 @@ from typing import Iterable
 from django import forms
 from django.db.models import TextChoices, Model
 from django.forms import ModelForm, CharField
+from django.forms.utils import ErrorList
 
 from core import constant
 from core.helper import form_utils, widgets_utils
@@ -145,6 +146,12 @@ class PersonForm(ModelForm):
 
     # extra field
     selected_other_id = forms.CharField(required=False)
+
+    def __init__(self, data=None, files=None, auto_id="id_%s", prefix=None, initial=None, error_class=ErrorList,
+                 label_suffix=None, empty_permitted=False, instance=None, use_required_attribute=None, renderer=None):
+        super().__init__(data, files, auto_id, prefix, initial, error_class, label_suffix, empty_permitted, instance,
+                         use_required_attribute, renderer)
+        self.is_org_form = False
 
     class Meta:
         model = CofkUnionPerson

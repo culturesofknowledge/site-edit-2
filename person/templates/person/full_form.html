@@ -16,7 +16,7 @@
     </fieldset>
     <fieldset id="header_organisations">
         <legend id="header_organisations" class="toc-item">Organisations to which belonged</legend>
-        {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_organisation.update_formset new_form=recref_organisation.new_form add_label='Add organisation:' %}
+        {% include "core/component/create_update_recref.html" with recref_type='organisation' recref_formset=recref_organisation.update_formset new_form=recref_organisation.new_form add_label='Add organisation:' %}
     </fieldset>
 
 
@@ -109,11 +109,4 @@
 
     </script>
 
-{% endblock %}
-
-{% block more_table_of_content %}
-    <a href="#header_known_loc">Known geographical locations</a>
-    <a href="#header_organisations">Organisations to which belonged</a>
-    <a href="#header_member">Members</a>
-    <a href="#header_related_others">Relationships with others</a>
 {% endblock %}

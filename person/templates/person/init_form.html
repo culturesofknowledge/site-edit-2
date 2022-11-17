@@ -4,7 +4,13 @@
 
 {% block content %}
     <script src="{% static 'core/js/ref_publication_service.js' %}" defer></script>
-    <h1 class="align-center">Person</h1>
+    <h1 class="align-center">
+        {% if person_form.is_org_form or person_form.is_organisation.value == 'Y' %}
+            Organisation
+        {% else %}
+            Person
+        {% endif %}
+    </h1>
 
     <div class="row row--centered">
         <div class="col col--1of2">
@@ -34,10 +40,15 @@
                             correspondent was a group or organisation.)</small>
                     </div>
 
-                    <div class="org-type-div margin-bottom" style="display: none">
+                    <div class="org-type-div margin-bottom"
+                            {% if not person_form.is_org_form or person_form.is_organisation.value != 'Y' %}
+                         style="display: none"
+                            {% endif %}
+                    >
                         <label>Type of group</label>
-                        {{ person_form.organisation_type  }}
-                        <small>Further details of a group's purpose or role can be given in the professions/titles field.</small>
+                        {{ person_form.organisation_type }}
+                        <small>Further details of a group's purpose or role can be given in the professions/titles
+                            field.</small>
                     </div>
 
                     <div class="margin-bottom">
@@ -119,22 +130,22 @@
     <script src="{% static 'core/js/table_of_content_service.js' %}" defer></script>
     <script>
 
-    function setup_is_org_checkbox(){
-        $('#id_is_organisation').change(function (e) {
-            let org_type_div_jqe = $('.org-type-div');
-            if ($(e.target).is(":checked")) {
-                org_type_div_jqe.show()
-            } else {
-                org_type_div_jqe.hide()
-            }
-        })
+        function setup_is_org_checkbox() {
+            $('#id_is_organisation').change(function (e) {
+                let org_type_div_jqe = $('.org-type-div');
+                if ($(e.target).is(":checked")) {
+                    org_type_div_jqe.show()
+                } else {
+                    org_type_div_jqe.hide()
+                }
+            })
 
-    }
+        }
 
-    $(function (){
-        setup_table_of_content();
-        setup_is_org_checkbox();
-    });
+        $(function () {
+            setup_table_of_content();
+            setup_is_org_checkbox();
+        });
     </script>
 
 {% endblock %}

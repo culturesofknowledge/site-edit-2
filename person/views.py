@@ -46,8 +46,20 @@ class PersonInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
 
     def on_form_changed(self, request, form) -> NoReturn:
         form.instance.person_id = create_person_id(form.instance.iperson_id)
-        # KTODO handle form.instance.roles
         return super().on_form_changed(request, form)
+
+    def get(self, request, *args, **kwargs):
+        is_org_form = request and request.GET.get('person_form_type') == 'org'
+        if is_org_form:
+            initial = {'is_organisation': 'Y', }
+        else:
+            initial = {}
+
+        form = self.form_factory(initial=initial)
+        if is_org_form:
+            form.is_org_form = True
+
+        return self.resp_form_page(request, form)
 
 
 class PersonQuickInitView(PersonInitView):
