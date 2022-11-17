@@ -121,8 +121,6 @@ class CofkUnionPerson(models.Model, RecordTracker):
     flourished_uncertain = models.SmallIntegerField(default=0)
     flourished_approx = models.SmallIntegerField(default=0)
 
-    roles = models.ManyToManyField('uploader.CofkUnionRoleCategory')
-
     locations = models.ManyToManyField('location.CofkUnionLocation',
                                        through='person.CofkPersonLocationMap',
                                        through_fields=('person', 'location'))

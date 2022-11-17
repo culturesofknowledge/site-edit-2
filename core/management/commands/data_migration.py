@@ -26,7 +26,7 @@ from person.models import CofkPersonLocationMap, CofkUnionPerson, SEQ_NAME_COFKU
     CofkPersonPersonMap, CofkPersonCommentMap, CofkPersonResourceMap
 from publication.models import CofkUnionPublication
 from uploader.models import CofkCollectStatus, Iso639LanguageCode, CofkLookupCatalogue, CofkCollectUpload, \
-    CofkUnionSubject
+    CofkUnionSubject, CofkUnionRoleCategory
 from uploader.models import CofkUnionOrgType, CofkUnionImage
 from work import models as work_models
 from manifestation import models as manif_models
@@ -508,6 +508,7 @@ def data_migration(user, password, database, host, port):
     clone_rows_by_model_class(conn, CofkUnionComment)
     clone_rows_by_model_class(conn, CofkUnionImage)
     clone_rows_by_model_class(conn, CofkUnionSubject)
+    clone_rows_by_model_class(conn, CofkUnionRoleCategory)
 
     # ### Uploads
     clone_rows_by_model_class(conn, CofkCollectUpload,
