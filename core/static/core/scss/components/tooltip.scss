@@ -13,5 +13,10 @@
 }
 
 [data-tippy-content], sup > svg {
-  cursor: pointer;
+  /*cursor: pointer;*/
+}
+
+.tippy-container {
+    margin: auto;
+    width: 24px;
 }

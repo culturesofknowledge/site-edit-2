@@ -1,4 +1,4 @@
-{% load render_queryable_resources render_queryable_images render_queryable_manif %}
+{% load cl_filters render_queryable_resources render_queryable_images render_queryable_manif %}
 
 <script>
     let tippies = [];
@@ -33,7 +33,11 @@
                 {% endif %}
             </td>
             <td>
-                {% include 'work/component/exclamation.html' with work=r %}
+                {% if r.work_to_be_deleted|is_general_true %}
+                    {% include 'work/component/delete.html' %}
+                {% else %}
+                    {% include 'work/component/exclamation.html' with work=r %}
+                {% endif %}
             </td>
             <td>
                 {% if r.images %}
