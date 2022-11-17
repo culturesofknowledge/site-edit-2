@@ -44,7 +44,7 @@ class CofkUnionInstitution(models.Model, RecordTracker):
     latitude = models.CharField(max_length=20, blank=True, null=True)
     longitude = models.CharField(max_length=20, blank=True, null=True)
 
-    resources = models.ManyToManyField('core.CofkUnionResource')
+    resources = models.ManyToManyField('core.CofkUnionResource')  # KTODO fix resources as recref
 
     class Meta:
         db_table = 'cofk_union_institution'

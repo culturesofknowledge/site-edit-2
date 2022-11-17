@@ -7,7 +7,7 @@ from django.forms import ModelForm, CharField
 from core import constant
 from core.helper import form_utils, widgets_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
-from core.helper.form_utils import RelationField, TargetPersonMRRForm
+from core.helper.form_utils import TargetPersonMRRForm
 from person.models import CofkUnionPerson
 
 log = logging.getLogger(__name__)

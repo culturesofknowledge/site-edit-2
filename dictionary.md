@@ -14,3 +14,4 @@
 | upsert | update or insert |
 | manif  | Manifestation |
 | lang   | language |
+| toc | Table of content |

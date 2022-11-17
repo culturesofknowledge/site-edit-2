@@ -128,9 +128,15 @@ class CofkUnionPerson(models.Model, RecordTracker):
                                        through='person.CofkPersonLocationMap',
                                        through_fields=('person', 'location'))
 
-    comments = models.ManyToManyField('core.CofkUnionComment')  # TOBEREMOVE
-    resources = models.ManyToManyField('core.CofkUnionResource')  # TOBEREMOVE
     images = models.ManyToManyField('uploader.CofkUnionImage')
+
+    @property
+    def comments(self):
+        return self.cofkpersoncommentmap_set.all()
+
+    @property
+    def resources(self):
+        return self.cofkpersonresourcemap_set.all()
 
     class Meta:
         db_table = 'cofk_union_person'

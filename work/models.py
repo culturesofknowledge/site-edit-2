@@ -12,7 +12,7 @@ from core.helper.model_utils import RecordTracker
 from core.models import Recref
 from uploader.models import CofkCollectUpload, CofkCollectStatus
 
-SEQ_NAME_COFKUNIONWORK__IWORK_ID = 'cofk_union_person_iwork_id_seq'
+SEQ_NAME_COFKUNIONWORK__IWORK_ID = 'cofk_union_work_iwork_id_seq'
 
 
 class CofkUnionWork(models.Model, RecordTracker):
