@@ -223,10 +223,16 @@ tr.selectable_entry:hover {
 .recref-list {
   margin-bottom: 1em;
 
+  .recref-row {
+    @extend .row-no-margin;
+    margin-bottom: 1em;
+  }
+
   .recref-title {
     margin-right: 1em;
     margin-top: auto;
     margin-bottom: auto;
+    width: 70%;
   }
 
   .recref-del {
