@@ -1,23 +1,29 @@
 
 #toc-div {
   @extend .fixed-right-bottom;
-  height: 70%;
+  max-height: 80%;
+  padding: 0;
+  height: 100%;
 
   #toc-btn {
+    width: 180px;
+  }
+
+  & > * {
     position: absolute;
     bottom: 0;
     right: 0;
-    width: 180px;
   }
 
 }
 
 #toc-body {
+  @extend .flex-col;
   max-width: 400px;
   background-color: #DCDFE5;
   font-size: $typescale-5a;
   padding: 1em;
-  min-width: 260px;
+  min-width: 360px;
   max-height: 100%;
   overflow-y: auto;
 
