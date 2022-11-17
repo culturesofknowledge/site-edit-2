@@ -99,9 +99,9 @@
                 <fieldset>
                     <legend id="header_dates" class="toc-item">Dates</legend>
 
-                    {% include "person/component/date_fields.html" with title_name='date of birth' calendar=person_form.date_of_birth_calendar  is_range=person_form.date_of_birth_is_range  inferred=person_form.date_of_birth_inferred  uncertain=person_form.date_of_birth_uncertain  approx=person_form.date_of_birth_approx day_field=person_form.date_of_birth_day month_field=person_form.date_of_birth_month year_field=person_form.date_of_birth_year %}
-                    {% include "person/component/date_fields.html" with title_name='date of death' calendar=person_form.date_of_death_calendar  is_range=person_form.date_of_death_is_range  inferred=person_form.date_of_death_inferred  uncertain=person_form.date_of_death_uncertain  approx=person_form.date_of_death_approx day_field=person_form.date_of_death_day month_field=person_form.date_of_death_month year_field=person_form.date_of_death_year %}
-                    {% include "person/component/date_fields.html" with title_name='date when flourished' calendar=person_form.flourished_calendar  is_range=person_form.flourished_is_range  inferred=person_form.flourished_inferred  uncertain=person_form.flourished_uncertain  approx=person_form.flourished_approx day_field=person_form.flourished_day month_field=person_form.flourished_month year_field=person_form.flourished_year %}
+                    {% include "person/component/date_fields.html" with title_name='date of birth' calendar=person_form.date_of_birth_calendar  is_range=person_form.date_of_birth_is_range  inferred=person_form.date_of_birth_inferred  uncertain=person_form.date_of_birth_uncertain  approx=person_form.date_of_birth_approx day_field=person_form.date_of_birth_day month_field=person_form.date_of_birth_month year_field=person_form.date_of_birth_year day_field2=person_form.date_of_birth2_day month_field2=person_form.date_of_birth2_month year_field2=person_form.date_of_birth2_year %}
+                    {% include "person/component/date_fields.html" with title_name='date of death' calendar=person_form.date_of_death_calendar  is_range=person_form.date_of_death_is_range  inferred=person_form.date_of_death_inferred  uncertain=person_form.date_of_death_uncertain  approx=person_form.date_of_death_approx day_field=person_form.date_of_death_day month_field=person_form.date_of_death_month year_field=person_form.date_of_death_year day_field2=person_form.date_of_death2_day month_field2=person_form.date_of_death2_month year_field2=person_form.date_of_death2_year %}
+                    {% include "person/component/date_fields.html" with title_name='date when flourished' calendar=person_form.flourished_calendar  is_range=person_form.flourished_is_range  inferred=person_form.flourished_inferred  uncertain=person_form.flourished_uncertain  approx=person_form.flourished_approx day_field=person_form.flourished_day month_field=person_form.flourished_month year_field=person_form.flourished_year day_field2=person_form.flourished2_day month_field2=person_form.flourished2_month year_field2=person_form.flourished2_year %}
 
                 </fieldset>
 
@@ -127,6 +127,7 @@
     </div>
 
 
+    <script src="{% static 'core/js/auto_date_calendar.js' %}" defer></script>
     <script src="{% static 'core/js/table_of_content_service.js' %}" defer></script>
     <script>
 
@@ -143,6 +144,9 @@
         }
 
         $(function () {
+            for (let date_jqe of $('.date-fields-div')) {
+                setup_is_range($(date_jqe));
+            }
             setup_table_of_content();
             setup_is_org_checkbox();
         });

@@ -112,6 +112,9 @@ class PersonForm(ModelForm):
     date_of_birth_year = form_utils.create_year_field()
     date_of_birth_month = form_utils.create_month_field()
     date_of_birth_day = form_utils.create_day_field()
+    date_of_birth2_year = form_utils.create_year_field()
+    date_of_birth2_month = form_utils.create_month_field()
+    date_of_birth2_day = form_utils.create_day_field()
     date_of_birth_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_birth_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_birth_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
@@ -122,6 +125,9 @@ class PersonForm(ModelForm):
     date_of_death_year = form_utils.create_year_field()
     date_of_death_month = form_utils.create_month_field()
     date_of_death_day = form_utils.create_day_field()
+    date_of_death2_year = form_utils.create_year_field()
+    date_of_death2_month = form_utils.create_month_field()
+    date_of_death2_day = form_utils.create_day_field()
     date_of_death_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_death_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_death_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
@@ -132,6 +138,9 @@ class PersonForm(ModelForm):
     flourished_year = form_utils.create_year_field()
     flourished_month = form_utils.create_month_field()
     flourished_day = form_utils.create_day_field()
+    flourished2_year = form_utils.create_year_field()
+    flourished2_month = form_utils.create_month_field()
+    flourished2_day = form_utils.create_day_field()
     flourished_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     flourished_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     flourished_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
@@ -166,6 +175,9 @@ class PersonForm(ModelForm):
             'date_of_birth_year',
             'date_of_birth_month',
             'date_of_birth_day',
+            'date_of_birth2_year',
+            'date_of_birth2_month',
+            'date_of_birth2_day',
             'date_of_birth',
             'date_of_birth_inferred',
             'date_of_birth_uncertain',
@@ -175,6 +187,9 @@ class PersonForm(ModelForm):
             'date_of_death_year',
             'date_of_death_month',
             'date_of_death_day',
+            'date_of_death2_year',
+            'date_of_death2_month',
+            'date_of_death2_day',
             'date_of_death',
             'date_of_death_inferred',
             'date_of_death_uncertain',
@@ -183,6 +198,9 @@ class PersonForm(ModelForm):
             'flourished_year',
             'flourished_month',
             'flourished_day',
+            'flourished2_year',
+            'flourished2_month',
+            'flourished2_day',
             'flourished',
             'flourished_inferred',
             'flourished_uncertain',
