@@ -1,5 +1,3 @@
-
-
 <script>
     let tippies = [];
 
@@ -21,11 +19,13 @@
     <tbody>
 
     {% for r in search_results %}
-        <tr class="selectable_entry" entry_id="{{ r.publication_id }}">
+        <tr class="selectable_entry" entry_id="{{ r.iwork_id }}">
 
 
             <td>
-                {{ r.description }}
+                <a href="{% url 'work:corr_form' r.iwork_id %}">
+                    {{ r.description }}
+                </a>
             </td>
             <td>
                 {{ r.date_of_work_as_marked }}<
@@ -40,7 +40,9 @@
                 ?
             </td>
             <td>
-                {{ r.iwork_id }}
+                <a href="{% url 'work:corr_form' r.iwork_id %}">
+                    {{ r.iwork_id }}
+                </a>
             </td>
             <td>
                 {{ r.change_timestamp }}
