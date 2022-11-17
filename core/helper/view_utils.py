@@ -618,54 +618,59 @@ class RecrefFormsetHandler:
             log.info(f'save m2m recref -- [{recref}][{target}]')
 
 
-class SubjectUI:
-    def __init__(self, subject_id, desc, is_selected, name='subjects'):
-        self.subject_id = subject_id
+class RecrefCheckbox:
+    def __init__(self, target_id, desc, is_selected, name):
+        self.target_id = target_id
         self.desc = desc
         self.is_selected = is_selected
         self.name = name
 
     def __call__(self, *args, **kwargs):
         context = {
-            'subject_id': self.subject_id,
+            'target_id': self.target_id,
             'desc': self.desc,
             'is_selected': self.is_selected,
             'name': self.name,
         }
-        return render_to_string('core/component/subject_checkbox.html', context)
+        return render_to_string('core/component/recref_checkbox.html', context)
 
 
-class SubjectHandler:
+class RecrefCheckboxHandler:
 
-    def __init__(self, recref_adapter: RecrefFormAdapter,
-                 rel_type=core_constant.REL_TYPE_DEALS_WITH,
-                 subject_name='subjects'):
+    def __init__(self, recref_adapter: RecrefFormAdapter, rel_type: str, name: str,
+                 target_class: Type[models.Model],
+                 ):
         self.recref_adapter = recref_adapter
         self.rel_type = rel_type
-        self.subject_name = subject_name
+        self.name = name
+        self.target_class = target_class
 
-    def _create_ui_data(self, subject: CofkUnionSubject, selected_id_list):
-        return SubjectUI(
-            subject_id=subject.subject_id,
-            desc=subject.subject_desc,
-            is_selected=subject.subject_id in selected_id_list,
-            name=self.subject_name,
+    def get_target_id_label(self, target):
+        raise NotImplementedError()
+
+    def _create_ui_data(self, target: models.Model, selected_id_list):
+        target_id, label = self.get_target_id_label(target)
+        return RecrefCheckbox(
+            target_id=target_id,
+            desc=label,
+            is_selected=target_id in selected_id_list,
+            name=self.name,
         )
 
     def create_context(self):
         selected_id_list = set(self.recref_adapter.find_targets_id_list(self.rel_type))
         return {
-            'subjects': (self._create_ui_data(s, selected_id_list) for s in CofkUnionSubject.objects.all()),
+            self.name: (self._create_ui_data(s, selected_id_list) for s in self.target_class.objects.all()),
         }
 
-    def get_selected_subject_id_list(self, request):
-        return request.POST.getlist(self.subject_name)
+    def get_selected_target_id_list(self, request):
+        return request.POST.getlist(self.name)
 
     def find_changed_list(self, request):
         org_recref_list = list(self.recref_adapter.find_recref_records(self.rel_type))
         org_id_list = {self.recref_adapter.get_target_id(r) for r in org_recref_list}
 
-        selected_id_list = {int(s) for s in self.get_selected_subject_id_list(request)}
+        selected_id_list = {int(s) for s in self.get_selected_target_id_list(request)}
         del_recref_list = [recref for recref in org_recref_list
                            if self.recref_adapter.get_target_id(recref) not in selected_id_list]
         new_id_set = selected_id_list - org_id_list
@@ -682,15 +687,27 @@ class SubjectHandler:
 
         # delete
         for recref in del_recref_list:
-            log.info(f'remove subject [{parent}][{recref.pk}]')
+            log.info(f'remove {self.name} recref [{parent}][{recref.pk}]')
             recref.delete()
 
         # add
-        for new_subject_id in new_id_set:
-            log.info(f'add subject [{parent}][{new_subject_id}]')
-            if not (target := self.recref_adapter.find_target_instance(new_subject_id)):
-                raise ValueError(f'not found [{new_subject_id}]')
+        for new_target_id in new_id_set:
+            log.info(f'add {self.name} recref [{parent}][{new_target_id}]')
+            if not (target := self.recref_adapter.find_target_instance(new_target_id)):
+                raise ValueError(f'not found [{new_target_id}]')
 
             recref = self.recref_adapter.upsert_recref(self.rel_type, parent, target,
                                                        username=request.user.username)
             recref.save()
+
+
+class SubjectHandler(RecrefCheckboxHandler):
+
+    def __init__(self, recref_adapter: RecrefFormAdapter,
+                 rel_type: str = core_constant.REL_TYPE_DEALS_WITH,
+                 name: str = 'subjects', ):
+        super().__init__(recref_adapter, rel_type, name, CofkUnionSubject)
+
+    def get_target_id_label(self, target):
+        target: CofkUnionSubject
+        return target.subject_id, target.subject_desc
