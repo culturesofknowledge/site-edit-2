@@ -930,8 +930,29 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
-            ('-date_of_work_as_marked', 'Date for ordering desc',),
-            ('date_of_work_as_marked', 'Date for ordering asc',),
+            ('addressees_for_display', 'Addressee',),
+            ('creators_for_display', 'Author/sender',),
+            ('date_of_work_std', 'Date for ordering',),
+            ('date_of_work_as_marked', 'Date of work as marked',),
+            ('date_of_work_day', 'Day',),
+            ('description', 'Description',),
+            ('places_to_searchable', 'Destination (standardised)',),
+            ('editors_notes', 'Editors\' notes',),
+            ('flags', 'Flags',),
+            ('language_of_work', 'Language of work',),
+            ('change_user', 'Last changed by',),
+            ('change_timestamp', 'Last edit',),
+            ('manifestations_searchable', 'Manifestations',),
+            ('date_of_work_std_month', 'Month',),
+            ('places_from_searchable', 'Origin (standardised)',),
+            ('origin_as_marked', 'Origin as marked',),
+            ('original_catalogue', 'Original catalogue',),
+            ('work_to_be_deleted', 'Record to be deleted',),
+            ('origin_as_marked', 'Origin as marked',),
+            ('related_resources', 'Related resources',),
+            ('accession_code', 'Source of record',),
+            ('iwork_id', 'Work ID',),
+            ('date_of_work_std_year', 'Year',),
         ]
 
     def get_queryset(self):
@@ -962,7 +983,12 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
-        return renderer_utils.create_table_search_results_renderer('work/search_table_layout.html')
+        return renderer_utils.create_table_search_results_renderer('work/expanded_search_table_layout.html')
+
+    @property
+    def compact_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+        # Compact search results for works are also table formatted
+        return renderer_utils.create_table_search_results_renderer('work/compact_search_table_layout.html')
 
     @property
     def return_quick_init_vname(self) -> str:

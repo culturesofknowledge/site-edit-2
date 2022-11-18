@@ -2,12 +2,25 @@
     <thead>
     <tr></tr>
     <tr>
-        <th>Full name of location</th>
+        <th>Name(s)</th>
         <th>ID</th>
         <th>Editors notes</th>
+        <th>Sent</th>
+        <th>Rec'd</th>
+        <th>Sent or Rec'd</th>
+        <th>Researchers' notes</th>
+        <th>Related resources</th>
         <th>Latitude</th>
         <th>Longitude</th>
-        <th>Details</th>
+        <th>1. E.g. room</th>
+        <th>2. E.g. building</th>
+        <th>3. E.g. district of city</th>
+        <th>4. E.g. city</th>
+        <th>5. E.g. county</th>
+        <th>6. E.g. country</th>
+        <th>7. E.g. empire</th>
+        <th>Images</th>
+        <th>Last edit</th>
     </tr>
     </thead>
     <tbody>
@@ -26,28 +39,33 @@
             </td>
             <td>
                 {% if r.editors_notes %}
-                    <details>
-                        <summary>Details</summary>
-                        {{ r.editors_notes }}
-                    </details>
+
+                    {{ r.editors_notes }}
+
                 {% endif %}
+            </td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>
+                <!-- {% include "core/component/search_table_layout/res_result.html" with resources=r.resources %} -->
             </td>
             <td> {{ r.latitude }} </td>
             <td> {{ r.longitude }} </td>
+            <td> {{ r.element_1_eg_room }} </td>
+            <td> {{ r.element_2_eg_building }} </td>
+            <td> {{ r.element_3_eg_parish }} </td>
+            <td> {{ r.element_4_eg_city }} </td>
+            <td> {{ r.element_5_eg_county }} </td>
+            <td> {{ r.element_6_eg_country }} </td>
+            <td> {{ r.element_7_eg_empire }} </td>
+            <td></td>
             <td>
-                <details>
-                    <summary>Details</summary>
-                    <div class="table-row-detail">
-                        {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r %}
+                {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r %}
 
-                        {% include "core/component/search_table_layout/comment_result.html" with comments=r.comments %}
+                {% include "core/component/search_table_layout/comment_result.html" with comments=r.comments %}
 
-                        {% include "core/component/search_table_layout/res_result.html" with resources=r.resources %}
-
-                    </div>
-
-
-                </details>
             </td>
         </tr>
     {% endfor %}

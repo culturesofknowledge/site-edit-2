@@ -1,6 +1,11 @@
 <div class="flex-col sticky-bottom">
     <div class="actionbox">
-            <button class="sticky-btn inline_btn" onclick="location.href='/'; return false;">Cancel</button>
-            <button type="submit" class="sticky-btn inline_btn">Save</button>
+            <button class="sticky-btn inline_btn cancel" onclick="location.href='/'; return false;">Cancel</button>
+            <button type="submit" class="sticky-btn inline_btn save">
+                {% if submit_title %}
+                    {{ submit_title }}
+                {% else %}
+                    Save
+                {% endif %}</button>
     </div>
 </div>
