@@ -158,12 +158,12 @@ class PlacesForm(forms.ModelForm):
 
 class DetailsForm(forms.ModelForm):
     accession_code = CharField(required=False)
-    editors_notes = CharField(required=False, widget=forms.Textarea(dict(rows='3')))
-    incipit = CharField(required=False, widget=forms.Textarea(dict(rows='3')))
-    explicit = CharField(required=False, widget=forms.Textarea(dict(rows='3')))
-    ps = CharField(required=False, widget=forms.Textarea(dict(rows='3')))
-    abstract = CharField(required=False, widget=forms.Textarea(dict(rows='4')))
-    keywords = CharField(required=False, widget=forms.Textarea(dict(rows='3')))
+    editors_notes = form_utils.CommonTextareaField()
+    incipit = form_utils.CommonTextareaField()
+    explicit = form_utils.CommonTextareaField()
+    ps = form_utils.CommonTextareaField()
+    abstract = form_utils.CommonTextareaField()
+    keywords = form_utils.CommonTextareaField()
 
     class Meta:
         model = CofkUnionWork
@@ -182,7 +182,7 @@ class ManifForm(forms.ModelForm):
     manifestation_type = form_utils.CharSelectField(choices=manif_type_choices)
 
     id_number_or_shelfmark = forms.CharField(required=False)
-    printed_edition_details = forms.CharField(required=False, widget=forms.Textarea())
+    printed_edition_details = form_utils.CommonTextareaField()
 
     manifestation_creation_date_as_marked = forms.CharField(required=False)
     manifestation_creation_date_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
@@ -220,8 +220,8 @@ class ManifForm(forms.ModelForm):
     manifestation_receipt_calendar = CharField(required=False,
                                                widget=forms.RadioSelect(choices=original_calendar_choices))
 
-    non_letter_enclosures = forms.CharField(required=False, widget=forms.Textarea(dict(rows='5')))
-    accompaniments = forms.CharField(required=False, widget=forms.Textarea(dict(rows='5')))
+    non_letter_enclosures = form_utils.CommonTextareaField()
+    accompaniments = form_utils.CommonTextareaField()
 
     # lang_note = forms.MultipleChoiceField(required=False)
     # lang_name = forms.MultipleChoiceField(required=False)
@@ -245,21 +245,21 @@ class ManifForm(forms.ModelForm):
     stored_folded = forms.CharField(required=False)
     paper_type_or_watermark = forms.CharField(required=False)
     number_of_pages_of_document = forms.IntegerField(required=False)
-    seal = forms.CharField(required=False, widget=forms.Textarea(dict(rows='3')))
+    seal = form_utils.CommonTextareaField()
     postage_marks = forms.CharField(required=False)
     postage_costs_as_marked = forms.CharField(required=False)
     postage_costs = forms.CharField(required=False)
-    address = forms.CharField(required=False, widget=forms.Textarea(dict(rows='3')))
-    routing_mark_stamp = forms.CharField(required=False, widget=forms.Textarea(dict(rows='3')))
-    routing_mark_ms = forms.CharField(required=False, widget=forms.Textarea(dict(rows='3')))
-    handling_instructions = forms.CharField(required=False, widget=forms.Textarea(dict(rows='3')))
-    endorsements = forms.CharField(required=False, widget=forms.Textarea(dict(rows='3')))
+    address = form_utils.CommonTextareaField()
+    routing_mark_stamp = form_utils.CommonTextareaField()
+    routing_mark_ms = form_utils.CommonTextareaField()
+    handling_instructions = form_utils.CommonTextareaField()
+    endorsements = form_utils.CommonTextareaField()
     non_delivery_reason = forms.CharField(required=False)
 
     manifestation_is_translation = form_utils.ZeroOneCheckboxField(is_str=False)
 
-    manifestation_incipit = forms.CharField(required=False, widget=forms.Textarea(dict(rows='3')))
-    manifestation_excipit = forms.CharField(required=False, widget=forms.Textarea(dict(rows='3')))
+    manifestation_incipit = form_utils.CommonTextareaField()
+    manifestation_excipit = form_utils.CommonTextareaField()
 
     # extra fields
     selected_scribe_id = forms.CharField(required=False)

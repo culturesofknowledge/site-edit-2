@@ -12,8 +12,7 @@ class LocationForm(ModelForm):
     location_name = CharField(required=False,
                               widget=forms.TextInput(attrs=dict(readonly=True)),
                               label='Full name of location')
-    editors_notes = CharField(required=False,
-                              widget=forms.Textarea())
+    editors_notes = form_utils.CommonTextareaField()
     element_1_eg_room = CharField(required=False,
                                   label='1. E.g. room')
     element_2_eg_building = CharField(required=False,

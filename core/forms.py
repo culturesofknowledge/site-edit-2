@@ -88,7 +88,7 @@ class CommentForm(ModelForm):
 
     record_tracker_label = form_utils.record_tracker_label_fn_factory('Note')
 
-    comment = forms.CharField(required=True, widget=forms.Textarea(dict(rows='5')))
+    comment = form_utils.CommonTextareaField(required=True)
 
     class Meta:
         model = CofkUnionComment
@@ -114,13 +114,13 @@ class ResourceForm(ModelForm):
     resource_name = forms.CharField(required=True,
                                     label='Title or brief description',
                                     widget=forms.Textarea(
-                                        {'class': 'res_standtext'}
+                                        {'class': 'res_standtext', 'rows': '4'}
                                     ), )
 
     resource_details = forms.CharField(required=True,
                                        label='Further details of resource',
                                        widget=forms.Textarea(
-                                           {'class': 'res_standtext'}
+                                           {'class': 'res_standtext', 'rows': '4'}
                                        ), )
 
     creation_timestamp = forms.DateTimeField(required=False, widget=HiddenInput())
@@ -155,8 +155,7 @@ class ImageForm(ModelForm):
                                 label='URL for thumbnail (if any)')
     credits = forms.CharField(required=False,
                               label="Credits for 'front end' display*")
-    licence_details = forms.CharField(required=False, widget=forms.Textarea(),
-                                      label='Either: full text of licence*')
+    licence_details = form_utils.CommonTextareaField(label='Either: full text of licence*')
 
     licence_url = forms.CharField(required=False,
                                   label='licence URL*')

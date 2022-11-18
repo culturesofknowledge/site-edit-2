@@ -446,3 +446,12 @@ def save_multi_rel_recref_formset(multi_rel_recref_formset, parent, request):
     for form in _forms:
         form: MultiRelRecrefForm
         form.create_or_delete(parent, request.user.username)
+
+
+class CommonTextareaField(forms.CharField):
+    def __init__(self, *, required=False, n_rows=4,
+                 max_length=None, min_length=None, strip=True, empty_value="", **kwargs):
+        widget = forms.Textarea(dict(rows=str(n_rows)))
+        super().__init__(required=required, widget=widget,
+                         max_length=max_length, min_length=min_length, strip=strip,
+                         empty_value=empty_value, **kwargs)
