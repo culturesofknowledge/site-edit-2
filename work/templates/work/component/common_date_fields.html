@@ -1,48 +1,48 @@
 <!-- remember to import auto_date_calendar.js and run setup_auto_calendar -->
 {% with header_id='header_'|add:name %}
-<fieldset id="{{ autodate_id }}" class="autodate-div">
-    <legend id="{{ header_id }}" class="toc-item">{{ name|capfirst }} date</legend>
-    <label>Date of {{ name }} as marked:</label>
-    {{ date_as_marked }}
+    <fieldset id="{{ autodate_id }}" class="autodate-div">
+        <legend id="{{ header_id }}" class="toc-item">{{ name|capfirst }} date</legend>
+        <label>Date of {{ name }} as marked:</label>
+        {{ date_as_marked }}
 
-    <div class="margin-bottom calendar-div">
-        {% include "core/component/common_form_choices.html" with label_text='Calendar used' choices_field=calendar_used %}
-    </div>
-
-    <fieldset>
-        <legend id="{{ header_id|add:'_date' }}" class="toc-sub-item">Date of {{ name }} in standard format</legend>
-        <div class="margin-bottom">
-            <div class="is-range-div">
-                {{ is_range }}
-                <label for="{{ is_range.id_for_label }}">Date range?</label>
-            </div>
-            <small>
-                Tick the 'Date range' box in either of the following cases:
-                <ul>
-                    <li>
-                        The {{ name }} is known to have been written over a period of two or more days
-                    </li>
-                    <li>
-                        The {{ name }} cannot be precisely dated even to a single year
-                    </li>
-                </ul>
-            </small>
+        <div class="margin-bottom calendar-div">
+            {% include "core/component/common_form_choices.html" with label_text='Calendar used' choices_field=calendar_used %}
         </div>
 
-        <div class="margin-bottom">
-            <div class="row-no-margin">
-                <div class="from-div">
-                    <label class="from-label">Date:</label>
-                    {% include 'core/component/form_three_date_fields.html' with day_field=day_field month_field=month_field year_field=year_field %}
+        <fieldset>
+            <legend id="{{ header_id|add:'_date' }}" class="toc-sub-item">Date of {{ name }} in standard format</legend>
+            <div class="margin-bottom">
+                <div class="is-range-div">
+                    {{ is_range }}
+                    <label for="{{ is_range.id_for_label }}">Date range?</label>
                 </div>
-
-                <div class="to-div">
-                    <label class="to-label">To:</label>
-                    {% include 'core/component/form_three_date_fields.html' with day_field=day_field2 month_field=month_field2 year_field=year_field2 %}
-                </div>
+                <small>
+                    Tick the 'Date range' box in either of the following cases:
+                    <ul>
+                        <li>
+                            The {{ name }} is known to have been written over a period of two or more days
+                        </li>
+                        <li>
+                            The {{ name }} cannot be precisely dated even to a single year
+                        </li>
+                    </ul>
+                </small>
             </div>
 
-            <span>
+            <div class="margin-bottom">
+                <div class="row-no-margin">
+                    <div class="from-div">
+                        <label class="from-label">Date:</label>
+                        {% include 'core/component/form_three_date_fields.html' with day_field=day_field month_field=month_field year_field=year_field %}
+                    </div>
+
+                    <div class="to-div">
+                        <label class="to-label">To:</label>
+                        {% include 'core/component/form_three_date_fields.html' with day_field=day_field2 month_field=month_field2 year_field=year_field2 %}
+                    </div>
+                </div>
+
+                <span>
                     <small>
                     Leave any part or parts of the date blank if necessary.
                     </small>
@@ -67,28 +67,31 @@
 
 
                 </span>
-        </div>
-
-        <div class="margin-bottom">
-            Dates for ordering (these will normally be automatically generated as you enter day,
-            month and year):
-            <br/>
-            <div class="original-calendar-div">
-                <label>In original calendar:</label>
-                {{ normal_date }}
             </div>
 
-            <div class="gregorian-calendar-div">
-                <label>In Gregorian calendar:</label>
-                {{ gregorian_date }}
-            </div>
-        </div>
+            <div class="margin-bottom">
+                <h5>
+                    Dates for ordering (these will normally be automatically generated as you enter day,
+                    month and year):
+                </h5>
+                <div class="row-no-margin">
+                    <div class="original-calendar-div col--1of2">
+                        <label>In original calendar:</label>
+                        {{ normal_date }}
+                    </div>
 
+                    <div class="gregorian-calendar-div col--1of2">
+                        <label>In Gregorian calendar:</label>
+                        {{ gregorian_date }}
+                    </div>
+                </div>
+            </div>
+
+        </fieldset>
+
+
+        {% include "person/component/issues_with_date.html" with title='Issues with date of '|add:name|add:':'  inferred=inferred  uncertain=uncertain  approx=approx %}
+
+        {% include "core/component/comment_publication_formset.html" with comment_formset=date_comment_formset comment_title='Notes on '|add:name|add:' date' header_id=header_id|add:'_comment' header_class="toc-sub-item" %}
     </fieldset>
-
-
-    {% include "person/component/issues_with_date.html" with title='Issues with date of '|add:name|add:':'  inferred=inferred  uncertain=uncertain  approx=approx %}
-
-    {% include "core/component/comment_publication_formset.html" with comment_formset=date_comment_formset comment_title='Notes on '|add:name|add:' date' header_id=header_id|add:'_comment' header_class="toc-sub-item" %}
-</fieldset>
 {% endwith %}
