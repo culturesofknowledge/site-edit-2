@@ -1,6 +1,7 @@
 .page-header {
   margin: 0 $gutter-negative $space-md;
   padding: $space-xs 0;
+  z-index: 100;
 
   a {
     font-size: $typescale-6;

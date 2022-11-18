@@ -166,10 +166,26 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
-            ('-change_timestamp', 'Change Timestamp desc',),
-            ('change_timestamp', 'Change Timestamp asc',),
-            ('-location_name', 'Location Name desc',),
-            ('location_name', 'Location Name asc',),
+            ('location_name', 'Location name(s)',),
+            ('location_id', 'Location ID',),
+            ('editors_notes', 'Editors\' notes',),
+            ('sent', 'Sent',),
+            ('recd', 'Rec\'d',),
+            ('all_works', 'Sent or Rec\'d',),
+            ('researchers_notes', 'Researchers\' notes',),
+            ('related_resources', 'Related resources',),
+            ('latitude', 'Latitude',),
+            ('longitude', 'Longitude',),
+            ('element_1_eg_room', '1. E.g.room',),
+            ('element_2_eg_building', '2. E.g.building',),
+            ('element_3_eg_parish', '3. E.g.district of city',),
+            ('element_4_eg_city', '4. E.g.city',),
+            ('element_5_eg_county', '5. E.g.county',),
+            ('element_6_eg_country', '6. E.g.country',),
+            ('element_7_eg_empire', '7. E.g.empire',),
+            ('images', 'Images',),
+            ('change_user', 'Last changed by',),
+            ('change_timestamp', 'Last edit',),
         ]
 
     def get_queryset(self):

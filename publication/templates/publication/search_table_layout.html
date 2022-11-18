@@ -6,6 +6,7 @@
         <th>ID</th>
         <th>Details</th>
         <th>Abbrev</th>
+        <th>Change timestamp</th>
     </tr>
     </thead>
     <tbody>
@@ -23,6 +24,9 @@
             </td>
             <td>
                 {{ r.abbrev }}
+            </td>
+            <td>
+                {{ r.change_timestamp }} by {{ r.change_user }}
             </td>
         </tr>
     {% endfor %}

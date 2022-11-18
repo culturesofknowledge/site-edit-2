@@ -10,7 +10,7 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 from core.models import Recref
-from uploader.models import CofkCollectUpload, CofkCollectStatus
+from uploader.models import CofkCollectUpload, CofkCollectStatus, CofkLookupCatalogue
 
 SEQ_NAME_COFKUNIONWORK__IWORK_ID = 'cofk_union_work_iwork_id_seq'
 
@@ -654,6 +654,10 @@ class CofkUnionQueryableWork(models.Model):
 
     class Meta:
         db_table = 'cofk_union_queryable_work'
+
+    @property
+    def catalogue(self) -> str:
+        return CofkLookupCatalogue.objects.filter(catalogue_code=self.original_catalogue)[0].catalogue_name
 
 
 class CofkCollectWorkSummary(models.Model):

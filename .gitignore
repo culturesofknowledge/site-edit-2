@@ -50,3 +50,4 @@ siteedit2/settings/local_dev.py
 # */migrations
 
 static/core/scss/
+upload/

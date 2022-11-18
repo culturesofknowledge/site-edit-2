@@ -26,3 +26,19 @@
   stroke-linejoin: round;
 
 }
+
+.search_result_img {
+  max-width: 100px;
+  margin-bottom: 1vw;
+}
+
+tr.selectable_entry td ul {
+  padding: 0 0 0 calc(.75 * 1rem);
+  margin-top: 0;
+}
+
+
+tr.selectable_entry td button {
+    background-color: $faint-grey;
+    color: $black;
+}
