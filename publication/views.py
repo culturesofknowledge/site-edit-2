@@ -84,7 +84,6 @@ class PubInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
 
 @login_required
 def full_form(request, pk):
-    # KTODO
     pub = get_object_or_404(CofkUnionPublication, pk=pk)
     pub_form = PublicationForm(request.POST or None, instance=pub)
 
