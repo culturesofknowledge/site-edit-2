@@ -5,7 +5,7 @@
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.description field_lookup=form.description_lookup %}
 
     <!-- Editor's notes -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.editors_notes field_lookup=form.editors_notes_lookup  %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.editors_notes field_lookup=form.editors_notes_lookup field_title="Editors' notes" %}
 
     <!-- Sender/recipient -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.sender_or_recipient field_lookup=form.sender_or_recipient_lookup search_fields=form.sender_or_recipient_search_fields %}

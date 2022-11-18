@@ -1,0 +1,74 @@
+{% load cl_filters render_queryable_resources render_queryable_images render_queryable_manif %}
+
+<script>
+    let tippies = [];
+
+</script>
+
+<table>
+    <thead>
+    <tr></tr>
+    <tr>
+        <th>Description</th>
+        <th>Date for ordering</th>
+        <th>&nbsp;</th>
+        <th>Images</th>
+        <th>Manifestations</th>
+        <th>Related resources</th>
+        <th>ID</th>
+        <th>Last edit</th>
+    </tr>
+    </thead>
+    <tbody>
+
+    {% for r in search_results %}
+        <tr class="selectable_entry" entry_id="{{ r.publication_id }}">
+
+            <td>
+                {{ r.description }}
+            </td>
+            <td>
+                {% if r.date_of_work_as_marked %}
+                {{ r.date_of_work_as_marked }}
+                {% endif %}
+            </td>
+            <td>
+                {% if r.work_to_be_deleted|is_general_true %}
+                    {% include 'work/component/delete.html' %}
+                {% else %}
+                    {% include 'work/component/exclamation.html' with work=r %}
+                {% endif %}
+            </td>
+            <td>
+                {% if r.images %}
+                    {{ r.images|render_queryable_images }}
+                {% endif %}
+            </td>
+            <td>
+                {% if r.manifestations_for_display %}
+                    {{ r.manifestations_for_display|render_queryable_manif }}
+                {% endif %}
+            </td>
+            <td>
+                {% if r.related_resources %}
+                    {{ r.related_resources|render_queryable_resources }}
+                {% endif %}
+            </td>
+            <td>
+                <a href="{% url 'work:overview_form' r.iwork_id %}"
+                   title="Full details of record no. {{ r.iwork_id }}" target="_blank">{{ r.iwork_id }}</a>
+                <br/>
+                <br/>
+                <button class="btn inline_btn" type="button"
+                        onclick="window.open('{% url 'work:full_form' r.iwork_id %}', '_blank').focus();">Edit</button>
+            </td>
+            <td>
+                {{ r.change_timestamp }} by {{ r.change_user }}<br/>
+                Source: {{ r.accession_code }}<br/>
+                [{{ r.catalogue}}]
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+
+</table>

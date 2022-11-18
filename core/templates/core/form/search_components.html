@@ -1,11 +1,16 @@
 
 <nav class="margin-bottom row">
-    <div class="col col--1of2">
+    <div class="col col--1of3">
         {{ form.sort_by.errors }}
         {{ form.sort_by.label_tag }}
         {{ form.sort_by }}
     </div>
-    <div class="col col--1of2">
+    <div class="col col--1of3">
+        {{ form.order.errors }}
+        {{ form.order.label_tag }}
+        {{ form.order }}
+    </div>
+    <div class="col col--1of3">
         {{ form.num_record.errors }}
         {{ form.num_record.label_tag }}
         {{ form.num_record }}

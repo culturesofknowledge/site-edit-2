@@ -1,0 +1,36 @@
+div#upload-header {
+  margin-top: 100px;
+}
+
+span#upload-summary {
+  background-color: $light-grey;
+  font-weight: bold;
+  padding: $space-xs;
+}
+
+div#upload-options {
+  padding-top: 2rem;
+}
+
+#works {
+  padding-top: 2rem;
+}
+
+hr {
+  width: 100%;
+}
+
+table.review {
+  border: 1px solid black;
+}
+
+table.review td {
+  border: 1px solid black;
+  padding: 1rem;
+}
+
+table.review td.header {
+  width: 150px;
+  font-size: $typescale-5;
+  font-weight: bold;
+}

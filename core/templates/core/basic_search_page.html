@@ -2,7 +2,9 @@
 
 {% block content %}
 
-    <h1> {{ title }} </h1>
+    <div class="col col--1of3" style="text-align: center;">
+        <h1> {{ title }} </h1>
+    </div>
 
     {% if total_record  %}
     <button id="fieldset-toggle" class="btn">Toggle</button>
@@ -25,12 +27,8 @@
                 {% for query_fieldset in query_fieldset_list %}
                     {{ query_fieldset }}
                 {% endfor %}
-                <div class="flex-col sticky-bottom">
-                    <div class="actionbox">
-                        <button type="button" name="__form_reset" value="clear" class="sticky-btn inline_btn" onclick="location.href = location.origin + location.pathname">Clear</button>
-                        <button type="submit" name="__form_action" value="search" class="sticky-btn inline_btn">Search</button>
-                    </div>
-                </div>
+
+                {% include "core/component/actionbox.html" with submit_title='Search' %}
             </aside>
 
 
@@ -218,7 +216,7 @@
             }
         });
 
-        ['id_sort_by', 'id_num_record',
+        ['id_sort_by', 'id_num_record', 'id_order',
             'display-as-grid', 'display-as-list'].forEach((target_id) => {
             document.getElementById(target_id).addEventListener('change', () => {
                 submit_page();

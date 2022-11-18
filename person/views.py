@@ -271,8 +271,25 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
-            ('-change_timestamp', 'Change Timestamp desc',),
-            ('change_timestamp', 'Change Timestamp asc',),
+            #('names_and_titles', 'Names and titles / roles',), TODO this is in a view cofk_union_person_view
+            ('date_of_birth', 'Born',),
+            ('date_of_death', 'Died',),
+            ('flourished', 'Flourished',),
+            ('gender', 'Gender',),
+            ('is_organisation', 'Person or group?',),
+            ('org_type', 'Type of group',),
+            ('sent', 'Sent',),
+            ('recd', 'Rec\'d',),
+            ('all_works', 'Sent or Rec\'d',),
+            ('mentioned', 'Mentioned',),
+            ('editors_notes', 'Editors\' notes',),
+            ('further_reading', 'Further reading',),
+            ('images', 'Images',),
+            ('other_details_summary', 'Other details',),
+            ('other_details_summary_searchable', 'Other details',),
+            ('change_timestamp', 'Change Timestamp',),
+            ('change_user', 'Change user',),
+            ('iperson_id', 'Person or Group ID',),
         ]
 
     @property
