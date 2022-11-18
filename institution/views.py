@@ -23,10 +23,19 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
-            ('institution_name', 'Institution name asc',),
-            ('-institution_name', 'Institution name desc',),
-            ('change_timestamp', 'Change Timestamp asc',),
-            ('-change_timestamp', 'Change Timestamp desc',),
+            ('institution_name', 'Institution name',),
+            ('institution_synonyms', 'Alternative institution names',),
+            ('institution_city', 'City name',),
+            ('institution_city_synonyms', 'Alternative city names',),
+            ('institution_country', 'Country name',),
+            ('institution_country_synonyms', 'Alternative country names',),
+            ('related_resources', 'Related resources',),
+            ('editors_notes', 'Editors\' notes',),
+            ('images', 'Images',),
+            ('change_timestamp', 'Change timestamp',),
+            ('change_user', 'Change user',),
+            ('institution_id', 'Repository ID',),
+
         ]
 
     @property
