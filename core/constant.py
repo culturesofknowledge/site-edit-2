@@ -60,3 +60,4 @@ REL_TYPE_SPOUSE_OF = 'spouse_of'
 
 
 DEFAULT_EMPTY_DATE_STR = '9999-12-31'
+STD_DATE_FORMAT = '%Y-%m-%d'

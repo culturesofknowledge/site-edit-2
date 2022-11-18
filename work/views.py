@@ -107,6 +107,9 @@ class BasicWorkFFH(FullFormHandler):
                 work.original_catalogue_id, cat_id))
             work.original_catalogue_id = cat_id
 
+        if work.description != (cur_desc := work_utils.get_recref_display_name(work)):
+            work.description = cur_desc
+
         work.update_current_user_timestamp(request.user.username)
         work.save()
         log.info(f'save work {work}')  # KTODO fix iwork_id plus more than 1
