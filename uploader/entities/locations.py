@@ -94,11 +94,12 @@ class CofkLocations(CofkEntity):
             for locations_relation in [w for w in work_locations_fields if w[0] in self.row_data]:
                 related_location = (self.row_data[locations_relation[0]],
                                     self.row_data[locations_relation[1]])
+                loc = {'name': related_location[0], 'id': related_location[1]}
 
-                if 'origin' in locations_relation[0]:
-                    self.origins.append({'name': related_location[0], 'id': related_location[1]})
-                elif 'destination' in locations_relation[0]:
-                    self.destinations.append({'name': related_location[0], 'id': related_location[1]})
+                if 'origin' in locations_relation[0] and loc not in self.origins:
+                    self.origins.append(loc)
+                elif 'destination' in locations_relation[0] and loc not in self.destinations:
+                    self.destinations.append(loc)
 
                 work_locations.append(related_location)
 

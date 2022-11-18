@@ -117,13 +117,19 @@ class CofkPeople(CofkEntity):
 
                 if 'author' in people_relation[0]:
                     for author in related_people:
-                        self.authors.append({'name': author[0], 'id': author[1]})
+                        author_ = {'name': author[0], 'id': author[1]}
+                        if author_ not in self.authors:
+                            self.authors.append(author_)
                 elif 'addressee' in people_relation[0]:
                     for addressee in related_people:
-                        self.addressees.append({'name': addressee[0], 'id': addressee[1]})
+                        addressee_ = {'name': addressee[0], 'id': addressee[1]}
+                        if addressee_ not in self.addressees:
+                            self.addressees.append(addressee_)
                 elif 'mention' in people_relation[0]:
                     for mentioned in related_people:
-                        self.mentioned.append({'name': mentioned[0], 'id': mentioned[1]})
+                        mentioned_ = {'name': mentioned[0], 'id': mentioned[1]}
+                        if mentioned_ not in self.mentioned:
+                            self.mentioned.append(mentioned_)
 
                 work_people += related_people
 

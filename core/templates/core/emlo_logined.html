@@ -9,11 +9,6 @@
             <li class="menu-item">
                 <a href="/"><img src="{% static 'core/img/cofk_logo_inverted.png' %}" id="logo"></a>
             </li>
-            {% if request.path != '/login/dashboard'  %}
-            <!--<li class="menu-item">
-                <a href="/"><i data-feather="home"></i></a>
-            </li>-->
-            {% endif %}
 
             {% include "core/component/common_section_menu_item.html" with search_vname='work:search' init_vname='work:init_form' section_name='Work' singular='work' %}
             {% include "core/component/common_section_menu_item.html" with search_vname='person:search' init_vname='person:init_form' section_name='People' singular='person'  %}
@@ -25,11 +20,11 @@
             <li class="menu-item">
                 <a href="{% url 'uploader:upload_form' %}">Uploads</a>
                 <ul class='unstyled-list no-margin menu-subitem'>
-                    <a href=''>
+                    <!--<a href=''>
                         <li> Search</li>
-                    </a>
-                    <a href=''>
-                        <li>Add a new {{ singular }}</li>
+                    </a>-->
+                    <a href='{% url 'uploader:upload_form' %}'>
+                        <li>Add a new upload</li>
                     </a>
                 </ul>
             </li>

@@ -49,6 +49,8 @@ class CofkEntity:
         if not row:
             row = self.row
 
+        row += 2
+
         if entity:
             if self.row not in self.other_errors:
                 self.other_errors[row] = []

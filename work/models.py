@@ -512,7 +512,7 @@ class CofkCollectLanguageOfWork(models.Model):
 
 
 class CofkCollectOriginOfWork(models.Model):
-    upload = models.OneToOneField('uploader.CofkCollectUpload', models.CASCADE)
+    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     origin_id = models.IntegerField()
     location = models.ForeignKey('location.CofkCollectLocation', models.CASCADE)
     iwork = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
@@ -524,7 +524,7 @@ class CofkCollectOriginOfWork(models.Model):
 
     class Meta:
         db_table = 'cofk_collect_origin_of_work'
-        unique_together = (('upload', 'iwork_id', 'origin_id'),)
+        unique_together = (('upload', 'iwork', 'origin_id'),)
 
 
 class CofkCollectPersonMentionedInWork(models.Model):
