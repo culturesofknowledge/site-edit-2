@@ -87,10 +87,10 @@ def handle_upload(request, context):
             context['report']['total_errors'] = 1
             context['report']['errors'] = {'file': {'total': 1, 'error': ['Could not read the Excel file.']}}
             log.error(e)
-        except Exception as e:
-            context['report']['total_errors'] = 1
-            context['error'] = 'Indeterminate error.'
-            log.error(e)
+        #except Exception as e:
+        #    context['report']['total_errors'] = 1
+        #    context['error'] = 'Indeterminate error.'
+        #    log.error(e)
 
         if cuef and cuef.errors:
             log.error('Deleting new upload')
@@ -114,7 +114,7 @@ def handle_upload(request, context):
 
 @login_required
 def upload_view(request, **kwargs):
-    template_url = 'form.html'
+    template_url = 'uploader/form.html'
     form = CofkCollectUploadForm
     context = {'form': form, }
 
@@ -132,7 +132,7 @@ def upload_view(request, **kwargs):
 
 @login_required
 def upload_review(request, upload_id, **kwargs):
-    template_url = 'review.html'
+    template_url = 'uploader/review.html'
     upload = CofkCollectUpload.objects.filter(upload_id=upload_id).first()
 
     context = {'upload': upload,

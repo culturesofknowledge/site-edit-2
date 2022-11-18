@@ -2,21 +2,24 @@
 
 {% block content %}
 
-<p style="font-size: x-large;">Contribution by {{ upload.upload_username }} uploaded {{ upload.upload_timestamp }}</p>
+<div id="upload-header">
+    <h3>Contribution by {{ upload.upload_username }} uploaded {{ upload.upload_timestamp }}</h3>
 
-<span style="background-color: #ddd; font-weight: bold; padding: 0.4em;">Status: {{ upload.upload_status }} | Number of works uploaded: {{ works | length }} | Accepted: {{ upload.works_accepted}} | Rejected: {{ upload.works_rejected}}</span>
+    <span id="upload-summary">Status: {{ upload.upload_status }} | Number of works uploaded: {{ works | length }} | Accepted: {{ upload.works_accepted}} | Rejected: {{ upload.works_rejected}}</span>
 
-<div style="margin-top: 20px">
+    <div id="upload-options">
     Back to list of contributions <button type="button" class="btn inline_btn" onclick="location.href='/upload'">Back</button>
 
     Accept entire contribution <button class="btn inline_btn" disabled>Accept all</button>
 
     Reject entire contribution <button class="btn inline_btn">Reject all</button>
+    </div>
+    <em>Note: confirmation will be required before Accept/Reject of entire contribution.</em>
 </div>
 
-{% include "works.html" %}
+{% include "uploader/component/works.html" %}
 
-{% include "people.html" %}
+{% include "uploader/component/people.html" %}
 
 <!--
 

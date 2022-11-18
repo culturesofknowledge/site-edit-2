@@ -35,30 +35,40 @@ class CofkPeople(CofkEntity):
             self.check_data_types('People')
             iperson_id = self.row_data['iperson_id'] if 'iperson_id' in self.row_data else None
 
-            person = CofkCollectPerson()
-            if iperson_id and isinstance(iperson_id, int):
-                person.person = CofkUnionPerson.objects.filter(iperson_id=iperson_id).first()
+            if iperson_id:
+                for ipi, pn in zip(str(iperson_id).split(';'), str(self.row_data['primary_name']).split(';')):
+                    person = CofkCollectPerson()
 
-            person.upload = self.upload
-            person.iperson_id = iperson_id
-            person.primary_name = self.row_data['primary_name']
-            person.date_of_birth_is_range = 0
-            person.date_of_birth_inferred = 0
-            person.date_of_birth_uncertain = 0
-            person.date_of_birth_approx = 0
-            person.date_of_birth_inferred = 0
-            person.date_of_death_is_range = 0
-            person.date_of_death_inferred = 0
-            person.date_of_death_uncertain = 0
-            person.date_of_death_approx = 0
-            person.flourished_is_range = 0
+                    try:
+                        ipi = int(ipi)
+                        person.person = CofkUnionPerson.objects.filter(iperson_id=ipi).first()
+                    except ValueError:
+                        log.info('So it goes')
 
-            self.people.append(person)
+                    person.upload = self.upload
+                    person.iperson_id = ipi
+                    person.primary_name = pn
+                    person.date_of_birth_is_range = 0
+                    person.date_of_birth_inferred = 0
+                    person.date_of_birth_uncertain = 0
+                    person.date_of_birth_approx = 0
+                    person.date_of_birth_inferred = 0
+                    person.date_of_death_is_range = 0
+                    person.date_of_death_inferred = 0
+                    person.date_of_death_uncertain = 0
+                    person.date_of_death_approx = 0
+                    person.flourished_is_range = 0
 
-            log.info(f'Creating new person {person}')
+                    if ipi not in list(map(lambda x: x[1], sheet_people)):
+                        self.people.append(person)
 
-            sheet_people.append((self.row_data['primary_name'], iperson_id))
+                    log.info(f'Creating new person {person}')
 
+                    sheet_people.append((pn, ipi))
+
+        log.info(len(sheet_people))
+        log.info(len(set(sheet_people)))
+        log.info(len(self.people))
         try:
             CofkCollectPerson.objects.bulk_create(self.people)
         except ValueError:
@@ -156,10 +166,14 @@ class CofkPeople(CofkEntity):
             if unique_work_people > unique_sheet_people:
                 ppl = [f'{p[0]} #{p[1]}' for p in list(unique_work_people - unique_sheet_people)]
                 ppl_joined = ', '.join(ppl)
-                self.add_error(ValidationError(f'The person {ppl_joined} is referenced in the Work spreadsheet'
-                                               f' but is missing from the People spreadsheet'))
+                plural = 'person is' if len(ppl) == 1 else f'following {len(ppl)} people are'
+                tense = 'is' if len(ppl) == 1 else 'are'
+                self.add_error(ValidationError(f'The {plural} referenced in the Work spreadsheet'
+                                               f' but {tense} missing from the People spreadsheet: {ppl_joined}'))
             elif unique_work_people < unique_sheet_people:
-                ppl = [str(p) for p in list(unique_sheet_people - unique_work_people)]
+                ppl = [f'{p[0]} #{p[1]}' for p in list(unique_sheet_people - unique_work_people)]
                 ppl_joined = ', '.join(ppl)
-                self.add_error(ValidationError(f'The person {ppl_joined} is referenced in the People spreadsheet'
-                                               f' but is missing from the Work spreadsheet'))
+                plural = 'person is' if len(ppl) == 1 else f'following {len(ppl)} people are'
+                tense = 'is' if len(ppl) == 1 else 'are'
+                self.add_error(ValidationError(f'The {plural} are referenced in the People spreadsheet'
+                                               f' but {tense} missing from the Work spreadsheet: {ppl_joined}'))
