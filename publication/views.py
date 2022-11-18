@@ -6,17 +6,21 @@ from django.forms import ModelForm
 from django.shortcuts import redirect, get_object_or_404
 from django.shortcuts import render
 
-from core.helper import renderer_utils
+from core.helper import renderer_utils, query_utils
 from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView
-from publication.forms import PublicationForm
+from publication.forms import PublicationForm, GeneralSearchFieldset
 from publication.models import CofkUnionPublication
 
 
 class PubSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
-    def title(self) -> str:
-        return 'Publication'
+    def query_fieldset_list(self) -> Iterable:
+        return [GeneralSearchFieldset(self.request_data)]
+
+    @property
+    def entity(self) -> str:
+        return 'publication,publications'
 
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
@@ -39,6 +43,23 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
     def get_queryset(self):
         # KTODO
         queryset = CofkUnionPublication.objects.all()
+
+        # queries for like_fields
+        field_fn_maps = {
+            # 'institution_id': query_utils.create_eq_query,
+        }
+
+        queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
+
+        queries.extend(
+            query_utils.create_queries_by_lookup_field(self.request_data, [
+                'publication_details', 'abbrev', 'change_user', 'publication_id',
+            ])
+        )
+
+        if queries:
+            queryset = queryset.filter(query_utils.all_queries_match(queries))
+
         if sort_by := self.get_sort_by():
             queryset = queryset.order_by(sort_by)
         return queryset
@@ -63,7 +84,6 @@ class PubInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
 
 @login_required
 def full_form(request, pk):
-    # KTODO
     pub = get_object_or_404(CofkUnionPublication, pk=pk)
     pub_form = PublicationForm(request.POST or None, instance=pub)
 
