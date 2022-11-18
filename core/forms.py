@@ -19,6 +19,13 @@ def build_search_components(sort_by_choices: list[tuple[str, str]]):
                                   widget=forms.Select(choices=sort_by_choices),
                                   required=False, )
 
+        order = forms.CharField(label='Order',
+                                widget=forms.Select(choices=[
+                                    ('asc', 'Ascending'),
+                                    ('desc', 'Descending')
+                                ]),
+                                required=False)
+
         num_record = forms.IntegerField(label='Records per page',
                                         widget=forms.Select(choices=[
                                             (10, 10),
