@@ -1,0 +1,10 @@
+<small class="choice-item">
+    <input id="id_{{ name }}_{{ target_id }}" name="{{ name }}" type="checkbox"
+           value="{{ target_id }}"
+            {% if is_selected %}
+           checked="checked"
+            {% endif %}
+    />
+    <label for="id_{{ name }}_{{ target_id }}">{{ desc }}</label>
+</small>
+

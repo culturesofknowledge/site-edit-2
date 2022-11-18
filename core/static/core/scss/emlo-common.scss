@@ -126,7 +126,13 @@ tr.selectable_entry:hover {
   }
 
   input[type=date] {
+    height: 35px;
     width: 130px;
+    margin: 0;
+  }
+
+  small {
+    margin: auto 0;
   }
 }
 
@@ -213,3 +219,24 @@ tr.selectable_entry:hover {
   margin-right: 20px;
 }
 
+
+.recref-list {
+  margin-bottom: 1em;
+
+  .recref-row {
+    @extend .row-no-margin;
+    margin-bottom: 1em;
+  }
+
+  .recref-title {
+    margin-right: 1em;
+    margin-top: auto;
+    margin-bottom: auto;
+    width: 70%;
+  }
+
+  .recref-del {
+    margin: auto 0;
+  }
+
+}

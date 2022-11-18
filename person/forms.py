@@ -1,14 +1,17 @@
 import logging
+from typing import Iterable
 
 from django import forms
 from django.db.models import TextChoices, Model
 from django.forms import ModelForm, CharField
+from django.forms.utils import ErrorList
 
 from core import constant
 from core.helper import form_utils, widgets_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.form_utils import TargetPersonMRRForm
 from person.models import CofkUnionPerson
+from uploader.models import CofkUnionOrgType
 
 log = logging.getLogger(__name__)
 
@@ -42,6 +45,28 @@ class YesEmptyCheckboxField(forms.CharField):
     def clean(self, value):
         new_value = super().clean(value)
         return 'Y' if new_value == 'True' else ''
+
+
+class OrgTypeField(forms.IntegerField):
+    def __init__(self, **kwargs):
+        widget = forms.Select()
+        super().__init__(widget=widget, **kwargs)
+
+    def reload_choices(self):
+        self.widget.choices = [
+            (None, ''),
+            *self.find_org_type_choices()
+        ]
+
+    def find_org_type_choices(self) -> Iterable[tuple[int, str]]:
+        for o in CofkUnionOrgType.objects.iterator():
+            yield o.org_type_id, o.org_type_desc
+
+    def clean(self, value):
+        org_type_id = super().clean(value)
+        if org_type_id is not None:
+            return CofkUnionOrgType.objects.get(pk=org_type_id)
+        return org_type_id
 
 
 class PersonForm(ModelForm):
@@ -87,6 +112,9 @@ class PersonForm(ModelForm):
     date_of_birth_year = form_utils.create_year_field()
     date_of_birth_month = form_utils.create_month_field()
     date_of_birth_day = form_utils.create_day_field()
+    date_of_birth2_year = form_utils.create_year_field()
+    date_of_birth2_month = form_utils.create_month_field()
+    date_of_birth2_day = form_utils.create_day_field()
     date_of_birth_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_birth_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_birth_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
@@ -97,6 +125,9 @@ class PersonForm(ModelForm):
     date_of_death_year = form_utils.create_year_field()
     date_of_death_month = form_utils.create_month_field()
     date_of_death_day = form_utils.create_day_field()
+    date_of_death2_year = form_utils.create_year_field()
+    date_of_death2_month = form_utils.create_month_field()
+    date_of_death2_day = form_utils.create_day_field()
     date_of_death_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_death_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_death_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
@@ -107,6 +138,9 @@ class PersonForm(ModelForm):
     flourished_year = form_utils.create_year_field()
     flourished_month = form_utils.create_month_field()
     flourished_day = form_utils.create_day_field()
+    flourished2_year = form_utils.create_year_field()
+    flourished2_month = form_utils.create_month_field()
+    flourished2_day = form_utils.create_day_field()
     flourished_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     flourished_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     flourished_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
@@ -117,9 +151,16 @@ class PersonForm(ModelForm):
     birth_place = forms.CharField(required=False, widget=forms.HiddenInput())
     death_place = forms.CharField(required=False, widget=forms.HiddenInput())
     other_place = forms.CharField(required=False, widget=forms.HiddenInput())
+    organisation_type = OrgTypeField(required=False)
 
     # extra field
     selected_other_id = forms.CharField(required=False)
+
+    def __init__(self, data=None, files=None, auto_id="id_%s", prefix=None, initial=None, error_class=ErrorList,
+                 label_suffix=None, empty_permitted=False, instance=None, use_required_attribute=None, renderer=None):
+        super().__init__(data, files, auto_id, prefix, initial, error_class, label_suffix, empty_permitted, instance,
+                         use_required_attribute, renderer)
+        self.is_org_form = False
 
     class Meta:
         model = CofkUnionPerson
@@ -134,6 +175,9 @@ class PersonForm(ModelForm):
             'date_of_birth_year',
             'date_of_birth_month',
             'date_of_birth_day',
+            'date_of_birth2_year',
+            'date_of_birth2_month',
+            'date_of_birth2_day',
             'date_of_birth',
             'date_of_birth_inferred',
             'date_of_birth_uncertain',
@@ -143,6 +187,9 @@ class PersonForm(ModelForm):
             'date_of_death_year',
             'date_of_death_month',
             'date_of_death_day',
+            'date_of_death2_year',
+            'date_of_death2_month',
+            'date_of_death2_day',
             'date_of_death',
             'date_of_death_inferred',
             'date_of_death_uncertain',
@@ -151,6 +198,9 @@ class PersonForm(ModelForm):
             'flourished_year',
             'flourished_month',
             'flourished_day',
+            'flourished2_year',
+            'flourished2_month',
+            'flourished2_day',
             'flourished',
             'flourished_inferred',
             'flourished_uncertain',
@@ -161,6 +211,8 @@ class PersonForm(ModelForm):
             'date_of_birth_is_range',
             'date_of_death_is_range',
             'flourished_is_range',
+
+            'organisation_type',
 
         )
 

@@ -213,6 +213,8 @@ input[type="radio"] {
     transition: all 0.35s;
     border: 1px solid $black;
     margin-left: $space-xxs;
+    position: relative;
+    top: 4px;
   }
 
   &:checked + label {

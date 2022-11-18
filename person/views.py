@@ -13,19 +13,21 @@ from django.shortcuts import render, redirect, get_object_or_404
 from core import constant
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_IS_RELATED_TO
 from core.forms import CommentForm, ResourceForm, LocRecrefForm, PersonRecrefForm
-from core.helper import renderer_utils, view_utils, query_utils, download_csv_utils, recref_utils, form_utils
+from core.helper import renderer_utils, view_utils, query_utils, download_csv_utils, recref_utils, form_utils, \
+    model_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter, TargetCommentRecrefAdapter, \
     TargetResourceRecrefAdapter, TargetPersonRecrefAdapter
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
 from core.helper.view_utils import CommonInitFormViewTemplate, ImageHandler, BasicSearchView, FullFormHandler, \
-    RecrefFormsetHandler
+    RecrefFormsetHandler, RoleCategoryHandler
 from core.models import Recref
 from location.models import CofkUnionLocation
 from person import person_utils
 from person.forms import PersonForm, GeneralSearchFieldset, PersonOtherRecrefForm
 from person.models import CofkUnionPerson, CofkPersonLocationMap, CofkPersonPersonMap, create_person_id, \
-    CofkPersonCommentMap, CofkPersonResourceMap
+    CofkPersonCommentMap, CofkPersonResourceMap, CofkPersonRoleMap
+from uploader.models import CofkUnionRoleCategory
 
 log = logging.getLogger(__name__)
 
@@ -44,8 +46,20 @@ class PersonInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
 
     def on_form_changed(self, request, form) -> NoReturn:
         form.instance.person_id = create_person_id(form.instance.iperson_id)
-        # KTODO handle form.instance.roles
         return super().on_form_changed(request, form)
+
+    def get(self, request, *args, **kwargs):
+        is_org_form = request and request.GET.get('person_form_type') == 'org'
+        if is_org_form:
+            initial = {'is_organisation': 'Y', }
+        else:
+            initial = {}
+
+        form = self.form_factory(initial=initial)
+        if is_org_form:
+            form.is_org_form = True
+
+        return self.resp_form_page(request, form)
 
 
 class PersonQuickInitView(PersonInitView):
@@ -112,8 +126,9 @@ class PersonFFH(FullFormHandler):
 
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
         self.person = get_object_or_404(CofkUnionPerson, iperson_id=pk)
-        # KTODO handle self.person.roles, roles_titles
         self.person_form = PersonForm(request_data or None, instance=self.person)
+        self.person_form.base_fields['organisation_type'].reload_choices()
+
         self.loc_handler = LocRecrefHandler(
             request_data, model_list=self.person.cofkpersonlocationmap_set.iterator(), )
 
@@ -202,6 +217,13 @@ class PersonFFH(FullFormHandler):
         ))
         self.img_handler = ImageHandler(request_data, request and request.FILES, self.person.images)
 
+        self.role_handler = RoleCategoryHandler(PersonRoleRecrefAdapter(self.person))
+
+    def create_context(self):
+        context = super().create_context()
+        context.update(self.role_handler.create_context())
+        return context
+
     def render_form(self, request):
         return render(request, 'person/full_form.html', self.create_context())
 
@@ -230,9 +252,9 @@ def full_form(request, iperson_id):
                                                   selected_id_field_name='selected_other_id',
                                                   rel_type=constant.REL_TYPE_UNSPECIFIED_RELATIONSHIP_WITH,
                                                   recref_adapter=PersonOtherRecrefForm.create_recref_adapter())
+        fhandler.role_handler.save(request, fhandler.person_form.instance)
 
         # KTODO save birthplace, deathplace
-        # KTODo save roles_titles
 
         # reload all form data for rendering
         fhandler.load_data(iperson_id, request_data=None)
@@ -417,6 +439,32 @@ class PersonResourceRecrefAdapter(TargetResourceRecrefAdapter):
 
     def find_recref_records(self, rel_type):
         return self.find_recref_records_by_related_manger(self.parent.cofkpersonresourcemap_set, rel_type)
+
+
+class PersonRoleRecrefAdapter(RecrefFormAdapter):
+    def __init__(self, parent):
+        self.parent: CofkUnionPerson = parent
+
+    def find_target_display_name_by_id(self, target_id):
+        target = self.find_target_instance(target_id)
+        return target and target.role_category_desc
+
+    def recref_class(self) -> Type[Recref]:
+        return CofkPersonRoleMap
+
+    def find_target_instance(self, target_id):
+        return model_utils.get_safe(CofkUnionRoleCategory, pk=target_id)
+
+    def set_parent_target_instance(self, recref, parent, target):
+        recref: CofkPersonRoleMap
+        recref.person = parent
+        recref.role = target
+
+    def find_recref_records(self, rel_type):
+        return self.find_recref_records_by_related_manger(self.parent.cofkpersonrolemap_set, rel_type)
+
+    def target_id_name(self):
+        return 'role_id'
 
 
 class PersonPersonRecrefAdapter(TargetPersonRecrefAdapter, ABC):

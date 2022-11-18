@@ -4,7 +4,13 @@
 
 {% block content %}
     <script src="{% static 'core/js/ref_publication_service.js' %}" defer></script>
-    <h1 class="align-center">Person</h1>
+    <h1 class="align-center">
+        {% if person_form.is_org_form or person_form.is_organisation.value == 'Y' %}
+            Organisation
+        {% else %}
+            Person
+        {% endif %}
+    </h1>
 
     <div class="row row--centered">
         <div class="col col--1of2">
@@ -33,6 +39,18 @@
                         <small> (Leave this checkbox blank if the correspondent was an individual person; tick if the
                             correspondent was a group or organisation.)</small>
                     </div>
+
+                    <div class="org-type-div margin-bottom"
+                            {% if not person_form.is_org_form or person_form.is_organisation.value != 'Y' %}
+                         style="display: none"
+                            {% endif %}
+                    >
+                        <label>Type of group</label>
+                        {{ person_form.organisation_type }}
+                        <small>Further details of a group's purpose or role can be given in the professions/titles
+                            field.</small>
+                    </div>
+
                     <div class="margin-bottom">
                         <label>Editors' notes</label>
                         {{ person_form.editors_notes }}
@@ -62,7 +80,9 @@
                 <fieldset>
                     <legend id="header_roles" class="toc-item">Roles/titles</legend>
                     <div class="choices-container">
-                        {% include "core/component/common_form_choices.html" with label_text='Professional categories' choices_field=person_form.roles_titles %}
+                        {% for s in roles %}
+                            {{ s }}
+                        {% endfor %}
                     </div>
                     <div class="margin-bottom">
                         <label>Further details of roles / titles:</label>
@@ -79,9 +99,9 @@
                 <fieldset>
                     <legend id="header_dates" class="toc-item">Dates</legend>
 
-                    {% include "person/component/date_fields.html" with title_name='date of birth' calendar=person_form.date_of_birth_calendar  is_range=person_form.date_of_birth_is_range  inferred=person_form.date_of_birth_inferred  uncertain=person_form.date_of_birth_uncertain  approx=person_form.date_of_birth_approx day_field=person_form.date_of_birth_day month_field=person_form.date_of_birth_month year_field=person_form.date_of_birth_year %}
-                    {% include "person/component/date_fields.html" with title_name='date of death' calendar=person_form.date_of_death_calendar  is_range=person_form.date_of_death_is_range  inferred=person_form.date_of_death_inferred  uncertain=person_form.date_of_death_uncertain  approx=person_form.date_of_death_approx day_field=person_form.date_of_death_day month_field=person_form.date_of_death_month year_field=person_form.date_of_death_year %}
-                    {% include "person/component/date_fields.html" with title_name='date when flourished' calendar=person_form.flourished_calendar  is_range=person_form.flourished_is_range  inferred=person_form.flourished_inferred  uncertain=person_form.flourished_uncertain  approx=person_form.flourished_approx day_field=person_form.flourished_day month_field=person_form.flourished_month year_field=person_form.flourished_year %}
+                    {% include "person/component/date_fields.html" with title_name='date of birth' calendar=person_form.date_of_birth_calendar  is_range=person_form.date_of_birth_is_range  inferred=person_form.date_of_birth_inferred  uncertain=person_form.date_of_birth_uncertain  approx=person_form.date_of_birth_approx day_field=person_form.date_of_birth_day month_field=person_form.date_of_birth_month year_field=person_form.date_of_birth_year day_field2=person_form.date_of_birth2_day month_field2=person_form.date_of_birth2_month year_field2=person_form.date_of_birth2_year %}
+                    {% include "person/component/date_fields.html" with title_name='date of death' calendar=person_form.date_of_death_calendar  is_range=person_form.date_of_death_is_range  inferred=person_form.date_of_death_inferred  uncertain=person_form.date_of_death_uncertain  approx=person_form.date_of_death_approx day_field=person_form.date_of_death_day month_field=person_form.date_of_death_month year_field=person_form.date_of_death_year day_field2=person_form.date_of_death2_day month_field2=person_form.date_of_death2_month year_field2=person_form.date_of_death2_year %}
+                    {% include "person/component/date_fields.html" with title_name='date when flourished' calendar=person_form.flourished_calendar  is_range=person_form.flourished_is_range  inferred=person_form.flourished_inferred  uncertain=person_form.flourished_uncertain  approx=person_form.flourished_approx day_field=person_form.flourished_day month_field=person_form.flourished_month year_field=person_form.flourished_year day_field2=person_form.flourished2_day month_field2=person_form.flourished2_month year_field2=person_form.flourished2_year %}
 
                 </fieldset>
 
@@ -107,11 +127,29 @@
     </div>
 
 
+    <script src="{% static 'core/js/auto_date_calendar.js' %}" defer></script>
     <script src="{% static 'core/js/table_of_content_service.js' %}" defer></script>
     <script>
-    $(function (){
-        setup_table_of_content();
-    });
+
+        function setup_is_org_checkbox() {
+            $('#id_is_organisation').change(function (e) {
+                let org_type_div_jqe = $('.org-type-div');
+                if ($(e.target).is(":checked")) {
+                    org_type_div_jqe.show()
+                } else {
+                    org_type_div_jqe.hide()
+                }
+            })
+
+        }
+
+        $(function () {
+            for (let date_jqe of $('.date-fields-div')) {
+                setup_is_range($(date_jqe));
+            }
+            setup_table_of_content();
+            setup_is_org_checkbox();
+        });
     </script>
 
 {% endblock %}

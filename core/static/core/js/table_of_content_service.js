@@ -8,6 +8,7 @@ function isElementInViewpoint(ele) {
     let window_jqe = $(window)
     var viewportTop = window_jqe.scrollTop();
     var viewportBottom = viewportTop + window_jqe.height();
+    viewportBottom = viewportBottom - 100;  // avoid select toc if too bottom
 
     return elementBottom > viewportTop && elementTop < viewportBottom;
 }
@@ -24,7 +25,7 @@ function toggle_table_of_content(){
 
 
 function build_table_of_content_ui() {
-    let container = $('<div class="fixed-right-bottom">')
+    let container = $('<div id="toc-div">')
     container.append()
     let toc_btn = $('<button id="toc-btn" >Table of Content</button>')
     toc_btn.on('click', toggle_table_of_content);
@@ -33,7 +34,7 @@ function build_table_of_content_ui() {
     let title = $('<button>Table of Content</button>')
     title.on('click', toggle_table_of_content);
 
-    let body = $('<div id="toc-body" class="flex-col">')
+    let body = $('<div id="toc-body">')
     body.append(title)
     body.hide()
 
@@ -44,7 +45,6 @@ function build_table_of_content_ui() {
         } else {
             link_jqe = $(`<a href="#${ele.id}">${ele.textContent}</a>`)
         }
-        // debugger
         body.append(link_jqe)
     });
 

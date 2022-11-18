@@ -69,6 +69,11 @@ emlojs.recref_service = {
                     select_url: '/person/search?recref_mode=1',
                     create_url: '/person/quick_init',
                 }
+            } else if(recref_type === 'organisation') {
+                urls = {
+                    select_url: '/person/search?recref_mode=1',
+                    create_url: '/person/quick_init?person_form_type=org',
+                }
             } else if(recref_type === 'work') {
                 urls = {
                     select_url: '/work/search?recref_mode=1',

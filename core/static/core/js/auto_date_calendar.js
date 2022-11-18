@@ -138,16 +138,20 @@ function maintain_is_range(autodate_div_jqe, is_range_jqe) {
     }
 }
 
+function setup_is_range(date_div_jqe) {
+    let is_range_jqe = date_div_jqe.find('.is-range-div input');
+    is_range_jqe.change(function (e) {
+        maintain_is_range(date_div_jqe, is_range_jqe);
+    });
+    maintain_is_range(date_div_jqe, is_range_jqe);
+}
+
 
 function setup_autodate_div(autodate_div_selector) {
     let autodate_div_jqe = $(autodate_div_selector);
 
     // setup is_range
-    let is_range_jqe = autodate_div_jqe.find('.is-range-div input');
-    is_range_jqe.change(function (e) {
-        maintain_is_range(autodate_div_jqe, is_range_jqe);
-    });
-    maintain_is_range(autodate_div_jqe, is_range_jqe);
+    setup_is_range(autodate_div_jqe);
 
     // setup from date
     new AutoCalendar(

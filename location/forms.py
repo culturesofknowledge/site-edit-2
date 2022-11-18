@@ -6,7 +6,7 @@ from location.models import CofkUnionLocation
 
 
 class LocationForm(ModelForm):
-    form_title__ = 'Core fields and editors\' notes:'
+    form_title__ = 'Core fields and editors\' notes'
 
     location_id = IntegerField(required=False, widget=HiddenInput())
     location_name = CharField(required=False,

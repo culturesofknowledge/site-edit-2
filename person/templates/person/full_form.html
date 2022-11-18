@@ -4,7 +4,7 @@
 {% block more_section_content %}
     <script src="/static/core/js/recref_service.js"></script>
     <fieldset id="header_known_loc">
-        <legend>Known geographical locations</legend>
+        <legend id="header_geo_locations" class="toc-item">Known geographical locations</legend>
         {% include "core/component/recref.html" with recref_type='location' id_field=person_form.birth_place label='Birthplace (or place of formation for organisations):' %}
         {% include "core/component/recref.html" with recref_type='location' id_field=person_form.death_place label='Place of death (or of cessation if an organisation):' %}
 
@@ -15,13 +15,13 @@
 
     </fieldset>
     <fieldset id="header_organisations">
-        <legend>Organisations to which belonged</legend>
-        {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_organisation.update_formset new_form=recref_organisation.new_form add_label='Add organisation:' %}
+        <legend id="header_organisations" class="toc-item">Organisations to which belonged</legend>
+        {% include "core/component/create_update_recref.html" with recref_type='organisation' recref_formset=recref_organisation.update_formset new_form=recref_organisation.new_form add_label='Add organisation:' %}
     </fieldset>
 
 
     <fieldset id="header_member">
-        <legend>Members:</legend>
+        <legend id="header_member" class="toc-item">Members</legend>
         {% if person_form.is_organisation.value == 'Y' %}
             {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_member.update_formset new_form=recref_member.new_form add_label='Add member:' %}
         {% else %}
@@ -109,11 +109,4 @@
 
     </script>
 
-{% endblock %}
-
-{% block more_table_of_content %}
-    <a href="#header_known_loc">Known geographical locations</a>
-    <a href="#header_organisations">Organisations to which belonged</a>
-    <a href="#header_member">Members</a>
-    <a href="#header_related_others">Relationships with others</a>
 {% endblock %}

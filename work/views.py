@@ -576,8 +576,11 @@ class DetailsFFH(BasicWorkFFH):
         context.update(self.subject_handler.create_context())
         return context
 
+    def has_changed(self, request):
+        return super(DetailsFFH, self).is_any_changed() or self.subject_handler.has_changed(request)
+
     def save(self, request):
-        if not self.is_any_changed():
+        if not self.has_changed(request):
             log.debug('skip save details when no changed')
             return
         work = self.save_work(request, self.details_form)
@@ -594,8 +597,6 @@ class DetailsFFH(BasicWorkFFH):
         self.save_all_recref_formset(work, request)
         self.maintain_all_recref_records(request, work)
         self.subject_handler.save(request, work)
-
-        # self.save_all_recref_formset(self.work, request)
 
 
 class ManifLangModelAdapter(LangModelAdapter):
