@@ -224,7 +224,7 @@ class CommonSearchTests:
         self.test_case.goto_vname(self.search_vname)
 
     def find_search_btn(self):
-        return self.test_case.selenium.find_element(By.CSS_SELECTOR, 'button[name=__form_action][value=search]')
+        return self.test_case.selenium.find_element(By.CSS_SELECTOR, 'button.save[type=submit]')
 
     def find_table_rows(self):
         return self.test_case.selenium.find_elements(By.CSS_SELECTOR, 'tbody tr.selectable_entry')
