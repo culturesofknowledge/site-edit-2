@@ -1,12 +1,13 @@
 from django import forms
 from django.forms import ModelForm, CharField, IntegerField
 
+
 from core.helper import form_utils, widgets_utils
 from publication.models import CofkUnionPublication
 
 
 class PublicationForm(ModelForm):
-    publication_details = forms.CharField(required=True, widget=forms.Textarea())
+    publication_details = form_utils.CommonTextareaField(required=True)
     abbrev = forms.CharField(required=False, max_length=50)
 
     class Meta:
