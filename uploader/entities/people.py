@@ -82,7 +82,7 @@ class CofkPeople(CofkEntity):
                 self.add_error(ValidationError(f'Encountered an empty value for a name in {names}.'), 'work')
 
             try:
-                ids_list = [int(i) for i in self.row_data[ids].split(';')]
+                ids_list = [int(i) for i in self.row_data[ids].split(';') if i != '']
 
                 if len(ids_list) < len(names_list):
                     # New people entries

@@ -2,9 +2,9 @@
 <div id="people">
     <h1>People and groups</h1>
 
-    <p>Details of {{ people| length }} new {{people|pluralize:"person, people"}} or group{{people|pluralize:", s"}}
+    <p>Details of {{ people| length }} new {{people|pluralize:"person, people"}} or group{{people|pluralize:",s"}}
         {{people|pluralize:"was, were"}} uploaded in this contribution. </p>
-
+    {{ people }}
 </div>
 
 {% for person in people %}
