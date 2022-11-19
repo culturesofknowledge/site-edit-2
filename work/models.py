@@ -241,22 +241,23 @@ class CofkCollectWork(models.Model):
         min_month = 1
         max_month = 12
 
-        if not min_month <= month <= max_month:
+        if month is not None and not min_month <= month <= max_month:
             self.add_error('%(field)s: is %(value)s but must be between %(min_month)s and %(max_month)s',
                            {'field': field_name, 'value': month, 'min_month': min_month, 'max_month': max_month})
 
     def clean_date(self, field, field_name, month):
-        if field < 1:
-            self.add_error('%(field)s: can not be less than 1', {'field': field_name})
-        elif field > 31:
-            self.add_error('%(field)s: can not be greater than 31', {'field': field_name})
-        # If month is April, June, September or November then day must be not more than 30
-        elif month in [4, 6, 9, 11] and field > 30:
-            self.add_error('%(field)s: can not be more than 30 for April, June, September or November',
-                           {'field': field_name})
-        # For February not more than 29
-        elif month == 2 and field > 29:
-            self.add_error('%(field)s: can not be more than 29 for February', {'field': field_name})
+        if field is not None:
+            if field < 1:
+                self.add_error('%(field)s: can not be less than 1', {'field': field_name})
+            elif field > 31:
+                self.add_error('%(field)s: can not be greater than 31', {'field': field_name})
+            # If month is April, June, September or November then day must be not more than 30
+            elif month in [4, 6, 9, 11] and field > 30:
+                self.add_error('%(field)s: can not be more than 30 for April, June, September or November',
+                               {'field': field_name})
+            # For February not more than 29
+            elif month == 2 and field > 29:
+                self.add_error('%(field)s: can not be more than 29 for February', {'field': field_name})
 
     def clean_range(self):
         if self.date_of_work_std_is_range == 1:
@@ -266,10 +267,14 @@ class CofkCollectWork(models.Model):
 
             self.clean_date(self.date_of_work2_std_day, 'date_of_work2_std_day', self.date_of_work2_std_month)
 
-            first_date = datetime(self.date_of_work_std_year,
-                                  self.date_of_work_std_month, self.date_of_work_std_day)
-            second_date = datetime(self.date_of_work2_std_year,
-                                   self.date_of_work2_std_month, self.date_of_work2_std_day)
+            try:
+                first_date = datetime(self.date_of_work_std_year,
+                                      self.date_of_work_std_month, self.date_of_work_std_day)
+                second_date = datetime(self.date_of_work2_std_year,
+                                       self.date_of_work2_std_month, self.date_of_work2_std_day)
+            except TypeError:
+                return
+
             if first_date >= second_date:
                 self.add_error('%(field1)s-%(field2)s: The start date in a date range can not be after the end date',
                                {'field1': 'date_of_work', 'field2': 'date_of_work2'})

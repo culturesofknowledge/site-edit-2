@@ -23,12 +23,12 @@ class CofkPeople(CofkEntity):
     contains information about the nature of the relation (which of the above tables to link to).
     """
 
-    def process_people_sheet(self) -> List[tuple]:
+    def process_people_sheet(self) -> dict:
         """
         Get all people from people spreadsheet
         Populating a list of tuples of (Name, iperson_id)
         """
-        sheet_people = []
+        sheet_people = {}
         for i in range(1, len(self.sheet_data.index)):
             self.row_data = {k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None}
 
@@ -59,16 +59,12 @@ class CofkPeople(CofkEntity):
                     person.date_of_death_approx = 0
                     person.flourished_is_range = 0
 
-                    if ipi not in list(map(lambda x: x[1], sheet_people)):
+                    if ipi not in sheet_people:
                         self.people.append(person)
+                        sheet_people[ipi] = pn
 
                     log.info(f'Creating new person {person}')
 
-                    sheet_people.append((pn, ipi))
-
-        log.info(len(sheet_people))
-        log.info(len(set(sheet_people)))
-        log.info(len(self.people))
         try:
             CofkCollectPerson.objects.bulk_create(self.people)
         except ValueError:
@@ -107,14 +103,14 @@ class CofkPeople(CofkEntity):
 
         return [(self.row_data[names], self.row_data[ids])]
 
-    def process_work_sheet(self) -> List[tuple]:
+    def process_work_sheet(self) -> dict:
         """
         Get all people from references in Work spreadsheet.
         Work sheets can contain multiple values for people per work. If so, the values are separated by
         a semicolon with no space on either side.
         Populating a list of tuples of (Name, iperson_id)
         """
-        work_people = []
+        work_people = {}
         work_people_fields = [('author_names', 'author_ids', 'notes_on_authors'),
                               ('addressee_names', 'addressee_ids', 'notes_on_addressees'),
                               ('mention_id', 'emlo_mention_id', 'notes_on_people_mentioned')]
@@ -127,21 +123,19 @@ class CofkPeople(CofkEntity):
 
                 if 'author' in people_relation[0]:
                     for author in related_people:
-                        author_ = {'name': author[0], 'id': author[1]}
-                        if author_ not in self.authors:
-                            self.authors.append(author_)
+                        if author[1] not in work_people:
+                            self.authors.append({'name': author[0], 'id': author[1]})
+                            work_people[author[1]] = author[0]
                 elif 'addressee' in people_relation[0]:
                     for addressee in related_people:
-                        addressee_ = {'name': addressee[0], 'id': addressee[1]}
-                        if addressee_ not in self.addressees:
-                            self.addressees.append(addressee_)
+                        if addressee[1] not in work_people:
+                            self.addressees.append({'name': addressee[0], 'id': addressee[1]})
+                            work_people[addressee[1]] = addressee[0]
                 elif 'mention' in people_relation[0]:
                     for mentioned in related_people:
-                        mentioned_ = {'name': mentioned[0], 'id': mentioned[1]}
-                        if mentioned_ not in self.mentioned:
-                            self.mentioned.append(mentioned_)
-
-                work_people += related_people
+                        if mentioned[1] not in work_people:
+                            self.mentioned.append({'name': mentioned[0], 'id': mentioned[1]})
+                            work_people[mentioned[1]] = mentioned[0]
 
         return work_people
 
@@ -159,21 +153,21 @@ class CofkPeople(CofkEntity):
         self.mentioned = []
         self.addressees = []
 
-        unique_sheet_people = set(self.process_people_sheet())
-        unique_work_people = set(self.process_work_sheet())
+        unique_sheet_people = self.process_people_sheet()
+        unique_work_people = self.process_work_sheet()
 
-        if unique_work_people != unique_sheet_people:
-            if unique_work_people > unique_sheet_people:
-                ppl = [f'{p[0]} #{p[1]}' for p in list(unique_work_people - unique_sheet_people)]
-                ppl_joined = ', '.join(ppl)
-                plural = 'person is' if len(ppl) == 1 else f'following {len(ppl)} people are'
-                tense = 'is' if len(ppl) == 1 else 'are'
-                self.add_error(ValidationError(f'The {plural} referenced in the Work spreadsheet'
-                                               f' but {tense} missing from the People spreadsheet: {ppl_joined}'))
-            elif unique_work_people < unique_sheet_people:
-                ppl = [f'{p[0]} #{p[1]}' for p in list(unique_sheet_people - unique_work_people)]
-                ppl_joined = ', '.join(ppl)
-                plural = 'person is' if len(ppl) == 1 else f'following {len(ppl)} people are'
-                tense = 'is' if len(ppl) == 1 else 'are'
-                self.add_error(ValidationError(f'The {plural} are referenced in the People spreadsheet'
-                                               f' but {tense} missing from the Work spreadsheet: {ppl_joined}'))
+        if len(unique_work_people) > len(unique_sheet_people):
+            ppl = [f'{unique_sheet_people[f]} (#{f})' for f in unique_sheet_people if f not in unique_work_people]
+            log.info(ppl)
+            ppl_joined = ', '.join(ppl)
+            plural = 'person is' if len(ppl) == 1 else f'following {len(ppl)} people are'
+            tense = 'is' if len(ppl) == 1 else 'are'
+            self.add_error(ValidationError(f'The {plural} referenced in the Work spreadsheet'
+                                           f' but {tense} missing from the People spreadsheet: {ppl_joined}'))
+        elif len(unique_work_people) < len(unique_sheet_people):
+            ppl = [f'{unique_work_people[f]} (#{f})' for f in unique_work_people if f not in unique_sheet_people]
+            ppl_joined = ', '.join(ppl)
+            plural = 'person is' if len(ppl) == 1 else f'following {len(ppl)} people are'
+            tense = 'is' if len(ppl) == 1 else 'are'
+            self.add_error(ValidationError(f'The {plural} referenced in the People spreadsheet'
+                                           f' but {tense} missing from the Work spreadsheet: {ppl_joined}'))
