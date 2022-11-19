@@ -35,7 +35,7 @@ class CofkPeople(CofkEntity):
             self.check_data_types('People')
             iperson_id = self.row_data['iperson_id'] if 'iperson_id' in self.row_data else None
 
-            if iperson_id:
+            if iperson_id is not None:
                 for ipi, pn in zip(str(iperson_id).split(';'), str(self.row_data['primary_name']).split(';')):
                     person = CofkCollectPerson()
 
@@ -64,6 +64,10 @@ class CofkPeople(CofkEntity):
                         sheet_people[ipi] = pn
 
                     log.info(f'Creating new person {person}')
+            elif self.row_data['primary_name'] not in sheet_people.values():
+                for name in str(self.row_data['primary_name']).split(';'):
+                    # This is a new person and doesn't have id
+                    sheet_people[name] = name
 
         try:
             CofkCollectPerson.objects.bulk_create(self.people)
@@ -156,8 +160,11 @@ class CofkPeople(CofkEntity):
         unique_sheet_people = self.process_people_sheet()
         unique_work_people = self.process_work_sheet()
 
+        log.info(unique_sheet_people)
+        log.info(unique_work_people)
+
         if len(unique_work_people) > len(unique_sheet_people):
-            ppl = [f'{unique_sheet_people[f]} (#{f})' for f in unique_sheet_people if f not in unique_work_people]
+            ppl = [f'{unique_work_people[f]} (#{f})' for f in unique_work_people if f not in unique_sheet_people]
             log.info(ppl)
             ppl_joined = ', '.join(ppl)
             plural = 'person is' if len(ppl) == 1 else f'following {len(ppl)} people are'
@@ -165,7 +172,7 @@ class CofkPeople(CofkEntity):
             self.add_error(ValidationError(f'The {plural} referenced in the Work spreadsheet'
                                            f' but {tense} missing from the People spreadsheet: {ppl_joined}'))
         elif len(unique_work_people) < len(unique_sheet_people):
-            ppl = [f'{unique_work_people[f]} (#{f})' for f in unique_work_people if f not in unique_sheet_people]
+            ppl = [f'{unique_sheet_people[f]} (#{f})' for f in unique_sheet_people if f not in unique_work_people]
             ppl_joined = ', '.join(ppl)
             plural = 'person is' if len(ppl) == 1 else f'following {len(ppl)} people are'
             tense = 'is' if len(ppl) == 1 else 'are'
