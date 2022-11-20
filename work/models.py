@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_COMMENT_DATE, \
-    REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO
+    REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE_CREATED
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 from core.models import Recref
@@ -97,6 +97,37 @@ class CofkUnionWork(models.Model, RecordTracker):
     @property
     def destination_location(self) -> 'CofkWorkLocationMap':
         return self.find_location_by_rel_type(REL_TYPE_WAS_SENT_TO)
+
+    def find_people_by_rel_type(self, rel_type) -> Iterable['CofkWorkPersonMap']:
+        return self.cofkworkpersonmap_set.filter(relationship_type=rel_type).all()
+
+    @property
+    def creators_for_display(self):
+        creators = self.find_people_by_rel_type(REL_TYPE_CREATED)
+        if len(creators) > 0:
+            return ",".join(creators)
+        else:
+            return "[Placeholder author/sender]"
+
+    @property
+    def places_from_for_display(self):
+        if self.origin_location:
+            return self.origin_location
+        return '[Placeholder origin]'
+
+    @property
+    def places_to_for_display(self):
+        if self.destination_location:
+            return self.destination_location
+        return '[Placeholder destination]'
+
+    @property
+    def addressees_for_display(self):
+        addressees = self.find_people_by_rel_type(REL_TYPE_COMMENT_ADDRESSEE)
+        if len(addressees) > 0:
+            return ",".join(addressees)
+        else:
+            return "[Placeholder addressee]"
 
 
 class CofkWorkCommentMap(Recref):
