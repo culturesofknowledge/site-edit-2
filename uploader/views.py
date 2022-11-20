@@ -1,19 +1,23 @@
 import logging
 import os
 import time
+from datetime import datetime
 from zipfile import BadZipFile
 
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, FieldDoesNotExist
 from django.core.files.storage import default_storage
+from django.db.models import QuerySet
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from pandas._config.config import OptionError
 
+from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_PEOPLE_MENTIONED_IN_WORK, \
+    REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM
 from institution.models import CofkCollectInstitution
-from location.models import CofkCollectLocation
-from manifestation.models import CofkCollectManifestation
-from person.models import CofkCollectPerson
+from location.models import CofkCollectLocation, CofkUnionLocation
+from manifestation.models import CofkCollectManifestation, CofkUnionManifestation
+from person.models import CofkCollectPerson, CofkUnionPerson
 from uploader.forms import CofkCollectUploadForm
 from django.conf import settings
 
@@ -22,7 +26,8 @@ from uploader.spreadsheet import CofkUploadExcelFile
 from uploader.validation import CofkMissingColumnError, CofkMissingSheetError, CofkNoDataError
 
 from work.models import CofkCollectWork, CofkCollectAuthorOfWork, CofkCollectAddresseeOfWork, CofkCollectLanguageOfWork, \
-    CofkCollectPersonMentionedInWork, CofkCollectWorkResource
+    CofkCollectPersonMentionedInWork, CofkCollectWorkResource, CofkUnionWork, CofkWorkPersonMap, \
+    CofkCollectDestinationOfWork, CofkCollectOriginOfWork, CofkWorkLocationMap, CofkUnionLanguageOfWork
 
 log = logging.getLogger(__name__)
 
@@ -65,7 +70,7 @@ def handle_upload(request, context):
             context['report']['total_errors'] = 1
             context['report']['errors'] = {'file': {'total': 1, 'error': [str(ve)[1:-1]]}}
             log.error(ve)
-        #except KeyError as ke:
+        # except KeyError as ke:
         #    context['report']['total_errors'] = 1
         #    context['report']['errors'] = {'file': {'total': 1, 'error': [f'Column "{ke.args[0]}" missing']}}
         #    log.error(context['report']['errors'])
@@ -81,13 +86,13 @@ def handle_upload(request, context):
             errors = [str(err) for i, err in enumerate(cmce.args[0]) if i % 2 != 0]
             context['report']['total_errors'] = len(errors)
             context['report']['errors'] = {'file': {'total': len(errors), 'error': errors}}
-            #log.error(ve.args[0])
+            # log.error(ve.args[0])
             log.error([err for i, err in enumerate(cmce.args[0]) if i % 2 != 0])
         except (FileNotFoundError, BadZipFile, OptionError, OSError) as e:
             context['report']['total_errors'] = 1
             context['report']['errors'] = {'file': {'total': 1, 'error': ['Could not read the Excel file.']}}
             log.error(e)
-        #except Exception as e:
+        # except Exception as e:
         #    context['report']['total_errors'] = 1
         #    context['error'] = 'Indeterminate error.'
         #    log.error(e)
@@ -130,6 +135,91 @@ def upload_view(request, **kwargs):
     return render(request, template_url, context)
 
 
+def create_union_work_from_collect(collect_work: CofkCollectWork):
+    union_dict = {
+        # work_id is primary key in CofkUnionWork
+        'work_id': f'work_{datetime.now().strftime("%Y%m%d%H%M%S%f")}_{collect_work.iwork_id}',
+    }
+
+    for field in [f for f in collect_work._meta.get_fields() if f.name != 'iwork_id']:
+        try:
+            CofkUnionWork._meta.get_field(field.name)
+            union_dict[field.name] = getattr(collect_work, field.name)
+
+        except FieldDoesNotExist:
+            log.warning(f'Field {field} does not exist')
+            # pass
+
+    union_work = CofkUnionWork(**union_dict)
+    union_work.save()
+
+    return union_work
+
+
+def link_person_to_work(entities: QuerySet, relationship_type: str,
+                        union_work: CofkUnionWork, work_id, request):
+    for person in entities.filter(iwork_id=work_id).all():
+        union_person = CofkUnionPerson.objects.filter(iperson_id=person.iperson.iperson_id).first()
+
+        cwpm = CofkWorkPersonMap(relationship_type=relationship_type,
+                                 work=union_work, person=union_person, person_id=union_person.person_id)
+        cwpm.update_current_user_timestamp(request.user)
+        cwpm.save()
+
+
+def link_location_to_work(entities: QuerySet, relationship_type: str,
+                          union_work: CofkUnionWork, work_id, request):
+    for destination in entities.filter(iwork_id=work_id).all():
+        union_location = CofkUnionLocation.objects.filter(location_id=destination.location.location_id).first()
+
+        cwlm = CofkWorkLocationMap(relationship_type=relationship_type,
+                                   work=union_work, location=union_location, location_id=union_location.location_id)
+        cwlm.update_current_user_timestamp(request.user)
+        cwlm.save()
+
+
+def accept_work(request, context: dict, upload: CofkCollectUpload):
+    work_id = request.GET['work_id']
+    collect_work = context['works'].filter(pk=work_id).first()
+
+    union_work = create_union_work_from_collect(collect_work)
+
+    # Link people
+    link_person_to_work(entities=context['authors'], relationship_type=REL_TYPE_CREATED,
+                        union_work=union_work, work_id=work_id, request=request)
+    link_person_to_work(entities=context['addressees'], relationship_type=REL_TYPE_WAS_ADDRESSED_TO,
+                        union_work=union_work, work_id=work_id, request=request)
+    link_person_to_work(entities=context['mentioned'], relationship_type=REL_TYPE_PEOPLE_MENTIONED_IN_WORK,
+                        union_work=union_work, work_id=work_id, request=request)
+
+    # Link languages
+    for lang in context['languages'].filter(iwork_id=work_id).all():
+        CofkUnionLanguageOfWork(work=union_work, language_code=lang.language_code).save()
+
+    # Link locations
+    link_location_to_work(entities=context['destinations'], relationship_type=REL_TYPE_WAS_SENT_TO,
+                        union_work=union_work, work_id=work_id, request=request)
+    link_location_to_work(entities=context['origins'], relationship_type=REL_TYPE_WAS_SENT_FROM,
+                          union_work=union_work, work_id=work_id, request=request)
+
+    # Link institutions
+    #for inst in context['institutions'].filter(iwork_id=work_id).all():
+    #    log.info(inst)
+
+    # Link manifestations
+    #for manif in context['manifestations'].filter(iwork_id=work_id).all():
+    #    log.info(vars(manif))
+    #    union_manif = CofkUnionManifestation.objects.filter(manifestation_id=manif.id).first()
+    #    log.info(union_manif)
+    # log.info(union_work)
+
+    # Change state of upload and work
+    upload.upload_status_id = 2  # Partly reviewed
+    # upload.save()
+    collect_work.upload_status_id = 4  # Accepted and saved into main database
+    # collect_work.save()
+
+
 @login_required
 def upload_review(request, upload_id, **kwargs):
     template_url = 'uploader/review.html'
@@ -141,12 +231,20 @@ def upload_review(request, upload_id, **kwargs):
                'addressees': CofkCollectAddresseeOfWork.objects.filter(upload=upload),
                'mentioned': CofkCollectPersonMentionedInWork.objects.filter(upload=upload),
                'languages': CofkCollectLanguageOfWork.objects.filter(upload=upload),
-               # Authors, addressees and mentinoed link to People, here we're only
+               # Authors, addressees and mentioned link to People, here we're only
                # passing new people for review purposes
                'people': CofkCollectPerson.objects.filter(upload=upload, iperson_id__isnull=True),
                'places': CofkCollectLocation.objects.filter(upload=upload),
+               'destinations': CofkCollectDestinationOfWork.objects.filter(upload=upload),
+               'origins': CofkCollectOriginOfWork.objects.filter(upload=upload),
                'institutions': CofkCollectInstitution.objects.filter(upload=upload),
                'manifestations': CofkCollectManifestation.objects.filter(upload=upload),
                'resources': CofkCollectWorkResource.objects.filter(upload=upload)}
+
+    if 'work_id' in request.GET:
+        if 'accept_work' in request.GET:
+            accept_work(request, context, upload)
+        elif 'delete_work' in request.GET:
+            pass
 
     return render(request, template_url, context)
