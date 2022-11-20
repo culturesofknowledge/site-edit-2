@@ -105,29 +105,29 @@ class CofkUnionWork(models.Model, RecordTracker):
     def creators_for_display(self):
         creators = self.find_people_by_rel_type(REL_TYPE_CREATED)
         if len(creators) > 0:
-            return ",".join(creators)
+            return ",".join([str(c.person) for c in creators])
         else:
-            return "[Placeholder author/sender]"
+            return "[Author/sender placeholder]"
 
     @property
     def places_from_for_display(self):
         if self.origin_location:
-            return self.origin_location
-        return '[Placeholder origin]'
+            return str(self.origin_location.location)
+        return '[Origin placeholder]'
 
     @property
     def places_to_for_display(self):
         if self.destination_location:
-            return self.destination_location
-        return '[Placeholder destination]'
+            return str(self.destination_location.location)
+        return '[Destination placeholder]'
 
     @property
     def addressees_for_display(self):
         addressees = self.find_people_by_rel_type(REL_TYPE_COMMENT_ADDRESSEE)
         if len(addressees) > 0:
-            return ",".join(addressees)
+            return ",".join([str(a.person) for a in addressees])
         else:
-            return "[Placeholder addressee]"
+            return "[Addressee placeholder]"
 
 
 class CofkWorkCommentMap(Recref):
