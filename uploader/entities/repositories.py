@@ -1,6 +1,8 @@
 import logging
 
 import pandas as pd
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 
 from institution.models import CofkCollectInstitution
 from uploader.entities.entity import CofkEntity
@@ -20,6 +22,12 @@ class CofkRepositories(CofkEntity):
         for i in range(1, len(self.sheet_data.index)):
             self.process_repository({k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None})
 
+        try:
+            CofkCollectInstitution.objects.bulk_create(self.institutions)
+        except IntegrityError as ie:
+            # Will error if location_id != int
+            self.add_error(ValidationError(ie))
+
     def process_repository(self, repository_data):
         self.row_data = repository_data
         self.row_data['upload'] = self.upload
@@ -32,7 +40,6 @@ class CofkRepositories(CofkEntity):
 
         if not self.already_exists():
             repository = CofkCollectInstitution(**self.row_data)
-            repository.save()
             self.institutions.append(repository)
 
             log.info(f'Repository {repository} created.')

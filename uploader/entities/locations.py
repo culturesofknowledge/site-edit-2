@@ -39,8 +39,6 @@ class CofkLocations(CofkEntity):
             location.element_5_eg_county = 0
             location.element_6_eg_country = 0
             location.element_7_eg_empire = 0
-            #log.debug(vars(location))
-            #location.save()
 
             self.locations.append(location)
 

@@ -135,7 +135,7 @@ def upload_view(request, **kwargs):
     return render(request, template_url, context)
 
 
-def create_union_work_from_collect(collect_work: CofkCollectWork):
+def create_union_work(collect_work: CofkCollectWork):
     union_dict = {
         # work_id is primary key in CofkUnionWork
         'work_id': f'work_{datetime.now().strftime("%Y%m%d%H%M%S%f")}_{collect_work.iwork_id}',
@@ -178,11 +178,38 @@ def link_location_to_work(entities: QuerySet, relationship_type: str,
         cwlm.save()
 
 
+def create_union_manifestations(work_id: str, union_work: CofkUnionWork, request, context):
+    for manif in context['manifestations'].filter(iwork_id=work_id).all():
+        union_dict = {'manifestation_creation_date_is_range': 0}
+        for field in [f for f in manif._meta.get_fields() if f.name != 'iwork_id']:
+            try:
+                CofkUnionManifestation._meta.get_field(field.name)
+                union_dict[field.name] = getattr(manif, field.name)
+
+            except FieldDoesNotExist:
+                # log.warning(f'Field {field} does not exist')
+                pass
+
+        union_manif = CofkUnionManifestation(**union_dict)
+        union_manif.work = union_work
+        union_manif.save()
+
+        if manif.repository_id is not None:
+            inst = context['institutions'].filter(id=manif.repository_id).first()
+            union_inst = CofkUnionInstitution.objects.filter(pk=inst.institution_id).first()
+
+            cmim = CofkManifInstMap(relationship_type=REL_TYPE_STORED_IN,
+                                    manif=union_manif, inst=union_inst, inst_id=union_inst.institution_id)
+            cmim.update_current_user_timestamp(request.user)
+            cmim.save()
+
+
 def accept_work(request, context: dict, upload: CofkCollectUpload):
     work_id = request.GET['work_id']
     collect_work = context['works'].filter(pk=work_id).first()
 
-    union_work = create_union_work_from_collect(collect_work)
+    # Create work
+    union_work = create_union_work(collect_work)
 
     # Link people
     link_person_to_work(entities=context['authors'], relationship_type=REL_TYPE_CREATED,
@@ -202,31 +229,12 @@ def accept_work(request, context: dict, upload: CofkCollectUpload):
     link_location_to_work(entities=context['origins'], relationship_type=REL_TYPE_WAS_SENT_FROM,
                           union_work=union_work, work_id=work_id, request=request)
 
-    # Link manifestations
-    for manif in context['manifestations'].filter(iwork_id=work_id).all():
-        union_dict = {'manifestation_creation_date_is_range': 0}
-        for field in [f for f in manif._meta.get_fields() if f.name != 'iwork_id']:
-            try:
-                CofkUnionManifestation._meta.get_field(field.name)
-                union_dict[field.name] = getattr(manif, field.name)
+    # Create manifestations
+    create_union_manifestations(work_id=work_id, union_work=union_work,
+                                request=request, context=context)
 
-            except FieldDoesNotExist:
-                # log.warning(f'Field {field} does not exist')
-                pass
-
-        union_manif = CofkUnionManifestation(**union_dict)
-        union_manif.work = union_work
-        union_manif.save()
-        # log.info(vars(cum))
-
-        if manif.repository_id is not None:
-            inst = context['institutions'].filter(id=manif.repository_id).first()
-            union_inst = CofkUnionInstitution.objects.filter(pk=inst.institution_id).first()
-
-            cmim = CofkManifInstMap(relationship_type=REL_TYPE_STORED_IN,
-                                    manif=union_manif, inst=union_inst, inst_id=union_inst.institution_id)
-            cmim.update_current_user_timestamp(request.user)
-            cmim.save()
+    # Link resources
+    log.info(context['resources'].all())
 
     # Change state of upload and work
     upload.upload_status_id = 2  # Partly reviewed
@@ -259,7 +267,7 @@ def upload_review(request, upload_id, **kwargs):
     if 'work_id' in request.GET:
         if 'accept_work' in request.GET:
             accept_work(request, context, upload)
-        elif 'delete_work' in request.GET:
+        elif 'reject_work' in request.GET:
             pass
 
     return render(request, template_url, context)
