@@ -238,8 +238,21 @@ def accept_work(request, context: dict, upload: CofkCollectUpload):
 
     # Change state of upload and work
     upload.upload_status_id = 2  # Partly reviewed
+    upload.works_accepted += 1
     # upload.save()
     collect_work.upload_status_id = 4  # Accepted and saved into main database
+    # collect_work.save()
+
+
+def reject_work(request, context: dict, upload: CofkCollectUpload):
+    work_id = request.GET['work_id']
+    collect_work = context['works'].filter(pk=work_id).first()
+
+    upload.upload_status_id = 2  # Partly reviewed
+    upload.works_rejected += 1
+    # upload.save()
+
+    collect_work.upload_status_id = 5  # Rejected
     # collect_work.save()
 
 
@@ -268,6 +281,6 @@ def upload_review(request, upload_id, **kwargs):
         if 'accept_work' in request.GET:
             accept_work(request, context, upload)
         elif 'reject_work' in request.GET:
-            pass
+            reject_work(request, context, upload)
 
     return render(request, template_url, context)
