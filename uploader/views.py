@@ -13,10 +13,10 @@ from django.utils import timezone
 from pandas._config.config import OptionError
 
 from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_PEOPLE_MENTIONED_IN_WORK, \
-    REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM
-from institution.models import CofkCollectInstitution
+    REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_STORED_IN
+from institution.models import CofkCollectInstitution, CofkUnionInstitution
 from location.models import CofkCollectLocation, CofkUnionLocation
-from manifestation.models import CofkCollectManifestation, CofkUnionManifestation
+from manifestation.models import CofkCollectManifestation, CofkUnionManifestation, CofkManifInstMap
 from person.models import CofkCollectPerson, CofkUnionPerson
 from uploader.forms import CofkCollectUploadForm
 from django.conf import settings
@@ -147,8 +147,8 @@ def create_union_work_from_collect(collect_work: CofkCollectWork):
             union_dict[field.name] = getattr(collect_work, field.name)
 
         except FieldDoesNotExist:
-            log.warning(f'Field {field} does not exist')
-            # pass
+            # log.warning(f'Field {field} does not exist')
+            pass
 
     union_work = CofkUnionWork(**union_dict)
     union_work.save()
@@ -198,20 +198,35 @@ def accept_work(request, context: dict, upload: CofkCollectUpload):
 
     # Link locations
     link_location_to_work(entities=context['destinations'], relationship_type=REL_TYPE_WAS_SENT_TO,
-                        union_work=union_work, work_id=work_id, request=request)
+                          union_work=union_work, work_id=work_id, request=request)
     link_location_to_work(entities=context['origins'], relationship_type=REL_TYPE_WAS_SENT_FROM,
                           union_work=union_work, work_id=work_id, request=request)
 
-    # Link institutions
-    #for inst in context['institutions'].filter(iwork_id=work_id).all():
-    #    log.info(inst)
-
     # Link manifestations
-    #for manif in context['manifestations'].filter(iwork_id=work_id).all():
-    #    log.info(vars(manif))
-    #    union_manif = CofkUnionManifestation.objects.filter(manifestation_id=manif.id).first()
-    #    log.info(union_manif)
-    # log.info(union_work)
+    for manif in context['manifestations'].filter(iwork_id=work_id).all():
+        union_dict = {'manifestation_creation_date_is_range': 0}
+        for field in [f for f in manif._meta.get_fields() if f.name != 'iwork_id']:
+            try:
+                CofkUnionManifestation._meta.get_field(field.name)
+                union_dict[field.name] = getattr(manif, field.name)
+
+            except FieldDoesNotExist:
+                # log.warning(f'Field {field} does not exist')
+                pass
+
+        union_manif = CofkUnionManifestation(**union_dict)
+        union_manif.work = union_work
+        union_manif.save()
+        # log.info(vars(cum))
+
+        if manif.repository_id is not None:
+            inst = context['institutions'].filter(id=manif.repository_id).first()
+            union_inst = CofkUnionInstitution.objects.filter(pk=inst.institution_id).first()
+
+            cmim = CofkManifInstMap(relationship_type=REL_TYPE_STORED_IN,
+                                    manif=union_manif, inst=union_inst, inst_id=union_inst.institution_id)
+            cmim.update_current_user_timestamp(request.user)
+            cmim.save()
 
     # Change state of upload and work
     upload.upload_status_id = 2  # Partly reviewed

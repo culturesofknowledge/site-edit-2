@@ -242,7 +242,7 @@ class CofkWork(CofkEntity):
             except IndexError:
                 continue
 
-            log.info(f'Processing destination location , iwork_id #{self.iwork_id}, upload_id #{self.upload.upload_id}')
+            log.info(f'Processing destination location, iwork_id #{self.iwork_id}, upload_id #{self.upload.upload_id}')
 
             destination_location = CofkCollectDestinationOfWork(destination_id=d_id, upload=self.upload, iwork=work,
                                                                 location=destination)
