@@ -48,7 +48,18 @@ def handle_upload(request, context):
         new_upload.total_works = 0
         new_upload.save()
 
-        file = default_storage.open(new_upload.upload_file.name, 'rb')
+        try:
+            file = default_storage.open(new_upload.upload_file.name, 'rb')
+        except OSError as oe:
+            context['report']['total_errors'] = 1
+            context['report']['errors'] = {'file': {'total': 1, 'error': [oe]}}
+            log.error(context['report']['errors'])
+            return
+        except Exception as e:
+            context['report']['total_errors'] = 1
+            context['error'] = 'Indeterminate error.'
+            log.error(e)
+            return
 
         cuef = None
         context['report'] = {'file': request.FILES['upload_file']._name,
