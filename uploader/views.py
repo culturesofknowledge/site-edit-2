@@ -165,7 +165,7 @@ def link_person_to_work(entities: QuerySet, relationship_type: str,
 
         cwpm = CofkWorkPersonMap(relationship_type=relationship_type,
                                  work=union_work, person=union_person, person_id=union_person.person_id)
-        cwpm.update_current_user_timestamp(request.user)
+        cwpm.update_current_user_timestamp(request.user.username)
         cwpm.save()
 
 
@@ -176,7 +176,7 @@ def link_location_to_work(entities: QuerySet, relationship_type: str,
 
         cwlm = CofkWorkLocationMap(relationship_type=relationship_type,
                                    work=union_work, location=union_location, location_id=union_location.location_id)
-        cwlm.update_current_user_timestamp(request.user)
+        cwlm.update_current_user_timestamp(request.user.username)
         cwlm.save()
 
 
@@ -202,7 +202,7 @@ def create_union_manifestations(work_id: str, union_work: CofkUnionWork, request
 
             cmim = CofkManifInstMap(relationship_type=REL_TYPE_STORED_IN,
                                     manif=union_manif, inst=union_inst, inst_id=union_inst.institution_id)
-            cmim.update_current_user_timestamp(request.user)
+            cmim.update_current_user_timestamp(request.user.username)
             cmim.save()
 
 
@@ -246,7 +246,7 @@ def accept_work(request, context: dict, upload: CofkCollectUpload):
 
         cwrm = CofkWorkResourceMap(relationship_type=REL_TYPE_IS_RELATED_TO,
                                    work=union_work, resource=union_resource, resource_id=union_resource.resource_id)
-        cwrm.update_current_user_timestamp(request.user)
+        cwrm.update_current_user_timestamp(request.user.username)
         cwrm.save()
 
     # Change state of upload and work
