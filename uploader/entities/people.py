@@ -160,12 +160,8 @@ class CofkPeople(CofkEntity):
         unique_sheet_people = self.process_people_sheet()
         unique_work_people = self.process_work_sheet()
 
-        log.info(unique_sheet_people)
-        log.info(unique_work_people)
-
         if len(unique_work_people) > len(unique_sheet_people):
             ppl = [f'{unique_work_people[f]} (#{f})' for f in unique_work_people if f not in unique_sheet_people]
-            log.info(ppl)
             ppl_joined = ', '.join(ppl)
             plural = 'person is' if len(ppl) == 1 else f'following {len(ppl)} people are'
             tense = 'is' if len(ppl) == 1 else 'are'

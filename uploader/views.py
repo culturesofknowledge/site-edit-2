@@ -13,7 +13,8 @@ from django.utils import timezone
 from pandas._config.config import OptionError
 
 from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_PEOPLE_MENTIONED_IN_WORK, \
-    REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_STORED_IN
+    REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_STORED_IN, REL_TYPE_IS_RELATED_TO
+from core.models import CofkUnionResource
 from institution.models import CofkCollectInstitution, CofkUnionInstitution
 from location.models import CofkCollectLocation, CofkUnionLocation
 from manifestation.models import CofkCollectManifestation, CofkUnionManifestation, CofkManifInstMap
@@ -27,7 +28,8 @@ from uploader.validation import CofkMissingColumnError, CofkMissingSheetError, C
 
 from work.models import CofkCollectWork, CofkCollectAuthorOfWork, CofkCollectAddresseeOfWork, CofkCollectLanguageOfWork, \
     CofkCollectPersonMentionedInWork, CofkCollectWorkResource, CofkUnionWork, CofkWorkPersonMap, \
-    CofkCollectDestinationOfWork, CofkCollectOriginOfWork, CofkWorkLocationMap, CofkUnionLanguageOfWork
+    CofkCollectDestinationOfWork, CofkCollectOriginOfWork, CofkWorkLocationMap, CofkUnionLanguageOfWork, \
+    CofkWorkResourceMap
 
 log = logging.getLogger(__name__)
 
@@ -234,7 +236,18 @@ def accept_work(request, context: dict, upload: CofkCollectUpload):
                                 request=request, context=context)
 
     # Link resources
-    log.info(context['resources'].all())
+    for resource in context['resources'].filter(iwork_id=work_id).all():
+        union_resource = CofkUnionResource()
+        union_resource.resource_url = resource.resource_url
+        union_resource.resource_name = resource.resource_name
+        union_resource.resource_details = resource.resource_details
+        union_resource.resource_id = resource.resource_id
+        union_resource.save()
+
+        cwrm = CofkWorkResourceMap(relationship_type=REL_TYPE_IS_RELATED_TO,
+                                   work=union_work, resource=union_resource, resource_id=union_resource.resource_id)
+        cwrm.update_current_user_timestamp(request.user)
+        cwrm.save()
 
     # Change state of upload and work
     upload.upload_status_id = 2  # Partly reviewed
