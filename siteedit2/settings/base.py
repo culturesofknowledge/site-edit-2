@@ -160,9 +160,6 @@ LOGGING = {
             'level': 'DEBUG',
         }
     },
-    'loggers': {
-        'uploader': debug_log_setting,
-    },
     'root': debug_log_setting,
 }
 
