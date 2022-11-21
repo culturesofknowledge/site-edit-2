@@ -210,6 +210,9 @@ def accept_work(request, context: dict, upload: CofkCollectUpload):
     work_id = request.GET['work_id']
     collect_work = context['works'].filter(pk=work_id).first()
 
+    if collect_work.upload_status_id != 1:
+        return
+
     # Create work
     union_work = create_union_work(collect_work)
 
@@ -261,6 +264,9 @@ def accept_work(request, context: dict, upload: CofkCollectUpload):
 def reject_work(request, context: dict, upload: CofkCollectUpload):
     work_id = request.GET['work_id']
     collect_work = context['works'].filter(pk=work_id).first()
+
+    if collect_work.upload_status_id != 1:
+        return
 
     upload.upload_status_id = 2  # Partly reviewed
     upload.works_rejected += 1
