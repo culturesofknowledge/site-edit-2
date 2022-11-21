@@ -20,7 +20,6 @@ class CofkUploadExcelFile:
 
     def __init__(self, upload: CofkCollectUpload, filename: str):
         """
-        :param logger:
         :param filename:
         """
         self.errors = {}
