@@ -45,6 +45,8 @@ class CofkWork(CofkEntity):
             self.process_work({k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None})
             self.row += 1
 
+        CofkCollectWork.objects.bulk_update(self.works, ['origin', 'destination'], batch_size=500)
+
     def preprocess_languages(self, work: CofkCollectWork):
         """
         TODO try catch below, sometimes work data?
@@ -173,7 +175,7 @@ class CofkWork(CofkEntity):
                 self.process_destination(work)
 
                 work.destination = CofkCollectDestinationOfWork.objects.filter(iwork_id=work).first()
-                work.save()
+                #work.save()
 
                 # Processing languages used in work
                 self.preprocess_languages(work)
