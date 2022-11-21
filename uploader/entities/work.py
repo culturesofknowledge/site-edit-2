@@ -45,6 +45,8 @@ class CofkWork(CofkEntity):
             self.process_work({k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None})
             self.row += 1
 
+        CofkCollectWork.objects.bulk_update(self.works, ['origin', 'destination'], batch_size=500)
+
     def preprocess_languages(self, work: CofkCollectWork):
         """
         TODO try catch below, sometimes work data?
@@ -173,7 +175,7 @@ class CofkWork(CofkEntity):
                 self.process_destination(work)
 
                 work.destination = CofkCollectDestinationOfWork.objects.filter(iwork_id=work).first()
-                work.save()
+                #work.save()
 
                 # Processing languages used in work
                 self.preprocess_languages(work)
@@ -223,7 +225,7 @@ class CofkWork(CofkEntity):
             except IndexError:
                 continue
 
-            log.info(f'Processing origin location , iwork_id #{self.iwork_id}, upload_id #{self.upload.upload_id}')
+            log.info(f'Processing origin location, iwork_id #{self.iwork_id}, upload_id #{self.upload.upload_id}')
 
             origin_location = CofkCollectOriginOfWork(origin_id=o_id, upload=self.upload, iwork=work, location=origin)
 
@@ -242,7 +244,7 @@ class CofkWork(CofkEntity):
             except IndexError:
                 continue
 
-            log.info(f'Processing destination location , iwork_id #{self.iwork_id}, upload_id #{self.upload.upload_id}')
+            log.info(f'Processing destination location, iwork_id #{self.iwork_id}, upload_id #{self.upload.upload_id}')
 
             destination_location = CofkCollectDestinationOfWork(destination_id=d_id, upload=self.upload, iwork=work,
                                                                 location=destination)
@@ -300,59 +302,12 @@ class CofkWork(CofkEntity):
         """
         work.upload_status = CofkCollectStatus.objects.filter(status_id=1).first()
 
-        if 'mentioned_inferred' not in self.row_data:
-            work.mentioned_inferred = 0
+        fields = ['mentioned_inferred', 'mentioned_uncertain', 'place_mentioned_inferred', 'place_mentioned_uncertain',
+                  'date_of_work2_approx', 'date_of_work2_inferred', 'date_of_work2_uncertain',
+                  'date_of_work_std_is_range', 'date_of_work_inferred', 'date_of_work_uncertain',
+                  'date_of_work_approx', 'authors_inferred', 'authors_uncertain', 'addressees_inferred',
+                  'addressees_uncertain', 'destination_inferred', 'destination_uncertain', 'origin_inferred',
+                  'origin_uncertain']
 
-        if 'mentioned_uncertain' not in self.row_data:
-            work.mentioned_uncertain = 0
-
-        if 'place_mentioned_inferred' not in self.row_data:
-            work.place_mentioned_inferred = 0
-
-        if 'place_mentioned_uncertain' not in self.row_data:
-            work.place_mentioned_uncertain = 0
-
-        if 'date_of_work2_approx' not in self.row_data:
-            work.date_of_work2_approx = 0
-
-        if 'date_of_work2_inferred' not in self.row_data:
-            work.date_of_work2_inferred = 0
-
-        if 'date_of_work2_uncertain' not in self.row_data:
-            work.date_of_work2_uncertain = 0
-
-        if 'date_of_work_std_is_range' not in self.row_data:
-            work.date_of_work_std_is_range = 0
-
-        if 'date_of_work_inferred' not in self.row_data:
-            work.date_of_work_inferred = 0
-
-        if 'date_of_work_uncertain' not in self.row_data:
-            work.date_of_work_uncertain = 0
-
-        if 'date_of_work_approx' not in self.row_data:
-            work.date_of_work_approx = 0
-
-        if 'authors_inferred' not in self.row_data:
-            work.authors_inferred = 0
-
-        if 'authors_uncertain' not in self.row_data:
-            work.authors_uncertain = 0
-
-        if 'addressees_inferred' not in self.row_data:
-            work.addressees_inferred = 0
-
-        if 'addressees_uncertain' not in self.row_data:
-            work.addressees_uncertain = 0
-
-        if 'destination_inferred' not in self.row_data:
-            work.destination_inferred = 0
-
-        if 'destination_uncertain' not in self.row_data:
-            work.destination_uncertain = 0
-
-        if 'origin_inferred' not in self.row_data:
-            work.origin_inferred = 0
-
-        if 'origin_uncertain' not in self.row_data:
-            work.origin_uncertain = 0
+        for field in [field for field in fields if field not in self.row_data]:
+            setattr(work, field, 0)

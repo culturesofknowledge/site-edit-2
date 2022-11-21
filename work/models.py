@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_COMMENT_DATE, \
-    REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO
+    REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE_CREATED
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 from core.models import Recref
@@ -97,6 +97,37 @@ class CofkUnionWork(models.Model, RecordTracker):
     @property
     def destination_location(self) -> 'CofkWorkLocationMap':
         return self.find_location_by_rel_type(REL_TYPE_WAS_SENT_TO)
+
+    def find_people_by_rel_type(self, rel_type) -> Iterable['CofkWorkPersonMap']:
+        return self.cofkworkpersonmap_set.filter(relationship_type=rel_type).all()
+
+    @property
+    def creators_for_display(self):
+        creators = self.find_people_by_rel_type(REL_TYPE_CREATED)
+        if len(creators) > 0:
+            return ",".join([str(c.person) for c in creators])
+        else:
+            return "[Author/sender placeholder]"
+
+    @property
+    def places_from_for_display(self):
+        if self.origin_location:
+            return str(self.origin_location.location)
+        return '[Origin placeholder]'
+
+    @property
+    def places_to_for_display(self):
+        if self.destination_location:
+            return str(self.destination_location.location)
+        return '[Destination placeholder]'
+
+    @property
+    def addressees_for_display(self):
+        addressees = self.find_people_by_rel_type(REL_TYPE_COMMENT_ADDRESSEE)
+        if len(addressees) > 0:
+            return ",".join([str(a.person) for a in addressees])
+        else:
+            return "[Addressee placeholder]"
 
 
 class CofkWorkCommentMap(Recref):
@@ -241,22 +272,23 @@ class CofkCollectWork(models.Model):
         min_month = 1
         max_month = 12
 
-        if not min_month <= month <= max_month:
+        if month is not None and not min_month <= month <= max_month:
             self.add_error('%(field)s: is %(value)s but must be between %(min_month)s and %(max_month)s',
                            {'field': field_name, 'value': month, 'min_month': min_month, 'max_month': max_month})
 
     def clean_date(self, field, field_name, month):
-        if field < 1:
-            self.add_error('%(field)s: can not be less than 1', {'field': field_name})
-        elif field > 31:
-            self.add_error('%(field)s: can not be greater than 31', {'field': field_name})
-        # If month is April, June, September or November then day must be not more than 30
-        elif month in [4, 6, 9, 11] and field > 30:
-            self.add_error('%(field)s: can not be more than 30 for April, June, September or November',
-                           {'field': field_name})
-        # For February not more than 29
-        elif month == 2 and field > 29:
-            self.add_error('%(field)s: can not be more than 29 for February', {'field': field_name})
+        if field is not None:
+            if field < 1:
+                self.add_error('%(field)s: can not be less than 1', {'field': field_name})
+            elif field > 31:
+                self.add_error('%(field)s: can not be greater than 31', {'field': field_name})
+            # If month is April, June, September or November then day must be not more than 30
+            elif month in [4, 6, 9, 11] and field > 30:
+                self.add_error('%(field)s: can not be more than 30 for April, June, September or November',
+                               {'field': field_name})
+            # For February not more than 29
+            elif month == 2 and field > 29:
+                self.add_error('%(field)s: can not be more than 29 for February', {'field': field_name})
 
     def clean_range(self):
         if self.date_of_work_std_is_range == 1:
@@ -266,10 +298,14 @@ class CofkCollectWork(models.Model):
 
             self.clean_date(self.date_of_work2_std_day, 'date_of_work2_std_day', self.date_of_work2_std_month)
 
-            first_date = datetime(self.date_of_work_std_year,
-                                  self.date_of_work_std_month, self.date_of_work_std_day)
-            second_date = datetime(self.date_of_work2_std_year,
-                                   self.date_of_work2_std_month, self.date_of_work2_std_day)
+            try:
+                first_date = datetime(self.date_of_work_std_year,
+                                      self.date_of_work_std_month, self.date_of_work_std_day)
+                second_date = datetime(self.date_of_work2_std_year,
+                                       self.date_of_work2_std_month, self.date_of_work2_std_day)
+            except TypeError:
+                return
+
             if first_date >= second_date:
                 self.add_error('%(field1)s-%(field2)s: The start date in a date range can not be after the end date',
                                {'field1': 'date_of_work', 'field2': 'date_of_work2'})
@@ -512,7 +548,7 @@ class CofkCollectLanguageOfWork(models.Model):
 
 
 class CofkCollectOriginOfWork(models.Model):
-    upload = models.OneToOneField('uploader.CofkCollectUpload', models.CASCADE)
+    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     origin_id = models.IntegerField()
     location = models.ForeignKey('location.CofkCollectLocation', models.CASCADE)
     iwork = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
@@ -524,7 +560,7 @@ class CofkCollectOriginOfWork(models.Model):
 
     class Meta:
         db_table = 'cofk_collect_origin_of_work'
-        unique_together = (('upload', 'iwork_id', 'origin_id'),)
+        unique_together = (('upload', 'iwork', 'origin_id'),)
 
 
 class CofkCollectPersonMentionedInWork(models.Model):

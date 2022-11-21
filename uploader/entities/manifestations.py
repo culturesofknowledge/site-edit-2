@@ -24,12 +24,19 @@ class CofkManifestations(CofkEntity):
         self.__manifestation_id = None
         self.__non_manifestation_data = {}
         self.ids = []
+        self.manifestations = []
 
         self.check_data_types('Manifestation')
 
         # Process each row in turn, using a dict comprehension to filter out empty values
         for i in range(1, len(self.sheet_data.index)):
             self.process_manifestation({k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None})
+
+        try:
+            CofkCollectManifestation.objects.bulk_create(self.manifestations)
+        except IntegrityError as ie:
+            # Will error if location_id != int
+            self.add_error(ValidationError(ie))
 
     def preprocess_data(self):
         if 'printed_edition_notes' in self.row_data:
@@ -81,12 +88,7 @@ class CofkManifestations(CofkEntity):
             self.__manifestation_id, self.upload.upload_id))
 
         manifestation = CofkCollectManifestation(**self.row_data)
-
-        try:
-            manifestation.save()
-        except IntegrityError as ie:
-            self.add_error(ValidationError(ie))
-
+        self.manifestations.append(manifestation)
         self.ids.append(self.__manifestation_id)
 
         log.info("Manifestation created.")

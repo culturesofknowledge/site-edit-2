@@ -61,6 +61,10 @@ def clone_queryable_work(work: CofkUnionWork):
         setattr(queryable_work, name, val)
 
     queryable_work.iwork_id = work.iwork_id
+    queryable_work.creators_for_display = work.creators_for_display
+    queryable_work.places_from_for_display = work.places_from_for_display
+    queryable_work.places_to_for_display = work.places_to_for_display
+    queryable_work.addressees_for_display = work.addressees_for_display
 
     queryable_work.save()
     log.info(f'queryable_work saved. [{work.iwork_id}][{list(updated_field_dict.keys())}]  ')

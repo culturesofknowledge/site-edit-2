@@ -39,8 +39,6 @@ class CofkLocations(CofkEntity):
             location.element_5_eg_county = 0
             location.element_6_eg_country = 0
             location.element_7_eg_empire = 0
-            #log.debug(vars(location))
-            #location.save()
 
             self.locations.append(location)
 
@@ -68,15 +66,19 @@ class CofkLocations(CofkEntity):
 
         if unique_work_locations != unique_sheet_locations:
             if unique_work_locations > unique_sheet_locations:
+                loc = [f'{l[0]} #{l[1]}' for l in list(unique_work_locations - unique_sheet_locations)]
+                loc_joined = ', '.join(loc)
+                plural = 'location is' if len(loc) == 1 else f'following {len(loc)} locations are'
+                tense = 'is' if len(loc) == 1 else 'are'
+                self.add_error(ValidationError(f'The {plural} referenced in the Work spreadsheet'
+                                               f' but {tense} missing from the Places spreadsheet: {loc_joined}'))
+            elif unique_work_locations < unique_sheet_locations:
                 loc = [f'{l[0]} #{l[1]}' for l in list(unique_sheet_locations - unique_work_locations)]
                 loc_joined = ', '.join(loc)
-                self.add_error(ValidationError(f'The location {loc_joined} is referenced in the Work spreadsheet'
-                                               f' but is missing from the Places spreadsheet'))
-            elif unique_work_locations < unique_sheet_locations:
-                loc = [str(l) for l in list(unique_work_locations - unique_sheet_locations)]
-                loc_joined = ', '.join(loc)
-                self.add_error(ValidationError(f'The person {loc_joined} is referenced in the Places spreadsheet'
-                                               f' but is missing from the Work spreadsheet'))
+                plural = 'location is' if len(loc) == 1 else f'following {len(loc)} locations are'
+                tense = 'is' if len(loc) == 1 else 'are'
+                self.add_error(ValidationError(f'The {plural} referenced in the Places spreadsheet'
+                                               f' but {tense} missing from the Work spreadsheet: {loc_joined}'))
 
     def process_work_sheet(self) -> List[tuple]:
         """
@@ -94,11 +96,12 @@ class CofkLocations(CofkEntity):
             for locations_relation in [w for w in work_locations_fields if w[0] in self.row_data]:
                 related_location = (self.row_data[locations_relation[0]],
                                     self.row_data[locations_relation[1]])
+                loc = {'name': related_location[0], 'id': related_location[1]}
 
-                if 'origin' in locations_relation[0]:
-                    self.origins.append({'name': related_location[0], 'id': related_location[1]})
-                elif 'destination' in locations_relation[0]:
-                    self.destinations.append({'name': related_location[0], 'id': related_location[1]})
+                if 'origin' in locations_relation[0] and loc not in self.origins:
+                    self.origins.append(loc)
+                elif 'destination' in locations_relation[0] and loc not in self.destinations:
+                    self.destinations.append(loc)
 
                 work_locations.append(related_location)
 

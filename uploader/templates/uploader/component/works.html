@@ -9,20 +9,28 @@
 
 </div>
 
-    <hr>
+<hr/>
 
 {% for work in works %}
-    <p style="font-weight: bold; font-size: larger;">Work {{ forloop.counter }} of {{ works | length }}</p>
+    <h3>Work {{ forloop.counter }} of {{ works | length }}</h3>
 
     <div style="margin: 1em;">
-        <a href="#works">Works</a> - <a href="#people">People</a>
+        <a href="#works">Works</a> - <a href="#people">People</a> - <a href="#repositories">Repositories</a> - <a href="#top">Top of page</a> - <a href="#bottom">Bottom of page</a>
     </div>
-    <table cellspacing="0" cellpadding="14" border="1" class="review">
+
+    <table class="review">
         <tr>
             <td class="header">Status and possible actions</td>
             <td><strong>{{ work.upload_status }}</strong> (Collect ID: {{ work.iwork_id}})<br/>
-                <button disabled>Accept</button> <button>Reject</button><br/>
-                Note: confirmation will be required before Accept/Reject of work</td>
+                {% if work.upload_status_id == 1 %}
+                <form>
+                    {% csrf_token %}
+                    <button name="accept_work" class="btn inline_btn">Accept</button> <button name="reject_work" class="btn inline_btn">Reject</button><br/>
+                    Note: confirmation will be required before Accept/Reject of work
+                    <input type="hidden" name="work_id" value="{{ work.id }}">
+                </form>
+                {% endif %}
+            </td>
         </tr>
         <tr>
             <td class="header">Date of work</td>

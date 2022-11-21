@@ -23,41 +23,51 @@ class CofkPeople(CofkEntity):
     contains information about the nature of the relation (which of the above tables to link to).
     """
 
-    def process_people_sheet(self) -> List[tuple]:
+    def process_people_sheet(self) -> dict:
         """
         Get all people from people spreadsheet
         Populating a list of tuples of (Name, iperson_id)
         """
-        sheet_people = []
+        sheet_people = {}
         for i in range(1, len(self.sheet_data.index)):
             self.row_data = {k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None}
 
             self.check_data_types('People')
             iperson_id = self.row_data['iperson_id'] if 'iperson_id' in self.row_data else None
 
-            person = CofkCollectPerson()
-            if iperson_id and isinstance(iperson_id, int):
-                person.person = CofkUnionPerson.objects.filter(iperson_id=iperson_id).first()
+            if iperson_id is not None:
+                for ipi, pn in zip(str(iperson_id).split(';'), str(self.row_data['primary_name']).split(';')):
+                    person = CofkCollectPerson()
 
-            person.upload = self.upload
-            person.iperson_id = iperson_id
-            person.primary_name = self.row_data['primary_name']
-            person.date_of_birth_is_range = 0
-            person.date_of_birth_inferred = 0
-            person.date_of_birth_uncertain = 0
-            person.date_of_birth_approx = 0
-            person.date_of_birth_inferred = 0
-            person.date_of_death_is_range = 0
-            person.date_of_death_inferred = 0
-            person.date_of_death_uncertain = 0
-            person.date_of_death_approx = 0
-            person.flourished_is_range = 0
+                    try:
+                        ipi = int(ipi)
+                        person.person = CofkUnionPerson.objects.filter(iperson_id=ipi).first()
+                    except ValueError:
+                        log.info('So it goes')
 
-            self.people.append(person)
+                    person.upload = self.upload
+                    person.iperson_id = ipi
+                    person.primary_name = pn
+                    person.date_of_birth_is_range = 0
+                    person.date_of_birth_inferred = 0
+                    person.date_of_birth_uncertain = 0
+                    person.date_of_birth_approx = 0
+                    person.date_of_birth_inferred = 0
+                    person.date_of_death_is_range = 0
+                    person.date_of_death_inferred = 0
+                    person.date_of_death_uncertain = 0
+                    person.date_of_death_approx = 0
+                    person.flourished_is_range = 0
 
-            log.info(f'Creating new person {person}')
+                    if ipi not in sheet_people:
+                        self.people.append(person)
+                        sheet_people[ipi] = pn
 
-            sheet_people.append((self.row_data['primary_name'], iperson_id))
+                    log.info(f'Creating new person {person}')
+            elif self.row_data['primary_name'] not in sheet_people.values():
+                for name in str(self.row_data['primary_name']).split(';'):
+                    # This is a new person and doesn't have id
+                    sheet_people[name] = name
 
         try:
             CofkCollectPerson.objects.bulk_create(self.people)
@@ -82,7 +92,7 @@ class CofkPeople(CofkEntity):
                 self.add_error(ValidationError(f'Encountered an empty value for a name in {names}.'), 'work')
 
             try:
-                ids_list = [int(i) for i in self.row_data[ids].split(';')]
+                ids_list = [int(i) for i in self.row_data[ids].split(';') if i != '']
 
                 if len(ids_list) < len(names_list):
                     # New people entries
@@ -97,14 +107,14 @@ class CofkPeople(CofkEntity):
 
         return [(self.row_data[names], self.row_data[ids])]
 
-    def process_work_sheet(self) -> List[tuple]:
+    def process_work_sheet(self) -> dict:
         """
         Get all people from references in Work spreadsheet.
         Work sheets can contain multiple values for people per work. If so, the values are separated by
         a semicolon with no space on either side.
         Populating a list of tuples of (Name, iperson_id)
         """
-        work_people = []
+        work_people = {}
         work_people_fields = [('author_names', 'author_ids', 'notes_on_authors'),
                               ('addressee_names', 'addressee_ids', 'notes_on_addressees'),
                               ('mention_id', 'emlo_mention_id', 'notes_on_people_mentioned')]
@@ -117,15 +127,19 @@ class CofkPeople(CofkEntity):
 
                 if 'author' in people_relation[0]:
                     for author in related_people:
-                        self.authors.append({'name': author[0], 'id': author[1]})
+                        if author[1] not in work_people:
+                            self.authors.append({'name': author[0], 'id': author[1]})
+                            work_people[author[1]] = author[0]
                 elif 'addressee' in people_relation[0]:
                     for addressee in related_people:
-                        self.addressees.append({'name': addressee[0], 'id': addressee[1]})
+                        if addressee[1] not in work_people:
+                            self.addressees.append({'name': addressee[0], 'id': addressee[1]})
+                            work_people[addressee[1]] = addressee[0]
                 elif 'mention' in people_relation[0]:
                     for mentioned in related_people:
-                        self.mentioned.append({'name': mentioned[0], 'id': mentioned[1]})
-
-                work_people += related_people
+                        if mentioned[1] not in work_people:
+                            self.mentioned.append({'name': mentioned[0], 'id': mentioned[1]})
+                            work_people[mentioned[1]] = mentioned[0]
 
         return work_people
 
@@ -143,17 +157,20 @@ class CofkPeople(CofkEntity):
         self.mentioned = []
         self.addressees = []
 
-        unique_sheet_people = set(self.process_people_sheet())
-        unique_work_people = set(self.process_work_sheet())
+        unique_sheet_people = self.process_people_sheet()
+        unique_work_people = self.process_work_sheet()
 
-        if unique_work_people != unique_sheet_people:
-            if unique_work_people > unique_sheet_people:
-                ppl = [f'{p[0]} #{p[1]}' for p in list(unique_work_people - unique_sheet_people)]
-                ppl_joined = ', '.join(ppl)
-                self.add_error(ValidationError(f'The person {ppl_joined} is referenced in the Work spreadsheet'
-                                               f' but is missing from the People spreadsheet'))
-            elif unique_work_people < unique_sheet_people:
-                ppl = [str(p) for p in list(unique_sheet_people - unique_work_people)]
-                ppl_joined = ', '.join(ppl)
-                self.add_error(ValidationError(f'The person {ppl_joined} is referenced in the People spreadsheet'
-                                               f' but is missing from the Work spreadsheet'))
+        if len(unique_work_people) > len(unique_sheet_people):
+            ppl = [f'{unique_work_people[f]} (#{f})' for f in unique_work_people if f not in unique_sheet_people]
+            ppl_joined = ', '.join(ppl)
+            plural = 'person is' if len(ppl) == 1 else f'following {len(ppl)} people are'
+            tense = 'is' if len(ppl) == 1 else 'are'
+            self.add_error(ValidationError(f'The {plural} referenced in the Work spreadsheet'
+                                           f' but {tense} missing from the People spreadsheet: {ppl_joined}'))
+        elif len(unique_work_people) < len(unique_sheet_people):
+            ppl = [f'{unique_sheet_people[f]} (#{f})' for f in unique_sheet_people if f not in unique_work_people]
+            ppl_joined = ', '.join(ppl)
+            plural = 'person is' if len(ppl) == 1 else f'following {len(ppl)} people are'
+            tense = 'is' if len(ppl) == 1 else 'are'
+            self.add_error(ValidationError(f'The {plural} referenced in the People spreadsheet'
+                                           f' but {tense} missing from the Work spreadsheet: {ppl_joined}'))

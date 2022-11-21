@@ -1,0 +1,48 @@
+
+<div id="people">
+    <h1>People and groups</h1>
+
+    <p>Details of {{ people| length }} new {{people|pluralize:"person, people"}} or group{{people|pluralize:",s"}}
+        {{people|pluralize:"was, were"}} uploaded in this contribution. </p>
+</div>
+
+{% for person in people %}
+
+    <p style="font-weight: bold; font-size: larger;">People and groups {{ forloop.counter }} of {{ people | length }}</p>
+
+    <div style="margin: 1em;">
+        <a href="#works">Works</a> - <a href="#people">People</a>
+    </div>
+    <table class="review">
+        <tr>
+            <td class="header">Primary name</td>
+            <td>{{ person.primary_name }}</td>
+        </tr>
+        {% if person.gender %}
+        <tr>
+            <td class="header">Gender</td>
+            <td>{{ person.gender }}</td>
+        </tr>
+        {% endif %}
+        {% if person.roles_or_titles %}
+        <tr>
+            <td class="header">Roles or titles</td>
+            <td>{{ person.roles_or_titles }}</td>
+        </tr>
+        {% endif %}
+        {% if person.date_of_birth_year %}
+        <tr>
+            <td class="header">Date of birth</td>
+            <td>{{ person.date_of_birth_year }}</td>
+        </tr>
+        {% endif %}
+        {% if person.date_of_death_year %}
+        <tr>
+            <td class="header">Date of death</td>
+            <td>{{ person.date_of_death_year }}</td>
+        </tr>
+        {% endif %}
+    </table>
+    <hr/>
+
+{% endfor %}

@@ -42,9 +42,15 @@
                     <label for="del_manif_{{ manif.manifestation_id }}"></label>
                 </td>
                 <td>
+                    {% if manif.inst_display_name %}
                     {{ manif.inst_display_name }}
+                    {% endif %}
                 </td>
-                <td> {{ manif.id_number_or_shelfmark }} </td>
+                <td>
+                    {% if manif.id_number_or_shelfmark %}
+                    {{ manif.id_number_or_shelfmark }}
+                    {% endif %}
+                </td>
                 <td> {{ manif.manifestation_type }} </td>
                 <td> <!-- KTODO Image --> </td>
                 <td>
