@@ -22,7 +22,7 @@
         <tr>
             <td class="header">Status and possible actions</td>
             <td><strong>{{ work.upload_status }}</strong> (Collect ID: {{ work.iwork_id}})<br/>
-                {% if 1 == 1 %}
+                {% if work.upload_status_id == 1 %}
                 <form>
                     {% csrf_token %}
                     <button name="accept_work" class="btn inline_btn">Accept</button> <button name="reject_work" class="btn inline_btn">Reject</button><br/>

@@ -252,9 +252,10 @@ def accept_work(request, context: dict, upload: CofkCollectUpload):
     # Change state of upload and work
     upload.upload_status_id = 2  # Partly reviewed
     upload.works_accepted += 1
-    # upload.save()
+    upload.save()
+
     collect_work.upload_status_id = 4  # Accepted and saved into main database
-    # collect_work.save()
+    collect_work.save()
 
 
 def reject_work(request, context: dict, upload: CofkCollectUpload):
