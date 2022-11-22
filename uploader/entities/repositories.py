@@ -1,10 +1,12 @@
 import logging
+from typing import Generator, Tuple
 
-import pandas as pd
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from openpyxl.cell import Cell
 
 from institution.models import CofkCollectInstitution
+from uploader.constants import mandatory_sheets
 from uploader.entities.entity import CofkEntity
 from uploader.models import CofkCollectUpload
 
@@ -12,21 +14,28 @@ log = logging.getLogger(__name__)
 
 
 class CofkRepositories(CofkEntity):
-    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame):
+    def __init__(self, upload: CofkCollectUpload, sheet_data: Generator[Tuple[Cell], None, None]):
         super().__init__(upload, sheet_data)
 
         self.__institution_id = None
         self.institutions = []
 
-        # Process each row in turn, using a dict comprehension to filter out empty values
-        for i in range(1, len(self.sheet_data.index)):
-            self.process_repository({k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None})
+        for r in sheet_data:
+            mc = mandatory_sheets['Repositories']['columns'][r[0].column - 1]
+            log.debug(f'{r[0].value} ({r[0].row}, {r[0].column} ({mc}))')
 
-        try:
-            CofkCollectInstitution.objects.bulk_create(self.institutions)
-        except IntegrityError as ie:
-            # Will error if location_id != int
-            self.add_error(ValidationError(ie))
+        # Process each row in turn, using a dict comprehension to filter out empty values
+        #for index, row in self.sheet_data.iterrows():
+        #    log.debug((index, row))
+        #    #self.process_repository({k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None})
+
+        #self.add_error(ValidationError('wrong'))
+
+        #try:
+        #    CofkCollectInstitution.objects.bulk_create(self.institutions)
+        #except IntegrityError as ie:
+        #    # Will error if location_id != int
+        #    self.add_error(ValidationError(ie))
 
     def process_repository(self, repository_data):
         self.row_data = repository_data

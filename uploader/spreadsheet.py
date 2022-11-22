@@ -1,10 +1,16 @@
 import logging
+from typing import Union, List, Generator, Tuple, Set, Type
 
-import pandas as pd
+from openpyxl.cell import Cell
+from openpyxl.reader.excel import load_workbook
+from openpyxl.workbook import Workbook
+from openpyxl.worksheet.worksheet import Worksheet
+#import pandas as pd
 from pandas import ExcelFile
 
 from uploader.OpenpyxlReaderWOFormatting import OpenpyxlReaderWOFormatting
 from uploader.constants import mandatory_sheets
+from uploader.entities.entity import CofkEntity
 from uploader.entities.locations import CofkLocations
 from uploader.entities.manifestations import CofkManifestations
 from uploader.entities.people import CofkPeople
@@ -16,6 +22,32 @@ from uploader.validation import CofkMissingSheetError, CofkMissingColumnError, C
 log = logging.getLogger(__name__)
 
 
+class CofkSheet:
+    def __init__(self, sheet: Worksheet):
+        self.worksheet: Worksheet = sheet
+        self.header: List[str]
+        self.rows: int
+        self.name: str = sheet.title
+        self.entities: Union[Type[CofkEntity], None] = None
+
+        # Obtain header and row count of non-empty rows
+        rows = (row for row in self.worksheet.iter_rows() if any([cell.value is not None for cell in row]))
+        self.header = [cell.value for cell in next(rows) if cell.value is not None]
+        next(rows)
+        self.rows = sum(1 for _ in rows)
+
+    @property
+    def data(self) -> Generator[Tuple[Cell], None, None]:
+        rows = (row for row in self.worksheet.iter_rows() if any([cell.value is not None for cell in row]))
+        next(rows)  # First row is header names
+        next(rows)  # Second row is explanatory notes
+        return rows
+
+    @property
+    def missing_columns(self) -> Set[str]:
+        return set(mandatory_sheets[self.name]['columns']).difference(set(self.header))
+
+
 class CofkUploadExcelFile:
 
     def __init__(self, upload: CofkCollectUpload, filename: str):
@@ -23,6 +55,7 @@ class CofkUploadExcelFile:
         :param filename:
         """
         self.errors = {}
+        self.wb: Union[Workbook, None] = None
         self.works = None
         self.upload = upload
         self.filename = filename
@@ -32,35 +65,52 @@ class CofkUploadExcelFile:
         self.manifestations = None
         self.total_errors = 0
         self.data = {}
+        self.missing_columns: List[CofkMissingColumnError] = []
 
-        """
-        Setting sheet_name to None returns a dict with sheet name as key and data frame as value
-        Occasionally additional data is included that we cannot parse, so we ignore "Unnamed:" columns
-        Supports xls, xlsx, xlsm, xlsb, odf, ods and odt file extensions read from a local filesystem or URL.
-        https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_excel.html
-        """
         try:
-            self.wb = pd.read_excel(filename, sheet_name=None, usecols=lambda c: not c.startswith('Unnamed:'))
+            self.wb = load_workbook(filename=filename, data_only=True, read_only=True)
+            #pd.read_excel(filename, sheet_name=None, usecols=lambda c: not c.startswith('Unnamed:'))
         except ValueError:
-            ExcelFile._engines['openpyxl_wo_formatting'] = OpenpyxlReaderWOFormatting
-            self.wb = pd.read_excel(filename, sheet_name=None,
-                                    usecols=lambda c: not c.startswith('Unnamed:'),
-                                    engine='openpyxl_wo_formatting')
+            pass
+            #from OpenpyxlReaderWOFormatting import load_workbook as l2
+            #ExcelFile._engines['openpyxl_wo_formatting'] = OpenpyxlReaderWOFormatting
+            #self.wb = pd.read_excel(filename, sheet_name=None,
+            #                        usecols=lambda c: not c.startswith('Unnamed:'),
+            #                        engine='openpyxl_wo_formatting')
 
+        # Make sure all sheets are present
         self.check_sheets()
 
-        for sheet in [s['name'] for s in mandatory_sheets]:
-            self.data[sheet.lower()] = self.get_sheet_data(sheet)
+        for sheet in mandatory_sheets.keys():
+            self.data[sheet] = CofkSheet(self.wb[sheet])
 
-        self.check_columns()
+            log.debug(f'{sheet} {self.data[sheet].rows}')
 
-        self.check_data_present()
+            # Using same iteration to verify that required columns are present
+            if len(self.data[sheet].missing_columns) > 1:
+                ms = ', '.join(self.data[sheet].missing_columns)
+                self.missing_columns.append(CofkMissingColumnError(f'Missing columns {ms} from the sheet {sheet}'))
+            elif len(self.data[sheet].missing_columns) == 1:
+                self.missing_columns.append(
+                    CofkMissingColumnError(f'Missing column {self.data[sheet].missing_columns.pop()} from the sheet {sheet}'))
+
+        if self.missing_columns:
+            raise CofkMissingColumnError(self.missing_columns)
+
+        # Quick check that works are present in upload, no need to go further if not
+        # sheets have already been verified to be present so no KeyError raised
+        if self.data['Work'].rows == 0:
+            msg = "Spreadsheet contains no data"
+            log.error(msg)
+            raise CofkNoDataError(msg)
 
         # It's process the sheets in reverse order, starting with repositories/institutions
-        self.repositories = CofkRepositories(upload=self.upload, sheet_data=self.data['repositories'])
+        self.data['Repositories'].entities = CofkRepositories(upload=self.upload,
+                                                              sheet_data=self.data['Repositories'].data)
 
+        raise ValueError('stuff')
         # The next sheet is places/locations
-        self.locations = CofkLocations(upload=self.upload, sheet_data=self.data['places'],
+        '''self.locations = CofkLocations(upload=self.upload, sheet_data=self.data['places'],
                                        work_data=self.data['work'])
 
         # The next sheet is people
@@ -89,59 +139,30 @@ class CofkUploadExcelFile:
 
         if self.people.errors:
             self.errors['people'] = self.people.format_errors_for_template()
-            self.total_errors += self.errors['people']['total']
+            self.total_errors += self.errors['people']['total']'''
 
         if self.repositories.errors:
             self.errors['repositories'] = self.repositories.format_errors_for_template()
             self.total_errors += self.errors['repositories']['total']
 
-        if self.locations.errors:
+        '''if self.locations.errors:
             self.errors['locations'] = self.locations.format_errors_for_template()
             self.total_errors += self.errors['locations']['total']
 
         if self.manifestations and self.manifestations.errors:
             self.errors['manifestations'] = self.manifestations.format_errors_for_template()
-            self.total_errors += self.errors['manifestations']['total']
-
-    def get_sheet_data(self, sheet_name: str) -> pd.DataFrame:
-        return self.wb[sheet_name].where(pd.notnull(self.wb[sheet_name]), None)
-
-    def check_data_present(self):
-        # if index length is less than 2 then there's only the header, no data
-        if len(self.data['work'].index) < 2:
-            msg = "Spreadsheet contains no data"
-            log.error(msg)
-
-            raise CofkNoDataError(msg)
+            self.total_errors += self.errors['manifestations']['total']'''
 
     def check_sheets(self):
         # Verify all required sheets are present
-        sheet_names = [s['name'] for s in mandatory_sheets]
+        difference = list(set(mandatory_sheets.keys()) - set([n for n in self.wb.sheetnames]))
 
-        if not all(elem in list(self.wb.keys()) for elem in sheet_names):
-            msg = "Missing sheet/s: {}".format(", ".join(list(sheet_names - self.wb.keys())))
+        if difference:
+            if len(difference) == 1:
+                msg = f'Missing sheet: {difference[0].title()}'
+            else:
+                msg = f'Missing sheets: {", ".join([n.title() for n in difference])}'
             log.error(msg)
             raise CofkMissingSheetError(msg)
 
-        log.debug("All {} sheets verified".format(len(mandatory_sheets)))
-
-    def check_columns(self):
-        total_missing_columns = []
-        for sheet in mandatory_sheets:
-            missing_columns = []
-            sheet_name = sheet['name']
-            for ms in set(sheet['columns']).difference(set(self.data[sheet_name.lower()].columns)):
-                missing_columns.append(ms)
-
-            if missing_columns:
-                if len(missing_columns) > 1:
-                    ms = ', '.join(missing_columns)
-                    missing_columns.append(CofkMissingColumnError(f'Missing columns {ms} from the sheet {sheet_name}'))
-                else:
-                    missing_columns.append(
-                        CofkMissingColumnError(f'Missing column {missing_columns[0]} from the sheet {sheet_name}'))
-                total_missing_columns += missing_columns
-
-        if total_missing_columns:
-            log.info(total_missing_columns)
-            raise CofkMissingColumnError(total_missing_columns)
+        log.debug(f'All {len(mandatory_sheets)} sheets verified')

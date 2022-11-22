@@ -105,6 +105,10 @@ def handle_upload(request, context):
             context['report']['total_errors'] = 1
             context['report']['errors'] = {'file': {'total': 1, 'error': ['Could not read the Excel file.']}}
             log.error(e)
+        except ValueError as ve:
+            context['report']['total_errors'] = 1
+            context['report']['errors'] = {'file': {'total': 1, 'error': [ve]}}
+            log.error(ve)
         # except Exception as e:
         #    context['report']['total_errors'] = 1
         #    context['error'] = 'Indeterminate error.'

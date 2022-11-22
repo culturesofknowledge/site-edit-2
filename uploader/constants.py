@@ -40,9 +40,9 @@ mapping = {'person': DBMapping('person', 'cofk_collect_person', 'CofkCollectPers
            }
 
 # These are the sheets expected to be in every uploaded Excel file
-mandatory_sheets = [
-    {'name': 'Work',
-     'columns': ['iwork_id', 'date_of_work_as_marked', 'original_calendar', 'date_of_work_std_year',
+# Note that the sheet names are case-sensitive !!!!!!
+mandatory_sheets = {'Work': {
+    'columns': ['iwork_id', 'date_of_work_as_marked', 'original_calendar', 'date_of_work_std_year',
                  'date_of_work_std_month', 'date_of_work_std_day', 'date_of_work2_std_year', 'date_of_work2_std_month',
                  'date_of_work2_std_day', 'date_of_work_std_is_range', 'date_of_work_inferred',
                  'date_of_work_uncertain', 'date_of_work_approx', 'notes_on_date_of_work', 'author_names',
@@ -61,18 +61,15 @@ mandatory_sheets = [
                'origin_inferred', 'origin_uncertain', 'destination_inferred', 'destination_uncertain',
                'hasgreek', 'hasarabic', 'hashebrew', 'haslatin']
      },
-    {'name': 'Manifestation',
-     'columns': ['manifestation_id', 'iwork_id', 'manifestation_type', 'repository_id', 'repository_name',
+    'Manifestation': {'columns': ['manifestation_id', 'iwork_id', 'manifestation_type', 'repository_id', 'repository_name',
                  'id_number_or_shelfmark', 'manifestation_notes', 'manifestation_type_p', 'printed_edition_details',
                  'printed_edition_notes', 'ms_translation', 'printed_translation']},
-    {'name': 'People',
-     'columns': ['primary_name', 'iperson_id', 'editors_notes']},
-    {'name': 'Places',
+    'People': {'columns': ['primary_name', 'iperson_id', 'editors_notes']},
+    'Places': {
      'columns': ['location_name', 'location_id'],
      'ints': ['location_id']},
-    {'name': 'Repositories',
-     'columns': ['institution_name', 'institution_id', 'institution_city', 'institution_country'],
+    'Repositories': {'columns': ['institution_name', 'institution_id', 'institution_city', 'institution_country'],
      'ints': ['institution_id']}
-]
+}
 
 multiple_ints = ['author_ids', 'addressee_ids']

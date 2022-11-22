@@ -1,7 +1,9 @@
 import logging
+from typing import Generator, Tuple
 
 import pandas as pd
 from django.core.exceptions import ValidationError
+from openpyxl.cell import Cell
 
 from uploader.constants import mandatory_sheets
 from uploader.models import CofkCollectUpload
@@ -10,7 +12,7 @@ log = logging.getLogger(__name__)
 
 
 class CofkEntity:
-    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame):
+    def __init__(self, upload: CofkCollectUpload, sheet_data: Generator[Tuple[Cell], None, None]):
         self.upload = upload
         self.sheet_data = sheet_data
         self.row_data = None
