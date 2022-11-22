@@ -194,7 +194,7 @@ class CofkCollectWork(models.Model):
                                     , related_name='union_collect_works')
     work = models.ForeignKey('CofkUnionWork', models.DO_NOTHING, blank=True, null=True, related_name='collect_works')
     date_of_work_as_marked = models.CharField(max_length=250, blank=True, null=True)
-    original_calendar = models.CharField(max_length=2)
+    original_calendar = models.CharField(max_length=2, blank=True, null=True)
     date_of_work_std_year = models.IntegerField(blank=True, null=True)
     date_of_work_std_month = models.IntegerField(blank=True, null=True)
     date_of_work_std_day = models.IntegerField(blank=True, null=True)

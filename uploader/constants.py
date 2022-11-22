@@ -68,7 +68,7 @@ mandatory_sheets = [
     {'name': 'People',
      'columns': ['primary_name', 'iperson_id', 'editors_notes']},
     {'name': 'Places',
-     'columns': ['location_name', 'location_id', 'editors_notes'],
+     'columns': ['location_name', 'location_id'],
      'ints': ['location_id']},
     {'name': 'Repositories',
      'columns': ['institution_name', 'institution_id', 'institution_city', 'institution_country'],
