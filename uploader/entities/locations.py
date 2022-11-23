@@ -1,8 +1,9 @@
 import logging
-from typing import List
+from typing import List, Generator, Tuple
 
 import pandas as pd
 from django.core.exceptions import ValidationError
+from openpyxl.cell import Cell
 
 from location.models import CofkCollectLocation, CofkUnionLocation
 from uploader.entities.entity import CofkEntity
@@ -12,6 +13,35 @@ log = logging.getLogger(__name__)
 
 
 class CofkLocations(CofkEntity):
+
+    def __init__(self, upload: CofkCollectUpload, sheet_data: Generator[Tuple[Cell], None, None],
+                 work_data: Generator[Tuple[Cell], None, None], sheet_name: str):
+        super().__init__(upload, sheet_data, sheet_name)
+        self.work_data = work_data
+        self.locations = []
+        self.origins = []
+        self.destinations = []
+
+        log.debug(self.get_column_by_name('location_id'))
+
+        # unique_sheet_locations = set(self.process_places_sheet())
+        '''unique_work_locations = set(self.process_work_sheet())
+
+        if unique_work_locations != unique_sheet_locations:
+            if unique_work_locations > unique_sheet_locations:
+                loc = [f'{l[0]} #{l[1]}' for l in list(unique_work_locations - unique_sheet_locations)]
+                loc_joined = ', '.join(loc)
+                plural = 'location is' if len(loc) == 1 else f'following {len(loc)} locations are'
+                tense = 'is' if len(loc) == 1 else 'are'
+                self.add_error(ValidationError(f'The {plural} referenced in the Work spreadsheet'
+                                               f' but {tense} missing from the Places spreadsheet: {loc_joined}'))
+            elif unique_work_locations < unique_sheet_locations:
+                loc = [f'{l[0]} #{l[1]}' for l in list(unique_sheet_locations - unique_work_locations)]
+                loc_joined = ', '.join(loc)
+                plural = 'location is' if len(loc) == 1 else f'following {len(loc)} locations are'
+                tense = 'is' if len(loc) == 1 else 'are'
+                self.add_error(ValidationError(f'The {plural} referenced in the Places spreadsheet'
+                                               f' but {tense} missing from the Work spreadsheet: {loc_joined}'))'''
 
     def process_places_sheet(self) -> List[tuple]:
         """
@@ -44,41 +74,7 @@ class CofkLocations(CofkEntity):
 
             sheet_locations.append((self.row_data['location_name'], location_id))
 
-        try:
-            CofkCollectLocation.objects.bulk_create(self.locations)
-        except ValueError:
-            # Will error if location_id != int
-            pass
-
-        log.debug(f'Created {len(self.locations)} locations.')
-
         return sheet_locations
-
-    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame, work_data: pd.DataFrame):
-        super().__init__(upload, sheet_data)
-        self.work_data = work_data
-        self.locations = []
-        self.origins = []
-        self.destinations = []
-
-        unique_sheet_locations = set(self.process_places_sheet())
-        unique_work_locations = set(self.process_work_sheet())
-
-        if unique_work_locations != unique_sheet_locations:
-            if unique_work_locations > unique_sheet_locations:
-                loc = [f'{l[0]} #{l[1]}' for l in list(unique_work_locations - unique_sheet_locations)]
-                loc_joined = ', '.join(loc)
-                plural = 'location is' if len(loc) == 1 else f'following {len(loc)} locations are'
-                tense = 'is' if len(loc) == 1 else 'are'
-                self.add_error(ValidationError(f'The {plural} referenced in the Work spreadsheet'
-                                               f' but {tense} missing from the Places spreadsheet: {loc_joined}'))
-            elif unique_work_locations < unique_sheet_locations:
-                loc = [f'{l[0]} #{l[1]}' for l in list(unique_sheet_locations - unique_work_locations)]
-                loc_joined = ', '.join(loc)
-                plural = 'location is' if len(loc) == 1 else f'following {len(loc)} locations are'
-                tense = 'is' if len(loc) == 1 else 'are'
-                self.add_error(ValidationError(f'The {plural} referenced in the Places spreadsheet'
-                                               f' but {tense} missing from the Work spreadsheet: {loc_joined}'))
 
     def process_work_sheet(self) -> List[tuple]:
         """

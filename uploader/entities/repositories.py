@@ -1,12 +1,10 @@
 import logging
-from typing import Generator, Tuple
+from typing import Generator, Tuple, List
 
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
 from openpyxl.cell import Cell
 
 from institution.models import CofkCollectInstitution
-from uploader.constants import mandatory_sheets
 from uploader.entities.entity import CofkEntity
 from uploader.models import CofkCollectUpload
 
@@ -14,49 +12,32 @@ log = logging.getLogger(__name__)
 
 
 class CofkRepositories(CofkEntity):
-    def __init__(self, upload: CofkCollectUpload, sheet_data: Generator[Tuple[Cell], None, None]):
-        super().__init__(upload, sheet_data)
+    def __init__(self, upload: CofkCollectUpload, sheet_data: Generator[Tuple[Cell], None, None],
+                 sheet_name: str):
+        """
+        This entity processes the repositories/institutions from the Excel sheet.
+        They do not need to be cross-referenced or verified.
+        No entities are committed at this stage, they are aggregated in self.institutions.
+        """
+        super().__init__(upload, sheet_data, sheet_name)
+        self.institutions: List[CofkCollectInstitution] = []
+        self.institution_ids: List[int] = []
 
-        self.__institution_id = None
-        self.institutions = []
+        for index, row in enumerate(self.iter_rows(), start=1):
+            repo = {self.get_column_name_by_index(cell.column): cell.value for cell in row}
+            self.check_required(repo, index)
+            self.check_data_types(repo, index)
 
-        for r in sheet_data:
-            mc = mandatory_sheets['Repositories']['columns'][r[0].column - 1]
-            log.debug(f'{r[0].value} ({r[0].row}, {r[0].column} ({mc}))')
+            # Collect institutions while there's no errors,
+            # no reason to do so if there's errors
+            if not self.errors:
+                inst = CofkCollectInstitution(**repo)
 
-        # Process each row in turn, using a dict comprehension to filter out empty values
-        #for index, row in self.sheet_data.iterrows():
-        #    log.debug((index, row))
-        #    #self.process_repository({k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None})
-
-        #self.add_error(ValidationError('wrong'))
-
-        #try:
-        #    CofkCollectInstitution.objects.bulk_create(self.institutions)
-        #except IntegrityError as ie:
-        #    # Will error if location_id != int
-        #    self.add_error(ValidationError(ie))
-
-    def process_repository(self, repository_data):
-        self.row_data = repository_data
-        self.row_data['upload'] = self.upload
-        self.__institution_id = repository_data['institution_id']
-
-        log.info("Processing repository, institution_id #{}, upload_id #{}".format(
-            self.__institution_id, self.upload.upload_id))
-
-        self.check_data_types('Repositories')
-
-        if not self.already_exists():
-            repository = CofkCollectInstitution(**self.row_data)
-            self.institutions.append(repository)
-
-            log.info(f'Repository {repository} created.')
-
-    def already_exists(self) -> bool:
-        try:
-            return CofkCollectInstitution.objects \
-                .filter(institution_id=self.__institution_id, upload=self.upload) \
-                .exists()
-        except ValueError:
-            return True
+                if inst.institution_id not in self.institution_ids:
+                    inst.upload = upload
+                    self.institutions.append(inst)
+                    self.institution_ids.append(inst.institution_id)
+                else:
+                    msg = f'Column institution_id in {self.sheet_name} is a duplicate id.'
+                    log.error(msg)
+                    self.add_error(ValidationError(msg), index)

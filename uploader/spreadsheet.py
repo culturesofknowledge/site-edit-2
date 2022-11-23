@@ -1,5 +1,5 @@
 import logging
-from typing import Union, List, Generator, Tuple, Set, Type
+from typing import Union, List, Generator, Tuple, Set, Type, Callable
 
 from openpyxl.cell import Cell
 from openpyxl.reader.excel import load_workbook
@@ -8,6 +8,8 @@ from openpyxl.worksheet.worksheet import Worksheet
 #import pandas as pd
 from pandas import ExcelFile
 
+from institution.models import CofkCollectInstitution
+from location.models import CofkCollectLocation
 from uploader.OpenpyxlReaderWOFormatting import OpenpyxlReaderWOFormatting
 from uploader.constants import mandatory_sheets
 from uploader.entities.entity import CofkEntity
@@ -20,6 +22,13 @@ from uploader.models import CofkCollectUpload
 from uploader.validation import CofkMissingSheetError, CofkMissingColumnError, CofkNoDataError
 
 log = logging.getLogger(__name__)
+
+
+class CofkColumn:
+    def __init__(self, name):
+        self.name = name
+        self.required: bool = False
+        self.validation: Union[Callable, None] = None
 
 
 class CofkSheet:
@@ -68,7 +77,8 @@ class CofkUploadExcelFile:
         self.missing_columns: List[CofkMissingColumnError] = []
 
         try:
-            self.wb = load_workbook(filename=filename, data_only=True, read_only=True)
+            # read_only mode
+            self.wb = load_workbook(filename=filename, data_only=True)
             #pd.read_excel(filename, sheet_name=None, usecols=lambda c: not c.startswith('Unnamed:'))
         except ValueError:
             pass
@@ -106,10 +116,16 @@ class CofkUploadExcelFile:
 
         # It's process the sheets in reverse order, starting with repositories/institutions
         self.data['Repositories'].entities = CofkRepositories(upload=self.upload,
-                                                              sheet_data=self.data['Repositories'].data)
+                                                              sheet_data=self.data['Repositories'].data,
+                                                              sheet_name='Repositories')
+
+        #log.debug(self.data['Work'].worksheet)
+        self.data['Places'].entities = CofkLocations(upload=self.upload, sheet_data=self.data['Places'].data,
+                                                     work_data=self.data['Work'].worksheet,
+                                                     sheet_name='Places')
 
         raise ValueError('stuff')
-        # The next sheet is places/locations
+        # The next sheet is places/locations,
         '''self.locations = CofkLocations(upload=self.upload, sheet_data=self.data['places'],
                                        work_data=self.data['work'])
 
@@ -166,3 +182,15 @@ class CofkUploadExcelFile:
             raise CofkMissingSheetError(msg)
 
         log.debug(f'All {len(mandatory_sheets)} sheets verified')
+
+    def create_objects(self):
+
+        CofkCollectInstitution.objects.bulk_create(self.repositories)
+
+        try:
+            CofkCollectLocation.objects.bulk_create(self.locations)
+        except ValueError:
+            # Will error if location_id != int
+            pass
+
+        log.debug(f'Created {len(self.locations)} locations.')
