@@ -609,8 +609,11 @@ class RecrefFormsetHandler:
     def save(self, parent, request):
         recref_adapter: RecrefFormAdapter = self.create_recref_adapter(parent)
         forms = [f for f in self.formset if f.has_changed()]
+
+        # save each target instance
         save_formset(forms, model_id_name=recref_adapter.target_id_name())
 
+        # upsert each recref
         for target in (f.instance for f in forms):
             org_recref = self.find_org_recref_fn(
                 parent=parent,
