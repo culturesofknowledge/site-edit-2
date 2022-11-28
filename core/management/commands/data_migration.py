@@ -23,7 +23,7 @@ from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocat
 from login.models import CofkUser
 from manifestation.models import CofkUnionManifestation
 from person.models import CofkPersonLocationMap, CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID, \
-    CofkPersonPersonMap, CofkPersonCommentMap, CofkPersonResourceMap
+    CofkPersonPersonMap, CofkPersonCommentMap, CofkPersonResourceMap, CofkPersonImageMap
 from publication.models import CofkUnionPublication
 from uploader.models import CofkCollectStatus, Iso639LanguageCode, CofkLookupCatalogue, CofkCollectUpload, \
     CofkUnionSubject, CofkUnionRoleCategory
@@ -377,18 +377,11 @@ def create_recref(conn,
 
 def create_resources_relationship(conn, model_class: Type[Model],
                                   cur_relation_table_name=None, ):
+    warnings.warn('replace by clone_recref_simple_by_field_pairs', DeprecationWarning)
+    # TOBEREMOVE replace by clone_recref_simple_by_field_pairs
     cur_relation_table_name = cur_relation_table_name or f'{model_class._meta.db_table}_resources'
     return create_m2m_relationship_by_relationship_table(
         conn, model_class, CofkUnionResource,
-        cur_relation_table_name,
-    )
-
-
-def create_images_relationship(conn, model_class: Type[Model],
-                               cur_relation_table_name=None, ):
-    cur_relation_table_name = cur_relation_table_name or f'{model_class._meta.db_table}_images'
-    return create_m2m_relationship_by_relationship_table(
-        conn, CofkUnionImage, model_class,
         cur_relation_table_name,
     )
 
@@ -496,7 +489,6 @@ def clone_recref_simple(conn,
 def clone_recref_simple_by_field_pairs(conn,
                                        field_pairs: Iterable[tuple[Any, Any]]):
     for left_field, right_field in field_pairs:
-        log.debug(f'clone recref by [{left_field}][{right_field}]')
         clone_recref_simple(conn, left_field, right_field)
 
 
@@ -542,12 +534,12 @@ def data_migration(user, password, database, host, port):
         int_pk_col_name='iperson_id',
     )
     # m2m person
-    create_images_relationship(conn, CofkUnionPerson)
     clone_recref_simple_by_field_pairs(conn, (
         (CofkPersonLocationMap.person, CofkPersonLocationMap.location),
         (CofkPersonPersonMap.person, CofkPersonPersonMap.related),
         (CofkPersonCommentMap.comment, CofkPersonCommentMap.person),
         (CofkPersonResourceMap.person, CofkPersonResourceMap.resource),
+        (CofkPersonImageMap.image, CofkPersonImageMap.person),
     ))
 
     # ### Repositories/institutions
@@ -582,12 +574,12 @@ def data_migration(user, password, database, host, port):
                               col_val_handler_fn_list=[_val_handler_manif__work_id],
                               seq_name=None)
     # m2m manif
-    create_images_relationship(conn, CofkUnionManifestation)
     clone_recref_simple_by_field_pairs(conn, (
         (manif_models.CofkManifManifMap.manif_from, manif_models.CofkManifManifMap.manif_to),
         (manif_models.CofkManifCommentMap.comment, manif_models.CofkManifCommentMap.manifestation),
         (manif_models.CofkManifPersonMap.person, manif_models.CofkManifPersonMap.manifestation),
         (manif_models.CofkManifInstMap.manif, manif_models.CofkManifInstMap.inst),
+        (manif_models.CofkManifImageMap.image, manif_models.CofkManifImageMap.manif),
     ))
 
     conn.close()
