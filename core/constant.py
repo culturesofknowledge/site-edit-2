@@ -47,7 +47,6 @@ REL_TYPE_EMPLOYED = 'employed'
 REL_TYPE_TAUGHT = 'taught'
 REL_TYPE_WAS_PATRON_OF = 'was_patron_of'
 
-
 REL_TYPE_UNSPECIFIED_RELATIONSHIP_WITH = 'unspecified_relationship_with'
 REL_TYPE_ACQUAINTANCE_OF = 'acquaintance_of'
 REL_TYPE_WAS_BUSINESS_ASSOCIATE = 'was_a_business_associate_of'
@@ -58,6 +57,7 @@ REL_TYPE_RELATIVE_OF = 'relative_of'
 REL_TYPE_SIBLING_OF = 'sibling_of'
 REL_TYPE_SPOUSE_OF = 'spouse_of'
 
+REL_TYPE_IMAGE_OF = 'image_of'
 
 DEFAULT_EMPTY_DATE_STR = '9999-12-31'
 STD_DATE_FORMAT = '%Y-%m-%d'

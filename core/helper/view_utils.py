@@ -1,6 +1,7 @@
 import itertools
 import logging
 import os
+from abc import ABC
 from multiprocessing import Process
 from typing import Iterable, Type, Callable
 from typing import NoReturn
@@ -583,8 +584,9 @@ class RecrefFormsetHandler:
     * help for create formset
     * help for save target instance and create recref records
     """
+
     def __init__(self, prefix, request_data,
-                 form,
+                 form: Type[ModelForm],
                  rel_type,
                  parent: models.Model,
                  context_name=None,
@@ -627,6 +629,45 @@ class RecrefFormsetHandler:
                                                   )
             recref.save()
             log.info(f'save m2m recref -- [{recref}][{target}]')
+
+
+class ImageRecrefHandler(RecrefFormsetHandler, ABC):
+    def __init__(self, request_data, request_files, parent: models.Model,
+                 rel_type=core_constant.REL_TYPE_IMAGE_OF,
+                 prefix='image', context_name=None):
+        super().__init__(prefix, request_data, ImageForm, rel_type, parent, context_name)
+        self.parent = parent
+        self.upload_img_form = UploadImageForm(request_data or None, request_files)
+
+    def create_context(self):
+        total_images = len(list(self.create_recref_adapter(self.parent).find_recref_records(self.rel_type)))
+        return {
+            'img_handler': {
+                'image_formset': self.formset,
+                'img_form': self.upload_img_form,
+                'total_images': total_images,
+            }
+        }
+
+    def save(self, parent, request):
+        super().save(parent, request)
+
+        # save if user uploaded an image
+        self.upload_img_form.is_valid()
+        if uploaded_img_file := self.upload_img_form.cleaned_data.get('selected_image'):
+            file_path = media_service.save_uploaded_img(uploaded_img_file)
+            file_url = media_service.get_img_url_by_file_path(file_path)
+            img_obj = CofkUnionImage(image_filename=file_url, display_order=0,
+                                     licence_details='', credits='',
+                                     licence_url=settings.DEFAULT_IMG_LICENCE_URL)
+            img_obj.update_current_user_timestamp(request.user.username)
+            img_obj.save()
+
+            # create recref records
+            recref_adapter = self.create_recref_adapter(parent)
+            recref = recref_adapter.upsert_recref(self.rel_type, parent, img_obj,
+                                                  username=request.user.username)
+            recref.save()
 
 
 class RecrefCheckbox:

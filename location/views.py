@@ -15,12 +15,14 @@ from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.model_utils import RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
-from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate, ImageHandler, RecrefFormsetHandler
+from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate, RecrefFormsetHandler, \
+    ImageRecrefHandler
 from core.models import Recref
 from location import location_utils
 from location.forms import LocationForm, GeneralSearchFieldset
-from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap
-from location.recref_adapter import LocationCommentRecrefAdapter, LocationResourceRecrefAdapter
+from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap, CofkLocationImageMap
+from location.recref_adapter import LocationCommentRecrefAdapter, LocationResourceRecrefAdapter, \
+    LocationImageRecrefAdapter
 
 log = logging.getLogger(__name__)
 FormOrFormSet = Union[BaseForm, BaseFormSet]
@@ -106,7 +108,7 @@ def full_form(request, location_id):
                                                     rel_type=REL_TYPE_COMMENT_REFERS_TO,
                                                     parent=loc)
 
-    img_handler = ImageHandler(request.POST, request.FILES, loc.images)
+    img_recref_handler = LocImageRecrefHandler(request.POST or None, request.FILES, parent=loc)
 
     def _render_full_form():
 
@@ -115,12 +117,13 @@ def full_form(request, location_id):
                        res_handler.context_name: res_handler.formset,
                        comment_handler.context_name: comment_handler.formset,
                        'loc_id': location_id,
-                       } | img_handler.create_context()
+                       } | img_recref_handler.create_context()
                       )
 
     if request.method == 'POST':
-        form_formsets = [loc_form, res_handler.formset, comment_handler.formset, img_handler.image_formset,
-                         img_handler.img_form]
+        form_formsets = [loc_form, res_handler.formset, comment_handler.formset,
+                         img_recref_handler.formset, img_recref_handler.upload_img_form,
+                         ]
 
         if view_utils.any_invalid_with_log(form_formsets):
             log.warning(f'something invalid')
@@ -131,7 +134,7 @@ def full_form(request, location_id):
         # save formset
         res_handler.save(loc, request)
         comment_handler.save(loc, request)
-        img_handler.save(request)
+        img_recref_handler.save(loc, request)
 
         loc_form.save()
         log.info(f'location [{location_id}] have been saved')
@@ -311,3 +314,9 @@ class LocationResourceFormsetHandler(RecrefFormsetHandler):
         return CofkLocationResourceMap.objects.filter(location=parent, resource=target).first()
 
 
+class LocImageRecrefHandler(ImageRecrefHandler):
+    def create_recref_adapter(self, parent) -> RecrefFormAdapter:
+        return LocationImageRecrefAdapter(parent)
+
+    def find_org_recref_fn(self, parent, target) -> Recref | None:
+        return CofkLocationImageMap.objects.filter(location=parent, image=target).first()
