@@ -446,45 +446,6 @@ def save_formset(forms: Iterable[ModelForm],
             many_related_manager.add(form.instance)
 
 
-class ImageHandler:
-    # TOBEREMOVE replace by ImageRecrefHandler
-    def __init__(self, request_data, request_files,
-                 img_related_manager):
-        self.img_related_manager = img_related_manager
-        self.image_formset = create_formset(
-            ImageForm, post_data=request_data,
-            prefix='image',
-            initial_list=model_utils.related_manager_to_dict_list(
-                self.img_related_manager), )
-        self.img_form = UploadImageForm(request_data or None, request_files)
-
-    def create_context(self):
-        return {
-            'img_handler': {
-                'image_formset': self.image_formset,
-                'img_form': self.img_form,
-                'total_images': self.img_related_manager.count(),
-            }
-        }
-
-    def save(self, request):
-        image_formset = (f for f in self.image_formset if f.is_valid())
-        image_formset = (f for f in image_formset if f.cleaned_data.get('image_filename'))
-        save_formset(image_formset, self.img_related_manager, model_id_name='image_id')
-
-        # save if user uploaded an image
-        self.img_form.is_valid()
-        if uploaded_img_file := self.img_form.cleaned_data.get('selected_image'):
-            file_path = media_service.save_uploaded_img(uploaded_img_file)
-            file_url = media_service.get_img_url_by_file_path(file_path)
-            img_obj = CofkUnionImage(image_filename=file_url, display_order=0,
-                                     licence_details='', credits='',
-                                     licence_url=settings.DEFAULT_IMG_LICENCE_URL)
-            img_obj.update_current_user_timestamp(request.user.username)
-            img_obj.save()
-            self.img_related_manager.add(img_obj)
-
-
 class FullFormHandler:
     """ maintain collections of Form and Formset for View
     developer can define instance of Form and Formset in `load_data`
