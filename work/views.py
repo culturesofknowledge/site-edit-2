@@ -22,14 +22,14 @@ from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.form_utils import save_multi_rel_recref_formset
 from core.helper.lang_utils import LangModelAdapter, NewLangForm
 from core.helper.recref_utils import create_recref_if_field_exist
-from core.helper.view_utils import DefaultSearchView, FullFormHandler, ImageHandler, RecrefFormsetHandler, \
-    SubjectHandler
+from core.helper.view_utils import DefaultSearchView, FullFormHandler, RecrefFormsetHandler, \
+    SubjectHandler, ImageRecrefHandler
 from core.models import Recref
 from institution import inst_utils
 from location import location_utils
 from location.models import CofkUnionLocation
 from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, create_manif_id, \
-    CofkUnionLanguageOfManifestation
+    CofkUnionLanguageOfManifestation, CofkManifImageMap
 from person import person_utils
 from person.models import CofkUnionPerson
 from uploader.models import CofkLookupCatalogue
@@ -45,7 +45,7 @@ from work.models import CofkWorkPersonMap, CofkUnionWork, CofkWorkCommentMap, Co
     CofkUnionQueryableWork
 from work.recref_adapter import WorkLocRecrefAdapter, ManifInstRecrefAdapter, WorkSubjectRecrefAdapter, \
     EarlierLetterRecrefAdapter, LaterLetterRecrefAdapter, EnclosureManifRecrefAdapter, EnclosedManifRecrefAdapter, \
-    WorkCommentRecrefAdapter, ManifCommentRecrefAdapter, WorkResourceRecrefAdapter
+    WorkCommentRecrefAdapter, ManifCommentRecrefAdapter, WorkResourceRecrefAdapter, ManifImageRecrefAdapter
 
 log = logging.getLogger(__name__)
 
@@ -431,7 +431,7 @@ class ManifFFH(BasicWorkFFH):
             rel_type=REL_TYPE_ENCLOSED_IN,
         )
 
-        self.img_handler = ImageHandler(request_data, request and request.FILES, self.safe_manif.images)
+        self.img_recref_handler = ManifImageRecrefHandler(request_data, request and request.FILES, parent=self.safe_manif)
 
     def create_context(self):
         context = super().create_context()
@@ -493,7 +493,7 @@ class ManifFFH(BasicWorkFFH):
                                      rel_type=ScribeRelationChoices.HANDWROTE,
                                      recref_adapter=ManifPersonMRRForm.create_recref_adapter())
         save_multi_rel_recref_formset(self.scribe_recref_formset, manif, request)
-        self.img_handler.save(request)
+        self.img_recref_handler.save(manif, request)
 
         self.inst_handler.upsert_recref_if_field_exist(
             self.manif_form, manif, request.user.username)
@@ -1042,3 +1042,11 @@ class WorkResourceFormsetHandler(RecrefFormsetHandler):
 
     def find_org_recref_fn(self, parent, target) -> Recref | None:
         return CofkWorkResourceMap.objects.filter(work=parent, resource=target).first()
+
+
+class ManifImageRecrefHandler(ImageRecrefHandler):
+    def create_recref_adapter(self, parent) -> RecrefFormAdapter:
+        return ManifImageRecrefAdapter(parent)
+
+    def find_org_recref_fn(self, parent, target) -> Recref | None:
+        return CofkManifImageMap.objects.filter(manif=parent, image=target).first()

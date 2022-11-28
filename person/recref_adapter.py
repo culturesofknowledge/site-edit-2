@@ -3,10 +3,10 @@ from typing import Type
 
 from core.helper import model_utils
 from core.helper.common_recref_adapter import TargetCommentRecrefAdapter, TargetResourceRecrefAdapter, \
-    RecrefFormAdapter, TargetPersonRecrefAdapter
+    RecrefFormAdapter, TargetPersonRecrefAdapter, TargetImageRecrefAdapter
 from core.models import Recref
 from person.models import CofkUnionPerson, CofkPersonCommentMap, CofkPersonResourceMap, CofkPersonRoleMap, \
-    CofkPersonPersonMap
+    CofkPersonPersonMap, CofkPersonImageMap
 from uploader.models import CofkUnionRoleCategory
 
 
@@ -40,6 +40,22 @@ class PersonResourceRecrefAdapter(TargetResourceRecrefAdapter):
 
     def find_recref_records(self, rel_type):
         return self.find_recref_records_by_related_manger(self.parent.cofkpersonresourcemap_set, rel_type)
+
+
+class PersonImageRecrefAdapter(TargetImageRecrefAdapter):
+    def __init__(self, parent):
+        self.parent: CofkUnionPerson = parent
+
+    def recref_class(self) -> Type[Recref]:
+        return CofkPersonImageMap
+
+    def set_parent_target_instance(self, recref, parent, target):
+        recref: CofkPersonImageMap
+        recref.person = parent
+        recref.image = target
+
+    def find_recref_records(self, rel_type):
+        return self.find_recref_records_by_related_manger(self.parent.cofkpersonimagemap_set, rel_type)
 
 
 class PersonRoleRecrefAdapter(RecrefFormAdapter):

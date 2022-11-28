@@ -88,7 +88,7 @@ class CofkUnionManifestation(models.Model, RecordTracker):
 
     # relation
     work = models.ForeignKey('work.CofkUnionWork', models.CASCADE, null=True)
-    images = models.ManyToManyField('uploader.CofkUnionImage')
+    images = models.ManyToManyField('uploader.CofkUnionImage')  # TOBEREMOVE replaced by CofkManifImageMap
 
     class Meta:
         db_table = 'cofk_union_manifestation'
@@ -166,6 +166,14 @@ class CofkManifInstMap(Recref):
 
     class Meta(Recref.Meta):
         db_table = 'cofk_manif_inst_map'
+
+
+class CofkManifImageMap(Recref):
+    manif = models.ForeignKey(CofkUnionManifestation, on_delete=models.CASCADE)
+    image = models.ForeignKey('uploader.CofkUnionImage', on_delete=models.CASCADE)
+
+    class Meta(Recref.Meta):
+        db_table = 'cofk_manif_image_map'
 
 
 def create_manif_id(iwork_id) -> str:

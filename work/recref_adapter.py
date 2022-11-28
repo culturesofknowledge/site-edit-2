@@ -2,15 +2,18 @@ from abc import ABC
 from typing import Type
 
 from core.helper import model_utils
-from core.helper.common_recref_adapter import RecrefFormAdapter, TargetCommentRecrefAdapter, TargetResourceRecrefAdapter
+from core.helper.common_recref_adapter import RecrefFormAdapter, TargetCommentRecrefAdapter, \
+    TargetResourceRecrefAdapter, TargetImageRecrefAdapter
 from core.models import Recref
 from institution import inst_utils
 from institution.models import CofkUnionInstitution
 from location import location_utils
 from location.models import CofkUnionLocation
 from manifestation import manif_utils
-from manifestation.models import CofkUnionManifestation, CofkManifInstMap, CofkManifManifMap, CofkManifCommentMap
+from manifestation.models import CofkUnionManifestation, CofkManifInstMap, CofkManifManifMap, CofkManifCommentMap, \
+    CofkManifImageMap
 from uploader.models import CofkUnionSubject
+from work import work_utils
 from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkSubjectMap, CofkWorkWorkMap, CofkWorkCommentMap, \
     CofkWorkResourceMap
 
@@ -94,7 +97,7 @@ class WorkSubjectRecrefAdapter(RecrefFormAdapter):
 class WorkWorkRecrefAdapter(RecrefFormAdapter, ABC):
 
     def find_target_display_name_by_id(self, target_id):
-        return work_utils.get_recref_display_name(CofkUnionWork.objects.get(work_id=work_id))
+        return work_utils.get_recref_display_name(CofkUnionWork.objects.get(work_id=target_id))
 
     def recref_class(self) -> Type[Recref]:
         return CofkWorkWorkMap
@@ -221,3 +224,19 @@ class WorkResourceRecrefAdapter(TargetResourceRecrefAdapter):
 
     def find_recref_records(self, rel_type):
         return self.find_recref_records_by_related_manger(self.parent.cofkworkresourcemap_set, rel_type)
+
+
+class ManifImageRecrefAdapter(TargetImageRecrefAdapter):
+    def __init__(self, parent):
+        self.parent: CofkUnionManifestation = parent
+
+    def recref_class(self) -> Type[Recref]:
+        return CofkManifImageMap
+
+    def set_parent_target_instance(self, recref, parent, target):
+        recref: CofkManifImageMap
+        recref.manif = parent
+        recref.image = target
+
+    def find_recref_records(self, rel_type):
+        return self.find_recref_records_by_related_manger(self.parent.cofkmanifimagemap_set, rel_type)

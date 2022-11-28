@@ -17,15 +17,15 @@ from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
 from core.helper.view_utils import CommonInitFormViewTemplate, ImageHandler, BasicSearchView, FullFormHandler, \
-    RecrefFormsetHandler, RoleCategoryHandler
+    RecrefFormsetHandler, RoleCategoryHandler, ImageRecrefHandler
 from core.models import Recref
-from location.models import CofkUnionLocation
+from location.models import CofkUnionLocation, CofkLocationImageMap
 from person import person_utils
 from person.forms import PersonForm, GeneralSearchFieldset, PersonOtherRecrefForm
 from person.models import CofkUnionPerson, CofkPersonLocationMap, CofkPersonPersonMap, create_person_id, \
-    CofkPersonCommentMap, CofkPersonResourceMap
+    CofkPersonCommentMap, CofkPersonResourceMap, CofkPersonImageMap
 from person.recref_adapter import PersonCommentRecrefAdapter, PersonResourceRecrefAdapter, PersonRoleRecrefAdapter, \
-    ActivePersonRecrefAdapter, PassivePersonRecrefAdapter
+    ActivePersonRecrefAdapter, PassivePersonRecrefAdapter, PersonImageRecrefAdapter
 
 log = logging.getLogger(__name__)
 
@@ -213,7 +213,8 @@ class PersonFFH(FullFormHandler):
             rel_type=REL_TYPE_IS_RELATED_TO,
             parent=self.person,
         ))
-        self.img_handler = ImageHandler(request_data, request and request.FILES, self.person.images)
+        self.img_recref_handler = PersonImageRecrefHandler(request_data, request and request.FILES,
+                                                           parent=self.person)
 
         self.role_handler = RoleCategoryHandler(PersonRoleRecrefAdapter(self.person))
 
@@ -242,7 +243,7 @@ def full_form(request, iperson_id):
 
         fhandler.person_form.save()
         fhandler.save_all_recref_formset(fhandler.person, request)
-        fhandler.img_handler.save(request)
+        fhandler.img_recref_handler.save(fhandler.person_form.instance, request)
         form_utils.save_multi_rel_recref_formset(fhandler.person_other_formset, fhandler.person_form.instance, request)
         recref_utils.create_recref_if_field_exist(fhandler.person_form,
                                                   fhandler.person_form.instance,
@@ -422,3 +423,11 @@ class PersonResourceFormsetHandler(RecrefFormsetHandler):
 
     def find_org_recref_fn(self, parent, target) -> Recref | None:
         return CofkPersonResourceMap.objects.filter(person=parent, resource=target).first()
+
+
+class PersonImageRecrefHandler(ImageRecrefHandler):
+    def create_recref_adapter(self, parent) -> RecrefFormAdapter:
+        return PersonImageRecrefAdapter(parent)
+
+    def find_org_recref_fn(self, parent, target) -> Recref | None:
+        return CofkPersonImageMap.objects.filter(person=parent, image=target).first()

@@ -447,6 +447,7 @@ def save_formset(forms: Iterable[ModelForm],
 
 
 class ImageHandler:
+    # TOBEREMOVE replace by ImageRecrefHandler
     def __init__(self, request_data, request_files,
                  img_related_manager):
         self.img_related_manager = img_related_manager
@@ -501,9 +502,9 @@ class FullFormHandler:
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
         raise NotImplementedError()
 
-    def all_image_handlers(self) -> Iterable[tuple[str, ImageHandler]]:
+    def all_img_recref_handlers(self) -> Iterable[tuple[str, 'ImageRecrefHandler']]:
         return ((name, var) for name, var in self.__dict__.items()
-                if isinstance(var, ImageHandler))
+                if isinstance(var, ImageRecrefHandler))
 
     def find_all_named_form_formset(self) -> Iterable[tuple[str, BaseForm | BaseFormSet]]:
         """
@@ -521,7 +522,7 @@ class FullFormHandler:
                 (h.new_form, h.update_formset) for h in self.all_recref_handlers
             ),
             itertools.chain.from_iterable(
-                (h.img_form, h.image_formset) for _, h in self.all_image_handlers()
+                (h.upload_img_form, h.formset) for _, h in self.all_img_recref_handlers()
             ),
             (h.formset for h in self.recref_formset_handlers),
         )
@@ -560,7 +561,7 @@ class FullFormHandler:
 
     def create_context(self):
         context = dict(self.find_all_named_form_formset())
-        for _, img_handler in self.all_image_handlers():
+        for _, img_handler in self.all_img_recref_handlers():
             context.update(img_handler.create_context())
         for h in self.all_recref_handlers:
             context.update(h.create_context())
