@@ -1,7 +1,6 @@
 import logging
-from abc import ABC
 from collections.abc import Callable
-from typing import Optional, Type, Iterable
+from typing import Iterable
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -19,7 +18,7 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_MENTION_WORK
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, ResourceForm, LocRecrefForm
 from core.helper import view_utils, lang_utils, model_utils, recref_utils, query_utils, renderer_utils
-from core.helper.common_recref_adapter import RecrefFormAdapter, TargetResourceRecrefAdapter, TargetCommentRecrefAdapter
+from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.form_utils import save_multi_rel_recref_formset
 from core.helper.lang_utils import LangModelAdapter, NewLangForm
 from core.helper.recref_utils import create_recref_if_field_exist
@@ -27,15 +26,13 @@ from core.helper.view_utils import DefaultSearchView, FullFormHandler, ImageHand
     SubjectHandler
 from core.models import Recref
 from institution import inst_utils
-from institution.models import CofkUnionInstitution
 from location import location_utils
 from location.models import CofkUnionLocation
-from manifestation import manif_utils
-from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, create_manif_id, CofkManifManifMap, \
-    CofkUnionLanguageOfManifestation, CofkManifInstMap
+from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, create_manif_id, \
+    CofkUnionLanguageOfManifestation
 from person import person_utils
 from person.models import CofkUnionPerson
-from uploader.models import CofkUnionSubject, CofkLookupCatalogue
+from uploader.models import CofkLookupCatalogue
 from work import work_utils
 from work.forms import WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \
@@ -43,8 +40,12 @@ from work.forms import WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     DetailsForm, WorkPersonRecrefAdapter, \
     CatalogueForm, manif_type_choices, original_calendar_choices, CompactSearchFieldset, ExpandedSearchFieldset, \
     ManifPersonMRRForm
-from work.models import CofkWorkPersonMap, CofkUnionWork, CofkWorkCommentMap, CofkWorkWorkMap, \
-    CofkWorkLocationMap, CofkWorkResourceMap, CofkUnionLanguageOfWork, CofkWorkSubjectMap, CofkUnionQueryableWork
+from work.models import CofkWorkPersonMap, CofkUnionWork, CofkWorkCommentMap, CofkWorkResourceMap, \
+    CofkUnionLanguageOfWork, \
+    CofkUnionQueryableWork
+from work.recref_adapter import WorkLocRecrefAdapter, ManifInstRecrefAdapter, WorkSubjectRecrefAdapter, \
+    EarlierLetterRecrefAdapter, LaterLetterRecrefAdapter, EnclosureManifRecrefAdapter, EnclosedManifRecrefAdapter, \
+    WorkCommentRecrefAdapter, ManifCommentRecrefAdapter, WorkResourceRecrefAdapter
 
 log = logging.getLogger(__name__)
 
@@ -1018,170 +1019,6 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         return [ExpandedSearchFieldset(request_data)]
 
 
-def find_work_rec_name(work_id) -> Optional[str]:
-    return work_utils.get_recref_display_name(CofkUnionWork.objects.get(work_id=work_id))
-
-
-class WorkLocRecrefAdapter(RecrefFormAdapter):
-    def __init__(self, parent=None):
-        self.parent: CofkUnionWork = parent
-
-    def find_target_display_name_by_id(self, target_id):
-        return location_utils.get_recref_display_name(self.find_target_instance(target_id))
-
-    def recref_class(self) -> Type[Recref]:
-        return CofkWorkLocationMap
-
-    def find_target_instance(self, target_id):
-        return model_utils.get_safe(CofkUnionLocation, location_id=target_id)
-
-    def set_parent_target_instance(self, recref, parent, target):
-        recref: CofkWorkLocationMap
-        recref.work = parent
-        recref.location = target
-
-    def find_recref_records(self, rel_type):
-        return self.parent.cofkworklocationmap_set.filter(relationship_type=rel_type).iterator()
-
-    def target_id_name(self):
-        return 'location_id'
-
-
-class ManifInstRecrefAdapter(RecrefFormAdapter):
-    def __init__(self, parent=None):
-        self.parent: CofkUnionManifestation = parent
-
-    def find_target_display_name_by_id(self, target_id):
-        return inst_utils.get_recref_display_name(self.find_target_instance(target_id))
-
-    def recref_class(self) -> Type[Recref]:
-        return CofkManifInstMap
-
-    def find_target_instance(self, target_id):
-        return model_utils.get_safe(CofkUnionInstitution, institution_id=target_id)
-
-    def set_parent_target_instance(self, recref, parent, target):
-        recref: CofkManifInstMap
-        recref.manif = parent
-        recref.inst = target
-
-    def find_recref_records(self, rel_type):
-        return self.parent.cofkmanifinstmap_set.filter(relationship_type=rel_type).iterator()
-
-    def target_id_name(self):
-        return 'inst_id'
-
-
-class WorkSubjectRecrefAdapter(RecrefFormAdapter):
-    def __init__(self, parent=None):
-        self.parent: CofkUnionSubject = parent
-
-    def find_target_display_name_by_id(self, target_id):
-        s = self.find_target_instance(target_id)
-        return s and s.subject_desc
-
-    def recref_class(self) -> Type[Recref]:
-        return CofkWorkSubjectMap
-
-    def find_target_instance(self, target_id):
-        return model_utils.get_safe(CofkUnionSubject, subject_id=target_id)
-
-    def set_parent_target_instance(self, recref, parent, target):
-        recref: CofkWorkSubjectMap
-        recref.work = parent
-        recref.subject = target
-
-    def find_recref_records(self, rel_type):
-        return self.find_recref_records_by_related_manger(self.parent.cofkworksubjectmap_set, rel_type)
-
-    def target_id_name(self):
-        return 'subject_id'
-
-
-class WorkWorkRecrefAdapter(RecrefFormAdapter, ABC):
-
-    def find_target_display_name_by_id(self, target_id):
-        return find_work_rec_name(target_id)
-
-    def recref_class(self) -> Type[Recref]:
-        return CofkWorkWorkMap
-
-    def find_target_instance(self, target_id):
-        return CofkUnionWork.objects.get(work_id=target_id)
-
-
-class EarlierLetterRecrefAdapter(WorkWorkRecrefAdapter):
-    def __init__(self, work=None):
-        self.work = work
-
-    def set_parent_target_instance(self, recref, parent, target):
-        recref.work_from = parent
-        recref.work_to = target
-
-    def find_recref_records(self, rel_type):
-        return self.work.work_from_set.filter(relationship_type=rel_type).iterator()
-
-    def target_id_name(self):
-        return 'work_to_id'
-
-
-class LaterLetterRecrefAdapter(WorkWorkRecrefAdapter):
-    def __init__(self, work=None):
-        self.work = work
-
-    def set_parent_target_instance(self, recref, parent, target):
-        recref.work_from = target
-        recref.work_to = parent
-
-    def find_recref_records(self, rel_type):
-        return self.work.work_to_set.filter(relationship_type=rel_type).iterator()
-
-    def target_id_name(self):
-        return 'work_from_id'
-
-
-class ManifManifRecrefAdapter(RecrefFormAdapter, ABC):
-
-    def find_target_display_name_by_id(self, target_id):
-        return manif_utils.get_recref_display_name(self.find_target_instance(target_id))
-
-    def recref_class(self) -> Type[Recref]:
-        return CofkManifManifMap
-
-    def find_target_instance(self, target_id):
-        return CofkUnionManifestation.objects.get(pk=target_id)
-
-
-class EnclosureManifRecrefAdapter(ManifManifRecrefAdapter):
-    def __init__(self, manif=None):
-        self.manif: CofkUnionManifestation = manif
-
-    def set_parent_target_instance(self, recref, parent, target):
-        recref.manif_from = parent
-        recref.manif_to = target
-
-    def find_recref_records(self, rel_type):
-        return self.manif.manif_from_set.filter(relationship_type=rel_type).iterator()
-
-    def target_id_name(self):
-        return 'manif_to_id'
-
-
-class EnclosedManifRecrefAdapter(ManifManifRecrefAdapter):
-    def __init__(self, manif=None):
-        self.manif: CofkUnionManifestation = manif
-
-    def set_parent_target_instance(self, recref, parent, target):
-        recref.manif_from = target
-        recref.manif_to = parent
-
-    def find_recref_records(self, rel_type):
-        return self.manif.manif_to_set.filter(relationship_type=rel_type).iterator()
-
-    def target_id_name(self):
-        return 'manif_from_id'
-
-
 class WorkCommentFormsetHandler(RecrefFormsetHandler):
 
     def create_recref_adapter(self, parent) -> RecrefFormAdapter:
@@ -1189,22 +1026,6 @@ class WorkCommentFormsetHandler(RecrefFormsetHandler):
 
     def find_org_recref_fn(self, parent, target) -> Recref | None:
         return CofkWorkCommentMap.objects.filter(work=parent, comment=target).first()
-
-
-class WorkCommentRecrefAdapter(TargetCommentRecrefAdapter):
-    def __init__(self, parent):
-        self.parent: CofkUnionWork = parent
-
-    def recref_class(self) -> Type[Recref]:
-        return CofkWorkCommentMap
-
-    def set_parent_target_instance(self, recref, parent, target):
-        recref: CofkWorkCommentMap
-        recref.work = parent
-        recref.comment = target
-
-    def find_recref_records(self, rel_type):
-        return self.find_recref_records_by_related_manger(self.parent.cofkworkcommentmap_set, rel_type)
 
 
 class ManifCommentFormsetHandler(RecrefFormsetHandler):
@@ -1215,41 +1036,9 @@ class ManifCommentFormsetHandler(RecrefFormsetHandler):
         return CofkManifCommentMap.objects.filter(manifestation=parent, comment=target).first()
 
 
-class ManifCommentRecrefAdapter(TargetCommentRecrefAdapter):
-    def __init__(self, parent):
-        self.parent: CofkUnionManifestation = parent
-
-    def recref_class(self) -> Type[Recref]:
-        return CofkManifCommentMap
-
-    def set_parent_target_instance(self, recref, parent, target):
-        recref: CofkManifCommentMap
-        recref.manifestation = parent
-        recref.comment = target
-
-    def find_recref_records(self, rel_type):
-        return self.find_recref_records_by_related_manger(self.parent.cofkmanifcommentmap_set, rel_type)
-
-
 class WorkResourceFormsetHandler(RecrefFormsetHandler):
     def create_recref_adapter(self, parent) -> RecrefFormAdapter:
         return WorkResourceRecrefAdapter(parent)
 
     def find_org_recref_fn(self, parent, target) -> Recref | None:
         return CofkWorkResourceMap.objects.filter(work=parent, resource=target).first()
-
-
-class WorkResourceRecrefAdapter(TargetResourceRecrefAdapter):
-    def __init__(self, parent):
-        self.parent: CofkUnionWork = parent
-
-    def recref_class(self) -> Type[Recref]:
-        return CofkWorkResourceMap
-
-    def set_parent_target_instance(self, recref, parent, target):
-        recref: CofkWorkResourceMap
-        recref.work = parent
-        recref.resource = target
-
-    def find_recref_records(self, rel_type):
-        return self.find_recref_records_by_related_manger(self.parent.cofkworkresourcemap_set, rel_type)

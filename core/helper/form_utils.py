@@ -278,6 +278,10 @@ class SubRecrefForm(forms.Form):
 
 
 class MultiRelRecrefForm(forms.Form):
+    """
+    this a class is form for handle multi relationship choices for one target.
+    it has multable choices (checkboxes) for relationship_type
+    """
     template_name = 'core/component/multi_rel_recref_form.html'
     no_date = True
     relationship_types = UndefinedRelationChoices

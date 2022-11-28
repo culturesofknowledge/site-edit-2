@@ -578,6 +578,11 @@ class FullFormHandler:
 
 
 class RecrefFormsetHandler:
+    """
+    Handle form for *target* instance.
+    * help for create formset
+    * help for save target instance and create recref records
+    """
     def __init__(self, prefix, request_data,
                  form,
                  rel_type,
