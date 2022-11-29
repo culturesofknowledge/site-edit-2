@@ -33,7 +33,7 @@ short_month_choices = [
 
 def record_tracker_label_fn_factory(subject='Entry'):
     def _fn(_self):
-        context = {k: _self[k].value() for k in
+        context = {k: _self.initial.get(k, None) for k in
                    ['creation_timestamp', 'creation_user', 'change_timestamp', 'change_user', ]}
 
         context = context | {'subject': subject}

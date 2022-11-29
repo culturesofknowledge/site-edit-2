@@ -14,16 +14,16 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_WORK_MATCHES, REL_TYPE_COMMENT_DATE, REL_TYPE_WAS_SENT_FROM, REL_TYPE_COMMENT_ORIGIN, \
     REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_ROUTE, REL_TYPE_FORMERLY_OWNED, \
     REL_TYPE_ENCLOSED_IN, REL_TYPE_COMMENT_RECEIPT_DATE, REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_STORED_IN, \
-    REL_TYPE_IS_RELATED_TO, REL_TYPE_PEOPLE_MENTIONED_IN_WORK, REL_TYPE_MENTION, REL_TYPE_MENTION_PLACE, \
+    REL_TYPE_PEOPLE_MENTIONED_IN_WORK, REL_TYPE_MENTION, REL_TYPE_MENTION_PLACE, \
     REL_TYPE_MENTION_WORK
-from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, ResourceForm, LocRecrefForm
+from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, LocRecrefForm
 from core.helper import view_utils, lang_utils, model_utils, recref_utils, query_utils, renderer_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.form_utils import save_multi_rel_recref_formset
 from core.helper.lang_utils import LangModelAdapter, NewLangForm
 from core.helper.recref_utils import create_recref_if_field_exist
 from core.helper.view_utils import DefaultSearchView, FullFormHandler, RecrefFormsetHandler, \
-    SubjectHandler, ImageRecrefHandler
+    SubjectHandler, ImageRecrefHandler, TargetResourceFormsetHandler
 from core.models import Recref
 from institution import inst_utils
 from location import location_utils
@@ -431,7 +431,8 @@ class ManifFFH(BasicWorkFFH):
             rel_type=REL_TYPE_ENCLOSED_IN,
         )
 
-        self.img_recref_handler = ManifImageRecrefHandler(request_data, request and request.FILES, parent=self.safe_manif)
+        self.img_recref_handler = ManifImageRecrefHandler(request_data, request and request.FILES,
+                                                          parent=self.safe_manif)
 
     def create_context(self):
         context = super().create_context()
@@ -506,10 +507,7 @@ class ResourcesFFH(BasicWorkFFH):
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
         super().load_data(pk, request_data=request_data, request=request)
         self.add_recref_formset_handler(WorkResourceFormsetHandler(
-            prefix='res',
             request_data=request_data,
-            form=ResourceForm,
-            rel_type=REL_TYPE_IS_RELATED_TO,
             parent=self.work,
         ))
 
@@ -1036,7 +1034,7 @@ class ManifCommentFormsetHandler(RecrefFormsetHandler):
         return CofkManifCommentMap.objects.filter(manifestation=parent, comment=target).first()
 
 
-class WorkResourceFormsetHandler(RecrefFormsetHandler):
+class WorkResourceFormsetHandler(TargetResourceFormsetHandler):
     def create_recref_adapter(self, parent) -> RecrefFormAdapter:
         return WorkResourceRecrefAdapter(parent)
 

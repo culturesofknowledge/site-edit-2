@@ -22,7 +22,25 @@ Remember call setup_url_checker, setup_standtext functions
                         Resource no. {{ forloop.counter0 }}. {{ form.resource_name.value }}
                     {% endif %}
                 </legend>
-                {{ form }}
+
+                {{ form.resource_id }}
+                <div class="margin-bottom">
+                    {% include "core/component/common_field_layout.html" with field=form.resource_name %}
+                </div>
+                <div class="margin-bottom">
+                    {% include "core/component/common_field_layout.html" with field=form.resource_url %}
+                </div>
+                <div class="margin-bottom">
+                    {% include "core/component/common_field_layout.html" with field=form.resource_details %}
+                </div>
+
+                {% if form.resource_id.value %}
+                    <div class="margin-bottom">
+                        {% include "core/component/common_checkbox.html" with field=form.is_delete name='Delete' %}
+                    </div>
+                {% endif %}
+
+
                 {{ form.record_tracker_label }}
 
             </fieldset>
