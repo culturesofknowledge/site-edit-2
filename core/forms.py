@@ -5,6 +5,7 @@ from django.urls import reverse
 
 from core.helper import form_utils, model_utils
 from core.helper import widgets_utils
+from core.helper.form_utils import CommonTextareaField
 from core.models import CofkUnionComment, CofkUnionResource
 from manifestation.models import CofkUnionManifestation
 from person import person_utils
@@ -114,21 +115,18 @@ class CommentForm(ModelForm):
 
 class ResourceForm(ModelForm):
     resource_id = IntegerField(required=False, widget=HiddenInput())
-    resource_url = forms.CharField(required=False,
+    resource_url = forms.CharField(required=True,
                                    label='URL')
-
     resource_url.widget.attrs.update({'class': 'url_checker'})
+
     resource_name = forms.CharField(required=True,
                                     label='Title or brief description',
-                                    widget=forms.Textarea(
-                                        {'class': 'res_standtext', 'rows': '4'}
+                                    widget=forms.TextInput(
+                                        {'class': 'res_standtext'}
                                     ), )
 
-    resource_details = forms.CharField(required=True,
-                                       label='Further details of resource',
-                                       widget=forms.Textarea(
-                                           {'class': 'res_standtext', 'rows': '4'}
-                                       ), )
+    resource_details = CommonTextareaField(required=False, label='Further details of resource')
+    resource_details.widget.attrs.update({'class': 'res_standtext'})
 
     creation_timestamp = forms.DateTimeField(required=False, widget=HiddenInput())
     creation_user = forms.CharField(required=False, widget=HiddenInput())
