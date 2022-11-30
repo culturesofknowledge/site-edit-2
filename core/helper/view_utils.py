@@ -275,8 +275,9 @@ class CommonInitFormViewTemplate(View):
     def on_form_changed(self, request, form) -> NoReturn:
         if hasattr(form.instance, 'update_current_user_timestamp'):
             form.instance.update_current_user_timestamp(request.user.username)
-        _new_loc = form.save()
-        return _new_loc
+        _new_instance = form.save()
+        log.info(f'records saved [{_new_instance}]')
+        return _new_instance
 
     def post(self, request, *args, **kwargs):
         form = self.form_factory(request.POST or None)
@@ -532,6 +533,11 @@ class RecrefFormsetHandler:
                 recref_adapter.find_all_targets_by_rel_type(rel_type)
             )
         )
+
+    def create_context(self):
+        return {
+            self.context_name: self.formset,
+        }
 
     def create_recref_adapter(self, parent) -> RecrefFormAdapter:
         raise NotImplementedError()

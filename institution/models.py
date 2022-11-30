@@ -2,6 +2,7 @@ from django.db import models
 
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
+from core.models import Recref
 
 
 class CofkCollectInstitution(models.Model):
@@ -44,7 +45,10 @@ class CofkUnionInstitution(models.Model, RecordTracker):
     latitude = models.CharField(max_length=20, blank=True, null=True)
     longitude = models.CharField(max_length=20, blank=True, null=True)
 
-    resources = models.ManyToManyField('core.CofkUnionResource')  # KTODO fix resources as recref
+    @property
+    def resources(self):
+        return self.cofkinstitutionresourcemap_set.all()
+
 
     class Meta:
         db_table = 'cofk_union_institution'
@@ -61,3 +65,19 @@ class CofkCollectInstitutionResource(models.Model):
     class Meta:
         db_table = 'cofk_collect_institution_resource'
         unique_together = (('upload', 'resource_id'),)
+
+
+class CofkInstitutionResourceMap(Recref):
+    institution = models.ForeignKey(CofkUnionInstitution, on_delete=models.CASCADE)
+    resource = models.ForeignKey('core.CofkUnionResource', on_delete=models.CASCADE)
+
+    class Meta(Recref.Meta):
+        db_table = 'cofk_institution_resource_map'
+
+
+class CofkInstitutionImageMap(Recref):
+    institution = models.ForeignKey(CofkUnionInstitution, on_delete=models.CASCADE)
+    image = models.ForeignKey('uploader.CofkUnionImage', on_delete=models.CASCADE)
+
+    class Meta(Recref.Meta):
+        db_table = 'cofk_institution_image_map'

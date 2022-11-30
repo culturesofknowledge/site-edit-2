@@ -97,10 +97,7 @@ def full_form(request, location_id):
 
     loc_form = LocationForm(request.POST or None, instance=loc)
 
-    res_handler = LocationResourceFormsetHandler(prefix='res',
-                                                 request_data=request.POST or None,
-                                                 form=ResourceForm,
-                                                 rel_type=REL_TYPE_IS_RELATED_TO,
+    res_handler = LocationResourceFormsetHandler(request_data=request.POST or None,
                                                  parent=loc)
     comment_handler = LocationCommentFormsetHandler(prefix='comment',
                                                     request_data=request.POST or None,
@@ -108,16 +105,18 @@ def full_form(request, location_id):
                                                     rel_type=REL_TYPE_COMMENT_REFERS_TO,
                                                     parent=loc)
 
-    img_recref_handler = LocImageRecrefHandler(request.POST or None, request.FILES, parent=loc)
+    img_recref_handler = LocationImageRecrefHandler(request.POST or None, request.FILES, parent=loc)
 
     def _render_full_form():
 
         return render(request, 'location/full_form.html',
-                      {'loc_form': loc_form,
-                       res_handler.context_name: res_handler.formset,
-                       comment_handler.context_name: comment_handler.formset,
-                       'loc_id': location_id,
-                       } | img_recref_handler.create_context()
+                      ({'loc_form': loc_form,
+                        'loc_id': location_id,
+                        }
+                       | img_recref_handler.create_context()
+                       | res_handler.create_context()
+                       | comment_handler.create_context()
+                       )
                       )
 
     if request.method == 'POST':
@@ -314,7 +313,7 @@ class LocationResourceFormsetHandler(TargetResourceFormsetHandler):
         return CofkLocationResourceMap.objects.filter(location=parent, resource=target).first()
 
 
-class LocImageRecrefHandler(ImageRecrefHandler):
+class LocationImageRecrefHandler(ImageRecrefHandler):
     def create_recref_adapter(self, parent) -> RecrefFormAdapter:
         return LocationImageRecrefAdapter(parent)
 

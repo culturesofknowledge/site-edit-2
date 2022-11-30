@@ -42,7 +42,7 @@ class LocationResourceRecrefAdapter(TargetResourceRecrefAdapter):
 class LocationImageRecrefAdapter(TargetImageRecrefAdapter):
 
     def __init__(self, parent):
-        self.parent: CofkUnionImage = parent
+        self.parent: CofkUnionLocation = parent
 
     def recref_class(self) -> Type[Recref]:
         return CofkLocationImageMap

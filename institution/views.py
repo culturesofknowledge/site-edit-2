@@ -7,11 +7,15 @@ from django.forms import ModelForm
 from django.shortcuts import render, redirect, get_object_or_404
 
 from core.helper import renderer_utils, query_utils, view_utils
+from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.renderer_utils import CompactSearchResultsRenderer
-from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView
-from institution import inst_utils
+from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView, TargetResourceFormsetHandler, \
+    ImageRecrefHandler
+from core.models import Recref
+from institution import inst_utils, models
 from institution.forms import InstitutionForm, GeneralSearchFieldset
 from institution.models import CofkUnionInstitution
+from institution.recref_adapter import InstResourceRecrefAdapter, InstImageRecrefAdapter
 
 
 class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
@@ -52,7 +56,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
 
         # queries for like_fields
         field_fn_maps = {
-            #'institution_id': query_utils.create_eq_query,
+            # 'institution_id': query_utils.create_eq_query,
         }
 
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
@@ -95,7 +99,7 @@ class InstInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
         return render(request, 'institution/init_form.html', {'inst_form': form})
 
     def resp_after_saved(self, request, form, new_instance):
-        return redirect('institution:search')
+        return redirect('institution:full_form', new_instance.institution_id)
 
     @property
     def form_factory(self) -> Callable[..., ModelForm]:
@@ -104,18 +108,34 @@ class InstInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
 
 @login_required
 def full_form(request, pk):
-    # KTODO
     inst = get_object_or_404(CofkUnionInstitution, pk=pk)
     inst_form = InstitutionForm(request.POST or None, instance=inst)
 
+    res_handler = InstResourceFormsetHandler(request_data=request.POST or None,
+                                             parent=inst)
+
+    img_recref_handler = InstImageRecrefHandler(request.POST or None, request.FILES, parent=inst)
+
     def _render_form():
-        return render(request, 'institution/init_form.html', {
-            'inst_form': inst_form,
-        })
+        return render(request, 'institution/init_form.html',
+                      ({
+                           'inst_form': inst_form,
+                       }
+                       | img_recref_handler.create_context()
+                       | res_handler.create_context()
+                       )
+                      )
 
     if request.POST:
-        if not inst_form.is_valid():
+        if view_utils.any_invalid_with_log([
+            inst_form,
+            res_handler.formset,
+            img_recref_handler.formset, img_recref_handler.upload_img_form,
+        ]):
             return _render_form()
+
+        res_handler.save(inst, request)
+        img_recref_handler.save(inst, request)
 
         inst_form.save()
         return redirect('institution:search')
@@ -136,3 +156,19 @@ def return_quick_init(request, pk):
         inst_utils.get_recref_display_name(inst),
         inst_utils.get_recref_target_id(inst),
     )
+
+
+class InstResourceFormsetHandler(TargetResourceFormsetHandler):
+    def create_recref_adapter(self, parent) -> RecrefFormAdapter:
+        return InstResourceRecrefAdapter(parent)
+
+    def find_org_recref_fn(self, parent, target) -> Recref | None:
+        return models.CofkInstitutionResourceMap.objects.filter(institution=parent, resource=target).first()
+
+
+class InstImageRecrefHandler(ImageRecrefHandler):
+    def create_recref_adapter(self, parent) -> RecrefFormAdapter:
+        return InstImageRecrefAdapter(parent)
+
+    def find_org_recref_fn(self, parent, target) -> Recref | None:
+        return models.CofkInstitutionImageMap.objects.filter(institution=parent, image=target).first()
