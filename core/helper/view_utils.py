@@ -104,9 +104,12 @@ class BasicSearchView(ListView):
         raise NotImplementedError('missing merge_page_vname')
 
     @property
-    def return_quick_init_vname(self) -> str:
-        # KTODO return_quick_init feature can be disable
-        raise NotImplementedError('missing return_quick_init_vname')
+    def return_quick_init_vname(self) -> str | None:
+        """
+        view name for "return quick init" j(select for recref)
+        return None if this entity (e.g. audit) not support "return quick init"
+        """
+        return None
 
     def get_queryset(self):
         raise NotImplementedError('missing get_queryset')
@@ -150,8 +153,10 @@ class BasicSearchView(ListView):
                         'is_compact_layout': is_compact_layout,
                         'to_user_messages': getattr(self, 'to_user_messages', []),
                         'merge_page_url': reverse(self.merge_page_vname),
-                        'return_quick_init_vname': self.return_quick_init_vname,
                         })
+
+        if self.return_quick_init_vname:
+            context['return_quick_init_vname'] = self.return_quick_init_vname
 
         return context
 
@@ -217,6 +222,10 @@ def urlparams(*_, **kwargs):
 class DefaultSearchView(BasicSearchView):
 
     @property
+    def title(self) -> str:
+        return '__title__'
+
+    @property
     def query_fieldset_list(self) -> Iterable:
         return []
 
@@ -245,10 +254,6 @@ class DefaultSearchView(BasicSearchView):
 
     @property
     def merge_page_vname(self) -> str:
-        return 'login:gate'
-
-    @property
-    def return_quick_init_vname(self) -> str:
         return 'login:gate'
 
     def get_queryset(self):

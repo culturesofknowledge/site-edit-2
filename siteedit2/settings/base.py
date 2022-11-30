@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'manifestation',
     'person',
     'publication',
+    'audit',
 ]
 
 MIDDLEWARE = [
