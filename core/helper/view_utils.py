@@ -618,10 +618,18 @@ class TargetResourceFormsetHandler(RecrefFormsetHandler, ABC):
             (f for f in self.formset if f.has_changed()),
             lambda f: f.cleaned_data['is_delete'],
         )
-        # saved_forms[0].changed_data
 
-        # KTODO handle delete forms
-        breakpoint()
+        # handle del
+        recref_adapter: RecrefFormAdapter = self.create_recref_adapter(parent)
+        for form in del_forms:
+            target_id_name = recref_adapter.target_id_name()
+            if form_target_id := form.cleaned_data.get(target_id_name):
+                form.instance._meta.model.objects.filter(**{target_id_name: form_target_id}).delete()
+                log.info(f'del resources recref [{form_target_id}][{form.cleaned_data}]')
+            else:
+                log.warning(f'skip del, form target id not found [{target_id_name}][{form_target_id}]')
+
+        # handle save / update
         super().save_form_list(parent, request, forms=saved_forms)
 
 
