@@ -16,7 +16,7 @@ from core.helper.model_utils import RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
 from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate, RecrefFormsetHandler, \
-    ImageRecrefHandler
+    ImageRecrefHandler, TargetResourceFormsetHandler
 from core.models import Recref
 from location import location_utils
 from location.forms import LocationForm, GeneralSearchFieldset
@@ -306,7 +306,7 @@ class LocationCommentFormsetHandler(RecrefFormsetHandler):
         return CofkLocationCommentMap.objects.filter(location=parent, comment=target).first()
 
 
-class LocationResourceFormsetHandler(RecrefFormsetHandler):
+class LocationResourceFormsetHandler(TargetResourceFormsetHandler):
     def create_recref_adapter(self, parent) -> RecrefFormAdapter:
         return LocationResourceRecrefAdapter(parent)
 

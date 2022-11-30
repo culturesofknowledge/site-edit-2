@@ -10,14 +10,14 @@ from django.forms import BaseForm
 from django.shortcuts import render, redirect, get_object_or_404
 
 from core import constant
-from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_IS_RELATED_TO
-from core.forms import CommentForm, ResourceForm, LocRecrefForm, PersonRecrefForm
+from core.constant import REL_TYPE_COMMENT_REFERS_TO
+from core.forms import CommentForm, LocRecrefForm, PersonRecrefForm
 from core.helper import renderer_utils, view_utils, query_utils, download_csv_utils, recref_utils, form_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
 from core.helper.view_utils import CommonInitFormViewTemplate, BasicSearchView, FullFormHandler, \
-    RecrefFormsetHandler, RoleCategoryHandler, ImageRecrefHandler
+    RecrefFormsetHandler, RoleCategoryHandler, ImageRecrefHandler, TargetResourceFormsetHandler
 from core.models import Recref
 from location.models import CofkUnionLocation
 from person import person_utils
@@ -207,10 +207,7 @@ class PersonFFH(FullFormHandler):
         ))
 
         self.add_recref_formset_handler(PersonResourceFormsetHandler(
-            prefix='res',
             request_data=request_data,
-            form=ResourceForm,
-            rel_type=REL_TYPE_IS_RELATED_TO,
             parent=self.person,
         ))
         self.img_recref_handler = PersonImageRecrefHandler(request_data, request and request.FILES,
@@ -417,7 +414,7 @@ class PersonCommentFormsetHandler(RecrefFormsetHandler):
         return CofkPersonCommentMap.objects.filter(person=parent, comment=target).first()
 
 
-class PersonResourceFormsetHandler(RecrefFormsetHandler):
+class PersonResourceFormsetHandler(TargetResourceFormsetHandler):
     def create_recref_adapter(self, parent) -> RecrefFormAdapter:
         return PersonResourceRecrefAdapter(parent)
 

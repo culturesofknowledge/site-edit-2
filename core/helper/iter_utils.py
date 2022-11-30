@@ -1,4 +1,5 @@
 import itertools
+from typing import Iterable, Any, Callable
 
 
 class RecordCounter:
@@ -15,3 +16,8 @@ class RecordCounter:
 
     def cur_size(self):
         return self._cur_size + 1
+
+
+def split(values: Iterable, cond_fn: Callable[[Any], bool]):
+    a, b = itertools.tee(values)
+    return (i for i in a if cond_fn(i)), (i for i in b if not cond_fn(i))

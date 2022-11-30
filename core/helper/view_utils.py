@@ -20,10 +20,10 @@ from django.views import View
 from django.views.generic import ListView
 
 import core.constant as core_constant
-from core.forms import ImageForm, UploadImageForm
+from core.forms import ImageForm, UploadImageForm, ResourceForm
 from core.forms import RecrefForm
 from core.forms import build_search_components
-from core.helper import file_utils, email_utils, recref_utils
+from core.helper import file_utils, email_utils, recref_utils, iter_utils
 from core.helper import model_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
@@ -415,37 +415,6 @@ class MultiRecrefAdapterHandler(MultiRecrefHandler):
         )
 
 
-def save_formset(forms: Iterable[ModelForm],
-                 many_related_manager=None,
-                 model_id_name=None,
-                 form_id_name=None):
-    _forms = (f for f in forms if f.has_changed())
-    for form in _forms:
-        log.debug(f'form has changed : {form.changed_data}')
-
-        # set id value to instead by mode_id
-        if model_id_name:
-            if hasattr(form.instance, model_id_name):
-                form_id_name = form_id_name or model_id_name
-                form.is_valid()  # make sure cleaned_data exist
-                if form_id_name in form.cleaned_data:
-                    setattr(form.instance, model_id_name,
-                            form.cleaned_data.get(form_id_name))
-                else:
-                    log.warning(f'form_id_name[{model_id_name}] not found in form_clean_data[{form.cleaned_data}]')
-
-            else:
-                log.warning(f'mode_id_name[{model_id_name}] not found in form.instance')
-
-        # save form
-        log.info(f'form save -- [{form.instance}]')
-        form.save()
-
-        # bind many-to-many relation
-        if many_related_manager:
-            many_related_manager.add(form.instance)
-
-
 class FullFormHandler:
     """ maintain collections of Form and Formset for View
     developer can define instance of Form and Formset in `load_data`
@@ -571,11 +540,53 @@ class RecrefFormsetHandler:
         raise NotImplementedError()
 
     def save(self, parent, request):
+        self.save_form_list(
+            parent, request,
+            (f for f in self.formset if f.has_changed()),
+        )
+
+    @staticmethod
+    def _save_formset(forms: Iterable[ModelForm],
+                      model_id_name=None,
+                      form_id_name=None,
+                      username=None, ):
+        _forms = (f for f in forms if f.has_changed())
+        for form in _forms:
+            log.debug(f'form has changed : {form.changed_data}')
+
+            form.is_valid()  # make sure cleaned_data exist
+            form_id_name = form_id_name or model_id_name
+            form_target_id = form.cleaned_data.get(form_id_name)
+
+            if form_target_id is None:
+                # create
+                if username and hasattr(form.instance, 'update_current_user_timestamp'):
+                    form.instance.update_current_user_timestamp(username)
+                form.save()
+                log.info(f'recref_formset created -- [{form.instance}]')
+
+            else:
+                # update
+                db_model: models.Model = form.instance._meta.model.objects.get(**{model_id_name: form_target_id})
+
+                for field in form.changed_data:
+                    if hasattr(db_model, field):
+                        setattr(db_model, field, form.cleaned_data[field])
+
+                if username and hasattr(db_model, 'update_current_user_timestamp'):
+                    db_model.update_current_user_timestamp(username)
+
+                db_model.save()
+                form.instance = db_model
+                log.info(f'recref_formset updated -- [{db_model}]')
+
+    def save_form_list(self, parent, request, forms: Iterable[ModelForm]):
         recref_adapter: RecrefFormAdapter = self.create_recref_adapter(parent)
-        forms = [f for f in self.formset if f.has_changed()]
+        forms = list(forms)
 
         # save each target instance
-        save_formset(forms, model_id_name=recref_adapter.target_id_name())
+        self._save_formset(forms, model_id_name=recref_adapter.target_id_name(),
+                           username=request.user.username)
 
         # upsert each recref
         for target in (f.instance for f in forms):
@@ -591,6 +602,35 @@ class RecrefFormsetHandler:
                                                   )
             recref.save()
             log.info(f'save m2m recref -- [{recref}][{target}]')
+
+
+class TargetResourceFormsetHandler(RecrefFormsetHandler, ABC):
+
+    def __init__(self, request_data, parent: models.Model,
+                 rel_type=core_constant.REL_TYPE_IS_RELATED_TO,
+                 prefix='res',
+                 form: Type[ModelForm] = ResourceForm,
+                 context_name=None):
+        super().__init__(prefix, request_data, form, rel_type, parent, context_name)
+
+    def save(self, parent, request):
+        del_forms, saved_forms = iter_utils.split(
+            (f for f in self.formset if f.has_changed()),
+            lambda f: f.cleaned_data['is_delete'],
+        )
+
+        # handle del
+        recref_adapter: RecrefFormAdapter = self.create_recref_adapter(parent)
+        for form in del_forms:
+            target_id_name = recref_adapter.target_id_name()
+            if form_target_id := form.cleaned_data.get(target_id_name):
+                form.instance._meta.model.objects.filter(**{target_id_name: form_target_id}).delete()
+                log.info(f'del resources recref [{form_target_id}][{form.cleaned_data}]')
+            else:
+                log.warning(f'skip del, form target id not found [{target_id_name}][{form_target_id}]')
+
+        # handle save / update
+        super().save_form_list(parent, request, forms=saved_forms)
 
 
 class ImageRecrefHandler(RecrefFormsetHandler, ABC):

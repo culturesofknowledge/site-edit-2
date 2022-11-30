@@ -241,3 +241,13 @@ tr.selectable_entry:hover {
   }
 
 }
+
+
+.errorlist {
+  color: red;
+}
+
+.warn-checked:checked + label * {
+  color: red;
+  font-weight: bold;
+}

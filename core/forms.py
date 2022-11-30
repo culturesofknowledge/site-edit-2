@@ -5,6 +5,7 @@ from django.urls import reverse
 
 from core.helper import form_utils, model_utils
 from core.helper import widgets_utils
+from core.helper.form_utils import CommonTextareaField, ZeroOneCheckboxField
 from core.models import CofkUnionComment, CofkUnionResource
 from manifestation.models import CofkUnionManifestation
 from person import person_utils
@@ -88,11 +89,6 @@ class ManifRecrefForm(RecrefForm):
 class CommentForm(ModelForm):
     comment_id = IntegerField(required=False, widget=HiddenInput())
 
-    creation_timestamp = forms.DateTimeField(required=False, widget=HiddenInput())
-    creation_user = forms.CharField(required=False, widget=HiddenInput())
-    change_timestamp = forms.DateTimeField(required=False, widget=HiddenInput())
-    change_user = forms.CharField(required=False, widget=HiddenInput())
-
     record_tracker_label = form_utils.record_tracker_label_fn_factory('Note')
 
     comment = form_utils.CommonTextareaField(required=True)
@@ -102,10 +98,6 @@ class CommentForm(ModelForm):
         fields = (
             'comment_id',
             'comment',
-            'creation_timestamp',
-            'creation_user',
-            'change_timestamp',
-            'change_user',
         )
         labels = {
             'comment': 'Note',
@@ -114,28 +106,23 @@ class CommentForm(ModelForm):
 
 class ResourceForm(ModelForm):
     resource_id = IntegerField(required=False, widget=HiddenInput())
-    resource_url = forms.CharField(required=False,
+    resource_url = forms.CharField(required=True,
                                    label='URL')
-
     resource_url.widget.attrs.update({'class': 'url_checker'})
+
     resource_name = forms.CharField(required=True,
                                     label='Title or brief description',
-                                    widget=forms.Textarea(
-                                        {'class': 'res_standtext', 'rows': '4'}
+                                    widget=forms.TextInput(
+                                        {'class': 'res_standtext'}
                                     ), )
 
-    resource_details = forms.CharField(required=True,
-                                       label='Further details of resource',
-                                       widget=forms.Textarea(
-                                           {'class': 'res_standtext', 'rows': '4'}
-                                       ), )
-
-    creation_timestamp = forms.DateTimeField(required=False, widget=HiddenInput())
-    creation_user = forms.CharField(required=False, widget=HiddenInput())
-    change_timestamp = forms.DateTimeField(required=False, widget=HiddenInput())
-    change_user = forms.CharField(required=False, widget=HiddenInput())
+    resource_details = CommonTextareaField(required=False, label='Further details of resource')
+    resource_details.widget.attrs.update({'class': 'res_standtext'})
 
     record_tracker_label = form_utils.record_tracker_label_fn_factory('Entry')
+
+    is_delete = ZeroOneCheckboxField(is_str=False, label='Delete')
+    is_delete.widget.attrs.update({'class': 'warn-checked'})
 
     class Meta:
         model = CofkUnionResource
@@ -145,10 +132,6 @@ class ResourceForm(ModelForm):
             'resource_name',
             'resource_url',
             'resource_details',
-            'creation_timestamp',
-            'creation_user',
-            'change_timestamp',
-            'change_user',
         )
 
 
