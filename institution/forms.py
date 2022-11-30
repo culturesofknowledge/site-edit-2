@@ -9,6 +9,10 @@ class InstitutionForm(ModelForm):
     institution_name = forms.CharField()
     institution_city = forms.CharField()
     institution_country = forms.CharField()
+    institution_synonyms = form_utils.CommonTextareaField()
+    editors_notes = form_utils.CommonTextareaField()
+    institution_city_synonyms = form_utils.CommonTextareaField()
+    institution_country_synonyms = form_utils.CommonTextareaField()
 
     class Meta:
         model = CofkUnionInstitution
@@ -22,7 +26,7 @@ class GeneralSearchFieldset(forms.Form):
     title = 'General'
     template_name = 'institution/component/institution_search_fieldset.html'
 
-    institution_name = forms.CharField(required=False,)
+    institution_name = forms.CharField(required=False, )
     institution_name_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     institution_synonyms = forms.CharField(required=False, )

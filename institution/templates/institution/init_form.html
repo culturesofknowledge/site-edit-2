@@ -1,6 +1,20 @@
 {% extends "core/emlo_logined.html" %}
 {% load static %}
 
+{% block head %}
+    <script src="{% static 'core/js/ref_publication_service.js' %}" defer></script>
+    <script src="{% static 'core/js/table_of_content_service.js' %}" defer></script>
+    <script defer>
+
+        $(function () {
+            setup_url_checker()
+            setup_standtext([
+                'Online catalogue', 'Repository Homepage', 'Wikidata ID', 'Wikipeda',
+            ]);
+            setup_table_of_content();
+        })
+    </script>
+{% endblock %}
 
 {% block content %}
     <script src="{% static 'core/js/ref_publication_service.js' %}" defer></script>
@@ -27,7 +41,8 @@
                         <label>Alternative institution names</label>
                         {{ inst_form.institution_synonyms }}
                         {{ inst_form.institution_synonyms.errors }}
-                        <small>(Please use this field for different variations of the institution name, e.g. BL for British Library.
+                        <small>(Please use this field for different variations of the institution name, e.g. BL for
+                            British Library.
                             You can also use this field to translate the name into different languages.
                             Please put each alternative institution name on a separate line.)</small>
                     </div>
@@ -79,6 +94,13 @@
 
                 </fieldset>
 
+                {% if res_formset %}
+                    {% include "core/component/resource_formset.html" with res_formset=res_formset %}
+                {% endif %}
+
+                {% if img_handler %}
+                    {% include "core/component/image_formset.html" with img_handler=img_handler %}
+                {% endif %}
 
                 {% include "core/component/actionbox.html" %}
 
