@@ -164,15 +164,4 @@ function setup_autodate_div(autodate_div_selector) {
     ).setup_auto_calendar();
 
 
-    // setup to date
-    new AutoCalendar(
-        autodate_div_jqe.find('.to-div .ad-year'),
-        autodate_div_jqe.find('.to-div .ad-month'),
-        autodate_div_jqe.find('.to-div .ad-day'),
-        autodate_div_jqe.find('.calendar-div input'),
-        autodate_div_jqe.find('.original-calendar-div input'),
-        autodate_div_jqe.find('.gregorian-calendar-div input'),
-    ).setup_auto_calendar();
-
-
 }
