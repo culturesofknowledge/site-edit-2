@@ -98,7 +98,7 @@ class CofkUnionImage(models.Model, RecordTracker):
     change_user = models.CharField(max_length=50)
     thumbnail = models.TextField(blank=True, null=True)
     can_be_displayed = models.CharField(max_length=1)
-    display_order = models.IntegerField()
+    display_order = models.IntegerField(default=1)
     licence_details = models.TextField()
     licence_url = models.CharField(max_length=2000)
     credits = models.CharField(max_length=2000)

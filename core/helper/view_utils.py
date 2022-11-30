@@ -1,6 +1,7 @@
 import itertools
 import logging
 import os
+from abc import ABC
 from multiprocessing import Process
 from typing import Iterable, Type, Callable
 from typing import NoReturn
@@ -445,44 +446,6 @@ def save_formset(forms: Iterable[ModelForm],
             many_related_manager.add(form.instance)
 
 
-class ImageHandler:
-    def __init__(self, request_data, request_files,
-                 img_related_manager):
-        self.img_related_manager = img_related_manager
-        self.image_formset = create_formset(
-            ImageForm, post_data=request_data,
-            prefix='image',
-            initial_list=model_utils.related_manager_to_dict_list(
-                self.img_related_manager), )
-        self.img_form = UploadImageForm(request_data or None, request_files)
-
-    def create_context(self):
-        return {
-            'img_handler': {
-                'image_formset': self.image_formset,
-                'img_form': self.img_form,
-                'total_images': self.img_related_manager.count(),
-            }
-        }
-
-    def save(self, request):
-        image_formset = (f for f in self.image_formset if f.is_valid())
-        image_formset = (f for f in image_formset if f.cleaned_data.get('image_filename'))
-        save_formset(image_formset, self.img_related_manager, model_id_name='image_id')
-
-        # save if user uploaded an image
-        self.img_form.is_valid()
-        if uploaded_img_file := self.img_form.cleaned_data.get('selected_image'):
-            file_path = media_service.save_uploaded_img(uploaded_img_file)
-            file_url = media_service.get_img_url_by_file_path(file_path)
-            img_obj = CofkUnionImage(image_filename=file_url, display_order=0,
-                                     licence_details='', credits='',
-                                     licence_url=settings.DEFAULT_IMG_LICENCE_URL)
-            img_obj.update_current_user_timestamp(request.user.username)
-            img_obj.save()
-            self.img_related_manager.add(img_obj)
-
-
 class FullFormHandler:
     """ maintain collections of Form and Formset for View
     developer can define instance of Form and Formset in `load_data`
@@ -500,9 +463,9 @@ class FullFormHandler:
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
         raise NotImplementedError()
 
-    def all_image_handlers(self) -> Iterable[tuple[str, ImageHandler]]:
+    def all_img_recref_handlers(self) -> Iterable[tuple[str, 'ImageRecrefHandler']]:
         return ((name, var) for name, var in self.__dict__.items()
-                if isinstance(var, ImageHandler))
+                if isinstance(var, ImageRecrefHandler))
 
     def find_all_named_form_formset(self) -> Iterable[tuple[str, BaseForm | BaseFormSet]]:
         """
@@ -520,7 +483,7 @@ class FullFormHandler:
                 (h.new_form, h.update_formset) for h in self.all_recref_handlers
             ),
             itertools.chain.from_iterable(
-                (h.img_form, h.image_formset) for _, h in self.all_image_handlers()
+                (h.upload_img_form, h.formset) for _, h in self.all_img_recref_handlers()
             ),
             (h.formset for h in self.recref_formset_handlers),
         )
@@ -559,7 +522,7 @@ class FullFormHandler:
 
     def create_context(self):
         context = dict(self.find_all_named_form_formset())
-        for _, img_handler in self.all_image_handlers():
+        for _, img_handler in self.all_img_recref_handlers():
             context.update(img_handler.create_context())
         for h in self.all_recref_handlers:
             context.update(h.create_context())
@@ -578,8 +541,14 @@ class FullFormHandler:
 
 
 class RecrefFormsetHandler:
+    """
+    Handle form for *target* instance.
+    * help for create formset
+    * help for save target instance and create recref records
+    """
+
     def __init__(self, prefix, request_data,
-                 form,
+                 form: Type[ModelForm],
                  rel_type,
                  parent: models.Model,
                  context_name=None,
@@ -604,8 +573,11 @@ class RecrefFormsetHandler:
     def save(self, parent, request):
         recref_adapter: RecrefFormAdapter = self.create_recref_adapter(parent)
         forms = [f for f in self.formset if f.has_changed()]
+
+        # save each target instance
         save_formset(forms, model_id_name=recref_adapter.target_id_name())
 
+        # upsert each recref
         for target in (f.instance for f in forms):
             org_recref = self.find_org_recref_fn(
                 parent=parent,
@@ -619,6 +591,45 @@ class RecrefFormsetHandler:
                                                   )
             recref.save()
             log.info(f'save m2m recref -- [{recref}][{target}]')
+
+
+class ImageRecrefHandler(RecrefFormsetHandler, ABC):
+    def __init__(self, request_data, request_files, parent: models.Model,
+                 rel_type=core_constant.REL_TYPE_IMAGE_OF,
+                 prefix='image', context_name=None):
+        super().__init__(prefix, request_data, ImageForm, rel_type, parent, context_name)
+        self.parent = parent
+        self.upload_img_form = UploadImageForm(request_data or None, request_files)
+
+    def create_context(self):
+        total_images = len(list(self.create_recref_adapter(self.parent).find_recref_records(self.rel_type)))
+        return {
+            'img_handler': {
+                'image_formset': self.formset,
+                'img_form': self.upload_img_form,
+                'total_images': total_images,
+            }
+        }
+
+    def save(self, parent, request):
+        super().save(parent, request)
+
+        # save if user uploaded an image
+        self.upload_img_form.is_valid()
+        if uploaded_img_file := self.upload_img_form.cleaned_data.get('selected_image'):
+            file_path = media_service.save_uploaded_img(uploaded_img_file)
+            file_url = media_service.get_img_url_by_file_path(file_path)
+            img_obj = CofkUnionImage(image_filename=file_url, display_order=0,
+                                     licence_details='', credits='',
+                                     licence_url=settings.DEFAULT_IMG_LICENCE_URL)
+            img_obj.update_current_user_timestamp(request.user.username)
+            img_obj.save()
+
+            # create recref records
+            recref_adapter = self.create_recref_adapter(parent)
+            recref = recref_adapter.upsert_recref(self.rel_type, parent, img_obj,
+                                                  username=request.user.username)
+            recref.save()
 
 
 class RecrefCheckbox:

@@ -11,6 +11,7 @@ from core.helper import form_utils, widgets_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.form_utils import TargetPersonMRRForm
 from person.models import CofkUnionPerson
+from person.recref_adapter import ActivePersonRecrefAdapter
 from uploader.models import CofkUnionOrgType
 
 log = logging.getLogger(__name__)
@@ -302,7 +303,6 @@ class PersonOtherRecrefForm(TargetPersonMRRForm):
 
     @classmethod
     def create_recref_adapter(cls, *args, **kwargs) -> RecrefFormAdapter:
-        from person.views import ActivePersonRecrefAdapter
         return ActivePersonRecrefAdapter(*args, **kwargs)
 
     def find_recref_list_by_target_id(self, parent: Model, target_id):

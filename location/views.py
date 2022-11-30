@@ -11,15 +11,18 @@ from django.views.generic import ListView
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_IS_RELATED_TO
 from core.forms import CommentForm, ResourceForm
 from core.helper import view_utils, renderer_utils, query_utils, download_csv_utils
-from core.helper.common_recref_adapter import RecrefFormAdapter, TargetCommentRecrefAdapter, TargetResourceRecrefAdapter
+from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.model_utils import RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
-from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate, ImageHandler, RecrefFormsetHandler
+from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate, RecrefFormsetHandler, \
+    ImageRecrefHandler
 from core.models import Recref
 from location import location_utils
 from location.forms import LocationForm, GeneralSearchFieldset
-from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap
+from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap, CofkLocationImageMap
+from location.recref_adapter import LocationCommentRecrefAdapter, LocationResourceRecrefAdapter, \
+    LocationImageRecrefAdapter
 
 log = logging.getLogger(__name__)
 FormOrFormSet = Union[BaseForm, BaseFormSet]
@@ -105,7 +108,7 @@ def full_form(request, location_id):
                                                     rel_type=REL_TYPE_COMMENT_REFERS_TO,
                                                     parent=loc)
 
-    img_handler = ImageHandler(request.POST, request.FILES, loc.images)
+    img_recref_handler = LocImageRecrefHandler(request.POST or None, request.FILES, parent=loc)
 
     def _render_full_form():
 
@@ -114,12 +117,13 @@ def full_form(request, location_id):
                        res_handler.context_name: res_handler.formset,
                        comment_handler.context_name: comment_handler.formset,
                        'loc_id': location_id,
-                       } | img_handler.create_context()
+                       } | img_recref_handler.create_context()
                       )
 
     if request.method == 'POST':
-        form_formsets = [loc_form, res_handler.formset, comment_handler.formset, img_handler.image_formset,
-                         img_handler.img_form]
+        form_formsets = [loc_form, res_handler.formset, comment_handler.formset,
+                         img_recref_handler.formset, img_recref_handler.upload_img_form,
+                         ]
 
         if view_utils.any_invalid_with_log(form_formsets):
             log.warning(f'something invalid')
@@ -130,7 +134,7 @@ def full_form(request, location_id):
         # save formset
         res_handler.save(loc, request)
         comment_handler.save(loc, request)
-        img_handler.save(request)
+        img_recref_handler.save(loc, request)
 
         loc_form.save()
         log.info(f'location [{location_id}] have been saved')
@@ -302,22 +306,6 @@ class LocationCommentFormsetHandler(RecrefFormsetHandler):
         return CofkLocationCommentMap.objects.filter(location=parent, comment=target).first()
 
 
-class LocationCommentRecrefAdapter(TargetCommentRecrefAdapter):
-    def __init__(self, parent):
-        self.parent: CofkUnionLocation = parent
-
-    def recref_class(self) -> Type[Recref]:
-        return CofkLocationCommentMap
-
-    def set_parent_target_instance(self, recref, parent, target):
-        recref: CofkLocationCommentMap
-        recref.location = parent
-        recref.comment = target
-
-    def find_recref_records(self, rel_type):
-        return self.find_recref_records_by_related_manger(self.parent.cofklocationcommentmap_set, rel_type)
-
-
 class LocationResourceFormsetHandler(RecrefFormsetHandler):
     def create_recref_adapter(self, parent) -> RecrefFormAdapter:
         return LocationResourceRecrefAdapter(parent)
@@ -326,17 +314,9 @@ class LocationResourceFormsetHandler(RecrefFormsetHandler):
         return CofkLocationResourceMap.objects.filter(location=parent, resource=target).first()
 
 
-class LocationResourceRecrefAdapter(TargetResourceRecrefAdapter):
-    def __init__(self, parent):
-        self.parent: CofkUnionLocation = parent
+class LocImageRecrefHandler(ImageRecrefHandler):
+    def create_recref_adapter(self, parent) -> RecrefFormAdapter:
+        return LocationImageRecrefAdapter(parent)
 
-    def recref_class(self) -> Type[Recref]:
-        return CofkLocationResourceMap
-
-    def set_parent_target_instance(self, recref, parent, target):
-        recref: CofkLocationResourceMap
-        recref.location = parent
-        recref.resource = target
-
-    def find_recref_records(self, rel_type):
-        return self.find_recref_records_by_related_manger(self.parent.cofklocationresourcemap_set, rel_type)
+    def find_org_recref_fn(self, parent, target) -> Recref | None:
+        return CofkLocationImageMap.objects.filter(location=parent, image=target).first()

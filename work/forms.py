@@ -14,6 +14,8 @@ from core.helper.form_utils import SelectedRecrefField, TargetPersonMRRForm
 from core.models import Recref
 from manifestation.models import CofkUnionManifestation, CofkManifPersonMap
 from work.models import CofkCollectWork, CofkUnionWork, CofkWorkPersonMap
+from work.recref_adapter import ManifInstRecrefAdapter
+from work.recref_adapter import WorkLocRecrefAdapter
 
 log = logging.getLogger(__name__)
 
@@ -57,13 +59,11 @@ def create_auto_date_field():
 
 class LocationRecrefField(SelectedRecrefField):
     def get_recref_name(self, target_id):
-        from work.views import WorkLocRecrefAdapter
         return WorkLocRecrefAdapter().find_target_display_name_by_id(target_id)
 
 
 class InstRecrefField(SelectedRecrefField):
     def get_recref_name(self, target_id):
-        from work.views import ManifInstRecrefAdapter
         return ManifInstRecrefAdapter().find_target_display_name_by_id(target_id)
 
 

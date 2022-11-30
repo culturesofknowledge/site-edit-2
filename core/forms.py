@@ -165,8 +165,10 @@ class ImageForm(ModelForm):
     licence_details = form_utils.CommonTextareaField(label='Either: full text of licence*')
 
     licence_url = forms.CharField(required=False,
-                                  label='licence URL*')
-    licence_url.widget.attrs.update({'class': 'url_checker', 'value': settings.DEFAULT_IMG_LICENCE_URL})
+                                  label='licence URL*',
+                                  initial=settings.DEFAULT_IMG_LICENCE_URL,
+                                  )
+    licence_url.widget.attrs.update({'class': 'url_checker', })
 
     can_be_displayed = form_utils.ZeroOneCheckboxField(required=False,
                                                        label='Can be displayed to public',

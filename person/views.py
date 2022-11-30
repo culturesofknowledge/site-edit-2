@@ -1,5 +1,4 @@
 import logging
-from abc import ABC
 from typing import Callable, Iterable, Type, Optional, Any, NoReturn
 
 from django.contrib.auth.decorators import login_required
@@ -13,21 +12,20 @@ from django.shortcuts import render, redirect, get_object_or_404
 from core import constant
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_IS_RELATED_TO
 from core.forms import CommentForm, ResourceForm, LocRecrefForm, PersonRecrefForm
-from core.helper import renderer_utils, view_utils, query_utils, download_csv_utils, recref_utils, form_utils, \
-    model_utils
-from core.helper.common_recref_adapter import RecrefFormAdapter, TargetCommentRecrefAdapter, \
-    TargetResourceRecrefAdapter, TargetPersonRecrefAdapter
+from core.helper import renderer_utils, view_utils, query_utils, download_csv_utils, recref_utils, form_utils
+from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
-from core.helper.view_utils import CommonInitFormViewTemplate, ImageHandler, BasicSearchView, FullFormHandler, \
-    RecrefFormsetHandler, RoleCategoryHandler
+from core.helper.view_utils import CommonInitFormViewTemplate, BasicSearchView, FullFormHandler, \
+    RecrefFormsetHandler, RoleCategoryHandler, ImageRecrefHandler
 from core.models import Recref
 from location.models import CofkUnionLocation
 from person import person_utils
 from person.forms import PersonForm, GeneralSearchFieldset, PersonOtherRecrefForm
 from person.models import CofkUnionPerson, CofkPersonLocationMap, CofkPersonPersonMap, create_person_id, \
-    CofkPersonCommentMap, CofkPersonResourceMap, CofkPersonRoleMap
-from uploader.models import CofkUnionRoleCategory
+    CofkPersonCommentMap, CofkPersonResourceMap, CofkPersonImageMap
+from person.recref_adapter import PersonCommentRecrefAdapter, PersonResourceRecrefAdapter, PersonRoleRecrefAdapter, \
+    ActivePersonRecrefAdapter, PassivePersonRecrefAdapter, PersonImageRecrefAdapter
 
 log = logging.getLogger(__name__)
 
@@ -215,7 +213,8 @@ class PersonFFH(FullFormHandler):
             rel_type=REL_TYPE_IS_RELATED_TO,
             parent=self.person,
         ))
-        self.img_handler = ImageHandler(request_data, request and request.FILES, self.person.images)
+        self.img_recref_handler = PersonImageRecrefHandler(request_data, request and request.FILES,
+                                                           parent=self.person)
 
         self.role_handler = RoleCategoryHandler(PersonRoleRecrefAdapter(self.person))
 
@@ -244,7 +243,7 @@ def full_form(request, iperson_id):
 
         fhandler.person_form.save()
         fhandler.save_all_recref_formset(fhandler.person, request)
-        fhandler.img_handler.save(request)
+        fhandler.img_recref_handler.save(fhandler.person_form.instance, request)
         form_utils.save_multi_rel_recref_formset(fhandler.person_other_formset, fhandler.person_form.instance, request)
         recref_utils.create_recref_if_field_exist(fhandler.person_form,
                                                   fhandler.person_form.instance,
@@ -271,7 +270,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
-            #('names_and_titles', 'Names and titles / roles',), TODO this is in a view cofk_union_person_view
+            # ('names_and_titles', 'Names and titles / roles',), TODO this is in a view cofk_union_person_view
             ('date_of_birth', 'Born',),
             ('date_of_death', 'Died',),
             ('flourished', 'Flourished',),
@@ -418,22 +417,6 @@ class PersonCommentFormsetHandler(RecrefFormsetHandler):
         return CofkPersonCommentMap.objects.filter(person=parent, comment=target).first()
 
 
-class PersonCommentRecrefAdapter(TargetCommentRecrefAdapter):
-    def __init__(self, parent):
-        self.parent: CofkUnionPerson = parent
-
-    def recref_class(self) -> Type[Recref]:
-        return CofkPersonCommentMap
-
-    def set_parent_target_instance(self, recref, parent, target):
-        recref: CofkPersonCommentMap
-        recref.person = parent
-        recref.comment = target
-
-    def find_recref_records(self, rel_type):
-        return self.find_recref_records_by_related_manger(self.parent.cofkpersoncommentmap_set, rel_type)
-
-
 class PersonResourceFormsetHandler(RecrefFormsetHandler):
     def create_recref_adapter(self, parent) -> RecrefFormAdapter:
         return PersonResourceRecrefAdapter(parent)
@@ -442,79 +425,9 @@ class PersonResourceFormsetHandler(RecrefFormsetHandler):
         return CofkPersonResourceMap.objects.filter(person=parent, resource=target).first()
 
 
-class PersonResourceRecrefAdapter(TargetResourceRecrefAdapter):
-    def __init__(self, parent):
-        self.parent: CofkUnionPerson = parent
+class PersonImageRecrefHandler(ImageRecrefHandler):
+    def create_recref_adapter(self, parent) -> RecrefFormAdapter:
+        return PersonImageRecrefAdapter(parent)
 
-    def recref_class(self) -> Type[Recref]:
-        return CofkPersonResourceMap
-
-    def set_parent_target_instance(self, recref, parent, target):
-        recref: CofkPersonResourceMap
-        recref.person = parent
-        recref.resource = target
-
-    def find_recref_records(self, rel_type):
-        return self.find_recref_records_by_related_manger(self.parent.cofkpersonresourcemap_set, rel_type)
-
-
-class PersonRoleRecrefAdapter(RecrefFormAdapter):
-    def __init__(self, parent):
-        self.parent: CofkUnionPerson = parent
-
-    def find_target_display_name_by_id(self, target_id):
-        target = self.find_target_instance(target_id)
-        return target and target.role_category_desc
-
-    def recref_class(self) -> Type[Recref]:
-        return CofkPersonRoleMap
-
-    def find_target_instance(self, target_id):
-        return model_utils.get_safe(CofkUnionRoleCategory, pk=target_id)
-
-    def set_parent_target_instance(self, recref, parent, target):
-        recref: CofkPersonRoleMap
-        recref.person = parent
-        recref.role = target
-
-    def find_recref_records(self, rel_type):
-        return self.find_recref_records_by_related_manger(self.parent.cofkpersonrolemap_set, rel_type)
-
-    def target_id_name(self):
-        return 'role_id'
-
-
-class PersonPersonRecrefAdapter(TargetPersonRecrefAdapter, ABC):
-    def __init__(self, parent=None):
-        self.parent: CofkUnionPerson = parent
-
-    def recref_class(self) -> Type[Recref]:
-        return CofkPersonPersonMap
-
-
-class ActivePersonRecrefAdapter(PersonPersonRecrefAdapter):
-
-    def set_parent_target_instance(self, recref, parent, target):
-        recref: CofkPersonPersonMap
-        recref.person = parent
-        recref.related = target
-
-    def find_recref_records(self, rel_type):
-        return self.find_recref_records_by_related_manger(self.parent.active_relationships, rel_type)
-
-    def target_id_name(self):
-        return 'related_id'
-
-
-class PassivePersonRecrefAdapter(PersonPersonRecrefAdapter):
-
-    def set_parent_target_instance(self, recref, parent, target):
-        recref: CofkPersonPersonMap
-        recref.person = target
-        recref.related = parent
-
-    def find_recref_records(self, rel_type):
-        return self.find_recref_records_by_related_manger(self.parent.passive_relationships, rel_type)
-
-    def target_id_name(self):
-        return 'person_id'
+    def find_org_recref_fn(self, parent, target) -> Recref | None:
+        return CofkPersonImageMap.objects.filter(person=parent, image=target).first()

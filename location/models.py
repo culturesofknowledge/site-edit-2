@@ -59,7 +59,7 @@ class CofkUnionLocation(models.Model, RecordTracker):
     element_7_eg_empire = models.CharField(max_length=100)
     uuid = models.UUIDField(blank=True, null=True)
 
-    images = models.ManyToManyField('uploader.CofkUnionImage')
+    images = models.ManyToManyField('uploader.CofkUnionImage')  # TOBEREMOVE
 
     @property
     def comments(self):
@@ -103,3 +103,11 @@ class CofkLocationResourceMap(Recref):
 
     class Meta(Recref.Meta):
         db_table = 'cofk_location_resource_map'
+
+
+class CofkLocationImageMap(Recref):
+    location = models.ForeignKey(CofkUnionLocation, on_delete=models.CASCADE)
+    image = models.ForeignKey('uploader.CofkUnionImage', on_delete=models.CASCADE)
+
+    class Meta(Recref.Meta):
+        db_table = 'cofk_location_image_map'

@@ -175,6 +175,14 @@ class CofkPersonResourceMap(Recref):
         db_table = 'cofk_person_resource_map'
 
 
+class CofkPersonImageMap(Recref):
+    person = models.ForeignKey(CofkUnionPerson, on_delete=models.CASCADE)
+    image = models.ForeignKey('uploader.CofkUnionImage', on_delete=models.CASCADE)
+
+    class Meta(Recref.Meta):
+        db_table = 'cofk_person_image_map'
+
+
 class CofkPersonRoleMap(Recref):
     person = models.ForeignKey(CofkUnionPerson, on_delete=models.CASCADE)
     role = models.ForeignKey('uploader.CofkUnionRoleCategory', on_delete=models.CASCADE)

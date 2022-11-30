@@ -8,6 +8,7 @@ from core.helper import recref_utils, model_utils
 from core.models import Recref, CofkUnionComment, CofkUnionResource
 from person import person_utils
 from person.models import CofkUnionPerson
+from uploader.models import CofkUnionImage
 
 log = logging.getLogger(__name__)
 
@@ -89,6 +90,18 @@ class TargetResourceRecrefAdapter(RecrefFormAdapter, ABC):
 
     def target_id_name(self):
         return 'resource_id'
+
+
+class TargetImageRecrefAdapter(RecrefFormAdapter, ABC):
+    def find_target_display_name_by_id(self, target_id):
+        c: CofkUnionImage = self.find_target_instance(target_id)
+        return c and c.image_filename
+
+    def find_target_instance(self, target_id):
+        return model_utils.get_safe(CofkUnionImage, image_id=target_id)
+
+    def target_id_name(self):
+        return 'image_id'
 
 
 class TargetPersonRecrefAdapter(RecrefFormAdapter, ABC):
