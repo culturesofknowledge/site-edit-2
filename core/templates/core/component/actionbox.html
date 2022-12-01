@@ -1,6 +1,10 @@
 <div class="flex-col sticky-bottom">
     <div class="actionbox">
+            {% if action == 'reset' %}
+            <button class="sticky-btn inline_btn cancel" type="reset">Reset</button>
+            {% else %}
             <button class="sticky-btn inline_btn cancel" onclick="location.href='/'; return false;">Cancel</button>
+            {% endif %}
             <button type="submit" class="sticky-btn inline_btn save">
                 {% if submit_title %}
                     {{ submit_title }}

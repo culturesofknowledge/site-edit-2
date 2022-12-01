@@ -545,7 +545,7 @@ def data_migration(user, password, database, host, port):
     # ### Repositories/institutions
     clone_rows_by_model_class(conn, CofkUnionInstitution,
                               col_val_handler_fn_list=[_val_handler_empty_str_null])
-    create_resources_relationship(conn, CofkUnionInstitution)  # KTODO fix resources as recref
+    # create_resources_relationship(conn, CofkUnionInstitution)  # KTODO fix resources as recref
     # clone_rows_by_model_class(conn, CofkCollectInstitution)
     clone_rows_by_model_class(conn, CofkUser,
                               col_val_handler_fn_list=[_val_handler_users],
