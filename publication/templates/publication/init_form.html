@@ -5,7 +5,7 @@
 {% block content %}
 
     <div class="row row--centered">
-        <div class="col col--1of2">
+        <div class="col col--2of3">
             <div>
                 {{ pub_form.errors }}
             </div>
@@ -32,9 +32,7 @@
                 </fieldset>
 
 
-                <div class="flex-col sticky-bottom">
-                    <input type="submit" value="Submit">
-                </div>
+                {% include "core/component/actionbox.html" %}
 
             </form>
 

@@ -22,17 +22,17 @@
         <div class="row">
 
             <!-- Query fieldsets -->
-            <aside id="query-fieldset" class="col col--1of3">
+            <aside id="query-fieldset" class="col col--1of4">
                 <h3 class="sr-only">Search</h3>
                 {% for query_fieldset in query_fieldset_list %}
                     {{ query_fieldset }}
                 {% endfor %}
 
-                {% include "core/component/actionbox.html" with submit_title='Search' %}
+                {% include "core/component/actionbox.html" with submit_title='Search' action='reset' %}
             </aside>
 
 
-            <div id="query-result" class="col col--2of3">
+            <div id="query-result" class="col col--3of4">
                 {% if total_record == 0 %}
                 <h2>No results</h2>
                 {% else %}
