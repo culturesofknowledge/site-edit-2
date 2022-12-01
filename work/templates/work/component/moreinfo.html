@@ -1,0 +1,10 @@
+{% load work_util_tags %}
+
+{% if work|more_info != '' %}
+
+<div class="tippy-container inline-tippy" data-tippy-content="{{ work|more_info }}">
+    <span class="moreinfo" data-feather="book-open" aria-hidden="true"></span>
+
+</div>
+
+{% endif %}

@@ -68,6 +68,31 @@ def exclamation(work: CofkUnionQueryableWork):
 
 
 @register.filter
+def more_info(work: CofkUnionQueryableWork):
+    tooltip = []
+
+    if work.notes_on_authors:
+        tooltip.append(f'Role of author/sender: {work.notes_on_authors}\n')
+
+    if work.creators_searchable.find('alias:') > -1:
+        tooltip.append(f'Further details of author: {work.creators_searchable}')
+
+    if work.addressees_searchable.find('alias:') > -1:
+        tooltip.append(f'Further details of addressee: {work.addressees_searchable}')
+
+    if work.subjects:
+        tooltip.append(f'Subject(s): {work.subjects}\n')
+
+    if work.abstract:
+        tooltip.append(f'{work.abstract}\n')
+
+    if work.general_notes:
+        tooltip.append(f'Notes: {work.general_notes}\n')
+
+    return ', '.join(tooltip)
+
+
+@register.filter
 def render_queryable_resources(values: str):
     resources = re.findall(link_pattern, values)
     html = values
