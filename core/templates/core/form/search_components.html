@@ -1,14 +1,12 @@
 
-<nav class="margin-bottom row">
+<nav class="margin-bottom row col--3of4" id="search-components">
     <div class="col col--1of3">
         {{ form.sort_by.errors }}
         {{ form.sort_by.label_tag }}
         {{ form.sort_by }}
     </div>
     <div class="col col--1of3">
-        {{ form.order.errors }}
-        {{ form.order.label_tag }}
-        {{ form.order }}
+        {% include "core/component/common_form_choices.html" with label_text='&nbsp;' choices_field=form.order %}
     </div>
     <div class="col col--1of3">
         {{ form.num_record.errors }}
