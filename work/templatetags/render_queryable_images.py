@@ -12,6 +12,6 @@ img_pattern = re.compile(r'(xxxCofkImageIDStartxxx)(.*?)(xxxCofkImageIDEndxxx)')
 def render_queryable_images(values: str):
     html = ''
     for img in re.findall(img_pattern, values):
-        html += f'<a href="{img[1]}"><img src="{img[1]}" class="search_result_img"></a>'
+        html += f'<a href="{img[1]}" target="_blank"><img src="{img[1]}" class="search_result_img"></a>'
 
     return mark_safe(html)
