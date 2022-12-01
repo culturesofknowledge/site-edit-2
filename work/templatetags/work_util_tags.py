@@ -1,9 +1,14 @@
+import re
+
 from django import template
+from django.utils.safestring import mark_safe
 
 from work.models import CofkUnionQueryableWork
 
 register = template.Library()
 
+link_pattern = re.compile(r'(xxxCofkLinkStartxxx)(xxxCofkHrefStartxxx)(.*?)(xxxCofkHrefEndxxx)(.*?)(xxxCofkLinkEndxxx)')
+img_pattern = re.compile(r'(xxxCofkImageIDStartxxx)(.*?)(xxxCofkImageIDEndxxx)')
 
 @register.filter
 def exclamation(work: CofkUnionQueryableWork):
@@ -60,3 +65,33 @@ def exclamation(work: CofkUnionQueryableWork):
             tooltip.append(f'(Destination as marked: {work.destination_as_marked})')
 
     return ', '.join(tooltip)
+
+
+@register.filter
+def render_queryable_resources(values: str):
+    resources = re.findall(link_pattern, values)
+    html = values
+
+    if len(resources) > 1:
+        html = '<ul>'
+        for link in resources:
+            html += f'<li><a href="{link[2]}">{link[4]}</a></li>'
+        html += '</ul>'
+    elif len(resources) == 1:
+        html = f'<a href="{resources[0][2]}">{resources[0][4]}</a>'
+
+    return mark_safe(html)
+
+
+@register.filter
+def render_queryable_manif(values: str):
+    return mark_safe(re.sub(link_pattern, r'<a href="\3">\5</a>', values))
+
+
+@register.filter
+def render_queryable_images(values: str):
+    html = ''
+    for img in re.findall(img_pattern, values):
+        html += f'<a href="{img[1]}" target="_blank"><img src="{img[1]}" class="search_result_img"></a>'
+
+    return mark_safe(html)
