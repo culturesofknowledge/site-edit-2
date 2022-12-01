@@ -22,7 +22,7 @@ def build_search_components(sort_by_choices: list[tuple[str, str]]):
 
         order = forms.CharField(label='Order',
                                 widget=forms.RadioSelect(choices=[
-                                    ('asc', 'Ascending '),
+                                    ('asc', 'Ascending'),
                                     ('desc', 'Descending')
                                 ]),
                                 required=False)
