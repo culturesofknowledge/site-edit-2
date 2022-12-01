@@ -40,7 +40,7 @@
             </td>
              <td>
                 {% if r.creators_for_display %}
-                {{ r.creators_for_display }}
+                {{ r.creators_for_display|safe }}
                 {% endif %}
             </td>
              <td>
