@@ -10,3 +10,4 @@ ln -vsfr person/manual_migrations/0*.py person/migrations/
 ln -vsfr uploader/manual_migrations/0*.py uploader/migrations/
 ln -vsfr work/manual_migrations/0*.py work/migrations/
 ln -vsfr manifestation/manual_migrations/0*.py manifestation/migrations/
+ln -vsfr audit/manual_migrations/0*.py audit/migrations/

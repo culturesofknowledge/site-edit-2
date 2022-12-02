@@ -1,0 +1,1 @@
+../manual_migrations/0002_create_audit_trigger.py
