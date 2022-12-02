@@ -117,10 +117,10 @@ class BasicSearchView(ListView):
         return self.request.GET
 
     def get_sort_by(self):
-        if self.request_data.get('order') == 'asc':
-            return self.request_data.get('sort_by', self.sort_by_choices[0][0])
+        if self.request_data.get('order') == 'desc':
+            return  '-' + self.request_data.get('sort_by', self.sort_by_choices[0][0])
 
-        return '-' + self.request_data.get('sort_by', self.sort_by_choices[0][0])
+        return self.request_data.get('sort_by', self.sort_by_choices[0][0])
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
