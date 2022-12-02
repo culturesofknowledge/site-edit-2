@@ -28,21 +28,24 @@ class GeneralSearchFieldset(forms.Form):
 
     institution_name = forms.CharField(required=False, )
     institution_name_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    institution_name_search_fields = 'institution_name,institution_synonyms'
 
-    institution_synonyms = forms.CharField(required=False, )
-    institution_synonyms_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    # institution_synonyms = forms.CharField(required=False, )
+    # institution_synonyms_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     institution_city = forms.CharField(required=False, )
     institution_city_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    institution_city_search_fields = 'institution_city,institution_city_synonyms'
 
-    institution_city_synonyms = forms.CharField(required=False, )
-    institution_city_synonyms_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    # institution_city_synonyms = forms.CharField(required=False, )
+    # institution_city_synonyms_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     institution_country = forms.CharField(required=False, )
     institution_country_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    institution_country_search_fields = 'institution_country,institution_country_synonyms'
 
-    institution_country_synonyms = forms.CharField(required=False, )
-    institution_country_synonyms_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    # institution_country_synonyms = forms.CharField(required=False, )
+    # institution_country_synonyms_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     # TODO Resource is M2M field
     resource = forms.CharField(required=False, help_text='E.g. links to online catalogues.')

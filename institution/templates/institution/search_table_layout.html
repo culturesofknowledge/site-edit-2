@@ -5,7 +5,7 @@
         <!-- KTODO add more fields -->
         <th>ID</th>
         <th>Name</th>
-        <th>Alternative institution names</th>
+        <th>Alternative repository names</th>
         <th>City</th>
         <th>Alternative city names</th>
         <th>Country</th>
@@ -60,7 +60,9 @@
                 {% endif %}
             </td>
             <td>
-                ?
+                {% if r.images %}
+                {{ r.images }}
+                {% endif %}
             </td>
             <td>
                 {{ r.change_timestamp }} by {{ r.change_user }}
