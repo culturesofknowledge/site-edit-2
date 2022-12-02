@@ -51,7 +51,6 @@ class GeneralSearchFieldset(forms.Form):
     template_name = 'location/component/location_search_fieldset.html'
 
     location_name = CharField(required=False,
-                              widget=forms.TextInput(attrs={'placeholder': 'xxxx'}),
                               label='Full name of location')
     location_name_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
