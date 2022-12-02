@@ -18,7 +18,7 @@ from psycopg2.extras import DictCursor
 
 from core.helper import iter_utils
 from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType
-from institution.models import CofkUnionInstitution
+from institution.models import CofkUnionInstitution, CofkInstitutionImageMap, CofkInstitutionResourceMap
 from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap
 from login.models import CofkUser
 from manifestation.models import CofkUnionManifestation
@@ -546,6 +546,11 @@ def data_migration(user, password, database, host, port):
     clone_rows_by_model_class(conn, CofkUnionInstitution,
                               col_val_handler_fn_list=[_val_handler_empty_str_null])
     # create_resources_relationship(conn, CofkUnionInstitution)  # KTODO fix resources as recref
+    clone_recref_simple_by_field_pairs(conn, (
+        (CofkInstitutionImageMap.image, CofkInstitutionImageMap.institution),
+        (CofkInstitutionResourceMap.institution, CofkInstitutionResourceMap.resource)
+    ))
+
     # clone_rows_by_model_class(conn, CofkCollectInstitution)
     clone_rows_by_model_class(conn, CofkUser,
                               col_val_handler_fn_list=[_val_handler_users],
