@@ -131,6 +131,7 @@ class BasicSearchView(ListView):
         default_search_components_dict = {
             'num_record': str(self.paginate_by),
             'sort_by': self.get_sort_by(),
+            'order': self.request_data.get('order') or 'asc'
         }
         is_compact_layout = (self.request_data.get('display-style', core_constant.SEARCH_LAYOUT_TABLE)
                              == core_constant.SEARCH_LAYOUT_GRID)
