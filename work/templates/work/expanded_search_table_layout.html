@@ -45,17 +45,17 @@
             </td>
              <td>
                 {% if r.places_from_for_display %}
-                {{ r.places_from_for_display }}
+                {{ r.places_from_for_display|safe }}
                 {% endif %}
             </td>
              <td>
                 {% if r.addressees_for_display %}
-                {{ r.addressees_for_display }}
+                {{ r.addressees_for_display|safe }}
                 {% endif %}
             </td>
              <td>
                 {% if r.places_to_for_display %}
-                {{ r.places_to_for_display }}
+                {{ r.places_to_for_display|safe }}
                 {% endif %}
             </td>
             <td>
