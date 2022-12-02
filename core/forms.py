@@ -13,7 +13,7 @@ from uploader.models import CofkUnionImage
 from work import work_utils
 
 
-def build_search_components(sort_by_choices: list[tuple[str, str]]):
+def build_search_components(sort_by_choices: list[tuple[str, str]], entity: str):
     class SearchComponents(Form):
         template_name = 'core/form/search_components.html'
         sort_by = forms.CharField(label='Sort by',
@@ -27,7 +27,7 @@ def build_search_components(sort_by_choices: list[tuple[str, str]]):
                                 ]),
                                 required=False)
 
-        num_record = forms.IntegerField(label='Records per page',
+        num_record = forms.IntegerField(label=f'{entity} per page',
                                         widget=forms.Select(choices=[
                                             (10, 10),
                                             (25, 25),

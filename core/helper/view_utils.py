@@ -126,7 +126,7 @@ class BasicSearchView(ListView):
         context = super().get_context_data(**kwargs)
         context['recref_mode'] = self.request_data.get('recref_mode', '0')
 
-        search_components_factory = build_search_components(self.sort_by_choices)
+        search_components_factory = build_search_components(self.sort_by_choices, self.entity.split(',')[1].title())
 
         default_search_components_dict = {
             'num_record': str(self.paginate_by),
