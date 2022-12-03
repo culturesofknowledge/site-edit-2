@@ -1,17 +1,20 @@
 
-<nav class="margin-bottom row col--3of4" id="search-components">
-    <div class="col col--1of3">
+<nav class="margin-bottom row col--5of6" id="search-components">
+    <div class="col col--1of6">
         {{ form.sort_by.errors }}
         {{ form.sort_by.label_tag }}
         {{ form.sort_by }}
     </div>
-    <div class="col col--1of3">
+    <div class="col col--1of6">
         {% include "core/component/common_form_choices.html" with label_text='&nbsp;' choices_field=form.order %}
     </div>
-    <div class="col col--1of3">
+    <div class="col col--1of6">
         {{ form.num_record.errors }}
         {{ form.num_record.label_tag }}
         {{ form.num_record }}
     </div>
+    <div class="col col--3of6" id="hidden_columns">
+    </div>
     {{ form.page }}
+
 </nav>
