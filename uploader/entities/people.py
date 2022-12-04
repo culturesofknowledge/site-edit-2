@@ -1,12 +1,13 @@
 import logging
-from typing import List
+from typing import List, Generator, Tuple
 
-import pandas as pd
 from django.core.exceptions import ValidationError
+from openpyxl.cell import Cell
 
 from person.models import CofkCollectPerson, CofkUnionPerson
 from uploader.entities.entity import CofkEntity
 from uploader.models import CofkCollectUpload
+from work.models import CofkCollectAuthorOfWork, CofkCollectPersonMentionedInWork, CofkCollectAddresseeOfWork
 
 log = logging.getLogger(__name__)
 
@@ -143,21 +144,38 @@ class CofkPeople(CofkEntity):
 
         return work_people
 
-    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame, work_data: pd.DataFrame):
+    def __init__(self, upload: CofkCollectUpload, sheet_data: Generator[Tuple[Cell], None, None],
+                 work_data: Generator[Tuple[Cell], None, None], sheet_name: str):
         """
         sheet_data: all data from the "People" sheet
         word_data: all data from the "Work" sheet, from which a few columns are required
         # TODO editor's notes from people sheet need to be added
         """
-        super().__init__(upload, sheet_data)
+        super().__init__(upload, sheet_data, sheet_name)
         self.work_data = work_data
 
-        self.people = []
-        self.authors = []
-        self.mentioned = []
-        self.addressees = []
+        self.people: List[CofkCollectPerson] = []
+        self.authors: List[CofkCollectAuthorOfWork] = []
+        self.mentioned: List[CofkCollectPersonMentionedInWork] = []
+        self.addressees: List[CofkCollectAddresseeOfWork] = []
 
-        unique_sheet_people = self.process_people_sheet()
+        for index, row in enumerate(self.iter_rows(), start=1):
+            per_dict = {self.get_column_name_by_index(cell.column): cell.value for cell in row}
+            self.check_required(per_dict, index)
+            self.check_data_types(per_dict, index)
+
+            if not self.errors:
+                if 'iperson_id' in per_dict:
+                    per_dict['union_iperson'] = CofkUnionPerson.objects.filter(
+                        iperson_id=per_dict['iperson_id']).first()
+                    del per_dict['iperson_id']
+
+                per_dict['upload'] = upload
+                p = CofkCollectPerson(**per_dict)
+                p.save()
+                self.people.append(p)
+
+        '''unique_sheet_people = self.process_people_sheet()
         unique_work_people = self.process_work_sheet()
 
         if len(unique_work_people) > len(unique_sheet_people):
@@ -173,4 +191,4 @@ class CofkPeople(CofkEntity):
             plural = 'person is' if len(ppl) == 1 else f'following {len(ppl)} people are'
             tense = 'is' if len(ppl) == 1 else 'are'
             self.add_error(ValidationError(f'The {plural} referenced in the People spreadsheet'
-                                           f' but {tense} missing from the Work spreadsheet: {ppl_joined}'))
+                                           f' but {tense} missing from the Work spreadsheet: {ppl_joined}'))'''

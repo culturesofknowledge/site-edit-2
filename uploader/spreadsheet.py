@@ -5,7 +5,7 @@ from openpyxl.cell import Cell
 from openpyxl.reader.excel import load_workbook
 from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
-#import pandas as pd
+# import pandas as pd
 from pandas import ExcelFile
 
 from institution.models import CofkCollectInstitution
@@ -79,12 +79,12 @@ class CofkUploadExcelFile:
         try:
             # read_only mode
             self.wb = load_workbook(filename=filename, data_only=True, read_only=True)
-            #pd.read_excel(filename, sheet_name=None, usecols=lambda c: not c.startswith('Unnamed:'))
+            # pd.read_excel(filename, sheet_name=None, usecols=lambda c: not c.startswith('Unnamed:'))
         except ValueError:
             pass
-            #from OpenpyxlReaderWOFormatting import load_workbook as l2
-            #ExcelFile._engines['openpyxl_wo_formatting'] = OpenpyxlReaderWOFormatting
-            #self.wb = pd.read_excel(filename, sheet_name=None,
+            # from OpenpyxlReaderWOFormatting import load_workbook as l2
+            # ExcelFile._engines['openpyxl_wo_formatting'] = OpenpyxlReaderWOFormatting
+            # self.wb = pd.read_excel(filename, sheet_name=None,
             #                        usecols=lambda c: not c.startswith('Unnamed:'),
             #                        engine='openpyxl_wo_formatting')
 
@@ -102,7 +102,8 @@ class CofkUploadExcelFile:
                 self.missing_columns.append(CofkMissingColumnError(f'Missing columns {ms} from the sheet {sheet}'))
             elif len(self.data[sheet].missing_columns) == 1:
                 self.missing_columns.append(
-                    CofkMissingColumnError(f'Missing column {self.data[sheet].missing_columns.pop()} from the sheet {sheet}'))
+                    CofkMissingColumnError(
+                        f'Missing column {self.data[sheet].missing_columns.pop()} from the sheet {sheet}'))
 
         if self.missing_columns:
             raise CofkMissingColumnError(self.missing_columns)
@@ -119,20 +120,17 @@ class CofkUploadExcelFile:
                                                               sheet_data=self.data['Repositories'].data,
                                                               sheet_name='Repositories')
 
-        #log.debug(self.data['Work'].worksheet)
+        # The next sheet is places/locations,
         self.data['Places'].entities = CofkLocations(upload=self.upload, sheet_data=self.data['Places'].data,
                                                      work_data=self.data['Work'].worksheet,
                                                      sheet_name='Places')
 
-        raise ValueError('stuff')
-        # The next sheet is places/locations,
-        '''self.locations = CofkLocations(upload=self.upload, sheet_data=self.data['places'],
-                                       work_data=self.data['work'])
-
         # The next sheet is people
-        self.people = CofkPeople(upload=self.upload, sheet_data=self.data['people'],
-                                 work_data=self.data['work'])
-
+        self.data['Places'] = CofkPeople(upload=self.upload, sheet_data=self.data['People'].data,
+                                         work_data=self.data['Work'].worksheet, sheet_name='People')
+        log.debug(vars(self))
+        raise ValueError('stuff')
+        '''
         # Second last but not least, the works themselves
         self.works = CofkWork(upload=self.upload, sheet_data=self.data['work'], people=self.people,
                               locations=self.locations)
