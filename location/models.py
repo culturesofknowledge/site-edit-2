@@ -11,7 +11,7 @@ class CofkCollectLocation(models.Model):
     # KTODO why upload_id in database become upload_id_id, should I change field name to upload instead
     # KTODO change null=True for draft version
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE, null=True)
-    location_id = models.IntegerField()
+    location_id = models.AutoField(primary_key=True)
     # KTODO what is usage of UnionLocation
     union_location = models.ForeignKey('CofkUnionLocation', models.DO_NOTHING, blank=True, null=True)
 
@@ -36,7 +36,7 @@ class CofkCollectLocation(models.Model):
         unique_together = (('upload', 'location_id'),)
 
     def __str__(self):
-        return str(self.union_location)
+        return str(self.union_location) if self.union_location is not None else f'{self.location_name} (collect)'
 
 
 class CofkUnionLocation(models.Model, RecordTracker):

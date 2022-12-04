@@ -19,6 +19,7 @@ class CofkEntity:
         self.sheet_data: Generator[Tuple[Cell], None, None] = sheet_data
         self.sheet_name: str = sheet_name
         self.ids: List[int] = []
+        self.ids_to_be_created: List[int] = []
         self.row_data = None
         self.errors = {}
         self.other_errors = {}
@@ -103,6 +104,23 @@ class CofkEntity:
                     msg = f'Column {bool_value} in {self.sheet_name} sheet is not a boolean value of either 0 or 1.'
                     log.error(msg)
                     self.add_error(ValidationError(msg))
+
+        if 'combos' in self.fields:
+            for combo in self.fields['combos']:
+                if isinstance(entity[combo[0]], str) and ';' in entity[combo[0]] or ';' in entity[combo[1]]:
+                    if len(entity[combo[0]].split(';')) < len(entity[combo[1]].split(';')):
+                        msg = f'Column {combo[0]} has fewer ids than there are names in {combo[1]}.'
+                        log.error(msg)
+                        self.add_error(ValidationError(msg))
+                    elif len(entity[combo[1]].split(';')) < len(entity[combo[0]].split(';')):
+                        # TODO this should be a warning
+                        msg = f'Column {combo[1]} has fewer names than there are ids in {combo[0]}.'
+                        log.error(msg)
+                        self.add_error(ValidationError(msg))
+
+        if 'strings' in self.fields:
+            for str_field in self.fields['strings']:
+                log.debug(str_field)
 
     def add_error(self, error: ValidationError, entity=None, row=None):
         if not row:

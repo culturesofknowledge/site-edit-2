@@ -41,6 +41,7 @@ mapping = {'person': DBMapping('person', 'cofk_collect_person', 'CofkCollectPers
 
 # These are the sheets expected to be in every uploaded Excel file
 # Note that the sheet names are case-sensitive !!!!!!
+# combos must have the id column first!!!
 mandatory_sheets = {'Work': {
     'columns': ['iwork_id', 'date_of_work_as_marked', 'original_calendar', 'date_of_work_std_year',
                 'date_of_work_std_month', 'date_of_work_std_day', 'date_of_work2_std_year', 'date_of_work2_std_month',
@@ -67,11 +68,14 @@ mandatory_sheets = {'Work': {
                     'printed_edition_notes', 'ms_translation', 'printed_translation']},
     'People': {'columns': ['primary_name', 'iperson_id', 'editors_notes']},
     'Places': {'columns': ['location_name', 'location_id'],
-               'ints': ['location_id']},
+               'required': ['location_name'],
+               'ids': ['location_id'],
+               'combos': [('location_id', 'location_name')]},
     'Repositories': {
         'columns': ['institution_name', 'institution_id', 'institution_city', 'institution_country'],
         'ids': ['institution_id'],
-        'required': ['institution_name', 'institution_id']}
+        'required': ['institution_name'],
+        'strings': ['institution_name', 'institution_city', 'institution_country']}
 }
 
 multiple_ints = ['author_ids', 'addressee_ids']

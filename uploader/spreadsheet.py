@@ -78,7 +78,7 @@ class CofkUploadExcelFile:
 
         try:
             # read_only mode
-            self.wb = load_workbook(filename=filename, data_only=True)
+            self.wb = load_workbook(filename=filename, data_only=True, read_only=True)
             #pd.read_excel(filename, sheet_name=None, usecols=lambda c: not c.startswith('Unnamed:'))
         except ValueError:
             pass

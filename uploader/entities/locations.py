@@ -8,6 +8,7 @@ from openpyxl.cell import Cell
 from location.models import CofkCollectLocation, CofkUnionLocation
 from uploader.entities.entity import CofkEntity
 from uploader.models import CofkCollectUpload
+from work.models import CofkCollectOriginOfWork, CofkCollectDestinationOfWork
 
 log = logging.getLogger(__name__)
 
@@ -18,11 +19,26 @@ class CofkLocations(CofkEntity):
                  work_data: Generator[Tuple[Cell], None, None], sheet_name: str):
         super().__init__(upload, sheet_data, sheet_name)
         self.work_data = work_data
-        self.locations = []
-        self.origins = []
-        self.destinations = []
+        self.locations: List[CofkCollectLocation] = []
+        self.origins: List[CofkCollectOriginOfWork] = []
+        self.destinations: List[CofkCollectDestinationOfWork] = []
 
-        log.debug(self.get_column_by_name('location_id'))
+        for index, row in enumerate(self.iter_rows(), start=1):
+            loc_dict = {self.get_column_name_by_index(cell.column): cell.value for cell in row}
+            self.check_required(loc_dict, index)
+            self.check_data_types(loc_dict, index)
+
+            if not self.errors:
+                if 'location_id' in loc_dict:
+                    loc_dict['union_location'] = CofkUnionLocation.objects.filter(location_id=loc_dict['location_id']).first()
+                    del loc_dict['location_id']
+
+                loc_dict['upload'] = upload
+                self.locations.append(CofkCollectLocation(**loc_dict))
+
+        # When we've iterated over all rows we can check whether all locations mentioned in work sheet
+        # occur in places sheet
+        # This could be done at the end? During the one work iteration?
 
         # unique_sheet_locations = set(self.process_places_sheet())
         '''unique_work_locations = set(self.process_work_sheet())

@@ -7,8 +7,7 @@ from core.models import Recref
 
 class CofkCollectInstitution(models.Model):
     upload = models.ForeignKey("uploader.CofkCollectUpload", on_delete=models.CASCADE)
-    institution_id = models.IntegerField()
-    # TODO under what circumstances is this populated? it is clearly not populated when spreadsheet is uploaded
+    institution_id = models.AutoField(primary_key=True)
     union_institution = models.ForeignKey('CofkUnionInstitution', models.DO_NOTHING, blank=True, null=True)
     institution_name = models.TextField()
     institution_city = models.TextField()
@@ -24,7 +23,7 @@ class CofkCollectInstitution(models.Model):
         unique_together = (('upload', 'institution_id'),)
 
     def __str__(self):
-        return f'{self.institution_name} (#{self.institution_id})'
+        return str(self.union_institution) if self.union_institution is not None else f'{self.institution_name} (collect)'
 
 
 class CofkUnionInstitution(models.Model, RecordTracker):

@@ -4,7 +4,7 @@ from typing import Generator, Tuple, List
 from django.core.exceptions import ValidationError
 from openpyxl.cell import Cell
 
-from institution.models import CofkCollectInstitution
+from institution.models import CofkCollectInstitution, CofkUnionInstitution
 from uploader.entities.entity import CofkEntity
 from uploader.models import CofkCollectUpload
 
@@ -21,23 +21,22 @@ class CofkRepositories(CofkEntity):
         """
         super().__init__(upload, sheet_data, sheet_name)
         self.institutions: List[CofkCollectInstitution] = []
-        self.institution_ids: List[int] = []
 
         for index, row in enumerate(self.iter_rows(), start=1):
-            repo = {self.get_column_name_by_index(cell.column): cell.value for cell in row}
-            self.check_required(repo, index)
-            self.check_data_types(repo, index)
+            inst_dict = {self.get_column_name_by_index(cell.column): cell.value for cell in row}
+            self.check_required(inst_dict, index)
+            self.check_data_types(inst_dict, index)
+            log.debug(inst_dict)
 
             # Collect institutions while there's no errors,
             # no reason to do so if there's errors
             if not self.errors:
-                inst = CofkCollectInstitution(**repo)
+                if 'institution_id' in inst_dict:
+                    inst_dict['union_institution'] = CofkUnionInstitution.objects.filter(
+                        institution_id=inst_dict['institution_id']).first()
+                    del inst_dict['institution_id']
 
-                if inst.institution_id not in self.institution_ids:
-                    inst.upload = upload
-                    self.institutions.append(inst)
-                    self.institution_ids.append(inst.institution_id)
-                else:
-                    msg = f'Column institution_id in {self.sheet_name} is a duplicate id.'
-                    log.error(msg)
-                    self.add_error(ValidationError(msg), index)
+                inst_dict['upload'] = upload
+                self.institutions.append(CofkCollectInstitution(**inst_dict))
+                # self.ids_to_be_created.append(inst.institution_id)
+
