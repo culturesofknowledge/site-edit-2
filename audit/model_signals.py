@@ -137,7 +137,7 @@ def get_left_right_adapters(instance):
     log.warning(f'undefined left right mapping for [{instance}]')
     left_right_instances = random_choice_left_right(instance)
 
-    adapters = [AuditRecrefAdapter(i) for i in left_right_instances]
+    adapters = [to_audit_adapter(i) for i in left_right_instances]
     return adapters
 
 
