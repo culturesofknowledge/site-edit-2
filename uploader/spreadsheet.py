@@ -136,8 +136,6 @@ class CofkUploadExcelFile:
                                               locations=self.data['Places'].entities.locations,
                                               sheet_name='Work')
 
-        # self.upload.total_works = len(self.works.ids)
-
         # The last sheet is manifestations
         self.data['Manifestation'].entities = CofkManifestations(upload=self.upload,
                                                                  sheet_data=self.data['Manifestation'].data,
