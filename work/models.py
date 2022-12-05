@@ -605,7 +605,7 @@ class CofkCollectSubjectOfWork(models.Model):
 
 class CofkCollectWorkResource(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
-    resource_id = models.IntegerField()
+    resource_id = models.AutoField(primary_key=True)
     iwork = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
     resource_name = models.TextField()
     resource_details = models.TextField()

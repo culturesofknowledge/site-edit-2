@@ -26,7 +26,7 @@ class CofkWork(CofkEntity):
         self.iwork_id = None
         self.non_work_data = {}
         self.ids = []
-        self.works = []
+        self.works:List[CofkCollectWork] = []
         self.people: List[CofkCollectPerson] = people
         self.authors: List[CofkCollectAuthorOfWork] = []
         self.mentioned: List[CofkCollectPersonMentionedInWork] = []
@@ -34,6 +34,7 @@ class CofkWork(CofkEntity):
         self.locations: List[CofkCollectLocation] = locations
         self.origins: List[CofkCollectOriginOfWork] = []
         self.destinations: List[CofkCollectDestinationOfWork] = []
+        self.resources: List[CofkCollectWorkResource] = []
 
         for index, row in enumerate(self.iter_rows(), start=1):
             work_dict = {self.get_column_name_by_index(cell.column): cell.value for cell in row}
@@ -46,6 +47,7 @@ class CofkWork(CofkEntity):
             w = CofkCollectWork(**{k: work_dict[k] for k in work_dict if k in CofkCollectWork.__dict__.keys() and
                                    k not in ['origin_id', 'destination_id']})
             w.save()
+            self.works.append(w)
 
             self.process_people(w, self.authors, CofkCollectAuthorOfWork, work_dict, 'author_ids', 'author_names')
             self.process_people(w, self.mentioned, CofkCollectPersonMentionedInWork, work_dict, 'emlo_mention_id',
@@ -58,8 +60,19 @@ class CofkWork(CofkEntity):
             self.process_locations(w, self.destinations, CofkCollectDestinationOfWork, work_dict, 'destination_id',
                                    'destination_name')
 
+            resource_dict = {k: work_dict[k] for k in work_dict if
+                             k in ['resource_name', 'resource_url', 'resource_details']}
+            if resource_dict:
+                resource_dict['upload'] = upload
+                resource_dict['iwork'] = w
+                self.resources.append(CofkCollectWorkResource(**resource_dict))
+
         if self.authors:
             CofkCollectAuthorOfWork.objects.bulk_create(self.authors, batch_size=500)
+
+        if self.resources:
+            CofkCollectWorkResource.objects.bulk_create(self.resources, batch_size=500)
+            log.debug(f'Created {len(self.resources)} work resources')
 
         # Process each row in turn, using a dict comprehension to filter out empty values
         '''for i in range(1, len(self.sheet_data.index)):
@@ -81,26 +94,6 @@ class CofkWork(CofkEntity):
 
         if location:
             return location[0]
-
-    def clean_lists(self, work_dict: dict, ids, names):
-        if isinstance(work_dict[ids], str):
-            id_list = work_dict[ids].split(';')
-        else:
-            id_list = [work_dict[ids]]
-
-        name_list = work_dict[names].split(';')
-
-        if len(id_list) < len(name_list):
-            self.add_error(ValidationError(f'Fewer ids in {ids} than names in {names}.'))
-        elif len(id_list) > len(name_list):
-            self.add_error(ValidationError(f'Fewer names in {names} than ids in {ids}'))
-
-        if '' in id_list:
-            self.add_error(ValidationError(f'Empty string in ids in {ids}'))
-        if '' in name_list:
-            self.add_error(ValidationError(f'Empty string in names in {names}'))
-
-        return id_list, name_list
 
     def process_people(self, work: CofkCollectWork, people_list: List[Any], people_model: Type[models.Model],
                        work_dict: dict, ids, names):

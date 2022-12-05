@@ -160,3 +160,23 @@ class CofkEntity:
 
         return {'errors': errors,
                 'total': total_errors}
+
+    def clean_lists(self, entity_dict: dict, ids, names) -> Tuple[List[int], List[int]]:
+        if isinstance(entity_dict[ids], str):
+            id_list = entity_dict[ids].split(';')
+        else:
+            id_list = [entity_dict[ids]]
+
+        name_list = entity_dict[names].split(';')
+
+        if len(id_list) < len(name_list):
+            self.add_error(ValidationError(f'Fewer ids in {ids} than names in {names}.'))
+        elif len(id_list) > len(name_list):
+            self.add_error(ValidationError(f'Fewer names in {names} than ids in {ids}'))
+
+        if '' in id_list:
+            self.add_error(ValidationError(f'Empty string in ids in {ids}'))
+        if '' in name_list:
+            self.add_error(ValidationError(f'Empty string in names in {names}'))
+
+        return id_list, name_list

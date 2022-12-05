@@ -135,31 +135,33 @@ class CofkUploadExcelFile:
                                               people=self.data['People'].entities.people,
                                               locations=self.data['Places'].entities.locations,
                                               sheet_name='Work')
-        log.debug(vars(self))
-        raise ValueError('stuff')
-        self.upload.total_works = len(self.works.ids)
-        '''
-        # The last sheet is manifestations
-        if self.works.works:
-            self.manifestations = CofkManifestations(upload=self.upload, sheet_data=self.data['manifestation'],
-                                                     repositories=self.repositories, works=self.works)
 
-        if self.people.other_errors:
+        # self.upload.total_works = len(self.works.ids)
+
+        # The last sheet is manifestations
+        self.data['Manifestation'].entities = CofkManifestations(upload=self.upload,
+                                                                 sheet_data=self.data['Manifestation'].data,
+                                                                 repositories=self.data[
+                                                                     'Repositories'].entities.institutions,
+                                                                 works=self.data['Work'].entities.works,
+                                                                 sheet_name='Manifestation')
+
+        '''if self.people.other_errors:
             for row_index in self.people.other_errors:
                 for error in self.people.other_errors[row_index]:
                     if error['entity'] == 'work':
                         self.works.add_error(error['error'], None, row_index)'''
 
-        if self.works.errors:
-            self.errors['work'] = self.works.format_errors_for_template()
+        if self.data['Work'].entities.errors:
+            self.errors['work'] = self.data['Work'].entities.format_errors_for_template()
             self.total_errors += self.errors['work']['total']
 
         '''if self.people.errors:
             self.errors['people'] = self.people.format_errors_for_template()
             self.total_errors += self.errors['people']['total']'''
 
-        if self.repositories.errors:
-            self.errors['repositories'] = self.repositories.format_errors_for_template()
+        if self.data['Repositories'].entities.errors:
+            self.errors['repositories'] = self.data['Repositories'].entities.format_errors_for_template()
             self.total_errors += self.errors['repositories']['total']
 
         '''if self.locations.errors:

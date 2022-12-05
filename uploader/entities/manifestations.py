@@ -1,8 +1,9 @@
 import logging
+from typing import Generator, Tuple
 
-import pandas as pd
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from openpyxl.cell import Cell
 
 from manifestation.models import CofkCollectManifestation
 from uploader.entities.entity import CofkEntity
@@ -15,9 +16,9 @@ log = logging.getLogger(__name__)
 
 class CofkManifestations(CofkEntity):
 
-    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame, repositories: CofkRepositories,
-                 works: CofkWork):
-        super().__init__(upload, sheet_data)
+    def __init__(self, upload: CofkCollectUpload, sheet_data: Generator[Tuple[Cell], None, None],
+                 repositories: CofkRepositories, works: CofkWork, sheet_name: str):
+        super().__init__(upload, sheet_data, sheet_name)
 
         self.repositories = repositories
         self.works = works
@@ -26,17 +27,20 @@ class CofkManifestations(CofkEntity):
         self.ids = []
         self.manifestations = []
 
-        self.check_data_types('Manifestation')
+        for index, row in enumerate(self.iter_rows(), start=1):
+            man_dict = {self.get_column_name_by_index(cell.column): cell.value for cell in row}
+            self.check_data_types(man_dict, index)
+            log.debug(man_dict)
 
         # Process each row in turn, using a dict comprehension to filter out empty values
-        for i in range(1, len(self.sheet_data.index)):
+        '''for i in range(1, len(self.sheet_data.index)):
             self.process_manifestation({k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None})
 
         try:
             CofkCollectManifestation.objects.bulk_create(self.manifestations)
         except IntegrityError as ie:
             # Will error if location_id != int
-            self.add_error(ValidationError(ie))
+            self.add_error(ValidationError(ie))'''
 
     def preprocess_data(self):
         if 'printed_edition_notes' in self.row_data:
