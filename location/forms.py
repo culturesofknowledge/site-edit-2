@@ -50,9 +50,7 @@ class GeneralSearchFieldset(forms.Form):
     title = 'General'
     template_name = 'location/component/location_search_fieldset.html'
 
-    location_name = CharField(required=False,
-                              widget=forms.TextInput(attrs={'placeholder': 'xxxx'}),
-                              label='Full name of location')
+    location_name = CharField(required=False, label='Full name of location')
     location_name_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     location_synonyms = forms.CharField(required=False,
@@ -62,7 +60,7 @@ class GeneralSearchFieldset(forms.Form):
     location_id = IntegerField(required=False, label='Location id')
     location_id_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
-    editors_notes = CharField(required=False)
+    editors_notes = CharField(required=False, label='Editors\' notes')
     editors_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     latitude = IntegerField(required=False, label='Latitude')

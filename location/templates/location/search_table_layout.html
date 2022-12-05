@@ -1,10 +1,10 @@
-<table>
+<table id="results_table">
     <thead>
     <tr></tr>
     <tr>
-        <th>Name(s)</th>
+        <th>Name</th>
         <th>ID</th>
-        <th>Editors notes</th>
+        <th>Editors' notes</th>
         <th>Sent</th>
         <th>Rec'd</th>
         <th>Sent or Rec'd</th>
@@ -37,19 +37,19 @@
                     {{ r.location_id }}
                 </a>
             </td>
-            <td>
+            <td style="min-width: 150px; word-break: break-all;">
                 {% if r.editors_notes %}
-
                     {{ r.editors_notes }}
-
                 {% endif %}
             </td>
             <td></td>
             <td></td>
             <td></td>
-            <td></td>
             <td>
-                <!-- {% include "core/component/search_table_layout/res_result.html" with resources=r.resources %} -->
+                {% include "core/component/search_table_layout/comment_result.html" with c_maps=r.comments %}
+            </td>
+            <td>
+                {% include "core/component/search_table_layout/res_result.html" with r_maps=r.resources %}
             </td>
             <td> {{ r.latitude }} </td>
             <td> {{ r.longitude }} </td>
@@ -63,9 +63,6 @@
             <td></td>
             <td>
                 {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r %}
-
-                {% include "core/component/search_table_layout/comment_result.html" with comments=r.comments %}
-
             </td>
         </tr>
     {% endfor %}

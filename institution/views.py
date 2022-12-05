@@ -22,13 +22,13 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
 
     @property
     def entity(self) -> str:
-        return 'institution,institutions'
+        return 'repository,repositories'
 
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
-            ('institution_name', 'Institution name',),
-            ('institution_synonyms', 'Alternative institution names',),
+            ('institution_name', 'Repository name',),
+            ('institution_synonyms', 'Alternative repository names',),
             ('institution_city', 'City name',),
             ('institution_city_synonyms', 'Alternative city names',),
             ('institution_country', 'Country name',),
@@ -62,8 +62,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
         queries.extend(
             query_utils.create_queries_by_lookup_field(self.request_data, [
-                'institution_name', 'institution_synonyms', 'editors_notes', 'institution_city',
-                'institution_city_synonyms', 'institution_country', 'institution_country_synonyms',
+                'institution_name', 'editors_notes', 'institution_city', 'institution_country',
                 'resource', 'change_user', 'institution_id'
             ])
         )
@@ -85,9 +84,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
 
     @property
     def query_fieldset_list(self) -> Iterable:
-        default_values = {
-            'foaf_name_lookup': 'starts_with',
-        }
+        default_values = {}
         request_data = default_values | self.request_data.dict()
 
         return [GeneralSearchFieldset(request_data)]

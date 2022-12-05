@@ -49,6 +49,9 @@ class CofkUnionInstitution(models.Model, RecordTracker):
     def resources(self):
         return self.cofkinstitutionresourcemap_set.all()
 
+    @property
+    def images(self):
+        return self.cofkinstitutionimagemap_set.all()
 
     class Meta:
         db_table = 'cofk_union_institution'

@@ -34,5 +34,5 @@ class GeneralSearchFieldset(forms.Form):
     change_timestamp_from = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
     change_timestamp_to = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
 
-    publication_id = IntegerField(required=False, label='Location id')
+    publication_id = IntegerField(required=False, label='Publication id')
     publication_id_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)

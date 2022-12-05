@@ -1,11 +1,11 @@
-{% load cl_filters render_queryable_resources render_queryable_images render_queryable_manif %}
+{% load cl_filters work_util_tags %}
 
 <script>
     let tippies = [];
 
 </script>
 
-<table>
+<table id="results_table">
     <thead>
     <tr></tr>
     <tr>
@@ -40,22 +40,22 @@
             </td>
              <td>
                 {% if r.creators_for_display %}
-                {{ r.creators_for_display }}
+                {{ r.creators_for_display|safe }}
                 {% endif %}
             </td>
              <td>
                 {% if r.places_from_for_display %}
-                {{ r.places_from_for_display }}
+                {{ r.places_from_for_display|safe }}
                 {% endif %}
             </td>
              <td>
                 {% if r.addressees_for_display %}
-                {{ r.addressees_for_display }}
+                {{ r.addressees_for_display|safe }}
                 {% endif %}
             </td>
              <td>
                 {% if r.places_to_for_display %}
-                {{ r.places_to_for_display }}
+                {{ r.places_to_for_display|safe }}
                 {% endif %}
             </td>
             <td>

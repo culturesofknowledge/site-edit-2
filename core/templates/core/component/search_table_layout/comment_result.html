@@ -1,10 +1,9 @@
-{% if comments.count %}
-    <div>
-        <label>Researchers' notes</label>
-        {% for comment in comments.iterator %}
-            <div>
-                {{ comment.comment }}
-            </div>
+{% if c_maps.count %}
+    <ul>
+        {% for c_map in c_maps.iterator %}
+            <li>
+                {{ c_map.comment.comment }}
+            </li>
         {% endfor %}
-    </div>
+    </ul>
 {% endif %}

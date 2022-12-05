@@ -1,11 +1,11 @@
-<table>
+<table id="results_table">
     <thead>
     <tr></tr>
     <tr>
         <!-- KTODO add more fields -->
         <th>ID</th>
         <th>Name</th>
-        <th>Alternative institution names</th>
+        <th>Alternative repository names</th>
         <th>City</th>
         <th>Alternative city names</th>
         <th>Country</th>
@@ -52,7 +52,7 @@
                 {% endif %}
             </td>
             <td>
-                {% include "core/component/search_table_layout/res_result.html" with resources=r.resources %}
+                {% include "core/component/search_table_layout/res_result.html" with r_maps=r.resources %}
             </td>
             <td>
                 {% if r.editors_notes %}
@@ -60,7 +60,9 @@
                 {% endif %}
             </td>
             <td>
-                ?
+                {% if r.images %}
+                {{ r.images }}
+                {% endif %}
             </td>
             <td>
                 {{ r.change_timestamp }} by {{ r.change_user }}

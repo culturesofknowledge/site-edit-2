@@ -117,20 +117,21 @@ class BasicSearchView(ListView):
         return self.request.GET
 
     def get_sort_by(self):
-        if self.request_data.get('order') == 'asc':
-            return self.request_data.get('sort_by', self.sort_by_choices[0][0])
+        if self.request_data.get('order') == 'desc':
+            return  '-' + self.request_data.get('sort_by', self.sort_by_choices[0][0])
 
-        return '-' + self.request_data.get('sort_by', self.sort_by_choices[0][0])
+        return self.request_data.get('sort_by', self.sort_by_choices[0][0])
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['recref_mode'] = self.request_data.get('recref_mode', '0')
 
-        search_components_factory = build_search_components(self.sort_by_choices)
+        search_components_factory = build_search_components(self.sort_by_choices, self.entity.split(',')[1].title())
 
         default_search_components_dict = {
             'num_record': str(self.paginate_by),
             'sort_by': self.get_sort_by(),
+            'order': self.request_data.get('order') or 'asc'
         }
         is_compact_layout = (self.request_data.get('display-style', core_constant.SEARCH_LAYOUT_TABLE)
                              == core_constant.SEARCH_LAYOUT_GRID)
