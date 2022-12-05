@@ -22,9 +22,10 @@ def get_action_name(action):
 
 def create_audit_trigger_sql(table_name, action):
     action_name = get_action_name(action)
+    when = 'before' if 'delete' else 'after'
     return f"""
     create trigger {table_name}_trg_audit_{action_name}
-    after {action}
+    {when} {action}
     on {table_name}
     for each row
     execute procedure dbf_cofk_union_audit_any();
@@ -41,5 +42,3 @@ def create_audit_trigger_list(table_name) -> Iterable[Operation]:
         yield migrations.RunSQL(
             sql, f'drop trigger {trigger_name} on {table_name}'
         )
-
-
