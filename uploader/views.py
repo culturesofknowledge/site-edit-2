@@ -7,6 +7,7 @@ from zipfile import BadZipFile
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError, FieldDoesNotExist
 from django.core.files.storage import default_storage
+from django.core.paginator import Paginator
 from django.db.models import QuerySet
 from django.shortcuts import render, redirect
 from django.utils import timezone
@@ -105,10 +106,10 @@ def handle_upload(request, context):
             context['report']['total_errors'] = 1
             context['report']['errors'] = {'file': {'total': 1, 'error': ['Could not read the Excel file.']}}
             log.error(e)
-        except ValueError as ve:
-            context['report']['total_errors'] = 1
-            context['report']['errors'] = {'file': {'total': 1, 'error': [ve]}}
-            log.error(ve)
+        #except ValueError as ve:
+        #    context['report']['total_errors'] = 1
+        #    context['report']['errors'] = {'file': {'total': 1, 'error': [ve]}}
+        #    log.error(ve)
         # except Exception as e:
         #    context['report']['total_errors'] = 1
         #    context['error'] = 'Indeterminate error.'
@@ -296,8 +297,12 @@ def upload_review(request, upload_id, **kwargs):
     template_url = 'uploader/review.html'
     upload = CofkCollectUpload.objects.filter(upload_id=upload_id).first()
 
+    works_paginator = Paginator(CofkCollectWork.objects.filter(upload=upload), 25)  # Show 25 contacts per page.
+    page_number = request.GET.get('page', 1)
+    works_page = works_paginator.get_page(page_number)
+
     context = {'upload': upload,
-               'works': CofkCollectWork.objects.filter(upload=upload),
+               'works_page': works_page,
                'authors': CofkCollectAuthorOfWork.objects.filter(upload=upload),
                'addressees': CofkCollectAddresseeOfWork.objects.filter(upload=upload),
                'mentioned': CofkCollectPersonMentionedInWork.objects.filter(upload=upload),

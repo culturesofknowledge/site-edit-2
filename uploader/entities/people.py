@@ -1,13 +1,11 @@
 import logging
 from typing import List, Generator, Tuple
 
-from django.core.exceptions import ValidationError
 from openpyxl.cell import Cell
 
 from person.models import CofkCollectPerson, CofkUnionPerson
 from uploader.entities.entity import CofkEntity
 from uploader.models import CofkCollectUpload
-from work.models import CofkCollectAuthorOfWork, CofkCollectPersonMentionedInWork, CofkCollectAddresseeOfWork
 
 log = logging.getLogger(__name__)
 
@@ -34,9 +32,7 @@ class CofkPeople(CofkEntity):
         self.work_data = work_data
 
         self.people: List[CofkCollectPerson] = []
-        # self.authors: List[CofkCollectAuthorOfWork] = []
-        # self.mentioned: List[CofkCollectPersonMentionedInWork] = []
-        # self.addressees: List[CofkCollectAddresseeOfWork] = []
+        self.ids: List[int] = []
 
         for index, row in enumerate(self.iter_rows(), start=1):
             per_dict = {self.get_column_name_by_index(cell.column): cell.value for cell in row}
@@ -44,31 +40,18 @@ class CofkPeople(CofkEntity):
             self.check_data_types(per_dict, index)
 
             if not self.errors:
-                if 'iperson_id' in per_dict:
-                    per_dict['union_iperson'] = CofkUnionPerson.objects.filter(
-                        iperson_id=per_dict['iperson_id']).first()
-                    del per_dict['iperson_id']
-
-                per_dict['upload'] = upload
-                self.people.append(CofkCollectPerson(**per_dict))
+                ids, names = self.clean_lists(per_dict, 'iperson_id', 'primary_name')
+                for _id, name in zip(ids, names):
+                    if _id not in self.ids:
+                        person = {'iperson_id': _id,
+                                  'primary_name': name,
+                                  'union_iperson': CofkUnionPerson.objects.filter(iperson_id=_id).first(),
+                                  'upload': upload,
+                                  'editors_notes': per_dict['editors_notes'] if 'editors_notes' in per_dict else None}
+                        self.people.append(CofkCollectPerson(**person))
+                        self.ids.append(_id)
+                    else:
+                        log.warning(f'{_id} duplicated in People sheet.')
 
         if self.people:
-            CofkCollectPerson.objects.bulk_create(self.people, batch_size=500)
-
-        '''unique_sheet_people = self.process_people_sheet()
-        unique_work_people = self.process_work_sheet()
-
-        if len(unique_work_people) > len(unique_sheet_people):
-            ppl = [f'{unique_work_people[f]} (#{f})' for f in unique_work_people if f not in unique_sheet_people]
-            ppl_joined = ', '.join(ppl)
-            plural = 'person is' if len(ppl) == 1 else f'following {len(ppl)} people are'
-            tense = 'is' if len(ppl) == 1 else 'are'
-            self.add_error(ValidationError(f'The {plural} referenced in the Work spreadsheet'
-                                           f' but {tense} missing from the People spreadsheet: {ppl_joined}'))
-        elif len(unique_work_people) < len(unique_sheet_people):
-            ppl = [f'{unique_sheet_people[f]} (#{f})' for f in unique_sheet_people if f not in unique_work_people]
-            ppl_joined = ', '.join(ppl)
-            plural = 'person is' if len(ppl) == 1 else f'following {len(ppl)} people are'
-            tense = 'is' if len(ppl) == 1 else 'are'
-            self.add_error(ValidationError(f'The {plural} referenced in the People spreadsheet'
-                                           f' but {tense} missing from the Work spreadsheet: {ppl_joined}'))'''
+            self.bulk_create(self.people)

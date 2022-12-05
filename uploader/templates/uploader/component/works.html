@@ -4,14 +4,14 @@
 <div id="works">
     <h1>Works</h1>
 
-    <p>Details of {{ works| length }} new work{{ works|pluralize:" was,s were" }} uploaded in this contribution.</p>
+    <p>Details of {{ works_page.paginator.count }} new work{{ works_page.paginator.count|pluralize:" was,s were" }} uploaded in this contribution.</p>
     <!--You can export details of the work{{ works|pluralize:",s"}} in this contribution to a spreadsheet <button>Export</button>-->
 
 </div>
 
 <hr/>
 
-{% for work in works %}
+{% for work in works_page %}
     <h3>Work {{ forloop.counter }} of {{ works | length }}</h3>
 
     <div style="margin: 1em;">
@@ -261,6 +261,25 @@
             </td>
         </tr>
     </table>
+
+    <div class="pagination">
+    <span class="step-links">
+        {% if works_paginator.has_previous %}
+            <a href="?page=1">&laquo; first</a>
+            <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ works_paginator.number }} of {{ works_paginator.paginator.num_pages }}.
+        </span>
+
+        {% if works_paginator.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+    </span>
+</div>
+
     <hr/>
 
 {% endfor %}

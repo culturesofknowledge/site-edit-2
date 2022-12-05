@@ -40,3 +40,6 @@ class CofkRepositories(CofkEntity):
                 self.institutions.append(CofkCollectInstitution(**inst_dict))
                 # self.ids_to_be_created.append(inst.institution_id)
 
+        if self.institutions:
+            self.bulk_create(self.institutions)
+

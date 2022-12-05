@@ -1,9 +1,11 @@
 import logging
-from typing import Generator, Tuple, List, Any
+from typing import Generator, Tuple, List, Any, Type
 
 from django.core.exceptions import ValidationError
+from django.db import models
 from openpyxl.cell import Cell
 from openpyxl.cell.read_only import EmptyCell
+
 
 from uploader.constants import mandatory_sheets
 from uploader.models import CofkCollectUpload
@@ -179,4 +181,10 @@ class CofkEntity:
         if '' in name_list:
             self.add_error(ValidationError(f'Empty string in names in {names}'))
 
+        log.debug(id_list)
+        log.debug(name_list)
+
         return id_list, name_list
+
+    def bulk_create(self, objects: List[Type[models.Model]]):
+        type(objects[0]).objects.bulk_create(objects, batch_size=500)
