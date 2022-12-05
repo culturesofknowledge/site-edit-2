@@ -57,6 +57,9 @@ def decode_person_death(person: CofkUnionPerson):
 
 class PersonAuditAdapter(AuditRecrefAdapter):
 
+    def key_value_integer(self):
+        return self.instance.iperson_id
+
     def key_decode(self, is_expand_details=False):
         self.instance: CofkUnionPerson
         person = self.instance
