@@ -155,9 +155,9 @@ class CofkPeople(CofkEntity):
         self.work_data = work_data
 
         self.people: List[CofkCollectPerson] = []
-        self.authors: List[CofkCollectAuthorOfWork] = []
-        self.mentioned: List[CofkCollectPersonMentionedInWork] = []
-        self.addressees: List[CofkCollectAddresseeOfWork] = []
+        # self.authors: List[CofkCollectAuthorOfWork] = []
+        # self.mentioned: List[CofkCollectPersonMentionedInWork] = []
+        # self.addressees: List[CofkCollectAddresseeOfWork] = []
 
         for index, row in enumerate(self.iter_rows(), start=1):
             per_dict = {self.get_column_name_by_index(cell.column): cell.value for cell in row}
@@ -171,9 +171,10 @@ class CofkPeople(CofkEntity):
                     del per_dict['iperson_id']
 
                 per_dict['upload'] = upload
-                p = CofkCollectPerson(**per_dict)
-                p.save()
-                self.people.append(p)
+                self.people.append(CofkCollectPerson(**per_dict))
+
+        if self.people:
+            CofkCollectPerson.objects.bulk_create(self.people, batch_size=500)
 
         '''unique_sheet_people = self.process_people_sheet()
         unique_work_people = self.process_work_sheet()

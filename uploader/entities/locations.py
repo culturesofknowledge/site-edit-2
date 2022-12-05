@@ -20,8 +20,8 @@ class CofkLocations(CofkEntity):
         super().__init__(upload, sheet_data, sheet_name)
         self.work_data = work_data
         self.locations: List[CofkCollectLocation] = []
-        self.origins: List[CofkCollectOriginOfWork] = []
-        self.destinations: List[CofkCollectDestinationOfWork] = []
+        # self.origins: List[CofkCollectOriginOfWork] = []
+        # self.destinations: List[CofkCollectDestinationOfWork] = []
 
         for index, row in enumerate(self.iter_rows(), start=1):
             loc_dict = {self.get_column_name_by_index(cell.column): cell.value for cell in row}
@@ -30,11 +30,16 @@ class CofkLocations(CofkEntity):
 
             if not self.errors:
                 if 'location_id' in loc_dict:
-                    loc_dict['union_location'] = CofkUnionLocation.objects.filter(location_id=loc_dict['location_id']).first()
+                    loc_dict['union_location'] = CofkUnionLocation.objects\
+                        .filter(location_id=loc_dict['location_id']).first()
                     del loc_dict['location_id']
 
                 loc_dict['upload'] = upload
                 self.locations.append(CofkCollectLocation(**loc_dict))
+
+        if self.locations:
+            CofkCollectLocation.objects.bulk_create(self.locations, batch_size=500)
+            log.debug(f'{len(self.locations)} locations created')
 
         # When we've iterated over all rows we can check whether all locations mentioned in work sheet
         # occur in places sheet

@@ -10,6 +10,7 @@ from pandas import ExcelFile
 
 from institution.models import CofkCollectInstitution
 from location.models import CofkCollectLocation
+from person.models import CofkCollectPerson
 from uploader.OpenpyxlReaderWOFormatting import OpenpyxlReaderWOFormatting
 from uploader.constants import mandatory_sheets
 from uploader.entities.entity import CofkEntity
@@ -126,16 +127,18 @@ class CofkUploadExcelFile:
                                                      sheet_name='Places')
 
         # The next sheet is people
-        self.data['Places'] = CofkPeople(upload=self.upload, sheet_data=self.data['People'].data,
-                                         work_data=self.data['Work'].worksheet, sheet_name='People')
+        self.data['People'].entities = CofkPeople(upload=self.upload, sheet_data=self.data['People'].data,
+                                                  work_data=self.data['Work'].worksheet, sheet_name='People')
+
+        # Second last but not least, the works themselves
+        self.data['Work'].entities = CofkWork(upload=self.upload, sheet_data=self.data['Work'].data,
+                                              people=self.data['People'].entities.people,
+                                              locations=self.data['Places'].entities.locations,
+                                              sheet_name='Work')
         log.debug(vars(self))
         raise ValueError('stuff')
-        '''
-        # Second last but not least, the works themselves
-        self.works = CofkWork(upload=self.upload, sheet_data=self.data['work'], people=self.people,
-                              locations=self.locations)
         self.upload.total_works = len(self.works.ids)
-
+        '''
         # The last sheet is manifestations
         if self.works.works:
             self.manifestations = CofkManifestations(upload=self.upload, sheet_data=self.data['manifestation'],
@@ -145,13 +148,13 @@ class CofkUploadExcelFile:
             for row_index in self.people.other_errors:
                 for error in self.people.other_errors[row_index]:
                     if error['entity'] == 'work':
-                        self.works.add_error(error['error'], None, row_index)
+                        self.works.add_error(error['error'], None, row_index)'''
 
         if self.works.errors:
             self.errors['work'] = self.works.format_errors_for_template()
             self.total_errors += self.errors['work']['total']
 
-        if self.people.errors:
+        '''if self.people.errors:
             self.errors['people'] = self.people.format_errors_for_template()
             self.total_errors += self.errors['people']['total']'''
 

@@ -201,29 +201,29 @@ class CofkCollectWork(models.Model):
     date_of_work2_std_year = models.IntegerField(blank=True, null=True)
     date_of_work2_std_month = models.IntegerField(blank=True, null=True)
     date_of_work2_std_day = models.IntegerField(blank=True, null=True)
-    date_of_work_std_is_range = models.SmallIntegerField()
-    date_of_work_inferred = models.SmallIntegerField()
-    date_of_work_uncertain = models.SmallIntegerField()
-    date_of_work_approx = models.SmallIntegerField()
+    date_of_work_std_is_range = models.SmallIntegerField(default=0)
+    date_of_work_inferred = models.SmallIntegerField(default=0)
+    date_of_work_uncertain = models.SmallIntegerField(default=0)
+    date_of_work_approx = models.SmallIntegerField(default=0)
     notes_on_date_of_work = models.TextField(blank=True, null=True)
     authors_as_marked = models.TextField(blank=True, null=True)
-    authors_inferred = models.SmallIntegerField()
-    authors_uncertain = models.SmallIntegerField()
+    authors_inferred = models.SmallIntegerField(default=0)
+    authors_uncertain = models.SmallIntegerField(default=0)
     notes_on_authors = models.TextField(blank=True, null=True)
     addressees_as_marked = models.TextField(blank=True, null=True)
-    addressees_inferred = models.SmallIntegerField()
-    addressees_uncertain = models.SmallIntegerField()
+    addressees_inferred = models.SmallIntegerField(default=0)
+    addressees_uncertain = models.SmallIntegerField(default=0)
     notes_on_addressees = models.TextField(blank=True, null=True)
-    # destination_id = models.IntegerField(blank=True, null=True)
-    destination = models.ForeignKey('CofkCollectDestinationOfWork', models.CASCADE, blank=True, null=True)
+    destination_id = models.IntegerField(blank=True, null=True)
+    # destination = models.ForeignKey('CofkCollectDestinationOfWork', models.CASCADE, blank=True, null=True)
     destination_as_marked = models.TextField(blank=True, null=True)
-    destination_inferred = models.SmallIntegerField()
-    destination_uncertain = models.SmallIntegerField()
-    # origin_id = models.IntegerField(blank=True, null=True)
-    origin = models.ForeignKey('CofkCollectOriginOfWork', models.CASCADE, blank=True, null=True)
+    destination_inferred = models.SmallIntegerField(default=0)
+    destination_uncertain = models.SmallIntegerField(default=0)
+    origin_id = models.IntegerField(blank=True, null=True)
+    # origin = models.ForeignKey('CofkCollectOriginOfWork', models.CASCADE, blank=True, null=True)
     origin_as_marked = models.TextField(blank=True, null=True)
-    origin_inferred = models.SmallIntegerField()
-    origin_uncertain = models.SmallIntegerField()
+    origin_inferred = models.SmallIntegerField(default=0)
+    origin_uncertain = models.SmallIntegerField(default=0)
     abstract = models.TextField(blank=True, null=True)
     keywords = models.TextField(blank=True, null=True)
     language_of_work = models.CharField(max_length=255, blank=True, null=True)
@@ -236,18 +236,18 @@ class CofkCollectWork(models.Model):
     editors_notes = models.TextField(blank=True, null=True)
     _id = models.CharField(db_column='_id', max_length=32, blank=True,
                            null=True)  # Field renamed because it started with '_'.
-    date_of_work2_approx = models.SmallIntegerField()
-    date_of_work2_inferred = models.SmallIntegerField()
-    date_of_work2_uncertain = models.SmallIntegerField()
+    date_of_work2_approx = models.SmallIntegerField(default=0)
+    date_of_work2_inferred = models.SmallIntegerField(default=0)
+    date_of_work2_uncertain = models.SmallIntegerField(default=0)
     mentioned_as_marked = models.TextField(blank=True, null=True)
-    mentioned_inferred = models.SmallIntegerField()
-    mentioned_uncertain = models.SmallIntegerField()
+    mentioned_inferred = models.SmallIntegerField(default=0)
+    mentioned_uncertain = models.SmallIntegerField(default=0)
     notes_on_destination = models.TextField(blank=True, null=True)
     notes_on_origin = models.TextField(blank=True, null=True)
     notes_on_place_mentioned = models.TextField(blank=True, null=True)
     place_mentioned_as_marked = models.TextField(blank=True, null=True)
-    place_mentioned_inferred = models.SmallIntegerField()
-    place_mentioned_uncertain = models.SmallIntegerField()
+    place_mentioned_inferred = models.SmallIntegerField(default=0)
+    place_mentioned_uncertain = models.SmallIntegerField(default=0)
     upload_name = models.CharField(max_length=254, blank=True, null=True)
     explicit = models.TextField(blank=True, null=True)
 
@@ -257,8 +257,8 @@ class CofkCollectWork(models.Model):
         db_table = 'cofk_collect_work'
         unique_together = (('upload', 'iwork_id'),)
 
-    def __str__(self):
-        return f'Work #{self.iwork_id}'
+    #def __str__(self):
+    #   return f'Work #{self.iwork_id}'
 
     def clean_year(self, year, field_name):
         max_year = 1900
@@ -319,7 +319,7 @@ class CofkCollectWork(models.Model):
             self.add_error('%(field)s: Notes with dates have to end with a full stop',
                            {'field': 'notes_on_date_of_work'})
 
-    def clean(self):
+    '''def clean(self):
         # Reset error count
         self.errors = []
         # Clean year values
@@ -347,7 +347,7 @@ class CofkCollectWork(models.Model):
         # Clean locations
 
         if self.errors:
-            raise ValidationError(self.errors)
+            raise ValidationError(self.errors)'''
 
     def add_error(self, msg, params):
         self.errors.append(ValidationError(msg, params=params))
@@ -502,7 +502,7 @@ class CofkCollectAuthorOfWork(models.Model):
     designate iperson_id and iwork_id as many-to-many-relationship fields.
     """
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
-    author_id = models.IntegerField()
+    author_id = models.AutoField(primary_key=True)
     iperson = models.ForeignKey('person.CofkCollectPerson', models.CASCADE)
     iwork = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
     notes_on_author = models.TextField(blank=True, null=True)

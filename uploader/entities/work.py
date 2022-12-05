@@ -1,13 +1,14 @@
 import logging
 
-from typing import List
+from typing import List, Generator, Tuple, Type, Any
 
-import pandas as pd
 from django.core.exceptions import ValidationError
+from django.db import models
+from openpyxl.cell import Cell
 
+from location.models import CofkCollectLocation
+from person.models import CofkCollectPerson
 from uploader.entities.entity import CofkEntity
-from uploader.entities.locations import CofkLocations
-from uploader.entities.people import CofkPeople
 from uploader.models import CofkCollectUpload, CofkCollectStatus, Iso639LanguageCode
 from work.models import CofkCollectWork, CofkCollectLanguageOfWork, CofkCollectWorkResource, \
     CofkCollectPersonMentionedInWork, CofkCollectAuthorOfWork, CofkCollectAddresseeOfWork, CofkCollectOriginOfWork, \
@@ -18,34 +19,130 @@ log = logging.getLogger(__name__)
 
 class CofkWork(CofkEntity):
 
-    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame, people: CofkPeople,
-                 locations: CofkLocations):
-        """
-        non_work_data will contain any raw data about:
-        1. origin location
-        2. destination location
-        3. people mentioned
-        4. languages used
-        5. resources
-        6. authors
-        7. addressees
-        :param upload:
-        """
-        super().__init__(upload, sheet_data)
+    def __init__(self, upload: CofkCollectUpload, sheet_data: Generator[Tuple[Cell], None, None], people, locations,
+                 sheet_name: str):
+        super().__init__(upload, sheet_data, sheet_name)
 
         self.iwork_id = None
         self.non_work_data = {}
         self.ids = []
         self.works = []
-        self.people = people
-        self.locations = locations
+        self.people: List[CofkCollectPerson] = people
+        self.authors: List[CofkCollectAuthorOfWork] = []
+        self.mentioned: List[CofkCollectPersonMentionedInWork] = []
+        self.addressees: List[CofkCollectAddresseeOfWork] = []
+        self.locations: List[CofkCollectLocation] = locations
+        self.origins: List[CofkCollectOriginOfWork] = []
+        self.destinations: List[CofkCollectDestinationOfWork] = []
+
+        for index, row in enumerate(self.iter_rows(), start=1):
+            work_dict = {self.get_column_name_by_index(cell.column): cell.value for cell in row}
+            self.check_required(work_dict, index)
+            # self.check_data_types(work_dict, index)
+            work_dict['upload_status_id'] = 1
+            work_dict['upload'] = upload
+            log.debug(work_dict)
+
+            w = CofkCollectWork(**{k: work_dict[k] for k in work_dict if k in CofkCollectWork.__dict__.keys() and
+                                   k not in ['origin_id', 'destination_id']})
+            w.save()
+
+            self.process_people(w, self.authors, CofkCollectAuthorOfWork, work_dict, 'author_ids', 'author_names')
+            self.process_people(w, self.mentioned, CofkCollectPersonMentionedInWork, work_dict, 'emlo_mention_id',
+                                'mention_id')
+            self.process_people(w, self.addressees, CofkCollectAddresseeOfWork, work_dict, 'addressee_ids',
+                                'addressee_names')
+
+            self.process_locations(w, self.origins, CofkCollectOriginOfWork, work_dict, 'origin_id',
+                                   'origin_name')
+            self.process_locations(w, self.destinations, CofkCollectDestinationOfWork, work_dict, 'destination_id',
+                                   'destination_name')
+
+        if self.authors:
+            CofkCollectAuthorOfWork.objects.bulk_create(self.authors, batch_size=500)
 
         # Process each row in turn, using a dict comprehension to filter out empty values
-        for i in range(1, len(self.sheet_data.index)):
+        '''for i in range(1, len(self.sheet_data.index)):
             self.process_work({k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None})
             self.row += 1
 
-        CofkCollectWork.objects.bulk_update(self.works, ['origin', 'destination'], batch_size=500)
+        CofkCollectWork.objects.bulk_update(self.works, ['origin', 'destination'], batch_size=500)'''
+
+    def get_person(self, person_id: str):
+        person = [p for p in self.people if
+                  p.union_iperson is not None and p.union_iperson.iperson_id == int(person_id)]
+
+        if person:
+            return person[0]
+
+    def get_location(self, location_id: str):
+        location = [l for l in self.locations if
+                    l.union_location is not None and l.union_location.location_id == int(location_id)]
+
+        if location:
+            return location[0]
+
+    def clean_lists(self, work_dict: dict, ids, names):
+        if isinstance(work_dict[ids], str):
+            id_list = work_dict[ids].split(';')
+        else:
+            id_list = [work_dict[ids]]
+
+        name_list = work_dict[names].split(';')
+
+        if len(id_list) < len(name_list):
+            self.add_error(ValidationError(f'Fewer ids in {ids} than names in {names}.'))
+        elif len(id_list) > len(name_list):
+            self.add_error(ValidationError(f'Fewer names in {names} than ids in {ids}'))
+
+        if '' in id_list:
+            self.add_error(ValidationError(f'Empty string in ids in {ids}'))
+        if '' in name_list:
+            self.add_error(ValidationError(f'Empty string in names in {names}'))
+
+        return id_list, name_list
+
+    def process_people(self, work: CofkCollectWork, people_list: List[Any], people_model: Type[models.Model],
+                       work_dict: dict, ids, names):
+        id_list, name_list = self.clean_lists(work_dict, ids, names)
+
+        if not self.errors:
+            for _id, name in zip(id_list, name_list):
+                log.debug(f'{_id} {name} {self.get_person(_id)}')
+                people_list.append(people_model(upload=self.upload, iwork=work,
+                                                iperson=self.get_person(_id)))
+        else:
+            log.info(self.errors)
+
+    def process_locations(self, work: CofkCollectWork, location_list: List[Any], location_model: Type[models.Model],
+                          work_dict: dict, ids: str, names: str):
+        id_list, name_list = self.clean_lists(work_dict, ids, names)
+
+        if not self.errors:
+            for _id, name in zip(id_list, name_list):
+                log.debug(f'{_id} {name} {self.get_location(_id)}')
+                location_list.append(location_model(upload=self.upload, iwork=work,
+                                                    location=self.get_location(_id)))
+        else:
+            log.info(self.errors)
+
+    '''def process_authors2(self, w, author_ids, author_names):
+        author_ids = author_ids.split(';')
+        author_names = author_names.split(';')
+
+        if len(author_ids) < len(author_names):
+            log.warning('Fewer ids than names')
+        elif len(author_ids) > len(author_names):
+            log.warning('Fewer names than ids')
+
+        if '' in author_ids:
+            log.warning('Empty string in ids')
+        if '' in author_names:
+            log.warning('Empty string in names')
+
+        for id, name in zip(author_ids, author_names):
+            log.debug(f'{id} {name} {self.get_person(id)}')
+            self.authors.append(CofkCollectAuthorOfWork(upload=self.upload, iwork=w, iperson=self.get_person(id)))'''
 
     def preprocess_languages(self, work: CofkCollectWork):
         """
@@ -75,8 +172,8 @@ class CofkWork(CofkEntity):
             self.process_languages(work, work_languages)
 
     def process_authors(self, work: CofkCollectWork):
-        a_id = CofkCollectAuthorOfWork.objects.\
-                values_list('author_id', flat=True).order_by('-author_id').first()
+        a_id = CofkCollectAuthorOfWork.objects. \
+            values_list('author_id', flat=True).order_by('-author_id').first()
 
         if a_id is None:
             a_id = 1
@@ -95,8 +192,8 @@ class CofkWork(CofkEntity):
                 pass
 
     def process_addressees(self, work: CofkCollectWork):
-        a_id = CofkCollectAddresseeOfWork.objects.\
-                values_list('addressee_id', flat=True).order_by('-addressee_id').first()
+        a_id = CofkCollectAddresseeOfWork.objects. \
+            values_list('addressee_id', flat=True).order_by('-addressee_id').first()
         if a_id is None:
             a_id = 1
 
@@ -175,7 +272,7 @@ class CofkWork(CofkEntity):
                 self.process_destination(work)
 
                 work.destination = CofkCollectDestinationOfWork.objects.filter(iwork_id=work).first()
-                #work.save()
+                # work.save()
 
                 # Processing languages used in work
                 self.preprocess_languages(work)
@@ -192,8 +289,8 @@ class CofkWork(CofkEntity):
             #    log.warning(te)
 
     def process_mentions(self, work: CofkCollectWork):
-        m_id = CofkCollectPersonMentionedInWork.objects.\
-                values_list('mention_id', flat=True).order_by('-mention_id').first()
+        m_id = CofkCollectPersonMentionedInWork.objects. \
+            values_list('mention_id', flat=True).order_by('-mention_id').first()
 
         if m_id is None:
             m_id = 0
@@ -214,8 +311,8 @@ class CofkWork(CofkEntity):
                 pass
 
     def process_origin(self, work: CofkCollectWork):
-        o_id = CofkCollectOriginOfWork.objects.\
-                values_list('origin_id', flat=True).order_by('-origin_id').first()
+        o_id = CofkCollectOriginOfWork.objects. \
+            values_list('origin_id', flat=True).order_by('-origin_id').first()
         if o_id is None:
             o_id = 0
 
@@ -233,8 +330,8 @@ class CofkWork(CofkEntity):
             log.debug(f'{origin_location} saved')
 
     def process_destination(self, work: CofkCollectWork):
-        d_id = CofkCollectDestinationOfWork.objects.\
-                values_list('destination_id', flat=True).order_by('-destination_id').first()
+        d_id = CofkCollectDestinationOfWork.objects. \
+            values_list('destination_id', flat=True).order_by('-destination_id').first()
         if d_id is None:
             d_id = 0
 
@@ -281,7 +378,7 @@ class CofkWork(CofkEntity):
         resource_url = self.non_work_data['resource_url'] if 'resource_url' in self.non_work_data else ''
         resource_details = self.non_work_data['resource_details'] if 'resource_details' in self.non_work_data else ''
 
-        r_id = CofkCollectWorkResource.objects.\
+        r_id = CofkCollectWorkResource.objects. \
             values_list('resource_id', flat=True).order_by('-resource_id').first()
 
         if r_id is None:

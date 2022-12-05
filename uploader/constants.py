@@ -55,13 +55,15 @@ mandatory_sheets = {'Work': {
                 'language_of_work', 'hasgreek', 'hasarabic', 'hashebrew', 'haslatin', 'answererby', 'incipit',
                 'excipit', 'notes_on_letter', 'mention_id', 'emlo_mention_id', 'notes_on_people_mentioned',
                 'editors_notes', 'resource_name', 'resource_url', 'resource_details'],
+    'ids': ['iwork_id', 'author_ids', 'addressee_ids', 'origin_id', 'mention_id'],
     'ints': ['iwork_id', 'date_of_work_std_year', 'date_of_work_std_month', 'date_of_work2_std_year',
              'date_of_work2_std_month', 'date_of_work2_std_day', 'origin_id', 'destination_id'],
     'bools': ['date_of_work_std_is_range', 'date_of_work_inferred', 'date_of_work_uncertain', 'date_of_work_approx',
               'authors_inferred', 'authors_uncertain', 'addressees_inferred', 'addressees_uncertain',
               'origin_inferred', 'origin_uncertain', 'destination_inferred', 'destination_uncertain',
-              'hasgreek', 'hasarabic', 'hashebrew', 'haslatin']
-},
+              'hasgreek', 'hasarabic', 'hashebrew', 'haslatin'],
+    'strings': ['original_calendar'],
+    'required': ['iwork_id'], },
     'Manifestation': {
         'columns': ['manifestation_id', 'iwork_id', 'manifestation_type', 'repository_id', 'repository_name',
                     'id_number_or_shelfmark', 'manifestation_notes', 'manifestation_type_p', 'printed_edition_details',

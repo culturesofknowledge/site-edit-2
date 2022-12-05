@@ -1,7 +1,6 @@
 import logging
-from typing import Generator, Tuple, Union, List, Any
+from typing import Generator, Tuple, List, Any
 
-import pandas as pd
 from django.core.exceptions import ValidationError
 from openpyxl.cell import Cell
 from openpyxl.cell.read_only import EmptyCell
@@ -69,6 +68,7 @@ class CofkEntity:
                 if isinstance(entity[id_value], int) and entity[id_value] > 0:
                     self.ids.append(entity[id_value])
                 elif isinstance(entity[id_value], str):
+                    log.debug(entity[id_value])
                     for int_value in entity[id_value].split(';'):
                         try:
                             if int(int_value) < 0:
@@ -94,7 +94,7 @@ class CofkEntity:
                     self.add_error(ValidationError(msg))
 
         if 'bools' in self.fields:
-            for bool_value in [t for t in self.fields['bools'] if t in self.row_data]:
+            for bool_value in [t for t in self.fields['bools'] if t in entity]:
                 try:
                     if int(entity[bool_value]) not in [0, 1]:
                         msg = f'Column {bool_value} in {self.sheet_name} sheet is not a boolean value of either 0 or 1.'
@@ -135,6 +135,8 @@ class CofkEntity:
 
         if self.row not in self.errors:
             self.errors[row] = []
+
+        log.error(error.message)
 
         self.errors[row].append(error)
 
