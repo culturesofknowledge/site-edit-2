@@ -23,9 +23,6 @@ class CofkWork(CofkEntity):
                  sheet_name: str):
         super().__init__(upload, sheet_data, sheet_name)
 
-        self.iwork_id = None
-        self.non_work_data = {}
-        self.ids = []
         self.works: List[CofkCollectWork] = []
         self.people: List[CofkCollectPerson] = people
         self.authors: List[CofkCollectAuthorOfWork] = []
@@ -35,6 +32,7 @@ class CofkWork(CofkEntity):
         self.origins: List[CofkCollectOriginOfWork] = []
         self.destinations: List[CofkCollectDestinationOfWork] = []
         self.resources: List[CofkCollectWorkResource] = []
+        self.languages: List[CofkCollectLanguageOfWork] = []
 
         for index, row in enumerate(self.iter_rows(), start=1):
             work_dict = {self.get_column_name_by_index(cell.column): cell.value for cell in row if
@@ -51,7 +49,8 @@ class CofkWork(CofkEntity):
             self.works.append(w)
             # log.debug({k: work_dict[k] for k in work_dict if k in CofkCollectWork.__dict__.keys()})
 
-            self.process_people(w, self.authors, CofkCollectAuthorOfWork, work_dict, 'author_ids', 'author_names')
+            if 'author_ids' in work_dict and 'author_names' in work_dict:
+                self.process_people(w, self.authors, CofkCollectAuthorOfWork, work_dict, 'author_ids', 'author_names')
 
             if 'emlo_mention_id' in work_dict and 'mention_id' in work_dict:
                 self.process_people(w, self.mentioned, CofkCollectPersonMentionedInWork, work_dict, 'emlo_mention_id',
@@ -74,6 +73,9 @@ class CofkWork(CofkEntity):
                 resource_dict['upload'] = upload
                 resource_dict['iwork'] = w
                 self.resources.append(CofkCollectWorkResource(**resource_dict))
+
+            if 'language_id' in work_dict:
+                self.process_languages(work_dict, w)
 
         upload.total_works = len(self.works)
         upload.save()
@@ -98,7 +100,6 @@ class CofkWork(CofkEntity):
 
         if not self.errors:
             for _id, name in zip(id_list, name_list):
-                log.debug(f'{_id} {name} {self.get_person(_id)}')
                 people_list.append(people_model(upload=self.upload, iwork=work,
                                                 iperson=self.get_person(_id)))
         else:
@@ -110,125 +111,33 @@ class CofkWork(CofkEntity):
 
         if not self.errors:
             for _id, name in zip(id_list, name_list):
-                log.debug(f'{_id} {name} {self.get_location(_id)}')
                 location_list.append(location_model(upload=self.upload, iwork=work,
                                                     location=self.get_location(_id)))
         else:
             log.info(self.errors)
 
-    def preprocess_languages(self, work: CofkCollectWork):
-        """
-        TODO try catch below, sometimes work data?
-        TODO does the order of languages matter?
-        """
-        try:
-            work_languages = self.non_work_data['language_id'].split(';')
-        except KeyError:
-            return
+    def process_languages(self, work_dict: dict, work: CofkCollectWork):
+        work_languages = work_dict['language_id'].split(';')
 
-        if 'hashebrew' in self.non_work_data:
+        if 'hashebrew' in work_dict:
             work_languages.append("heb")
 
-        if 'hasarabic' in self.non_work_data:
+        if 'hasarabic' in work_dict:
             work_languages.append("ara")
 
-        if 'hasgreek' in self.non_work_data:
+        if 'hasgreek' in work_dict:
             work_languages.append("ell")
 
-        if 'haslatin' in self.non_work_data:
+        if 'haslatin' in work_dict:
             work_languages.append("lat")
 
-        if len(work_languages):
-            log.info("Foreign language in iwork_id #{}, upload_id #{}".format(
-                self.iwork_id, self.upload.upload_id))
-            self.process_languages(work, work_languages)
-
-    def process_work(self, work_data: dict):
-        """
-        This method processes one row of data from the Excel sheet.
-        """
-        self.row_data = work_data
-
-        self.row_data['upload_id'] = self.upload.upload_id
-        self.iwork_id = work_data['iwork_id']
-
-        self.check_data_types('Work')
-
-        log.info(f'Processing work, iwork_id #{self.iwork_id}, upload_id #{self.upload.upload_id}')
-
-        self.preprocess_data()
-
-        # The relation between origin/destination locations and works are circular
-        # foreign keys. They will be processed after the work has been saved.
-        if 'origin_id' in self.row_data:
-            del self.row_data['origin_id']
-
-        if 'destination_id' in self.row_data:
-            del self.row_data['destination_id']
-
-        # Creating the work itself
-        work = CofkCollectWork(**self.row_data)
-
-        self.set_default_values(work)
-
-        if not self.errors:
-            try:
-                work.save()
-
-                self.ids.append(self.iwork_id)
-
-                log.info(f'Work created iwork_id #{self.iwork_id}, upload_id #{self.upload.upload_id}')
-
-                # Processing people mentioned in work
-                self.process_authors(work)
-                self.process_mentions(work)
-                self.process_addressees(work)
-
-                # Origin location needs to be processed before work is created
-                # Is it possible that a work has more than one origin?
-                self.process_origin(work)
-
-                work.origin = CofkCollectOriginOfWork.objects.filter(iwork_id=work).first()
-
-                # Destination location needs to be processed before work is created
-                # Is it possible that a work has more than one destination?
-                self.process_destination(work)
-
-                work.destination = CofkCollectDestinationOfWork.objects.filter(iwork_id=work).first()
-                # work.save()
-
-                # Processing languages used in work
-                self.preprocess_languages(work)
-
-                # Processing resources in work
-                self.process_resource(work)
-
-                self.works.append(work)
-
-            except ValidationError as ve:
-                self.add_error(ve)
-                log.warning(ve)
-            # except TypeError as te:
-            #    log.warning(te)
-
-    def process_languages(self, work: CofkCollectWork, has_language: List[str]):
-        l_id = CofkCollectLanguageOfWork.objects. \
-            values_list('language_of_work_id', flat=True).order_by('-language_of_work_id').first()
-
-        if l_id is None:
-            l_id = 0
-
-        l_id += 1
-
-        for l_id, language in enumerate(has_language, start=l_id):
+        for language in work_languages:
+            # Would it optimize to load languages to memory, that would eliminate database queries
             lan = Iso639LanguageCode.objects.filter(code_639_3=language).first()
 
             if lan is not None:
-                lang = CofkCollectLanguageOfWork(language_of_work_id=l_id, upload=self.upload, iwork=work,
-                                                 language_code=lan)
-                lang.save()
+                self.languages.append(CofkCollectLanguageOfWork(upload=self.upload, iwork=work, language_code=lan))
             else:
                 msg = f'The value in column "language_id", "{language}" is not a valid ISO639 language.'
                 log.error(msg)
                 self.add_error(ValidationError(msg))
-

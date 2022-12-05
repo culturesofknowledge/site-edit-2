@@ -534,7 +534,7 @@ class CofkCollectDestinationOfWork(models.Model):
 
 class CofkCollectLanguageOfWork(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
-    language_of_work_id = models.IntegerField()
+    language_of_work_id = models.AutoField(primary_key=True)
     iwork = models.ForeignKey('work.CofkCollectWork', models.DO_NOTHING)
     language_code = models.ForeignKey('uploader.Iso639LanguageCode', models.DO_NOTHING, db_column='language_code')
     _id = models.CharField(max_length=32, blank=True, null=True)

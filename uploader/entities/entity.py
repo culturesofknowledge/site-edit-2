@@ -62,7 +62,6 @@ class CofkEntity:
 
     def check_data_types(self, entity: dict, row_number: int):
         self.row = row_number
-        log.debug(entity)
 
         # ids can be ints or strings that are ints separated by a semicolon and no space
         if 'ids' in self.fields:
@@ -70,7 +69,6 @@ class CofkEntity:
                 if isinstance(entity[id_value], int) and entity[id_value] > 0:
                     self.ids.append(entity[id_value])
                 elif isinstance(entity[id_value], str):
-                    log.debug(entity[id_value])
                     for int_value in entity[id_value].split(';'):
                         try:
                             if int(int_value) < 0:
@@ -121,8 +119,9 @@ class CofkEntity:
                         self.add_error(ValidationError(msg))
 
         if 'strings' in self.fields:
-            for str_field in self.fields['strings']:
-                log.debug(str_field)
+            for str_field in [s for s in self.fields['strings'] if s in entity]:
+                # TODO do I need to cast to string?
+                entity[str_field] = str(entity[str_field])
 
     def add_error(self, error: ValidationError, entity=None, row=None):
         if not row:
@@ -180,9 +179,6 @@ class CofkEntity:
             self.add_error(ValidationError(f'Empty string in ids in {ids}'))
         if '' in name_list:
             self.add_error(ValidationError(f'Empty string in names in {names}'))
-
-        log.debug(id_list)
-        log.debug(name_list)
 
         return id_list, name_list
 

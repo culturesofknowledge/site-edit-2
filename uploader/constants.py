@@ -67,7 +67,9 @@ mandatory_sheets = {'Work': {
     'Manifestation': {
         'columns': ['manifestation_id', 'iwork_id', 'manifestation_type', 'repository_id', 'repository_name',
                     'id_number_or_shelfmark', 'manifestation_notes', 'manifestation_type_p', 'printed_edition_details',
-                    'printed_edition_notes', 'ms_translation', 'printed_translation']},
+                    'printed_edition_notes', 'ms_translation', 'printed_translation'],
+    'ids': ['manifestation_id', 'repository_id'],
+    'ints': ['manifestation_id', 'repository_id']},
     'People': {'columns': ['primary_name', 'iperson_id', 'editors_notes'],
                'ids': ['iperson_id'],
                'required': ['primary_name'],

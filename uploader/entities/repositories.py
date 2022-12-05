@@ -26,7 +26,6 @@ class CofkRepositories(CofkEntity):
             inst_dict = {self.get_column_name_by_index(cell.column): cell.value for cell in row}
             self.check_required(inst_dict, index)
             self.check_data_types(inst_dict, index)
-            log.debug(inst_dict)
 
             # Collect institutions while there's no errors,
             # no reason to do so if there's errors
