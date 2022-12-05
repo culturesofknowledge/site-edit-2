@@ -4,7 +4,7 @@ import logging
 from django.db import models
 from django.db.models.base import ModelBase
 
-from audit.audit_recref_adapter import AuditRecrefAdapter
+from audit.audit_recref_adapter import AuditRecrefAdapter, PersonAuditAdapter, LocationAuditAdapter
 from audit.models import CofkUnionAuditLiteral
 from core import constant
 from core.helper import model_utils
@@ -121,11 +121,23 @@ def save_audit_records(instance: Recref, old_instance: Recref = None, ):
         literal.save()
 
 
+def to_audit_adapter(instance: models.Model):
+    if isinstance(instance, CofkUnionPerson):
+        return PersonAuditAdapter(instance)
+    elif isinstance(instance, CofkUnionLocation):
+        return LocationAuditAdapter(instance)
+    else:
+        log.warning(f'undefined audit adapter mapping [{instance}] ')
+        return AuditRecrefAdapter(instance)
+
+
 def get_left_right_adapters(instance):
-    adapters = [
-        AuditRecrefAdapter(i)
-        for i in random_choice_left_right(instance)
-    ]
+    # KTODO left right mapping by recref
+
+    log.warning(f'undefined left right mapping for [{instance}]')
+    left_right_instances = random_choice_left_right(instance)
+
+    adapters = [AuditRecrefAdapter(i) for i in left_right_instances]
     return adapters
 
 
