@@ -22,7 +22,8 @@ def get_action_name(action):
 
 def create_audit_trigger_sql(table_name, action):
     action_name = get_action_name(action)
-    when = 'before' if 'delete' else 'after'
+    # when = 'before' if 'delete' else 'after'
+    when = 'after'   # KTODO seem like Django does not support **before** trigger
     return f"""
     create trigger {table_name}_trg_audit_{action_name}
     {when} {action}
