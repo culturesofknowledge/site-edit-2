@@ -164,7 +164,7 @@ class CofkEntity:
 
     def clean_lists(self, entity_dict: dict, ids, names) -> Tuple[List[int], List[int]]:
         if isinstance(entity_dict[ids], str):
-            id_list = entity_dict[ids].split(';')
+            id_list = [int(i) for i in entity_dict[ids].split(';')]
         else:
             id_list = [entity_dict[ids]]
 
