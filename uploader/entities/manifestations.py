@@ -43,7 +43,6 @@ class CofkManifestations(CofkEntity):
                     del man_dict['repository_name']
 
                 man_dict['upload'] = upload
-                log.debug(man_dict)
                 self.manifestations.append(CofkCollectManifestation(**man_dict))
 
         if self.manifestations:

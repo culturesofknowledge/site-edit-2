@@ -60,14 +60,15 @@ class CofkEntity:
 
     def check_data_types(self, entity: dict, row_number: int):
         self.row = row_number
+        log.debug(f'Checking data type: {self.sheet.name}, row {row_number}')
 
         # ids can be ints or strings that are ints separated by a semicolon and no space
         if 'ids' in self.fields:
-            for id_value in [t for t in self.fields['ids'] if t in entity]:
-                if isinstance(entity[id_value], int) and entity[id_value] > 0:
-                    self.ids.append(entity[id_value])
-                elif isinstance(entity[id_value], str):
-                    for int_value in entity[id_value].split(';'):
+            for id_field in [t for t in self.fields['ids'] if t in entity]:
+                if isinstance(entity[id_field], int) and entity[id_field] > 0:
+                    self.ids.append(entity[id_field])
+                elif isinstance(entity[id_field], str):
+                    for int_value in entity[id_field].split(';'):
                         try:
                             if int(int_value) < 0:
                                 raise ValueError()
@@ -78,7 +79,7 @@ class CofkEntity:
                             log.error(msg)
                             self.add_error(ValidationError(msg))
                 else:
-                    msg = f'Column {entity[id_value]} in {self.sheet.name} sheet is not a valid positive integer.'
+                    msg = f'Column {entity[id_field]} in {self.sheet.name} sheet is not a valid positive integer.'
                     log.error(msg)
                     self.add_error(ValidationError(msg))
 
@@ -117,7 +118,7 @@ class CofkEntity:
                         self.add_error(ValidationError(msg))
 
         if 'strings' in self.fields:
-            for str_field in [s for s in self.fields['strings'] if s in entity]:
+            for str_field in [s for s in self.fields['strings'] if s in entity and not isinstance(entity[s], str)]:
                 # TODO do I need to cast to string?
                 entity[str_field] = str(entity[str_field])
 
