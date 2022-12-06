@@ -116,31 +116,27 @@ class CofkUploadExcelFile:
 
         # It's process the sheets in reverse order, starting with repositories/institutions
         self.data['Repositories'].entities = CofkRepositories(upload=self.upload,
-                                                              sheet_data=self.data['Repositories'].data,
-                                                              sheet_name='Repositories')
+                                                              sheet=self.data['Repositories'])
 
         # The next sheet is places/locations,
-        self.data['Places'].entities = CofkLocations(upload=self.upload, sheet_data=self.data['Places'].data,
-                                                     work_data=self.data['Work'].worksheet,
-                                                     sheet_name='Places')
+        self.data['Places'].entities = CofkLocations(upload=self.upload, sheet=self.data['Places'],
+                                                     work_data=self.data['Work'].worksheet)
 
         # The next sheet is people
-        self.data['People'].entities = CofkPeople(upload=self.upload, sheet_data=self.data['People'].data,
-                                                  work_data=self.data['Work'].worksheet, sheet_name='People')
+        self.data['People'].entities = CofkPeople(upload=self.upload, sheet=self.data['People'],
+                                                  work_data=self.data['Work'].worksheet)
 
         # Second last but not least, the works themselves
-        self.data['Work'].entities = CofkWork(upload=self.upload, sheet_data=self.data['Work'].data,
+        self.data['Work'].entities = CofkWork(upload=self.upload, sheet=self.data['Work'],
                                               people=self.data['People'].entities.people,
-                                              locations=self.data['Places'].entities.locations,
-                                              sheet_name='Work')
+                                              locations=self.data['Places'].entities.locations)
 
         # The last sheet is manifestations
         self.data['Manifestation'].entities = CofkManifestations(upload=self.upload,
-                                                                 sheet_data=self.data['Manifestation'].data,
+                                                                 sheet=self.data['Manifestation'],
                                                                  repositories=self.data[
                                                                      'Repositories'].entities.institutions,
-                                                                 works=self.data['Work'].entities.works,
-                                                                 sheet_name='Manifestation')
+                                                                 works=self.data['Work'].entities.works)
 
         self.data['Work'].entities.create_all()
 

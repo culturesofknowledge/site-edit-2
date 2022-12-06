@@ -12,14 +12,13 @@ log = logging.getLogger(__name__)
 
 
 class CofkRepositories(CofkEntity):
-    def __init__(self, upload: CofkCollectUpload, sheet_data: Generator[Tuple[Cell], None, None],
-                 sheet_name: str):
+    def __init__(self, upload: CofkCollectUpload, sheet):
         """
         This entity processes the repositories/institutions from the Excel sheet.
         They do not need to be cross-referenced or verified.
         No entities are committed at this stage, they are aggregated in self.institutions.
         """
-        super().__init__(upload, sheet_data, sheet_name)
+        super().__init__(upload, sheet)
         self.institutions: List[CofkCollectInstitution] = []
 
         for index, row in enumerate(self.iter_rows(), start=1):

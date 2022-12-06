@@ -21,14 +21,14 @@ class CofkPeople(CofkEntity):
     This means that the People sheet needs to be processed before the Work sheet. The Work sheet
     contains information about the nature of the relation (which of the above tables to link to).
     """
-    def __init__(self, upload: CofkCollectUpload, sheet_data: Generator[Tuple[Cell], None, None],
-                 work_data: Generator[Tuple[Cell], None, None], sheet_name: str):
+    def __init__(self, upload: CofkCollectUpload, sheet,
+                 work_data: Generator[Tuple[Cell], None, None]):
         """
         sheet_data: all data from the "People" sheet
         word_data: all data from the "Work" sheet, from which a few columns are required
         # TODO editor's notes from people sheet need to be added
         """
-        super().__init__(upload, sheet_data, sheet_name)
+        super().__init__(upload, sheet)
         self.work_data = work_data
 
         self.people: List[CofkCollectPerson] = []

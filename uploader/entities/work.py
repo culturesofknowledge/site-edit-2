@@ -27,9 +27,8 @@ def get_common_languages():
 
 class CofkWork(CofkEntity):
 
-    def __init__(self, upload: CofkCollectUpload, sheet_data: Generator[Tuple[Cell], None, None], people, locations,
-                 sheet_name: str):
-        super().__init__(upload, sheet_data, sheet_name)
+    def __init__(self, upload: CofkCollectUpload, sheet, people, locations):
+        super().__init__(upload, sheet)
 
         self.works: List[CofkCollectWork] = []
         self.people: List[CofkCollectPerson] = people

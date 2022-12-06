@@ -14,11 +14,9 @@ log = logging.getLogger(__name__)
 
 
 class CofkEntity:
-    def __init__(self, upload: CofkCollectUpload, sheet_data: Generator[Tuple[Cell], None, None],
-                 sheet_name: str):
+    def __init__(self, upload: CofkCollectUpload, sheet):
         self.upload: CofkCollectUpload = upload
-        self.sheet_data: Generator[Tuple[Cell], None, None] = sheet_data
-        self.sheet_name: str = sheet_name
+        self.sheet = sheet
         self.ids: List[int] = []
         self.ids_to_be_created: List[int] = []
         self.row_data = None
@@ -28,7 +26,7 @@ class CofkEntity:
 
     @property
     def fields(self):
-        return mandatory_sheets[self.sheet_name]
+        return mandatory_sheets[self.sheet.name]
 
     def get_column_name_by_index(self, index: int) -> str:
         # openpyxl starts column count at 1
@@ -36,11 +34,11 @@ class CofkEntity:
 
     def iter_rows(self):
         return ((c for c in r if not isinstance(c, EmptyCell)
-                 and c.column <= len(self.fields['columns'])) for r in self.sheet_data)
+                 and c.column <= len(self.fields['columns'])) for r in self.sheet.data)
 
     def get_column_by_name(self, name: str) -> List[Any]:
         return [[c.value for c in r if not isinstance(c, EmptyCell) and c.column <= len(self.fields['columns'])
-                 and self.get_column_name_by_index(c.column) == name][0] for r in self.sheet_data]
+                 and self.get_column_name_by_index(c.column) == name][0] for r in self.sheet.data]
 
     def get_all_values_by_column_name(self, name: str) -> List[int]:
         values = []
@@ -50,13 +48,13 @@ class CofkEntity:
             elif isinstance(v, str):
                 values += [int(i) for i in v.split(';')]
             else:
-                log.warning(f'Value in {name} of {self.sheet_name} is {v}')
+                log.warning(f'Value in {name} of {self.sheet.name} is {v}')
 
         return values
 
     def check_required(self, entity: dict, row_number: int):
         for missing in [m for m in self.fields['required'] if m not in entity]:
-            msg = f'Column {missing} in {self.sheet_name} is missing.'
+            msg = f'Column {missing} in {self.sheet.name} is missing.'
             log.error(msg)
             self.add_error(ValidationError(msg), row_number)
 
@@ -76,11 +74,11 @@ class CofkEntity:
 
                             self.ids.append(int(int_value))
                         except ValueError as ve:
-                            msg = f'Column {int_value} in {self.sheet_name} sheet is not a valid positive integer.'
+                            msg = f'Column {int_value} in {self.sheet.name} sheet is not a valid positive integer.'
                             log.error(msg)
                             self.add_error(ValidationError(msg))
                 else:
-                    msg = f'Column {entity[id_value]} in {self.sheet_name} sheet is not a valid positive integer.'
+                    msg = f'Column {entity[id_value]} in {self.sheet.name} sheet is not a valid positive integer.'
                     log.error(msg)
                     self.add_error(ValidationError(msg))
 
@@ -89,7 +87,7 @@ class CofkEntity:
                 try:
                     int(entity[int_value])
                 except ValueError as ve:
-                    msg = f'Column {int_value} in {self.sheet_name} sheet is not a valid integer.'
+                    msg = f'Column {int_value} in {self.sheet.name} sheet is not a valid integer.'
                     log.error(msg)
                     self.add_error(ValidationError(msg))
 
@@ -97,11 +95,11 @@ class CofkEntity:
             for bool_value in [t for t in self.fields['bools'] if t in entity]:
                 try:
                     if int(entity[bool_value]) not in [0, 1]:
-                        msg = f'Column {bool_value} in {self.sheet_name} sheet is not a boolean value of either 0 or 1.'
+                        msg = f'Column {bool_value} in {self.sheet.name} sheet is not a boolean value of either 0 or 1.'
                         log.error(msg)
                         self.add_error(ValidationError(msg))
                 except ValueError as ve:
-                    msg = f'Column {bool_value} in {self.sheet_name} sheet is not a boolean value of either 0 or 1.'
+                    msg = f'Column {bool_value} in {self.sheet.name} sheet is not a boolean value of either 0 or 1.'
                     log.error(msg)
                     self.add_error(ValidationError(msg))
 

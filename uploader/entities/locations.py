@@ -1,7 +1,6 @@
 import logging
 from typing import List, Generator, Tuple
 
-import pandas as pd
 from django.core.exceptions import ValidationError
 from openpyxl.cell import Cell
 
@@ -15,9 +14,8 @@ log = logging.getLogger(__name__)
 
 class CofkLocations(CofkEntity):
 
-    def __init__(self, upload: CofkCollectUpload, sheet_data: Generator[Tuple[Cell], None, None],
-                 work_data: Generator[Tuple[Cell], None, None], sheet_name: str):
-        super().__init__(upload, sheet_data, sheet_name)
+    def __init__(self, upload: CofkCollectUpload, sheet, work_data: Generator[Tuple[Cell], None, None]):
+        super().__init__(upload, sheet)
         self.work_data = work_data
         self.locations: List[CofkCollectLocation] = []
         # self.origins: List[CofkCollectOriginOfWork] = []

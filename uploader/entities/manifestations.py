@@ -14,9 +14,9 @@ log = logging.getLogger(__name__)
 
 class CofkManifestations(CofkEntity):
 
-    def __init__(self, upload: CofkCollectUpload, sheet_data: Generator[Tuple[Cell], None, None],
-                 repositories: List[CofkCollectInstitution], works: List[CofkCollectWork], sheet_name: str):
-        super().__init__(upload, sheet_data, sheet_name)
+    def __init__(self, upload: CofkCollectUpload, sheet,
+                 repositories: List[CofkCollectInstitution], works: List[CofkCollectWork]):
+        super().__init__(upload, sheet)
 
         self.repositories = repositories
         self.works = works

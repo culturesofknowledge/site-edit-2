@@ -40,7 +40,8 @@ mapping = {'person': DBMapping('person', 'cofk_collect_person', 'CofkCollectPers
            }
 
 # These are the sheets expected to be in every uploaded Excel file
-# Note that the sheet names are case-sensitive !!!!!!
+# Sheet names are case-sensitive !!!!!!
+# The first sheet must be Work
 # combos must have the id column first!!!
 mandatory_sheets = {'Work': {
     'columns': ['iwork_id', 'date_of_work_as_marked', 'original_calendar', 'date_of_work_std_year',
