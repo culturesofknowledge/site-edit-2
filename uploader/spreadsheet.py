@@ -5,8 +5,6 @@ from openpyxl.cell import Cell
 from openpyxl.reader.excel import load_workbook
 from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
-# import pandas as pd
-from pandas import ExcelFile
 
 from institution.models import CofkCollectInstitution
 from location.models import CofkCollectLocation
@@ -146,7 +144,6 @@ class CofkUploadExcelFile:
 
         self.data['Work'].entities.create_all()
 
-        raise ValueError('stuff')
 
         '''if self.people.other_errors:
             for row_index in self.people.other_errors:
