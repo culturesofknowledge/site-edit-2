@@ -1,11 +1,11 @@
-{% load cl_filters render_queryable_resources render_queryable_images render_queryable_manif %}
+{% load cl_filters work_util_tags %}
 
 <script>
     let tippies = [];
 
 </script>
 
-<table>
+<table id="results_table">
     <thead>
     <tr></tr>
     <tr>
@@ -25,6 +25,7 @@
         <tr class="selectable_entry" entry_id="{{ r.publication_id }}">
 
             <td>
+                {% include 'work/component/moreinfo.html' with work=r %}
                 {{ r.description }}
             </td>
             <td>
@@ -35,9 +36,9 @@
             <td>
                 {% if r.work_to_be_deleted|is_general_true %}
                     {% include 'work/component/delete.html' %}
-                {% else %}
-                    {% include 'work/component/exclamation.html' with work=r %}
                 {% endif %}
+
+                {% include 'work/component/exclamation.html' with work=r %}
             </td>
             <td>
                 {% if r.images %}

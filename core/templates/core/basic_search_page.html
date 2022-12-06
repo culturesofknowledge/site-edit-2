@@ -22,17 +22,17 @@
         <div class="row">
 
             <!-- Query fieldsets -->
-            <aside id="query-fieldset" class="col col--1of3">
+            <aside id="query-fieldset" class="col col--1of4">
                 <h3 class="sr-only">Search</h3>
                 {% for query_fieldset in query_fieldset_list %}
                     {{ query_fieldset }}
                 {% endfor %}
 
-                {% include "core/component/actionbox.html" with submit_title='Search' %}
+                {% include "core/component/actionbox.html" with submit_title='Search' action='reset' %}
             </aside>
 
 
-            <div id="query-result" class="col col--2of3">
+            <div id="query-result" class="col col--3of4">
                 {% if total_record == 0 %}
                     <h2>No results</h2>
                 {% else %}
@@ -221,7 +221,7 @@
             }
         });
 
-        ['id_sort_by', 'id_num_record', 'id_order',
+        ['id_sort_by', 'id_num_record', 'id_order_0', 'id_order_1',
             'display-as-grid', 'display-as-list'].forEach((target_id) => {
             document.getElementById(target_id).addEventListener('change', () => {
                 submit_page();
@@ -231,9 +231,29 @@
         function setup_fieldset_toggle() {
             $('#fieldset-toggle').click(function () {
                 $('#query-fieldset').toggle();
-                $('#query-result').toggleClass('col--2of3')
+                $('#query-result').toggleClass('col--3of4')
             });
+        }
 
+        function show_column(show_tag, column_index) {
+            show_tag.remove();
+            $('#results_table tr > *:nth-child(' + column_index + ')').show();
+        }
+
+        function hide_column(column_index, column_name) {
+            $('#results_table tr > *:nth-child(' + column_index + ')').hide();
+            $('#hidden_columns').append('<span onclick="show_column(this, ' + column_index + ');">'+ feather.icons['eye'].toSvg() + '&nbsp;' + column_name + '</span>');
+        }
+
+        function add_hide_buttons_to_columns() {
+            var columns = $('#results_table thead')[0].children[1].cells;
+            for (var i = 0; i < columns.length; i++) {
+                columns[i].innerHTML += '&nbsp;<a href="#" onclick="hide_column(' + (i + 1) + ', \'' + columns[i].innerText.replace("'", "\\'") + '\');">' + feather.icons['eye-off'].toSvg() + '</span></a>';
+
+                if($('#results_table tr > *:nth-child(' + (i + 1) + ')').filter('td').is(':empty'))    {
+                    hide_column(i + 1, columns[i].innerText);
+                }
+            }
         }
 
         $(function () {
@@ -241,6 +261,7 @@
             emlojs.selectable_service.setup_all()
             setup_merge_btn();
             setup_fieldset_toggle();
+            add_hide_buttons_to_columns();
             {% if recref_mode == '1' %}
                 emlojs.recref_select_service.setup_all()
             {% endif %}

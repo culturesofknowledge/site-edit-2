@@ -67,8 +67,10 @@ def create_queries_by_lookup_field(request_data: dict, lookup_fields: Union[list
             continue
 
         if search_fields:
+            q = Q()
             for search_field in str(search_fields).split(','):
-                yield run_lookup_fn(lookup_fn, search_field, field_val)
+                q.add(run_lookup_fn(lookup_fn, search_field, field_val), Q.OR)
+            yield q
         else:
             yield run_lookup_fn(lookup_fn, field_name, field_val)
 

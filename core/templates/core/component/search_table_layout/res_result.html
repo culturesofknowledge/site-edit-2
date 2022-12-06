@@ -1,9 +1,9 @@
-{% if resources.count %}
+{% if r_maps.count %}
     <ul>
-        {% for resource in resources.iterator %}
+        {% for r_map in r_maps.iterator %}
             <li>
-                <a href="{{ resource.resource_url }}" target="_blank">
-                    {{ resource.resource_name }}
+                <a href="{{ r_map.resource.resource_url }}" target="_blank">
+                    {{ r_map.resource.resource_name }}
                 </a>
             </li>
         {% endfor %}
