@@ -141,17 +141,7 @@ def get_left_right_adapters(instance):
     return adapters
 
 
-def on_update_audit_changed_user(sender: ModelBase, instance: models.Model, created: bool,
-                                 raw: bool, using, update_fields, **kwargs):
-    handle_update_audit_changed_user(sender, instance)
-
-
-def on_delete_queryable_work(sender: ModelBase, instance: models.Model, using, **kwargs):
-    handle_update_audit_changed_user(sender, instance)
-
-
-def on_update_audit_relation(sender: ModelBase, instance: models.Model,
-                             raw: bool, using, update_fields, **kwargs):
+def handle_update_relation_date(sender: ModelBase, instance: models.Model):
     if not issubclass(sender, Recref):
         return
 
@@ -163,9 +153,26 @@ def on_update_audit_relation(sender: ModelBase, instance: models.Model,
     save_audit_records(instance, old_instance=old_instance)
 
 
-def on_create_audit_relation(sender: ModelBase, instance: models.Model, created: bool,
-                             raw: bool, using, update_fields, **kwargs):
+def handle_create_relation_date(sender: ModelBase, instance: models.Model):
     if not issubclass(sender, Recref) or not getattr(instance, 'todo_audit', False):
         return
 
     save_audit_records(instance)
+
+
+def add_relation_audit_to_literal(sender: ModelBase, instance: models.Model):
+    """
+    xxxCofkLinkStartxxxxxxCofkHrefStartxxxhttps://emlo-edit.bodleian.ox.ac.uk/interface/union.php?iwork_id=975935xxxCofkHrefEndxxxms. Z 431-1, p. 111-112xxxCofkLinkEndxxx
+
+
+    xxxCofkLinkStartxxx
+    xxxCofkHrefStartxxx
+    https://emlo-edit.bodleian.ox.ac.uk/interface/union.php?iwork_id=977453
+    xxxCofkHrefEndxxx
+    12 Jun 1664: $RSEL Christian Huygens (Calais $RSEL Calais) to $RSEL Robert Moray
+    xxxCofkLinkEndxxx
+
+    """
+    if not issubclass(sender, Recref):
+        return
+
