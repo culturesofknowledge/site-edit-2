@@ -473,7 +473,7 @@ class CofkCollectWork(models.Model):
 
 class CofkCollectAddresseeOfWork(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
-    addressee_id = models.IntegerField()
+    addressee_id = models.AutoField(primary_key=True)
     iperson = models.ForeignKey('person.CofkCollectPerson', models.CASCADE)
     iwork = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
     notes_on_addressee = models.TextField(blank=True, null=True)
@@ -518,7 +518,7 @@ class CofkCollectAuthorOfWork(models.Model):
 
 class CofkCollectDestinationOfWork(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
-    destination_id = models.IntegerField()
+    destination_id = models.AutoField(primary_key=True)
     location = models.ForeignKey('location.CofkCollectLocation', models.CASCADE)
     iwork = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
     notes_on_destination = models.TextField(blank=True, null=True)
@@ -549,7 +549,7 @@ class CofkCollectLanguageOfWork(models.Model):
 
 class CofkCollectOriginOfWork(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
-    origin_id = models.IntegerField()
+    origin_id = models.AutoField(primary_key=True)
     location = models.ForeignKey('location.CofkCollectLocation', models.CASCADE)
     iwork = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
     notes_on_origin = models.TextField(blank=True, null=True)
@@ -565,7 +565,7 @@ class CofkCollectOriginOfWork(models.Model):
 
 class CofkCollectPersonMentionedInWork(models.Model):
     upload = models.ForeignKey("uploader.CofkCollectUpload", null=False, on_delete=models.CASCADE)
-    mention_id = models.IntegerField()
+    mention_id = models.AutoField(primary_key=True)
     iperson = models.ForeignKey('person.CofkCollectPerson', models.CASCADE)
     iwork = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
     notes_on_person_mentioned = models.TextField(blank=True, null=True)

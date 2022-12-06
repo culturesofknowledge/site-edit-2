@@ -17,6 +17,14 @@ from work.models import CofkCollectWork, CofkCollectLanguageOfWork, CofkCollectW
 log = logging.getLogger(__name__)
 
 
+def get_common_languages():
+    # results from select distinct(language_code) from cofk_collect_language_of_work;
+    common_languages = ["otk", "fro", "ara", "ces", "hye", "cat", "syr", "dan", "rus", "por", "swe", "nld", "hrv",
+                        "yes", "nds", "pol", "gla", "heb", "grc", "eng", "spa", "aii", "fas", "chu", "cym", "fra",
+                        "deu", "tam", "kat", "eus", "lat", "cop", "ita", "cor", "tur"]
+    return list(Iso639LanguageCode.objects.filter(code_639_3__in=common_languages).all())
+
+
 class CofkWork(CofkEntity):
 
     def __init__(self, upload: CofkCollectUpload, sheet_data: Generator[Tuple[Cell], None, None], people, locations,
@@ -25,10 +33,12 @@ class CofkWork(CofkEntity):
 
         self.works: List[CofkCollectWork] = []
         self.people: List[CofkCollectPerson] = people
+        self.locations: List[CofkCollectLocation] = locations
+        self.common_languages: List[Iso639LanguageCode] = get_common_languages()
+
         self.authors: List[CofkCollectAuthorOfWork] = []
         self.mentioned: List[CofkCollectPersonMentionedInWork] = []
         self.addressees: List[CofkCollectAddresseeOfWork] = []
-        self.locations: List[CofkCollectLocation] = locations
         self.origins: List[CofkCollectOriginOfWork] = []
         self.destinations: List[CofkCollectDestinationOfWork] = []
         self.resources: List[CofkCollectWorkResource] = []
@@ -132,8 +142,12 @@ class CofkWork(CofkEntity):
             work_languages.append("lat")
 
         for language in work_languages:
-            # Would it optimize to load languages to memory, that would eliminate database queries
-            lan = Iso639LanguageCode.objects.filter(code_639_3=language).first()
+            lan = [l for l in self.common_languages if l.code_639_3 == language]
+
+            if not lan:
+                lan = Iso639LanguageCode.objects.filter(code_639_3=language).first()
+            else:
+                lan = lan[0]
 
             if lan is not None:
                 self.languages.append(CofkCollectLanguageOfWork(upload=self.upload, iwork=work, language_code=lan))
@@ -141,3 +155,9 @@ class CofkWork(CofkEntity):
                 msg = f'The value in column "language_id", "{language}" is not a valid ISO639 language.'
                 log.error(msg)
                 self.add_error(ValidationError(msg))
+
+    def create_all(self):
+        for entities in [self.authors, self.mentioned, self.addressees, self.origins, self.destinations,
+                         self.resources, self.languages]:
+            if entities:
+                self.bulk_create(entities)

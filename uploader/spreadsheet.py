@@ -144,6 +144,10 @@ class CofkUploadExcelFile:
                                                                  works=self.data['Work'].entities.works,
                                                                  sheet_name='Manifestation')
 
+        self.data['Work'].entities.create_all()
+
+        raise ValueError('stuff')
+
         '''if self.people.other_errors:
             for row_index in self.people.other_errors:
                 for error in self.people.other_errors[row_index]:
