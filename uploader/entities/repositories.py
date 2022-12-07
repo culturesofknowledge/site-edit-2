@@ -33,8 +33,7 @@ class CofkRepositories(CofkEntity):
                     else:
                         log.warning(f'{inst_id} duplicated in {self.sheet.name} sheet.')
                 else:
-                    # New repo to be created?
-                    pass
+                    log.warning(f'New repo {inst_dict} to be created?')
 
         if self.institutions:
             self.bulk_create(self.institutions)

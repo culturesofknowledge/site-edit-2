@@ -6,9 +6,6 @@ from openpyxl.reader.excel import load_workbook
 from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
-from institution.models import CofkCollectInstitution
-from location.models import CofkCollectLocation
-from person.models import CofkCollectPerson
 from uploader.OpenpyxlReaderWOFormatting import OpenpyxlReaderWOFormatting
 from uploader.constants import mandatory_sheets
 from uploader.entities.entity import CofkEntity
@@ -22,13 +19,14 @@ from uploader.validation import CofkMissingSheetError, CofkMissingColumnError, C
 
 log = logging.getLogger(__name__)
 
-
+# not used currently
+''''
 class CofkColumn:
     def __init__(self, name):
         self.name = name
         self.required: bool = False
         self.validation: Union[Callable, None] = None
-
+'''
 
 class CofkSheet:
     def __init__(self, sheet: Worksheet):
@@ -123,8 +121,7 @@ class CofkUploadExcelFile:
                                                      work_data=self.data['Work'].worksheet)
 
         # The next sheet is people
-        self.data['People'].entities = CofkPeople(upload=self.upload, sheet=self.data['People'],
-                                                  work_data=self.data['Work'].worksheet)
+        self.data['People'].entities = CofkPeople(upload=self.upload, sheet=self.data['People'])
 
         # Second last but not least, the works themselves
         self.data['Work'].entities = CofkWork(upload=self.upload, sheet=self.data['Work'],
@@ -139,6 +136,7 @@ class CofkUploadExcelFile:
                                                                  works=self.data['Work'].entities.works)
 
         self.data['Work'].entities.create_all()
+        # raise ValueError()
 
 
         '''if self.people.other_errors:
@@ -180,15 +178,3 @@ class CofkUploadExcelFile:
             raise CofkMissingSheetError(msg)
 
         log.debug(f'All {len(mandatory_sheets)} sheets verified')
-
-    def create_objects(self):
-
-        CofkCollectInstitution.objects.bulk_create(self.repositories)
-
-        try:
-            CofkCollectLocation.objects.bulk_create(self.locations)
-        except ValueError:
-            # Will error if location_id != int
-            pass
-
-        log.debug(f'Created {len(self.locations)} locations.')
