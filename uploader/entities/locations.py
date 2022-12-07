@@ -1,13 +1,11 @@
 import logging
 from typing import List, Generator, Tuple
 
-from django.core.exceptions import ValidationError
 from openpyxl.cell import Cell
 
 from location.models import CofkCollectLocation, CofkUnionLocation
 from uploader.entities.entity import CofkEntity
 from uploader.models import CofkCollectUpload
-from work.models import CofkCollectOriginOfWork, CofkCollectDestinationOfWork
 
 log = logging.getLogger(__name__)
 
@@ -18,11 +16,9 @@ class CofkLocations(CofkEntity):
         super().__init__(upload, sheet)
         self.work_data = work_data
         self.locations: List[CofkCollectLocation] = []
-        # self.origins: List[CofkCollectOriginOfWork] = []
-        # self.destinations: List[CofkCollectDestinationOfWork] = []
 
         for index, row in enumerate(self.iter_rows(), start=1):
-            loc_dict = {self.get_column_name_by_index(cell.column): cell.value for cell in row}
+            loc_dict = self.get_row(row)
             self.check_required(loc_dict, index)
             self.check_data_types(loc_dict, index)
 
@@ -36,8 +32,7 @@ class CofkLocations(CofkEntity):
                 self.locations.append(CofkCollectLocation(**loc_dict))
 
         if self.locations:
-            CofkCollectLocation.objects.bulk_create(self.locations, batch_size=500)
-            log.debug(f'{len(self.locations)} locations created')
+            self.bulk_create(self.locations)
 
         # When we've iterated over all rows we can check whether all locations mentioned in work sheet
         # occur in places sheet
@@ -61,39 +56,6 @@ class CofkLocations(CofkEntity):
                 tense = 'is' if len(loc) == 1 else 'are'
                 self.add_error(ValidationError(f'The {plural} referenced in the Places spreadsheet'
                                                f' but {tense} missing from the Work spreadsheet: {loc_joined}'))'''
-
-    def process_places_sheet(self) -> List[tuple]:
-        """
-        Get all people from people spreadsheet
-        Populating a list of tuples of (Name, iperson_id)
-        TODO where does Geonames lookup happen?
-        """
-        sheet_locations = []
-        for i in range(1, len(self.sheet_data.index)):
-            self.row_data = {k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None}
-
-            self.check_data_types('Places')
-            location_id = self.row_data['location_id'] if 'location_id' in self.row_data else 1
-
-            location = CofkCollectLocation(**self.row_data)
-
-            if location_id and isinstance(location_id, int):
-                location.union_location = CofkUnionLocation.objects.filter(location_id=location_id).first()
-
-            location.location_id = location_id
-            location.element_1_eg_room = 0
-            location.element_2_eg_building = 0
-            location.element_3_eg_parish = 0
-            location.element_4_eg_city = 0
-            location.element_5_eg_county = 0
-            location.element_6_eg_country = 0
-            location.element_7_eg_empire = 0
-
-            self.locations.append(location)
-
-            sheet_locations.append((self.row_data['location_name'], location_id))
-
-        return sheet_locations
 
     def process_work_sheet(self) -> List[tuple]:
         """

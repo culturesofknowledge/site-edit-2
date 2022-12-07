@@ -1,10 +1,8 @@
 import logging
 
-from typing import List, Generator, Tuple, Type, Any
+from typing import List, Type, Any
 
-from django.core.exceptions import ValidationError
 from django.db import models
-from openpyxl.cell import Cell
 
 from location.models import CofkCollectLocation
 from person.models import CofkCollectPerson
@@ -44,8 +42,7 @@ class CofkWork(CofkEntity):
         self.languages: List[CofkCollectLanguageOfWork] = []
 
         for index, row in enumerate(self.iter_rows(), start=1):
-            work_dict = {self.get_column_name_by_index(cell.column): cell.value for cell in row if
-                         cell.value is not None}
+            work_dict = self.get_row(row)
             self.check_required(work_dict, index)
             # TODO check work data types
             self.check_data_types(work_dict, index)
@@ -54,6 +51,8 @@ class CofkWork(CofkEntity):
             # log.debug(work_dict)
 
             w = CofkCollectWork(**{k: work_dict[k] for k in work_dict if k in CofkCollectWork.__dict__.keys()})
+            # TODO potential efficiency gain if work is bulk saved
+            # however, work needs to exist before related objects are created
             w.save()
             self.works.append(w)
             # log.debug({k: work_dict[k] for k in work_dict if k in CofkCollectWork.__dict__.keys()})
@@ -89,14 +88,14 @@ class CofkWork(CofkEntity):
         upload.total_works = len(self.works)
         upload.save()
 
-    def get_person(self, person_id: str):
+    def get_person(self, person_id: str) -> CofkCollectPerson:
         person = [p for p in self.people if
                   p.union_iperson is not None and p.union_iperson.iperson_id == int(person_id)]
 
         if person:
             return person[0]
 
-    def get_location(self, location_id: str):
+    def get_location(self, location_id: str) -> CofkCollectLocation:
         location = [l for l in self.locations if
                     l.union_location is not None and l.union_location.location_id == int(location_id)]
 
@@ -111,8 +110,6 @@ class CofkWork(CofkEntity):
             for _id, name in zip(id_list, name_list):
                 people_list.append(people_model(upload=self.upload, iwork=work,
                                                 iperson=self.get_person(_id)))
-        else:
-            log.info(self.errors)
 
     def process_locations(self, work: CofkCollectWork, location_list: List[Any], location_model: Type[models.Model],
                           work_dict: dict, ids: str, names: str):
@@ -122,8 +119,6 @@ class CofkWork(CofkEntity):
             for _id, name in zip(id_list, name_list):
                 location_list.append(location_model(upload=self.upload, iwork=work,
                                                     location=self.get_location(_id)))
-        else:
-            log.info(self.errors)
 
     def process_languages(self, work_dict: dict, work: CofkCollectWork):
         work_languages = work_dict['language_id'].split(';')
@@ -151,9 +146,7 @@ class CofkWork(CofkEntity):
             if lan is not None:
                 self.languages.append(CofkCollectLanguageOfWork(upload=self.upload, iwork=work, language_code=lan))
             else:
-                msg = f'The value in column "language_id", "{language}" is not a valid ISO639 language.'
-                log.error(msg)
-                self.add_error(ValidationError(msg))
+                self.add_error(f'The value in column "language_id", "{language}" is not a valid ISO639 language.')
 
     def create_all(self):
         for entities in [self.authors, self.mentioned, self.addressees, self.origins, self.destinations,
