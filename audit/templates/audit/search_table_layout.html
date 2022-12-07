@@ -34,13 +34,17 @@
             <td>{{ r.column_name }}</td>
             <td>{{ r.change_type }}</td>
             <td>
-                {% if  r.new_column_value %}
-                    New value: <span> {{ r.new_column_value }}</span>
-                {% endif %}
+                <div class="margin-bottom-sm">
+                    {% if  r.new_column_value %}
+                        New value: <span> {{ r.new_column_value }}</span>
+                    {% endif %}
+                </div>
+                <div>
 
-                {% if  r.old_column_value %}
-                    Old value: <span> {{ r.old_column_value }}</span>
-                {% endif %}
+                    {% if  r.old_column_value %}
+                        Old value: <span> {{ r.old_column_value }}</span>
+                    {% endif %}
+                </div>
             </td>
 
             <td>{{ r.audit_id }}</td>
