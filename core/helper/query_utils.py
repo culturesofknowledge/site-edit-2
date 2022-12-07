@@ -52,7 +52,10 @@ def create_queries_by_field_fn_maps(field_fn_maps: dict, data: dict) -> list[Q]:
     return queries
 
 
-def create_queries_by_lookup_field(request_data: dict, search_field_names: Union[list[str]]) -> Iterable[Q]:
+def create_queries_by_lookup_field(request_data: dict,
+                                   search_field_names: Union[list[str]],
+                                   search_fields_maps: dict[str, Iterable[str]] = None
+                                   ) -> Iterable[Q]:
     for field_name in search_field_names:
         field_val = request_data.get(field_name)
         lookup_key = request_data.get(f'{field_name}_lookup')
@@ -60,15 +63,17 @@ def create_queries_by_lookup_field(request_data: dict, search_field_names: Union
         if not field_val and lookup_key not in nullable_lookup_keys:
             continue
 
-        search_fields = request_data.get(f'{field_name}_search_fields')
-
         if (lookup_fn := choices_lookup_map.get(lookup_key)) is None:
             log.warning(f'lookup fn not found -- [{field_name}][{lookup_key}]')
             continue
 
+        _request_search_fields = request_data.get(f'{field_name}_search_fields')
+        _request_search_fields = str(_request_search_fields or '').split(',')
+        search_fields_maps = search_fields_maps or dict()
+        search_fields = search_fields_maps.get(field_name, _request_search_fields)
         if search_fields:
             q = Q()
-            for search_field in str(search_fields).split(','):
+            for search_field in search_fields:
                 q.add(run_lookup_fn(lookup_fn, search_field, field_val), Q.OR)
             yield q
         else:
