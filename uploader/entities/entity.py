@@ -40,18 +40,6 @@ class CofkEntity:
         return [[c.value for c in r if not isinstance(c, EmptyCell) and c.column <= len(self.fields['columns'])
                  and self.get_column_name_by_index(c.column) == name][0] for r in self.sheet.data]
 
-    '''def get_all_values_by_column_name(self, name: str) -> List[int]:
-        values = []
-        for v in self.get_column_by_name(name):
-            if isinstance(v, int):
-                values.append(v)
-            elif isinstance(v, str):
-                values += [int(i) for i in v.split(';')]
-            else:
-                log.warning(f'Value in {name} of {self.sheet.name} is {v}')
-
-        return values'''
-
     def check_required(self, entity: dict, row_number: int):
         for missing in [m for m in self.fields['required'] if m not in entity]:
             self.add_error(f'Column {missing} in {self.sheet.name} is missing.', row_number)
@@ -61,9 +49,17 @@ class CofkEntity:
         log.debug(f'Checking data type: {self.sheet.name}, row {row_number}')
 
         if 'strings' in self.fields:
-            for str_field in [s for s in self.fields['strings'] if s in entity and not isinstance(entity[s], str)]:
-                # TODO do I need to cast to string?
-                entity[str_field] = str(entity[str_field])
+            for str_field in [s for s in self.fields['strings'] if
+                              (isinstance(s, str) and s in entity and not isinstance(entity[s], str) or
+                              isinstance(s, tuple) and s[0] in entity)]:
+                if isinstance(str_field, tuple):
+                    entity[str_field[0]] = str(entity[str_field[0]])
+
+                    if len(entity[str_field[0]]) > str_field[1]:
+                        self.add_error(f'The field {str_field[0]} is longer than the limit of {str_field[1]} '
+                                       f'characters for that field.')
+                else:
+                    entity[str_field] = str(entity[str_field])
 
         # ids can be ints or strings that are ints separated by a semicolon and no space
         if 'ids' in self.fields:

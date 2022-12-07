@@ -93,7 +93,8 @@ mandatory_sheets = {
         'columns': ['location_name', 'location_id'],
         'required': ['location_name'],
         'ids': ['location_id'],
-        'combos': [('location_id', 'location_name')]
+        'combos': [('location_id', 'location_name')],
+        'strings': [('location_name', 500)]
     },
     'Repositories': {
         'columns': ['institution_name', 'institution_id', 'institution_city', 'institution_country'],

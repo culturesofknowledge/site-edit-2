@@ -23,7 +23,8 @@ class CofkCollectInstitution(models.Model):
         unique_together = (('upload', 'institution_id'),)
 
     def __str__(self):
-        return str(self.union_institution) if self.union_institution is not None else f'{self.institution_name} (collect)'
+        return str(self.union_institution) if\
+            self.union_institution is not None else f'{self.institution_name} (collect)'
 
 
 class CofkUnionInstitution(models.Model, RecordTracker):
