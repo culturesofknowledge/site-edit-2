@@ -52,8 +52,8 @@ def create_queries_by_field_fn_maps(field_fn_maps: dict, data: dict) -> list[Q]:
     return queries
 
 
-def create_queries_by_lookup_field(request_data: dict, lookup_fields: Union[list[str]]) -> Iterable[Q]:
-    for field_name in lookup_fields:
+def create_queries_by_lookup_field(request_data: dict, search_field_names: Union[list[str]]) -> Iterable[Q]:
+    for field_name in search_field_names:
         field_val = request_data.get(field_name)
         lookup_key = request_data.get(f'{field_name}_lookup')
 
