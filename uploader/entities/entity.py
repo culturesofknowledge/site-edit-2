@@ -99,7 +99,8 @@ class CofkEntity:
         if 'combos' in self.fields:
             for combo in self.fields['combos']:
                 log.debug(f'---- {combo}')
-                if isinstance(entity[combo[0]], str) and ';' in entity[combo[0]] or ';' in entity[combo[1]]:
+                if combo[0] in entity and isinstance(entity[combo[0]], str) and ';' in entity[combo[0]]\
+                        or (combo[1] in entity and ';' in entity[combo[1]]):
                     if len(entity[combo[0]].split(';')) < len(entity[combo[1]].split(';')):
                         self.add_error(f'Column {combo[0]} has fewer ids than there are names in {combo[1]}.')
                     elif len(entity[combo[1]].split(';')) < len(entity[combo[0]].split(';')):
