@@ -18,11 +18,11 @@ class CofkEntity:
         self.upload: CofkCollectUpload = upload
         self.sheet = sheet
         self.ids: List[int] = []
-        self.ids_to_be_created: List[int] = []
-        self.row_data = None
-        self.errors = {}
-        self.other_errors = {}
-        self.row = 1
+        # self.ids_to_be_created: List[int] = []
+        # self.row_data = None
+        self.errors: dict = {}
+        self.other_errors: dict = {}
+        self.row: int = 1
 
     @property
     def fields(self):
@@ -65,23 +65,24 @@ class CofkEntity:
         # ids can be ints or strings that are ints separated by a semicolon and no space
         if 'ids' in self.fields:
             for id_field in [t for t in self.fields['ids'] if t in entity]:
-                if isinstance(entity[id_field], int) and entity[id_field] > 0:
-                    self.ids.append(entity[id_field])
+                if isinstance(entity[id_field], int) and entity[id_field] < 1:
+                    msg = f'Column {id_field} in {self.sheet.name} sheet is not a valid positive integer.'
+                    log.error(msg)
+                    self.add_error(ValidationError(msg))
+                    # self.ids.append(entity[id_field])
                 elif isinstance(entity[id_field], str):
                     for int_value in entity[id_field].split(';'):
                         try:
                             if int(int_value) < 0:
-                                raise ValueError()
+                                msg = f'Column {id_field} in {self.sheet.name} sheet is not a valid positive integer.'
+                                log.error(msg)
+                                self.add_error(ValidationError(msg))
 
-                            self.ids.append(int(int_value))
+                            # self.ids.append(int(int_value))
                         except ValueError as ve:
-                            msg = f'Column {int_value} in {self.sheet.name} sheet is not a valid positive integer.'
+                            msg = f'Column {id_field} in {self.sheet.name} sheet is not a valid positive integer.'
                             log.error(msg)
                             self.add_error(ValidationError(msg))
-                else:
-                    msg = f'Column {entity[id_field]} in {self.sheet.name} sheet is not a valid positive integer.'
-                    log.error(msg)
-                    self.add_error(ValidationError(msg))
 
         if 'ints' in self.fields:
             for int_value in [t for t in self.fields['ints'] if t in entity and not isinstance(t, int)]:
@@ -106,6 +107,7 @@ class CofkEntity:
 
         if 'combos' in self.fields:
             for combo in self.fields['combos']:
+                log.debug(f'---- {combo}')
                 if isinstance(entity[combo[0]], str) and ';' in entity[combo[0]] or ';' in entity[combo[1]]:
                     if len(entity[combo[0]].split(';')) < len(entity[combo[1]].split(';')):
                         msg = f'Column {combo[0]} has fewer ids than there are names in {combo[1]}.'

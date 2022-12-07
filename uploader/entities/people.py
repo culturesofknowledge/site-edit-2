@@ -32,7 +32,7 @@ class CofkPeople(CofkEntity):
         self.work_data = work_data
 
         self.people: List[CofkCollectPerson] = []
-        self._ids: List[int] = []
+        # self._ids: List[int] = []
 
         for index, row in enumerate(self.iter_rows(), start=1):
             per_dict = {self.get_column_name_by_index(cell.column): cell.value for cell in row}
@@ -42,14 +42,14 @@ class CofkPeople(CofkEntity):
             if not self.errors:
                 ids, names = self.clean_lists(per_dict, 'iperson_id', 'primary_name')
                 for _id, name in zip(ids, names):
-                    if _id not in self._ids:
+                    if _id not in self.ids:
                         person = {'iperson_id': _id,
                                   'primary_name': name,
                                   'union_iperson': CofkUnionPerson.objects.filter(iperson_id=_id).first(),
                                   'upload': upload,
                                   'editors_notes': per_dict['editors_notes'] if 'editors_notes' in per_dict else None}
                         self.people.append(CofkCollectPerson(**person))
-                        self._ids.append(_id)
+                        self.ids.append(_id)
                     else:
                         log.warning(f'{_id} duplicated in People sheet.')
 

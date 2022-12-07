@@ -48,7 +48,7 @@ class CofkWork(CofkEntity):
                          cell.value is not None}
             self.check_required(work_dict, index)
             # TODO check work data types
-            # self.check_data_types(work_dict, index)
+            self.check_data_types(work_dict, index)
             work_dict['upload_status_id'] = 1
             work_dict['upload'] = upload
             # log.debug(work_dict)
