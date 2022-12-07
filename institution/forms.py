@@ -60,8 +60,7 @@ class GeneralSearchFieldset(forms.Form):
 
     last_edit_from = forms.CharField(required=False)
     last_edit_to = forms.CharField(required=False)
-    last_edit_info = "Enter as dd/mm/yyyy hh:mm or dd/mm/yyyy (please note: dd/mm/yyyy counts as the very " \
-                     "start of a day)."
+    last_edit_info = form_utils.datetime_search_info
 
     change_user = forms.CharField(required=False, help_text='Username of the person who last changed the record.')
     change_user_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)

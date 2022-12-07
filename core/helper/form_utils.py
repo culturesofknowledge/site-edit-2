@@ -30,6 +30,9 @@ short_month_choices = [
     (12, 'Dec'),
 ]
 
+datetime_search_info = "Enter as dd/mm/yyyy hh:mm or dd/mm/yyyy (please note: dd/mm/yyyy counts as the very " \
+                       "start of a day)."
+
 
 def record_tracker_label_fn_factory(subject='Entry'):
     def _fn(_self):
