@@ -1,3 +1,4 @@
+'''
 class DBMapping:
     """
     Helper class for mapping between Excel sheet, SQLAlchemy class name
@@ -11,7 +12,7 @@ class DBMapping:
         self.id = _id
 
 
-mapping = {'person': DBMapping('person', 'cofk_collect_person', 'CofkCollectPerson', 'iperson_id'),
+ mapping = {'person': DBMapping('person', 'cofk_collect_person', 'CofkCollectPerson', 'iperson_id'),
            'location': DBMapping('location', 'cofk_collect_location', 'CofkCollectLocation', 'location_id'),
            'institution': DBMapping('institution', 'cofk_collect_institution', 'CofkCollectInstitution',
                                     'institution_id'),
@@ -38,6 +39,7 @@ mapping = {'person': DBMapping('person', 'cofk_collect_person', 'CofkCollectPers
            'image_of_manif': DBMapping('image_of_manif', 'cofk_collect_image_of_manif',
                                        't_cofk_collect_image_of_manif'),
            }
+'''
 
 # These are the sheets expected to be in every uploaded Excel file
 # Sheet names are case-sensitive !!!!!!
@@ -46,29 +48,33 @@ mapping = {'person': DBMapping('person', 'cofk_collect_person', 'CofkCollectPers
 mandatory_sheets = {
     'Work': {
         'columns': ['iwork_id', 'date_of_work_as_marked', 'original_calendar', 'date_of_work_std_year',
-                'date_of_work_std_month', 'date_of_work_std_day', 'date_of_work2_std_year', 'date_of_work2_std_month',
-                'date_of_work2_std_day', 'date_of_work_std_is_range', 'date_of_work_inferred',
-                'date_of_work_uncertain', 'date_of_work_approx', 'notes_on_date_of_work', 'author_names',
-                'author_ids', 'authors_as_marked', 'authors_inferred', 'authors_uncertain', 'notes_on_authors',
-                'addressee_names', 'addressee_ids', 'addressees_as_marked', 'addressees_inferred',
-                'addressees_uncertain', 'notes_on_addressees', 'origin_name', 'origin_id', 'origin_as_marked',
-                'origin_inferred', 'origin_uncertain', 'destination_name', 'destination_id', 'destination_as_marked',
-                'destination_inferred', 'destination_uncertain', 'abstract', 'keywords', 'language_id',
-                'language_of_work', 'hasgreek', 'hasarabic', 'hashebrew', 'haslatin', 'answererby', 'incipit',
-                'excipit', 'notes_on_letter', 'mention_id', 'emlo_mention_id', 'notes_on_people_mentioned',
-                'editors_notes', 'resource_name', 'resource_url', 'resource_details'],
+                    'date_of_work_std_month', 'date_of_work_std_day', 'date_of_work2_std_year',
+                    'date_of_work2_std_month', 'date_of_work2_std_day', 'date_of_work_std_is_range',
+                    'date_of_work_inferred', 'date_of_work_uncertain', 'date_of_work_approx', 'notes_on_date_of_work',
+                    'author_names', 'author_ids', 'authors_as_marked', 'authors_inferred', 'authors_uncertain',
+                    'notes_on_authors', 'addressee_names', 'addressee_ids', 'addressees_as_marked',
+                    'addressees_inferred', 'addressees_uncertain', 'notes_on_addressees', 'origin_name', 'origin_id',
+                    'origin_as_marked', 'origin_inferred', 'origin_uncertain', 'destination_name',
+                    'destination_id', 'destination_as_marked', 'destination_inferred', 'destination_uncertain',
+                    'abstract', 'keywords', 'language_id', 'language_of_work', 'hasgreek', 'hasarabic', 'hashebrew',
+                    'haslatin', 'answererby', 'incipit', 'excipit', 'notes_on_letter', 'mention_id', 'emlo_mention_id',
+                    'notes_on_people_mentioned', 'editors_notes', 'resource_name', 'resource_url', 'resource_details'],
         'ids': ['iwork_id', 'author_ids', 'addressee_ids', 'origin_id', 'emlo_mention_id'],
-        'ints': ['iwork_id', 'date_of_work_std_year', 'date_of_work_std_month', 'date_of_work2_std_year',
-             'date_of_work2_std_month', 'date_of_work2_std_day', 'origin_id', 'destination_id'],
+        'ints': ['iwork_id', 'date_of_work_std_year', 'date_of_work_std_month', 'date_of_work_std_day',
+                 'date_of_work2_std_year', 'date_of_work2_std_month', 'date_of_work2_std_day', 'origin_id',
+                 'destination_id'],
         'bools': ['date_of_work_std_is_range', 'date_of_work_inferred', 'date_of_work_uncertain', 'date_of_work_approx',
-              'authors_inferred', 'authors_uncertain', 'addressees_inferred', 'addressees_uncertain',
-              'origin_inferred', 'origin_uncertain', 'destination_inferred', 'destination_uncertain',
-              'hasgreek', 'hasarabic', 'hashebrew', 'haslatin'],
+                  'authors_inferred', 'authors_uncertain', 'addressees_inferred', 'addressees_uncertain',
+                  'origin_inferred', 'origin_uncertain', 'destination_inferred', 'destination_uncertain',
+                  'hasgreek', 'hasarabic', 'hashebrew', 'haslatin'],
         'strings': ['original_calendar', 'notes_on_letter', 'notes_on_people_mentioned', 'author_names',
                     'notes_on_authors', 'mention_id', 'origin_name', 'destination_name'],
         'required': ['iwork_id'],
         'combos': [('author_ids', 'author_names'), ('addressee_ids', 'addressee_names'),
-                   ('emlo_mention_id', 'mention_id')]
+                   ('emlo_mention_id', 'mention_id')],
+        'years': ['date_of_work_std_year', 'date_of_work2_std_year'],
+        'months': ['date_of_work_std_month', 'date_of_work2_std_month'],
+        'dates': ['date_of_work_std_day', 'date_of_work2_std_day']
     },
     'Manifestation': {
         'columns': ['manifestation_id', 'iwork_id', 'manifestation_type', 'repository_id', 'repository_name',
@@ -86,7 +92,7 @@ mandatory_sheets = {
     'Places': {
         'columns': ['location_name', 'location_id'],
         'required': ['location_name'],
-               'ids': ['location_id'],
+        'ids': ['location_id'],
         'combos': [('location_id', 'location_name')]
     },
     'Repositories': {
@@ -97,4 +103,5 @@ mandatory_sheets = {
     }
 }
 
-multiple_ints = ['author_ids', 'addressee_ids']
+max_year = 1900
+min_year = 1500

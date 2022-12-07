@@ -6,6 +6,7 @@ from django.db import models
 
 from location.models import CofkCollectLocation
 from person.models import CofkCollectPerson
+from uploader.constants import max_year, min_year
 from uploader.entities.entity import CofkEntity
 from uploader.models import CofkCollectUpload, Iso639LanguageCode
 from work.models import CofkCollectWork, CofkCollectLanguageOfWork, CofkCollectWorkResource, \
@@ -89,17 +90,13 @@ class CofkWork(CofkEntity):
         upload.save()
 
     def get_person(self, person_id: str) -> CofkCollectPerson:
-        person = [p for p in self.people if
-                  p.union_iperson is not None and p.union_iperson.iperson_id == int(person_id)]
-
-        if person:
+        if person := [p for p in self.people if
+                      p.union_iperson is not None and p.union_iperson.iperson_id == int(person_id)]:
             return person[0]
 
     def get_location(self, location_id: str) -> CofkCollectLocation:
-        location = [l for l in self.locations if
-                    l.union_location is not None and l.union_location.location_id == int(location_id)]
-
-        if location:
+        if location := [l for l in self.locations if
+                        l.union_location is not None and l.union_location.location_id == int(location_id)]:
             return location[0]
 
     def process_people(self, work: CofkCollectWork, people_list: List[Any], people_model: Type[models.Model],
@@ -108,8 +105,12 @@ class CofkWork(CofkEntity):
 
         if not self.errors:
             for _id, name in zip(id_list, name_list):
-                people_list.append(people_model(upload=self.upload, iwork=work,
-                                                iperson=self.get_person(_id)))
+                if person := self.get_person(_id):
+                    people_list.append(people_model(upload=self.upload, iwork=work, iperson=person))
+                else:
+                    # Person not present in people sheet
+                    self.add_error(f'Person with id {_id} was listed in {self.sheet.name} but is not present in'
+                                   f'People sheet. ')
 
     def process_locations(self, work: CofkCollectWork, location_list: List[Any], location_model: Type[models.Model],
                           work_dict: dict, ids: str, names: str):
@@ -117,8 +118,12 @@ class CofkWork(CofkEntity):
 
         if not self.errors:
             for _id, name in zip(id_list, name_list):
-                location_list.append(location_model(upload=self.upload, iwork=work,
-                                                    location=self.get_location(_id)))
+                if location := self.get_location(_id):
+                    location_list.append(location_model(upload=self.upload, iwork=work, location=location))
+                else:
+                    # Location not present in places sheet
+                    self.add_error(f'Location with id {_id} was listed in {self.sheet.name} but is not present in'
+                                   f'Places sheet. ')
 
     def process_languages(self, work_dict: dict, work: CofkCollectWork):
         work_languages = work_dict['language_id'].split(';')
@@ -153,3 +158,25 @@ class CofkWork(CofkEntity):
                          self.resources, self.languages]:
             if entities:
                 self.bulk_create(entities)
+
+    def check_year(self, year_field: str, year: int):
+        if isinstance(year, int) and  not max_year >= year >= min_year:
+            self.add_error(f'{year_field}: is {year} but must be between {min_year} and {max_year}')
+
+    def check_month(self, month_field: str, month: int):
+        if isinstance(month, int) and not 1 <= month <= 12:
+            self.add_error(f'{month_field}: is {month} but must be between 1 and 12')
+
+    def check_date(self, date_field: str, date: int):
+        if date > 31:
+            self.add_error(f'{date_field}: is {date} but can not be greater than 31')
+
+        # If month is April, June, September or November then day must be not more than 30
+        '''elif month in [4, 6, 9, 11] and field > 30:
+            self.add_error('%(field)s: can not be more than 30 for April, June, September or November',
+                           {'field': field_name})
+        # For February not more than 29
+        elif month == 2 and field > 29:
+            self.add_error('%(field)s: can not be more than 29 for February', {'field': field_name})'''
+
+    # TODO check date ranges

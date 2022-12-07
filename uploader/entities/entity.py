@@ -60,6 +60,11 @@ class CofkEntity:
         self.row = row_number
         log.debug(f'Checking data type: {self.sheet.name}, row {row_number}')
 
+        if 'strings' in self.fields:
+            for str_field in [s for s in self.fields['strings'] if s in entity and not isinstance(entity[s], str)]:
+                # TODO do I need to cast to string?
+                entity[str_field] = str(entity[str_field])
+
         # ids can be ints or strings that are ints separated by a semicolon and no space
         if 'ids' in self.fields:
             for id_field in [t for t in self.fields['ids'] if t in entity]:
@@ -104,13 +109,19 @@ class CofkEntity:
                     if len(entity[combo[0]].split(';')) < len(entity[combo[1]].split(';')):
                         self.add_error(f'Column {combo[0]} has fewer ids than there are names in {combo[1]}.')
                     elif len(entity[combo[1]].split(';')) < len(entity[combo[0]].split(';')):
-                        # TODO this should be a warning
                         self.add_error(f'Column {combo[1]} has fewer names than there are ids in {combo[0]}.')
 
-        if 'strings' in self.fields:
-            for str_field in [s for s in self.fields['strings'] if s in entity and not isinstance(entity[s], str)]:
-                # TODO do I need to cast to string?
-                entity[str_field] = str(entity[str_field])
+        if 'years' in self.fields:
+            for year_field in [y for y in self.fields['years'] if y in entity]:
+                self.check_year(year_field, entity[year_field])
+
+        if 'months' in self.fields:
+            for month_field in [m for m in self.fields['months'] if m in entity]:
+                self.check_month(month_field, entity[month_field])
+
+        if 'dates' in self.fields:
+            for date_field in [m for m in self.fields['months'] if m in entity]:
+                self.check_date(date_field, entity[date_field])
 
     def add_error(self, error_msg: str, entity=None, row=None):
         if not row:
@@ -182,3 +193,12 @@ class CofkEntity:
         except IntegrityError as ie:
             log.error(ie)
             self.add_error('Could not create objects in database.')
+
+    def check_year(self, year_field: str, year: int):
+        raise NotImplementedError()
+
+    def check_month(self, month_field: str, month: int):
+        raise NotImplementedError()
+
+    def check_date(self, date_field: str, date: int):
+        raise NotImplementedError()
