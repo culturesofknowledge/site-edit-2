@@ -1,17 +1,12 @@
 <table>
     <thead>
     <tr>
-        <th>audit_id</th>
         <th>change_timestamp</th>
-        <th>change_user</th>
-        <th>change_type</th>
-        <th>table_name</th>
-        <th>key_value_text</th>
-        <th>key_value_integer</th>
-        <th>key_decode</th>
-        <th>column_name</th>
-        <th>new_column_value</th>
-        <th>old_column_value</th>
+        <th>Changed record</th>
+        <th>Changed field</th>
+        <th>Type</th>
+        <th>Changes made</th>
+        <th>Audit trail</th>
     </tr>
     </thead>
     <tbody>
@@ -19,17 +14,36 @@
     {% for r in search_results %}
         <tr>
 
-            <td>{{ r.audit_id }}</td>
-            <td>{{ r.change_timestamp }}</td>
-            <td>{{ r.change_user }}</td>
-            <td>{{ r.change_type }}</td>
-            <td>{{ r.table_name }}</td>
-            <td>{{ r.key_value_text }}</td>
-            <td>{{ r.key_value_integer }}</td>
-            <td>{{ r.key_decode }}</td>
+            <td>{{ r.change_timestamp }} by {{ r.change_user }}</td>
+
+            <td>
+                <div>
+                    {% if r.key_decode %}
+                        {{ r.key_decode }}
+                    {% endif %}
+                </div>
+                <div>
+
+                    {% if r.key_value_text %}
+                        [ {{ r.key_value_text }} ]
+                    {% endif %}
+                </div>
+
+            </td>
+
             <td>{{ r.column_name }}</td>
-            <td>{{ r.new_column_value }}</td>
-            <td>{{ r.old_column_value }}</td>
+            <td>{{ r.change_type }}</td>
+            <td>
+                {% if  r.new_column_value %}
+                    New value: <span> {{ r.new_column_value }}</span>
+                {% endif %}
+
+                {% if  r.old_column_value %}
+                    Old value: <span> {{ r.old_column_value }}</span>
+                {% endif %}
+            </td>
+
+            <td>{{ r.audit_id }}</td>
 
         </tr>
     {% endfor %}

@@ -121,7 +121,7 @@ class BasicSearchView(ListView):
 
     def get_sort_by(self):
         if self.request_data.get('order') == 'desc':
-            return  '-' + self.request_data.get('sort_by', self.sort_by_choices[0][0])
+            return '-' + self.request_data.get('sort_by', self.sort_by_choices[0][0])
 
         return self.request_data.get('sort_by', self.sort_by_choices[0][0])
 
@@ -150,7 +150,7 @@ class BasicSearchView(ListView):
                         'total_record': self.get_queryset().count(),
                         'entity': self.entity or '',
                         'title': self.entity.split(',')[1].title() if self.entity else 'Title',
-                        'results_renderer': results_renderer(context[self.context_object_name]),
+                        'results_renderer': results_renderer(self.get_search_results_context(context)),
                         'is_compact_layout': is_compact_layout,
                         'to_user_messages': getattr(self, 'to_user_messages', []),
                         'merge_page_url': reverse(self.merge_page_vname),
@@ -160,6 +160,9 @@ class BasicSearchView(ListView):
             context['return_quick_init_vname'] = self.return_quick_init_vname
 
         return context
+
+    def get_search_results_context(self, context):
+        return context[self.context_object_name]
 
     @staticmethod
     def send_csv_email(csv_handler, queryset, to_email):
