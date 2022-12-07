@@ -23,7 +23,7 @@
     {% include "core/component/common_field_layout.html" with field=form.change_type %}
 
     <!-- Changes made -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.change_made field_lookup=form.change_made %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.change_made field_lookup=form.change_made_lookup %}
 
     <!-- Audit Trail -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.audit_id field_lookup=form.audit_id_lookup %}
