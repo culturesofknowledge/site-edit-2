@@ -958,8 +958,6 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         ]
 
     def get_queryset(self):
-        queryset = CofkUnionQueryableWork.objects.all()
-
         field_fn_maps = {}
 
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
@@ -975,13 +973,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                 'work_id', 'change_user'
             ])
         )
-
-        if queries:
-            queryset = queryset.filter(query_utils.all_queries_match(queries))
-
-        if sort_by := self.get_sort_by():
-            queryset = queryset.order_by(sort_by)
-        return queryset
+        return self.create_queryset_by_queries(CofkUnionQueryableWork, queries)
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:

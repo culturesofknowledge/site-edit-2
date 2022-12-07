@@ -11,6 +11,7 @@ from urllib.parse import urlencode
 from django import template
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 from django.forms import ModelForm, BaseForm, BaseFormSet
 from django.forms import formset_factory
 from django.shortcuts import render
@@ -23,7 +24,7 @@ import core.constant as core_constant
 from core.forms import ImageForm, UploadImageForm, ResourceForm
 from core.forms import RecrefForm
 from core.forms import build_search_components
-from core.helper import file_utils, email_utils, recref_utils, iter_utils
+from core.helper import file_utils, email_utils, recref_utils, iter_utils, query_utils
 from core.helper import model_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
@@ -113,6 +114,16 @@ class BasicSearchView(ListView):
 
     def get_queryset(self):
         raise NotImplementedError('missing get_queryset')
+
+    def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q]):
+        queryset = model_class.objects.all()
+
+        if queries:
+            queryset = queryset.filter(query_utils.all_queries_match(queries))
+
+        if sort_by := self.get_sort_by():
+            queryset = queryset.order_by(sort_by)
+        return queryset
 
     @property
     def request_data(self):

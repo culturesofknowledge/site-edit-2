@@ -52,7 +52,6 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
 
     def get_queryset(self):
         # KTODO
-        queryset = CofkUnionInstitution.objects.all()
 
         # queries for like_fields
         field_fn_maps = {
@@ -66,13 +65,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
                 'resource', 'change_user', 'institution_id'
             ])
         )
-
-        if queries:
-            queryset = queryset.filter(query_utils.all_queries_match(queries))
-
-        if sort_by := self.get_sort_by():
-            queryset = queryset.order_by(sort_by)
-        return queryset
+        return self.create_queryset_by_queries(CofkUnionInstitution, queries)
 
     @property
     def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
