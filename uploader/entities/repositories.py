@@ -1,4 +1,5 @@
 import logging
+from abc import ABC
 from typing import List
 
 from institution.models import CofkCollectInstitution, CofkUnionInstitution
@@ -8,7 +9,7 @@ from uploader.models import CofkCollectUpload
 log = logging.getLogger(__name__)
 
 
-class CofkRepositories(CofkEntity):
+class CofkRepositories(CofkEntity, ABC):
     def __init__(self, upload: CofkCollectUpload, sheet):
         super().__init__(upload, sheet)
         self.institutions: List[CofkCollectInstitution] = []
