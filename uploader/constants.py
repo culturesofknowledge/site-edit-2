@@ -67,7 +67,8 @@ mandatory_sheets = {
         'strings': ['original_calendar', 'notes_on_letter', 'notes_on_people_mentioned', 'author_names',
                     'notes_on_authors', 'mention_id', 'origin_name', 'destination_name'],
         'required': ['iwork_id'],
-        'combos': [('author_ids', 'author_names')]
+        'combos': [('author_ids', 'author_names'), ('addressee_ids', 'addressee_names'),
+                   ('emlo_mention_id', 'mention_id')]
     },
     'Manifestation': {
         'columns': ['manifestation_id', 'iwork_id', 'manifestation_type', 'repository_id', 'repository_name',

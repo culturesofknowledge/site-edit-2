@@ -20,7 +20,6 @@ class CofkManifestations(CofkEntity):
 
         self.repositories = repositories
         self.works = works
-        self.ids = []
         self.manifestations: List[CofkCollectManifestation] = []
 
         for index, row in enumerate(self.iter_rows(), start=1):

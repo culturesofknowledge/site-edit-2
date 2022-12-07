@@ -1,8 +1,5 @@
 import logging
-from typing import Generator, Tuple, List
-
-from django.core.exceptions import ValidationError
-from openpyxl.cell import Cell
+from typing import List
 
 from institution.models import CofkCollectInstitution, CofkUnionInstitution
 from uploader.entities.entity import CofkEntity
@@ -13,16 +10,11 @@ log = logging.getLogger(__name__)
 
 class CofkRepositories(CofkEntity):
     def __init__(self, upload: CofkCollectUpload, sheet):
-        """
-        This entity processes the repositories/institutions from the Excel sheet.
-        They do not need to be cross-referenced or verified.
-        No entities are committed at this stage, they are aggregated in self.institutions.
-        """
         super().__init__(upload, sheet)
         self.institutions: List[CofkCollectInstitution] = []
 
         for index, row in enumerate(self.iter_rows(), start=1):
-            inst_dict = {self.get_column_name_by_index(cell.column): cell.value for cell in row}
+            inst_dict = self.get_row(row)
             self.check_required(inst_dict, index)
             self.check_data_types(inst_dict, index)
 
@@ -30,13 +22,19 @@ class CofkRepositories(CofkEntity):
             # no reason to do so if there's errors
             if not self.errors:
                 if 'institution_id' in inst_dict:
-                    inst_dict['union_institution'] = CofkUnionInstitution.objects.filter(
-                        institution_id=inst_dict['institution_id']).first()
-                    del inst_dict['institution_id']
+                    inst_id = inst_dict['institution_id']
+                    if inst_id not in self.ids:
+                        inst_dict['union_institution'] = CofkUnionInstitution.objects.filter(
+                            institution_id=inst_id).first()
 
-                inst_dict['upload'] = upload
-                self.institutions.append(CofkCollectInstitution(**inst_dict))
-                # self.ids_to_be_created.append(inst.institution_id)
+                        inst_dict['upload'] = upload
+                        self.institutions.append(CofkCollectInstitution(**inst_dict))
+                        self.ids.append(inst_id)
+                    else:
+                        log.warning(f'{inst_id} duplicated in {self.sheet.name} sheet.')
+                else:
+                    # New repo to be created?
+                    pass
 
         if self.institutions:
             self.bulk_create(self.institutions)

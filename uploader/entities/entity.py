@@ -1,11 +1,10 @@
 import logging
-from typing import Generator, Tuple, List, Any, Type
+from typing import Tuple, List, Any, Type, Generator
 
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, IntegrityError
 from openpyxl.cell import Cell
 from openpyxl.cell.read_only import EmptyCell
-
 
 from uploader.constants import mandatory_sheets
 from uploader.models import CofkCollectUpload
@@ -18,29 +17,30 @@ class CofkEntity:
         self.upload: CofkCollectUpload = upload
         self.sheet = sheet
         self.ids: List[int] = []
-        # self.ids_to_be_created: List[int] = []
-        # self.row_data = None
         self.errors: dict = {}
         self.other_errors: dict = {}
         self.row: int = 1
 
     @property
-    def fields(self):
+    def fields(self) -> dict:
         return mandatory_sheets[self.sheet.name]
 
     def get_column_name_by_index(self, index: int) -> str:
         # openpyxl starts column count at 1
         return self.fields['columns'][index - 1]
 
-    def iter_rows(self):
+    def iter_rows(self) -> Generator[Generator[Cell, None, None], None, None]:
         return ((c for c in r if not isinstance(c, EmptyCell)
                  and c.column <= len(self.fields['columns'])) for r in self.sheet.data)
+
+    def get_row(self, row: Generator[Cell, None, None]) -> dict:
+        return {self.get_column_name_by_index(cell.column): cell.value for cell in row if cell.value is not None}
 
     def get_column_by_name(self, name: str) -> List[Any]:
         return [[c.value for c in r if not isinstance(c, EmptyCell) and c.column <= len(self.fields['columns'])
                  and self.get_column_name_by_index(c.column) == name][0] for r in self.sheet.data]
 
-    def get_all_values_by_column_name(self, name: str) -> List[int]:
+    '''def get_all_values_by_column_name(self, name: str) -> List[int]:
         values = []
         for v in self.get_column_by_name(name):
             if isinstance(v, int):
@@ -50,13 +50,11 @@ class CofkEntity:
             else:
                 log.warning(f'Value in {name} of {self.sheet.name} is {v}')
 
-        return values
+        return values'''
 
     def check_required(self, entity: dict, row_number: int):
         for missing in [m for m in self.fields['required'] if m not in entity]:
-            msg = f'Column {missing} in {self.sheet.name} is missing.'
-            log.error(msg)
-            self.add_error(ValidationError(msg), row_number)
+            self.add_error(f'Column {missing} in {self.sheet.name} is missing.', row_number)
 
     def check_data_types(self, entity: dict, row_number: int):
         self.row = row_number
@@ -65,68 +63,59 @@ class CofkEntity:
         # ids can be ints or strings that are ints separated by a semicolon and no space
         if 'ids' in self.fields:
             for id_field in [t for t in self.fields['ids'] if t in entity]:
+                log.debug(f'----{id_field}')
                 if isinstance(entity[id_field], int) and entity[id_field] < 1:
-                    msg = f'Column {id_field} in {self.sheet.name} sheet is not a valid positive integer.'
-                    log.error(msg)
-                    self.add_error(ValidationError(msg))
+                    self.add_error(f'Column {id_field} in {self.sheet.name} sheet is not a valid positive integer.')
                     # self.ids.append(entity[id_field])
                 elif isinstance(entity[id_field], str):
                     for int_value in entity[id_field].split(';'):
                         try:
                             if int(int_value) < 0:
-                                msg = f'Column {id_field} in {self.sheet.name} sheet is not a valid positive integer.'
-                                log.error(msg)
-                                self.add_error(ValidationError(msg))
-
+                                self.add_error(f'Column {id_field} in {self.sheet.name}'
+                                               f' sheet is not a valid positive integer.')
                             # self.ids.append(int(int_value))
                         except ValueError as ve:
-                            msg = f'Column {id_field} in {self.sheet.name} sheet is not a valid positive integer.'
-                            log.error(msg)
-                            self.add_error(ValidationError(msg))
+                            self.add_error(f'Column {id_field} in {self.sheet.name}'
+                                           f' sheet is not a valid positive integer.')
 
         if 'ints' in self.fields:
             for int_value in [t for t in self.fields['ints'] if t in entity and not isinstance(t, int)]:
                 try:
                     int(entity[int_value])
                 except ValueError as ve:
-                    msg = f'Column {int_value} in {self.sheet.name} sheet is not a valid integer.'
-                    log.error(msg)
-                    self.add_error(ValidationError(msg))
+                    self.add_error(f'Column {int_value} in {self.sheet.name} sheet is not a valid integer.')
 
         if 'bools' in self.fields:
             for bool_value in [t for t in self.fields['bools'] if t in entity]:
                 try:
                     if int(entity[bool_value]) not in [0, 1]:
-                        msg = f'Column {bool_value} in {self.sheet.name} sheet is not a boolean value of either 0 or 1.'
-                        log.error(msg)
-                        self.add_error(ValidationError(msg))
+                        self.add_error(f'Column {bool_value} in {self.sheet.name} sheet'
+                                       f' is not a boolean value of either 0 or 1.')
                 except ValueError as ve:
-                    msg = f'Column {bool_value} in {self.sheet.name} sheet is not a boolean value of either 0 or 1.'
-                    log.error(msg)
-                    self.add_error(ValidationError(msg))
+
+                    self.add_error(f'Column {bool_value} in {self.sheet.name}'
+                                   f' sheet is not a boolean value of either 0 or 1.')
 
         if 'combos' in self.fields:
             for combo in self.fields['combos']:
                 log.debug(f'---- {combo}')
                 if isinstance(entity[combo[0]], str) and ';' in entity[combo[0]] or ';' in entity[combo[1]]:
                     if len(entity[combo[0]].split(';')) < len(entity[combo[1]].split(';')):
-                        msg = f'Column {combo[0]} has fewer ids than there are names in {combo[1]}.'
-                        log.error(msg)
-                        self.add_error(ValidationError(msg))
+                        self.add_error(f'Column {combo[0]} has fewer ids than there are names in {combo[1]}.')
                     elif len(entity[combo[1]].split(';')) < len(entity[combo[0]].split(';')):
                         # TODO this should be a warning
-                        msg = f'Column {combo[1]} has fewer names than there are ids in {combo[0]}.'
-                        log.error(msg)
-                        self.add_error(ValidationError(msg))
+                        self.add_error(f'Column {combo[1]} has fewer names than there are ids in {combo[0]}.')
 
         if 'strings' in self.fields:
             for str_field in [s for s in self.fields['strings'] if s in entity and not isinstance(entity[s], str)]:
                 # TODO do I need to cast to string?
                 entity[str_field] = str(entity[str_field])
 
-    def add_error(self, error: ValidationError, entity=None, row=None):
+    def add_error(self, error_msg: str, entity=None, row=None):
         if not row:
             row = self.row
+
+        error = ValidationError(error_msg)
 
         if entity:
             if self.row not in self.other_errors:
@@ -165,23 +154,30 @@ class CofkEntity:
 
     def clean_lists(self, entity_dict: dict, ids, names) -> Tuple[List[int], List[int]]:
         if isinstance(entity_dict[ids], str):
-            id_list = [int(i) for i in entity_dict[ids].split(';')]
+            try:
+                id_list = [int(i) for i in entity_dict[ids].split(';')]
+            except ValueError:
+                return [], []
         else:
             id_list = [entity_dict[ids]]
 
         name_list = entity_dict[names].split(';')
 
         if len(id_list) < len(name_list):
-            self.add_error(ValidationError(f'Fewer ids in {ids} than names in {names}.'))
+            self.add_error(f'Fewer ids in {ids} than names in {names}.')
         elif len(id_list) > len(name_list):
-            self.add_error(ValidationError(f'Fewer names in {names} than ids in {ids}'))
+            self.add_error(f'Fewer names in {names} than ids in {ids}')
 
         if '' in id_list:
-            self.add_error(ValidationError(f'Empty string in ids in {ids}'))
+            self.add_error(f'Empty string in ids in {ids}')
         if '' in name_list:
-            self.add_error(ValidationError(f'Empty string in names in {names}'))
+            self.add_error(f'Empty string in names in {names}')
 
         return id_list, name_list
 
     def bulk_create(self, objects: List[Type[models.Model]]):
-        type(objects[0]).objects.bulk_create(objects, batch_size=500)
+        try:
+            type(objects[0]).objects.bulk_create(objects, batch_size=500)
+        except IntegrityError as ie:
+            log.error(ie)
+            self.add_error('Could not create objects in database.')
