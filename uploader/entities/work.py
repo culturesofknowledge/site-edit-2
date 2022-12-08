@@ -43,10 +43,10 @@ class CofkWork(CofkEntity):
         self.languages: List[CofkCollectLanguageOfWork] = []
 
         for index, row in enumerate(self.iter_rows(), start=1):
-            work_dict = self.get_row(row)
-            self.check_required(work_dict, index)
+            work_dict = self.get_row(row, index)
+            self.check_required(work_dict)
             # TODO check work data types
-            self.check_data_types(work_dict, index)
+            self.check_data_types(work_dict)
             work_dict['upload_status_id'] = 1
             work_dict['upload'] = upload
             # log.debug(work_dict)
@@ -109,8 +109,8 @@ class CofkWork(CofkEntity):
                     people_list.append(people_model(upload=self.upload, iwork=work, iperson=person))
                 else:
                     # Person not present in people sheet
-                    self.add_error(f'Person with id {_id} was listed in {self.sheet.name} but is not present in'
-                                   f'People sheet. ')
+                    self.add_error(f'Person with the id {_id} was listed in the {self.sheet.name} sheet but is'
+                                   f' not present in the People sheet. ')
 
     def process_locations(self, work: CofkCollectWork, location_list: List[Any], location_model: Type[models.Model],
                           work_dict: dict, ids: str, names: str):
@@ -122,8 +122,8 @@ class CofkWork(CofkEntity):
                     location_list.append(location_model(upload=self.upload, iwork=work, location=location))
                 else:
                     # Location not present in places sheet
-                    self.add_error(f'Location with id {_id} was listed in {self.sheet.name} but is not present in'
-                                   f'Places sheet. ')
+                    self.add_error(f'Location with the id {_id} was listed in the {self.sheet.name} sheet but is'
+                                   f' not present in the Places sheet. ')
 
     def process_languages(self, work_dict: dict, work: CofkCollectWork):
         work_languages = work_dict['language_id'].split(';')

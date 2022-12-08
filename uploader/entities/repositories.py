@@ -15,9 +15,9 @@ class CofkRepositories(CofkEntity, ABC):
         self.institutions: List[CofkCollectInstitution] = []
 
         for index, row in enumerate(self.iter_rows(), start=1):
-            inst_dict = self.get_row(row)
-            self.check_required(inst_dict, index)
-            self.check_data_types(inst_dict, index)
+            inst_dict = self.get_row(row, index)
+            self.check_required(inst_dict)
+            self.check_data_types(inst_dict)
 
             # Collect institutions while there's no errors,
             # no reason to do so if there's errors

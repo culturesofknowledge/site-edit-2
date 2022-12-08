@@ -33,20 +33,20 @@ class CofkEntity:
         return ((c for c in r if not isinstance(c, EmptyCell)
                  and c.column <= len(self.fields['columns'])) for r in self.sheet.data)
 
-    def get_row(self, row: Generator[Cell, None, None]) -> dict:
+    def get_row(self, row: Generator[Cell, None, None], row_number: int) -> dict:
+        self.row = row_number
         return {self.get_column_name_by_index(cell.column): cell.value for cell in row if cell.value is not None}
 
     def get_column_by_name(self, name: str) -> List[Any]:
         return [[c.value for c in r if not isinstance(c, EmptyCell) and c.column <= len(self.fields['columns'])
                  and self.get_column_name_by_index(c.column) == name][0] for r in self.sheet.data]
 
-    def check_required(self, entity: dict, row_number: int):
+    def check_required(self, entity: dict):
         for missing in [m for m in self.fields['required'] if m not in entity]:
-            self.add_error(f'Column {missing} in {self.sheet.name} is missing.', row_number)
+            self.add_error(f'Column {missing} in {self.sheet.name} is missing.')
 
-    def check_data_types(self, entity: dict, row_number: int):
-        self.row = row_number
-        log.debug(f'Checking data type: {self.sheet.name}, row {row_number}')
+    def check_data_types(self, entity: dict):
+        log.debug(f'Checking data type: {self.sheet.name}, row {self.row}')
 
         if 'strings' in self.fields:
             for str_field in [s for s in self.fields['strings'] if

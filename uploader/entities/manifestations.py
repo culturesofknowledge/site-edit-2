@@ -1,4 +1,5 @@
 import logging
+from abc import ABC
 from typing import List
 
 from institution.models import CofkCollectInstitution
@@ -10,7 +11,7 @@ from work.models import CofkCollectWork
 log = logging.getLogger(__name__)
 
 
-class CofkManifestations(CofkEntity):
+class CofkManifestations(CofkEntity, ABC):
 
     def __init__(self, upload: CofkCollectUpload, sheet,
                  repositories: List[CofkCollectInstitution], works: List[CofkCollectWork]):
@@ -21,8 +22,9 @@ class CofkManifestations(CofkEntity):
         self.manifestations: List[CofkCollectManifestation] = []
 
         for index, row in enumerate(self.iter_rows(), start=1):
-            man_dict = {self.get_column_name_by_index(cell.column): cell.value for cell in row if cell.value is not None}
-            self.check_data_types(man_dict, index)
+            man_dict = self.get_row(row, index)
+            self.check_required(man_dict)
+            self.check_data_types(man_dict)
 
             if not self.errors:
                 if 'iwork_id' in man_dict:

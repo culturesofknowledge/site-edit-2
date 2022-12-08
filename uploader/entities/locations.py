@@ -19,9 +19,9 @@ class CofkLocations(CofkEntity, ABC):
         self.locations: List[CofkCollectLocation] = []
 
         for index, row in enumerate(self.iter_rows(), start=1):
-            loc_dict = self.get_row(row)
-            self.check_required(loc_dict, index)
-            self.check_data_types(loc_dict, index)
+            loc_dict = self.get_row(row, index)
+            self.check_required(loc_dict)
+            self.check_data_types(loc_dict)
 
             if not self.errors:
                 if 'location_id' in loc_dict:

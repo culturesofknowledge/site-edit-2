@@ -83,7 +83,8 @@ mandatory_sheets = {
                     'printed_edition_notes', 'ms_translation', 'printed_translation'],
         'ids': ['manifestation_id', 'repository_id'],
         'ints': ['manifestation_id', 'repository_id'],
-        'strings': [('manifestation_type', 3), ('id_number_or_shelfmark', 500), 'manifestation_notes']
+        'strings': [('manifestation_type', 3), ('id_number_or_shelfmark', 500), 'manifestation_notes'],
+        'required': ['iwork_id']
     },
     'People': {
         'columns': ['primary_name', 'iperson_id', 'editors_notes'],
