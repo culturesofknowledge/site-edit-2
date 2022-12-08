@@ -188,7 +188,7 @@ class CofkEntity:
             type(objects[0]).objects.bulk_create(objects, batch_size=500)
         except IntegrityError as ie:
             log.error(ie)
-            self.add_error('Could not create objects in database.')
+            self.add_error(f'Could not create {type(objects[0])} objects in database.')
 
     def check_year(self, year_field: str, year: int):
         raise NotImplementedError()
