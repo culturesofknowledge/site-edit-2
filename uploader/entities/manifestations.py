@@ -34,7 +34,8 @@ class CofkManifestations(CofkEntity):
                     man_dict['repository'] = self.get_repository(man_dict.pop('repository_id'))
 
                 if 'printed_edition_notes' in man_dict:
-                    man_dict['manifestation_notes'] = man_dict.pop('printed_edition_notes')
+                    man_dict['printed_edition_details'] = man_dict.pop('printed_edition_notes')
+                # TODO can this be right?
                 if 'manifestation_type_p' in man_dict:
                     man_dict['manifestation_type'] = man_dict.pop('manifestation_type_p')
 

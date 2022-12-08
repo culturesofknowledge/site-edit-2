@@ -81,13 +81,15 @@ mandatory_sheets = {
                     'id_number_or_shelfmark', 'manifestation_notes', 'manifestation_type_p', 'printed_edition_details',
                     'printed_edition_notes', 'ms_translation', 'printed_translation'],
         'ids': ['manifestation_id', 'repository_id'],
-        'ints': ['manifestation_id', 'repository_id']
+        'ints': ['manifestation_id', 'repository_id'],
+        'strings': [('manifestation_type', 3), ('id_number_or_shelfmark', 500), 'manifestation_notes']
     },
     'People': {
         'columns': ['primary_name', 'iperson_id', 'editors_notes'],
         'ids': ['iperson_id'],
+        'combos': [('iperson_id', 'primary_name')],
         'required': ['primary_name'],
-        'strings': ['primary_name']
+        'strings': [('primary_name', 200)]
     },
     'Places': {
         'columns': ['location_name', 'location_id'],
