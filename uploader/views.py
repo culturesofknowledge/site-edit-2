@@ -5,7 +5,7 @@ from datetime import datetime
 from zipfile import BadZipFile
 
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError, FieldDoesNotExist
+from django.core.exceptions import FieldDoesNotExist
 from django.core.files.storage import default_storage
 from django.core.paginator import Paginator
 from django.db.models import QuerySet
@@ -44,9 +44,6 @@ def handle_upload(request, context):
         new_upload = form.save(commit=False)
         new_upload.upload_status = CofkCollectStatus.objects.filter(status_id=1).first()
         new_upload.upload_timestamp = timezone.now()
-        new_upload.works_accepted = 0
-        new_upload.works_rejected = 0
-        new_upload.total_works = 0
         new_upload.save()
 
         try:
@@ -63,10 +60,11 @@ def handle_upload(request, context):
             return
 
         cuef = None
-        context['report'] = {'file': request.FILES['upload_file']._name,
-                             'time': new_upload.upload_timestamp,
-                             'size': os.path.getsize(settings.MEDIA_ROOT + new_upload.upload_file.name) >> 10,
-                             'upload_id': new_upload.upload_id, }
+        context['report'] = {
+            'file': request.FILES['upload_file']._name,
+            'time': new_upload.upload_timestamp,
+            'size': os.path.getsize(settings.MEDIA_ROOT + new_upload.upload_file.name) >> 10,
+            'upload_id': new_upload.upload_id, }
 
         try:
             cuef = CofkUploadExcelFile(new_upload, file)
@@ -80,21 +78,9 @@ def handle_upload(request, context):
 
             context['report']['elapsed'] = elapsed
 
-        except ValidationError as ve:
+        except (CofkMissingSheetError, CofkNoDataError) as ce:
             context['report']['total_errors'] = 1
-            context['report']['errors'] = {'file': {'total': 1, 'error': [str(ve)[1:-1]]}}
-            log.error(ve)
-        # except KeyError as ke:
-        #    context['report']['total_errors'] = 1
-        #    context['report']['errors'] = {'file': {'total': 1, 'error': [f'Column "{ke.args[0]}" missing']}}
-        #    log.error(context['report']['errors'])
-        except CofkNoDataError as cnde:
-            context['report']['total_errors'] = 1
-            context['report']['errors'] = {'file': {'total': 1, 'error': [cnde]}}
-            log.error(context['report']['errors'])
-        except CofkMissingSheetError as cmse:
-            context['report']['total_errors'] = 1
-            context['report']['errors'] = {'file': {'total': 1, 'error': [cmse]}}
+            context['report']['errors'] = {'file': {'total': 1, 'error': [ce]}}
             log.error(context['report']['errors'])
         except CofkMissingColumnError as cmce:
             errors = [str(err) for i, err in enumerate(cmce.args[0]) if i % 2 != 0]
@@ -106,7 +92,7 @@ def handle_upload(request, context):
             context['report']['total_errors'] = 1
             context['report']['errors'] = {'file': {'total': 1, 'error': ['Could not read the Excel file.']}}
             log.error(e)
-        #except ValueError as ve:
+        # except ValueError as ve:
         #    context['report']['total_errors'] = 1
         #    context['report']['errors'] = {'file': {'total': 1, 'error': [ve]}}
         #    log.error(ve)
