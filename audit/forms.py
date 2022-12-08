@@ -261,27 +261,27 @@ class AuditSearchFieldset(forms.Form):
     title = 'General'
     template_name = 'audit/component/audit_search_fieldset.html'
 
-    change_datetime_from = forms.CharField(required=False)
-    change_datetime_to = forms.CharField(required=False)
-    change_datetime_info = form_utils.datetime_search_info
+    change_timestamp_from = forms.CharField(required=False)
+    change_timestamp_to = forms.CharField(required=False)
+    change_timestamp_info = form_utils.datetime_search_info
 
     change_user = forms.CharField(required=False)
     change_user_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     table_name = CharSelectField(choices=table_name_choices, )
 
-    record_id = forms.CharField(required=False)
-    record_id_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
-
-    key_value_text = forms.CharField(required=False, label='Record Desc')
+    key_value_text = forms.CharField(required=False, label='Record ID')
     key_value_text_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    changed_field = CharSelectField(choices=changed_field_choices, )
+    key_decode = forms.CharField(required=False, label='Record Desc')
+    key_decode_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    column_name = CharSelectField(choices=changed_field_choices, )
+
+    change_type = CharSelectField(choices=change_type_choices, )
 
     change_made = forms.CharField(required=False)
     change_made_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
-
-    change_type = CharSelectField(choices=change_type_choices, )
 
     audit_id = forms.IntegerField(required=False)
     audit_id_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)

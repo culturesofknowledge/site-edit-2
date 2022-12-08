@@ -2,7 +2,7 @@
     <legend>{{ form.title }}</legend>
 
     <!-- Change datetime -->
-    {% include "core/component/search_fieldset/from_to_year.html" with title='Change date/time' from_field=form.change_datetime_from to_field=form.change_datetime_to field_info=form.change_datetime_info %}
+    {% include "core/component/search_fieldset/from_to_year.html" with title='Change date/time' from_field=form.change_timestamp_from to_field=form.change_timestamp_to field_info=form.change_timestamp_info %}
 
     <!-- Change user -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.change_user field_lookup=form.change_user_lookup %}
@@ -11,13 +11,13 @@
     {% include "core/component/common_field_layout.html" with field=form.table_name %}
 
     <!-- Record ID -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.record_id field_lookup=form.record_id_lookup %}
-
-    <!-- Record Desc -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.key_value_text field_lookup=form.key_value_text_lookup %}
 
+    <!-- Record Desc -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.key_decode field_lookup=form.key_decode_lookup %}
+
     <!-- Changed field -->
-    {% include "core/component/common_field_layout.html" with field=form.changed_field %}
+    {% include "core/component/common_field_layout.html" with field=form.column_name %}
 
     <!-- Change type -->
     {% include "core/component/common_field_layout.html" with field=form.change_type %}

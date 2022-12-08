@@ -4,6 +4,9 @@ from typing import Callable, Iterable, Union
 
 from django.db.models import F
 from django.db.models import Q, Lookup, lookups
+from django.db.models.lookups import GreaterThanOrEqual, LessThanOrEqual
+
+from core.helper import date_utils
 
 log = logging.getLogger(__name__)
 
@@ -68,7 +71,8 @@ def create_queries_by_lookup_field(request_data: dict,
             continue
 
         _request_search_fields = request_data.get(f'{field_name}_search_fields')
-        _request_search_fields = str(_request_search_fields or '').split(',')
+        _request_search_fields = str(_request_search_fields or '')
+        _request_search_fields = _request_search_fields.split(',') if _request_search_fields else []
         search_fields_maps = search_fields_maps or dict()
         search_fields = search_fields_maps.get(field_name, _request_search_fields)
         if search_fields:
@@ -116,3 +120,12 @@ choices_lookup_map = {
 nullable_lookup_keys = [
     'is_blank', 'not_blank',
 ]
+
+
+def create_from_to_datetime(from_field_name, to_field_name, db_field_name):
+    return {
+        from_field_name: lambda _, v: GreaterThanOrEqual(
+            F(db_field_name), date_utils.str_to_search_datetime(v)),
+        to_field_name: lambda _, v: LessThanOrEqual(
+            F(db_field_name), date_utils.str_to_search_datetime(v)),
+    }
