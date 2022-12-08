@@ -17,9 +17,9 @@ from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_
     REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_STORED_IN, REL_TYPE_IS_RELATED_TO
 from core.models import CofkUnionResource
 from institution.models import CofkCollectInstitution, CofkUnionInstitution
-from location.models import CofkCollectLocation, CofkUnionLocation
+from location.models import CofkCollectLocation
 from manifestation.models import CofkCollectManifestation, CofkUnionManifestation, CofkManifInstMap
-from person.models import CofkCollectPerson, CofkUnionPerson
+from person.models import CofkCollectPerson
 from uploader.forms import CofkCollectUploadForm
 from django.conf import settings
 
@@ -162,7 +162,9 @@ def create_union_work(collect_work: CofkCollectWork):
     for field in [f for f in collect_work._meta.get_fields() if f.name != 'iwork_id']:
         try:
             CofkUnionWork._meta.get_field(field.name)
-            union_dict[field.name] = getattr(collect_work, field.name)
+
+            if value := getattr(collect_work, field.name):
+                union_dict[field.name] = value
 
         except FieldDoesNotExist:
             # log.warning(f'Field {field} does not exist')
@@ -177,21 +179,19 @@ def create_union_work(collect_work: CofkCollectWork):
 def link_person_to_work(entities: QuerySet, relationship_type: str,
                         union_work: CofkUnionWork, work_id, request):
     for person in entities.filter(iwork_id=work_id).all():
-        union_person = CofkUnionPerson.objects.filter(iperson_id=person.iperson.iperson_id).first()
-
         cwpm = CofkWorkPersonMap(relationship_type=relationship_type,
-                                 work=union_work, person=union_person, person_id=union_person.person_id)
+                                 work=union_work, person=person.iperson.union_iperson,
+                                 person_id=person.iperson.union_iperson.person_id)
         cwpm.update_current_user_timestamp(request.user.username)
         cwpm.save()
 
 
 def link_location_to_work(entities: QuerySet, relationship_type: str,
                           union_work: CofkUnionWork, work_id, request):
-    for destination in entities.filter(iwork_id=work_id).all():
-        union_location = CofkUnionLocation.objects.filter(location_id=destination.location.location_id).first()
-
+    for location in entities.filter(iwork_id=work_id).all():
         cwlm = CofkWorkLocationMap(relationship_type=relationship_type,
-                                   work=union_work, location=union_location, location_id=union_location.location_id)
+                                   work=union_work, location=location.union_location,
+                                   location_id=location.union_location.location_id)
         cwlm.update_current_user_timestamp(request.user.username)
         cwlm.save()
 
@@ -223,8 +223,11 @@ def create_union_manifestations(work_id: str, union_work: CofkUnionWork, request
 
 
 def accept_work(request, context: dict, upload: CofkCollectUpload):
-    work_id = request.GET['work_id']
-    collect_work = context['works'].filter(pk=work_id).first()
+    try:
+        work_id = int(request.GET['work_id'])
+    except ValueError:
+        return
+    collect_work = [w for w in context['works_page'].object_list if w.id == work_id][0]
 
     if collect_work.upload_status_id != 1:
         return

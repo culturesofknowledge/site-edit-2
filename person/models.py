@@ -15,8 +15,9 @@ class CofkCollectPerson(models.Model):
     # KTODO temporary related_name
     union_iperson = models.ForeignKey('CofkUnionPerson', models.DO_NOTHING, blank=True, null=True,
                                       related_name='union_collect_persons')
-    person = models.ForeignKey('CofkUnionPerson', models.DO_NOTHING, blank=True, null=True,
-                               related_name='collect_persons')
+    person_id = models.CharField(max_length=100)
+    #person = models.ForeignKey('CofkUnionPerson', models.DO_NOTHING, blank=True, null=True,
+    #                           related_name='collect_persons')
     primary_name = models.CharField(max_length=200)
     alternative_names = models.TextField(blank=True, null=True)
     roles_or_titles = models.TextField(blank=True, null=True)
