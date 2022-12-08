@@ -16,20 +16,19 @@ from django.db.models import Model, Max, fields
 from django.db.models.fields.related_descriptors import ForwardManyToOneDescriptor
 from psycopg2.extras import DictCursor
 
+from core import recref_settings
 from core.helper import iter_utils
 from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType
-from institution.models import CofkUnionInstitution, CofkInstitutionImageMap, CofkInstitutionResourceMap
-from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap
+from institution.models import CofkUnionInstitution
+from location.models import CofkUnionLocation
 from login.models import CofkUser
 from manifestation.models import CofkUnionManifestation
-from person.models import CofkPersonLocationMap, CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID, \
-    CofkPersonPersonMap, CofkPersonCommentMap, CofkPersonResourceMap, CofkPersonImageMap
+from person.models import CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID
 from publication.models import CofkUnionPublication
 from uploader.models import CofkCollectStatus, Iso639LanguageCode, CofkLookupCatalogue, CofkCollectUpload, \
     CofkUnionSubject, CofkUnionRoleCategory
 from uploader.models import CofkUnionOrgType, CofkUnionImage
 from work import models as work_models
-from manifestation import models as manif_models
 from work.models import CofkUnionWork, CofkUnionQueryableWork
 
 log = logging.getLogger(__name__)
@@ -520,11 +519,6 @@ def data_migration(user, password, database, host, port):
 
     # ### Location
     clone_rows_by_model_class(conn, CofkUnionLocation)
-    # m2m location
-    clone_recref_simple_by_field_pairs(conn, (
-        (CofkLocationCommentMap.comment, CofkLocationCommentMap.location),
-        (CofkLocationResourceMap.location, CofkLocationResourceMap.resource),
-    ))
 
     # ### Person
     clone_rows_by_model_class(
@@ -533,25 +527,11 @@ def data_migration(user, password, database, host, port):
         seq_name=SEQ_NAME_COFKUNIONPERSION__IPERSON_ID,
         int_pk_col_name='iperson_id',
     )
-    # m2m person
-    clone_recref_simple_by_field_pairs(conn, (
-        (CofkPersonLocationMap.person, CofkPersonLocationMap.location),
-        (CofkPersonPersonMap.person, CofkPersonPersonMap.related),
-        (CofkPersonCommentMap.comment, CofkPersonCommentMap.person),
-        (CofkPersonResourceMap.person, CofkPersonResourceMap.resource),
-        (CofkPersonImageMap.image, CofkPersonImageMap.person),
-    ))
 
     # ### Repositories/institutions
     clone_rows_by_model_class(conn, CofkUnionInstitution,
                               col_val_handler_fn_list=[_val_handler_empty_str_null])
-    # create_resources_relationship(conn, CofkUnionInstitution)  # KTODO fix resources as recref
-    clone_recref_simple_by_field_pairs(conn, (
-        (CofkInstitutionImageMap.image, CofkInstitutionImageMap.institution),
-        (CofkInstitutionResourceMap.institution, CofkInstitutionResourceMap.resource)
-    ))
 
-    # clone_rows_by_model_class(conn, CofkCollectInstitution)
     clone_rows_by_model_class(conn, CofkUser,
                               col_val_handler_fn_list=[_val_handler_users],
                               seq_name=None,
@@ -564,27 +544,13 @@ def data_migration(user, password, database, host, port):
                               seq_name=work_models.SEQ_NAME_COFKUNIONWORK__IWORK_ID,
                               int_pk_col_name='iwork_id', )
     clone_rows_by_model_class(conn, CofkUnionQueryableWork, seq_name=None)
-    # m2m work
-    clone_recref_simple_by_field_pairs(conn, (
-        (work_models.CofkWorkCommentMap.comment, work_models.CofkWorkCommentMap.work),
-        (work_models.CofkWorkResourceMap.work, work_models.CofkWorkResourceMap.resource),
-        (work_models.CofkWorkWorkMap.work_from, work_models.CofkWorkWorkMap.work_to),
-        (work_models.CofkWorkSubjectMap.work, work_models.CofkWorkSubjectMap.subject),
-        (work_models.CofkWorkPersonMap.work, work_models.CofkWorkPersonMap.person),
-        (work_models.CofkWorkLocationMap.work, work_models.CofkWorkLocationMap.location),
-    ))
 
     # ### manif
     clone_rows_by_model_class(conn, CofkUnionManifestation,
                               col_val_handler_fn_list=[_val_handler_manif__work_id],
                               seq_name=None)
-    # m2m manif
-    clone_recref_simple_by_field_pairs(conn, (
-        (manif_models.CofkManifManifMap.manif_from, manif_models.CofkManifManifMap.manif_to),
-        (manif_models.CofkManifCommentMap.comment, manif_models.CofkManifCommentMap.manifestation),
-        (manif_models.CofkManifPersonMap.person, manif_models.CofkManifPersonMap.manifestation),
-        (manif_models.CofkManifInstMap.manif, manif_models.CofkManifInstMap.inst),
-        (manif_models.CofkManifImageMap.image, manif_models.CofkManifImageMap.manif),
-    ))
+
+    # clone recref records
+    clone_recref_simple_by_field_pairs(conn, recref_settings.recref_left_right_pairs)
 
     conn.close()
