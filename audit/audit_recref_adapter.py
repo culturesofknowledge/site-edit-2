@@ -1,6 +1,8 @@
 from django.db import models
 
+from core import constant
 from location.models import CofkUnionLocation
+from manifestation.models import CofkUnionManifestation
 from person.models import CofkUnionPerson
 
 
@@ -103,3 +105,78 @@ class PersonAuditAdapter(AuditRecrefAdapter):
             decode += '; alternative name(s): ' + self.instance.skos_altlabel
 
         return decode
+
+
+class ResourceAuditAdapter(AuditRecrefAdapter):
+    def key_decode(self, is_expand_details=False):
+        return self.instance.resource_name
+
+
+class WorkAuditAdapter(AuditRecrefAdapter):
+    def key_value_text(self):
+        return self.instance.work_id
+
+    def key_value_integer(self):
+        return self.instance.iwork_id
+
+    def key_decode(self, is_expand_details=False):
+        return self.instance.description
+
+
+class ManifAuditAdapter(AuditRecrefAdapter):
+    def key_decode(self, is_expand_details=False):
+        self.instance: CofkUnionManifestation
+
+        decode = self.instance.id_number_or_shelfmark or ''
+        decode += ' '
+        decode += self.instance.printed_edition_details or ''
+        date = self.instance.manifestation_creation_date
+        if date or date != constant.STD_DATE_FORMAT:
+            if self.instance.manifestation_creation_date_approx:
+                date = f'c.{date}'
+            if self.instance.manifestation_creation_date_uncertain:
+                date = f'{date}?'
+            if self.instance.manifestation_creation_date_inferred:
+                date = f'[{date}]'
+        decode = f'{date}: {decode}'
+        return decode
+
+
+class RelTypeAuditAdapter(AuditRecrefAdapter):
+    def key_decode(self, is_expand_details=False):
+        return self.instance.desc_left_to_right
+
+
+class CommentAuditAdapter(AuditRecrefAdapter):
+    def key_decode(self, is_expand_details=False):
+        return self.instance.comment
+
+
+class ImageAuditAdapter(AuditRecrefAdapter):
+    def key_decode(self, is_expand_details=False):
+        return self.instance.image_filename
+
+
+class InstAuditAdapter(AuditRecrefAdapter):
+    def key_decode(self, is_expand_details=False):
+        return self.instance.institution_name
+
+
+class PubAuditAdapter(AuditRecrefAdapter):
+    def key_decode(self, is_expand_details=False):
+        return self.instance.publication_details
+
+
+class NationalityAuditAdapter(AuditRecrefAdapter):
+    def key_decode(self, is_expand_details=False):
+        return self.instance.nationality_desc
+
+
+class SubjectAuditAdapter(AuditRecrefAdapter):
+    def key_decode(self, is_expand_details=False):
+        return self.instance.subject_desc
+
+
+class RoleCatAuditAdapter(AuditRecrefAdapter):
+    def key_decode(self, is_expand_details=False):
+        return self.instance.role_category_desc

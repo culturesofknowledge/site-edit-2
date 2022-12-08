@@ -4,17 +4,19 @@ import logging
 from django.db import models
 from django.db.models.base import ModelBase
 
-from audit.audit_recref_adapter import AuditRecrefAdapter, PersonAuditAdapter, LocationAuditAdapter
+from audit import audit_recref_adapter
+from audit.audit_recref_adapter import AuditRecrefAdapter
 from audit.models import CofkUnionAuditLiteral
 from core import constant, recref_settings
 from core.helper import model_utils
-from core.models import CofkUnionComment, CofkUnionRelationship, CofkUnionRelationshipType, CofkUnionResource, Recref
+from core.models import CofkUnionComment, CofkUnionRelationship, CofkUnionRelationshipType, CofkUnionResource, Recref, \
+    CofkUnionNationality
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from manifestation.models import CofkUnionManifestation
 from person.models import CofkUnionPerson
 from publication.models import CofkUnionPublication
-from uploader.models import CofkUnionImage
+from uploader.models import CofkUnionImage, CofkUnionSubject, CofkUnionRoleCategory
 from work.models import CofkUnionWork
 
 log = logging.getLogger(__name__)
@@ -122,10 +124,24 @@ def save_audit_records(instance: Recref, old_instance: Recref = None, ):
 
 
 def to_audit_adapter(instance: models.Model):
-    if isinstance(instance, CofkUnionPerson):
-        return PersonAuditAdapter(instance)
-    elif isinstance(instance, CofkUnionLocation):
-        return LocationAuditAdapter(instance)
+    adapter_map = {
+        CofkUnionPerson: audit_recref_adapter.PersonAuditAdapter,
+        CofkUnionLocation: audit_recref_adapter.LocationAuditAdapter,
+        CofkUnionResource: audit_recref_adapter.ResourceAuditAdapter,
+        CofkUnionWork: audit_recref_adapter.WorkAuditAdapter,
+        CofkUnionManifestation: audit_recref_adapter.ManifAuditAdapter,
+        CofkUnionRelationshipType: audit_recref_adapter.RelTypeAuditAdapter,
+        CofkUnionComment: audit_recref_adapter.CommentAuditAdapter,
+        CofkUnionImage: audit_recref_adapter.ImageAuditAdapter,
+        CofkUnionInstitution: audit_recref_adapter.InstAuditAdapter,
+        CofkUnionPublication: audit_recref_adapter.PubAuditAdapter,
+        CofkUnionNationality: audit_recref_adapter.NationalityAuditAdapter,
+        CofkUnionSubject: audit_recref_adapter.SubjectAuditAdapter,
+        CofkUnionRoleCategory: audit_recref_adapter.RoleCatAuditAdapter,
+    }
+
+    if adapter := adapter_map.get(instance.__class__):
+        return adapter(instance)
     else:
         log.warning(f'undefined audit adapter mapping [{instance}] ')
         return AuditRecrefAdapter(instance)
