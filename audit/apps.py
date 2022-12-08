@@ -14,11 +14,11 @@ class AuditConfig(AppConfig):
 
         def on_pre_save(sender: ModelBase, instance: models.Model,
                         raw: bool, using, update_fields, **kwargs):
-            model_signals.handle_update_relation_date(sender, instance)
+            model_signals.handle_update_recref_date(sender, instance)
 
         def on_post_save(sender: ModelBase, instance: models.Model, created: bool,
                          raw: bool, using, update_fields, **kwargs):
-            model_signals.handle_create_relation_date(sender, instance)
+            model_signals.handle_create_recref_date(sender, instance)
             model_signals.handle_update_audit_changed_user(sender, instance)
             model_signals.add_relation_audit_to_literal(sender, instance)
 

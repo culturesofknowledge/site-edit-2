@@ -141,7 +141,7 @@ def get_left_right_adapters(instance):
     return adapters
 
 
-def handle_update_relation_date(sender: ModelBase, instance: models.Model):
+def handle_update_recref_date(sender: ModelBase, instance: models.Model):
     if not issubclass(sender, Recref):
         return
 
@@ -153,7 +153,7 @@ def handle_update_relation_date(sender: ModelBase, instance: models.Model):
     save_audit_records(instance, old_instance=old_instance)
 
 
-def handle_create_relation_date(sender: ModelBase, instance: models.Model):
+def handle_create_recref_date(sender: ModelBase, instance: models.Model):
     if not issubclass(sender, Recref) or not getattr(instance, 'todo_audit', False):
         return
 
