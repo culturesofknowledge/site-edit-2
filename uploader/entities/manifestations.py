@@ -1,7 +1,5 @@
 import logging
-from typing import Generator, Tuple, List
-
-from openpyxl.cell import Cell
+from typing import List
 
 from institution.models import CofkCollectInstitution
 from manifestation.models import CofkCollectManifestation
@@ -48,13 +46,13 @@ class CofkManifestations(CofkEntity):
         if self.manifestations:
             self.bulk_create(self.manifestations)
 
-    def get_work(self, work_id: str):
+    def get_work(self, work_id: str) -> CofkCollectWork:
         work = [w for w in self.works if w.iwork_id == int(work_id)]
 
         if work:
             return work[0]
 
-    def get_repository(self, institution_id: str):
+    def get_repository(self, institution_id: str) -> CofkCollectInstitution:
         repository = [r for r in self.repositories if r.institution_id == int(institution_id)]
 
         if repository:
