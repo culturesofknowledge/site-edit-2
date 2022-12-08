@@ -18,7 +18,7 @@ from psycopg2.extras import DictCursor
 
 from core import recref_settings
 from core.helper import iter_utils
-from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType
+from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType, CofkUnionRelationshipType
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from login.models import CofkUser
@@ -61,7 +61,7 @@ def iter_records(conn, sql, cursor_factory=None, vals=None):
 def clone_rows_by_model_class(conn, model_class: Type[Model],
                               check_duplicate_fn=None,
                               col_val_handler_fn_list: list[Callable[[dict, Any], dict]] = None,
-                              seq_name='',
+                              seq_name: str | None = '',
                               int_pk_col_name='pk',
                               target_model_class=None
                               ):
@@ -463,6 +463,7 @@ def data_migration(user, password, database, host, port):
     clone_rows_by_model_class(conn, CofkUnionImage)
     clone_rows_by_model_class(conn, CofkUnionSubject)
     clone_rows_by_model_class(conn, CofkUnionRoleCategory)
+    clone_rows_by_model_class(conn, CofkUnionRelationshipType, seq_name=None)
 
     # ### Uploads
     clone_rows_by_model_class(conn, CofkCollectUpload,

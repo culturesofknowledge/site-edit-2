@@ -38,3 +38,8 @@ recref_left_right_pairs = [
     (manif_models.CofkManifImageMap.image, manif_models.CofkManifImageMap.manif),
 
 ]
+
+recref_left_right_dict = {
+    l.field.model: (l, r)
+    for l, r in recref_left_right_pairs
+}

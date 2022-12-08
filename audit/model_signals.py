@@ -6,7 +6,7 @@ from django.db.models.base import ModelBase
 
 from audit.audit_recref_adapter import AuditRecrefAdapter, PersonAuditAdapter, LocationAuditAdapter
 from audit.models import CofkUnionAuditLiteral
-from core import constant
+from core import constant, recref_settings
 from core.helper import model_utils
 from core.models import CofkUnionComment, CofkUnionRelationship, CofkUnionRelationshipType, CofkUnionResource, Recref
 from institution.models import CofkUnionInstitution
@@ -162,17 +162,47 @@ def handle_create_recref_date(sender: ModelBase, instance: models.Model):
 
 def add_relation_audit_to_literal(sender: ModelBase, instance: models.Model):
     """
-    xxxCofkLinkStartxxxxxxCofkHrefStartxxxhttps://emlo-edit.bodleian.ox.ac.uk/interface/union.php?iwork_id=975935xxxCofkHrefEndxxxms. Z 431-1, p. 111-112xxxCofkLinkEndxxx
-
-
-    xxxCofkLinkStartxxx
-    xxxCofkHrefStartxxx
-    https://emlo-edit.bodleian.ox.ac.uk/interface/union.php?iwork_id=977453
-    xxxCofkHrefEndxxx
-    12 Jun 1664: $RSEL Christian Huygens (Calais $RSEL Calais) to $RSEL Robert Moray
-    xxxCofkLinkEndxxx
-
+    add "Relation: " records to cofk_union_audit_literal
     """
+
     if not issubclass(sender, Recref):
         return
 
+    if sender not in recref_settings.recref_left_right_dict:
+        log.warning(f'unknown left right mapping for class [{sender}]')
+        return
+
+    # define left, right column
+    left_col, right_col = recref_settings.recref_left_right_dict[sender]
+    left_rel_obj = left_col.get_object(instance)
+    right_rel_obj = right_col.get_object(instance)
+
+    instance: Recref
+
+    # define rel description
+    rel_type = CofkUnionRelationshipType.objects.filter(relationship_code=instance.relationship_type).first()
+    if rel_type:
+        from_left_desc = rel_type.desc_left_to_right
+        from_right_desc = rel_type.desc_right_to_left
+    else:
+        from_left_desc = f'{instance.relationship_type} < '
+        from_right_desc = f'{instance.relationship_type} > '
+
+    # save two (both ways) relation audit records
+    for cur_left_rel, cur_right_rel, rel_desc in [
+        (left_rel_obj, right_rel_obj, from_left_desc),
+        (right_rel_obj, left_rel_obj, from_right_desc),
+    ]:
+        left_adapter = to_audit_adapter(cur_left_rel)
+        right_adapter = to_audit_adapter(cur_right_rel)
+        literal = CofkUnionAuditLiteral(
+            change_user=getattr(instance, 'change_user', constant.DEFAULT_CHANGE_USER),
+            change_type='New',
+            table_name=cur_left_rel._meta.db_table,
+            key_value_text=left_adapter.key_value_text(),
+            key_value_integer=instance.recref_id,
+            key_decode=left_adapter.key_decode(),
+            column_name=f'Relationship: {rel_desc}',
+            new_column_value=right_adapter.key_decode(),
+        )
+        literal.save()
