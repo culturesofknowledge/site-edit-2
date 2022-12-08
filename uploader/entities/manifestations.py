@@ -21,7 +21,7 @@ class CofkManifestations(CofkEntity, ABC):
         self.works = works
         self.manifestations: List[CofkCollectManifestation] = []
 
-        for index, row in enumerate(self.iter_rows(), start=1):
+        for index, row in enumerate(self.iter_rows(), start=1 + self.sheet.header_length):
             man_dict = self.get_row(row, index)
             self.check_required(man_dict)
             self.check_data_types(man_dict)

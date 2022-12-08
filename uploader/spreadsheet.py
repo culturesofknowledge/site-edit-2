@@ -35,6 +35,8 @@ class CofkSheet:
         self.rows: int
         self.name: str = sheet.title
         self.entities: Union[Type[CofkEntity], None] = None
+        # Hard-coded number of header rows
+        self.header_length: int = 2
 
         # Obtain header and row count of non-empty rows
         rows = (row for row in self.worksheet.iter_rows() if any([cell.value is not None for cell in row]))
@@ -45,8 +47,10 @@ class CofkSheet:
     @property
     def data(self) -> Generator[Tuple[Cell], None, None]:
         rows = (row for row in self.worksheet.iter_rows() if any([cell.value is not None for cell in row]))
-        next(rows)  # First row is header names
-        next(rows)  # Second row is explanatory notes
+
+        for i in range(self.header_length):
+            next(rows)
+
         return rows
 
     @property

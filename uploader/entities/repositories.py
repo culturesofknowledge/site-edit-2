@@ -14,7 +14,7 @@ class CofkRepositories(CofkEntity, ABC):
         super().__init__(upload, sheet)
         self.institutions: List[CofkCollectInstitution] = []
 
-        for index, row in enumerate(self.iter_rows(), start=1):
+        for index, row in enumerate(self.iter_rows(), start=1 + self.sheet.header_length):
             inst_dict = self.get_row(row, index)
             self.check_required(inst_dict)
             self.check_data_types(inst_dict)

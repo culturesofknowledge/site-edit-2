@@ -14,7 +14,7 @@ class CofkPeople(CofkEntity, ABC):
         super().__init__(upload, sheet)
         self.people: List[CofkCollectPerson] = []
 
-        for index, row in enumerate(self.iter_rows(), start=1):
+        for index, row in enumerate(self.iter_rows(), start=1 + self.sheet.header_length):
             per_dict = self.get_row(row, index)
             self.check_required(per_dict )
             self.check_data_types(per_dict)

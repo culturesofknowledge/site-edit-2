@@ -42,7 +42,7 @@ class CofkWork(CofkEntity):
         self.resources: List[CofkCollectWorkResource] = []
         self.languages: List[CofkCollectLanguageOfWork] = []
 
-        for index, row in enumerate(self.iter_rows(), start=1):
+        for index, row in enumerate(self.iter_rows(), start=1 + self.sheet.header_length):
             work_dict = self.get_row(row, index)
             self.check_required(work_dict)
             # TODO check work data types
