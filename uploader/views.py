@@ -188,10 +188,10 @@ def link_person_to_work(entities: QuerySet, relationship_type: str,
 
 def link_location_to_work(entities: QuerySet, relationship_type: str,
                           union_work: CofkUnionWork, work_id, request):
-    for location in entities.filter(iwork_id=work_id).all():
+    for origin_or_dest in entities.filter(iwork_id=work_id).all():
         cwlm = CofkWorkLocationMap(relationship_type=relationship_type,
-                                   work=union_work, location=location.union_location,
-                                   location_id=location.union_location.location_id)
+                                   work=union_work, location=origin_or_dest.location.union_location,
+                                   location_id=origin_or_dest.location.union_location.location_id)
         cwlm.update_current_user_timestamp(request.user.username)
         cwlm.save()
 
