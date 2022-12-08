@@ -132,41 +132,6 @@ def create_common_relation_col_name(table_name):
     return table_name.replace('_', '') + '_id'
 
 
-def create_m2m_relationship_by_relationship_table(conn,
-                                                  left_model_class: Type[Model],
-                                                  right_model_class: Type[Model],
-                                                  cur_relation_table_name,
-                                                  check_duplicate_fn=None,
-                                                  ):
-    left_table_name = left_model_class._meta.db_table
-    right_table_name = right_model_class._meta.db_table
-    left_col = create_common_relation_col_name(left_table_name)
-    right_col = create_common_relation_col_name(right_table_name)
-
-    if check_duplicate_fn is None:
-        def check_duplicate_fn(_left_id, _right_id):
-            sql = f'select 1 from {cur_relation_table_name} ' \
-                  f"where {left_col} = '{_left_id}' and {right_col} = '{_right_id}' "
-            return is_exists(cur_conn, sql)
-
-    sql = 'select left_id_value, right_id_value from cofk_union_relationship ' \
-          f" where left_table_name = '{left_table_name}' " \
-          f" and right_table_name = '{right_table_name}' "
-    values = iter_records(conn, sql)
-    values = (_id for _id in values if not check_duplicate_fn(*_id))
-    sql_val_list = (
-        (
-            (f'insert into {cur_relation_table_name} ({left_col}, {right_col}) '
-             f"values (%s, %s)"),
-            [left_id, right_id],
-        )
-        for left_id, right_id in values
-    )
-
-    record_size = insert_sql_val_list(sql_val_list)
-    log_save_records(cur_relation_table_name, record_size)
-
-
 def insert_sql_val_list(sql_val_list: Iterable[tuple[str, Any]]) -> int:
     record_counter = iter_utils.RecordCounter()
     insert_cursor = cur_conn.cursor()
@@ -372,17 +337,6 @@ def create_recref(conn,
 
     record_size = insert_sql_val_list(sql_val_list)
     log_save_records(id_field_val.mapping_table_name, record_size)
-
-
-def create_resources_relationship(conn, model_class: Type[Model],
-                                  cur_relation_table_name=None, ):
-    warnings.warn('replace by clone_recref_simple_by_field_pairs', DeprecationWarning)
-    # TOBEREMOVE replace by clone_recref_simple_by_field_pairs
-    cur_relation_table_name = cur_relation_table_name or f'{model_class._meta.db_table}_resources'
-    return create_m2m_relationship_by_relationship_table(
-        conn, model_class, CofkUnionResource,
-        cur_relation_table_name,
-    )
 
 
 def no_duplicate_check(*args, **kwargs):
