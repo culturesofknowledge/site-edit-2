@@ -7,6 +7,22 @@ trigger_sql__dbf_cofk_union_audit_any = """
 """
 
 
+def create_debug_trigger():
+    trigger_name = 'debug_trigger'
+    table_name = 'cofk_union_location'
+    sql = f"""
+    create trigger {trigger_name}
+     before insert 
+     on {table_name} 
+     for each row
+    execute procedure debug_fn();
+    """
+
+    return migrations.RunSQL(
+        sql, f'drop trigger {trigger_name} on {table_name}'
+    )
+
+
 class Migration(migrations.Migration):
     initial = True
 
@@ -40,6 +56,8 @@ class Migration(migrations.Migration):
         migrations_utils.create_function_by_file('audit', 'trigger/dbf_cofk_union_audit_literal_delete.sql'),
         migrations_utils.create_function_by_file('audit', 'trigger/dbf_cofk_union_audit_literal_insert.sql'),
         migrations_utils.create_function_by_file('audit', 'trigger/dbf_cofk_union_audit_literal_update.sql'),
+
+        # migrations_utils.create_function_by_file('audit', 'trigger/debug_trigger.sql'),
     ]
 
     for table_name in [
@@ -60,3 +78,6 @@ class Migration(migrations.Migration):
         operations.extend(
             audit_migrations_utils.create_audit_trigger_list(table_name)
         )
+        pass
+
+    # operations.append(create_debug_trigger())
