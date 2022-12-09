@@ -22,7 +22,8 @@ def get_action_name(action):
 
 def create_audit_trigger_sql(table_name, action):
     action_name = get_action_name(action)
-    when = 'before' if 'delete' else 'after'
+    # when = 'before' if 'delete' else 'after'
+    when = 'after'  # in original should be 'before delete'
     return f"""
     create trigger {table_name}_trg_audit_{action_name}
     {when} {action}
@@ -34,7 +35,7 @@ def create_audit_trigger_sql(table_name, action):
 
 def create_audit_trigger_list(table_name) -> Iterable[Operation]:
     action_list = [
-        # 'delete',  #  **before** delete trigger not working
+        'delete',
         'insert',
         'update'
     ]
