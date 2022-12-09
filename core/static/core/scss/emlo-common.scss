@@ -257,6 +257,11 @@ tr.selectable_entry:hover {
 }
 
 
+.form-core-div {
+  @extend .row;
+  font-size: 16px;
+}
+
 .form-col-left {
   @extend .col;
   @extend .col--1of3;
@@ -265,4 +270,13 @@ tr.selectable_entry:hover {
 .form-col-right {
   @extend .col;
   @extend .col--2of3;
+
+  line-height: 1.1;
+
+  label {
+    display: block;
+
+  }
+
+
 }
