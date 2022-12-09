@@ -3,24 +3,29 @@
 
 {% block head %}
     <script src="{% static 'location/js/init_loc_form.js' %}" defer></script>
+    <script src="{% static 'core/js/table_of_content_service.js' %}" defer></script>
     <script defer>
         document.addEventListener('DOMContentLoaded', (e) => {
-            setup_location_form_listener()
+            setup_location_form_listener();
+            setup_table_of_content();
         });
     </script>
 {% endblock %}
 
 {% block content %}
 
-    <div class="row row--centered">
-        <div class="col col--2of3">
+    <div class="row">
+        <div class="form-col-left toc-host"></div>
+        <div class="form-col-right">
             <h1 class="align-center">Location</h1>
 
             <form method="post">
                 {% csrf_token %}
 
                 <fieldset>
-                    <legend>{{ form.form_title__ }}</legend>
+                    <legend id="header_init_{{ forloop.counter0 }}" class="toc-item">
+                        {{ loc_form.form_title__ }}
+                    </legend>
                     {{ loc_form }}
                 </fieldset>
 

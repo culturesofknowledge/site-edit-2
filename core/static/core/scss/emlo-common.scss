@@ -255,3 +255,14 @@ tr.selectable_entry:hover {
   color: red;
   font-weight: bold;
 }
+
+
+.form-col-left {
+  @extend .col;
+  @extend .col--1of3;
+}
+
+.form-col-right {
+  @extend .col;
+  @extend .col--2of3;
+}

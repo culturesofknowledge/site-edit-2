@@ -1,7 +1,18 @@
+@media only screen and (min-width: 768px) and (max-width: 1023px) {
+  #toc-div {
+    position: relative;
+  }
+}
+
+@media only screen and (min-width: 1024px) {
+  #toc-div {
+    position: fixed;
+  }
+}
 
 #toc-div {
-  @extend .fixed-right-bottom;
-  max-height: 80%;
+  min-width: 350px;
+  max-height: 70%;
   padding: 0;
   height: 100%;
 
@@ -9,21 +20,13 @@
     width: 180px;
   }
 
-  & > * {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-  }
-
 }
 
 #toc-body {
   @extend .flex-col;
-  max-width: 400px;
   background-color: #DCDFE5;
   font-size: $typescale-5a;
   padding: 1em;
-  min-width: 360px;
   max-height: 100%;
   overflow-y: auto;
 
