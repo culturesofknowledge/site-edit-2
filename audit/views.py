@@ -11,6 +11,10 @@ from core.helper.view_utils import DefaultSearchView
 
 class AuditSearchView(LoginRequiredMixin, DefaultSearchView):
 
+    @property
+    def entity(self) -> str:
+        return 'audit,audits'
+
     def get_queryset(self):
         field_fn_maps = {
                             'table_name': query_utils.create_eq_query,
