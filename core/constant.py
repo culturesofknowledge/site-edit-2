@@ -59,6 +59,10 @@ REL_TYPE_SPOUSE_OF = 'spouse_of'
 
 REL_TYPE_IMAGE_OF = 'image_of'
 
+REL_TYPE_WAS_BORN_IN_LOCATION = 'was_born_in_location'
+REL_TYPE_WAS_IN_LOCATION = 'was_in_location'
+REL_TYPE_DIED_AT_LOCATION = 'died_at_location'
+
 DEFAULT_EMPTY_DATE_STR = '9999-12-31'
 STD_DATE_FORMAT = '%Y-%m-%d'
 SEARCH_DATE_FORMAT = '%d/%m/%Y'

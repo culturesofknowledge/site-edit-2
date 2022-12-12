@@ -9,7 +9,7 @@ from django.forms.utils import ErrorList
 from core import constant
 from core.helper import form_utils, widgets_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
-from core.helper.form_utils import TargetPersonMRRForm
+from core.helper.form_utils import TargetPersonMRRForm, LocationRecrefField
 from person.models import CofkUnionPerson
 from person.recref_adapter import ActivePersonRecrefAdapter
 from uploader.models import CofkUnionOrgType
@@ -149,12 +149,12 @@ class PersonForm(ModelForm):
     flourished_calendar = forms.CharField(required=False,
                                           widget=forms.RadioSelect(choices=calendar_date_choices, ))
 
-    birth_place = forms.CharField(required=False, widget=forms.HiddenInput())
-    death_place = forms.CharField(required=False, widget=forms.HiddenInput())
-    other_place = forms.CharField(required=False, widget=forms.HiddenInput())
     organisation_type = OrgTypeField(required=False)
 
     # extra field
+    birth_place = LocationRecrefField(required=False)
+    death_place = LocationRecrefField(required=False)
+    other_place = forms.CharField(required=False, widget=forms.HiddenInput())
     selected_other_id = forms.CharField(required=False)
 
     def __init__(self, data=None, files=None, auto_id="id_%s", prefix=None, initial=None, error_class=ErrorList,

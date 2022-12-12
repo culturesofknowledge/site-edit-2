@@ -42,6 +42,9 @@ class SingleRecrefHandler:
         self.create_recref_adapter = create_recref_adapter_fn
 
     def create_init_dict(self, parent: models.Model):
+        if parent is None:
+            return dict()
+
         recref_adapter = self.create_recref_adapter(parent)
         recref = self._find_recref_by_parent(parent, recref_adapter=recref_adapter)
         return {

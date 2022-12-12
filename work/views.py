@@ -139,12 +139,11 @@ class PlacesFFH(BasicWorkFFH):
             create_recref_adapter_fn=WorkLocRecrefAdapter,
         )
 
-        dates_form_initial = {}
-        if self.work is not None:
-            dates_form_initial.update(
-                self.origin_loc_handler.create_init_dict(self.work)
-                | self.destination_loc_handler.create_init_dict(self.work)
-            )
+        dates_form_initial = (
+            {}
+            | self.origin_loc_handler.create_init_dict(self.work)
+            | self.destination_loc_handler.create_init_dict(self.work)
+        )
         self.places_form = PlacesForm(request_data, instance=self.work, initial=dates_form_initial)
 
         # comments
