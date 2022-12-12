@@ -8,15 +8,15 @@ from django.forms import BaseForm, BaseFormSet, ModelForm
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView
 
-from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_IS_RELATED_TO
-from core.forms import CommentForm, ResourceForm
+from core.constant import REL_TYPE_COMMENT_REFERS_TO
+from core.forms import CommentForm
 from core.helper import view_utils, renderer_utils, query_utils, download_csv_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.model_utils import RecordTracker
+from core.helper.recref_handler import RecrefFormsetHandler, ImageRecrefHandler, TargetResourceFormsetHandler
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
-from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate, RecrefFormsetHandler, \
-    ImageRecrefHandler, TargetResourceFormsetHandler
+from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate
 from core.models import Recref
 from location import location_utils
 from location.forms import LocationForm, GeneralSearchFieldset

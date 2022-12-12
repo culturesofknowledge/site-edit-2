@@ -9,8 +9,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from core.helper import renderer_utils, query_utils, view_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.renderer_utils import CompactSearchResultsRenderer
-from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView, TargetResourceFormsetHandler, \
-    ImageRecrefHandler
+from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView
+from core.helper.recref_handler import ImageRecrefHandler, TargetResourceFormsetHandler
 from core.models import Recref
 from institution import inst_utils, models
 from institution.forms import InstitutionForm, GeneralSearchFieldset
