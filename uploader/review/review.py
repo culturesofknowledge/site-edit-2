@@ -107,15 +107,25 @@ def bulk_create(objects: List[Type[models.Model]]):
             # self.add_error(f'Could not create {type(objects[0])} objects in database.')
 
 
-def accept_work(request, context: dict, upload: CofkCollectUpload):
+def get_work(works, work_id) -> CofkCollectWork | None:
     try:
-        work_id = int(request.GET['work_id'])
+        work_id = int(work_id)
     except ValueError:
         return
-    collect_work = [w for w in context['works_page'].object_list if w.id == work_id][0]
 
-    if collect_work.upload_status_id != 1:
+    try:
+        return [w for w in works  if w.id == work_id][0]
+    except IndexError:
+        pass
+
+
+def accept_work(request, context: dict, upload: CofkCollectUpload):
+    collect_work = get_work(context['works_page'].object_list, request.GET['work_id'])
+
+    if not collect_work or collect_work.upload_status_id != 1:
         return
+
+    work_id = collect_work.iwork_id
 
     # Create work
     union_work = create_union_work(collect_work)
@@ -171,19 +181,103 @@ def accept_work(request, context: dict, upload: CofkCollectUpload):
 
 
 def reject_work(request, context: dict, upload: CofkCollectUpload):
-    work_id = request.GET['work_id']
-    collect_work = context['works'].filter(pk=work_id).first()
+    collect_work = get_work(context['works_page'].object_list, request.GET['work_id'])
 
-    if collect_work.upload_status_id != 1:
+    if not collect_work or collect_work.upload_status_id != 1:
         return
 
     upload.upload_status_id = 2  # Partly reviewed
     upload.works_rejected += 1
-    # upload.save()
+    upload.save()
 
     collect_work.upload_status_id = 5  # Rejected
-    # collect_work.save()
+    collect_work.save()
 
 
 def accept_works(request, context: dict, upload: CofkCollectUpload):
-    pass
+    collect_works = context['works_page'].paginator.object_list
+
+    if any([c.upload_status_id != 1 for c in collect_works]):
+        return
+
+    rel_maps = []
+
+    for work_count, collect_work in enumerate(collect_works, start=1):
+        work_id = collect_work.iwork_id
+        # Create work
+        union_work = create_union_work(collect_work)
+        union_work.save()
+
+        # Link people
+        people_maps = link_person_to_work(entities=context['authors'], relationship_type=REL_TYPE_CREATED,
+                                          union_work=union_work, work_id=work_id, request=request)
+        people_maps += link_person_to_work(entities=context['addressees'], relationship_type=REL_TYPE_WAS_ADDRESSED_TO,
+                                           union_work=union_work, work_id=work_id, request=request)
+        people_maps += link_person_to_work(entities=context['mentioned'],
+                                           relationship_type=REL_TYPE_PEOPLE_MENTIONED_IN_WORK,
+                                           union_work=union_work, work_id=work_id, request=request)
+        rel_maps.append(people_maps)
+
+        lang_maps = [CofkUnionLanguageOfWork(work=union_work, language_code=lang.language_code) for
+                     lang in context['languages'].filter(iwork_id=work_id).all()]
+        # Link languages
+        rel_maps.append(lang_maps)
+
+        # Link locations
+        loc_maps = link_location_to_work(entities=context['destinations'], relationship_type=REL_TYPE_WAS_SENT_TO,
+                                         union_work=union_work, work_id=work_id, request=request)
+        loc_maps += link_location_to_work(entities=context['origins'], relationship_type=REL_TYPE_WAS_SENT_FROM,
+                                          union_work=union_work, work_id=work_id, request=request)
+        rel_maps.append(loc_maps)
+
+        # Create manifestations
+        union_maps = create_union_manifestations(work_id=work_id, union_work=union_work, request=request,
+                                                 context=context)
+        rel_maps.append(union_maps)
+
+        res_maps = []
+
+        # Link resources
+        for resource in context['resources'].filter(iwork_id=work_id).all():
+            union_resource = CofkUnionResource()
+            union_resource.resource_url = resource.resource_url
+            union_resource.resource_name = resource.resource_name
+            union_resource.resource_details = resource.resource_details
+            union_resource.resource_id = resource.resource_id
+            union_resource.save()
+
+            cwrm = CofkWorkResourceMap(relationship_type=REL_TYPE_IS_RELATED_TO, work=union_work,
+                                       resource=union_resource, resource_id=union_resource.resource_id)
+            cwrm.update_current_user_timestamp(request.user.username)
+            # cwrm.save()
+            res_maps.append(cwrm)
+
+        rel_maps.append(res_maps)
+
+        collect_work.upload_status_id = 4  # Accepted and saved into main database
+
+    for rel_map in rel_maps:
+        bulk_create(rel_map)
+
+    CofkCollectWork.objects.bulk_update(collect_works, ['upload_status_id'])
+
+    # Change state of upload and work
+    upload.upload_status_id = 3  # Review complete
+    upload.works_accepted = work_count
+    upload.save()
+
+
+def reject_works(context: dict, upload: CofkCollectUpload):
+    collect_works = context['works_page'].paginator.object_list
+
+    if any([c.upload_status_id != 1 for c in collect_works]):
+        return
+
+    for work_count, collect_work in enumerate(collect_works, start=1):
+        collect_work.upload_status_id = 5  # Rejected
+
+    CofkCollectWork.objects.bulk_update(collect_works, ['upload_status_id'])
+
+    upload.upload_status_id = 3  # Review complete
+    upload.works_rejected = work_count
+    upload.save()

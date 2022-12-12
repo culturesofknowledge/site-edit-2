@@ -17,7 +17,7 @@ from uploader.forms import CofkCollectUploadForm
 from django.conf import settings
 
 from uploader.models import CofkCollectUpload
-from uploader.review.review import accept_work, reject_work, accept_works
+from uploader.review.review import accept_work, reject_work, accept_works, reject_works
 from uploader.spreadsheet import CofkUploadExcelFile
 from uploader.validation import CofkMissingColumnError, CofkMissingSheetError, CofkNoDataError
 
@@ -135,7 +135,7 @@ def upload_review(request, upload_id, **kwargs):
     template_url = 'uploader/review.html'
     upload = CofkCollectUpload.objects.filter(upload_id=upload_id).first()
 
-    works_paginator = Paginator(CofkCollectWork.objects.filter(upload=upload), 25)  # Show 25 contacts per page.
+    works_paginator = Paginator(CofkCollectWork.objects.filter(upload=upload), 25)
     page_number = request.GET.get('page', 1)
     works_page = works_paginator.get_page(page_number)
 
@@ -160,7 +160,9 @@ def upload_review(request, upload_id, **kwargs):
             accept_work(request, context, upload)
         elif 'reject_work' in request.GET:
             reject_work(request, context, upload)
-        elif 'accept_works' in request.GET:
-            accept_works(request, context, upload)
+    elif 'accept_all' in request.GET:
+        accept_works(request, context, upload)
+    elif 'reject_all' in request.GET:
+        reject_works(context, upload)
 
     return render(request, template_url, context)
