@@ -11,17 +11,19 @@
 
 <hr/>
 
-{% for work in works_page %}
-    <h3>Work {{ forloop.counter }} of {{ works_page.paginator.per_page }}</h3>
+{% include "uploader/component/pagination.html" with entity='works' page=works_page page_range=works_page_range %}
 
+{% for work in works_page %}
     <div style="margin: 1em;">
+        <h3>Work {{ forloop.counter }} of {{ works_page.object_list|length }}</h3>
+
         <a href="#works">Works</a> - <a href="#people">People</a> - <a href="#repositories">Repositories</a> - <a href="#top">Top of page</a> - <a href="#bottom">Bottom of page</a>
     </div>
 
     <table class="review">
         <tr>
             <td class="header">Status and possible actions</td>
-            <td><strong>{{ work.upload_status }}</strong> (Collect ID: {{ work.iwork_id}})<br/>
+            <td><strong>{{ work.upload_status }}</strong> (Collect ID: {{ work.iwork_id }})<br/>
                 {% if work.upload_status_id == 1 %}
                 <form>
                     {% csrf_token %}
@@ -262,24 +264,10 @@
         </tr>
     </table>
 
-    <div class="pagination">
-    <span class="step-links">
-        {% if works_paginator.has_previous %}
-            <a href="?page=1">&laquo; first</a>
-            <a href="?page={{ page_obj.previous_page_number }}">previous</a>
-        {% endif %}
-
-        <span class="current">
-            Page {{ works_paginator.number }} of {{ works_paginator.paginator.num_pages }}.
-        </span>
-
-        {% if works_paginator.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}">next</a>
-            <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
-        {% endif %}
-    </span>
-</div>
-
+<!--
     <hr/>
-
+-->
 {% endfor %}
+
+
+{% include "uploader/component/pagination.html" with entity='works' page=works_page page_range=works_page_range %}
