@@ -264,7 +264,7 @@ tr.selectable_entry:hover {
 }
 
 
-@media only screen and (min-width: 768px) {
+@media only screen and (min-width: $mborder-small) and (max-width: $mborder-mid) {
   .form-col-left {
     flex-basis: 100%;
   }

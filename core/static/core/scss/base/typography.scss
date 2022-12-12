@@ -5,13 +5,13 @@ html {
   letter-spacing: 0.015em;
 }
 
-@media only screen and (min-width: 768px) {
+@media only screen and (min-width: $mborder-small) {
   html {
     font-size: 18px;
   }
 }
 
-@media only screen and (min-width: 2560px) {
+@media only screen and (min-width: $mborder-big) {
   html {
     font-size: 20px;
   }
