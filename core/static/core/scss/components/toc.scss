@@ -1,18 +1,20 @@
 @media only screen and (min-width: 768px) and (max-width: 1023px) {
   #toc-div {
+    width: 400px;
     position: relative;
+    max-height: 100%;
   }
 }
 
 @media only screen and (min-width: 1024px) {
   #toc-div {
     position: fixed;
+    max-height: 70%;
   }
 }
 
 #toc-div {
-  min-width: 350px;
-  max-height: 70%;
+  min-width: 300px;
   padding: 0;
   height: 100%;
 
