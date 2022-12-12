@@ -63,5 +63,5 @@ $white-15:         hsla(0, 0%, 100%, .15);
 // media border
 $mborder-small : 768px;
 $mborder-mid : 1024px;
-$mborder-mid-1 : calc(#{$mborder-mid} - 1);
+$mborder-mid-p1 : calc(1px + #{$mborder-mid});
 $mborder-big : 2560px;
