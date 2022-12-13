@@ -289,10 +289,12 @@ class CommonInitFormViewTemplate(View):
 
     def post(self, request, *args, **kwargs):
         form = self.form_factory(request.POST or None)
-        if form.is_valid():
+        if form.is_valid() and form.has_changed():
             log.info(f'form have been changed')
             new_instance = self.on_form_changed(request, form)
             return self.resp_after_saved(request, form, new_instance)
+        else:
+            log.warning(f'ignore save init form -- valid[{form.is_valid()}] has_changed[{form.has_changed()}]')
 
         return self.resp_form_page(request, form)
 
