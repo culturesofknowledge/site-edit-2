@@ -25,8 +25,7 @@
         <div class="form-col-left toc-host"></div>
         <div class="form-col-right">
             <h1 class="align-center" id="header_location">Location</h1>
-            <form action="{% url 'location:full_form' loc_id %}" method="post"
-                  enctype="multipart/form-data">
+            <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <h1>Location </h1>
                 <fieldset>
