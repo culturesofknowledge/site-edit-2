@@ -49,11 +49,10 @@
                 <!-- Images section -->
                 {% include "core/component/image_formset.html" with img_handler=img_handler %}
 
-                <div class="flex-col sticky-bottom">
-                    <input type="submit" value="Submit">
-                </div>
+                {% include "core/component/actionbox.html" %}
+
             </form>
         </div>
     </div>
-    <!-- KTODO delete record button >
+    <!-- KTODO delete record button  -->
 {% endblock %}
