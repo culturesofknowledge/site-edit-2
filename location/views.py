@@ -4,7 +4,7 @@ from typing import Iterable, Union, Type, Callable
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.forms import BaseForm, BaseFormSet, ModelForm
+from django.forms import BaseForm, BaseFormSet
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView
 
@@ -12,10 +12,10 @@ from core.constant import REL_TYPE_COMMENT_REFERS_TO
 from core.forms import CommentForm
 from core.helper import view_utils, renderer_utils, query_utils, download_csv_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
-from core.helper.model_utils import RecordTracker
 from core.helper.recref_handler import RecrefFormsetHandler, ImageRecrefHandler, TargetResourceFormsetHandler
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
+from core.helper.view_handler import FullFormHandler
 from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate
 from core.models import Recref
 from location import location_utils
@@ -75,71 +75,62 @@ def flat_changed_forms(form_formsets: Iterable[FormOrFormSet]):
     return (f for f in forms if f.has_changed())
 
 
-def update_current_user_timestamp(user, form_formsets: Iterable[FormOrFormSet]):
-    forms = flat_changed_forms(form_formsets)
-    forms = (f for f in forms if isinstance(f, ModelForm))
-    records = (f.instance for f in forms if isinstance(f.instance, RecordTracker))
-    for r in records:
-        r.update_current_user_timestamp(user)
-
-
 def save_changed_forms(form_formsets: Iterable[FormOrFormSet]):
     for f in flat_changed_forms(form_formsets):
         f.save()
 
 
+class LocationFFH(FullFormHandler):
+
+    def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
+        self.loc = None
+        self.location_id = pk or request.POST.get('location_id')
+        if self.location_id:
+            self.loc = get_object_or_404(CofkUnionLocation, pk=self.location_id)
+
+        self.loc_form = LocationForm(request_data, instance=self.loc)
+
+        self.add_recref_formset_handler(
+            LocationResourceFormsetHandler(request_data=request_data,
+                                           parent=self.loc)
+        )
+        self.add_recref_formset_handler(LocationCommentFormsetHandler(prefix='comment',
+                                                                      request_data=request_data,
+                                                                      form=CommentForm,
+                                                                      rel_type=REL_TYPE_COMMENT_REFERS_TO,
+                                                                      parent=self.loc))
+
+        self.img_recref_handler = LocationImageRecrefHandler(request_data, request and request.FILES,
+                                                             parent=self.loc)
+
+    def create_context(self):
+        context = super().create_context()
+        context.update({
+            'loc_id': self.location_id
+        })
+        return context
+
+    def render_form(self, request):
+        return render(request, 'location/full_form.html', self.create_context())
+
+
 @login_required
 def full_form(request, location_id):
-    loc = None
-    location_id = location_id or request.POST.get('location_id')
-    if location_id:
-        loc = get_object_or_404(CofkUnionLocation, pk=location_id)
-
-    loc_form = LocationForm(request.POST or None, instance=loc)
-
-    res_handler = LocationResourceFormsetHandler(request_data=request.POST or None,
-                                                 parent=loc)
-    comment_handler = LocationCommentFormsetHandler(prefix='comment',
-                                                    request_data=request.POST or None,
-                                                    form=CommentForm,
-                                                    rel_type=REL_TYPE_COMMENT_REFERS_TO,
-                                                    parent=loc)
-
-    img_recref_handler = LocationImageRecrefHandler(request.POST or None, request.FILES, parent=loc)
-
-    def _render_full_form():
-
-        return render(request, 'location/full_form.html',
-                      ({'loc_form': loc_form,
-                        'loc_id': location_id,
-                        }
-                       | img_recref_handler.create_context()
-                       | res_handler.create_context()
-                       | comment_handler.create_context()
-                       )
-                      )
+    fhandler = LocationFFH(location_id, request_data=request.POST, request=request)
 
     if request.method == 'POST':
-        form_formsets = [loc_form, res_handler.formset, comment_handler.formset,
-                         img_recref_handler.formset, img_recref_handler.upload_img_form,
-                         ]
 
-        if view_utils.any_invalid_with_log(form_formsets):
-            log.warning(f'something invalid')
-            return _render_full_form()
-
-        update_current_user_timestamp(request.user.username, form_formsets)
+        if fhandler.is_invalid():
+            return fhandler.render_form(request)
 
         # save formset
-        res_handler.save(loc, request)
-        comment_handler.save(loc, request)
-        img_recref_handler.save(loc, request)
+        fhandler.loc_form.save()
+        fhandler.save_all_recref_formset(fhandler.loc_form.instance, request)
 
-        loc_form.save()
         log.info(f'location [{location_id}] have been saved')
-        return redirect('location:search')
+        fhandler.load_data(location_id, request_data=None)
 
-    return _render_full_form()
+    return fhandler.render_form(request)
 
 
 class LocationMergeView(LoginRequiredMixin, ListView):
