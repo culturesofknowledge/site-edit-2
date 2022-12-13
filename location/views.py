@@ -23,6 +23,7 @@ from location.forms import LocationForm, GeneralSearchFieldset
 from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap, CofkLocationImageMap
 from location.recref_adapter import LocationCommentRecrefAdapter, LocationResourceRecrefAdapter, \
     LocationImageRecrefAdapter
+from location.view_components import LocationFormDescriptor
 
 log = logging.getLogger(__name__)
 FormOrFormSet = Union[BaseForm, BaseFormSet]
@@ -105,9 +106,11 @@ class LocationFFH(FullFormHandler):
 
     def create_context(self):
         context = super().create_context()
-        context.update({
-            'loc_id': self.location_id
-        })
+        context.update(
+            {
+                'loc_id': self.location_id,
+            } | LocationFormDescriptor(self.loc).create_context()
+        )
         return context
 
     def render_form(self, request):

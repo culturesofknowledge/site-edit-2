@@ -2,6 +2,9 @@
 {% load static %}
 {% load cl_filters %}
 {% block tabcontent %}
+
+    {% include "core/component/form_descriptor.html" with descriptor=form_descriptor %}
+
     <span>You can have the following summary sent to you by email as a spreadsheet TODO <!-- KTODO --></span>
 
     <h2 id="header_general" class="toc-item">General</h2>

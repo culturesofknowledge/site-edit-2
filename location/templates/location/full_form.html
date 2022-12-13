@@ -27,7 +27,7 @@
             <h1 class="align-center" id="header_location">Location</h1>
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
-                <h1>Location </h1>
+                {% include "core/component/form_descriptor.html" with descriptor=form_descriptor %}
                 <fieldset>
                     <legend id="header_init_{{ forloop.counter0 }}" class="toc-item">
                         {{ loc_form.form_title__ }}

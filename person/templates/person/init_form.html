@@ -26,6 +26,7 @@
 
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
+                {% include "core/component/form_descriptor.html" with descriptor=form_descriptor %}
 
                 <fieldset>
                     <legend id="header_person" class="toc-item">Core fields and editors' notes</legend>

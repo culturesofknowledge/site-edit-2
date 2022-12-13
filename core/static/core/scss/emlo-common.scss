@@ -288,3 +288,15 @@ tr.selectable_entry:hover {
   }
 
 }
+
+
+@media only screen and (min-width: $mborder-mid) {
+  .form-descriptor {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 55px;
+    background-color: white;
+  }
+}
+
+

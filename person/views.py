@@ -26,6 +26,7 @@ from person.models import CofkUnionPerson, CofkPersonPersonMap, create_person_id
     CofkPersonCommentMap, CofkPersonResourceMap, CofkPersonImageMap
 from person.recref_adapter import PersonCommentRecrefAdapter, PersonResourceRecrefAdapter, PersonRoleRecrefAdapter, \
     ActivePersonRecrefAdapter, PassivePersonRecrefAdapter, PersonImageRecrefAdapter, PersonLocRecrefAdapter
+from person.view_components import PersonFormDescriptor
 
 log = logging.getLogger(__name__)
 
@@ -206,7 +207,10 @@ class PersonFFH(FullFormHandler):
 
     def create_context(self):
         context = super().create_context()
-        context.update(self.role_handler.create_context())
+        context.update(
+            self.role_handler.create_context()
+            | PersonFormDescriptor(self.person).create_context()
+        )
         return context
 
     def render_form(self, request):

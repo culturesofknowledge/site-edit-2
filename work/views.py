@@ -48,6 +48,7 @@ from work.models import CofkWorkPersonMap, CofkUnionWork, CofkWorkCommentMap, Co
 from work.recref_adapter import WorkLocRecrefAdapter, ManifInstRecrefAdapter, WorkSubjectRecrefAdapter, \
     EarlierLetterRecrefAdapter, LaterLetterRecrefAdapter, EnclosureManifRecrefAdapter, EnclosedManifRecrefAdapter, \
     WorkCommentRecrefAdapter, ManifCommentRecrefAdapter, WorkResourceRecrefAdapter, ManifImageRecrefAdapter
+from work.view_components import WorkFormDescriptor
 
 log = logging.getLogger(__name__)
 
@@ -86,10 +87,8 @@ class BasicWorkFFH(FullFormHandler):
     def create_context(self):
         context = super().create_context()
         context.update({
-            'iwork_id': self.request_iwork_id
-        })
-        if self.work:
-            context['work_display_name'] = work_utils.get_recref_display_name(self.work)
+                           'iwork_id': self.request_iwork_id
+                       } | WorkFormDescriptor(self.work).create_context())
         return context
 
     def render_form(self, request):
@@ -140,9 +139,9 @@ class PlacesFFH(BasicWorkFFH):
         )
 
         dates_form_initial = (
-            {}
-            | self.origin_loc_handler.create_init_dict(self.work)
-            | self.destination_loc_handler.create_init_dict(self.work)
+                {}
+                | self.origin_loc_handler.create_init_dict(self.work)
+                | self.destination_loc_handler.create_init_dict(self.work)
         )
         self.places_form = PlacesForm(request_data, instance=self.work, initial=dates_form_initial)
 
@@ -861,6 +860,8 @@ def overview_view(request, iwork_id):
         manif_set=list(map(to_overview_manif, work.cofkunionmanifestation_set.iterator())),
         original_calendar_display=to_calendar_display(work.original_calendar),
     )
+
+    context.update(WorkFormDescriptor(work).create_context())
 
     return render(request, 'work/overview_form.html', context)
 

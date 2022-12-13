@@ -18,6 +18,7 @@ from django.views.generic import ListView
 import core.constant as core_constant
 from core.forms import build_search_components
 from core.helper import file_utils, email_utils, query_utils
+from core.helper.model_utils import ModelLike, RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
     demo_table_search_results_renderer
 from core.helper.view_components import DownloadCsvHandler
@@ -332,3 +333,39 @@ def create_formset(form_class, post_data=None, prefix=None,
         prefix=prefix,
         initial=initial_list,
     )
+
+
+class FormDescriptor:
+
+    def __init__(self, obj: ModelLike):
+        self.obj = obj
+
+    @property
+    def name(self):
+        """ name of the records """
+        return '__unknown_name__'
+
+    @property
+    def model_name(self):
+        """ mode name of records e.g. (Work, Person, Location) """
+        return '__unknown_title__'
+
+    @property
+    def id(self):
+        """ id of record"""
+        return self.obj.pk
+
+    @property
+    def change_timestamp(self):
+        if isinstance(self.obj, RecordTracker):
+            return self.obj.change_timestamp
+        return None
+
+    @property
+    def change_user(self):
+        if isinstance(self.obj, RecordTracker):
+            return self.obj.change_user
+        return None
+
+    def create_context(self):
+        return {'form_descriptor': self}
