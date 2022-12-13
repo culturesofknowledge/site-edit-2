@@ -4,20 +4,21 @@
 
 {% block content %}
     <script src="{% static 'core/js/ref_publication_service.js' %}" defer></script>
-    <h1 class="align-center">
-        {% if person_form.is_org_form or person_form.is_organisation.value == 'Y' %}
-            Organisation
-        {% else %}
-            Person
-        {% endif %}
-    </h1>
 
     <div class="form-core-div">
 
         <div class="form-col-left toc-host"></div>
-
-
         <div class="form-col-right">
+
+            <h1 class="align-center">
+                {% if person_form.is_org_form or person_form.is_organisation.value == 'Y' %}
+                    Organisation
+                {% else %}
+                    Person
+                {% endif %}
+            </h1>
+
+
             <div>
                 {{ person_form.errors }}
             </div>
