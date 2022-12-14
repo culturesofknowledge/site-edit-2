@@ -21,15 +21,18 @@
 {% endblock %}
 
 {% block content %}
-    <div class="row row--centered">
-        <div class="col col--1of2">
+    <div class="form-core-div">
+        <div class="form-col-left toc-host"></div>
+        <div class="form-col-right">
             <h1 class="align-center" id="header_location">Location</h1>
             <form action="{% url 'location:full_form' loc_id %}" method="post"
                   enctype="multipart/form-data">
                 {% csrf_token %}
                 <h1>Location </h1>
                 <fieldset>
-                    <legend id="header_init_{{ forloop.counter0 }}" class="toc-item">{{ loc_form.form_title__ }}</legend>
+                    <legend id="header_init_{{ forloop.counter0 }}" class="toc-item">
+                        {{ loc_form.form_title__ }}
+                    </legend>
                     {{ loc_form }}
                 </fieldset>
 

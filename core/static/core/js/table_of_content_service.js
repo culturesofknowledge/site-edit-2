@@ -13,30 +13,16 @@ function isElementInViewpoint(ele) {
     return elementBottom > viewportTop && elementTop < viewportBottom;
 }
 
-function toggle_table_of_content(){
-    if ($('#toc-body').is(':visible')){
-        $('#toc-body').hide()
-        $('#toc-btn').show()
-    } else {
-        $('#toc-body').show()
-        $('#toc-btn').hide()
-    }
-}
-
 
 function build_table_of_content_ui() {
     let container = $('<div id="toc-div">')
     container.append()
-    let toc_btn = $('<button id="toc-btn" >Table of Content</button>')
-    toc_btn.on('click', toggle_table_of_content);
 
 
-    let title = $('<button>Table of Content</button>')
-    title.on('click', toggle_table_of_content);
+    let title = $('<h3>Table of Content</h3>')
 
     let body = $('<div id="toc-body">')
     body.append(title)
-    body.hide()
 
     $('.toc-item, .toc-sub-item').each(function (idx, ele) {
         let link_jqe;
@@ -48,13 +34,13 @@ function build_table_of_content_ui() {
         body.append(link_jqe)
     });
 
-    container.append(toc_btn)
     container.append(body)
-    $('body').append(container);
+
+    $('.toc-host').append(container);
 }
 
 
-function find_new_cur_toc_item(){
+function find_new_cur_toc_item() {
     for (let toc_item_jqe of $('.toc-item, .toc-sub-item')) {
         if (isElementInViewpoint(toc_item_jqe)) {
             return toc_item_jqe
@@ -79,7 +65,6 @@ function setup_table_of_content() {
             delayed_table_of_content_scroll_fn = setTimeout(function () {
 
 
-
                 let cur_toc_item_jqe = find_new_cur_toc_item()
                 if (cur_toc_item_jqe != null && old_toc_id !== cur_toc_item_jqe.id) {
                     old_toc_id = cur_toc_item_jqe.id;
@@ -91,10 +76,9 @@ function setup_table_of_content() {
                     $(`#toc-body a[href='#${cur_toc_item_jqe.id}']`).addClass(cur_toc_item_class)
 
                     // update url, add #hash to url
-                    history.replaceState(null, null,  '#' + cur_toc_item_jqe.id )
+                    history.replaceState(null, null, '#' + cur_toc_item_jqe.id)
 
                 }
-
 
 
                 // clean delay function for trigger again

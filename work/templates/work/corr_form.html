@@ -11,9 +11,16 @@
 
         <label> Issues with authors/senders: </label>
 
-        {% include "core/component/common_checkbox.html" with field=corr_form.authors_inferred name='Authors / senders inferred' %}
+        <div class="row-no-margin">
+            <div class="margin-right">
+                {% include "core/component/common_checkbox.html" with field=corr_form.authors_inferred name='Authors / senders inferred' %}
+            </div>
 
-        {% include "core/component/common_checkbox.html" with field=corr_form.authors_uncertain  name='Authors / senders uncertain' %}
+
+            <div class="margin-right">
+                {% include "core/component/common_checkbox.html" with field=corr_form.authors_uncertain  name='Authors / senders uncertain' %}
+            </div>
+        </div>
 
         {% include "core/component/comment_publication_formset.html" with comment_formset=author_comment_formset comment_title='Notes on authors/senders' header_id='header_comment_author' header_class='toc-sub-item' %}
     </fieldset>
@@ -22,16 +29,21 @@
     <fieldset>
         <legend id="header_addressees" class="toc-item">Addressees</legend>
 
-        {% include "core/component/common_multi_rel_recref_formset.html" with multi_rel_recref_formset=addressee_formset recref_type='person' id_field=corr_form.selected_addressee_id label_add='Add another addressee:'%}
+        {% include "core/component/common_multi_rel_recref_formset.html" with multi_rel_recref_formset=addressee_formset recref_type='person' id_field=corr_form.selected_addressee_id label_add='Add another addressee:' %}
 
         <label> Addressees as marked: </label>
         {{ corr_form.addressees_as_marked }}
 
         <label> Issues with addressees: </label>
 
-        {% include "core/component/common_checkbox.html" with field=corr_form.addressees_inferred name='Addressees inferred' %}
-
-        {% include "core/component/common_checkbox.html" with field=corr_form.addressees_uncertain  name='Addressees uncertain' %}
+        <div class="row-no-margin">
+            <div class="margin-right">
+                {% include "core/component/common_checkbox.html" with field=corr_form.addressees_inferred name='Addressees inferred' %}
+            </div>
+            <div class="margin-right">
+                {% include "core/component/common_checkbox.html" with field=corr_form.addressees_uncertain  name='Addressees uncertain' %}
+            </div>
+        </div>
 
         {% include "core/component/comment_publication_formset.html" with comment_formset=addressee_comment_formset comment_title='Notes on addressees' header_id='header_comment_addressee' header_class='toc-sub-item' %}
 

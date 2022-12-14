@@ -6,7 +6,7 @@ body {
   max-width: 100%;
 }
 
-@media only screen and (min-width: 2560px) {
+@media only screen and (min-width: $mborder-big) {
   body {
     padding: 0 calc(#{$gutter} * 3);
   }
@@ -24,7 +24,7 @@ body {
   justify-content: center;
 }
 
-@media only screen and (min-width: 768px) {
+@media only screen and (min-width: $mborder-small) {
   .row {
     flex-direction: row;
   }
@@ -57,7 +57,7 @@ body {
   max-width: 50%;
 }
 
-@media only screen and (min-width: 768px) and (max-width: 1023px) {
+@media only screen and (min-width: $mborder-small) and (max-width: $mborder-mid) {
   .col--1of4 {
     flex-basis: 50%;
     max-width: 50%;
@@ -98,7 +98,7 @@ body {
   }
 }
 
-@media only screen and (min-width: 1024px) {
+@media only screen and (min-width: $mborder-mid) {
   .col--1of5 {
     flex-basis: 20%;
     max-width: 20%;
