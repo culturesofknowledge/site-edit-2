@@ -1,3 +1,6 @@
+import re
+
+import pkg_resources
 from django.db import migrations
 from django.db.migrations.operations.base import Operation
 
@@ -35,4 +38,17 @@ def create_operation_seq(seq_name, init_val=1) -> Operation:
     return migrations.RunSQL(
         f"CREATE SEQUENCE {seq_name} start with {init_val} ",
         f"DROP SEQUENCE {seq_name}",
+    )
+
+
+def create_function_by_file(module_name, path) -> Operation:
+    create_sql = pkg_resources.resource_stream(module_name, path).read().decode()
+    if fn_name := re.findall(r'create function (\w+)\(', create_sql):
+        fn_name = fn_name[0]
+    else:
+        raise ValueError(f'function name not found [{module_name}][{path}]')
+
+    return migrations.RunSQL(
+        create_sql,
+        f"DROP function {fn_name}",
     )

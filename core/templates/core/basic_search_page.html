@@ -6,8 +6,8 @@
         <h1> {{ title }} </h1>
     </div>
 
-    {% if total_record  %}
-    <button id="fieldset-toggle" class="btn">Toggle</button>
+    {% if total_record %}
+        <button id="fieldset-toggle" class="btn">Toggle</button>
     {% endif %}
 
     {% for to_user_msg in to_user_messages %}
@@ -34,64 +34,64 @@
 
             <div id="query-result" class="col col--3of4">
                 {% if total_record == 0 %}
-                <h2>No results</h2>
+                    <h2>No results</h2>
                 {% else %}
-                <h2>{{ total_record | floatformat:'g' }} {{ total_record|pluralize:entity }} found</h2>
+                    <h2>{{ total_record | floatformat:'g' }} {{ total_record|pluralize:entity }} found</h2>
 
 
 
-                <!-- Search components (e.g. sort by, records per page) -->
-                {{ search_components }}
+                    <!-- Search components (e.g. sort by, records per page) -->
+                    {{ search_components }}
 
-                <!-- search function toolbar (e.g. download output, compact, expanded)  -->
-                <aside class="margin-bottom row">
-                    <div class="col col--1of2">
-                        <button type='submit' class="btn margin-right inline_btn"
-                                name="__form_action" value="download_csv">
-                            Download output
-                        </button>
-                        <button class="btn margin-right inline_btn selectable_mode_btn">
-                            Select
-                        </button>
-                        <button id="merge_btn" class="btn margin-right inline_btn">
-                            Merge
-                        </button>
-                        <a href="" class="btn margin-right">Save query</a>
-                    </div>
-                    <div class="col col--1of2">
-                        <h3 class="sr-only">Layout</h3>
-                        <div class="align-right">
-                            <input type="radio" id="display-as-grid" value="grid"
-                                   name="display-style"
-                                    {% if is_compact_layout %}
-                                   checked
-                                    {% endif %}
-
-                            />
-                            <label for="display-as-grid">
-                                Compact
-                                <small> <span data-feather="grid" aria-hidden="true"></span> </small>
-                            </label>
-
-                            <input type="radio" id="display-as-list" value="table"
-                                   name="display-style"
-                                    {% if not is_compact_layout %}
-                                   checked
-                                    {% endif %}
-                            />
-                            <label for="display-as-list">
-                                Expanded
-                                <small><span data-feather="list" aria-hidden="true"></span></small>
-                            </label>
+                    <!-- search function toolbar (e.g. download output, compact, expanded)  -->
+                    <aside class="margin-bottom row">
+                        <div class="col col--1of2">
+                            <button type='submit' class="btn margin-right inline_btn"
+                                    name="__form_action" value="download_csv">
+                                Download output
+                            </button>
+                            <button class="btn margin-right inline_btn selectable_mode_btn">
+                                Select
+                            </button>
+                            <button id="merge_btn" class="btn margin-right inline_btn">
+                                Merge
+                            </button>
+                            <a href="" class="btn margin-right">Save query</a>
                         </div>
-                    </div>
-                </aside>
+                        <div class="col col--1of2">
+                            <h3 class="sr-only">Layout</h3>
+                            <div class="align-right">
+                                <input type="radio" id="display-as-grid" value="grid"
+                                       name="display-style"
+                                        {% if is_compact_layout %}
+                                       checked
+                                        {% endif %}
 
-                {{ results_renderer | safe }}
+                                />
+                                <label for="display-as-grid">
+                                    Compact
+                                    <small> <span data-feather="grid" aria-hidden="true"></span> </small>
+                                </label>
 
-                <!-- Pagination -->
+                                <input type="radio" id="display-as-list" value="table"
+                                       name="display-style"
+                                        {% if not is_compact_layout %}
+                                       checked
+                                        {% endif %}
+                                />
+                                <label for="display-as-list">
+                                    Expanded
+                                    <small><span data-feather="list" aria-hidden="true"></span></small>
+                                </label>
+                            </div>
+                        </div>
+                    </aside>
 
-                {% include 'core/component/pagination.html' %}
+                    {{ results_renderer | safe }}
+
+                    <!-- Pagination -->
+
+                    {% include 'core/component/pagination.html' %}
 
                 {% endif %}
 
@@ -146,19 +146,24 @@
         emlojs.recref_select_service = {
 
             setup_all: function () {
-                $('.selectable_entry').on('click', (e) => {
-                    let entry_id = emlojs.selectable_service.get_entry_id(
-                        $(e.target).closest('.selectable_entry')
-                    );
 
-                    let form = $('<form action="{% url return_quick_init_vname '__entry_id__' %}">');
-                    form.attr(
-                        'action',
-                        form.attr('action').replace('__entry_id__', entry_id)
-                    )
-                    $('body').append(form)
-                    form.submit()
-                })
+                {% if return_quick_init_vname %}
+
+                    $('.selectable_entry').on('click', (e) => {
+                        let entry_id = emlojs.selectable_service.get_entry_id(
+                            $(e.target).closest('.selectable_entry')
+                        );
+
+                        let form = $('<form action="{% url return_quick_init_vname '__entry_id__' %}">');
+                        form.attr(
+                            'action',
+                            form.attr('action').replace('__entry_id__', entry_id)
+                        )
+                        $('body').append(form)
+                        form.submit()
+                    })
+
+                {% endif %}
 
             },
 

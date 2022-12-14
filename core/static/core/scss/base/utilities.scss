@@ -96,7 +96,7 @@
   }
 }
 
-@media only screen and (min-width: 768px) {
+@media only screen and (min-width: $mborder-small) {
   .border-left {
     border-left: 1px solid;
   }
@@ -260,7 +260,7 @@
   display: none;
 }
 
-@media only screen and (max-width: 1023px) {
+@media only screen and (max-width: $mborder-mid) {
   .unstyled-list li:not(:last-child) svg {
     margin-bottom: $space-md;
   }
@@ -279,7 +279,7 @@
   animation: flash 4s ease-in-out infinite;
 }
 
-@media only screen and (min-width: 1024px) {
+@media only screen and (min-width: $mborder-mid) {
   .sticky {
     position: -webkit-sticky;
     position: sticky;

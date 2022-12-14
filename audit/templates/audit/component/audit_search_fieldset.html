@@ -1,0 +1,32 @@
+<fieldset>
+    <legend>{{ form.title }}</legend>
+
+    <!-- Change datetime -->
+    {% include "core/component/search_fieldset/from_to_year.html" with title='Change date/time' from_field=form.change_timestamp_from to_field=form.change_timestamp_to field_info=form.change_timestamp_info %}
+
+    <!-- Change user -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.change_user field_lookup=form.change_user_lookup %}
+
+    <!-- Table name -->
+    {% include "core/component/common_field_layout.html" with field=form.table_name %}
+
+    <!-- Record ID -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.key_value_text field_lookup=form.key_value_text_lookup %}
+
+    <!-- Record Desc -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.key_decode field_lookup=form.key_decode_lookup %}
+
+    <!-- Changed field -->
+    {% include "core/component/common_field_layout.html" with field=form.column_name %}
+
+    <!-- Change type -->
+    {% include "core/component/common_field_layout.html" with field=form.change_type %}
+
+    <!-- Changes made -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.change_made field_lookup=form.change_made_lookup %}
+
+    <!-- Audit Trail -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.audit_id field_lookup=form.audit_id_lookup %}
+
+
+</fieldset>

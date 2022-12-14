@@ -1,0 +1,56 @@
+<table>
+    <thead>
+    <tr>
+        <th>change_timestamp</th>
+        <th>Changed record</th>
+        <th>Changed field</th>
+        <th>Type</th>
+        <th>Changes made</th>
+        <th>Audit trail</th>
+    </tr>
+    </thead>
+    <tbody>
+
+    {% for r in search_results %}
+        <tr>
+
+            <td>{{ r.change_timestamp }} by {{ r.change_user }}</td>
+
+            <td>
+                <div>
+                    {% if r.key_decode %}
+                        {{ r.key_decode }}
+                    {% endif %}
+                </div>
+                <div>
+
+                    {% if r.key_value_text %}
+                        [ {{ r.key_value_text }} ]
+                    {% endif %}
+                </div>
+
+            </td>
+
+            <td>{{ r.column_name }}</td>
+            <td>{{ r.change_type }}</td>
+            <td>
+                <div class="margin-bottom-sm">
+                    {% if  r.new_column_value %}
+                        New value: <span> {{ r.new_column_value }}</span>
+                    {% endif %}
+                </div>
+                <div>
+
+                    {% if  r.old_column_value %}
+                        Old value: <span> {{ r.old_column_value }}</span>
+                    {% endif %}
+                </div>
+            </td>
+
+            <td>{{ r.audit_id }}</td>
+
+        </tr>
+    {% endfor %}
+    </tbody>
+
+</table>

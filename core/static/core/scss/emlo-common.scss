@@ -183,14 +183,14 @@ tr.selectable_entry:hover {
 .row-from-to {
   @extend .row-no-margin;
 
-  input, select {
-    @extend .col--2of5;
+  & > div {
+    @extend .col--1of2;
   }
 }
 
 .row-from-to small {
-    margin-right: 0.5em;
-    margin-left: 0.5em;
+  margin-right: 0.5em;
+  margin-left: 0.5em;
 }
 
 
@@ -255,4 +255,36 @@ tr.selectable_entry:hover {
 .warn-checked:checked + label * {
   color: red;
   font-weight: bold;
+}
+
+
+.form-core-div {
+  @extend .row;
+  font-size: 16px;
+}
+
+
+@media only screen and (min-width: $mborder-small) and (max-width: $mborder-mid) {
+  .form-col-left {
+    flex-basis: 100%;
+  }
+}
+
+
+.form-col-left {
+  @extend .col;
+  max-width: 310px;
+}
+
+.form-col-right {
+  @extend .col;
+  @extend .col--2of3;
+  min-width: 700px;
+
+  line-height: 1.1;
+
+  label {
+    display: block;
+  }
+
 }

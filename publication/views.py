@@ -41,9 +41,6 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
         return 'publication:return_quick_init'
 
     def get_queryset(self):
-        # KTODO
-        queryset = CofkUnionPublication.objects.all()
-
         # queries for like_fields
         field_fn_maps = {
             # 'institution_id': query_utils.create_eq_query,
@@ -56,13 +53,7 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
                 'publication_details', 'abbrev', 'change_user', 'publication_id',
             ])
         )
-
-        if queries:
-            queryset = queryset.filter(query_utils.all_queries_match(queries))
-
-        if sort_by := self.get_sort_by():
-            queryset = queryset.order_by(sort_by)
-        return queryset
+        return self.create_queryset_by_queries(CofkUnionPublication, queries)
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:

@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'manifestation',
     'person',
     'publication',
+    'audit',
 ]
 
 MIDDLEWARE = [
@@ -159,6 +160,14 @@ LOGGING = {
             # 'formatter': 'verbose',
             'level': 'DEBUG',
         }
+    },
+    'loggers': {
+        'uploader': debug_log_setting,
+        # # uncomment to log all sql
+        # 'django': {
+        #     'level': 'DEBUG',
+        #     'propagate': True,
+        # },
     },
     'root': debug_log_setting,
 }

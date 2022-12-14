@@ -11,6 +11,7 @@ from urllib.parse import urlencode
 from django import template
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 from django.forms import ModelForm, BaseForm, BaseFormSet
 from django.forms import formset_factory
 from django.shortcuts import render
@@ -23,7 +24,7 @@ import core.constant as core_constant
 from core.forms import ImageForm, UploadImageForm, ResourceForm
 from core.forms import RecrefForm
 from core.forms import build_search_components
-from core.helper import file_utils, email_utils, recref_utils, iter_utils
+from core.helper import file_utils, email_utils, recref_utils, iter_utils, query_utils
 from core.helper import model_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
@@ -104,12 +105,25 @@ class BasicSearchView(ListView):
         raise NotImplementedError('missing merge_page_vname')
 
     @property
-    def return_quick_init_vname(self) -> str:
-        # KTODO return_quick_init feature can be disable
-        raise NotImplementedError('missing return_quick_init_vname')
+    def return_quick_init_vname(self) -> str | None:
+        """
+        view name for "return quick init" j(select for recref)
+        return None if this entity (e.g. audit) not support "return quick init"
+        """
+        return None
 
     def get_queryset(self):
         raise NotImplementedError('missing get_queryset')
+
+    def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q]):
+        queryset = model_class.objects.all()
+
+        if queries:
+            queryset = queryset.filter(query_utils.all_queries_match(queries))
+
+        if sort_by := self.get_sort_by():
+            queryset = queryset.order_by(sort_by)
+        return queryset
 
     @property
     def request_data(self):
@@ -118,7 +132,7 @@ class BasicSearchView(ListView):
 
     def get_sort_by(self):
         if self.request_data.get('order') == 'desc':
-            return  '-' + self.request_data.get('sort_by', self.sort_by_choices[0][0])
+            return '-' + self.request_data.get('sort_by', self.sort_by_choices[0][0])
 
         return self.request_data.get('sort_by', self.sort_by_choices[0][0])
 
@@ -147,14 +161,19 @@ class BasicSearchView(ListView):
                         'total_record': self.get_queryset().count(),
                         'entity': self.entity or '',
                         'title': self.entity.split(',')[1].title() if self.entity else 'Title',
-                        'results_renderer': results_renderer(context[self.context_object_name]),
+                        'results_renderer': results_renderer(self.get_search_results_context(context)),
                         'is_compact_layout': is_compact_layout,
                         'to_user_messages': getattr(self, 'to_user_messages', []),
                         'merge_page_url': reverse(self.merge_page_vname),
-                        'return_quick_init_vname': self.return_quick_init_vname,
                         })
 
+        if self.return_quick_init_vname:
+            context['return_quick_init_vname'] = self.return_quick_init_vname
+
         return context
+
+    def get_search_results_context(self, context):
+        return context[self.context_object_name]
 
     @staticmethod
     def send_csv_email(csv_handler, queryset, to_email):
@@ -218,6 +237,10 @@ def urlparams(*_, **kwargs):
 class DefaultSearchView(BasicSearchView):
 
     @property
+    def title(self) -> str:
+        return '__title__'
+
+    @property
     def query_fieldset_list(self) -> Iterable:
         return []
 
@@ -246,10 +269,6 @@ class DefaultSearchView(BasicSearchView):
 
     @property
     def merge_page_vname(self) -> str:
-        return 'login:gate'
-
-    @property
-    def return_quick_init_vname(self) -> str:
         return 'login:gate'
 
     def get_queryset(self):

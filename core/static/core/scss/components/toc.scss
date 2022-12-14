@@ -1,7 +1,20 @@
+@media only screen and (min-width: $mborder-small) and (max-width: $mborder-mid) {
+  #toc-div {
+    width: 400px;
+    position: relative;
+    max-height: 100%;
+  }
+}
+
+@media only screen and (min-width: $mborder-mid-p1) {
+  #toc-div {
+    position: fixed;
+    max-height: 70%;
+  }
+}
 
 #toc-div {
-  @extend .fixed-right-bottom;
-  max-height: 80%;
+  min-width: 300px;
   padding: 0;
   height: 100%;
 
@@ -9,21 +22,13 @@
     width: 180px;
   }
 
-  & > * {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-  }
-
 }
 
 #toc-body {
   @extend .flex-col;
-  max-width: 400px;
   background-color: #DCDFE5;
   font-size: $typescale-5a;
   padding: 1em;
-  min-width: 360px;
   max-height: 100%;
   overflow-y: auto;
 
