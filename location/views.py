@@ -192,8 +192,6 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
         ]
 
     def get_queryset(self):
-        queryset = CofkUnionLocation.objects.all()
-
         # queries for like_fields
         field_fn_maps = {
             'editors_notes': query_utils.create_contains_query,
@@ -210,13 +208,11 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
             'element_7_eg_empire': query_utils.create_contains_query,
         }
 
-        queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
-        if queries:
-            queryset = queryset.filter(query_utils.all_queries_match(queries))
+        # KTODO support lookup query_utils.create_queries_by_lookup_field
 
-        if sort_by := self.get_sort_by():
-            queryset = queryset.order_by(sort_by)
-        return queryset
+        queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
+
+        return self.create_queryset_by_queries(CofkUnionLocation, queries)
 
     @property
     def entity(self) -> str:

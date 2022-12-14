@@ -61,3 +61,7 @@ REL_TYPE_IMAGE_OF = 'image_of'
 
 DEFAULT_EMPTY_DATE_STR = '9999-12-31'
 STD_DATE_FORMAT = '%Y-%m-%d'
+SEARCH_DATE_FORMAT = '%d/%m/%Y'
+SEARCH_DATETIME_FORMAT = '%d/%m/%Y %H:%M'
+
+DEFAULT_CHANGE_USER = '__unknown_user'

@@ -310,8 +310,6 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             'change_timestamp_to': lambda _, v: LessThanOrEqual(F('change_timestamp'), v),
         }
 
-        queryset = CofkUnionPerson.objects.all()
-
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
         queries.extend(
             query_utils.create_queries_by_lookup_field(self.request_data, [
@@ -320,12 +318,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             ])
         )
 
-        if queries:
-            queryset = queryset.filter(query_utils.all_queries_match(queries))
-
-        if sort_by := self.get_sort_by():
-            queryset = queryset.order_by(sort_by)
-        return queryset
+        return self.create_queryset_by_queries(CofkUnionPerson, queries)
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:

@@ -16,20 +16,19 @@ from django.db.models import Model, Max, fields
 from django.db.models.fields.related_descriptors import ForwardManyToOneDescriptor
 from psycopg2.extras import DictCursor
 
+from core import recref_settings
 from core.helper import iter_utils
-from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType
-from institution.models import CofkUnionInstitution, CofkInstitutionImageMap, CofkInstitutionResourceMap
-from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap
+from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType, CofkUnionRelationshipType
+from institution.models import CofkUnionInstitution
+from location.models import CofkUnionLocation
 from login.models import CofkUser
 from manifestation.models import CofkUnionManifestation
-from person.models import CofkPersonLocationMap, CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID, \
-    CofkPersonPersonMap, CofkPersonCommentMap, CofkPersonResourceMap, CofkPersonImageMap
+from person.models import CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID
 from publication.models import CofkUnionPublication
 from uploader.models import CofkCollectStatus, Iso639LanguageCode, CofkLookupCatalogue, CofkCollectUpload, \
     CofkUnionSubject, CofkUnionRoleCategory
 from uploader.models import CofkUnionOrgType, CofkUnionImage
 from work import models as work_models
-from manifestation import models as manif_models
 from work.models import CofkUnionWork, CofkUnionQueryableWork
 
 log = logging.getLogger(__name__)
@@ -62,7 +61,7 @@ def iter_records(conn, sql, cursor_factory=None, vals=None):
 def clone_rows_by_model_class(conn, model_class: Type[Model],
                               check_duplicate_fn=None,
                               col_val_handler_fn_list: list[Callable[[dict, Any], dict]] = None,
-                              seq_name='',
+                              seq_name: str | None = '',
                               int_pk_col_name='pk',
                               target_model_class=None
                               ):
@@ -131,41 +130,6 @@ class Command(BaseCommand):
 
 def create_common_relation_col_name(table_name):
     return table_name.replace('_', '') + '_id'
-
-
-def create_m2m_relationship_by_relationship_table(conn,
-                                                  left_model_class: Type[Model],
-                                                  right_model_class: Type[Model],
-                                                  cur_relation_table_name,
-                                                  check_duplicate_fn=None,
-                                                  ):
-    left_table_name = left_model_class._meta.db_table
-    right_table_name = right_model_class._meta.db_table
-    left_col = create_common_relation_col_name(left_table_name)
-    right_col = create_common_relation_col_name(right_table_name)
-
-    if check_duplicate_fn is None:
-        def check_duplicate_fn(_left_id, _right_id):
-            sql = f'select 1 from {cur_relation_table_name} ' \
-                  f"where {left_col} = '{_left_id}' and {right_col} = '{_right_id}' "
-            return is_exists(cur_conn, sql)
-
-    sql = 'select left_id_value, right_id_value from cofk_union_relationship ' \
-          f" where left_table_name = '{left_table_name}' " \
-          f" and right_table_name = '{right_table_name}' "
-    values = iter_records(conn, sql)
-    values = (_id for _id in values if not check_duplicate_fn(*_id))
-    sql_val_list = (
-        (
-            (f'insert into {cur_relation_table_name} ({left_col}, {right_col}) '
-             f"values (%s, %s)"),
-            [left_id, right_id],
-        )
-        for left_id, right_id in values
-    )
-
-    record_size = insert_sql_val_list(sql_val_list)
-    log_save_records(cur_relation_table_name, record_size)
 
 
 def insert_sql_val_list(sql_val_list: Iterable[tuple[str, Any]]) -> int:
@@ -375,17 +339,6 @@ def create_recref(conn,
     log_save_records(id_field_val.mapping_table_name, record_size)
 
 
-def create_resources_relationship(conn, model_class: Type[Model],
-                                  cur_relation_table_name=None, ):
-    warnings.warn('replace by clone_recref_simple_by_field_pairs', DeprecationWarning)
-    # TOBEREMOVE replace by clone_recref_simple_by_field_pairs
-    cur_relation_table_name = cur_relation_table_name or f'{model_class._meta.db_table}_resources'
-    return create_m2m_relationship_by_relationship_table(
-        conn, model_class, CofkUnionResource,
-        cur_relation_table_name,
-    )
-
-
 def no_duplicate_check(*args, **kwargs):
     return False
 
@@ -510,6 +463,7 @@ def data_migration(user, password, database, host, port):
     clone_rows_by_model_class(conn, CofkUnionImage)
     clone_rows_by_model_class(conn, CofkUnionSubject)
     clone_rows_by_model_class(conn, CofkUnionRoleCategory)
+    clone_rows_by_model_class(conn, CofkUnionRelationshipType, seq_name=None)
 
     # ### Uploads
     clone_rows_by_model_class(conn, CofkCollectUpload,
@@ -520,11 +474,6 @@ def data_migration(user, password, database, host, port):
 
     # ### Location
     clone_rows_by_model_class(conn, CofkUnionLocation)
-    # m2m location
-    clone_recref_simple_by_field_pairs(conn, (
-        (CofkLocationCommentMap.comment, CofkLocationCommentMap.location),
-        (CofkLocationResourceMap.location, CofkLocationResourceMap.resource),
-    ))
 
     # ### Person
     clone_rows_by_model_class(
@@ -533,25 +482,11 @@ def data_migration(user, password, database, host, port):
         seq_name=SEQ_NAME_COFKUNIONPERSION__IPERSON_ID,
         int_pk_col_name='iperson_id',
     )
-    # m2m person
-    clone_recref_simple_by_field_pairs(conn, (
-        (CofkPersonLocationMap.person, CofkPersonLocationMap.location),
-        (CofkPersonPersonMap.person, CofkPersonPersonMap.related),
-        (CofkPersonCommentMap.comment, CofkPersonCommentMap.person),
-        (CofkPersonResourceMap.person, CofkPersonResourceMap.resource),
-        (CofkPersonImageMap.image, CofkPersonImageMap.person),
-    ))
 
     # ### Repositories/institutions
     clone_rows_by_model_class(conn, CofkUnionInstitution,
                               col_val_handler_fn_list=[_val_handler_empty_str_null])
-    # create_resources_relationship(conn, CofkUnionInstitution)  # KTODO fix resources as recref
-    clone_recref_simple_by_field_pairs(conn, (
-        (CofkInstitutionImageMap.image, CofkInstitutionImageMap.institution),
-        (CofkInstitutionResourceMap.institution, CofkInstitutionResourceMap.resource)
-    ))
 
-    # clone_rows_by_model_class(conn, CofkCollectInstitution)
     clone_rows_by_model_class(conn, CofkUser,
                               col_val_handler_fn_list=[_val_handler_users],
                               seq_name=None,
@@ -564,27 +499,13 @@ def data_migration(user, password, database, host, port):
                               seq_name=work_models.SEQ_NAME_COFKUNIONWORK__IWORK_ID,
                               int_pk_col_name='iwork_id', )
     clone_rows_by_model_class(conn, CofkUnionQueryableWork, seq_name=None)
-    # m2m work
-    clone_recref_simple_by_field_pairs(conn, (
-        (work_models.CofkWorkCommentMap.comment, work_models.CofkWorkCommentMap.work),
-        (work_models.CofkWorkResourceMap.work, work_models.CofkWorkResourceMap.resource),
-        (work_models.CofkWorkWorkMap.work_from, work_models.CofkWorkWorkMap.work_to),
-        (work_models.CofkWorkSubjectMap.work, work_models.CofkWorkSubjectMap.subject),
-        (work_models.CofkWorkPersonMap.work, work_models.CofkWorkPersonMap.person),
-        (work_models.CofkWorkLocationMap.work, work_models.CofkWorkLocationMap.location),
-    ))
 
     # ### manif
     clone_rows_by_model_class(conn, CofkUnionManifestation,
                               col_val_handler_fn_list=[_val_handler_manif__work_id],
                               seq_name=None)
-    # m2m manif
-    clone_recref_simple_by_field_pairs(conn, (
-        (manif_models.CofkManifManifMap.manif_from, manif_models.CofkManifManifMap.manif_to),
-        (manif_models.CofkManifCommentMap.comment, manif_models.CofkManifCommentMap.manifestation),
-        (manif_models.CofkManifPersonMap.person, manif_models.CofkManifPersonMap.manifestation),
-        (manif_models.CofkManifInstMap.manif, manif_models.CofkManifInstMap.inst),
-        (manif_models.CofkManifImageMap.image, manif_models.CofkManifImageMap.manif),
-    ))
+
+    # clone recref records
+    clone_recref_simple_by_field_pairs(conn, recref_settings.recref_left_right_pairs)
 
     conn.close()

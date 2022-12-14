@@ -4,6 +4,9 @@ from typing import Callable, Iterable, Union
 
 from django.db.models import F
 from django.db.models import Q, Lookup, lookups
+from django.db.models.lookups import GreaterThanOrEqual, LessThanOrEqual
+
+from core.helper import date_utils
 
 log = logging.getLogger(__name__)
 
@@ -52,23 +55,29 @@ def create_queries_by_field_fn_maps(field_fn_maps: dict, data: dict) -> list[Q]:
     return queries
 
 
-def create_queries_by_lookup_field(request_data: dict, lookup_fields: Union[list[str]]) -> Iterable[Q]:
-    for field_name in lookup_fields:
+def create_queries_by_lookup_field(request_data: dict,
+                                   search_field_names: Union[list[str]],
+                                   search_fields_maps: dict[str, Iterable[str]] = None
+                                   ) -> Iterable[Q]:
+    for field_name in search_field_names:
         field_val = request_data.get(field_name)
         lookup_key = request_data.get(f'{field_name}_lookup')
 
         if not field_val and lookup_key not in nullable_lookup_keys:
             continue
 
-        search_fields = request_data.get(f'{field_name}_search_fields')
-
         if (lookup_fn := choices_lookup_map.get(lookup_key)) is None:
             log.warning(f'lookup fn not found -- [{field_name}][{lookup_key}]')
             continue
 
+        _request_search_fields = request_data.get(f'{field_name}_search_fields')
+        _request_search_fields = str(_request_search_fields or '')
+        _request_search_fields = _request_search_fields.split(',') if _request_search_fields else []
+        search_fields_maps = search_fields_maps or dict()
+        search_fields = search_fields_maps.get(field_name, _request_search_fields)
         if search_fields:
             q = Q()
-            for search_field in str(search_fields).split(','):
+            for search_field in search_fields:
                 q.add(run_lookup_fn(lookup_fn, search_field, field_val), Q.OR)
             yield q
         else:
@@ -111,3 +120,12 @@ choices_lookup_map = {
 nullable_lookup_keys = [
     'is_blank', 'not_blank',
 ]
+
+
+def create_from_to_datetime(from_field_name, to_field_name, db_field_name):
+    return {
+        from_field_name: lambda _, v: GreaterThanOrEqual(
+            F(db_field_name), date_utils.str_to_search_datetime(v)),
+        to_field_name: lambda _, v: LessThanOrEqual(
+            F(db_field_name), date_utils.str_to_search_datetime(v)),
+    }

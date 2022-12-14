@@ -182,9 +182,8 @@ tr.selectable_entry:hover {
 
 .row-from-to {
   @extend .row-no-margin;
-
-  input, select {
-    @extend .col--2of5;
+  & > div {
+    @extend .col--1of2;
   }
 }
 
