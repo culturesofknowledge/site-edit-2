@@ -15,8 +15,9 @@ class CofkCollectPerson(models.Model):
     # KTODO temporary related_name
     union_iperson = models.ForeignKey('CofkUnionPerson', models.DO_NOTHING, blank=True, null=True,
                                       related_name='union_collect_persons')
-    person = models.ForeignKey('CofkUnionPerson', models.DO_NOTHING, blank=True, null=True,
-                               related_name='collect_persons')
+    person_id = models.CharField(max_length=100)
+    #person = models.ForeignKey('CofkUnionPerson', models.DO_NOTHING, blank=True, null=True,
+    #                           related_name='collect_persons')
     primary_name = models.CharField(max_length=200)
     alternative_names = models.TextField(blank=True, null=True)
     roles_or_titles = models.TextField(blank=True, null=True)
@@ -26,27 +27,27 @@ class CofkCollectPerson(models.Model):
     date_of_birth_year = models.IntegerField(blank=True, null=True)
     date_of_birth_month = models.IntegerField(blank=True, null=True)
     date_of_birth_day = models.IntegerField(blank=True, null=True)
-    date_of_birth_is_range = models.SmallIntegerField()
+    date_of_birth_is_range = models.SmallIntegerField(default=0)
     date_of_birth2_year = models.IntegerField(blank=True, null=True)
     date_of_birth2_month = models.IntegerField(blank=True, null=True)
     date_of_birth2_day = models.IntegerField(blank=True, null=True)
-    date_of_birth_inferred = models.SmallIntegerField()
-    date_of_birth_uncertain = models.SmallIntegerField()
-    date_of_birth_approx = models.SmallIntegerField()
+    date_of_birth_inferred = models.SmallIntegerField(default=0)
+    date_of_birth_uncertain = models.SmallIntegerField(default=0)
+    date_of_birth_approx = models.SmallIntegerField(default=0)
     date_of_death_year = models.IntegerField(blank=True, null=True)
     date_of_death_month = models.IntegerField(blank=True, null=True)
     date_of_death_day = models.IntegerField(blank=True, null=True)
-    date_of_death_is_range = models.SmallIntegerField()
+    date_of_death_is_range = models.SmallIntegerField(default=0)
     date_of_death2_year = models.IntegerField(blank=True, null=True)
     date_of_death2_month = models.IntegerField(blank=True, null=True)
     date_of_death2_day = models.IntegerField(blank=True, null=True)
-    date_of_death_inferred = models.SmallIntegerField()
-    date_of_death_uncertain = models.SmallIntegerField()
-    date_of_death_approx = models.SmallIntegerField()
+    date_of_death_inferred = models.SmallIntegerField(default=0)
+    date_of_death_uncertain = models.SmallIntegerField(default=0)
+    date_of_death_approx = models.SmallIntegerField(default=0)
     flourished_year = models.IntegerField(blank=True, null=True)
     flourished_month = models.IntegerField(blank=True, null=True)
     flourished_day = models.IntegerField(blank=True, null=True)
-    flourished_is_range = models.SmallIntegerField()
+    flourished_is_range = models.SmallIntegerField(default=0)
     flourished2_year = models.IntegerField(blank=True, null=True)
     flourished2_month = models.IntegerField(blank=True, null=True)
     flourished2_day = models.IntegerField(blank=True, null=True)
@@ -60,7 +61,7 @@ class CofkCollectPerson(models.Model):
         unique_together = (('upload', 'iperson_id'),)
 
     def __str__(self):
-        return f'{self.primary_name} (#{self.iperson_id})'
+        return str(self.union_iperson) if self.union_iperson is not None else f'{self.primary_name} (collect)'
 
 
 class CofkUnionPerson(models.Model, RecordTracker):

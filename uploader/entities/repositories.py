@@ -1,53 +1,41 @@
 import logging
+from abc import ABC
+from typing import List
 
-import pandas as pd
-from django.core.exceptions import ValidationError
-from django.db import IntegrityError
-
-from institution.models import CofkCollectInstitution
+from institution.models import CofkCollectInstitution, CofkUnionInstitution
 from uploader.entities.entity import CofkEntity
 from uploader.models import CofkCollectUpload
 
 log = logging.getLogger(__name__)
 
 
-class CofkRepositories(CofkEntity):
-    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame):
-        super().__init__(upload, sheet_data)
+class CofkRepositories(CofkEntity, ABC):
+    def __init__(self, upload: CofkCollectUpload, sheet):
+        super().__init__(upload, sheet)
+        self.institutions: List[CofkCollectInstitution] = []
 
-        self.__institution_id = None
-        self.institutions = []
+        for index, row in enumerate(self.iter_rows(), start=1 + self.sheet.header_length):
+            inst_dict = self.get_row(row, index)
+            self.check_required(inst_dict)
+            self.check_data_types(inst_dict)
 
-        # Process each row in turn, using a dict comprehension to filter out empty values
-        for i in range(1, len(self.sheet_data.index)):
-            self.process_repository({k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None})
+            # Collect institutions while there's no errors,
+            # no reason to do so if there's errors
+            if not self.errors:
+                if 'institution_id' in inst_dict:
+                    inst_id = inst_dict['institution_id']
+                    if inst_id not in self.ids:
+                        inst_dict['union_institution'] = CofkUnionInstitution.objects.filter(
+                            institution_id=inst_id).first()
 
-        try:
-            CofkCollectInstitution.objects.bulk_create(self.institutions)
-        except IntegrityError as ie:
-            # Will error if location_id != int
-            self.add_error(ValidationError(ie))
+                        inst_dict['upload'] = upload
+                        self.institutions.append(CofkCollectInstitution(**inst_dict))
+                        self.ids.append(inst_id)
+                    else:
+                        log.warning(f'{inst_id} duplicated in {self.sheet.name} sheet.')
+                else:
+                    log.warning(f'New repo {inst_dict} to be created?')
 
-    def process_repository(self, repository_data):
-        self.row_data = repository_data
-        self.row_data['upload'] = self.upload
-        self.__institution_id = repository_data['institution_id']
+        if self.institutions:
+            self.bulk_create(self.institutions)
 
-        log.info("Processing repository, institution_id #{}, upload_id #{}".format(
-            self.__institution_id, self.upload.upload_id))
-
-        self.check_data_types('Repositories')
-
-        if not self.already_exists():
-            repository = CofkCollectInstitution(**self.row_data)
-            self.institutions.append(repository)
-
-            log.info(f'Repository {repository} created.')
-
-    def already_exists(self) -> bool:
-        try:
-            return CofkCollectInstitution.objects \
-                .filter(institution_id=self.__institution_id, upload=self.upload) \
-                .exists()
-        except ValueError:
-            return True

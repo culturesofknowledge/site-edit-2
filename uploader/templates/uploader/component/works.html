@@ -4,24 +4,26 @@
 <div id="works">
     <h1>Works</h1>
 
-    <p>Details of {{ works| length }} new work{{ works|pluralize:" was,s were" }} uploaded in this contribution.</p>
+    <p>Details of {{ works_page.paginator.count }} new work{{ works_page.paginator.count|pluralize:" was,s were" }} uploaded in this contribution.</p>
     <!--You can export details of the work{{ works|pluralize:",s"}} in this contribution to a spreadsheet <button>Export</button>-->
 
 </div>
 
 <hr/>
 
-{% for work in works %}
-    <h3>Work {{ forloop.counter }} of {{ works | length }}</h3>
+{% include "uploader/component/pagination.html" with entity='works' page=works_page page_range=works_page_range %}
 
+{% for work in works_page %}
     <div style="margin: 1em;">
+        <h3>Work {{ forloop.counter }} of {{ works_page.object_list|length }}</h3>
+
         <a href="#works">Works</a> - <a href="#people">People</a> - <a href="#repositories">Repositories</a> - <a href="#top">Top of page</a> - <a href="#bottom">Bottom of page</a>
     </div>
 
     <table class="review">
         <tr>
             <td class="header">Status and possible actions</td>
-            <td><strong>{{ work.upload_status }}</strong> (Collect ID: {{ work.iwork_id}})<br/>
+            <td><strong>{{ work.upload_status }}</strong> (Collect ID: {{ work.iwork_id }})<br/>
                 {% if work.upload_status_id == 1 %}
                 <form>
                     {% csrf_token %}
@@ -65,10 +67,10 @@
                     {% if authors|length > 1 %}
                         <li>
                     {% endif %}
-                    {% if author.iperson.person %}
-                        {{ author.iperson.person.foaf_name }}
+                    {% if author.iperson.union_iperson %}
+                        {{ author.iperson.union_iperson.foaf_name }}
                     {% else %}
-                        {{ author }}
+                        {{ author.iperson.primary_name }}
                     {% endif %}
                     {% if authors|length > 1 %}
                         </li>
@@ -97,11 +99,7 @@
         </tr>
         <tr>
             <td class="header">Origin</td>
-            <td>{% if work.origin.union_location %}
-                    {{ work.origin.union_location }}
-                {% else %}
-                    {{ work.origin }}
-                {% endif %}
+            <td>{% get_location work.origin_id %}
 
                 {% if work.origin_as_marked %}
                     <br/>As marked: {{ work.origin_as_marked }}
@@ -115,8 +113,8 @@
         <tr>
             <td class="header">Addressee{{ addressees|pluralize:",s" }}</td>
             <td>{% for addressee in addressees|filter_by_work:work %}
-                    {% if addressee.iperson.person %}
-                        {{ addressee.iperson.person.foaf_name }}
+                    {% if addressee.iperson.union_iperson %}
+                        {{ addressee.iperson.union_iperson.foaf_name }}
                     {% else %}
                         {{ addressee }}<br/>
                     {% endif %}
@@ -137,11 +135,7 @@
         </tr>
         <tr>
             <td class="header">Destination</td>
-            <td>{% if work.destination.union_location %}
-                    {{ work.destination.union_location }}
-                {% else %}
-                    {{ work.destination }}
-                {% endif %}
+            <td>{% get_location work.destination_id %}
 
                 {% if work.destination_as_marked %}
                     <br/>As marked: {{ work.destination_as_marked }}
@@ -186,8 +180,8 @@
         <tr>
             <td class="header">{{ mentioned|pluralize:"Person,People" }} mentioned</td>
             <td>{% for mention in mentioned|filter_by_work:work %}
-                    {% if mention.iperson.person %}
-                        {{ mention.iperson.person.foaf_name }}
+                    {% if mention.iperson.union_iperson %}
+                        {{ mention.iperson.union_iperson.foaf_name }}<br/>
                     {% else %}
                         {{ mention }}<br/>
                     {% endif %}
@@ -217,7 +211,7 @@
                         {% endif %}
 
                         {% if manifestation.repository %}
-                        Repository: {{ manifestation.repository }}<br/>
+                        Repository: {{ manifestation.repository.institution_name }}<br/>
                         {% endif %}
 
                         {% if manifestation.id_number_or_shelfmark %}
@@ -261,6 +255,11 @@
             </td>
         </tr>
     </table>
-    <hr/>
 
+<!--
+    <hr/>
+-->
 {% endfor %}
+
+
+{% include "uploader/component/pagination.html" with entity='works' page=works_page page_range=works_page_range %}

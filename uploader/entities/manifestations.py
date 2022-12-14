@@ -1,94 +1,62 @@
 import logging
+from abc import ABC
+from typing import List
 
-import pandas as pd
-from django.core.exceptions import ValidationError
-from django.db import IntegrityError
-
+from institution.models import CofkCollectInstitution
 from manifestation.models import CofkCollectManifestation
 from uploader.entities.entity import CofkEntity
-from uploader.entities.repositories import CofkRepositories
-from uploader.entities.work import CofkWork
 from uploader.models import CofkCollectUpload
+from work.models import CofkCollectWork
 
 log = logging.getLogger(__name__)
 
 
-class CofkManifestations(CofkEntity):
+class CofkManifestations(CofkEntity, ABC):
 
-    def __init__(self, upload: CofkCollectUpload, sheet_data: pd.DataFrame, repositories: CofkRepositories,
-                 works: CofkWork):
-        super().__init__(upload, sheet_data)
+    def __init__(self, upload: CofkCollectUpload, sheet,
+                 repositories: List[CofkCollectInstitution], works: List[CofkCollectWork]):
+        super().__init__(upload, sheet)
 
         self.repositories = repositories
         self.works = works
-        self.__manifestation_id = None
-        self.__non_manifestation_data = {}
-        self.ids = []
-        self.manifestations = []
+        self.manifestations: List[CofkCollectManifestation] = []
 
-        self.check_data_types('Manifestation')
+        for index, row in enumerate(self.iter_rows(), start=1 + self.sheet.header_length):
+            man_dict = self.get_row(row, index)
+            self.check_required(man_dict)
+            self.check_data_types(man_dict)
 
-        # Process each row in turn, using a dict comprehension to filter out empty values
-        for i in range(1, len(self.sheet_data.index)):
-            self.process_manifestation({k: v for k, v in self.sheet_data.iloc[i].to_dict().items() if v is not None})
+            if not self.errors:
+                if 'iwork_id' in man_dict:
+                    man_dict['iwork'] = self.get_work(man_dict.pop('iwork_id'))
 
-        try:
-            CofkCollectManifestation.objects.bulk_create(self.manifestations)
-        except IntegrityError as ie:
-            # Will error if location_id != int
-            self.add_error(ValidationError(ie))
+                if 'repository_id' in man_dict:
+                    man_dict['repository'] = self.get_repository(man_dict.pop('repository_id'))
 
-    def preprocess_data(self):
-        if 'printed_edition_notes' in self.row_data:
-            self.row_data['manifestation_notes'] = self.row_data.pop('printed_edition_notes')
-        if 'manifestation_type_p' in self.row_data:
-            self.row_data['manifestation_type'] = self.row_data.pop('manifestation_type_p')
+                if 'printed_edition_notes' in man_dict:
+                    man_dict['printed_edition_details'] = man_dict.pop('printed_edition_notes')
+                # TODO can this be right?
+                if 'manifestation_type_p' in man_dict:
+                    man_dict['manifestation_type'] = man_dict.pop('manifestation_type_p')
 
-        # Isolating data relevant to a work
-        non_work_keys = list(set(self.row_data.keys()) - set([c for c in CofkCollectManifestation.__dict__.keys()]))
+                if 'repository_name' in man_dict:
+                    del man_dict['repository_name']
 
-        # Removing non work data so that variable work_data_raw can be used to pass parameters
-        # to create a CofkCollectWork object
-        for m in non_work_keys:
-            self.__non_manifestation_data[m] = self.row_data[m]
-            del self.row_data[m]
+                man_dict['upload'] = upload
+                self.manifestations.append(CofkCollectManifestation(**man_dict))
 
-    def process_manifestation(self, manifestation_data):
-        self.row_data = manifestation_data
+        if self.manifestations:
+            self.bulk_create(self.manifestations)
 
-        institution = None
+    def get_work(self, work_id: str) -> CofkCollectWork:
+        work = [w for w in self.works if w.iwork_id == int(work_id)]
 
-        try:
-            institution = [i2 for i2 in self.repositories.institutions if
-                           'repository_id' in self.row_data and
-                           self.row_data['repository_id'] == i2.institution_id][0]
-        except IndexError:
-            pass
+        if work:
+            return work[0]
 
-        self.preprocess_data()
-        self.row_data['upload'] = self.upload
-        work = None
+    def get_repository(self, institution_id: str) -> CofkCollectInstitution:
+        repository = [r for r in self.repositories if r.institution_id == int(institution_id)]
 
-        try:
-            work = [w2 for w2 in self.works.works if
-                    self.row_data['iwork_id'] == w2.iwork_id][0]
-        except IndexError:
-            pass
+        if repository:
+            return repository[0]
 
-        self.row_data['iwork'] = work
-        del self.row_data['iwork_id']
-
-        if institution:
-            self.row_data['repository'] = institution
-            del self.row_data['repository_id']
-
-        self.__manifestation_id = str(manifestation_data['manifestation_id'])
-
-        log.info("Processing manifestation, manifestation_id #{}, upload_id #{}".format(
-            self.__manifestation_id, self.upload.upload_id))
-
-        manifestation = CofkCollectManifestation(**self.row_data)
-        self.manifestations.append(manifestation)
-        self.ids.append(self.__manifestation_id)
-
-        log.info("Manifestation created.")

@@ -10,19 +10,18 @@ from core.models import Recref
 class CofkCollectLocation(models.Model):
     # KTODO why upload_id in database become upload_id_id, should I change field name to upload instead
     # KTODO change null=True for draft version
-    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE, null=True)
+    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     location_id = models.IntegerField()
     # KTODO what is usage of UnionLocation
     union_location = models.ForeignKey('CofkUnionLocation', models.DO_NOTHING, blank=True, null=True)
-
-    location_name = models.CharField(max_length=500)
-    element_1_eg_room = models.CharField(max_length=100)
-    element_2_eg_building = models.CharField(max_length=100)
-    element_3_eg_parish = models.CharField(max_length=100)
-    element_4_eg_city = models.CharField(max_length=100)
-    element_5_eg_county = models.CharField(max_length=100)
-    element_6_eg_country = models.CharField(max_length=100)
-    element_7_eg_empire = models.CharField(max_length=100)
+    location_name = models.CharField(max_length=500, default='')
+    element_1_eg_room = models.CharField(max_length=100, default='')
+    element_2_eg_building = models.CharField(max_length=100, default='')
+    element_3_eg_parish = models.CharField(max_length=100, default='')
+    element_4_eg_city = models.CharField(max_length=100, default='')
+    element_5_eg_county = models.CharField(max_length=100, default='')
+    element_6_eg_country = models.CharField(max_length=100, default='')
+    element_7_eg_empire = models.CharField(max_length=100, default='')
     notes_on_place = models.TextField(blank=True, null=True)
     editors_notes = models.TextField(blank=True, null=True)
     upload_name = models.CharField(max_length=254, blank=True, null=True)
@@ -36,7 +35,7 @@ class CofkCollectLocation(models.Model):
         unique_together = (('upload', 'location_id'),)
 
     def __str__(self):
-        return str(self.union_location)
+        return str(self.union_location) if self.union_location is not None else f'{self.location_name} (collect)'
 
 
 class CofkUnionLocation(models.Model, RecordTracker):

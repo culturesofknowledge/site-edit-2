@@ -104,6 +104,7 @@ class CofkCollectManifestation(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     manifestation_id = models.IntegerField()
     iwork = models.ForeignKey('work.CofkCollectWork', models.DO_NOTHING)
+    # TODO Union manifestation doesn't really make sense
     union_manifestation = models.ForeignKey(CofkUnionManifestation, models.DO_NOTHING, blank=True, null=True)
     manifestation_type = models.CharField(max_length=3)
     repository = models.ForeignKey('institution.CofkCollectInstitution', models.DO_NOTHING, blank=True, null=True)
