@@ -33,7 +33,7 @@
                 {% csrf_token %}
 
                 <fieldset>
-                    <legend>Institution</legend>
+                    <legend id="header_inst" class="toc-item">Institution</legend>
                     <div class="margin-bottom">
                         <label>Institution name</label>
                         {{ inst_form.institution_name }}
@@ -62,7 +62,7 @@
                 </fieldset>
 
                 <fieldset>
-                    <legend>City</legend>
+                    <legend id="header_city" class="toc-item">City</legend>
                     <div class="margin-bottom">
                         <label>City name</label>
                         {{ inst_form.institution_city }}
@@ -80,7 +80,7 @@
                 </fieldset>
 
                 <fieldset>
-                    <legend>Country</legend>
+                    <legend id="header_country" class="toc-item">Country</legend>
                     <div class="margin-bottom">
                         <label>Country name</label>
                         {{ inst_form.institution_country }}
