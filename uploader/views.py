@@ -19,7 +19,7 @@ from django.conf import settings
 from uploader.models import CofkCollectUpload
 from uploader.review.review import accept_work, reject_work, accept_works, reject_works
 from uploader.spreadsheet import CofkUploadExcelFile
-from uploader.validation import CofkMissingColumnError, CofkMissingSheetError, CofkNoDataError
+from uploader.validation import CofkExcelFileError
 
 from work.models import CofkCollectWork, CofkCollectAuthorOfWork, CofkCollectAddresseeOfWork, CofkCollectLanguageOfWork, CofkCollectPersonMentionedInWork, CofkCollectWorkResource, CofkCollectDestinationOfWork, CofkCollectOriginOfWork
 log = logging.getLogger(__name__)
@@ -69,19 +69,14 @@ def handle_upload(request, context):
 
             context['report']['elapsed'] = elapsed
 
-        except (CofkMissingSheetError, CofkNoDataError) as ce:
-            context['report']['total_errors'] = 1
-            context['report']['errors'] = {'file': {'total': 1, 'error': [ce]}}
-            log.error(context['report']['errors'])
-        except CofkMissingColumnError as cmce:
-            errors = [str(err) for i, err in enumerate(cmce.args[0]) if i % 2 != 0]
+        except CofkExcelFileError as cmce:
+            errors = [str(cmce)]
             context['report']['total_errors'] = len(errors)
             context['report']['errors'] = {'file': {'total': len(errors), 'error': errors}}
-            # log.error(ve.args[0])
-            log.error([err for i, err in enumerate(cmce.args[0]) if i % 2 != 0])
+            log.error(cmce.msg)
         except (FileNotFoundError, BadZipFile, OSError) as e:
             context['report']['total_errors'] = 1
-            context['report']['errors'] = {'file': {'total': 1, 'error': ['Could not read the Excel file.']}}
+            context['report']['errors'] = {'file': {'total': 1, 'error': ['Could not read the file.']}}
             log.error(e)
         # except ValueError as ve:
         #    context['report']['total_errors'] = 1

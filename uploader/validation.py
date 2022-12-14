@@ -1,8 +1,6 @@
 import datetime
-import pandas
 
 
-# TODO, Establish what columns are mandatory and check for them
 
 class CofkValueException(Exception):
     def __init__(self, msg, col):
@@ -12,20 +10,11 @@ class CofkValueException(Exception):
 
 
 class CofkExcelFileError(Exception):
-    def __init__(self, msg):
+    msg: str
+
+    def __init__(self, msg: str):
+        super().__init__(msg)
         self.msg = msg
-
-
-class CofkMissingSheetError(Exception):
-    pass
-
-
-class CofkMissingColumnError(Exception):
-    pass
-
-
-class CofkNoDataError(Exception):
-    pass
 
 
 class CofkValue:
@@ -143,17 +132,6 @@ class CofkValidateWork:
         if origin_name.value and not origin_id.value and "unknown" == origin_name.value.strip().lower():
             self.add_error("Origin name must not be \"unknown\".", origin_name.key)
 
-    def validate_languages(self):
-        lang = self.get_value('language_id')
-
-        codes = pandas.read_csv('languages.csv').language_code.to_list()
-
-        if not all(l in codes for l in lang.value.split(';')):
-            self.add_error("Not all values in language_id are valid 3-digit ISO language codes.", lang.key)
-
-        # Explicitly deleting language codes as it is a list of 8224 3 digit codes
-        del codes
-
     def validate_keywords(self):
         keywords = self.get_value('keywords')
 
@@ -193,11 +171,11 @@ def validate_manifestation(df):
         else:
             if manifestation['id_number_or_shelfmark'].find('-') > -1:
                 m_errors.append(CofkValueException('There should be an en dash used between folio numbers,'
-                                                               ' not a hyphen.', 'id_number_or_shelfmark'))
+                                                   ' not a hyphen.', 'id_number_or_shelfmark'))
 
             if manifestation['id_number_or_shelfmark'][-1] != '.':
                 m_errors.append(CofkValueException('There should not be a full stop at the end of'
-                                                               ' a shelfmark.', 'id_number_or_shelfmark'))
+                                                   ' a shelfmark.', 'id_number_or_shelfmark'))
 
         if 'printed_edition_details' in manifestation:
             if manifestation['printed_edition_details'][-1] == '.':
@@ -207,7 +185,7 @@ def validate_manifestation(df):
             if manifestation['printed_edition_details'].find('-') > -1 and \
                     manifestation['printed_edition_details'].find('–') == -1:
                 m_errors.append(CofkValueException('It seems you are using hyphens to indicate a page range when you'
-                                                 ' should be using en dashes.', 'printed_edition_details'))
+                                                   ' should be using en dashes.', 'printed_edition_details'))
 
         if len(m_errors) > 0:
             errors.append({'sheet': 'Manifestation', 'row': i, 'errors': m_errors})

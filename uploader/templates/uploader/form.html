@@ -20,7 +20,7 @@
             <div class="col col--4of6">
                 <p class="fw-700 search-result__date">
                     <small>
-                        <time datetime="1753-01-05">{{ report.time }}</time>
+                        <time datetime="{{ report.time }}">{{ report.time }}</time>
                     </small>
                 </p>
                 <h3>
@@ -63,7 +63,7 @@
                 </details>
                 {% else %}
                     {% for error in properties.error %}
-                        <span style="color: #f00;">{{ error }}</span></br>
+                        <span style="color: #f00;">{{ error|safe }}</span></br>
                     {% endfor %}
                 {% endif %}
             {% endfor %}

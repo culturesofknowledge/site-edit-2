@@ -13,12 +13,15 @@ log = logging.getLogger(__name__)
 
 
 class CofkEntity:
+    errors: dict[int, List[ValidationError]]
+    other_errors: dict[int, List[dict]]
+
     def __init__(self, upload: CofkCollectUpload, sheet):
         self.upload: CofkCollectUpload = upload
         self.sheet = sheet
         self.ids: List[int] = []
-        self.errors: dict = {}
-        self.other_errors: dict = {}
+        self.errors: dict[int, List[ValidationError]] = {}
+        self.other_errors: dict[int, List[dict]] = {}
         self.row: int = 1
 
     @property
