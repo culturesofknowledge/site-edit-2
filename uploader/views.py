@@ -134,6 +134,7 @@ def upload_review(request, upload_id, **kwargs):
     page_number = request.GET.get('page', 1)
     works_page = works_paginator.get_page(page_number)
 
+    # TODO, are all of these required for context?
     context = {'upload': upload,
                'works_page': works_page,
                'authors': CofkCollectAuthorOfWork.objects.filter(upload=upload),

@@ -119,6 +119,7 @@ def get_work(works, work_id) -> CofkCollectWork | None:
         pass
 
 
+# TODO refactor accept_work and accept_works common functionality
 def accept_work(request, context: dict, upload: CofkCollectUpload):
     collect_work = get_work(context['works_page'].object_list, request.GET['work_id'])
 

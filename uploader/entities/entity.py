@@ -1,5 +1,5 @@
 import logging
-from typing import Tuple, List, Any, Type, Generator
+from typing import Tuple, List, Any, Generator
 
 from django.core.exceptions import ValidationError
 from django.db import models, IntegrityError
@@ -186,7 +186,7 @@ class CofkEntity:
 
         return id_list, name_list
 
-    def bulk_create(self, objects: List[Type[models.Model]]):
+    def bulk_create(self, objects: List[models.Model]):
         try:
             type(objects[0]).objects.bulk_create(objects, batch_size=500)
         except IntegrityError as ie:
