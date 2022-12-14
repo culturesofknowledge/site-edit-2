@@ -353,7 +353,7 @@ class FormDescriptor:
     @property
     def id(self):
         """ id of record"""
-        return self.obj.pk
+        return self.obj and self.obj.pk
 
     @property
     def change_timestamp(self):

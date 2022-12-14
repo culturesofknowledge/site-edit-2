@@ -31,6 +31,7 @@
             <form method="post">
                 {% csrf_token %}
 
+                {% include "core/component/form_descriptor.html" with descriptor=form_descriptor %}
                 <fieldset>
                     <legend id="header_inst" class="toc-item">Institution</legend>
                     <div class="margin-bottom">

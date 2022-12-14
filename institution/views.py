@@ -16,6 +16,7 @@ from institution import inst_utils, models
 from institution.forms import InstitutionForm, GeneralSearchFieldset
 from institution.models import CofkUnionInstitution
 from institution.recref_adapter import InstResourceRecrefAdapter, InstImageRecrefAdapter
+from institution.view_components import InstFormDescriptor
 
 
 class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
@@ -113,6 +114,7 @@ def full_form(request, pk):
                        }
                        | img_recref_handler.create_context()
                        | res_handler.create_context()
+                       | InstFormDescriptor(inst).create_context()
                        )
                       )
 
