@@ -29,8 +29,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ('audit', '0001_initial'),
         ('location', '0002_initial'),
-        ('institution', '0001_initial'),
-        ('manifestation', '0001_initial'),
+        ('institution', '0002_initial'),
         ('manifestation', '0001_initial'),
         ('publication', '0001_initial'),
     ]

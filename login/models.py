@@ -30,13 +30,3 @@ class CofkUser(AbstractBaseUser, PermissionsMixin):
 
     class Meta:
         db_table = 'cofk_user'
-
-
-class CofkSessions(models.Model):
-    session_id = models.AutoField(primary_key=True)
-    session_timestamp = models.DateTimeField()
-    session_code = models.TextField(unique=True, blank=True, null=True)
-    username = models.ForeignKey('CofkUser', models.DO_NOTHING, db_column='username', blank=True, null=True)
-
-    class Meta:
-        db_table = 'cofk_sessions'
