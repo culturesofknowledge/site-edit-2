@@ -75,6 +75,10 @@ class BasicSearchView(ListView):
         raise NotImplementedError()
 
     @property
+    def default_sort_by_choice(self) -> int:
+        return 0
+
+    @property
     def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
         """ factory of Compact layout """
         raise NotImplementedError('missing compact_search_results_renderer_factory')
@@ -112,6 +116,7 @@ class BasicSearchView(ListView):
 
         if sort_by := self.get_sort_by():
             queryset = queryset.order_by(sort_by)
+
         return queryset
 
     @property
@@ -121,9 +126,9 @@ class BasicSearchView(ListView):
 
     def get_sort_by(self):
         if self.request_data.get('order') == 'desc':
-            return '-' + self.request_data.get('sort_by', self.sort_by_choices[0][0])
+            return '-' + self.request_data.get('sort_by', self.sort_by_choices[self.default_sort_by_choice][0])
 
-        return self.request_data.get('sort_by', self.sort_by_choices[0][0])
+        return self.request_data.get('sort_by', self.sort_by_choices[self.default_sort_by_choice][0])
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

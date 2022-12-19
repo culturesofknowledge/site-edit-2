@@ -914,6 +914,10 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             ('date_of_work_std_year', 'Year',),
         ]
 
+    @property
+    def default_sort_by_choice(self) -> int:
+        return 3
+
     def get_queryset(self):
         field_fn_maps = {}
 
