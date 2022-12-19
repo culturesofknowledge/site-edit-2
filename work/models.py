@@ -51,6 +51,8 @@ class CofkUnionWork(models.Model, RecordTracker):
     incipit = models.TextField(blank=True, null=True)
     explicit = models.TextField(blank=True, null=True)
     ps = models.TextField(blank=True, null=True)
+
+    # KTODO that should reference to catalogue_code
     original_catalogue = models.ForeignKey("uploader.CofkLookupCatalogue", models.DO_NOTHING,
                                            db_column='original_catalogue', blank=True, null=True,
                                            default='')

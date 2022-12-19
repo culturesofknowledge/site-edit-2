@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('upload', '0001_initial'),
+        ('uploader', '0001_initial'),
         ('core', '0002_basic_db_settings'),
     ]
     operations = [
@@ -65,7 +65,6 @@ class Migration(migrations.Migration):
         migrations_utils.create_operation_default_value('cofk_collect_person', 'date_of_death_uncertain', '0'),
         migrations_utils.create_operation_default_value('cofk_collect_person', 'date_of_death_approx', '0'),
         migrations_utils.create_operation_default_value('cofk_collect_person', 'flourished_is_range', '0'),
-
 
         migrations_utils.create_operation_default_value('cofk_collect_work', 'original_calendar', "''"),
         migrations_utils.create_operation_default_value('cofk_collect_work', 'date_of_work_std_is_range', '0'),

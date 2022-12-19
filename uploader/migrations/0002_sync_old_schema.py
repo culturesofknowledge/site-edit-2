@@ -1,0 +1,1 @@
+../manual_migrations/0002_sync_old_schema.py
