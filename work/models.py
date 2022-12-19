@@ -51,10 +51,9 @@ class CofkUnionWork(models.Model, RecordTracker):
     incipit = models.TextField(blank=True, null=True)
     explicit = models.TextField(blank=True, null=True)
     ps = models.TextField(blank=True, null=True)
-
-    # KTODO that should reference to catalogue_code
     original_catalogue = models.ForeignKey("uploader.CofkLookupCatalogue", models.DO_NOTHING,
                                            db_column='original_catalogue', blank=True, null=True,
+                                           to_field='catalogue_code',
                                            default='')
     accession_code = models.CharField(max_length=1000, blank=True, null=True)
     work_to_be_deleted = models.SmallIntegerField(default=0)

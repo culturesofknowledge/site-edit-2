@@ -81,7 +81,7 @@ class BasicWorkFFH(FullFormHandler):
             'catalogue': self.safe_work.original_catalogue_id
         })
         self.catalogue_form.fields['catalogue'].widget.choices = [(None, '')] + [
-            (c.catalogue_id, c.catalogue_name) for c in CofkLookupCatalogue.objects.all()
+            (c.catalogue_code, c.catalogue_name) for c in CofkLookupCatalogue.objects.all()
         ]
 
     def create_context(self):
@@ -103,11 +103,11 @@ class BasicWorkFFH(FullFormHandler):
 
         # handle catalogue
         self.catalogue_form.is_valid()
-        cat_id = self.catalogue_form.cleaned_data.get('catalogue')
-        if cat_id and work.original_catalogue_id != cat_id:
+        cat_code = self.catalogue_form.cleaned_data.get('catalogue')
+        if cat_code and work.original_catalogue_id != cat_code:
             log.info('change original_catalogue_id from [{}] to [{}]'.format(
-                work.original_catalogue_id, cat_id))
-            work.original_catalogue_id = cat_id
+                work.original_catalogue_id, cat_code))
+            work.original_catalogue_id = cat_code
 
         if work.description != (cur_desc := work_utils.get_recref_display_name(work)):
             work.description = cur_desc
