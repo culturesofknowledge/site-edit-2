@@ -6,7 +6,7 @@ from django.db.models.base import ModelBase
 
 from core import constant
 from core.helper import model_utils
-from uploader.models import CofkLookupCatalogue
+from core.models import CofkLookupCatalogue
 
 from work.models import CofkUnionWork, CofkUnionQueryableWork
 import datetime

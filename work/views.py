@@ -26,7 +26,7 @@ from core.helper.recref_handler import SingleRecrefHandler, RecrefFormsetHandler
 from core.helper.recref_utils import create_recref_if_field_exist
 from core.helper.view_utils import DefaultSearchView
 from core.helper.view_handler import FullFormHandler
-from core.models import Recref
+from core.models import Recref, CofkLookupCatalogue
 from institution import inst_utils
 from location import location_utils
 from location.models import CofkUnionLocation
@@ -34,7 +34,6 @@ from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, cr
     CofkUnionLanguageOfManifestation, CofkManifImageMap
 from person import person_utils
 from person.models import CofkUnionPerson
-from uploader.models import CofkLookupCatalogue
 from work import work_utils
 from work.forms import WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \

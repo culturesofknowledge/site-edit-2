@@ -7,8 +7,7 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE_CREATED
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
-from core.models import Recref
-from uploader.models import CofkLookupCatalogue
+from core.models import Recref, CofkLookupCatalogue
 
 SEQ_NAME_COFKUNIONWORK__IWORK_ID = 'cofk_union_work_iwork_id_seq'
 
@@ -49,7 +48,7 @@ class CofkUnionWork(models.Model, RecordTracker):
     incipit = models.TextField(blank=True, null=True)
     explicit = models.TextField(blank=True, null=True)
     ps = models.TextField(blank=True, null=True)
-    original_catalogue = models.ForeignKey("uploader.CofkLookupCatalogue", models.DO_NOTHING,
+    original_catalogue = models.ForeignKey("core.CofkLookupCatalogue", models.DO_NOTHING,
                                            db_column='original_catalogue', blank=True, null=True,
                                            to_field='catalogue_code',
                                            default='',

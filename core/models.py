@@ -235,3 +235,44 @@ class CofkUnionFavouriteLanguage(models.Model):
 
     class Meta:
         db_table = 'cofk_union_favourite_language'
+
+
+class CofkLookupCatalogue(models.Model):
+    catalogue_id = models.AutoField(primary_key=True)
+    catalogue_code = models.CharField(unique=True, max_length=100)
+    catalogue_name = models.CharField(unique=True, max_length=500)
+    is_in_union = models.IntegerField()
+    publish_status = models.SmallIntegerField()
+
+    class Meta:
+        db_table = 'cofk_lookup_catalogue'
+
+
+class CofkUserSavedQuery(models.Model):
+    query_id = models.AutoField(primary_key=True)
+    username = models.ForeignKey('login.CofkUser', models.DO_NOTHING, db_column='username')
+    query_class = models.CharField(max_length=100)
+    query_method = models.CharField(max_length=100)
+    query_title = models.TextField()
+    query_order_by = models.CharField(max_length=100)
+    query_sort_descending = models.SmallIntegerField()
+    query_entries_per_page = models.SmallIntegerField()
+    query_record_layout = models.CharField(max_length=12)
+    query_menu_item_name = models.TextField(blank=True, null=True)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+
+    class Meta:
+        db_table = 'cofk_user_saved_query'
+
+
+class CofkUserSavedQuerySelection(models.Model):
+    selection_id = models.AutoField(primary_key=True)
+    query = models.ForeignKey(CofkUserSavedQuery, models.DO_NOTHING)
+    column_name = models.CharField(max_length=100)
+    column_value = models.CharField(max_length=500)
+    op_name = models.CharField(max_length=100)
+    op_value = models.CharField(max_length=100)
+    column_value2 = models.CharField(max_length=500)
+
+    class Meta:
+        db_table = 'cofk_user_saved_query_selection'
