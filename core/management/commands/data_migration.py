@@ -18,16 +18,15 @@ from psycopg2.extras import DictCursor
 
 from core import recref_settings
 from core.helper import iter_utils
-from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType, CofkUnionRelationshipType
+from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType, CofkUnionRelationshipType, \
+    CofkUnionImage, CofkUnionOrgType, CofkUnionRoleCategory, CofkUnionSubject, Iso639LanguageCode
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from login.models import CofkUser
 from manifestation.models import CofkUnionManifestation
 from person.models import CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID
 from publication.models import CofkUnionPublication
-from uploader.models import CofkCollectStatus, Iso639LanguageCode, CofkLookupCatalogue, CofkCollectUpload, \
-    CofkUnionSubject, CofkUnionRoleCategory
-from uploader.models import CofkUnionOrgType, CofkUnionImage
+from uploader.models import CofkCollectStatus, CofkLookupCatalogue, CofkCollectUpload
 from work import models as work_models
 from work.models import CofkUnionWork, CofkUnionQueryableWork
 from audit.models import CofkUnionAuditLiteral, CofkUnionAuditRelationship

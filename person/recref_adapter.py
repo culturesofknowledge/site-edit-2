@@ -4,10 +4,9 @@ from typing import Type
 from core.helper import model_utils
 from core.helper.common_recref_adapter import TargetCommentRecrefAdapter, TargetResourceRecrefAdapter, \
     RecrefFormAdapter, TargetPersonRecrefAdapter, TargetImageRecrefAdapter, TargetLocationRecrefAdapter
-from core.models import Recref
+from core.models import Recref, CofkUnionRoleCategory
 from person.models import CofkUnionPerson, CofkPersonCommentMap, CofkPersonResourceMap, CofkPersonRoleMap, \
     CofkPersonPersonMap, CofkPersonImageMap, CofkPersonLocationMap
-from uploader.models import CofkUnionRoleCategory
 
 
 class PersonLocRecrefAdapter(TargetLocationRecrefAdapter):

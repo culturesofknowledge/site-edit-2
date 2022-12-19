@@ -12,7 +12,7 @@ from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.form_utils import TargetPersonMRRForm, LocationRecrefField
 from person.models import CofkUnionPerson
 from person.recref_adapter import ActivePersonRecrefAdapter
-from uploader.models import CofkUnionOrgType
+from core.models import CofkUnionOrgType
 
 log = logging.getLogger(__name__)
 

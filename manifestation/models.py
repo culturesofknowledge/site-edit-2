@@ -88,7 +88,7 @@ class CofkUnionManifestation(models.Model, RecordTracker):
 
     # relation
     work = models.ForeignKey('work.CofkUnionWork', models.CASCADE, null=True)
-    images = models.ManyToManyField('uploader.CofkUnionImage')  # TOBEREMOVE replaced by CofkManifImageMap
+    images = models.ManyToManyField('core.CofkUnionImage')  # TOBEREMOVE replaced by CofkManifImageMap
 
     class Meta:
         db_table = 'cofk_union_manifestation'
@@ -126,7 +126,7 @@ class CofkUnionLanguageOfManifestation(models.Model):
     lang_manif_id = models.AutoField(primary_key=True)
     manifestation = models.ForeignKey(CofkUnionManifestation, models.DO_NOTHING,
                                       related_name='language_set')
-    language_code = models.ForeignKey('uploader.Iso639LanguageCode', models.DO_NOTHING,
+    language_code = models.ForeignKey('core.Iso639LanguageCode', models.DO_NOTHING,
                                       db_column='language_code',
                                       to_field='code_639_3'
                                       )
@@ -170,7 +170,7 @@ class CofkManifInstMap(Recref):
 
 class CofkManifImageMap(Recref):
     manif = models.ForeignKey(CofkUnionManifestation, on_delete=models.CASCADE)
-    image = models.ForeignKey('uploader.CofkUnionImage', on_delete=models.CASCADE)
+    image = models.ForeignKey('core.CofkUnionImage', on_delete=models.CASCADE)
 
     class Meta(Recref.Meta):
         db_table = 'cofk_manif_image_map'

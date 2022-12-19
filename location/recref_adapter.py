@@ -4,7 +4,6 @@ from core.helper.common_recref_adapter import TargetCommentRecrefAdapter, Target
     TargetImageRecrefAdapter
 from core.models import Recref
 from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap, CofkLocationImageMap
-from uploader.models import CofkUnionImage
 
 
 class LocationCommentRecrefAdapter(TargetCommentRecrefAdapter):

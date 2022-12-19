@@ -80,7 +80,7 @@ class CofkInstitutionResourceMap(Recref):
 
 class CofkInstitutionImageMap(Recref):
     institution = models.ForeignKey(CofkUnionInstitution, on_delete=models.CASCADE)
-    image = models.ForeignKey('uploader.CofkUnionImage', on_delete=models.CASCADE)
+    image = models.ForeignKey('core.CofkUnionImage', on_delete=models.CASCADE)
 
     class Meta(Recref.Meta):
         db_table = 'cofk_institution_image_map'

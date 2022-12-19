@@ -171,3 +171,67 @@ class CopyCofkUnionQueryableWork(models.Model):
 
     class Meta:
         db_table = 'copy_cofk_union_queryable_work'
+
+
+class CofkUnionImage(models.Model, RecordTracker):
+    image_id = models.AutoField(primary_key=True)
+    image_filename = models.TextField(blank=True, null=True)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    creation_user = models.CharField(max_length=50)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    change_user = models.CharField(max_length=50)
+    thumbnail = models.TextField(blank=True, null=True)
+    can_be_displayed = models.CharField(max_length=1)
+    display_order = models.IntegerField(default=1)
+    licence_details = models.TextField()
+    licence_url = models.CharField(max_length=2000)
+    credits = models.CharField(max_length=2000)
+    uuid = models.UUIDField(blank=True, null=True)
+
+    class Meta:
+        db_table = 'cofk_union_image'
+
+
+class CofkUnionOrgType(models.Model):
+    org_type_id = models.AutoField(primary_key=True)
+    org_type_desc = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = 'cofk_union_org_type'
+
+
+class CofkUnionRoleCategory(models.Model):
+    role_category_id = models.AutoField(primary_key=True)
+    role_category_desc = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = 'cofk_union_role_category'
+
+
+class CofkUnionSubject(models.Model):
+    subject_id = models.AutoField(primary_key=True)
+    subject_desc = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = 'cofk_union_subject'
+
+
+class Iso639LanguageCode(models.Model):
+    code_639_3 = models.CharField(max_length=3, unique=True)
+    code_639_1 = models.CharField(max_length=2)
+    language_name = models.CharField(max_length=100)
+    language_id = models.AutoField(primary_key=True)
+
+    def __str__(self):
+        return self.language_name
+
+    class Meta:
+        db_table = 'iso_639_language_codes'
+
+
+class CofkUnionFavouriteLanguage(models.Model):
+    language_code = models.OneToOneField(Iso639LanguageCode, models.DO_NOTHING, db_column='language_code',
+                                         primary_key=True)
+
+    class Meta:
+        db_table = 'cofk_union_favourite_language'

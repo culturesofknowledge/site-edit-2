@@ -8,7 +8,7 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_PEOPLE_MENTIONED_IN_WORK
 from manifestation.models import CofkUnionManifestation
 from siteedit2.utils.test_utils import EmloSeleniumTestCase, FieldValTester
-from uploader.models import Iso639LanguageCode
+from core.models import Iso639LanguageCode
 from work import work_utils
 from work.models import CofkUnionWork
 

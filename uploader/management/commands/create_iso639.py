@@ -1,6 +1,6 @@
 from django.core.management import BaseCommand
 
-from uploader.models import Iso639LanguageCode
+from core.models import Iso639LanguageCode
 import pycountry
 
 

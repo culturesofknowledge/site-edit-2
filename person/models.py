@@ -95,7 +95,7 @@ class CofkUnionPerson(models.Model, RecordTracker):
     change_user = models.CharField(max_length=50)
     editors_notes = models.TextField(blank=True, null=True)
     further_reading = models.TextField(blank=True, null=True)
-    organisation_type = models.ForeignKey('uploader.CofkUnionOrgType', models.DO_NOTHING, db_column='organisation_type',
+    organisation_type = models.ForeignKey('core.CofkUnionOrgType', models.DO_NOTHING, db_column='organisation_type',
                                           blank=True, null=True)
     date_of_birth_calendar = models.CharField(max_length=2)
     date_of_birth_is_range = models.SmallIntegerField(default=0)
@@ -125,7 +125,7 @@ class CofkUnionPerson(models.Model, RecordTracker):
                                        through='person.CofkPersonLocationMap',
                                        through_fields=('person', 'location'))
 
-    images = models.ManyToManyField('uploader.CofkUnionImage')
+    images = models.ManyToManyField('core.CofkUnionImage')
 
     @property
     def comments(self):
@@ -177,7 +177,7 @@ class CofkPersonResourceMap(Recref):
 
 class CofkPersonImageMap(Recref):
     person = models.ForeignKey(CofkUnionPerson, on_delete=models.CASCADE)
-    image = models.ForeignKey('uploader.CofkUnionImage', on_delete=models.CASCADE)
+    image = models.ForeignKey('core.CofkUnionImage', on_delete=models.CASCADE)
 
     class Meta(Recref.Meta):
         db_table = 'cofk_person_image_map'
@@ -185,7 +185,7 @@ class CofkPersonImageMap(Recref):
 
 class CofkPersonRoleMap(Recref):
     person = models.ForeignKey(CofkUnionPerson, on_delete=models.CASCADE)
-    role = models.ForeignKey('uploader.CofkUnionRoleCategory', on_delete=models.CASCADE)
+    role = models.ForeignKey('core.CofkUnionRoleCategory', on_delete=models.CASCADE)
 
     class Meta(Recref.Meta):
         db_table = 'cofk_person_role_map'
@@ -195,7 +195,7 @@ class CofkCollectOccupationOfPerson(models.Model):
     upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
     occupation_of_person_id = models.IntegerField()
     iperson_id = models.IntegerField()
-    occupation = models.ForeignKey('uploader.CofkUnionRoleCategory', models.DO_NOTHING)
+    occupation = models.ForeignKey('core.CofkUnionRoleCategory', models.DO_NOTHING)
 
     class Meta:
         db_table = 'cofk_collect_occupation_of_person'

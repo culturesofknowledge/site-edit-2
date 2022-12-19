@@ -4,7 +4,7 @@ from typing import Type
 from core.helper import model_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter, TargetCommentRecrefAdapter, \
     TargetResourceRecrefAdapter, TargetImageRecrefAdapter
-from core.models import Recref
+from core.models import Recref, CofkUnionSubject
 from institution import inst_utils
 from institution.models import CofkUnionInstitution
 from location import location_utils
@@ -12,7 +12,6 @@ from location.models import CofkUnionLocation
 from manifestation import manif_utils
 from manifestation.models import CofkUnionManifestation, CofkManifInstMap, CofkManifManifMap, CofkManifCommentMap, \
     CofkManifImageMap
-from uploader.models import CofkUnionSubject
 from work import work_utils
 from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkSubjectMap, CofkWorkWorkMap, CofkWorkCommentMap, \
     CofkWorkResourceMap

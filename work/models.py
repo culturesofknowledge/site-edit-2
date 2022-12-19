@@ -160,7 +160,7 @@ class CofkWorkWorkMap(Recref):
 
 class CofkWorkSubjectMap(Recref):
     work = models.ForeignKey(CofkUnionWork, on_delete=models.CASCADE)
-    subject = models.ForeignKey("uploader.CofkUnionSubject", on_delete=models.CASCADE)
+    subject = models.ForeignKey("core.CofkUnionSubject", on_delete=models.CASCADE)
 
     class Meta(Recref.Meta):
         db_table = 'cofk_work_subject_map'
@@ -538,7 +538,7 @@ class CofkCollectLanguageOfWork(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     language_of_work_id = models.IntegerField()
     iwork = models.ForeignKey('work.CofkCollectWork', models.DO_NOTHING)
-    language_code = models.ForeignKey('uploader.Iso639LanguageCode', models.DO_NOTHING, db_column='language_code')
+    language_code = models.ForeignKey('core.Iso639LanguageCode', models.DO_NOTHING, db_column='language_code')
     _id = models.CharField(max_length=32, blank=True, null=True)
 
     def __str__(self):
@@ -598,7 +598,7 @@ class CofkCollectSubjectOfWork(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     subject_of_work_id = models.IntegerField()
     iwork_id = models.IntegerField()
-    subject = models.ForeignKey('uploader.CofkUnionSubject', models.DO_NOTHING)
+    subject = models.ForeignKey('core.CofkUnionSubject', models.DO_NOTHING)
 
     class Meta:
         db_table = 'cofk_collect_subject_of_work'
@@ -622,7 +622,7 @@ class CofkCollectWorkResource(models.Model):
 class CofkUnionLanguageOfWork(models.Model):
     lang_work_id = models.AutoField(primary_key=True)
     work = models.ForeignKey(CofkUnionWork, models.DO_NOTHING, related_name='language_set')
-    language_code = models.ForeignKey('uploader.Iso639LanguageCode', models.DO_NOTHING,
+    language_code = models.ForeignKey('core.Iso639LanguageCode', models.DO_NOTHING,
                                       db_column='language_code',
                                       to_field='code_639_3',
                                       )
