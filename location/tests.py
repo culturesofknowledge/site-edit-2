@@ -51,7 +51,7 @@ class LocationFormTests(EmloSeleniumTestCase):
         # fill m2m
         m2m_tester.fill()
 
-        self.selenium.find_element(By.CSS_SELECTOR, 'input[type=submit]').click()
+        self.click_submit()
 
         # assert result after form submit
         loc_a.refresh_from_db()
