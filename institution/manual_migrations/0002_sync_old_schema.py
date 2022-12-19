@@ -7,8 +7,8 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('institution', '0002_initial'),
-        ('core', '0002_basic_db_settings'),
+        ('institution', '0001_initial'),
+        ('core', '0003_basic_db_settings'),
     ]
     operations = [
         migrations_utils.create_operation_default_value('cofk_union_institution', 'institution_name', "''"),

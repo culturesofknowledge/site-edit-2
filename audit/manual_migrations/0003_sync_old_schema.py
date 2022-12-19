@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('audit', '0002_create_audit_trigger'),
-        ('core', '0002_basic_db_settings'),
+        ('core', '0003_basic_db_settings'),
     ]
     operations = [
         migrations_utils.create_operation_default_value('cofk_union_audit_relationship', 'left_id_value_new', "''"),

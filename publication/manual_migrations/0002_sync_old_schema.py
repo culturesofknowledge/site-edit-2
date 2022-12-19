@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('publication', '0001_initial'),
-        ('core', '0002_basic_db_settings'),
+        ('core', '0003_basic_db_settings'),
     ]
     operations = [
         migrations_utils.create_operation_default_value('cofk_union_publication', 'publication_details', "''"),

@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('work', '0002_create_seq'),
-        ('core', '0002_basic_db_settings'),
+        ('core', '0003_basic_db_settings'),
     ]
     operations = [
 

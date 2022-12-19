@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('person', '0002_create_seq'),
-        ('core', '0002_basic_db_settings'),
+        ('core', '0003_basic_db_settings'),
     ]
     operations = [
         migrations_utils.create_operation_default_value('cofk_union_person', 'date_of_birth_inferred', '0'),
