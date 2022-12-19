@@ -4,9 +4,8 @@ import pandas as pd
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
-from institution.models import CofkCollectInstitution
 from uploader.entities.entity import CofkEntity
-from uploader.models import CofkCollectUpload
+from uploader.models import CofkCollectUpload, CofkCollectInstitution
 
 log = logging.getLogger(__name__)
 

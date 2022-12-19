@@ -15,20 +15,22 @@ from pandas._config.config import OptionError
 from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_PEOPLE_MENTIONED_IN_WORK, \
     REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_STORED_IN, REL_TYPE_IS_RELATED_TO
 from core.models import CofkUnionResource
-from institution.models import CofkCollectInstitution, CofkUnionInstitution
-from location.models import CofkCollectLocation, CofkUnionLocation
-from manifestation.models import CofkCollectManifestation, CofkUnionManifestation, CofkManifInstMap
-from person.models import CofkCollectPerson, CofkUnionPerson
+from institution.models import CofkUnionInstitution
+from location.models import CofkUnionLocation
+from manifestation.models import CofkUnionManifestation, CofkManifInstMap
+from person.models import CofkUnionPerson
 from uploader.forms import CofkCollectUploadForm
 from django.conf import settings
 
-from uploader.models import CofkCollectStatus, CofkCollectUpload
+from uploader.models import CofkCollectStatus, CofkCollectUpload, CofkCollectLocation, CofkCollectManifestation, \
+    CofkCollectPerson, CofkCollectWork, CofkCollectAddresseeOfWork, CofkCollectAuthorOfWork, \
+    CofkCollectDestinationOfWork, CofkCollectLanguageOfWork, CofkCollectOriginOfWork, CofkCollectPersonMentionedInWork, \
+    CofkCollectWorkResource, CofkCollectInstitution
 from uploader.spreadsheet import CofkUploadExcelFile
 from uploader.validation import CofkMissingColumnError, CofkMissingSheetError, CofkNoDataError
 
-from work.models import CofkCollectWork, CofkCollectAuthorOfWork, CofkCollectAddresseeOfWork, CofkCollectLanguageOfWork, \
-    CofkCollectPersonMentionedInWork, CofkCollectWorkResource, CofkUnionWork, CofkWorkPersonMap, \
-    CofkCollectDestinationOfWork, CofkCollectOriginOfWork, CofkWorkLocationMap, CofkUnionLanguageOfWork, \
+from work.models import CofkUnionWork, CofkWorkPersonMap, \
+    CofkWorkLocationMap, CofkUnionLanguageOfWork, \
     CofkWorkResourceMap
 
 log = logging.getLogger(__name__)

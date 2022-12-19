@@ -4,9 +4,9 @@ from typing import List
 import pandas as pd
 from django.core.exceptions import ValidationError
 
-from person.models import CofkCollectPerson, CofkUnionPerson
+from person.models import CofkUnionPerson
 from uploader.entities.entity import CofkEntity
-from uploader.models import CofkCollectUpload
+from uploader.models import CofkCollectUpload, CofkCollectPerson
 
 log = logging.getLogger(__name__)
 

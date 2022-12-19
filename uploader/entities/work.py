@@ -8,11 +8,10 @@ from django.core.exceptions import ValidationError
 from uploader.entities.entity import CofkEntity
 from uploader.entities.locations import CofkLocations
 from uploader.entities.people import CofkPeople
-from uploader.models import CofkCollectUpload, CofkCollectStatus
+from uploader.models import CofkCollectUpload, CofkCollectStatus, CofkCollectWork, CofkCollectAddresseeOfWork, \
+    CofkCollectAuthorOfWork, CofkCollectDestinationOfWork, CofkCollectLanguageOfWork, CofkCollectOriginOfWork, \
+    CofkCollectPersonMentionedInWork, CofkCollectWorkResource
 from core.models import Iso639LanguageCode
-from work.models import CofkCollectWork, CofkCollectLanguageOfWork, CofkCollectWorkResource, \
-    CofkCollectPersonMentionedInWork, CofkCollectAuthorOfWork, CofkCollectAddresseeOfWork, CofkCollectOriginOfWork, \
-    CofkCollectDestinationOfWork
 
 log = logging.getLogger(__name__)
 

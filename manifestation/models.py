@@ -100,28 +100,6 @@ class CofkUnionManifestation(models.Model, RecordTracker):
         return self.cofkmanifinstmap_set.filter(relationship_type=REL_TYPE_STORED_IN).first()
 
 
-class CofkCollectManifestation(models.Model):
-    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
-    manifestation_id = models.IntegerField()
-    iwork = models.ForeignKey('work.CofkCollectWork', models.DO_NOTHING)
-    union_manifestation = models.ForeignKey(CofkUnionManifestation, models.DO_NOTHING, blank=True, null=True)
-    manifestation_type = models.CharField(max_length=3)
-    repository = models.ForeignKey('institution.CofkCollectInstitution', models.DO_NOTHING, blank=True, null=True)
-    id_number_or_shelfmark = models.CharField(max_length=500, blank=True, null=True)
-    printed_edition_details = models.TextField(blank=True, null=True)
-    manifestation_notes = models.TextField(blank=True, null=True)
-    image_filenames = models.TextField(blank=True, null=True)
-    upload_name = models.CharField(max_length=254, blank=True, null=True)
-    _id = models.CharField(max_length=32, blank=True, null=True)
-
-    class Meta:
-        db_table = 'cofk_collect_manifestation'
-        unique_together = (('upload', 'iwork_id', 'manifestation_id'),)
-
-    def __str__(self):
-        return f'Manifestation #{self.manifestation_id}'
-
-
 class CofkUnionLanguageOfManifestation(models.Model):
     lang_manif_id = models.AutoField(primary_key=True)
     manifestation = models.ForeignKey(CofkUnionManifestation, models.DO_NOTHING,
@@ -135,17 +113,6 @@ class CofkUnionLanguageOfManifestation(models.Model):
     class Meta:
         db_table = 'cofk_union_language_of_manifestation'
         unique_together = (('manifestation', 'language_code'),)
-
-
-class CofkCollectImageOfManif(models.Model):
-    upload = models.ForeignKey('uploader.CofkCollectUpload', models.DO_NOTHING)
-    manifestation_id = models.IntegerField()
-    image_filename = models.CharField(max_length=2000)
-    _id = models.CharField(max_length=32, blank=True, null=True)
-    iwork_id = models.IntegerField(blank=True, null=True)
-
-    class Meta:
-        db_table = 'cofk_collect_image_of_manif'
 
 
 class CofkManifManifMap(Recref):

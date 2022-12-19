@@ -4,7 +4,7 @@ from django import template
 from django.db.models import QuerySet
 
 from core.models import CofkLookupDocumentType
-from work.models import CofkCollectWork
+from uploader.models import CofkCollectWork
 
 register = template.Library()
 

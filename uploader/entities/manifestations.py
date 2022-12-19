@@ -4,11 +4,10 @@ import pandas as pd
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
-from manifestation.models import CofkCollectManifestation
 from uploader.entities.entity import CofkEntity
 from uploader.entities.repositories import CofkRepositories
 from uploader.entities.work import CofkWork
-from uploader.models import CofkCollectUpload
+from uploader.models import CofkCollectUpload, CofkCollectManifestation
 
 log = logging.getLogger(__name__)
 
