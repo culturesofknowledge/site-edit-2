@@ -6,6 +6,8 @@ from django.db import models
 
 from core.helper import recref_utils, model_utils
 from core.models import Recref, CofkUnionComment, CofkUnionResource
+from location import location_utils
+from location.models import CofkUnionLocation
 from person import person_utils
 from person.models import CofkUnionPerson
 from uploader.models import CofkUnionImage
@@ -113,3 +115,14 @@ class TargetPersonRecrefAdapter(RecrefFormAdapter, ABC):
 
     def target_id_name(self):
         return 'person_id'
+
+
+class TargetLocationRecrefAdapter(RecrefFormAdapter, ABC):
+    def find_target_display_name_by_id(self, target_id):
+        return location_utils.get_recref_display_name(self.find_target_instance(target_id))
+
+    def find_target_instance(self, target_id):
+        return model_utils.get_safe(CofkUnionLocation, location_id=target_id)
+
+    def target_id_name(self):
+        return 'location_id'

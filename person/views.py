@@ -1,31 +1,32 @@
 import logging
-from typing import Callable, Iterable, Type, Optional, Any, NoReturn
+from typing import Callable, Iterable, Type, Any, NoReturn
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db import models
 from django.db.models import F
 from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual, Exact
 from django.forms import BaseForm
 from django.shortcuts import render, redirect, get_object_or_404
 
 from core import constant
-from core.constant import REL_TYPE_COMMENT_REFERS_TO
-from core.forms import CommentForm, LocRecrefForm, PersonRecrefForm
+from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_BORN_IN_LOCATION, REL_TYPE_DIED_AT_LOCATION
+from core.forms import CommentForm, PersonRecrefForm
 from core.helper import renderer_utils, view_utils, query_utils, download_csv_utils, recref_utils, form_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
+from core.helper.recref_handler import RecrefFormsetHandler, RoleCategoryHandler, ImageRecrefHandler, \
+    TargetResourceFormsetHandler, MultiRecrefAdapterHandler, SingleRecrefHandler
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
-from core.helper.view_utils import CommonInitFormViewTemplate, BasicSearchView, FullFormHandler, \
-    RecrefFormsetHandler, RoleCategoryHandler, ImageRecrefHandler, TargetResourceFormsetHandler
+from core.helper.view_handler import FullFormHandler
+from core.helper.view_utils import CommonInitFormViewTemplate, BasicSearchView
 from core.models import Recref
-from location.models import CofkUnionLocation
 from person import person_utils
 from person.forms import PersonForm, GeneralSearchFieldset, PersonOtherRecrefForm
-from person.models import CofkUnionPerson, CofkPersonLocationMap, CofkPersonPersonMap, create_person_id, \
+from person.models import CofkUnionPerson, CofkPersonPersonMap, create_person_id, \
     CofkPersonCommentMap, CofkPersonResourceMap, CofkPersonImageMap
 from person.recref_adapter import PersonCommentRecrefAdapter, PersonResourceRecrefAdapter, PersonRoleRecrefAdapter, \
-    ActivePersonRecrefAdapter, PassivePersonRecrefAdapter, PersonImageRecrefAdapter
+    ActivePersonRecrefAdapter, PassivePersonRecrefAdapter, PersonImageRecrefAdapter, PersonLocRecrefAdapter
+from person.view_components import PersonFormDescriptor
 
 log = logging.getLogger(__name__)
 
@@ -75,38 +76,6 @@ def return_quick_init(request, pk):
     )
 
 
-class LocRecrefHandler(view_utils.MultiRecrefHandler):
-
-    def __init__(self, request_data, model_list, name=None):
-        def _find_rec_name_by_id(target_id) -> Optional[str]:
-            loc = CofkUnionLocation.objects.get(location_id=target_id)
-            return loc and loc.location_name
-
-        initial_list = (m.__dict__ for m in model_list)
-        initial_list = (recref_utils.convert_to_recref_form_dict(r, 'location_id', _find_rec_name_by_id)
-                        for r in initial_list)
-
-        name = name or 'loc'
-        super().__init__(request_data, name=name, initial_list=initial_list,
-                         recref_form_class=LocRecrefForm)
-
-    @property
-    def recref_class(self) -> Type[models.Model]:
-        return CofkPersonLocationMap
-
-    def create_recref_by_new_form(self, target_id, parent_instance) -> Optional[models.Model]:
-        ps_loc: CofkPersonLocationMap = CofkPersonLocationMap()
-        ps_loc.location = CofkUnionLocation.objects.get(location_id=target_id)
-        if not ps_loc.location:
-            # KTODO can we put it to validate function?
-            log.warning(f"location_id not found -- {target_id} ")
-            return None
-
-        ps_loc.person = parent_instance
-        ps_loc.relationship_type = 'was_in_location'  # KTODO support other type
-        return ps_loc
-
-
 class OrganisationRecrefConvertor:
 
     @property
@@ -124,69 +93,83 @@ class PersonFFH(FullFormHandler):
 
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
         self.person = get_object_or_404(CofkUnionPerson, iperson_id=pk)
-        self.person_form = PersonForm(request_data or None, instance=self.person)
+
+        self.birth_loc_handler = SingleRecrefHandler(
+            form_field_name='birth_place',
+            rel_type=REL_TYPE_WAS_BORN_IN_LOCATION,
+            create_recref_adapter_fn=PersonLocRecrefAdapter,
+        )
+        self.death_loc_handler = SingleRecrefHandler(
+            form_field_name='death_place',
+            rel_type=REL_TYPE_DIED_AT_LOCATION,
+            create_recref_adapter_fn=PersonLocRecrefAdapter,
+        )
+
+        initial_dict = (
+                {}
+                | self.birth_loc_handler.create_init_dict(self.person)
+                | self.death_loc_handler.create_init_dict(self.person)
+        )
+        self.person_form = PersonForm(request_data or None, instance=self.person, initial=initial_dict)
         self.person_form.base_fields['organisation_type'].reload_choices()
 
-        self.loc_handler = LocRecrefHandler(
-            request_data, model_list=self.person.cofkpersonlocationmap_set.iterator(), )
-
-        self.org_handler = view_utils.MultiRecrefAdapterHandler(
+        self.org_handler = MultiRecrefAdapterHandler(
             request_data, name='organisation',
             recref_adapter=ActivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_MEMBER_OF,
         )
-        self.member_handler = view_utils.MultiRecrefAdapterHandler(
+        self.member_handler = MultiRecrefAdapterHandler(
             request_data, name='member',
             recref_adapter=PassivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_MEMBER_OF,
         )
-        self.parent_handler = view_utils.MultiRecrefAdapterHandler(
+        self.parent_handler = MultiRecrefAdapterHandler(
             request_data, name='parent',
             recref_adapter=ActivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_PARENT_OF,
         )
-        self.children_handler = view_utils.MultiRecrefAdapterHandler(
+        self.children_handler = MultiRecrefAdapterHandler(
             request_data, name='children',
             recref_adapter=PassivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_PARENT_OF,
         )
-        self.employer_handler = view_utils.MultiRecrefAdapterHandler(
+        self.employer_handler = MultiRecrefAdapterHandler(
             request_data, name='employer',
             recref_adapter=ActivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_EMPLOYED,
         )
-        self.employee_handler = view_utils.MultiRecrefAdapterHandler(
+        self.employee_handler = MultiRecrefAdapterHandler(
             request_data, name='employee',
             recref_adapter=PassivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_EMPLOYED,
         )
 
-        self.teacher_handler = view_utils.MultiRecrefAdapterHandler(
+        self.teacher_handler = MultiRecrefAdapterHandler(
             request_data, name='teacher',
             recref_adapter=ActivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_TAUGHT,
         )
-        self.student_handler = view_utils.MultiRecrefAdapterHandler(
+        self.student_handler = MultiRecrefAdapterHandler(
             request_data, name='student',
             recref_adapter=PassivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_TAUGHT,
         )
 
-        self.patron_handler = view_utils.MultiRecrefAdapterHandler(
+        self.patron_handler = MultiRecrefAdapterHandler(
             request_data, name='patron',
             recref_adapter=ActivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_WAS_PATRON_OF,
         )
-        self.protege_handler = view_utils.MultiRecrefAdapterHandler(
+        self.protege_handler = MultiRecrefAdapterHandler(
             request_data, name='protege',
             recref_adapter=PassivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
@@ -215,9 +198,19 @@ class PersonFFH(FullFormHandler):
 
         self.role_handler = RoleCategoryHandler(PersonRoleRecrefAdapter(self.person))
 
+        self.other_loc_handler = MultiRecrefAdapterHandler(
+            request_data, name='other_loc',
+            recref_adapter=PersonLocRecrefAdapter(self.person),
+            recref_form_class=PersonRecrefForm,
+            rel_type=constant.REL_TYPE_WAS_IN_LOCATION,
+        )
+
     def create_context(self):
         context = super().create_context()
-        context.update(self.role_handler.create_context())
+        context.update(
+            self.role_handler.create_context()
+            | PersonFormDescriptor(self.person).create_context()
+        )
         return context
 
     def render_form(self, request):
@@ -250,7 +243,14 @@ def full_form(request, iperson_id):
                                                   recref_adapter=PersonOtherRecrefForm.create_recref_adapter())
         fhandler.role_handler.save(request, fhandler.person_form.instance)
 
-        # KTODO save birthplace, deathplace
+        fhandler.birth_loc_handler.upsert_recref_if_field_exist(
+            fhandler.person_form, fhandler.person_form.instance,
+            request.user.username
+        )
+        fhandler.death_loc_handler.upsert_recref_if_field_exist(
+            fhandler.person_form, fhandler.person_form.instance,
+            request.user.username
+        )
 
         # reload all form data for rendering
         fhandler.load_data(iperson_id, request_data=None)

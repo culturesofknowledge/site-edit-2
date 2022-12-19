@@ -11,6 +11,7 @@ from core.helper import widgets_utils, data_utils, view_utils, recref_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.models import Recref
 from person import person_utils
+from work.recref_adapter import WorkLocRecrefAdapter, ManifInstRecrefAdapter
 
 log = logging.getLogger(__name__)
 
@@ -462,3 +463,13 @@ class CommonTextareaField(forms.CharField):
         super().__init__(required=required, widget=widget,
                          max_length=max_length, min_length=min_length, strip=strip,
                          empty_value=empty_value, **kwargs)
+
+
+class LocationRecrefField(SelectedRecrefField):
+    def get_recref_name(self, target_id):
+        return WorkLocRecrefAdapter().find_target_display_name_by_id(target_id)
+
+
+class InstRecrefField(SelectedRecrefField):
+    def get_recref_name(self, target_id):
+        return ManifInstRecrefAdapter().find_target_display_name_by_id(target_id)

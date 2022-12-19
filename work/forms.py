@@ -10,12 +10,10 @@ from core.constant import DEFAULT_EMPTY_DATE_STR, REL_TYPE_CREATED, REL_TYPE_WAS
 from core.helper import form_utils
 from core.helper import widgets_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter, TargetPersonRecrefAdapter
-from core.helper.form_utils import SelectedRecrefField, TargetPersonMRRForm
+from core.helper.form_utils import TargetPersonMRRForm, LocationRecrefField, InstRecrefField
 from core.models import Recref
 from manifestation.models import CofkUnionManifestation, CofkManifPersonMap
 from work.models import CofkCollectWork, CofkUnionWork, CofkWorkPersonMap
-from work.recref_adapter import ManifInstRecrefAdapter
-from work.recref_adapter import WorkLocRecrefAdapter
 
 log = logging.getLogger(__name__)
 
@@ -55,16 +53,6 @@ def create_auto_date_field():
                            initial=DEFAULT_EMPTY_DATE_STR,
                            empty_value=DEFAULT_EMPTY_DATE_STR,
                            widget=forms.TextInput(dict(readonly='readonly')))
-
-
-class LocationRecrefField(SelectedRecrefField):
-    def get_recref_name(self, target_id):
-        return WorkLocRecrefAdapter().find_target_display_name_by_id(target_id)
-
-
-class InstRecrefField(SelectedRecrefField):
-    def get_recref_name(self, target_id):
-        return ManifInstRecrefAdapter().find_target_display_name_by_id(target_id)
 
 
 class CorrForm(forms.ModelForm):

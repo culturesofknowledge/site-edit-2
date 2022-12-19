@@ -19,9 +19,7 @@
         <div class="form-col-right">
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
-                {% if work_display_name %}
-                    <h4>{{ work_display_name }}</h4>
-                {% endif %}
+                {% include "core/component/form_descriptor.html" with descriptor=form_descriptor %}
 
                 <label>Original catalogue:</label>
                 {{ catalogue_form.catalogue }}

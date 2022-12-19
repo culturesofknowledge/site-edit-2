@@ -5,7 +5,7 @@ from typing import Iterable
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models
-from django.forms import Form, ModelForm, BaseForm
+from django.forms import ModelForm, BaseForm
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
 
@@ -17,13 +17,15 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_PEOPLE_MENTIONED_IN_WORK, REL_TYPE_MENTION, REL_TYPE_MENTION_PLACE, \
     REL_TYPE_MENTION_WORK
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, LocRecrefForm
-from core.helper import view_utils, lang_utils, model_utils, recref_utils, query_utils, renderer_utils
+from core.helper import view_utils, lang_utils, model_utils, query_utils, renderer_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.form_utils import save_multi_rel_recref_formset
 from core.helper.lang_utils import LangModelAdapter, NewLangForm
+from core.helper.recref_handler import SingleRecrefHandler, RecrefFormsetHandler, SubjectHandler, ImageRecrefHandler, \
+    TargetResourceFormsetHandler, MultiRecrefAdapterHandler
 from core.helper.recref_utils import create_recref_if_field_exist
-from core.helper.view_utils import DefaultSearchView, FullFormHandler, RecrefFormsetHandler, \
-    SubjectHandler, ImageRecrefHandler, TargetResourceFormsetHandler
+from core.helper.view_utils import DefaultSearchView
+from core.helper.view_handler import FullFormHandler
 from core.models import Recref
 from institution import inst_utils
 from location import location_utils
@@ -46,6 +48,7 @@ from work.models import CofkWorkPersonMap, CofkUnionWork, CofkWorkCommentMap, Co
 from work.recref_adapter import WorkLocRecrefAdapter, ManifInstRecrefAdapter, WorkSubjectRecrefAdapter, \
     EarlierLetterRecrefAdapter, LaterLetterRecrefAdapter, EnclosureManifRecrefAdapter, EnclosedManifRecrefAdapter, \
     WorkCommentRecrefAdapter, ManifCommentRecrefAdapter, WorkResourceRecrefAdapter, ManifImageRecrefAdapter
+from work.view_components import WorkFormDescriptor
 
 log = logging.getLogger(__name__)
 
@@ -84,10 +87,8 @@ class BasicWorkFFH(FullFormHandler):
     def create_context(self):
         context = super().create_context()
         context.update({
-            'iwork_id': self.request_iwork_id
-        })
-        if self.work:
-            context['work_display_name'] = work_utils.get_recref_display_name(self.work)
+                           'iwork_id': self.request_iwork_id
+                       } | WorkFormDescriptor(self.work).create_context())
         return context
 
     def render_form(self, request):
@@ -119,50 +120,6 @@ class BasicWorkFFH(FullFormHandler):
         return work
 
 
-class SingleRecrefHandler:
-    """
-    some recref only allow select one target in frontend
-    this class help you to load(init) and save for single recref situation
-    """
-
-    def __init__(self, form_field_name, rel_type, create_recref_adapter_fn):
-        self.form_field_name = form_field_name
-        self.rel_type = rel_type
-        self.create_recref_adapter = create_recref_adapter_fn
-
-    def create_init_dict(self, parent: models.Model):
-        recref_adapter = self.create_recref_adapter(parent)
-        recref = self._find_recref_by_parent(parent, recref_adapter=recref_adapter)
-        return {
-            self.form_field_name: recref_adapter.get_target_id(recref),
-        }
-
-    def _find_recref_by_parent(self, parent, recref_adapter=None):
-        recref_adapter = recref_adapter or self.create_recref_adapter(parent)
-        recref = next(recref_adapter.find_recref_records(self.rel_type), None)
-        return recref
-
-    def upsert_recref_if_field_exist(self, form: Form, parent, username,
-                                     ):
-        if not (target_id := form.cleaned_data.get(self.form_field_name)):
-            log.debug(f'value of form_field_name not found [{self.form_field_name=}] ')
-            return
-
-        recref_adapter = self.create_recref_adapter(parent)
-        recref_adapter.target_id_name()
-        recref = recref_utils.upsert_recref_by_target_id(
-            target_id, recref_adapter.find_target_instance,
-            rel_type=self.rel_type,
-            parent_instance=parent,
-            create_recref_fn=recref_adapter.recref_class(),
-            set_parent_target_instance_fn=recref_adapter.set_parent_target_instance,
-            org_recref=self._find_recref_by_parent(parent, recref_adapter),
-            username=username,
-        )
-        recref.save()
-        return recref
-
-
 class PlacesFFH(BasicWorkFFH):
     def __init__(self, pk, request_data=None, request=None, *args, **kwargs):
         super().__init__(pk, 'work/places_form.html', *args, request_data=request_data, request=request, **kwargs)
@@ -181,12 +138,11 @@ class PlacesFFH(BasicWorkFFH):
             create_recref_adapter_fn=WorkLocRecrefAdapter,
         )
 
-        dates_form_initial = {}
-        if self.work is not None:
-            dates_form_initial.update(
-                self.origin_loc_handler.create_init_dict(self.work)
+        dates_form_initial = (
+                {}
+                | self.origin_loc_handler.create_init_dict(self.work)
                 | self.destination_loc_handler.create_init_dict(self.work)
-            )
+        )
         self.places_form = PlacesForm(request_data, instance=self.work, initial=dates_form_initial)
 
         # comments
@@ -295,19 +251,19 @@ class CorrFFH(BasicWorkFFH):
         ))
 
         # letters
-        self.earlier_letter_handler = view_utils.MultiRecrefAdapterHandler(
+        self.earlier_letter_handler = MultiRecrefAdapterHandler(
             request_data, name='earlier_letter',
             recref_adapter=EarlierLetterRecrefAdapter(self.safe_work),
             recref_form_class=WorkRecrefForm,
             rel_type=REL_TYPE_WORK_IS_REPLY_TO,
         )
-        self.later_letter_handler = view_utils.MultiRecrefAdapterHandler(
+        self.later_letter_handler = MultiRecrefAdapterHandler(
             request_data, name='later_letter',
             recref_adapter=LaterLetterRecrefAdapter(self.safe_work),
             recref_form_class=WorkRecrefForm,
             rel_type=REL_TYPE_WORK_IS_REPLY_TO,
         )
-        self.matching_letter_handler = view_utils.MultiRecrefAdapterHandler(
+        self.matching_letter_handler = MultiRecrefAdapterHandler(
             request_data, name='matching_letter',
             recref_adapter=EarlierLetterRecrefAdapter(self.safe_work),
             recref_form_class=WorkRecrefForm,
@@ -376,7 +332,7 @@ class ManifFFH(BasicWorkFFH):
                                     instance=self.manif, initial=manif_form_initial)
         self.new_lang_form = NewLangForm()
 
-        self.former_recref_handler = view_utils.MultiRecrefAdapterHandler(
+        self.former_recref_handler = MultiRecrefAdapterHandler(
             request_data, name='former',
             recref_adapter=ManifPersonRecrefAdapter(self.safe_manif),
             recref_form_class=PersonRecrefForm,
@@ -418,13 +374,13 @@ class ManifFFH(BasicWorkFFH):
         ))
 
         # enclosures
-        self.enclosure_manif_handler = view_utils.MultiRecrefAdapterHandler(
+        self.enclosure_manif_handler = MultiRecrefAdapterHandler(
             request_data, name='enclosure_manif',
             recref_adapter=EnclosureManifRecrefAdapter(self.safe_manif),
             recref_form_class=ManifRecrefForm,
             rel_type=REL_TYPE_ENCLOSED_IN,
         )
-        self.enclosed_manif_handler = view_utils.MultiRecrefAdapterHandler(
+        self.enclosed_manif_handler = MultiRecrefAdapterHandler(
             request_data, name='enclosed_manif',
             recref_adapter=EnclosedManifRecrefAdapter(self.safe_manif),
             recref_form_class=ManifRecrefForm,
@@ -544,19 +500,19 @@ class DetailsFFH(BasicWorkFFH):
         ))
 
         # related recref
-        self.people_recref_handler = view_utils.MultiRecrefAdapterHandler(
+        self.people_recref_handler = MultiRecrefAdapterHandler(
             request_data, name='people',
             recref_adapter=WorkPersonRecrefAdapter(self.safe_work),
             recref_form_class=PersonRecrefForm,
             rel_type=REL_TYPE_MENTION,
         )
-        self.place_recref_handler = view_utils.MultiRecrefAdapterHandler(
+        self.place_recref_handler = MultiRecrefAdapterHandler(
             request_data, name='place',
             recref_adapter=WorkLocRecrefAdapter(self.safe_work),
             recref_form_class=LocRecrefForm,
             rel_type=REL_TYPE_MENTION_PLACE,
         )
-        self.work_recref_handler = view_utils.MultiRecrefAdapterHandler(
+        self.work_recref_handler = MultiRecrefAdapterHandler(
             request_data, name='work',
             recref_adapter=EarlierLetterRecrefAdapter(self.safe_work),
             recref_form_class=WorkRecrefForm,
@@ -904,6 +860,8 @@ def overview_view(request, iwork_id):
         manif_set=list(map(to_overview_manif, work.cofkunionmanifestation_set.iterator())),
         original_calendar_display=to_calendar_display(work.original_calendar),
     )
+
+    context.update(WorkFormDescriptor(work).create_context())
 
     return render(request, 'work/overview_form.html', context)
 

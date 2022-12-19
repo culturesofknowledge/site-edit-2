@@ -1,4 +1,5 @@
 import logging
+import typing
 import uuid
 from typing import Iterable, Type, Optional
 
@@ -7,6 +8,8 @@ import django.utils.timezone
 from django.conf import settings
 from django.db import models
 from django.db.models import Model
+
+ModelLike = typing.TypeVar('ModelLike', bound=models.Model)
 
 
 class RecordTracker:

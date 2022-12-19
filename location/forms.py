@@ -13,22 +13,14 @@ class LocationForm(ModelForm):
                               widget=forms.TextInput(attrs=dict(readonly=True)),
                               label='Full name of location')
     editors_notes = form_utils.CommonTextareaField()
-    element_1_eg_room = CharField(required=False,
-                                  label='1. E.g. room')
-    element_2_eg_building = CharField(required=False,
-                                      label='2. E.g. building')
-    element_3_eg_parish = CharField(required=False,
-                                    label='3. E.g. parish')
-    element_4_eg_city = CharField(required=True,
-                                  label='4. E.g. city * ')
-    element_5_eg_county = CharField(required=False,
-                                    label='5. E.g. county')
-    element_6_eg_country = CharField(required=False,
-                                     label='6. E.g. country')
-    element_7_eg_empire = CharField(required=False,
-                                    label='7. E.g. empire')
-    location_synonyms = CharField(required=False,
-                                  label='Alternative names for location')
+    element_1_eg_room = CharField(required=False, label='1. E.g. room')
+    element_2_eg_building = CharField(required=False, label='2. E.g. building')
+    element_3_eg_parish = CharField(required=False, label='3. E.g. parish')
+    element_4_eg_city = CharField(required=False, label='4. E.g. city')
+    element_5_eg_county = CharField(required=False, label='5. E.g. county')
+    element_6_eg_country = CharField(required=False, label='6. E.g. country')
+    element_7_eg_empire = CharField(required=False, label='7. E.g. empire')
+    location_synonyms = CharField(required=False, label='Alternative names for location')
     latitude = CharField(required=False)
     longitude = CharField(required=False)
 

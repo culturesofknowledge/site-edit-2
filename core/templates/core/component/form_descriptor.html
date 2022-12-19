@@ -1,0 +1,16 @@
+{% if descriptor and descriptor.name %}
+    <div class="form-descriptor">
+        <div class="desc-name">
+            <h3> {{ descriptor.model_name }}:  {{ descriptor.name }}</h3>
+        </div>
+    </div>
+    <div class="margin-bottom">
+        <small>
+            {{ descriptor.model_name }} ID {{ descriptor.id }}.
+            {% if descriptor.change_timestamp %}
+                Last change {{ descriptor.change_timestamp }}
+                by {{ descriptor.change_user }}
+            {% endif %}
+        </small>
+    </div>
+{% endif %}

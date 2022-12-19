@@ -281,10 +281,22 @@ tr.selectable_entry:hover {
   @extend .col--2of3;
   min-width: 700px;
 
-  line-height: 1.1;
+  line-height: 1.4;
 
   label {
     display: block;
   }
 
 }
+
+
+@media only screen and (min-width: $mborder-mid) {
+  .form-descriptor {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 55px;
+    background-color: white;
+  }
+}
+
+
