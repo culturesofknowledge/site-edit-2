@@ -54,7 +54,8 @@ class CofkUnionWork(models.Model, RecordTracker):
     original_catalogue = models.ForeignKey("uploader.CofkLookupCatalogue", models.DO_NOTHING,
                                            db_column='original_catalogue', blank=True, null=True,
                                            to_field='catalogue_code',
-                                           default='')
+                                           default='',
+                                           db_constraint=False, )
     accession_code = models.CharField(max_length=1000, blank=True, null=True)
     work_to_be_deleted = models.SmallIntegerField(default=0)
     iwork_id = models.IntegerField(

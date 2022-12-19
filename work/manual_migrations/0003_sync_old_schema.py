@@ -37,10 +37,7 @@ class Migration(migrations.Migration):
         migrations_utils.create_operation_default_value('cofk_union_work', 'creation_timestamp', 'now()'),
         migrations_utils.create_operation_default_value('cofk_union_work', 'change_timestamp', 'now()'),
         migrations_utils.create_operation_default_value('cofk_union_work', 'uuid', 'uuid_generate_v4()'),
-
-        # KTODO fix invalid original_calendar type, should be varchar
-        # migrations_utils.create_operation_default_value('cofk_union_work', 'original_catalogue', "''"),
-
+        migrations_utils.create_operation_default_value('cofk_union_work', 'original_catalogue', "''"),
         migrations_utils.create_operation_default_value('cofk_union_queryable_work', 'date_of_work_inferred', '0'),
         migrations_utils.create_operation_default_value('cofk_union_queryable_work', 'date_of_work_uncertain', '0'),
         migrations_utils.create_operation_default_value('cofk_union_queryable_work', 'date_of_work_approx', '0'),
@@ -65,8 +62,7 @@ class Migration(migrations.Migration):
                                                         "''"),
         migrations_utils.create_operation_default_value('cofk_union_queryable_work', 'work_is_translation', '0'),
         migrations_utils.create_operation_default_value('cofk_union_queryable_work', 'edit_status', "''"),
-        # KTODO fix invalid original_calendar type, should be varchar
-        # migrations_utils.create_operation_default_value('cofk_union_queryable_work', 'original_catalogue', "''"),
+        migrations_utils.create_operation_default_value('cofk_union_queryable_work', 'original_catalogue', "''"),
         migrations_utils.create_operation_default_value('cofk_union_queryable_work', 'work_to_be_deleted', '0'),
         migrations_utils.create_operation_default_value('cofk_union_queryable_work', 'change_timestamp', 'now()'),
         migrations_utils.create_operation_default_value('cofk_union_queryable_work', 'relevant_to_cofk', "''"),
