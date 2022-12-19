@@ -1,5 +1,4 @@
 from django.db import models
-from django.db.models import QuerySet
 
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
