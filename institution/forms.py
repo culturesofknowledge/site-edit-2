@@ -47,14 +47,13 @@ class GeneralSearchFieldset(forms.Form):
     # institution_country_synonyms = forms.CharField(required=False, )
     # institution_country_synonyms_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    # TODO Resource is M2M field
-    resource = forms.CharField(required=False, help_text='E.g. links to online catalogues.')
-    resource_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    resources = forms.CharField(required=False, help_text='E.g. links to online catalogues.')
+    resources_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    # resources_search_fields = 'resource_name,resource_details,resource_url'
 
     editors_notes = forms.CharField(required=False)
     editors_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    # TODO There is no images field in database model
     images = forms.CharField(required=False)
     images_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 

@@ -1,3 +1,4 @@
+import logging
 from abc import ABC
 from typing import Callable, Iterable, Type
 
@@ -34,7 +35,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
             ('institution_city_synonyms', 'Alternative city names',),
             ('institution_country', 'Country name',),
             ('institution_country_synonyms', 'Alternative country names',),
-            ('related_resources', 'Related resources',),
+            ('resources', 'Related resources',),
             ('editors_notes', 'Editors\' notes',),
             ('images', 'Images',),
             ('change_timestamp', 'Change timestamp',),
@@ -63,8 +64,11 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
         queries.extend(
             query_utils.create_queries_by_lookup_field(self.request_data, [
                 'institution_name', 'editors_notes', 'institution_city', 'institution_country',
-                'resource', 'change_user', 'institution_id'
-            ])
+                'change_user', 'institution_id', 'resources', 'images'
+            ], search_fields_maps={'resources': ['resources__resource_name', 'resources__resource_details',
+                                                 'resources__resource_url'],
+                                   'images': ['images__image_filename', 'images__thumbnail',
+                                              'images__licence_details']})
         )
         return self.create_queryset_by_queries(CofkUnionInstitution, queries)
 
