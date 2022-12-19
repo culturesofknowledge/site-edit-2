@@ -38,17 +38,6 @@ class CofkLookupCatalogue(models.Model):
         db_table = 'cofk_lookup_catalogue'
 
 
-class CofkReportGroup(models.Model):
-    report_group_id = models.AutoField(primary_key=True)
-    report_group_title = models.TextField(blank=True, null=True)
-    report_group_order = models.IntegerField()
-    on_main_reports_menu = models.IntegerField()
-    report_group_code = models.CharField(max_length=100, blank=True, null=True)
-
-    class Meta:
-        db_table = 'cofk_report_group'
-
-
 class CofkUnionImage(models.Model, RecordTracker):
     image_id = models.AutoField(primary_key=True)
     image_filename = models.TextField(blank=True, null=True)
@@ -125,27 +114,6 @@ class CofkCollectUpload(models.Model):
 
     class Meta:
         db_table = 'cofk_collect_upload'
-
-
-class CofkReport(models.Model):
-    report_id = models.AutoField(primary_key=True)
-    report_title = models.TextField(blank=True, null=True)
-    class_name = models.CharField(max_length=40, blank=True, null=True)
-    method_name = models.CharField(max_length=40, blank=True, null=True)
-    report_group = models.ForeignKey(CofkReportGroup, models.DO_NOTHING, blank=True, null=True)
-    menu_item = models.ForeignKey('core.CofkMenu', models.DO_NOTHING, blank=True, null=True)
-    has_csv_option = models.BooleanField(null=False, default=False)
-    is_dummy_option = models.BooleanField(null=False, default=False)
-    report_code = models.CharField(max_length=100, blank=True, null=True)
-    parm_list = models.TextField(blank=True, null=True)
-    parm_titles = models.TextField(blank=True, null=True)
-    prompt_for_parms = models.SmallIntegerField()
-    default_parm_values = models.TextField(blank=True, null=True)
-    parm_methods = models.TextField(blank=True, null=True)
-    report_help = models.TextField(blank=True, null=True)
-
-    class Meta:
-        db_table = 'cofk_report'
 
 
 class CofkUserSavedQuery(models.Model):

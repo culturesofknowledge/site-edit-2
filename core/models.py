@@ -27,30 +27,6 @@ class Recref(models.Model, RecordTracker):
         abstract = True
 
 
-class CofkHelpOptions(models.Model):
-    option_id = models.AutoField(primary_key=True)
-    menu_item = models.ForeignKey('CofkMenu', models.DO_NOTHING, blank=True, null=True)
-    button_name = models.CharField(max_length=100)
-    help_page = models.ForeignKey('CofkHelpPages', models.DO_NOTHING)
-    order_in_manual = models.IntegerField()
-    menu_depth = models.IntegerField()
-
-    class Meta:
-        db_table = 'cofk_help_options'
-        unique_together = (('menu_item', 'button_name'),)
-
-
-class CofkHelpPages(models.Model):
-    page_id = models.AutoField(primary_key=True)
-    page_title = models.CharField(max_length=500)
-    custom_url = models.CharField(max_length=500, blank=True, null=True)
-    published_text = models.TextField()
-    draft_text = models.TextField(blank=True, null=True)
-
-    class Meta:
-        db_table = 'cofk_help_pages'
-
-
 class CofkLookupDocumentType(models.Model):
     document_type_id = models.AutoField(primary_key=True)
     document_type_code = models.CharField(unique=True, max_length=3)
@@ -58,32 +34,6 @@ class CofkLookupDocumentType(models.Model):
 
     class Meta:
         db_table = 'cofk_lookup_document_type'
-
-
-class CofkMenu(models.Model):
-    menu_item_id = models.AutoField(primary_key=True)
-    menu_item_name = models.TextField()
-    menu_order = models.IntegerField(blank=True, null=True)
-    parent = models.ForeignKey('self', models.DO_NOTHING, blank=True, null=True)
-    has_children = models.IntegerField()
-    class_name = models.CharField(max_length=100, blank=True, null=True)
-    method_name = models.CharField(max_length=100, blank=True, null=True)
-    user_restriction = models.CharField(max_length=30)
-    hidden_parent = models.IntegerField(blank=True, null=True)
-    called_as_popup = models.IntegerField()
-    collection = models.CharField(max_length=20)
-
-    class Meta:
-        db_table = 'cofk_menu'
-
-
-class CofkReportOutputs(models.Model):
-    output_id = models.CharField(max_length=250)
-    line_number = models.IntegerField()
-    line_text = models.TextField(blank=True, null=True)
-
-    class Meta:
-        db_table = 'cofk_report_outputs'
 
 
 class CofkUnionComment(models.Model, RecordTracker):
