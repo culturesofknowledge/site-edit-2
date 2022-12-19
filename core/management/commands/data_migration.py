@@ -30,6 +30,7 @@ from uploader.models import CofkCollectStatus, Iso639LanguageCode, CofkLookupCat
 from uploader.models import CofkUnionOrgType, CofkUnionImage
 from work import models as work_models
 from work.models import CofkUnionWork, CofkUnionQueryableWork
+from audit.models import CofkUnionAuditLiteral, CofkUnionAuditRelationship
 
 log = logging.getLogger(__name__)
 
@@ -507,5 +508,10 @@ def data_migration(user, password, database, host, port):
 
     # clone recref records
     clone_recref_simple_by_field_pairs(conn, recref_settings.recref_left_right_pairs)
+
+    # remove all audit records that created by data_migrations
+    print('remove all audit records that created by data_migrations')
+    CofkUnionAuditLiteral.objects.all().delete()
+    CofkUnionAuditRelationship.objects.all().delete()
 
     conn.close()
