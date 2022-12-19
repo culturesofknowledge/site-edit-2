@@ -1,12 +1,12 @@
 
-<nav class="margin-bottom row col--5of6" id="search-components">
+<nav class="margin-bottom row col" id="search-components">
+    <div class="col col--1of6" style="text-align: right;">
+        {% include "core/component/common_form_choices.html" with choices_field=form.order %}
+    </div>
     <div class="col col--1of6">
         {{ form.sort_by.errors }}
         {{ form.sort_by.label_tag }}
         {{ form.sort_by }}
-    </div>
-    <div class="col col--1of6">
-        {% include "core/component/common_form_choices.html" with label_text='&nbsp;' choices_field=form.order %}
     </div>
     <div class="col col--1of6">
         {{ form.num_record.errors }}
