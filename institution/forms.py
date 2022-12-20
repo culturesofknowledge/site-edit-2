@@ -28,28 +28,15 @@ class GeneralSearchFieldset(forms.Form):
 
     institution_name = forms.CharField(required=False, )
     institution_name_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
-    institution_name_search_fields = 'institution_name,institution_synonyms'
-
-    # institution_synonyms = forms.CharField(required=False, )
-    # institution_synonyms_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     institution_city = forms.CharField(required=False, )
     institution_city_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
-    institution_city_search_fields = 'institution_city,institution_city_synonyms'
-
-    # institution_city_synonyms = forms.CharField(required=False, )
-    # institution_city_synonyms_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     institution_country = forms.CharField(required=False, )
     institution_country_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
-    institution_country_search_fields = 'institution_country,institution_country_synonyms'
-
-    # institution_country_synonyms = forms.CharField(required=False, )
-    # institution_country_synonyms_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     resources = forms.CharField(required=False, help_text='E.g. links to online catalogues.')
     resources_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
-    # resources_search_fields = 'resource_name,resource_details,resource_url'
 
     editors_notes = forms.CharField(required=False)
     editors_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
@@ -57,9 +44,9 @@ class GeneralSearchFieldset(forms.Form):
     images = forms.CharField(required=False)
     images_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    last_edit_from = forms.CharField(required=False)
-    last_edit_to = forms.CharField(required=False)
-    last_edit_info = form_utils.datetime_search_info
+    change_timestamp_from = forms.CharField(required=False)
+    change_timestamp_to = forms.CharField(required=False)
+    change_timestamp_info = form_utils.datetime_search_info
 
     change_user = forms.CharField(required=False, help_text='Username of the person who last changed the record.')
     change_user_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)

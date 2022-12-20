@@ -1,0 +1,11 @@
+{% if images.count %}
+    <ul>
+        {% for image in images.iterator %}
+            <li>
+                <a href="{{ resource.resource_url }}" target="_blank">
+                    {{ image }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
