@@ -1,7 +1,7 @@
 from django import forms
 from django.forms import ModelForm
 
-from core.helper import form_utils
+from core.helper import form_utils, widgets_utils
 from institution.models import CofkUnionInstitution
 
 
@@ -44,11 +44,12 @@ class GeneralSearchFieldset(forms.Form):
     images = forms.CharField(required=False)
     images_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    change_timestamp_from = forms.CharField(required=False)
-    change_timestamp_to = forms.CharField(required=False)
+    change_timestamp_from = forms.CharField(required=False, widget=widgets_utils.NewDateInput())
+    change_timestamp_to = forms.CharField(required=False, widget=widgets_utils.NewDateInput())
     change_timestamp_info = form_utils.datetime_search_info
 
-    change_user = forms.CharField(required=False, help_text='Username of the person who last changed the record.')
+    change_user = forms.CharField(required=False, label='Last edited by',
+                                  help_text='Username of the person who last changed the record.')
     change_user_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     institution_id = forms.IntegerField(required=False, min_value=1, label='Repository id',
