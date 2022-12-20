@@ -26,19 +26,19 @@ class GeneralSearchFieldset(forms.Form):
     title = 'General'
     template_name = 'institution/component/institution_search_fieldset.html'
 
-    institution_name = forms.CharField(required=False, )
+    institution_name = forms.CharField(required=False, label='Name')
     institution_name_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    institution_city = forms.CharField(required=False, )
+    institution_city = forms.CharField(required=False, label='City')
     institution_city_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    institution_country = forms.CharField(required=False, )
+    institution_country = forms.CharField(required=False, label='Country')
     institution_country_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    resources = forms.CharField(required=False, help_text='E.g. links to online catalogues.')
+    resources = forms.CharField(required=False, label='Related resources', help_text='E.g. links to online catalogues.')
     resources_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    editors_notes = forms.CharField(required=False)
+    editors_notes = forms.CharField(required=False, label="Editors' notes")
     editors_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     images = forms.CharField(required=False)
@@ -51,6 +51,6 @@ class GeneralSearchFieldset(forms.Form):
     change_user = forms.CharField(required=False, help_text='Username of the person who last changed the record.')
     change_user_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    institution_id = forms.IntegerField(required=False, min_value=1,
+    institution_id = forms.IntegerField(required=False, min_value=1, label='Repository id',
                                         help_text='The unique ID for the record within this database.')
     institution_id_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
