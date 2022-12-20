@@ -63,7 +63,7 @@ class CofkCollectToolSession(models.Model):
 
 
 class CofkCollectLocation(models.Model):
-    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE, null=True)
+    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE, null=False)
     location_id = models.IntegerField()
     union_location = models.ForeignKey('location.CofkUnionLocation', models.DO_NOTHING, blank=True, null=True)
 
@@ -139,7 +139,7 @@ class CofkCollectImageOfManif(models.Model):
 
 class CofkCollectPerson(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
-    iperson_id = models.IntegerField(blank=True, null=True)
+    iperson_id = models.IntegerField(blank=False, null=False)
     # KTODO temporary related_name
     union_iperson = models.ForeignKey('person.CofkUnionPerson', models.DO_NOTHING, blank=True, null=True,
                                       related_name='union_collect_persons')
