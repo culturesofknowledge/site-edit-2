@@ -3,11 +3,17 @@
 
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.location_name field_lookup=form.location_name_lookup %}
 
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.location_synonyms field_lookup=form.location_synonyms_lookup %}
-
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.location_id field_lookup=form.location_id_lookup %}
 
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.editors_notes field_lookup=form.editors_notes_lookup %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.sent field_lookup=form.sent_lookup %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.received field_lookup=form.received_lookup %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.sent_received field_lookup=form.sent_received_lookup %}
+
+     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.researchers_notes field_lookup=form.researchers_notes_lookup %}
 
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.latitude field_lookup=form.latitude_lookup %}
 

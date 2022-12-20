@@ -187,24 +187,22 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
 
     def get_queryset(self):
         # queries for like_fields
-        field_fn_maps = {
-            'editors_notes': query_utils.create_contains_query,
-            'location_name': query_utils.create_contains_query,
-            'location_id': query_utils.create_eq_query,
-            'latitude': query_utils.create_contains_query,
-            'longitude': query_utils.create_contains_query,
-            'element_1_eg_room': query_utils.create_contains_query,
-            'element_2_eg_building': query_utils.create_contains_query,
-            'element_3_eg_parish': query_utils.create_contains_query,
-            'element_4_eg_city': query_utils.create_contains_query,
-            'element_5_eg_county': query_utils.create_contains_query,
-            'element_6_eg_country': query_utils.create_contains_query,
-            'element_7_eg_empire': query_utils.create_contains_query,
-        }
+        field_fn_maps = query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
+                                                            'change_timestamp', )
+
+        fields = ['location_name', 'editors_notes', 'location_id', 'researchers_notes', 'latitude', 'longitude',
+                  'element_1_eg_room', 'element_2_eg_building', 'element_3_eg_parish', 'element_4_eg_city',
+                  'element_5_eg_county', 'element_6_eg_country', 'element_7_eg_empire', 'images', 'change_user']
+        search_fields_maps = {
+            'location_name': ['location_name', 'location_synonyms'],
+            'researchers_notes': ['comments__comment']}
 
         # KTODO support lookup query_utils.create_queries_by_lookup_field
 
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
+        queries.extend(
+            query_utils.create_queries_by_lookup_field(self.request_data, fields, search_fields_maps)
+        )
 
         return self.create_queryset_by_queries(CofkUnionLocation, queries)
 

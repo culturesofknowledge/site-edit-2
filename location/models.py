@@ -24,16 +24,9 @@ class CofkUnionLocation(models.Model, RecordTracker):
     element_6_eg_country = models.CharField(max_length=100)
     element_7_eg_empire = models.CharField(max_length=100)
     uuid = models.UUIDField(blank=True, null=True)
-
-    images = models.ManyToManyField(to='core.CofkUnionImage', through='CofkLocationImageMap')
-
-    @property
-    def comments(self):
-        return self.cofklocationcommentmap_set.all()
-
-    @property
-    def resources(self):
-        return self.cofklocationresourcemap_set.all()
+    comments = models.ManyToManyField('core.CofkUnionComment', through='CofkLocationCommentMap')
+    resources = models.ManyToManyField('core.CofkUnionResource', through='CofkLocationResourceMap')
+    images = models.ManyToManyField('uploader.CofkUnionImage', through='CofkLocationImageMap')
 
     def __str__(self):
         return self.location_name

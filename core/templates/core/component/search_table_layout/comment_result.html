@@ -1,8 +1,8 @@
-{% if c_maps.count %}
+{% if comments.count %}
     <ul>
-        {% for c_map in c_maps.iterator %}
+        {% for comment in comments.iterator %}
             <li>
-                {{ c_map.comment.comment }}
+                {{ comment.comment }}
             </li>
         {% endfor %}
     </ul>
