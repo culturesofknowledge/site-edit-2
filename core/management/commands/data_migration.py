@@ -1,6 +1,7 @@
 import itertools
 import logging
 import re
+import time
 import warnings
 from argparse import ArgumentParser
 from typing import Type, Callable, Iterable, Any
@@ -70,6 +71,7 @@ def clone_rows_by_model_class(conn, model_class: Type[Model],
     * assume all column name are same
     * assume no column have been removed
     """
+    start_sec = time.time()
     if check_duplicate_fn is None:
         def check_duplicate_fn(model):
             return model_class.objects.filter(pk=model.pk).exists()
@@ -88,9 +90,11 @@ def clone_rows_by_model_class(conn, model_class: Type[Model],
     rows = (model_class(**r) for r in rows)
     rows = itertools.filterfalse(check_duplicate_fn, rows)
     rows = map(record_counter, rows)
+    rows = map(__debug, rows)
     model_class.objects.bulk_create(rows, batch_size=500)
     log_save_records(f'{model_class.__module__}.{model_class.__name__}',
-                     record_counter.cur_size())
+                     record_counter.cur_size(),
+                     used_sec=time.time() - start_sec)
 
     if seq_name == '':
         seq_name = create_seq_col_name(model_class)
@@ -107,8 +111,12 @@ def clone_rows_by_model_class(conn, model_class: Type[Model],
         cur_conn.cursor().execute(f"select setval('{seq_name}', {new_val})")
 
 
-def log_save_records(target, size):
-    print(f'save news records [{target}][{size}]')
+def __debug(i):
+    return i
+
+
+def log_save_records(target, size, used_sec):
+    print(f'save news records [{used_sec:>5,.0f}s][{size:>6,}][{target}]')
 
 
 class Command(BaseCommand):
@@ -312,6 +320,7 @@ def create_recref(conn,
                   id_field_val: RecrefIdFieldVal,
                   extra_field_val: FieldVal = None,
                   ):
+    start_sec = time.time()
     extra_field_val = extra_field_val or FieldVal()
 
     sql = 'select * from cofk_union_relationship ' \
@@ -337,7 +346,8 @@ def create_recref(conn,
     )
 
     record_size = insert_sql_val_list(sql_val_list)
-    log_save_records(id_field_val.mapping_table_name, record_size)
+    log_save_records(id_field_val.mapping_table_name, record_size,
+                     used_sec=time.time() - start_sec)
 
 
 def no_duplicate_check(*args, **kwargs):
@@ -407,10 +417,11 @@ def migrate_groups_and_permissions(conn, target_model: str):
 
 
 def _val_handler_work__catalogue(row: dict, conn):
-    if row['original_catalogue']:
-        row['original_catalogue'] = CofkLookupCatalogue.objects.get(catalogue_code=row['original_catalogue'])
+    v = row.pop('original_catalogue')
+    if v or v == '':
+        row['original_catalogue_id'] = v
     else:
-        row['original_catalogue'] = None
+        row['original_catalogue_id'] = ''
     return row
 
 
