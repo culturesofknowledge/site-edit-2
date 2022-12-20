@@ -57,24 +57,6 @@ class CofkUnionNationality(models.Model):
         db_table = 'cofk_union_nationality'
 
 
-class CofkUnionRelationship(models.Model, RecordTracker):
-    relationship_id = models.AutoField(primary_key=True)
-    left_table_name = models.CharField(max_length=100)
-    left_id_value = models.CharField(max_length=100)
-    relationship_type = models.ForeignKey('CofkUnionRelationshipType', models.DO_NOTHING, db_column='relationship_type')
-    right_table_name = models.CharField(max_length=100)
-    right_id_value = models.CharField(max_length=100)
-    relationship_valid_from = models.DateTimeField(blank=True, null=True)
-    relationship_valid_till = models.DateTimeField(blank=True, null=True)
-    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
-    creation_user = models.CharField(max_length=50)
-    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
-    change_user = models.CharField(max_length=50)
-
-    class Meta:
-        db_table = 'cofk_union_relationship'
-
-
 class CofkUnionRelationshipType(models.Model, RecordTracker):
     relationship_code = models.CharField(primary_key=True, max_length=50)
     desc_left_to_right = models.CharField(max_length=200)
@@ -217,7 +199,7 @@ class CofkUnionSubject(models.Model):
 
 
 class Iso639LanguageCode(models.Model):
-    code_639_3 = models.CharField(max_length=3, unique=True)
+    code_639_3 = models.CharField(max_length=3, unique=True)  # KTODO this is primary_key in original schema
     code_639_1 = models.CharField(max_length=2)
     language_name = models.CharField(max_length=100)
     language_id = models.AutoField(primary_key=True)

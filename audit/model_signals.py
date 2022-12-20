@@ -9,7 +9,7 @@ from audit.audit_recref_adapter import AuditRecrefAdapter
 from audit.models import CofkUnionAuditLiteral
 from core import constant, recref_settings
 from core.helper import model_utils
-from core.models import CofkUnionComment, CofkUnionRelationship, CofkUnionRelationshipType, CofkUnionResource, Recref, \
+from core.models import CofkUnionComment, CofkUnionRelationshipType, CofkUnionResource, Recref, \
     CofkUnionNationality, CofkUnionImage, CofkUnionRoleCategory, CofkUnionSubject
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
@@ -61,7 +61,6 @@ cofk_union_work
         CofkUnionManifestation,
         CofkUnionPerson,
         CofkUnionPublication,
-        CofkUnionRelationship,
         CofkUnionRelationshipType,
         CofkUnionResource,
         # CofkUnionRoleCategory,   # have no change_user
