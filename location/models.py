@@ -1,8 +1,10 @@
 from django.db import models
 
+from core.constant import REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 from core.models import Recref
+from work.models import CofkWorkLocationMap
 
 
 class CofkUnionLocation(models.Model, RecordTracker):
@@ -27,6 +29,21 @@ class CofkUnionLocation(models.Model, RecordTracker):
     comments = models.ManyToManyField('core.CofkUnionComment', through='CofkLocationCommentMap')
     resources = models.ManyToManyField('core.CofkUnionResource', through='CofkLocationResourceMap')
     images = models.ManyToManyField('uploader.CofkUnionImage', through='CofkLocationImageMap')
+
+    @property
+    def sent(self):
+        return CofkWorkLocationMap.objects.filter(location_id=self.location_id,
+                                                  relationship_type=REL_TYPE_WAS_SENT_TO).count()
+
+    @property
+    def received(self):
+        return CofkWorkLocationMap.objects.filter(location_id=self.location_id,
+                                                  relationship_type=REL_TYPE_WAS_SENT_FROM).count()
+
+    @property
+    def sent_received(self):
+        return self.sent + self.received
+
 
     def __str__(self):
         return self.location_name

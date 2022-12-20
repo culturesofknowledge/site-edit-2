@@ -4,14 +4,16 @@ from typing import Iterable, Union, Type, Callable
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Count, Q
 from django.forms import BaseForm, BaseFormSet
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView
 
-from core.constant import REL_TYPE_COMMENT_REFERS_TO
+from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM
 from core.forms import CommentForm
 from core.helper import view_utils, renderer_utils, query_utils, download_csv_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
+from core.helper.query_utils import choices_lookup_map, run_lookup_fn, nullable_lookup_keys
 from core.helper.recref_handler import RecrefFormsetHandler, ImageRecrefHandler, TargetResourceFormsetHandler
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
@@ -24,6 +26,7 @@ from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocat
 from location.recref_adapter import LocationCommentRecrefAdapter, LocationResourceRecrefAdapter, \
     LocationImageRecrefAdapter
 from location.view_components import LocationFormDescriptor
+from work.models import CofkWorkLocationMap
 
 log = logging.getLogger(__name__)
 FormOrFormSet = Union[BaseForm, BaseFormSet]
@@ -190,7 +193,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
         field_fn_maps = query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
                                                             'change_timestamp', )
 
-        fields = ['location_name', 'editors_notes', 'location_id', 'researchers_notes', 'resources','latitude',
+        fields = ['location_name', 'editors_notes', 'location_id', 'researchers_notes', 'resources', 'latitude',
                   'longitude', 'element_1_eg_room', 'element_2_eg_building', 'element_3_eg_parish', 'element_4_eg_city',
                   'element_5_eg_county', 'element_6_eg_country', 'element_7_eg_empire', 'images', 'change_user']
         search_fields_maps = {
@@ -199,12 +202,39 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
                           'resources__resource_url'],
             'researchers_notes': ['comments__comment']}
 
+        work_locations = [('sent', [REL_TYPE_WAS_SENT_TO]),
+                          ('received', [REL_TYPE_WAS_SENT_FROM]),
+                          ('sent_received', [REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM])]
+        q = Q()
+
+        for rel_field in [w for w in work_locations if self.request_data.get(w[0])]:
+            field_val = self.request_data.get(rel_field[0])
+            lookup_key = self.request_data.get(f'{rel_field[0]}_lookup')
+
+            if not field_val and lookup_key not in nullable_lookup_keys:
+                continue
+
+            if (lookup_fn := choices_lookup_map.get(lookup_key)) is None:
+                log.warning(f'lookup fn not found -- [{rel_field[0]}][{lookup_key}]')
+                continue
+
+            locations = CofkWorkLocationMap.objects. \
+                filter(relationship_type__in=rel_field[1]). \
+                values('location_id'). \
+                order_by('location_id'). \
+                annotate(count=Count('location_id')). \
+                filter(Q(run_lookup_fn(lookup_fn, 'count', field_val))). \
+                all()
+
+            q.add(('location_id__in', [l['location_id'] for l in locations]), Q.AND)
+
         # KTODO support lookup query_utils.create_queries_by_lookup_field
 
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
         queries.extend(
             query_utils.create_queries_by_lookup_field(self.request_data, fields, search_fields_maps)
         )
+        queries.extend([q])
 
         return self.create_queryset_by_queries(CofkUnionLocation, queries)
 
