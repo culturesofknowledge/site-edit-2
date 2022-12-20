@@ -49,7 +49,7 @@ class CofkUnionWork(models.Model, RecordTracker):
     explicit = models.TextField(blank=True, null=True)
     ps = models.TextField(blank=True, null=True)
     original_catalogue = models.ForeignKey("core.CofkLookupCatalogue", models.DO_NOTHING,
-                                           db_column='original_catalogue', blank=True, null=True,
+                                           db_column='original_catalogue', blank=True, null=False,
                                            to_field='catalogue_code',
                                            default='',
                                            db_constraint=False, )

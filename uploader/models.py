@@ -220,9 +220,10 @@ class CofkCollectWork(models.Model):
     iwork_id = models.IntegerField()
     union_iwork = models.ForeignKey('work.CofkUnionWork', models.DO_NOTHING, blank=True, null=True
                                     , related_name='union_collect_works')
-    work = models.ForeignKey('work.CofkUnionWork', models.DO_NOTHING, blank=True, null=True, related_name='collect_works')
+    work = models.ForeignKey('work.CofkUnionWork', models.DO_NOTHING, blank=True, null=True,
+                             related_name='collect_works')
     date_of_work_as_marked = models.CharField(max_length=250, blank=True, null=True)
-    original_calendar = models.CharField(max_length=2, blank=True, null=True)
+    original_calendar = models.CharField(max_length=2, blank=True, null=False)
     date_of_work_std_year = models.IntegerField(blank=True, null=True)
     date_of_work_std_month = models.IntegerField(blank=True, null=True)
     date_of_work_std_day = models.IntegerField(blank=True, null=True)
@@ -597,7 +598,7 @@ class CofkCollectPersonMentionedInWork(models.Model):
     iperson = models.ForeignKey('uploader.CofkCollectPerson', models.CASCADE)
     iwork = models.ForeignKey('CofkCollectWork', models.CASCADE)
     notes_on_person_mentioned = models.TextField(blank=True, null=True)
-    _id = models.CharField(max_length=32)
+    _id = models.CharField(max_length=32, null=True)
 
     def __str__(self):
         return str(self.iperson)
