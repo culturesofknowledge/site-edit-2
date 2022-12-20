@@ -5,10 +5,14 @@
 #   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
 #   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
+import functools
+
 from django.db import models
 
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
+
+SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID = 'iso_639_language_codes_id_seq'
 
 
 class Recref(models.Model, RecordTracker):
@@ -199,10 +203,13 @@ class CofkUnionSubject(models.Model):
 
 
 class Iso639LanguageCode(models.Model):
-    code_639_3 = models.CharField(max_length=3, unique=True)  # KTODO this is primary_key in original schema
+    code_639_3 = models.CharField(max_length=3, primary_key=True)
     code_639_1 = models.CharField(max_length=2)
     language_name = models.CharField(max_length=100)
-    language_id = models.AutoField(primary_key=True)
+    language_id = models.IntegerField(
+        default=functools.partial(model_utils.next_seq_safe, SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID),
+        unique=True,
+    )
 
     def __str__(self):
         return self.language_name

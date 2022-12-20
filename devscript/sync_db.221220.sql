@@ -32,6 +32,19 @@ alter column change_timestamp type timestamp using change_timestamp::timestamp;
 alter table cofk_union_audit_relationship
     alter column change_user set default "current_user"();
 
+alter table cofk_lookup_catalogue
+    alter column catalogue_id set default nextval('cofk_lookup_catalogue_id_seq'::regclass);
+
+drop index cofk_lookup_catalogue_catalogue_code_ca21e20f_like;
+
+drop index cofk_lookup_catalogue_catalogue_name_656ef550_like;
+
+alter table cofk_lookup_catalogue
+drop constraint cofk_lookup_catalogue_catalogue_code_key;
+
+alter table cofk_lookup_catalogue
+drop constraint cofk_lookup_catalogue_catalogue_name_key;
+
 alter table cofk_lookup_document_type
     alter column document_type_id set default nextval('cofk_lookup_document_type_id_seq'::regclass);
 
@@ -57,8 +70,28 @@ alter table cofk_union_comment
 
 -- Alter Turn not supported
 
+alter table cofk_union_image
+    alter column image_id set default nextval('cofk_union_image_id_seq'::regclass);
+
+alter table cofk_union_image
+alter column creation_timestamp type timestamp using creation_timestamp::timestamp;
+
+alter table cofk_union_image
+    alter column creation_user set default "current_user"();
+
+alter table cofk_union_image
+alter column change_timestamp type timestamp using change_timestamp::timestamp;
+
+alter table cofk_union_image
+    alter column change_user set default "current_user"();
+
+-- Alter Turn not supported
+
 alter table cofk_union_nationality
     alter column nationality_id set default nextval('cofk_union_nationality_id_seq'::regclass);
+
+alter table cofk_union_org_type
+    alter column org_type_id set default nextval('cofk_union_org_type_id_seq'::regclass);
 
 alter table cofk_union_relationship_type
 alter column creation_timestamp type timestamp using creation_timestamp::timestamp;
@@ -93,8 +126,14 @@ alter table cofk_union_resource
 
 -- Alter Turn not supported
 
+alter table cofk_union_role_category
+    alter column role_category_id set default nextval('cofk_union_role_category_id_seq'::regclass);
+
 alter table cofk_union_speed_entry_text
     alter column speed_entry_text_id set default nextval('cofk_union_speed_entry_text_id_seq'::regclass);
+
+alter table cofk_union_subject
+    alter column subject_id set default nextval('cofk_union_subject_id_seq'::regclass);
 
 alter table copy_cofk_union_queryable_work
 alter column change_timestamp type timestamp using change_timestamp::timestamp;
@@ -104,97 +143,6 @@ drop constraint copy_cofk_union_queryable_work_pkey;
 
 alter table copy_cofk_union_queryable_work
 drop column id;
-
-alter table cofk_union_relationship
-    alter column relationship_id set default nextval('cofk_union_relationship_id_seq'::regclass);
-
-alter table cofk_union_relationship
-alter column relationship_valid_from type timestamp using relationship_valid_from::timestamp;
-
-alter table cofk_union_relationship
-alter column relationship_valid_till type timestamp using relationship_valid_till::timestamp;
-
-alter table cofk_union_relationship
-alter column creation_timestamp type timestamp using creation_timestamp::timestamp;
-
-alter table cofk_union_relationship
-    alter column creation_timestamp set default now();
-
-alter table cofk_union_relationship
-    alter column creation_user set default "current_user"();
-
-alter table cofk_union_relationship
-alter column change_timestamp type timestamp using change_timestamp::timestamp;
-
-alter table cofk_union_relationship
-    alter column change_timestamp set default now();
-
-alter table cofk_union_relationship
-    alter column change_user set default "current_user"();
-
-alter table cofk_union_relationship
-alter column relationship_type type varchar(100) using relationship_type::varchar(100);
-
--- column reordering is not supported cofk_union_relationship.relationship_type
-
-drop index cofk_union_relationship_relationship_type_2b08a041;
-
-drop index cofk_union_relationship_relationship_type_2b08a041_like;
-
-alter table cofk_union_relationship
-drop constraint cofk_union_relations_relationship_type_2b08a041_fk_cofk_unio;
-
--- Alter Turn not supported
-
-alter table cofk_collect_status
-    alter column status_id drop default;
-
-alter table cofk_collect_status
-alter column editable type smallint using editable::smallint;
-
-alter table cofk_collect_tool_user
-    alter column tool_user_id set default nextval('cofk_collect_tool_user_id_seq'::regclass);
-
-drop index cofk_collect_tool_user_tool_user_email_6eb2893b_like;
-
-alter table cofk_collect_tool_user
-drop constraint cofk_collect_tool_user_tool_user_email_key;
-
-alter table cofk_lookup_catalogue
-    alter column catalogue_id set default nextval('cofk_lookup_catalogue_id_seq'::regclass);
-
-drop index cofk_lookup_catalogue_catalogue_code_ca21e20f_like;
-
-drop index cofk_lookup_catalogue_catalogue_name_656ef550_like;
-
-alter table cofk_lookup_catalogue
-drop constraint cofk_lookup_catalogue_catalogue_name_key;
-
-alter table cofk_union_image
-    alter column image_id set default nextval('cofk_union_image_id_seq'::regclass);
-
-alter table cofk_union_image
-alter column creation_timestamp type timestamp using creation_timestamp::timestamp;
-
-alter table cofk_union_image
-    alter column creation_user set default "current_user"();
-
-alter table cofk_union_image
-alter column change_timestamp type timestamp using change_timestamp::timestamp;
-
-alter table cofk_union_image
-    alter column change_user set default "current_user"();
-
--- Alter Turn not supported
-
-alter table cofk_union_org_type
-    alter column org_type_id set default nextval('cofk_union_org_type_id_seq'::regclass);
-
-alter table cofk_union_role_category
-    alter column role_category_id set default nextval('cofk_union_role_category_id_seq'::regclass);
-
-alter table cofk_union_subject
-    alter column subject_id set default nextval('cofk_union_subject_id_seq'::regclass);
 
 alter table iso_639_language_codes
     alter column language_id set default nextval('iso_639_language_codes_id_seq'::regclass);
@@ -221,21 +169,22 @@ drop table cofk_user_saved_query;
 
 drop table cofk_user;
 
-alter table cofk_collect_upload
-    alter column upload_id set default nextval('cofk_collect_upload_id_seq'::regclass);
+alter table cofk_union_institution
+    alter column institution_id set default nextval('cofk_union_institution_id_seq'::regclass);
 
-alter table cofk_collect_upload
-drop column upload_file;
+alter table cofk_union_institution
+alter column creation_timestamp type timestamp using creation_timestamp::timestamp;
 
--- column reordering is not supported cofk_collect_upload.upload_status
+alter table cofk_union_institution
+    alter column creation_user set default "current_user"();
 
-alter table cofk_collect_upload
-alter column upload_timestamp type timestamp using upload_timestamp::timestamp;
+alter table cofk_union_institution
+alter column change_timestamp type timestamp using change_timestamp::timestamp;
 
-drop index cofk_collect_upload_upload_status_b576aaa0;
+alter table cofk_union_institution
+    alter column change_user set default "current_user"();
 
-alter table cofk_collect_upload
-drop constraint cofk_collect_upload_upload_status_b576aaa0_fk_cofk_coll;
+-- Alter Turn not supported
 
 alter table cofk_union_queryable_work
     add constraint cofk_uniq_union_queryable_work_id
@@ -252,74 +201,46 @@ create trigger cofk_union_queryable_work_trg_set_change_cols
     for each row
     execute procedure dbf_cofk_set_change_cols();
 
-alter table cofk_collect_tool_session
-    alter column session_id set default nextval('cofk_sessions_session_id_seq'::regclass);
+drop table cofk_institution_resource_map;
 
-alter table cofk_collect_tool_session
-alter column session_timestamp type timestamp using session_timestamp::timestamp;
-
-alter table cofk_collect_tool_session
-alter column username type varchar(100) using username::varchar(100);
-
-drop index cofk_collect_tool_session_session_code_dd423eca_like;
-
-drop index cofk_collect_tool_session_username_77e0c349;
-
-alter table cofk_collect_tool_session
-drop constraint cofk_collect_tool_session_session_code_key;
-
-alter table cofk_collect_tool_session
-drop constraint cofk_collect_tool_se_username_77e0c349_fk_cofk_coll;
+drop table cofk_institution_image_map;
 
 alter table cofk_collect_addressee_of_work
     add constraint cofk_collect_addressee_of_work_fk_upload_id
         foreign key (upload_id) references cofk_collect_upload;
 
+drop table cofk_location_image_map;
+
 alter table cofk_collect_author_of_work
     add constraint cofk_collect_author_of_work_fk_upload_id
         foreign key (upload_id) references cofk_collect_upload;
 
--- column reordering is not supported cofk_collect_institution.union_institution_id
+alter table cofk_union_location
+    alter column location_id set default nextval('cofk_union_location_id_seq'::regclass);
 
--- column reordering is not supported cofk_collect_institution.upload_id
+alter table cofk_union_location
+alter column creation_timestamp type timestamp using creation_timestamp::timestamp;
 
-drop index cofk_collect_institution_union_institution_id_4b3395e1;
+alter table cofk_union_location
+    alter column creation_user set default "current_user"();
 
-drop index cofk_collect_institution_upload_id_a28243e5;
+alter table cofk_union_location
+alter column change_timestamp type timestamp using change_timestamp::timestamp;
 
-alter table cofk_collect_institution
-drop constraint cofk_collect_institution_upload_id_institution_id_c3e31e30_uniq;
+alter table cofk_union_location
+    alter column change_user set default "current_user"();
 
-alter table cofk_collect_institution
-drop constraint cofk_collect_institu_union_institution_id_4b3395e1_fk_cofk_unio;
-
-alter table cofk_collect_institution
-drop constraint cofk_collect_institu_upload_id_a28243e5_fk_cofk_coll;
+-- Alter Turn not supported
 
 alter table cofk_collect_destination_of_work
     add constraint cofk_collect_destination_of_work_fk_upload_id
         foreign key (upload_id) references cofk_collect_upload;
 
--- column reordering is not supported cofk_collect_institution_resource.upload_id
-
-alter table cofk_collect_institution_resource
-drop constraint cofk_collect_institution_resource_pkey;
-
-alter table cofk_collect_institution_resource
-drop column id;
-
-alter table cofk_collect_institution_resource
-drop constraint cofk_collect_institution_resource_upload_id_key;
-
-alter table cofk_collect_institution_resource
-drop constraint cofk_collect_institution_upload_id_resource_id_fdb3f098_uniq;
-
-alter table cofk_collect_institution_resource
-drop constraint cofk_collect_institu_upload_id_32dbe7da_fk_cofk_coll;
-
 alter table cofk_collect_image_of_manif
     add constraint cofk_collect_image_of_manif_fk_upload_id
         foreign key (upload_id) references cofk_collect_upload;
+
+drop table cofk_location_resource_map;
 
 alter table cofk_collect_institution
     add constraint cofk_collect_institution_fk_union_id
@@ -330,40 +251,11 @@ alter table cofk_collect_institution
     add constraint cofk_collect_institution_fk_upload_id
         foreign key (upload_id) references cofk_collect_upload;
 
-drop table cofk_institution_image_map;
-
-alter table cofk_collect_institution_resource
-    add primary key (upload_id, resource_id);
-
 alter table cofk_collect_institution_resource
     add constraint cofk_collect_institution_resource_fk_upload_id
         foreign key (upload_id) references cofk_collect_upload;
 
-alter table cofk_union_institution
-    alter column institution_id set default nextval('cofk_union_institution_id_seq'::regclass);
-
-alter table cofk_union_institution
-    alter column institution_synonyms set not null;
-
-alter table cofk_union_institution
-    alter column institution_city_synonyms set not null;
-
-alter table cofk_union_institution
-    alter column institution_country_synonyms set not null;
-
-alter table cofk_union_institution
-alter column creation_timestamp type timestamp using creation_timestamp::timestamp;
-
-alter table cofk_union_institution
-    alter column creation_user set default "current_user"();
-
-alter table cofk_union_institution
-alter column change_timestamp type timestamp using change_timestamp::timestamp;
-
-alter table cofk_union_institution
-    alter column change_user set default "current_user"();
-
--- Alter Turn not supported
+drop table cofk_location_comment_map;
 
 alter table cofk_collect_language_of_work
     add constraint cofk_collect_language_of_work_fk_upload_id
@@ -377,8 +269,6 @@ alter table cofk_collect_location
 alter table cofk_collect_location
     add constraint cofk_collect_location_fk_upload_id
         foreign key (upload_id) references cofk_collect_upload;
-
-drop table cofk_institution_resource_map;
 
 alter table cofk_collect_location_resource
     add constraint cofk_collect_location_resource_fk_upload_id
@@ -402,6 +292,8 @@ alter table cofk_collect_occupation_of_person
     add constraint cofk_collect_occupation_of_person_fk_upload_id
         foreign key (upload_id) references cofk_collect_upload;
 
+drop table cofk_person_image_map;
+
 alter table cofk_collect_origin_of_work
     add constraint cofk_collect_origin_of_work_fk_upload_id
         foreign key (upload_id) references cofk_collect_upload;
@@ -415,59 +307,60 @@ alter table cofk_collect_person
     add constraint cofk_collect_person_fk_upload_id
         foreign key (upload_id) references cofk_collect_upload;
 
+drop table cofk_person_location_map;
+
+alter table cofk_union_person
+    alter column iperson_id set default nextval('cofk_union_person_iperson_id_seq'::regclass);
+
+alter table cofk_union_person
+alter column creation_timestamp type timestamp using creation_timestamp::timestamp;
+
+alter table cofk_union_person
+    alter column creation_user set default "current_user"();
+
+alter table cofk_union_person
+alter column change_timestamp type timestamp using change_timestamp::timestamp;
+
+alter table cofk_union_person
+    alter column change_user set default "current_user"();
+
+-- column reordering is not supported cofk_union_person.organisation_type
+
+drop index cofk_union_person_person_id_49f4748f_like;
+
+drop index cofk_union_person_organisation_type_37bee9de;
+
+alter table cofk_union_person
+drop constraint cofk_union_person_iperson_id_key;
+
+alter table cofk_union_person
+drop constraint cofk_union_person_organisation_type_37bee9de_fk_cofk_unio;
+
+-- Alter Turn not supported
+
 alter table cofk_collect_person_mentioned_in_work
     add constraint cofk_collect_person_mentioned_in_work_fk_upload_id
         foreign key (upload_id) references cofk_collect_upload;
 
--- column reordering is not supported cofk_collect_location.union_location_id
+alter table cofk_union_person_summary
+alter column iperson_id type integer using iperson_id::integer;
 
-alter table cofk_collect_location
-    alter column upload_id set not null;
+drop index cofk_union_person_summary_iperson_id_19bf5074_like;
 
--- column reordering is not supported cofk_collect_location.upload_id
-
-drop index cofk_collect_location_union_location_id_1da76575;
-
-drop index cofk_collect_location_upload_id_02d01558;
-
-alter table cofk_collect_location
-drop constraint cofk_collect_location_upload_id_location_id_50c243da_uniq;
-
-alter table cofk_collect_location
-drop constraint cofk_collect_locatio_union_location_id_1da76575_fk_cofk_unio;
-
-alter table cofk_collect_location
-drop constraint cofk_collect_locatio_upload_id_02d01558_fk_cofk_coll;
+alter table cofk_union_person_summary
+drop constraint cofk_union_person_su_iperson_id_19bf5074_fk_cofk_unio;
 
 alter table cofk_collect_person_resource
     add constraint cofk_collect_person_resource_fk_upload_id
         foreign key (upload_id) references cofk_collect_upload;
 
--- column reordering is not supported cofk_collect_location_resource.upload_id
-
-alter table cofk_collect_location_resource
-drop constraint cofk_collect_location_resource_pkey;
-
-alter table cofk_collect_location_resource
-    add primary key (upload_id, resource_id);
-
-alter table cofk_collect_location_resource
-drop column id;
-
-alter table cofk_collect_location_resource
-drop constraint cofk_collect_location_resource_upload_id_key;
-
-alter table cofk_collect_location_resource
-drop constraint cofk_collect_location_re_upload_id_resource_id_8500f73f_uniq;
-
-alter table cofk_collect_location_resource
-drop constraint cofk_collect_locatio_upload_id_a92a9607_fk_cofk_coll;
+drop table cofk_person_role_map;
 
 alter table cofk_collect_place_mentioned_in_work
     add constraint cofk_collect_place_mentioned_in_work_fk_upload_id
         foreign key (upload_id) references cofk_collect_upload;
 
-drop table cofk_location_comment_map;
+drop table cofk_person_resource_map;
 
 alter table cofk_collect_subject_of_work
     add constraint cofk_collect_subject_of_work_fk_subject_id
@@ -478,11 +371,11 @@ alter table cofk_collect_subject_of_work
     add constraint cofk_collect_subject_of_work_fk_upload_id
         foreign key (upload_id) references cofk_collect_upload;
 
+drop table cofk_person_person_map;
+
 alter table cofk_collect_tool_session
     add constraint cofk_collect_tool_uniq_session_code
         unique (session_code);
-
-drop table cofk_location_image_map;
 
 alter table cofk_collect_tool_user
     add constraint cofk_collect_tool_user_uniq_email
@@ -493,28 +386,11 @@ alter table cofk_collect_tool_session
         foreign key (username) references cofk_collect_tool_user (tool_user_email)
             on update cascade on delete cascade;
 
-drop table cofk_location_resource_map;
-
 alter table cofk_collect_upload
     add constraint cofk_collect_fk_upload_status
         foreign key (upload_status) references cofk_collect_status;
 
-alter table cofk_union_location
-    alter column location_id set default nextval('cofk_union_location_id_seq'::regclass);
-
-alter table cofk_union_location
-alter column creation_timestamp type timestamp using creation_timestamp::timestamp;
-
-alter table cofk_union_location
-    alter column creation_user set default "current_user"();
-
-alter table cofk_union_location
-alter column change_timestamp type timestamp using change_timestamp::timestamp;
-
-alter table cofk_union_location
-    alter column change_user set default "current_user"();
-
--- Alter Turn not supported
+drop table cofk_person_comment_map;
 
 alter table cofk_collect_work
     add constraint cofk_collect_fk_work_status
@@ -528,8 +404,6 @@ alter table cofk_collect_work
 alter table cofk_collect_work
     add constraint cofk_collect_work_fk_upload_id
         foreign key (upload_id) references cofk_collect_upload;
-
-drop table cofk_union_location_images;
 
 alter table cofk_collect_work_resource
     add constraint cofk_collect_work_resource_fk_upload_id
@@ -559,6 +433,34 @@ alter table cofk_lookup_catalogue
 alter table cofk_lookup_document_type
     add constraint cofk_lookup_uniq_document_type_code
         unique (document_type_code);
+
+alter table cofk_union_work
+    alter column iwork_id set default nextval('cofk_union_work_iwork_id_seq'::regclass);
+
+alter table cofk_union_work
+alter column creation_timestamp type timestamp using creation_timestamp::timestamp;
+
+alter table cofk_union_work
+    alter column creation_user set default "current_user"();
+
+alter table cofk_union_work
+alter column change_timestamp type timestamp using change_timestamp::timestamp;
+
+alter table cofk_union_work
+    alter column change_user set default "current_user"();
+
+-- column reordering is not supported cofk_union_work.original_catalogue
+
+drop index cofk_union_work_work_id_b789e904_like;
+
+drop index cofk_union_work_original_catalogue_a7fe2240;
+
+drop index cofk_union_work_original_catalogue_a7fe2240_like;
+
+alter table cofk_union_work
+drop constraint cofk_union_work_iwork_id_key;
+
+-- Alter Turn not supported
 
 create table cofk_menu
 (
@@ -606,36 +508,7 @@ create table cofk_help_options
 alter table cofk_help_options
     owner to postgres;
 
-drop table cofk_person_location_map;
-
-alter table cofk_union_person
-    alter column iperson_id set default nextval('cofk_union_person_iperson_id_seq'::regclass);
-
-alter table cofk_union_person
-alter column creation_timestamp type timestamp using creation_timestamp::timestamp;
-
-alter table cofk_union_person
-    alter column creation_user set default "current_user"();
-
-alter table cofk_union_person
-alter column change_timestamp type timestamp using change_timestamp::timestamp;
-
-alter table cofk_union_person
-    alter column change_user set default "current_user"();
-
--- column reordering is not supported cofk_union_person.organisation_type
-
-drop index cofk_union_person_person_id_49f4748f_like;
-
-drop index cofk_union_person_organisation_type_37bee9de;
-
-alter table cofk_union_person
-drop constraint cofk_union_person_iperson_id_key;
-
-alter table cofk_union_person
-drop constraint cofk_union_person_organisation_type_37bee9de_fk_cofk_unio;
-
--- Alter Turn not supported
+drop table cofk_work_work_map;
 
 create table cofk_report_groups
 (
@@ -650,7 +523,7 @@ create table cofk_report_groups
 alter table cofk_report_groups
     owner to postgres;
 
-drop table cofk_union_person_images;
+drop table cofk_work_subject_map;
 
 create table cofk_report_outputs
 (
@@ -662,13 +535,9 @@ create table cofk_report_outputs
 alter table cofk_report_outputs
     owner to postgres;
 
-alter table cofk_union_person_summary
-alter column iperson_id type integer using iperson_id::integer;
+drop table cofk_work_resource_map;
 
-drop index cofk_union_person_summary_iperson_id_19bf5074_like;
-
-alter table cofk_union_person_summary
-drop constraint cofk_union_person_su_iperson_id_19bf5074_fk_cofk_unio;
+drop table cofk_work_person_map;
 
 create table cofk_reports
 (
@@ -697,9 +566,7 @@ create table cofk_reports
 alter table cofk_reports
     owner to postgres;
 
-drop table cofk_person_role_map;
-
-drop table cofk_person_resource_map;
+drop table cofk_work_location_map;
 
 create table cofk_roles
 (
@@ -716,7 +583,23 @@ create table cofk_roles
 alter table cofk_roles
     owner to postgres;
 
-drop table cofk_person_person_map;
+drop table cofk_work_comment_map;
+
+alter table cofk_union_queryable_work
+alter column change_timestamp type timestamp using change_timestamp::timestamp;
+
+alter table cofk_union_queryable_work
+    alter column change_user set default "current_user"();
+
+-- column reordering is not supported cofk_union_queryable_work.work_id
+
+drop index cofk_union_queryable_work_work_id_5fd28c2c_like;
+
+alter table cofk_union_queryable_work
+drop constraint cofk_union_queryable_work_work_id_5fd28c2c_uniq;
+
+alter table cofk_union_queryable_work
+drop constraint cofk_union_queryable_work_id_5fd28c2c_fk_cofk_unio;
 
 create index cofk_union_audit_literal_change_timestamp
     on cofk_union_audit_literal (change_timestamp desc);
@@ -724,88 +607,32 @@ create index cofk_union_audit_literal_change_timestamp
 create index cofk_union_audit_literal_change_user
     on cofk_union_audit_literal (change_user);
 
-drop table cofk_person_image_map;
+-- column reordering is not supported cofk_union_language_of_work.work_id
 
-drop table cofk_person_comment_map;
+-- column reordering is not supported cofk_union_language_of_work.language_code
 
--- column reordering is not supported cofk_collect_person_resource.upload_id
+drop index cofk_union_language_of_work_language_code_80b7ec36;
 
-alter table cofk_collect_person_resource
-drop constraint cofk_collect_person_resource_pkey;
+drop index cofk_union_language_of_work_language_code_80b7ec36_like;
 
-alter table cofk_collect_person_resource
-    add primary key (upload_id, resource_id);
+drop index cofk_union_language_of_work_work_id_cbe641cb;
 
-alter table cofk_collect_person_resource
-drop column id;
+drop index cofk_union_language_of_work_work_id_cbe641cb_like;
 
-alter table cofk_collect_person_resource
-drop constraint cofk_collect_person_resource_upload_id_key;
+alter table cofk_union_language_of_work
+drop constraint cofk_union_language_of_work_pkey;
 
-alter table cofk_collect_person_resource
-drop constraint cofk_collect_person_reso_upload_id_resource_id_28d43830_uniq;
+alter table cofk_union_language_of_work
+drop column lang_work_id;
 
-alter table cofk_collect_person_resource
-drop constraint cofk_collect_person__upload_id_cb3e072e_fk_cofk_coll;
+alter table cofk_union_language_of_work
+drop constraint cofk_union_language_of_work_work_id_language_code_137a8af7_uniq;
 
--- column reordering is not supported cofk_collect_person.upload_id
+alter table cofk_union_language_of_work
+drop constraint cofk_union_language__language_code_80b7ec36_fk_iso_639_l;
 
-alter table cofk_collect_person
-    alter column iperson_id set not null;
-
-alter table cofk_collect_person
-alter column union_iperson_id type integer using union_iperson_id::integer;
-
--- column reordering is not supported cofk_collect_person.union_iperson_id
-
--- column reordering is not supported cofk_collect_person.person_id
-
-drop index cofk_collect_person_person_id_b2861ef8;
-
-drop index cofk_collect_person_person_id_b2861ef8_like;
-
-drop index cofk_collect_person_union_iperson_id_c047cdb3;
-
-drop index cofk_collect_person_union_iperson_id_c047cdb3_like;
-
-drop index cofk_collect_person_upload_id_4ce05075;
-
-alter table cofk_collect_person
-drop constraint cofk_collect_person_upload_id_iperson_id_09e71047_uniq;
-
-alter table cofk_collect_person
-drop constraint cofk_collect_person_person_id_b2861ef8_fk_cofk_unio;
-
-alter table cofk_collect_person
-drop constraint cofk_collect_person_union_iperson_id_c047cdb3_fk_cofk_unio;
-
-alter table cofk_collect_person
-drop constraint cofk_collect_person_upload_id_4ce05075_fk_cofk_coll;
-
--- column reordering is not supported cofk_collect_occupation_of_person.upload_id
-
-drop index cofk_collect_occupation_of_person_occupation_id_e7789f0e;
-
-alter table cofk_collect_occupation_of_person
-drop constraint cofk_collect_occupation_of_person_pkey;
-
-alter table cofk_collect_occupation_of_person
-    add primary key (upload_id, occupation_of_person_id);
-
-alter table cofk_collect_occupation_of_person
-drop column id;
-
-alter table cofk_collect_occupation_of_person
-drop constraint cofk_collect_occupation_of_person_upload_id_key;
-
-alter table cofk_collect_occupation_of_person
-drop constraint cofk_collect_occupation__upload_id_occupation_of__54441db1_uniq;
-
-alter table cofk_collect_occupation_of_person
-drop constraint cofk_collect_occupat_occupation_id_e7789f0e_fk_cofk_unio;
-
-alter table cofk_collect_occupation_of_person
-drop constraint cofk_collect_occupat_upload_id_4c650320_fk_cofk_coll;
+alter table cofk_union_language_of_work
+drop constraint cofk_union_language__work_id_cbe641cb_fk_cofk_unio;
 
 alter table cofk_union_person
     add constraint cofk_uniq_union_iperson_id
@@ -819,42 +646,6 @@ alter table cofk_collect_person
 alter table cofk_union_person
     add constraint cofk_union_fk_org_type
         foreign key (organisation_type) references cofk_union_org_type;
-
-alter table cofk_union_person
-    add constraint cofk_chk_union_person_date_of_birth_approx
-        check ((date_of_birth_approx = 0) OR (date_of_birth_approx = 1));
-
-alter table cofk_union_person
-    add constraint cofk_chk_union_person_date_of_birth_inferred
-        check ((date_of_birth_inferred = 0) OR (date_of_birth_inferred = 1));
-
-alter table cofk_union_person
-    add constraint cofk_chk_union_person_date_of_birth_uncertain
-        check ((date_of_birth_uncertain = 0) OR (date_of_birth_uncertain = 1));
-
-alter table cofk_union_person
-    add constraint cofk_chk_union_person_date_of_death_approx
-        check ((date_of_death_approx = 0) OR (date_of_death_approx = 1));
-
-alter table cofk_union_person
-    add constraint cofk_chk_union_person_date_of_death_inferred
-        check ((date_of_death_inferred = 0) OR (date_of_death_inferred = 1));
-
-alter table cofk_union_person
-    add constraint cofk_chk_union_person_date_of_death_uncertain
-        check ((date_of_death_uncertain = 0) OR (date_of_death_uncertain = 1));
-
-alter table cofk_union_person
-    add constraint cofk_union_chk_date_of_birth_is_range
-        check ((date_of_birth_is_range = 0) OR (date_of_birth_is_range = 1));
-
-alter table cofk_union_person
-    add constraint cofk_union_chk_date_of_death_is_range
-        check ((date_of_death_is_range = 0) OR (date_of_death_is_range = 1));
-
-alter table cofk_union_person
-    add constraint cofk_union_chk_flourished_is_range
-        check ((flourished_is_range = 0) OR (flourished_is_range = 1));
 
 create trigger cofk_union_person_trg_cascade03_del
     after delete
@@ -893,62 +684,6 @@ alter table cofk_union_work
     add constraint cofk_union_work_fk_original_catalogue
         foreign key (original_catalogue) references cofk_lookup_catalogue (catalogue_code)
             on update cascade;
-
-alter table cofk_union_work
-    add constraint cofk_chk_union_work_addressees_inferred
-        check ((addressees_inferred = 0) OR (addressees_inferred = 1));
-
-alter table cofk_union_work
-    add constraint cofk_chk_union_work_addressees_uncertain
-        check ((addressees_uncertain = 0) OR (addressees_uncertain = 1));
-
-alter table cofk_union_work
-    add constraint cofk_chk_union_work_authors_inferred
-        check ((authors_inferred = 0) OR (authors_inferred = 1));
-
-alter table cofk_union_work
-    add constraint cofk_chk_union_work_authors_uncertain
-        check ((authors_uncertain = 0) OR (authors_uncertain = 1));
-
-alter table cofk_union_work
-    add constraint cofk_chk_union_work_date_of_work_approx
-        check ((date_of_work_approx = 0) OR (date_of_work_approx = 1));
-
-alter table cofk_union_work
-    add constraint cofk_chk_union_work_date_of_work_inferred
-        check ((date_of_work_inferred = 0) OR (date_of_work_inferred = 1));
-
-alter table cofk_union_work
-    add constraint cofk_chk_union_work_date_of_work_std_is_range
-        check ((date_of_work_std_is_range = 0) OR (date_of_work_std_is_range = 1));
-
-alter table cofk_union_work
-    add constraint cofk_chk_union_work_date_of_work_uncertain
-        check ((date_of_work_uncertain = 0) OR (date_of_work_uncertain = 1));
-
-alter table cofk_union_work
-    add constraint cofk_chk_union_work_destination_inferred
-        check ((destination_inferred = 0) OR (destination_inferred = 1));
-
-alter table cofk_union_work
-    add constraint cofk_chk_union_work_destination_uncertain
-        check ((destination_uncertain = 0) OR (destination_uncertain = 1));
-
-alter table cofk_union_work
-    add constraint cofk_chk_union_work_is_translation
-        check ((work_is_translation = 0) OR (work_is_translation = 1));
-
-alter table cofk_union_work
-    add constraint cofk_chk_union_work_origin_inferred
-        check ((origin_inferred = 0) OR (origin_inferred = 1));
-
-alter table cofk_union_work
-    add constraint cofk_chk_union_work_origin_uncertain
-        check ((origin_uncertain = 0) OR (origin_uncertain = 1));
-
-alter table cofk_union_work
-    add constraint cofk_chk_union_work_to_be_deleted
-        check ((work_to_be_deleted = 0) OR (work_to_be_deleted = 1));
 
 create trigger cofk_union_work_trg_cascade01_del
     after delete
@@ -992,6 +727,36 @@ create trigger cofk_union_work_trg_set_change_cols
     for each row
     execute procedure dbf_cofk_set_change_cols();
 
+drop table cofk_manif_image_map;
+
+alter table cofk_union_manifestation
+alter column creation_timestamp type timestamp using creation_timestamp::timestamp;
+
+alter table cofk_union_manifestation
+    alter column creation_user set default "current_user"();
+
+alter table cofk_union_manifestation
+alter column change_timestamp type timestamp using change_timestamp::timestamp;
+
+alter table cofk_union_manifestation
+    alter column change_user set default "current_user"();
+
+drop index cofk_union_manifestation_manifestation_id_2627abe2_like;
+
+drop index cofk_union_manifestation_work_id_0aa9a6be;
+
+drop index cofk_union_manifestation_work_id_0aa9a6be_like;
+
+alter table cofk_union_manifestation
+drop constraint cofk_union_manifesta_work_id_0aa9a6be_fk_cofk_unio;
+
+alter table cofk_union_manifestation
+drop column work_id;
+
+-- Alter Turn not supported
+
+drop table cofk_manif_person_map;
+
 create trigger cofk_union_comment_trg_cascade03_del
     after delete
     on cofk_union_comment
@@ -1016,6 +781,42 @@ create trigger cofk_union_comment_trg_set_change_cols
     for each row
     execute procedure dbf_cofk_set_change_cols();
 
+drop table cofk_manif_manif_map;
+
+drop table cofk_manif_inst_map;
+
+drop table cofk_manif_comment_map;
+
+-- column reordering is not supported cofk_union_language_of_manifestation.manifestation_id
+
+-- column reordering is not supported cofk_union_language_of_manifestation.language_code
+
+drop index cofk_union_language_of_manifestation_language_code_b7cdf192;
+
+drop index cofk_union_language_of_m_language_code_b7cdf192_like;
+
+drop index cofk_union_language_of_manifestation_manifestation_id_72b027d0;
+
+drop index cofk_union_language_of_m_manifestation_id_72b027d0_like;
+
+alter table cofk_union_language_of_manifestation
+drop constraint cofk_union_language_of_manifestation_pkey;
+
+alter table cofk_union_language_of_manifestation
+drop column lang_manif_id;
+
+alter table cofk_union_language_of_manifestation
+drop constraint cofk_union_language_of_m_manifestation_id_languag_3a20f2b9_uniq;
+
+alter table cofk_union_language_of_manifestation
+drop constraint cofk_union_language__language_code_b7cdf192_fk_iso_639_l;
+
+alter table iso_639_language_codes
+drop constraint iso_639_language_codes_code_639_3_key;
+
+alter table cofk_union_language_of_manifestation
+drop constraint cofk_union_language__manifestation_id_72b027d0_fk_cofk_unio;
+
 create trigger cofk_union_image_trg_cascade03_upd
     after update
     on cofk_union_image
@@ -1033,6 +834,165 @@ create trigger cofk_union_institution_trg_set_change_cols
     on cofk_union_institution
     for each row
     execute procedure dbf_cofk_set_change_cols();
+
+alter table cofk_union_language_of_manifestation
+    add primary key (manifestation_id, language_code);
+
+alter table cofk_union_language_of_manifestation
+    add constraint cofk_union_fk_manifestation_id
+        foreign key (manifestation_id) references cofk_union_manifestation
+            on delete cascade;
+
+create trigger cofk_union_language_of_manifestation_trg_cascade03_del
+    after delete
+    on cofk_union_language_of_manifestation
+    for each row
+    execute procedure dbf_cofk_union_refresh_language_of_manifestation();
+
+create trigger cofk_union_language_of_manifestation_trg_cascade03_ins
+    after insert
+    on cofk_union_language_of_manifestation
+    for each row
+    execute procedure dbf_cofk_union_refresh_language_of_manifestation();
+
+create trigger cofk_union_language_of_manifestation_trg_cascade03_upd
+    after update
+    on cofk_union_language_of_manifestation
+    for each row
+    execute procedure dbf_cofk_union_refresh_language_of_manifestation();
+
+alter table cofk_union_language_of_work
+    add primary key (work_id, language_code);
+
+alter table cofk_union_language_of_work
+    add constraint cofk_union_fk_work_id
+        foreign key (work_id) references cofk_union_work
+            on delete cascade;
+
+create trigger cofk_union_language_of_work_trg_cascade03_del
+    after delete
+    on cofk_union_language_of_work
+    for each row
+    execute procedure dbf_cofk_union_refresh_language_of_work();
+
+create trigger cofk_union_language_of_work_trg_cascade03_ins
+    after insert
+    on cofk_union_language_of_work
+    for each row
+    execute procedure dbf_cofk_union_refresh_language_of_work();
+
+create trigger cofk_union_language_of_work_trg_cascade03_upd
+    after update
+    on cofk_union_language_of_work
+    for each row
+    execute procedure dbf_cofk_union_refresh_language_of_work();
+
+create trigger cofk_union_location_trg_cascade03_del
+    after delete
+    on cofk_union_location
+    for each row
+    execute procedure dbf_cofk_union_cascade03_decodes();
+
+create trigger cofk_union_location_trg_cascade03_ins
+    after insert
+    on cofk_union_location
+    for each row
+    execute procedure dbf_cofk_union_cascade03_decodes();
+
+create trigger cofk_union_location_trg_cascade03_upd
+    after update
+    on cofk_union_location
+    for each row
+    execute procedure dbf_cofk_union_cascade03_decodes();
+
+create trigger cofk_union_location_trg_set_change_cols
+    before update
+    on cofk_union_location
+    for each row
+    execute procedure dbf_cofk_set_change_cols();
+
+create table cofk_union_relationship
+(
+    relationship_id         integer     default nextval('cofk_union_relationship_id_seq'::regclass) not null
+        primary key,
+    left_table_name         varchar(100)                                                            not null,
+    left_id_value           varchar(100)                                                            not null,
+    relationship_type       varchar(100)                                                            not null
+        constraint cofk_fk_union_relationship_type
+            references cofk_union_relationship_type,
+    right_table_name        varchar(100)                                                            not null,
+    right_id_value          varchar(100)                                                            not null,
+    relationship_valid_from timestamp,
+    relationship_valid_till timestamp,
+    creation_timestamp      timestamp   default now(),
+    creation_user           varchar(50) default "current_user"()                                    not null,
+    change_timestamp        timestamp   default now(),
+    change_user             varchar(50) default "current_user"()                                    not null
+);
+
+alter table cofk_union_relationship
+    owner to postgres;
+
+create index cofk_union_relationship_left_idx
+    on cofk_union_relationship (left_table_name, left_id_value, relationship_type);
+
+create index cofk_union_relationship_right_idx
+    on cofk_union_relationship (right_table_name, right_id_value, relationship_type);
+
+create trigger cofk_union_relationship_trg_audit_del
+    before delete
+    on cofk_union_relationship
+    for each row
+    execute procedure dbf_cofk_union_audit_any();
+
+create trigger cofk_union_relationship_trg_audit_ins
+    after insert
+    on cofk_union_relationship
+    for each row
+    execute procedure dbf_cofk_union_audit_any();
+
+create trigger cofk_union_relationship_trg_audit_upd
+    after update
+    on cofk_union_relationship
+    for each row
+    execute procedure dbf_cofk_union_audit_any();
+
+create trigger cofk_union_relationship_trg_cascade02_del
+    after delete
+    on cofk_union_relationship
+    for each row
+    execute procedure dbf_cofk_union_cascade02_rel_changes();
+
+create trigger cofk_union_relationship_trg_cascade02_ins
+    after insert
+    on cofk_union_relationship
+    for each row
+    execute procedure dbf_cofk_union_cascade02_rel_changes();
+
+create trigger cofk_union_relationship_trg_cascade02_upd
+    after update
+    on cofk_union_relationship
+    for each row
+    execute procedure dbf_cofk_union_cascade02_rel_changes();
+
+create trigger cofk_union_relationship_trg_set_change_cols
+    before update
+    on cofk_union_relationship
+    for each row
+    execute procedure dbf_cofk_set_change_cols();
+
+alter table cofk_union_publication
+    alter column publication_id set default nextval('cofk_union_publication_id_seq'::regclass);
+
+alter table cofk_union_publication
+alter column change_timestamp type timestamp using change_timestamp::timestamp;
+
+alter table cofk_union_publication
+    alter column change_user set default "current_user"();
+
+-- Alter Turn not supported
+
+drop table django_session;
 
 alter table cofk_collect_destination_of_work
 alter column location_id type integer using location_id::integer;
@@ -1063,6 +1023,47 @@ drop constraint cofk_collect_destina_location_id_df4507b1_fk_cofk_coll;
 
 alter table cofk_collect_destination_of_work
 drop constraint cofk_collect_destina_upload_id_90b3cf61_fk_cofk_coll;
+
+create trigger cofk_union_manifestation_trg_cascade03_del
+    after delete
+    on cofk_union_manifestation
+    for each row
+    execute procedure dbf_cofk_union_cascade03_decodes();
+
+create trigger cofk_union_manifestation_trg_cascade03_ins
+    after insert
+    on cofk_union_manifestation
+    for each row
+    execute procedure dbf_cofk_union_cascade03_decodes();
+
+create trigger cofk_union_manifestation_trg_cascade03_upd
+    after update
+    on cofk_union_manifestation
+    for each row
+    execute procedure dbf_cofk_union_cascade03_decodes();
+
+create trigger cofk_union_manifestation_trg_set_change_cols
+    before update
+    on cofk_union_manifestation
+    for each row
+    execute procedure dbf_cofk_set_change_cols();
+
+-- column reordering is not supported cofk_collect_location.union_location_id
+
+-- column reordering is not supported cofk_collect_location.upload_id
+
+drop index cofk_collect_location_union_location_id_1da76575;
+
+drop index cofk_collect_location_upload_id_02d01558;
+
+alter table cofk_collect_location
+drop constraint cofk_collect_location_upload_id_location_id_50c243da_uniq;
+
+alter table cofk_collect_location
+drop constraint cofk_collect_locatio_union_location_id_1da76575_fk_cofk_unio;
+
+alter table cofk_collect_location
+drop constraint cofk_collect_locatio_upload_id_02d01558_fk_cofk_coll;
 
 alter table cofk_collect_origin_of_work
 alter column location_id type integer using location_id::integer;
@@ -1109,9 +1110,6 @@ alter table cofk_collect_origin_of_work
     add constraint cofk_collect_origin_of_work_fk_location_id
         foreign key (upload_id, location_id) references cofk_collect_location;
 
-alter table cofk_collect_location
-drop column id;
-
 alter table cofk_collect_place_mentioned_in_work
     add constraint cofk_collect_place_mentioned_in_work_fk_location_id
         foreign key (upload_id, location_id) references cofk_collect_location;
@@ -1124,183 +1122,41 @@ alter table cofk_collect_work
     add constraint cofk_collect_origin_of_work_fk_location_id
         foreign key (upload_id, origin_id) references cofk_collect_location;
 
+alter table cofk_collect_location
+drop column id;
+
 alter table cofk_collect_origin_of_work
 drop constraint cofk_collect_origin__upload_id_f6a4ff5a_fk_cofk_coll;
 
-alter table cofk_union_work
-    alter column iwork_id set default nextval('cofk_union_work_iwork_id_seq'::regclass);
+alter table cofk_collect_status
+    alter column status_id drop default;
 
-alter table cofk_union_work
-alter column creation_timestamp type timestamp using creation_timestamp::timestamp;
+alter table cofk_collect_status
+alter column editable type smallint using editable::smallint;
 
-alter table cofk_union_work
-    alter column creation_user set default "current_user"();
+alter table cofk_collect_tool_user
+    alter column tool_user_id set default nextval('cofk_collect_tool_user_id_seq'::regclass);
 
-alter table cofk_union_work
-alter column change_timestamp type timestamp using change_timestamp::timestamp;
+drop index cofk_collect_tool_user_tool_user_email_6eb2893b_like;
 
-alter table cofk_union_work
-    alter column change_user set default "current_user"();
+alter table cofk_collect_tool_user
+drop constraint cofk_collect_tool_user_tool_user_email_key;
 
-alter table cofk_union_work
-    alter column original_catalogue set not null;
+alter table cofk_collect_upload
+    alter column upload_id set default nextval('cofk_collect_upload_id_seq'::regclass);
 
--- column reordering is not supported cofk_union_work.original_catalogue
+alter table cofk_collect_upload
+drop column upload_file;
 
-drop index cofk_union_work_work_id_b789e904_like;
+-- column reordering is not supported cofk_collect_upload.upload_status
 
-drop index cofk_union_work_original_catalogue_a7fe2240;
+alter table cofk_collect_upload
+alter column upload_timestamp type timestamp using upload_timestamp::timestamp;
 
-drop index cofk_union_work_original_catalogue_a7fe2240_like;
+drop index cofk_collect_upload_upload_status_b576aaa0;
 
-alter table cofk_union_work
-drop constraint cofk_union_work_iwork_id_key;
-
-alter table cofk_union_work
-drop constraint cofk_union_person_su_iperson_id_19bf5074_fk_cofk_unio;
-
-alter table cofk_union_work
-drop constraint cofk_union_work_original_catalogue_a7fe2240_fk_cofk_look;
-
-alter table cofk_lookup_catalogue
-drop constraint cofk_lookup_catalogue_catalogue_code_key;
-
--- Alter Turn not supported
-
-alter table cofk_union_language_of_manifestation
-    add constraint cofk_union_fk_manifestation_id
-        foreign key (manifestation_id) references cofk_union_manifestation
-            on delete cascade;
-
-create trigger cofk_union_language_of_manifestation_trg_cascade03_del
-    after delete
-    on cofk_union_language_of_manifestation
-    for each row
-    execute procedure dbf_cofk_union_refresh_language_of_manifestation();
-
-create trigger cofk_union_language_of_manifestation_trg_cascade03_ins
-    after insert
-    on cofk_union_language_of_manifestation
-    for each row
-    execute procedure dbf_cofk_union_refresh_language_of_manifestation();
-
-create trigger cofk_union_language_of_manifestation_trg_cascade03_upd
-    after update
-    on cofk_union_language_of_manifestation
-    for each row
-    execute procedure dbf_cofk_union_refresh_language_of_manifestation();
-
-alter table cofk_union_language_of_work
-    add constraint cofk_union_fk_work_id
-        foreign key (work_id) references cofk_union_work
-            on delete cascade;
-
-create trigger cofk_union_language_of_work_trg_cascade03_del
-    after delete
-    on cofk_union_language_of_work
-    for each row
-    execute procedure dbf_cofk_union_refresh_language_of_work();
-
-create trigger cofk_union_language_of_work_trg_cascade03_ins
-    after insert
-    on cofk_union_language_of_work
-    for each row
-    execute procedure dbf_cofk_union_refresh_language_of_work();
-
-create trigger cofk_union_language_of_work_trg_cascade03_upd
-    after update
-    on cofk_union_language_of_work
-    for each row
-    execute procedure dbf_cofk_union_refresh_language_of_work();
-
-drop table cofk_work_work_map;
-
-drop table cofk_work_subject_map;
-
-create trigger cofk_union_location_trg_cascade03_del
-    after delete
-    on cofk_union_location
-    for each row
-    execute procedure dbf_cofk_union_cascade03_decodes();
-
-create trigger cofk_union_location_trg_cascade03_ins
-    after insert
-    on cofk_union_location
-    for each row
-    execute procedure dbf_cofk_union_cascade03_decodes();
-
-create trigger cofk_union_location_trg_cascade03_upd
-    after update
-    on cofk_union_location
-    for each row
-    execute procedure dbf_cofk_union_cascade03_decodes();
-
-create trigger cofk_union_location_trg_set_change_cols
-    before update
-    on cofk_union_location
-    for each row
-    execute procedure dbf_cofk_set_change_cols();
-
-drop table cofk_work_resource_map;
-
-drop table cofk_work_person_map;
-
-create index cofk_union_relationship_left_idx
-    on cofk_union_relationship (left_table_name, left_id_value, relationship_type);
-
-create index cofk_union_relationship_right_idx
-    on cofk_union_relationship (right_table_name, right_id_value, relationship_type);
-
-alter table cofk_union_relationship
-    add constraint cofk_fk_union_relationship_type
-        foreign key (relationship_type) references cofk_union_relationship_type;
-
-create trigger cofk_union_relationship_trg_cascade02_del
-    after delete
-    on cofk_union_relationship
-    for each row
-    execute procedure dbf_cofk_union_cascade02_rel_changes();
-
-create trigger cofk_union_relationship_trg_cascade02_ins
-    after insert
-    on cofk_union_relationship
-    for each row
-    execute procedure dbf_cofk_union_cascade02_rel_changes();
-
-create trigger cofk_union_relationship_trg_cascade02_upd
-    after update
-    on cofk_union_relationship
-    for each row
-    execute procedure dbf_cofk_union_cascade02_rel_changes();
-
-create trigger cofk_union_relationship_trg_set_change_cols
-    before update
-    on cofk_union_relationship
-    for each row
-    execute procedure dbf_cofk_set_change_cols();
-
-drop table cofk_work_location_map;
-
-drop table cofk_work_comment_map;
-
-alter table cofk_union_queryable_work
-alter column change_timestamp type timestamp using change_timestamp::timestamp;
-
-alter table cofk_union_queryable_work
-    alter column change_user set default "current_user"();
-
--- column reordering is not supported cofk_union_queryable_work.work_id
-
-drop index cofk_union_queryable_work_work_id_5fd28c2c_like;
-
-alter table cofk_union_queryable_work
-drop constraint cofk_union_queryable_work_work_id_key;
-
-alter table cofk_union_queryable_work
-drop constraint cofk_union_queryable_work_id_5fd28c2c_fk_cofk_unio;
-
-alter table cofk_collect_work
-    alter column original_calendar set not null;
+alter table cofk_collect_upload
+drop constraint cofk_collect_upload_upload_status_b576aaa0_fk_cofk_coll;
 
 alter table cofk_collect_work
 alter column destination_id type integer using destination_id::integer;
@@ -1378,71 +1234,126 @@ drop constraint cofk_collect_work_upload_status_27f03bb2_fk_cofk_coll;
 alter table cofk_collect_work
 drop constraint cofk_collect_work_work_id_e477222a_fk_cofk_union_work_work_id;
 
-alter table cofk_union_manifestation
-    add constraint cofk_chk_union_manifestation_creation_date_approx
-        check ((manifestation_creation_date_approx = 0) OR (manifestation_creation_date_approx = 1));
+alter table cofk_collect_tool_session
+    alter column session_id set default nextval('cofk_sessions_session_id_seq'::regclass);
 
-alter table cofk_union_manifestation
-    add constraint cofk_chk_union_manifestation_creation_date_inferred
-        check ((manifestation_creation_date_inferred = 0) OR (manifestation_creation_date_inferred = 1));
+alter table cofk_collect_tool_session
+alter column session_timestamp type timestamp using session_timestamp::timestamp;
 
-alter table cofk_union_manifestation
-    add constraint cofk_chk_union_manifestation_creation_date_uncertain
-        check ((manifestation_creation_date_uncertain = 0) OR (manifestation_creation_date_uncertain = 1));
+alter table cofk_collect_tool_session
+alter column username type varchar(100) using username::varchar(100);
 
-create trigger cofk_union_manifestation_trg_cascade03_del
-    after delete
-    on cofk_union_manifestation
-    for each row
-    execute procedure dbf_cofk_union_cascade03_decodes();
+drop index cofk_collect_tool_session_session_code_dd423eca_like;
 
-create trigger cofk_union_manifestation_trg_cascade03_ins
-    after insert
-    on cofk_union_manifestation
-    for each row
-    execute procedure dbf_cofk_union_cascade03_decodes();
+drop index cofk_collect_tool_session_username_77e0c349;
 
-create trigger cofk_union_manifestation_trg_cascade03_upd
-    after update
-    on cofk_union_manifestation
-    for each row
-    execute procedure dbf_cofk_union_cascade03_decodes();
+alter table cofk_collect_tool_session
+drop constraint cofk_collect_tool_session_session_code_key;
 
-create trigger cofk_union_manifestation_trg_set_change_cols
+alter table cofk_collect_tool_session
+drop constraint cofk_collect_tool_se_username_77e0c349_fk_cofk_coll;
+
+alter table cofk_union_person_summary
+    add constraint cofk_union_fk_person_summary
+        foreign key (iperson_id) references cofk_union_person (iperson_id)
+            on delete cascade;
+
+alter table cofk_collect_person
+alter column union_iperson_id type integer using union_iperson_id::integer;
+
+-- column reordering is not supported cofk_collect_person.union_iperson_id
+
+-- column reordering is not supported cofk_collect_person.person_id
+
+-- column reordering is not supported cofk_collect_person.upload_id
+
+drop index cofk_collect_person_person_id_b2861ef8;
+
+drop index cofk_collect_person_person_id_b2861ef8_like;
+
+drop index cofk_collect_person_union_iperson_id_c047cdb3;
+
+drop index cofk_collect_person_union_iperson_id_c047cdb3_like;
+
+drop index cofk_collect_person_upload_id_4ce05075;
+
+alter table cofk_collect_person
+drop constraint cofk_collect_person_upload_id_iperson_id_09e71047_uniq;
+
+alter table cofk_collect_person
+drop constraint cofk_collect_person_person_id_b2861ef8_fk_cofk_unio;
+
+alter table cofk_collect_person
+drop constraint cofk_collect_person_union_iperson_id_c047cdb3_fk_cofk_unio;
+
+alter table cofk_collect_person
+drop constraint cofk_collect_person_upload_id_4ce05075_fk_cofk_coll;
+
+create trigger cofk_union_publication_trg_set_change_cols
     before update
-    on cofk_union_manifestation
+    on cofk_union_publication
     for each row
     execute procedure dbf_cofk_set_change_cols();
 
--- column reordering is not supported cofk_union_language_of_work.work_id
+-- column reordering is not supported cofk_collect_institution.union_institution_id
 
--- column reordering is not supported cofk_union_language_of_work.language_code
+-- column reordering is not supported cofk_collect_institution.upload_id
 
-drop index cofk_union_language_of_work_language_code_80b7ec36;
+drop index cofk_collect_institution_union_institution_id_4b3395e1;
 
-drop index cofk_union_language_of_work_language_code_80b7ec36_like;
+drop index cofk_collect_institution_upload_id_a28243e5;
 
-drop index cofk_union_language_of_work_work_id_cbe641cb;
+alter table cofk_collect_institution
+drop constraint cofk_collect_institution_upload_id_institution_id_c3e31e30_uniq;
 
-drop index cofk_union_language_of_work_work_id_cbe641cb_like;
+alter table cofk_collect_institution
+drop constraint cofk_collect_institu_union_institution_id_4b3395e1_fk_cofk_unio;
 
-alter table cofk_union_language_of_work
-drop constraint cofk_union_language_of_work_pkey;
+alter table cofk_collect_institution
+drop constraint cofk_collect_institu_upload_id_a28243e5_fk_cofk_coll;
 
-alter table cofk_union_language_of_work
-    add primary key (work_id, language_code);
+-- column reordering is not supported cofk_collect_image_of_manif.upload_id
 
-alter table cofk_union_language_of_work
-drop column lang_work_id;
+drop index cofk_collect_image_of_manif_upload_id_7b16ccf2;
 
-alter table cofk_union_language_of_work
-drop constraint cofk_union_language_of_work_work_id_language_code_137a8af7_uniq;
+alter table cofk_collect_image_of_manif
+drop constraint cofk_collect_image_of_manif_pkey;
 
-alter table cofk_union_language_of_work
-drop constraint cofk_union_language__language_code_80b7ec36_fk_iso_639_l;
+alter table cofk_collect_image_of_manif
+drop column id;
 
-alter table cofk_union_language_of_work
-drop constraint cofk_union_language__work_id_cbe641cb_fk_cofk_unio;
+alter table cofk_collect_image_of_manif
+drop constraint cofk_collect_image_o_upload_id_7b16ccf2_fk_cofk_coll;
+
+create trigger cofk_union_relationship_type_trg_set_change_cols
+    before update
+    on cofk_union_relationship_type
+    for each row
+    execute procedure dbf_cofk_set_change_cols();
+
+create trigger cofk_union_resource_trg_cascade03_del
+    after delete
+    on cofk_union_resource
+    for each row
+    execute procedure dbf_cofk_union_cascade03_decodes();
+
+create trigger cofk_union_resource_trg_cascade03_ins
+    after insert
+    on cofk_union_resource
+    for each row
+    execute procedure dbf_cofk_union_cascade03_decodes();
+
+create trigger cofk_union_resource_trg_cascade03_upd
+    after update
+    on cofk_union_resource
+    for each row
+    execute procedure dbf_cofk_union_cascade03_decodes();
+
+create trigger cofk_union_resource_trg_set_change_cols
+    before update
+    on cofk_union_resource
+    for each row
+    execute procedure dbf_cofk_set_change_cols();
 
 alter table cofk_collect_work_summary
 alter column upload_id type integer using upload_id::integer;
@@ -1512,11 +1423,6 @@ drop constraint cofk_collect_subject_subject_id_ab4a8812_fk_cofk_unio;
 alter table cofk_collect_subject_of_work
 drop constraint cofk_collect_subject_upload_id_9a423a03_fk_cofk_coll;
 
-alter table cofk_union_person_summary
-    add constraint cofk_union_fk_person_summary
-        foreign key (iperson_id) references cofk_union_person (iperson_id)
-            on delete cascade;
-
 -- column reordering is not supported cofk_collect_place_mentioned_in_work.upload_id
 
 drop index cofk_collect_place_mentioned_in_work_upload_id_a787ad2a;
@@ -1536,8 +1442,30 @@ drop constraint cofk_collect_place_menti_upload_id_iwork_id_menti_24731363_uniq;
 alter table cofk_collect_place_mentioned_in_work
 drop constraint cofk_collect_place_m_upload_id_a787ad2a_fk_cofk_coll;
 
-alter table cofk_collect_person_mentioned_in_work
-    alter column _id drop not null;
+-- column reordering is not supported cofk_collect_person_resource.upload_id
+
+drop index cofk_collect_institution_upload_id_institution_id_c3e31e30_uniq;
+
+alter table cofk_collect_person_resource
+drop constraint cofk_collect_person_resource_pkey;
+
+alter table cofk_collect_person_resource
+    add primary key (upload_id, resource_id);
+
+alter table cofk_collect_person_resource
+drop column id;
+
+alter table cofk_collect_person_resource
+drop constraint cofk_collect_person_resource_upload_id_key;
+
+alter table cofk_collect_person_resource
+drop constraint cofk_collect_person_reso_upload_id_resource_id_28d43830_uniq;
+
+alter table cofk_collect_person_resource
+drop constraint cofk_collect_institu_union_institution_id_4b3395e1_fk_cofk_unio;
+
+alter table cofk_collect_person_resource
+drop constraint cofk_collect_person__upload_id_cb3e072e_fk_cofk_coll;
 
 alter table cofk_collect_person_mentioned_in_work
 alter column iperson_id type integer using iperson_id::integer;
@@ -1578,210 +1506,30 @@ drop constraint cofk_collect_person__iwork_id_a9c68e50_fk_cofk_coll;
 alter table cofk_collect_person_mentioned_in_work
 drop constraint cofk_collect_person__upload_id_cd3493b7_fk_cofk_coll;
 
-alter table cofk_collect_language_of_work
-alter column iwork_id type integer using iwork_id::integer;
+-- column reordering is not supported cofk_collect_occupation_of_person.upload_id
 
-alter table cofk_collect_language_of_work
-alter column language_code type varchar(3) using language_code::varchar(3);
-
--- column reordering is not supported cofk_collect_language_of_work._id
-
--- column reordering is not supported cofk_collect_language_of_work.upload_id
-
-drop index cofk_collect_language_of_work_iwork_id_eadca89e;
-
-drop index cofk_collect_language_of_work_language_code_b815d6ff;
-
-drop index cofk_collect_language_of_work_upload_id_73bfa507;
-
-alter table cofk_collect_language_of_work
-drop constraint cofk_collect_language_of_work_pkey;
-
-alter table cofk_collect_language_of_work
-    add primary key (upload_id, iwork_id, language_of_work_id);
-
-alter table cofk_collect_language_of_work
-drop column id;
-
-alter table cofk_collect_language_of_work
-drop constraint cofk_collect_language_of_upload_id_iwork_id_langu_17f94255_uniq;
-
-alter table cofk_collect_language_of_work
-drop constraint cofk_collect_languag_iwork_id_eadca89e_fk_cofk_coll;
-
-alter table cofk_collect_language_of_work
-drop constraint cofk_collect_languag_language_code_b815d6ff_fk_iso_639_l;
-
-alter table iso_639_language_codes
-drop constraint iso_639_language_codes_pkey;
-
-alter table iso_639_language_codes
-    add primary key (code_639_3);
-
-alter table cofk_collect_language_of_work
-    add constraint cofk_collect_language_of_work_fk_language_id
-        foreign key (language_code) references iso_639_language_codes;
-
-alter table cofk_union_favourite_language
-    add constraint cofk_union_fk_language_code
-        foreign key (language_code) references iso_639_language_codes
-            on delete cascade;
-
-alter table cofk_union_language_of_manifestation
-    add constraint cofk_union_fk_language_code
-        foreign key (language_code) references iso_639_language_codes
-            on delete cascade;
-
-alter table cofk_union_language_of_work
-    add constraint cofk_union_fk_language_code
-        foreign key (language_code) references iso_639_language_codes
-            on delete cascade;
-
-alter table cofk_collect_language_of_work
-drop constraint cofk_collect_languag_upload_id_73bfa507_fk_cofk_coll;
-
-alter table cofk_collect_author_of_work
-alter column iperson_id type integer using iperson_id::integer;
-
--- column reordering is not supported cofk_collect_author_of_work.iperson_id
-
-alter table cofk_collect_author_of_work
-alter column iwork_id type integer using iwork_id::integer;
-
--- column reordering is not supported cofk_collect_author_of_work.iwork_id
-
--- column reordering is not supported cofk_collect_author_of_work.upload_id
-
-drop index cofk_collect_author_of_work_iperson_id_965dd0b1;
-
-drop index cofk_collect_author_of_work_iwork_id_1699d182;
-
-drop index cofk_collect_author_of_work_upload_id_33824bf3;
-
-alter table cofk_collect_author_of_work
-drop constraint cofk_collect_author_of_work_pkey;
-
-alter table cofk_collect_author_of_work
-    add primary key (upload_id, iwork_id, author_id);
-
-alter table cofk_collect_author_of_work
-drop column id;
-
-alter table cofk_collect_author_of_work
-drop constraint cofk_collect_author_of_w_upload_id_iwork_id_autho_6e375d91_uniq;
-
-alter table cofk_collect_author_of_work
-drop constraint cofk_collect_author__iperson_id_965dd0b1_fk_cofk_coll;
-
-alter table cofk_collect_author_of_work
-drop constraint cofk_collect_author__iwork_id_1699d182_fk_cofk_coll;
-
-alter table cofk_collect_author_of_work
-drop constraint cofk_collect_author__upload_id_33824bf3_fk_cofk_coll;
-
-create trigger cofk_union_publication_trg_set_change_cols
-    before update
-    on cofk_union_publication
-    for each row
-    execute procedure dbf_cofk_set_change_cols();
-
-alter table cofk_collect_addressee_of_work
-alter column iperson_id type integer using iperson_id::integer;
-
--- column reordering is not supported cofk_collect_addressee_of_work.iperson_id
-
-alter table cofk_collect_addressee_of_work
-alter column iwork_id type integer using iwork_id::integer;
-
--- column reordering is not supported cofk_collect_addressee_of_work.iwork_id
-
--- column reordering is not supported cofk_collect_addressee_of_work.upload_id
-
-drop index cofk_collect_addressee_of_work_iperson_id_10330dc7;
-
-drop index cofk_collect_addressee_of_work_iwork_id_86df0a49;
-
-drop index cofk_collect_addressee_of_work_upload_id_506529bb;
-
-alter table cofk_collect_addressee_of_work
-drop constraint cofk_collect_addressee_of_work_pkey;
-
-alter table cofk_collect_addressee_of_work
-    add primary key (upload_id, iwork_id, addressee_id);
-
-alter table cofk_collect_addressee_of_work
-drop column id;
-
-alter table cofk_collect_addressee_of_work
-drop constraint cofk_collect_addressee_o_upload_id_iwork_id_addre_9314246f_uniq;
-
-alter table cofk_collect_addressee_of_work
-drop constraint cofk_collect_address_iperson_id_10330dc7_fk_cofk_coll;
-
-alter table cofk_collect_person
-drop constraint cofk_collect_person_pkey;
-
-alter table cofk_collect_person
-    add primary key (upload_id, iperson_id);
-
-alter table cofk_collect_addressee_of_work
-    add constraint cofk_collect_addressee_of_work_fk_iperson_id
-        foreign key (upload_id, iperson_id) references cofk_collect_person;
-
-alter table cofk_collect_author_of_work
-    add constraint cofk_collect_author_of_work_fk_iperson_id
-        foreign key (upload_id, iperson_id) references cofk_collect_person;
+drop index cofk_collect_occupation_of_person_occupation_id_e7789f0e;
 
 alter table cofk_collect_occupation_of_person
-    add constraint cofk_collect_occupation_of_person_fk_iperson_id
-        foreign key (upload_id, iperson_id) references cofk_collect_person;
+drop constraint cofk_collect_occupation_of_person_pkey;
 
-alter table cofk_collect_person_mentioned_in_work
-    add constraint cofk_collect_person_mentioned_in_work_fk_iperson_id
-        foreign key (upload_id, iperson_id) references cofk_collect_person;
+alter table cofk_collect_occupation_of_person
+    add primary key (upload_id, occupation_of_person_id);
 
-alter table cofk_collect_person_resource
-    add constraint cofk_collect_person_resource_fk_iperson_id
-        foreign key (upload_id, iperson_id) references cofk_collect_person;
-
-alter table cofk_collect_person
+alter table cofk_collect_occupation_of_person
 drop column id;
 
-alter table cofk_collect_addressee_of_work
-drop constraint cofk_collect_address_iwork_id_86df0a49_fk_cofk_coll;
+alter table cofk_collect_occupation_of_person
+drop constraint cofk_collect_occupation_of_person_upload_id_key;
 
-alter table cofk_collect_addressee_of_work
-drop constraint cofk_collect_address_upload_id_506529bb_fk_cofk_coll;
+alter table cofk_collect_occupation_of_person
+drop constraint cofk_collect_occupation__upload_id_occupation_of__54441db1_uniq;
 
-create trigger cofk_union_relationship_type_trg_set_change_cols
-    before update
-    on cofk_union_relationship_type
-    for each row
-    execute procedure dbf_cofk_set_change_cols();
+alter table cofk_collect_occupation_of_person
+drop constraint cofk_collect_occupat_occupation_id_e7789f0e_fk_cofk_unio;
 
-create trigger cofk_union_resource_trg_cascade03_del
-    after delete
-    on cofk_union_resource
-    for each row
-    execute procedure dbf_cofk_union_cascade03_decodes();
-
-create trigger cofk_union_resource_trg_cascade03_ins
-    after insert
-    on cofk_union_resource
-    for each row
-    execute procedure dbf_cofk_union_cascade03_decodes();
-
-create trigger cofk_union_resource_trg_cascade03_upd
-    after update
-    on cofk_union_resource
-    for each row
-    execute procedure dbf_cofk_union_cascade03_decodes();
-
-create trigger cofk_union_resource_trg_set_change_cols
-    before update
-    on cofk_union_resource
-    for each row
-    execute procedure dbf_cofk_set_change_cols();
+alter table cofk_collect_occupation_of_person
+drop constraint cofk_collect_occupat_upload_id_4c650320_fk_cofk_coll;
 
 create table cofk_users
 (
@@ -1859,6 +1607,95 @@ alter table cofk_user_saved_query_selection
     add constraint cofk_fk_user_saved_query_selection_query_id
         foreign key (query_id) references cofk_user_saved_queries;
 
+alter table cofk_collect_manifestation
+alter column iwork_id type integer using iwork_id::integer;
+
+-- column reordering is not supported cofk_collect_manifestation.iwork_id
+
+alter table cofk_collect_manifestation
+alter column repository_id type integer using repository_id::integer;
+
+-- column reordering is not supported cofk_collect_manifestation.repository_id
+
+-- column reordering is not supported cofk_collect_manifestation.union_manifestation_id
+
+-- column reordering is not supported cofk_collect_manifestation.upload_id
+
+drop index cofk_collect_manifestation_iwork_id_fcdf68f2;
+
+drop index cofk_collect_manifestation_repository_id_5685a307;
+
+drop index cofk_collect_manifestation_union_manifestation_id_1fb7024b;
+
+drop index cofk_collect_manifestation_union_manifestation_id_1fb7024b_like;
+
+drop index cofk_collect_manifestation_upload_id_1f97a779;
+
+alter table cofk_collect_manifestation
+drop constraint cofk_collect_manifestation_pkey;
+
+alter table cofk_collect_manifestation
+    add primary key (upload_id, iwork_id, manifestation_id);
+
+alter table cofk_collect_image_of_manif
+    add constraint cofk_collect_image_of_manif_fk_manifestation_id
+        foreign key (upload_id, iwork_id, manifestation_id) references cofk_collect_manifestation;
+
+alter table cofk_collect_manifestation
+drop column id;
+
+alter table cofk_collect_manifestation
+drop constraint cofk_collect_manifestati_upload_id_iwork_id_manif_80b93ddf_uniq;
+
+alter table cofk_collect_manifestation
+drop constraint cofk_collect_manifes_iwork_id_fcdf68f2_fk_cofk_coll;
+
+alter table cofk_collect_manifestation
+drop constraint cofk_collect_manifes_repository_id_5685a307_fk_cofk_coll;
+
+alter table cofk_collect_institution
+drop constraint cofk_collect_institution_pkey;
+
+alter table cofk_collect_institution
+    add primary key (upload_id, institution_id);
+
+alter table cofk_collect_institution_resource
+    add constraint cofk_collect_institution_resource_fk_institution_id
+        foreign key (upload_id, institution_id) references cofk_collect_institution;
+
+alter table cofk_collect_manifestation
+    add constraint cofk_collect_manifestation_fk_repos
+        foreign key (upload_id, repository_id) references cofk_collect_institution;
+
+alter table cofk_collect_institution
+drop column id;
+
+alter table cofk_collect_manifestation
+drop constraint cofk_collect_manifes_union_manifestation__1fb7024b_fk_cofk_unio;
+
+alter table cofk_collect_manifestation
+drop constraint cofk_collect_manifes_upload_id_1f97a779_fk_cofk_coll;
+
+-- column reordering is not supported cofk_collect_location_resource.upload_id
+
+alter table cofk_collect_location_resource
+drop constraint cofk_collect_location_resource_pkey;
+
+alter table cofk_collect_location_resource
+    add primary key (upload_id, resource_id);
+
+alter table cofk_collect_location_resource
+drop column id;
+
+alter table cofk_collect_location_resource
+drop constraint cofk_collect_location_resource_upload_id_key;
+
+alter table cofk_collect_location_resource
+drop constraint cofk_collect_location_re_upload_id_resource_id_8500f73f_uniq;
+
+alter table cofk_collect_location_resource
+drop constraint cofk_collect_locatio_upload_id_a92a9607_fk_cofk_coll;
+
 create table pro_activity
 (
     id                    integer   default nextval('pro_id_activity'::regclass) not null
@@ -1889,6 +1726,68 @@ comment on table pro_activity is 'prosopographical activity';
 alter table pro_activity
     owner to cofktanya;
 
+alter table cofk_collect_language_of_work
+alter column iwork_id type integer using iwork_id::integer;
+
+alter table cofk_collect_language_of_work
+alter column language_code type varchar(3) using language_code::varchar(3);
+
+-- column reordering is not supported cofk_collect_language_of_work._id
+
+-- column reordering is not supported cofk_collect_language_of_work.upload_id
+
+drop index cofk_collect_language_of_work_iwork_id_eadca89e;
+
+drop index cofk_collect_language_of_work_language_code_b815d6ff;
+
+drop index cofk_collect_language_of_work_upload_id_73bfa507;
+
+alter table cofk_collect_language_of_work
+drop constraint cofk_collect_language_of_work_pkey;
+
+alter table cofk_collect_language_of_work
+    add primary key (upload_id, iwork_id, language_of_work_id);
+
+alter table cofk_collect_language_of_work
+drop column id;
+
+alter table cofk_collect_language_of_work
+drop constraint cofk_collect_language_of_upload_id_iwork_id_langu_17f94255_uniq;
+
+alter table cofk_collect_language_of_work
+drop constraint cofk_collect_languag_iwork_id_eadca89e_fk_cofk_coll;
+
+alter table cofk_collect_language_of_work
+drop constraint cofk_collect_languag_language_code_b815d6ff_fk_iso_639_l;
+
+alter table iso_639_language_codes
+drop constraint iso_639_language_codes_pkey;
+
+alter table iso_639_language_codes
+    add primary key (code_639_3);
+
+alter table cofk_collect_language_of_work
+    add constraint cofk_collect_language_of_work_fk_language_id
+        foreign key (language_code) references iso_639_language_codes;
+
+alter table cofk_union_favourite_language
+    add constraint cofk_union_fk_language_code
+        foreign key (language_code) references iso_639_language_codes
+            on delete cascade;
+
+alter table cofk_union_language_of_manifestation
+    add constraint cofk_union_fk_language_code
+        foreign key (language_code) references iso_639_language_codes
+            on delete cascade;
+
+alter table cofk_union_language_of_work
+    add constraint cofk_union_fk_language_code
+        foreign key (language_code) references iso_639_language_codes
+            on delete cascade;
+
+alter table cofk_collect_language_of_work
+drop constraint cofk_collect_languag_upload_id_73bfa507_fk_cofk_coll;
+
 create table pro_activity_relation
 (
     id                       integer default nextval('pro_id_activity_relation'::regclass) not null
@@ -1904,6 +1803,26 @@ comment on table pro_activity_relation is 'mapping for related prosopography eve
 alter table pro_activity_relation
     owner to cofktanya;
 
+-- column reordering is not supported cofk_collect_institution_resource.upload_id
+
+alter table cofk_collect_institution_resource
+drop constraint cofk_collect_institution_resource_pkey;
+
+alter table cofk_collect_institution_resource
+    add primary key (upload_id, resource_id);
+
+alter table cofk_collect_institution_resource
+drop column id;
+
+alter table cofk_collect_institution_resource
+drop constraint cofk_collect_institution_resource_upload_id_key;
+
+alter table cofk_collect_institution_resource
+drop constraint cofk_collect_institution_upload_id_resource_id_fdb3f098_uniq;
+
+alter table cofk_collect_institution_resource
+drop constraint cofk_collect_institu_upload_id_32dbe7da_fk_cofk_coll;
+
 create table pro_assertion
 (
     id                 integer   default nextval('pro_id_assertion'::regclass) not null
@@ -1917,6 +1836,45 @@ create table pro_assertion
 
 alter table pro_assertion
     owner to cofktanya;
+
+alter table cofk_collect_author_of_work
+alter column iperson_id type integer using iperson_id::integer;
+
+-- column reordering is not supported cofk_collect_author_of_work.iperson_id
+
+alter table cofk_collect_author_of_work
+alter column iwork_id type integer using iwork_id::integer;
+
+-- column reordering is not supported cofk_collect_author_of_work.iwork_id
+
+-- column reordering is not supported cofk_collect_author_of_work.upload_id
+
+drop index cofk_collect_author_of_work_iperson_id_965dd0b1;
+
+drop index cofk_collect_author_of_work_iwork_id_1699d182;
+
+drop index cofk_collect_author_of_work_upload_id_33824bf3;
+
+alter table cofk_collect_author_of_work
+drop constraint cofk_collect_author_of_work_pkey;
+
+alter table cofk_collect_author_of_work
+    add primary key (upload_id, iwork_id, author_id);
+
+alter table cofk_collect_author_of_work
+drop column id;
+
+alter table cofk_collect_author_of_work
+drop constraint cofk_collect_author_of_w_upload_id_iwork_id_autho_6e375d91_uniq;
+
+alter table cofk_collect_author_of_work
+drop constraint cofk_collect_author__iperson_id_965dd0b1_fk_cofk_coll;
+
+alter table cofk_collect_author_of_work
+drop constraint cofk_collect_author__iwork_id_1699d182_fk_cofk_coll;
+
+alter table cofk_collect_author_of_work
+drop constraint cofk_collect_author__upload_id_33824bf3_fk_cofk_coll;
 
 create table pro_ingest_map_v2
 (
@@ -1972,6 +1930,127 @@ create table pro_ingest_v8
 
 alter table pro_ingest_v8
     owner to cofktanya;
+
+alter table cofk_collect_addressee_of_work
+alter column iperson_id type integer using iperson_id::integer;
+
+-- column reordering is not supported cofk_collect_addressee_of_work.iperson_id
+
+alter table cofk_collect_addressee_of_work
+alter column iwork_id type integer using iwork_id::integer;
+
+-- column reordering is not supported cofk_collect_addressee_of_work.iwork_id
+
+-- column reordering is not supported cofk_collect_addressee_of_work.upload_id
+
+drop index cofk_collect_addressee_of_work_iperson_id_10330dc7;
+
+drop index cofk_collect_addressee_of_work_iwork_id_86df0a49;
+
+drop index cofk_collect_addressee_of_work_upload_id_506529bb;
+
+alter table cofk_collect_addressee_of_work
+drop constraint cofk_collect_addressee_of_work_pkey;
+
+alter table cofk_collect_addressee_of_work
+    add primary key (upload_id, iwork_id, addressee_id);
+
+alter table cofk_collect_addressee_of_work
+drop column id;
+
+alter table cofk_collect_addressee_of_work
+drop constraint cofk_collect_addressee_o_upload_id_iwork_id_addre_9314246f_uniq;
+
+alter table cofk_collect_addressee_of_work
+drop constraint cofk_collect_address_iperson_id_10330dc7_fk_cofk_coll;
+
+alter table cofk_collect_person
+drop constraint cofk_collect_person_pkey;
+
+alter table cofk_collect_person
+    add primary key (upload_id, iperson_id);
+
+alter table cofk_collect_addressee_of_work
+    add constraint cofk_collect_addressee_of_work_fk_iperson_id
+        foreign key (upload_id, iperson_id) references cofk_collect_person;
+
+alter table cofk_collect_author_of_work
+    add constraint cofk_collect_author_of_work_fk_iperson_id
+        foreign key (upload_id, iperson_id) references cofk_collect_person;
+
+alter table cofk_collect_occupation_of_person
+    add constraint cofk_collect_occupation_of_person_fk_iperson_id
+        foreign key (upload_id, iperson_id) references cofk_collect_person;
+
+alter table cofk_collect_person_mentioned_in_work
+    add constraint cofk_collect_person_mentioned_in_work_fk_iperson_id
+        foreign key (upload_id, iperson_id) references cofk_collect_person;
+
+alter table cofk_collect_person_resource
+    add constraint cofk_collect_person_resource_fk_iperson_id
+        foreign key (upload_id, iperson_id) references cofk_collect_person;
+
+alter table cofk_collect_person
+drop column id;
+
+alter table cofk_collect_addressee_of_work
+drop constraint cofk_collect_address_iwork_id_86df0a49_fk_cofk_coll;
+
+alter table cofk_collect_work
+drop constraint cofk_collect_work_pkey;
+
+alter table cofk_collect_work
+    add primary key (upload_id, iwork_id);
+
+alter table cofk_collect_addressee_of_work
+    add constraint cofk_collect_addressee_of_work_fk_iwork_id
+        foreign key (upload_id, iwork_id) references cofk_collect_work;
+
+alter table cofk_collect_author_of_work
+    add constraint cofk_collect_author_of_work_fk_iwork_id
+        foreign key (upload_id, iwork_id) references cofk_collect_work;
+
+alter table cofk_collect_destination_of_work
+    add constraint cofk_collect_destination_of_work_fk_iwork_id
+        foreign key (upload_id, iwork_id) references cofk_collect_work;
+
+alter table cofk_collect_language_of_work
+    add constraint cofk_collect_language_of_work_fk_iwork_id
+        foreign key (upload_id, iwork_id) references cofk_collect_work;
+
+alter table cofk_collect_manifestation
+    add constraint cofk_collect_manifestation_fk_iwork_id
+        foreign key (upload_id, iwork_id) references cofk_collect_work;
+
+alter table cofk_collect_origin_of_work
+    add constraint cofk_collect_origin_of_work_fk_iwork_id
+        foreign key (upload_id, iwork_id) references cofk_collect_work;
+
+alter table cofk_collect_person_mentioned_in_work
+    add constraint cofk_collect_person_mentioned_in_work_fk_iwork_id
+        foreign key (upload_id, iwork_id) references cofk_collect_work;
+
+alter table cofk_collect_place_mentioned_in_work
+    add constraint cofk_collect_place_mentioned_in_work_fk_iwork_id
+        foreign key (upload_id, iwork_id) references cofk_collect_work;
+
+alter table cofk_collect_subject_of_work
+    add constraint cofk_collect_subject_of_work_fk_iwork_id
+        foreign key (upload_id, iwork_id) references cofk_collect_work;
+
+alter table cofk_collect_work_resource
+    add constraint cofk_collect_work_resource_fk_iwork_id
+        foreign key (upload_id, iwork_id) references cofk_collect_work;
+
+alter table cofk_collect_work_summary
+    add constraint cofk_collect_work_fk_work_id_in_tool
+        foreign key (upload_id, work_id_in_tool) references cofk_collect_work;
+
+alter table cofk_collect_work
+drop column id;
+
+alter table cofk_collect_addressee_of_work
+drop constraint cofk_collect_address_upload_id_506529bb_fk_cofk_coll;
 
 create table pro_ingest_v8_toreview
 (
@@ -2105,223 +2184,4 @@ create table pro_textual_source
 
 alter table pro_textual_source
     owner to cofktanya;
-
-alter table cofk_union_manifestation
-alter column creation_timestamp type timestamp using creation_timestamp::timestamp;
-
-alter table cofk_union_manifestation
-    alter column creation_user set default "current_user"();
-
-alter table cofk_union_manifestation
-alter column change_timestamp type timestamp using change_timestamp::timestamp;
-
-alter table cofk_union_manifestation
-    alter column change_user set default "current_user"();
-
-drop index cofk_union_manifestation_manifestation_id_2627abe2_like;
-
-drop index cofk_union_manifestation_work_id_0aa9a6be;
-
-drop index cofk_union_manifestation_work_id_0aa9a6be_like;
-
-alter table cofk_union_manifestation
-drop constraint cofk_union_manifesta_work_id_0aa9a6be_fk_cofk_unio;
-
-alter table cofk_union_manifestation
-drop column work_id;
-
--- Alter Turn not supported
-
-drop table cofk_union_manifestation_images;
-
-drop table cofk_manif_person_map;
-
-drop table cofk_manif_manif_map;
-
-drop table cofk_manif_inst_map;
-
-drop table cofk_manif_image_map;
-
-drop table cofk_manif_comment_map;
-
--- column reordering is not supported cofk_collect_image_of_manif.upload_id
-
-drop index cofk_collect_image_of_manif_upload_id_7b16ccf2;
-
-alter table cofk_collect_image_of_manif
-drop constraint cofk_collect_image_of_manif_pkey;
-
-alter table cofk_collect_image_of_manif
-drop column id;
-
-alter table cofk_collect_image_of_manif
-drop constraint cofk_collect_image_o_upload_id_7b16ccf2_fk_cofk_coll;
-
--- column reordering is not supported cofk_union_language_of_manifestation.manifestation_id
-
--- column reordering is not supported cofk_union_language_of_manifestation.language_code
-
-drop index cofk_union_language_of_manifestation_language_code_b7cdf192;
-
-drop index cofk_union_language_of_m_language_code_b7cdf192_like;
-
-drop index cofk_union_language_of_manifestation_manifestation_id_72b027d0;
-
-drop index cofk_union_language_of_m_manifestation_id_72b027d0_like;
-
-alter table cofk_union_language_of_manifestation
-drop constraint cofk_union_language_of_manifestation_pkey;
-
-alter table cofk_union_language_of_manifestation
-    add primary key (manifestation_id, language_code);
-
-alter table cofk_union_language_of_manifestation
-drop column lang_manif_id;
-
-alter table cofk_union_language_of_manifestation
-drop constraint cofk_union_language_of_m_manifestation_id_languag_3a20f2b9_uniq;
-
-alter table cofk_union_language_of_manifestation
-drop constraint cofk_union_language__language_code_b7cdf192_fk_iso_639_l;
-
-alter table iso_639_language_codes
-drop constraint iso_639_language_codes_code_639_3_key;
-
-alter table cofk_union_language_of_manifestation
-drop constraint cofk_union_language__manifestation_id_72b027d0_fk_cofk_unio;
-
-alter table cofk_collect_manifestation
-alter column iwork_id type integer using iwork_id::integer;
-
--- column reordering is not supported cofk_collect_manifestation.iwork_id
-
-alter table cofk_collect_manifestation
-alter column repository_id type integer using repository_id::integer;
-
--- column reordering is not supported cofk_collect_manifestation.repository_id
-
--- column reordering is not supported cofk_collect_manifestation.union_manifestation_id
-
--- column reordering is not supported cofk_collect_manifestation.upload_id
-
-drop index cofk_collect_manifestation_iwork_id_fcdf68f2;
-
-drop index cofk_collect_manifestation_repository_id_5685a307;
-
-drop index cofk_collect_manifestation_union_manifestation_id_1fb7024b;
-
-drop index cofk_collect_manifestation_union_manifestation_id_1fb7024b_like;
-
-drop index cofk_collect_manifestation_upload_id_1f97a779;
-
-alter table cofk_collect_manifestation
-drop constraint cofk_collect_manifestation_pkey;
-
-alter table cofk_collect_manifestation
-    add primary key (upload_id, iwork_id, manifestation_id);
-
-alter table cofk_collect_image_of_manif
-    add constraint cofk_collect_image_of_manif_fk_manifestation_id
-        foreign key (upload_id, iwork_id, manifestation_id) references cofk_collect_manifestation;
-
-alter table cofk_collect_manifestation
-drop column id;
-
-alter table cofk_collect_manifestation
-drop constraint cofk_collect_manifestati_upload_id_iwork_id_manif_80b93ddf_uniq;
-
-alter table cofk_collect_manifestation
-drop constraint cofk_collect_manifes_iwork_id_fcdf68f2_fk_cofk_coll;
-
-alter table cofk_collect_work
-drop constraint cofk_collect_work_pkey;
-
-alter table cofk_collect_work
-    add primary key (upload_id, iwork_id);
-
-alter table cofk_collect_addressee_of_work
-    add constraint cofk_collect_addressee_of_work_fk_iwork_id
-        foreign key (upload_id, iwork_id) references cofk_collect_work;
-
-alter table cofk_collect_author_of_work
-    add constraint cofk_collect_author_of_work_fk_iwork_id
-        foreign key (upload_id, iwork_id) references cofk_collect_work;
-
-alter table cofk_collect_destination_of_work
-    add constraint cofk_collect_destination_of_work_fk_iwork_id
-        foreign key (upload_id, iwork_id) references cofk_collect_work;
-
-alter table cofk_collect_language_of_work
-    add constraint cofk_collect_language_of_work_fk_iwork_id
-        foreign key (upload_id, iwork_id) references cofk_collect_work;
-
-alter table cofk_collect_manifestation
-    add constraint cofk_collect_manifestation_fk_iwork_id
-        foreign key (upload_id, iwork_id) references cofk_collect_work;
-
-alter table cofk_collect_origin_of_work
-    add constraint cofk_collect_origin_of_work_fk_iwork_id
-        foreign key (upload_id, iwork_id) references cofk_collect_work;
-
-alter table cofk_collect_person_mentioned_in_work
-    add constraint cofk_collect_person_mentioned_in_work_fk_iwork_id
-        foreign key (upload_id, iwork_id) references cofk_collect_work;
-
-alter table cofk_collect_place_mentioned_in_work
-    add constraint cofk_collect_place_mentioned_in_work_fk_iwork_id
-        foreign key (upload_id, iwork_id) references cofk_collect_work;
-
-alter table cofk_collect_subject_of_work
-    add constraint cofk_collect_subject_of_work_fk_iwork_id
-        foreign key (upload_id, iwork_id) references cofk_collect_work;
-
-alter table cofk_collect_work_resource
-    add constraint cofk_collect_work_resource_fk_iwork_id
-        foreign key (upload_id, iwork_id) references cofk_collect_work;
-
-alter table cofk_collect_work_summary
-    add constraint cofk_collect_work_fk_work_id_in_tool
-        foreign key (upload_id, work_id_in_tool) references cofk_collect_work;
-
-alter table cofk_collect_work
-drop column id;
-
-alter table cofk_collect_manifestation
-drop constraint cofk_collect_manifes_repository_id_5685a307_fk_cofk_coll;
-
-alter table cofk_collect_institution
-drop constraint cofk_collect_institution_pkey;
-
-alter table cofk_collect_institution
-drop column id;
-
-alter table cofk_collect_institution
-    add primary key (upload_id, institution_id);
-
-alter table cofk_collect_institution_resource
-    add constraint cofk_collect_institution_resource_fk_institution_id
-        foreign key (upload_id, institution_id) references cofk_collect_institution;
-
-alter table cofk_collect_manifestation
-    add constraint cofk_collect_manifestation_fk_repos
-        foreign key (upload_id, repository_id) references cofk_collect_institution;
-
-alter table cofk_collect_manifestation
-drop constraint cofk_collect_manifes_union_manifestation__1fb7024b_fk_cofk_unio;
-
-alter table cofk_collect_manifestation
-drop constraint cofk_collect_manifes_upload_id_1f97a779_fk_cofk_coll;
-
-alter table cofk_union_publication
-    alter column publication_id set default nextval('cofk_union_publication_id_seq'::regclass);
-
-alter table cofk_union_publication
-alter column change_timestamp type timestamp using change_timestamp::timestamp;
-
-alter table cofk_union_publication
-    alter column change_user set default "current_user"();
-
--- Alter Turn not supported
-
-drop table django_session;
 

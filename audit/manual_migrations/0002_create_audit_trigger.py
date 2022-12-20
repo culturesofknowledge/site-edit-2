@@ -67,7 +67,7 @@ class Migration(migrations.Migration):
         'cofk_union_manifestation',
         'cofk_union_person',
         'cofk_union_publication',
-        'cofk_union_relationship',
+        # 'cofk_union_relationship',
         'cofk_union_relationship_type',
         'cofk_union_resource',
         # 'cofk_union_role_category',  # have no change_user

@@ -19,7 +19,8 @@ from psycopg2.extras import DictCursor
 from core import recref_settings
 from core.helper import iter_utils
 from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType, CofkUnionRelationshipType, \
-    CofkUnionImage, CofkUnionOrgType, CofkUnionRoleCategory, CofkUnionSubject, Iso639LanguageCode, CofkLookupCatalogue
+    CofkUnionImage, CofkUnionOrgType, CofkUnionRoleCategory, CofkUnionSubject, Iso639LanguageCode, CofkLookupCatalogue, \
+    SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from login.models import CofkUser
@@ -455,7 +456,10 @@ def data_migration(user, password, database, host, port):
 
     clone_rows_by_model_class(conn, CofkLookupCatalogue)
     clone_rows_by_model_class(conn, CofkLookupDocumentType)
-    clone_rows_by_model_class(conn, Iso639LanguageCode)
+    clone_rows_by_model_class(conn, Iso639LanguageCode,
+                              seq_name=SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID,
+                              int_pk_col_name='language_id',
+                              )
     clone_rows_by_model_class(conn, CofkCollectStatus)  # Static lookup table
     clone_rows_by_model_class(conn, CofkUnionOrgType)  # Static lookup table
     clone_rows_by_model_class(conn, CofkUnionResource)
