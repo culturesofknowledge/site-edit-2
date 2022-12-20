@@ -13,7 +13,10 @@
 
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.sent_received field_lookup=form.sent_received_lookup %}
 
-     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.researchers_notes field_lookup=form.researchers_notes_lookup %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.researchers_notes field_lookup=form.researchers_notes_lookup %}
+
+    <!-- Related resources -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.resources field_lookup=form.resources_lookup %}
 
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.latitude field_lookup=form.latitude_lookup %}
 

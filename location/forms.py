@@ -73,6 +73,9 @@ class GeneralSearchFieldset(forms.Form):
                                   help_text='Comments destined for front-end display.')
     researchers_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
+    resources = forms.CharField(required=False, label='Related resources')
+    resources_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
     latitude = IntegerField(required=False, label='Latitude')
     latitude_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 

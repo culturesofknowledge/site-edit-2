@@ -190,11 +190,13 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
         field_fn_maps = query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
                                                             'change_timestamp', )
 
-        fields = ['location_name', 'editors_notes', 'location_id', 'researchers_notes', 'latitude', 'longitude',
-                  'element_1_eg_room', 'element_2_eg_building', 'element_3_eg_parish', 'element_4_eg_city',
+        fields = ['location_name', 'editors_notes', 'location_id', 'researchers_notes', 'resources','latitude',
+                  'longitude', 'element_1_eg_room', 'element_2_eg_building', 'element_3_eg_parish', 'element_4_eg_city',
                   'element_5_eg_county', 'element_6_eg_country', 'element_7_eg_empire', 'images', 'change_user']
         search_fields_maps = {
             'location_name': ['location_name', 'location_synonyms'],
+            'resources': ['resources__resource_name', 'resources__resource_details',
+                          'resources__resource_url'],
             'researchers_notes': ['comments__comment']}
 
         # KTODO support lookup query_utils.create_queries_by_lookup_field
