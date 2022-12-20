@@ -71,7 +71,7 @@ class CofkUnionPerson(models.Model, RecordTracker):
                                        through='person.CofkPersonLocationMap',
                                        through_fields=('person', 'location'))
 
-    images = models.ManyToManyField('core.CofkUnionImage')
+    images = models.ManyToManyField(to='core.CofkUnionImage', through='CofkPersonImageMap')
 
     @property
     def comments(self):

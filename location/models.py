@@ -25,7 +25,7 @@ class CofkUnionLocation(models.Model, RecordTracker):
     element_7_eg_empire = models.CharField(max_length=100)
     uuid = models.UUIDField(blank=True, null=True)
 
-    images = models.ManyToManyField('core.CofkUnionImage')  # TOBEREMOVE
+    images = models.ManyToManyField(to='core.CofkUnionImage', through='CofkLocationImageMap')
 
     @property
     def comments(self):

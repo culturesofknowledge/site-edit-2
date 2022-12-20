@@ -88,7 +88,7 @@ class CofkUnionManifestation(models.Model, RecordTracker):
 
     # relation
     work = models.ForeignKey('work.CofkUnionWork', models.CASCADE, null=True)
-    images = models.ManyToManyField('core.CofkUnionImage')  # TOBEREMOVE replaced by CofkManifImageMap
+    images = models.ManyToManyField(to='core.CofkUnionImage', through='CofkManifImageMap')
 
     class Meta:
         db_table = 'cofk_union_manifestation'
