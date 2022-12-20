@@ -223,7 +223,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
                 values('location_id'). \
                 order_by('location_id'). \
                 annotate(count=Count('location_id')). \
-                filter(Q(run_lookup_fn(lookup_fn, 'count', field_val))). \
+                filter(run_lookup_fn(lookup_fn, 'count', field_val)). \
                 all()
 
             q.add(('location_id__in', [l['location_id'] for l in locations]), Q.AND)
