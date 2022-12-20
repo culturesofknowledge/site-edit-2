@@ -27,5 +27,16 @@
 
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.element_7_eg_empire field_lookup=form.element_7_eg_empire_lookup %}
 
+    <!-- Images -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.images field_lookup=form.images_lookup %}
+
+    <!-- Last edit -->
+    {% include "core/component/search_fieldset/from_to_year.html" with title='Last edit' from_field=form.change_timestamp_from to_field=form.change_timestamp_to field_info=form.change_timestamp_info %}
+
+    <!-- Last changed by-->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.change_user field_lookup=form.change_user_lookup %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.institution_id field_lookup=form.institution_id_lookup %}
+
 
 </fieldset>

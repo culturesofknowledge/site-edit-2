@@ -26,7 +26,7 @@
                 {{ r.abbrev }}
             </td>
             <td>
-                {{ r.change_timestamp }} by {{ r.change_user }}
+                {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r %}
             </td>
         </tr>
     {% endfor %}
