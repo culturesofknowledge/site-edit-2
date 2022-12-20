@@ -20,6 +20,10 @@ def find_statements(sql) -> Iterable[str]:
         cur_idx += 1
 
 
+def to_oneline(s):
+    return s.replace('\n', '')
+
+
 def main():
     path = 'sync_db.221220.sql'
     sql = Path(path).read_text()
@@ -40,19 +44,21 @@ def main():
         elif s.startswith('create table'):
             sql_maps['deleted_tables'].append(re.findall(r'create table (\w+)', s)[0])
         elif 'set default nextval(' in s:
-            sql_maps['seq'].append(s.replace('\n', ''))
+            sql_maps['seq'].append(to_oneline(s))
         elif 'type timestamp using ' in s:
-            sql_maps['change timestamp type'].append(s.replace('\n', ''))
+            sql_maps['change timestamp type'].append(to_oneline(s))
         elif 'set default "current_user"()' in s:
-            sql_maps['current_user'].append(s.replace('\n', ''))
+            sql_maps['current_user'].append(to_oneline(s))
         elif 'drop index ' in s:
-            sql_maps['added_index'].append(s.replace('\n', ''))
+            sql_maps['added_index'].append(to_oneline(s))
         elif result := re.findall(r'alter table (\w+).+drop column (\w+);', s, re.DOTALL):
             sql_maps['added_column'].append(result)
+        elif re.search(r'add constraint .+ foreign key ', s, re.DOTALL):
+            sql_maps['missed_foreign_key'].append(s)
         elif 'add constraint ' in s:
             sql_maps['missed_constraint'].append(s)
         elif 'owner to ' in s:
-            sql_maps['owner_to'].append(s)
+            sql_maps['owner_to'].append(to_oneline(s))
         elif 'add primary key ' in s:
             sql_maps['missed primary key'].append(s)
         elif 'create index ' in s:
@@ -76,6 +82,7 @@ def main():
         print(f'--------------------- {k}')
         for n in values:
             print(n)
+        print()
 
     print('--------------------- other statements')
     for s in other_statements:
