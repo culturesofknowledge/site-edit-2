@@ -52,3 +52,17 @@ def create_function_by_file(module_name, path) -> Operation:
         create_sql,
         f"DROP function {fn_name}",
     )
+
+
+def create_operation_zero_one_check(table_name, field_name, constraint_name):
+    return migrations.RunSQL(
+        f"""
+alter table {table_name}
+add constraint {constraint_name}
+check (({field_name} = 0) OR ({field_name} = 1));
+            """,
+        f"""
+alter table {table_name}
+drop constraint {constraint_name};
+        """
+    )
