@@ -16,10 +16,14 @@ from selenium.webdriver.support.select import Select
 import core.fixtures
 import location.fixtures
 import person.fixtures
+from core.helper import model_utils
 from core.helper.view_utils import BasicSearchView
+from core.models import CofkLookupCatalogue
 from location.models import CofkUnionLocation
 from login.models import CofkUser
 from person.models import CofkUnionPerson
+from work.fixtures import work_dict_a
+from work.models import CofkUnionWork
 
 log = logging.getLogger(__name__)
 
@@ -330,18 +334,29 @@ class FieldValTester:
                 self.test_case.assertEqual(getattr(model, field_name), expected_val)
 
 
+def create_work_by_dict(work_dict: dict = None, work_id=None) -> CofkUnionWork:
+    work_dict = dict(work_dict or work_dict_a)
+    if work_id:
+        work_dict['work_id'] = work_id
+    work = create_model_instance(CofkUnionWork, instance_dict=work_dict)
+    return work
+
+
 def create_person_by_dict(pson_dict: dict = None) -> CofkUnionPerson:
-    pson_dict = pson_dict or person.fixtures.person_dict_a
-    pson_a = CofkUnionPerson(**pson_dict)
-    pson_a.save()
-    return pson_a
+    return create_model_instance(CofkUnionPerson,
+                                 instance_dict=pson_dict or person.fixtures.person_dict_a)
 
 
 def create_location_by_dict(loc_dict: dict = None) -> CofkUnionLocation:
-    loc_dict = loc_dict or location.fixtures.location_dict_a
-    loc_a = CofkUnionLocation(**loc_dict)
-    loc_a.save()
-    return loc_a
+    return create_model_instance(CofkUnionLocation,
+                                 instance_dict=loc_dict or location.fixtures.location_dict_a)
+
+
+def create_model_instance(model_class: Type[model_utils.ModelLike],
+                          instance_dict: dict) -> model_utils.ModelLike:
+    obj = model_class(**instance_dict)
+    obj.save()
+    return obj
 
 
 class SwitchToNewWindow:
@@ -403,3 +418,14 @@ def run_recref_test_by_test_cases(emlo_test: EmloSeleniumTestCase, test_cases: I
     for test_case in test_cases:
         with emlo_test.subTest(recref=test_case['recref_form_name']):
             run_recref_test(emlo_test, **test_case)
+
+
+def create_empty_lookup_cat() -> CofkLookupCatalogue:
+    cat = CofkLookupCatalogue(
+        catalogue_code='',
+        catalogue_name='empty cat',
+        is_in_union=1,
+        publish_status=1,
+    )
+    cat.save()
+    return cat

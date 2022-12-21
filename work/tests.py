@@ -2,13 +2,14 @@ import re
 
 from selenium.webdriver import Keys
 
-from core import fixtures
+from core import fixtures, constant
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_COMMENT_DATE, \
     REL_TYPE_COMMENT_DESTINATION, REL_TYPE_COMMENT_ROUTE, REL_TYPE_COMMENT_ORIGIN, REL_TYPE_COMMENT_REFERS_TO, \
     REL_TYPE_PEOPLE_MENTIONED_IN_WORK
-from manifestation.models import CofkUnionManifestation
-from siteedit2.utils.test_utils import EmloSeleniumTestCase, FieldValTester
 from core.models import Iso639LanguageCode
+from manifestation.models import CofkUnionManifestation
+from siteedit2.utils import test_utils
+from siteedit2.utils.test_utils import EmloSeleniumTestCase, FieldValTester
 from work import work_utils
 from work.models import CofkUnionWork
 
@@ -109,6 +110,31 @@ class WorkFormTests(EmloSeleniumTestCase):
         # assert db updated
         work.refresh_from_db()
         work.authors_as_marked = input_authors_as_marked
+
+    def test_corr__recref(self):
+        test_utils.create_empty_lookup_cat()
+        work = test_utils.create_work_by_dict()
+
+        test_utils.create_person_by_dict()
+        form_url = self.get_url_by_viewname('work:corr_form', iwork_id=work.iwork_id)
+        test_cases = [
+            dict(recref_form_name='selected_author_id',
+                 target_obj=work,
+                 related_manager=work.cofkworkpersonmap_set,
+                 expected_rel_type=constant.REL_TYPE_CREATED,
+                 form_url=form_url, ),
+            dict(recref_form_name='selected_addressee_id',
+                 target_obj=work,
+                 related_manager=work.cofkworkpersonmap_set,
+                 expected_rel_type=constant.REL_TYPE_WAS_ADDRESSED_TO,
+                 form_url=form_url, ),
+            dict(recref_form_name='new_earlier_letter',
+                 target_obj=work,
+                 related_manager=work.work_to_set,
+                 expected_rel_type=constant.REL_TYPE_WORK_IS_REPLY_TO,
+                 form_url=form_url, ),
+        ]
+        test_utils.run_recref_test_by_test_cases(self, test_cases)
 
     def test_detes__create(self):
         self.goto_vname('work:dates_form')
