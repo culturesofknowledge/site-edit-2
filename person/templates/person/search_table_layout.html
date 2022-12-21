@@ -15,6 +15,9 @@
         <col>
         <col>
         <col>
+        <col>
+        <col>
+        <col>
     </colgroup>
     <thead>
     <tr></tr>
@@ -36,6 +39,7 @@
         <th>Further reading</th>
         <th>Images</th>
         <th>Other details</th>
+        <th>Last edited by</th>
     </tr>
     </thead>
     <tbody>
@@ -86,13 +90,16 @@
             <td> {{ r.summary.all_works }} </td>
             <td> {{ r.summary.mentioned }} </td>
             <td>
+                {{ r.iperson_id }}</br>
                 <a href="{% url 'person:full_form' r.iperson_id %}">
-                    {{ r.iperson_id }}
+                    Edit
                 </a>
             </td>
 
             <td>
+                {% if r.editors_notes %}
                 {{ r.editors_notes }}
+                {% endif %}
             </td>
 
             <td>
@@ -105,9 +112,11 @@
             </td>
 
             <td>
-                {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r %}
                 {% include "core/component/search_table_layout/comment_result.html" with comments=r.comments %}
-                {% include "core/component/search_table_layout/res_result.html" with r_maps=r.resources %}
+                {% include "core/component/search_table_layout/res_result.html" with resources=r.resources %}
+            </td>
+            <td>
+                {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r %}
             </td>
 
         </tr>

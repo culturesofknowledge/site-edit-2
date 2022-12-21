@@ -284,7 +284,8 @@ class GeneralSearchFieldset(forms.Form):
                                   help_text='Username of the person who last changed the record.')
     change_user_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    iperson_id = forms.IntegerField(required=False)
+    iperson_id = forms.IntegerField(required=False, label='Person or Group ID',
+                                    help_text='The unique ID for the record within this database.')
     iperson_id_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
 

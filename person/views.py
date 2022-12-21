@@ -315,7 +315,8 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             query_utils.create_queries_by_lookup_field(self.request_data, [
                 'foaf_name', 'iperson_id', 'editors_notes',
                 'further_reading', 'change_user'
-            ])
+            ], {'foaf_name': ['foaf_name', 'skos_altlabel', 'person_aliases', 'skos_hiddenlabel',
+                              'summary__other_details_summary_searchable']})
         )
 
         return self.create_queryset_by_queries(CofkUnionPerson, queries)
