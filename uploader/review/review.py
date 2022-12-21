@@ -11,8 +11,8 @@ from core.constant import REL_TYPE_STORED_IN, REL_TYPE_CREATED, REL_TYPE_WAS_ADD
 from core.models import CofkUnionResource
 from institution.models import CofkUnionInstitution
 from manifestation.models import CofkUnionManifestation, CofkManifInstMap
-from uploader.models import CofkCollectUpload
-from work.models import CofkCollectWork, CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, CofkWorkResourceMap, \
+from uploader.models import CofkCollectUpload, CofkCollectWork
+from work.models import  CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, CofkWorkResourceMap, \
     CofkUnionLanguageOfWork
 
 

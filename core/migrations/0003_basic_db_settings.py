@@ -1,0 +1,1 @@
+../manual_migrations/0003_basic_db_settings.py

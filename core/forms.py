@@ -6,10 +6,9 @@ from django.urls import reverse
 from core.helper import form_utils, model_utils
 from core.helper import widgets_utils
 from core.helper.form_utils import CommonTextareaField, ZeroOneCheckboxField
-from core.models import CofkUnionComment, CofkUnionResource
+from core.models import CofkUnionComment, CofkUnionResource, CofkUnionImage
 from manifestation.models import CofkUnionManifestation
 from person import person_utils
-from uploader.models import CofkUnionImage
 from work import work_utils
 
 

@@ -1,6 +1,7 @@
 import itertools
 import logging
 import re
+import time
 import warnings
 from argparse import ArgumentParser
 from typing import Type, Callable, Iterable, Any
@@ -18,18 +19,19 @@ from psycopg2.extras import DictCursor
 
 from core import recref_settings
 from core.helper import iter_utils
-from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType, CofkUnionRelationshipType
+from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType, CofkUnionRelationshipType, \
+    CofkUnionImage, CofkUnionOrgType, CofkUnionRoleCategory, CofkUnionSubject, Iso639LanguageCode, CofkLookupCatalogue, \
+    SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from login.models import CofkUser
 from manifestation.models import CofkUnionManifestation
 from person.models import CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID
 from publication.models import CofkUnionPublication
-from uploader.models import CofkCollectStatus, Iso639LanguageCode, CofkLookupCatalogue, CofkCollectUpload, \
-    CofkUnionSubject, CofkUnionRoleCategory
-from uploader.models import CofkUnionOrgType, CofkUnionImage
+from uploader.models import CofkCollectStatus, CofkCollectUpload
 from work import models as work_models
 from work.models import CofkUnionWork, CofkUnionQueryableWork
+from audit.models import CofkUnionAuditLiteral, CofkUnionAuditRelationship
 
 log = logging.getLogger(__name__)
 
@@ -69,6 +71,7 @@ def clone_rows_by_model_class(conn, model_class: Type[Model],
     * assume all column name are same
     * assume no column have been removed
     """
+    start_sec = time.time()
     if check_duplicate_fn is None:
         def check_duplicate_fn(model):
             return model_class.objects.filter(pk=model.pk).exists()
@@ -89,7 +92,8 @@ def clone_rows_by_model_class(conn, model_class: Type[Model],
     rows = map(record_counter, rows)
     model_class.objects.bulk_create(rows, batch_size=500)
     log_save_records(f'{model_class.__module__}.{model_class.__name__}',
-                     record_counter.cur_size())
+                     record_counter.cur_size(),
+                     used_sec=time.time() - start_sec)
 
     if seq_name == '':
         seq_name = create_seq_col_name(model_class)
@@ -106,8 +110,8 @@ def clone_rows_by_model_class(conn, model_class: Type[Model],
         cur_conn.cursor().execute(f"select setval('{seq_name}', {new_val})")
 
 
-def log_save_records(target, size):
-    print(f'save news records [{target}][{size}]')
+def log_save_records(target, size, used_sec):
+    print(f'save news records [{used_sec:>5,.0f}s][{size:>6,}][{target}]')
 
 
 class Command(BaseCommand):
@@ -119,13 +123,15 @@ class Command(BaseCommand):
         parser.add_argument('-d', '--database')
         parser.add_argument('-o', '--host')
         parser.add_argument('-t', '--port')
+        parser.add_argument('-a', '--include-audit', action='store_true', default=False)
 
     def handle(self, *args, **options):
         data_migration(user=options['user'],
                        password=options['password'],
                        database=options['database'],
                        host=options['host'],
-                       port=options['port'])
+                       port=options['port'],
+                       include_audit=options['include_audit'], )
 
 
 def create_common_relation_col_name(table_name):
@@ -311,6 +317,7 @@ def create_recref(conn,
                   id_field_val: RecrefIdFieldVal,
                   extra_field_val: FieldVal = None,
                   ):
+    start_sec = time.time()
     extra_field_val = extra_field_val or FieldVal()
 
     sql = 'select * from cofk_union_relationship ' \
@@ -336,7 +343,8 @@ def create_recref(conn,
     )
 
     record_size = insert_sql_val_list(sql_val_list)
-    log_save_records(id_field_val.mapping_table_name, record_size)
+    log_save_records(id_field_val.mapping_table_name, record_size,
+                     used_sec=time.time() - start_sec)
 
 
 def no_duplicate_check(*args, **kwargs):
@@ -406,10 +414,11 @@ def migrate_groups_and_permissions(conn, target_model: str):
 
 
 def _val_handler_work__catalogue(row: dict, conn):
-    if row['original_catalogue']:
-        row['original_catalogue'] = CofkLookupCatalogue.objects.get(catalogue_code=row['original_catalogue'])
+    v = row.pop('original_catalogue')
+    if v or v == '':
+        row['original_catalogue_id'] = v
     else:
-        row['original_catalogue'] = None
+        row['original_catalogue_id'] = ''
     return row
 
 
@@ -445,7 +454,7 @@ def clone_recref_simple_by_field_pairs(conn,
         clone_recref_simple(conn, left_field, right_field)
 
 
-def data_migration(user, password, database, host, port):
+def data_migration(user, password, database, host, port, include_audit=False):
     warnings.filterwarnings('ignore',
                             '.*DateTimeField .+ received a naive datetime .+ while time zone support is active.*')
 
@@ -455,7 +464,10 @@ def data_migration(user, password, database, host, port):
 
     clone_rows_by_model_class(conn, CofkLookupCatalogue)
     clone_rows_by_model_class(conn, CofkLookupDocumentType)
-    clone_rows_by_model_class(conn, Iso639LanguageCode)
+    clone_rows_by_model_class(conn, Iso639LanguageCode,
+                              seq_name=SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID,
+                              int_pk_col_name='language_id',
+                              )
     clone_rows_by_model_class(conn, CofkCollectStatus)  # Static lookup table
     clone_rows_by_model_class(conn, CofkUnionOrgType)  # Static lookup table
     clone_rows_by_model_class(conn, CofkUnionResource)
@@ -507,5 +519,14 @@ def data_migration(user, password, database, host, port):
 
     # clone recref records
     clone_recref_simple_by_field_pairs(conn, recref_settings.recref_left_right_pairs)
+
+    # remove all audit records that created by data_migrations
+    print('remove all audit records that created by data_migrations')
+    CofkUnionAuditLiteral.objects.all().delete()
+    CofkUnionAuditRelationship.objects.all().delete()
+
+    # clone audit
+    if include_audit:
+        clone_rows_by_model_class(conn, CofkUnionAuditLiteral)
 
     conn.close()

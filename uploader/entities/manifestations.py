@@ -2,11 +2,8 @@ import logging
 from abc import ABC
 from typing import List
 
-from institution.models import CofkCollectInstitution
-from manifestation.models import CofkCollectManifestation
 from uploader.entities.entity import CofkEntity
-from uploader.models import CofkCollectUpload
-from work.models import CofkCollectWork
+from uploader.models import CofkCollectUpload, CofkCollectManifestation, CofkCollectWork, CofkCollectInstitution
 
 log = logging.getLogger(__name__)
 
@@ -59,4 +56,3 @@ class CofkManifestations(CofkEntity, ABC):
 
         if repository:
             return repository[0]
-

@@ -41,6 +41,13 @@ def create_operation_seq(seq_name, init_val=1) -> Operation:
     )
 
 
+def create_operation_add_index(index_name, table_name, fields: list) -> Operation:
+    return migrations.RunSQL(
+        f"create index {index_name} on {table_name} ({','.join(fields)})",
+        f"DROP index {index_name}",
+    )
+
+
 def create_function_by_file(module_name, path) -> Operation:
     create_sql = pkg_resources.resource_stream(module_name, path).read().decode()
     if fn_name := re.findall(r'create function (\w+)\(', create_sql):
@@ -51,4 +58,18 @@ def create_function_by_file(module_name, path) -> Operation:
     return migrations.RunSQL(
         create_sql,
         f"DROP function {fn_name}",
+    )
+
+
+def create_operation_zero_one_check(table_name, field_name, constraint_name):
+    return migrations.RunSQL(
+        f"""
+alter table {table_name}
+add constraint {constraint_name}
+check (({field_name} = 0) OR ({field_name} = 1));
+            """,
+        f"""
+alter table {table_name}
+drop constraint {constraint_name};
+        """
     )

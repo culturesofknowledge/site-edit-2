@@ -5,10 +5,14 @@
 #   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
 #   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
+import functools
+
 from django.db import models
 
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
+
+SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID = 'iso_639_language_codes_id_seq'
 
 
 class Recref(models.Model, RecordTracker):
@@ -27,30 +31,6 @@ class Recref(models.Model, RecordTracker):
         abstract = True
 
 
-class CofkHelpOptions(models.Model):
-    option_id = models.AutoField(primary_key=True)
-    menu_item = models.ForeignKey('CofkMenu', models.DO_NOTHING, blank=True, null=True)
-    button_name = models.CharField(max_length=100)
-    help_page = models.ForeignKey('CofkHelpPages', models.DO_NOTHING)
-    order_in_manual = models.IntegerField()
-    menu_depth = models.IntegerField()
-
-    class Meta:
-        db_table = 'cofk_help_options'
-        unique_together = (('menu_item', 'button_name'),)
-
-
-class CofkHelpPages(models.Model):
-    page_id = models.AutoField(primary_key=True)
-    page_title = models.CharField(max_length=500)
-    custom_url = models.CharField(max_length=500, blank=True, null=True)
-    published_text = models.TextField()
-    draft_text = models.TextField(blank=True, null=True)
-
-    class Meta:
-        db_table = 'cofk_help_pages'
-
-
 class CofkLookupDocumentType(models.Model):
     document_type_id = models.AutoField(primary_key=True)
     document_type_code = models.CharField(unique=True, max_length=3)
@@ -58,32 +38,6 @@ class CofkLookupDocumentType(models.Model):
 
     class Meta:
         db_table = 'cofk_lookup_document_type'
-
-
-class CofkMenu(models.Model):
-    menu_item_id = models.AutoField(primary_key=True)
-    menu_item_name = models.TextField()
-    menu_order = models.IntegerField(blank=True, null=True)
-    parent = models.ForeignKey('self', models.DO_NOTHING, blank=True, null=True)
-    has_children = models.IntegerField()
-    class_name = models.CharField(max_length=100, blank=True, null=True)
-    method_name = models.CharField(max_length=100, blank=True, null=True)
-    user_restriction = models.CharField(max_length=30)
-    hidden_parent = models.IntegerField(blank=True, null=True)
-    called_as_popup = models.IntegerField()
-    collection = models.CharField(max_length=20)
-
-    class Meta:
-        db_table = 'cofk_menu'
-
-
-class CofkReportOutputs(models.Model):
-    output_id = models.CharField(max_length=250)
-    line_number = models.IntegerField()
-    line_text = models.TextField(blank=True, null=True)
-
-    class Meta:
-        db_table = 'cofk_report_outputs'
 
 
 class CofkUnionComment(models.Model, RecordTracker):
@@ -105,24 +59,6 @@ class CofkUnionNationality(models.Model):
 
     class Meta:
         db_table = 'cofk_union_nationality'
-
-
-class CofkUnionRelationship(models.Model, RecordTracker):
-    relationship_id = models.AutoField(primary_key=True)
-    left_table_name = models.CharField(max_length=100)
-    left_id_value = models.CharField(max_length=100)
-    relationship_type = models.ForeignKey('CofkUnionRelationshipType', models.DO_NOTHING, db_column='relationship_type')
-    right_table_name = models.CharField(max_length=100)
-    right_id_value = models.CharField(max_length=100)
-    relationship_valid_from = models.DateTimeField(blank=True, null=True)
-    relationship_valid_till = models.DateTimeField(blank=True, null=True)
-    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
-    creation_user = models.CharField(max_length=50)
-    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
-    change_user = models.CharField(max_length=50)
-
-    class Meta:
-        db_table = 'cofk_union_relationship'
 
 
 class CofkUnionRelationshipType(models.Model, RecordTracker):
@@ -223,221 +159,109 @@ class CopyCofkUnionQueryableWork(models.Model):
         db_table = 'copy_cofk_union_queryable_work'
 
 
-class ProActivity(models.Model, RecordTracker):
-    activity_type_id = models.TextField(blank=True, null=True)
-    activity_name = models.TextField(blank=True, null=True)
-    activity_description = models.TextField(blank=True, null=True)
-    date_type = models.TextField(blank=True, null=True)
-    date_from_year = models.TextField(blank=True, null=True)
-    date_from_month = models.TextField(blank=True, null=True)
-    date_from_day = models.TextField(blank=True, null=True)
-    date_from_uncertainty = models.TextField(blank=True, null=True)
-    date_to_year = models.TextField(blank=True, null=True)
-    date_to_month = models.TextField(blank=True, null=True)
-    date_to_day = models.TextField(blank=True, null=True)
-    date_to_uncertainty = models.TextField(blank=True, null=True)
-    notes_used = models.TextField(blank=True, null=True)
-    additional_notes = models.TextField(blank=True, null=True)
+class CofkUnionImage(models.Model, RecordTracker):
+    image_id = models.AutoField(primary_key=True)
+    image_filename = models.TextField(blank=True, null=True)
     creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
-    creation_user = models.TextField(blank=True, null=True)
+    creation_user = models.CharField(max_length=50)
     change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
-    change_user = models.TextField(blank=True, null=True)
-    event_label = models.TextField(blank=True, null=True)
+    change_user = models.CharField(max_length=50)
+    thumbnail = models.TextField(blank=True, null=True)
+    can_be_displayed = models.CharField(max_length=1)
+    display_order = models.IntegerField(default=1)
+    licence_details = models.TextField()
+    licence_url = models.CharField(max_length=2000)
+    credits = models.CharField(max_length=2000)
+    uuid = models.UUIDField(blank=True, null=True)
 
     class Meta:
-        db_table = 'pro_activity'
+        db_table = 'cofk_union_image'
 
 
-class ProActivityRelation(models.Model):
-    meta_activity_id = models.IntegerField(blank=True, null=True)
-    filename = models.TextField()
-    spreadsheet_row = models.IntegerField()
-    combined_spreadsheet_row = models.IntegerField()
+class CofkUnionOrgType(models.Model):
+    org_type_id = models.AutoField(primary_key=True)
+    org_type_desc = models.CharField(max_length=100)
 
     class Meta:
-        db_table = 'pro_activity_relation'
+        db_table = 'cofk_union_org_type'
 
 
-class ProAssertion(models.Model):
-    assertion_type = models.TextField(blank=True, null=True)
-    assertion_id = models.TextField(blank=True, null=True)
-    source_id = models.TextField(blank=True, null=True)
-    source_description = models.TextField(blank=True, null=True)
-    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+class CofkUnionRoleCategory(models.Model):
+    role_category_id = models.AutoField(primary_key=True)
+    role_category_desc = models.CharField(max_length=100)
 
     class Meta:
-        db_table = 'pro_assertion'
+        db_table = 'cofk_union_role_category'
 
 
-class ProIngestMapV2(models.Model):
-    relationship = models.TextField(blank=True, null=True)
-    mapping = models.TextField(blank=True, null=True)
-    s_event_category = models.TextField(blank=True, null=True)
-    s_event_type = models.TextField(blank=True, null=True)
-    s_role = models.TextField(blank=True, null=True)
-    p_event_category = models.TextField(blank=True, null=True)
-    p_event_type = models.TextField(blank=True, null=True)
-    p_role = models.TextField(blank=True, null=True)
+class CofkUnionSubject(models.Model):
+    subject_id = models.AutoField(primary_key=True)
+    subject_desc = models.CharField(max_length=100)
 
     class Meta:
-        db_table = 'pro_ingest_map_v2'
+        db_table = 'cofk_union_subject'
 
 
-class ProIngestV8(models.Model):
-    event_category = models.TextField(blank=True, null=True)
-    event_type = models.TextField(blank=True, null=True)
-    event_name = models.TextField(blank=True, null=True)
-    pp_i = models.TextField(blank=True, null=True)
-    pp_name = models.TextField(blank=True, null=True)
-    pp_role = models.TextField(blank=True, null=True)
-    sp_i = models.TextField(blank=True, null=True)
-    sp_name = models.TextField(blank=True, null=True)
-    sp_type = models.TextField(blank=True, null=True)
-    sp_role = models.TextField(blank=True, null=True)
-    df_year = models.TextField(blank=True, null=True)
-    df_month = models.TextField(blank=True, null=True)
-    df_day = models.TextField(blank=True, null=True)
-    df_uncertainty = models.TextField(blank=True, null=True)
-    dt_year = models.TextField(blank=True, null=True)
-    dt_month = models.TextField(blank=True, null=True)
-    dt_day = models.TextField(blank=True, null=True)
-    dt_uncertainty = models.TextField(blank=True, null=True)
-    date_type = models.TextField(blank=True, null=True)
-    location_i = models.TextField(blank=True, null=True)
-    location_detail = models.TextField(blank=True, null=True)
-    location_city = models.TextField(blank=True, null=True)
-    location_region = models.TextField(blank=True, null=True)
-    location_country = models.TextField(blank=True, null=True)
-    location_type = models.TextField(blank=True, null=True)
-    ts_abbrev = models.TextField(blank=True, null=True)
-    ts_detail = models.TextField(blank=True, null=True)
-    editor = models.TextField(blank=True, null=True)
-    noted_used = models.TextField(blank=True, null=True)
-    add_notes = models.TextField(blank=True, null=True)
-    filename = models.TextField(blank=True, null=True)
-    spreadsheet_row_id = models.TextField(blank=True, null=True)
-    combined_csv_row_id = models.TextField(blank=True, null=True)
+class Iso639LanguageCode(models.Model):
+    code_639_3 = models.CharField(max_length=3, primary_key=True)
+    code_639_1 = models.CharField(max_length=2)
+    language_name = models.CharField(max_length=100)
+    language_id = models.IntegerField(
+        default=functools.partial(model_utils.next_seq_safe, SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID),
+        unique=True,
+    )
+
+    def __str__(self):
+        return self.language_name
 
     class Meta:
-        db_table = 'pro_ingest_v8'
+        db_table = 'iso_639_language_codes'
 
 
-class ProIngestV8Toreview(models.Model):
-    event_category = models.TextField(blank=True, null=True)
-    event_type = models.TextField(blank=True, null=True)
-    event_name = models.TextField(blank=True, null=True)
-    pp_i = models.TextField(blank=True, null=True)
-    pp_name = models.TextField(blank=True, null=True)
-    pp_role = models.TextField(blank=True, null=True)
-    sp_i = models.TextField(blank=True, null=True)
-    sp_name = models.TextField(blank=True, null=True)
-    sp_type = models.TextField(blank=True, null=True)
-    sp_role = models.TextField(blank=True, null=True)
-    df_year = models.TextField(blank=True, null=True)
-    df_month = models.TextField(blank=True, null=True)
-    df_day = models.TextField(blank=True, null=True)
-    df_uncertainty = models.TextField(blank=True, null=True)
-    dt_year = models.TextField(blank=True, null=True)
-    dt_month = models.TextField(blank=True, null=True)
-    dt_day = models.TextField(blank=True, null=True)
-    dt_uncertainty = models.TextField(blank=True, null=True)
-    date_type = models.TextField(blank=True, null=True)
-    location_i = models.TextField(blank=True, null=True)
-    location_detail = models.TextField(blank=True, null=True)
-    location_city = models.TextField(blank=True, null=True)
-    location_region = models.TextField(blank=True, null=True)
-    location_country = models.TextField(blank=True, null=True)
-    location_type = models.TextField(blank=True, null=True)
-    ts_abbrev = models.TextField(blank=True, null=True)
-    ts_detail = models.TextField(blank=True, null=True)
-    editor = models.TextField(blank=True, null=True)
-    noted_used = models.TextField(blank=True, null=True)
-    add_notes = models.TextField(blank=True, null=True)
-    filename = models.TextField(blank=True, null=True)
-    spreadsheet_row_id = models.TextField(blank=True, null=True)
-    combined_csv_row_id = models.TextField(blank=True, null=True)
+class CofkUnionFavouriteLanguage(models.Model):
+    language_code = models.OneToOneField(Iso639LanguageCode, models.DO_NOTHING, db_column='language_code',
+                                         primary_key=True)
 
     class Meta:
-        db_table = 'pro_ingest_v8_toreview'
+        db_table = 'cofk_union_favourite_language'
 
 
-class ProLocation(models.Model):
-    location_id = models.TextField(blank=True, null=True)
-    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
-    activity_id = models.IntegerField(blank=True, null=True)
-
-    class Meta:
-        db_table = 'pro_location'
-
-
-class ProPeopleCheck(models.Model):
-    person_name = models.TextField(blank=True, null=True)
-    iperson_id = models.TextField(blank=True, null=True)
+class CofkLookupCatalogue(models.Model):
+    catalogue_id = models.AutoField(primary_key=True)
+    catalogue_code = models.CharField(unique=True, max_length=100)
+    catalogue_name = models.CharField(unique=True, max_length=500)
+    is_in_union = models.IntegerField()
+    publish_status = models.SmallIntegerField()
 
     class Meta:
-        db_table = 'pro_people_check'
+        db_table = 'cofk_lookup_catalogue'
 
 
-class ProPrimaryPerson(models.Model):
-    person_id = models.TextField(blank=True, null=True)
-    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
-    activity_id = models.IntegerField(blank=True, null=True)
-
-    class Meta:
-        db_table = 'pro_primary_person'
-
-
-class ProRelationship(models.Model):
-    subject_id = models.TextField(blank=True, null=True)
-    subject_type = models.TextField(blank=True, null=True)
-    subject_role_id = models.TextField(blank=True, null=True)
-    relationship_id = models.TextField(blank=True, null=True)
-    object_id = models.TextField(blank=True, null=True)
-    object_type = models.TextField(blank=True, null=True)
-    object_role_id = models.TextField(blank=True, null=True)
-    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
-    activity_id = models.IntegerField(blank=True, null=True)
-
-    class Meta:
-        db_table = 'pro_relationship'
-
-
-class ProRoleInActivity(models.Model):
-    entity_type = models.TextField(blank=True, null=True)
-    entity_id = models.TextField(blank=True, null=True)
-    role_id = models.TextField(blank=True, null=True)
-    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
-    activity_id = models.IntegerField(blank=True, null=True)
-
-    class Meta:
-        db_table = 'pro_role_in_activity'
-
-
-class ProTextualSource(models.Model, RecordTracker):
-    author = models.TextField(blank=True, null=True)
-    title = models.TextField(blank=True, null=True)
-    chapterarticletitle = models.TextField(db_column='chapterArticleTitle', blank=True,
-                                           null=True)  # Field name made lowercase.
-    volumeseriesnumber = models.TextField(db_column='volumeSeriesNumber', blank=True,
-                                          null=True)  # Field name made lowercase.
-    issuenumber = models.TextField(db_column='issueNumber', blank=True, null=True)  # Field name made lowercase.
-    pagenumber = models.TextField(db_column='pageNumber', blank=True, null=True)  # Field name made lowercase.
-    editor = models.TextField(blank=True, null=True)
-    placepublication = models.TextField(db_column='placePublication', blank=True,
-                                        null=True)  # Field name made lowercase.
-    datepublication = models.TextField(db_column='datePublication', blank=True, null=True)  # Field name made lowercase.
-    urlresource = models.TextField(db_column='urlResource', blank=True, null=True)  # Field name made lowercase.
-    abbreviation = models.TextField(blank=True, null=True)
-    fullbibliographicdetails = models.TextField(db_column='fullBibliographicDetails', blank=True,
-                                                null=True)  # Field name made lowercase.
-    edition = models.TextField(blank=True, null=True)
-    reprintfacsimile = models.TextField(db_column='reprintFacsimile', blank=True,
-                                        null=True)  # Field name made lowercase.
-    repository = models.TextField(blank=True, null=True)
-    creation_user = models.TextField(blank=True, null=True)
+class CofkUserSavedQuery(models.Model):
+    query_id = models.AutoField(primary_key=True)
+    username = models.ForeignKey('login.CofkUser', models.DO_NOTHING, db_column='username')
+    query_class = models.CharField(max_length=100)
+    query_method = models.CharField(max_length=100)
+    query_title = models.TextField()
+    query_order_by = models.CharField(max_length=100)
+    query_sort_descending = models.SmallIntegerField()
+    query_entries_per_page = models.SmallIntegerField()
+    query_record_layout = models.CharField(max_length=12)
+    query_menu_item_name = models.TextField(blank=True, null=True)
     creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
-    change_user = models.TextField(blank=True, null=True)
-    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
 
     class Meta:
-        db_table = 'pro_textual_source'
+        db_table = 'cofk_user_saved_query'
+
+
+class CofkUserSavedQuerySelection(models.Model):
+    selection_id = models.AutoField(primary_key=True)
+    query = models.ForeignKey(CofkUserSavedQuery, models.DO_NOTHING)
+    column_name = models.CharField(max_length=100)
+    column_value = models.CharField(max_length=500)
+    op_name = models.CharField(max_length=100)
+    op_value = models.CharField(max_length=100)
+    column_value2 = models.CharField(max_length=500)
+
+    class Meta:
+        db_table = 'cofk_user_saved_query_selection'

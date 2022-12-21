@@ -13,7 +13,7 @@ from core.helper.common_recref_adapter import RecrefFormAdapter, TargetPersonRec
 from core.helper.form_utils import TargetPersonMRRForm, LocationRecrefField, InstRecrefField
 from core.models import Recref
 from manifestation.models import CofkUnionManifestation, CofkManifPersonMap
-from work.models import CofkCollectWork, CofkUnionWork, CofkWorkPersonMap
+from work.models import CofkUnionWork, CofkWorkPersonMap
 
 log = logging.getLogger(__name__)
 
@@ -39,13 +39,6 @@ manif_letter_opened_choices = [
     ('p', 'Partially opened'),
     ('u', 'Unopened'),
 ]
-
-
-class CofkCollectWorkForm(forms.ModelForm):
-    class Meta:
-        model = CofkCollectWork
-        fields = '__all__'
-        # exclude = ['_id']
 
 
 def create_auto_date_field():

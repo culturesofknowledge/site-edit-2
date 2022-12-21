@@ -1,0 +1,1 @@
+../manual_migrations/0005_add_seq.py

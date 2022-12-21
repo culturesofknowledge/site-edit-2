@@ -1,16 +1,13 @@
 import functools
-from datetime import datetime
 from typing import Iterable
 
-from django.core.exceptions import ValidationError
 from django.db import models
 
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_COMMENT_DATE, \
     REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE_CREATED
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
-from core.models import Recref
-from uploader.models import CofkCollectUpload, CofkCollectStatus, CofkLookupCatalogue
+from core.models import Recref, CofkLookupCatalogue
 
 SEQ_NAME_COFKUNIONWORK__IWORK_ID = 'cofk_union_work_iwork_id_seq'
 
@@ -51,9 +48,11 @@ class CofkUnionWork(models.Model, RecordTracker):
     incipit = models.TextField(blank=True, null=True)
     explicit = models.TextField(blank=True, null=True)
     ps = models.TextField(blank=True, null=True)
-    original_catalogue = models.ForeignKey("uploader.CofkLookupCatalogue", models.DO_NOTHING,
-                                           db_column='original_catalogue', blank=True, null=True,
-                                           default='')
+    original_catalogue = models.ForeignKey("core.CofkLookupCatalogue", models.DO_NOTHING,
+                                           db_column='original_catalogue', blank=True, null=False,
+                                           to_field='catalogue_code',
+                                           default='',
+                                           db_constraint=False, )
     accession_code = models.CharField(max_length=1000, blank=True, null=True)
     work_to_be_deleted = models.SmallIntegerField(default=0)
     iwork_id = models.IntegerField(
@@ -158,7 +157,7 @@ class CofkWorkWorkMap(Recref):
 
 class CofkWorkSubjectMap(Recref):
     work = models.ForeignKey(CofkUnionWork, on_delete=models.CASCADE)
-    subject = models.ForeignKey("uploader.CofkUnionSubject", on_delete=models.CASCADE)
+    subject = models.ForeignKey("core.CofkUnionSubject", on_delete=models.CASCADE)
 
     class Meta(Recref.Meta):
         db_table = 'cofk_work_subject_map'
@@ -187,344 +186,10 @@ class CofkWorkLocationMap(Recref):
         db_table = 'cofk_work_location_map'
 
 
-class CofkCollectWork(models.Model):
-    upload = models.ForeignKey(CofkCollectUpload, models.CASCADE)
-    iwork_id = models.IntegerField()
-    union_iwork = models.ForeignKey('CofkUnionWork', models.DO_NOTHING, blank=True, null=True
-                                    , related_name='union_collect_works')
-    work = models.ForeignKey('CofkUnionWork', models.DO_NOTHING, blank=True, null=True, related_name='collect_works')
-    date_of_work_as_marked = models.CharField(max_length=250, blank=True, null=True)
-    original_calendar = models.CharField(max_length=2, blank=True, null=True)
-    date_of_work_std_year = models.IntegerField(blank=True, null=True)
-    date_of_work_std_month = models.IntegerField(blank=True, null=True)
-    date_of_work_std_day = models.IntegerField(blank=True, null=True)
-    date_of_work2_std_year = models.IntegerField(blank=True, null=True)
-    date_of_work2_std_month = models.IntegerField(blank=True, null=True)
-    date_of_work2_std_day = models.IntegerField(blank=True, null=True)
-    date_of_work_std_is_range = models.SmallIntegerField(default=0)
-    date_of_work_inferred = models.SmallIntegerField(default=0)
-    date_of_work_uncertain = models.SmallIntegerField(default=0)
-    date_of_work_approx = models.SmallIntegerField(default=0)
-    notes_on_date_of_work = models.TextField(blank=True, null=True)
-    authors_as_marked = models.TextField(blank=True, null=True)
-    authors_inferred = models.SmallIntegerField(default=0)
-    authors_uncertain = models.SmallIntegerField(default=0)
-    notes_on_authors = models.TextField(blank=True, null=True)
-    addressees_as_marked = models.TextField(blank=True, null=True)
-    addressees_inferred = models.SmallIntegerField(default=0)
-    addressees_uncertain = models.SmallIntegerField(default=0)
-    notes_on_addressees = models.TextField(blank=True, null=True)
-    destination_id = models.IntegerField(blank=True, null=True)
-    # destination = models.ForeignKey('CofkCollectDestinationOfWork', models.CASCADE, blank=True, null=True)
-    destination_as_marked = models.TextField(blank=True, null=True)
-    destination_inferred = models.SmallIntegerField(default=0)
-    destination_uncertain = models.SmallIntegerField(default=0)
-    origin_id = models.IntegerField(blank=True, null=True)
-    # origin = models.ForeignKey('CofkCollectOriginOfWork', models.CASCADE, blank=True, null=True)
-    origin_as_marked = models.TextField(blank=True, null=True)
-    origin_inferred = models.SmallIntegerField(default=0)
-    origin_uncertain = models.SmallIntegerField(default=0)
-    abstract = models.TextField(blank=True, null=True)
-    keywords = models.TextField(blank=True, null=True)
-    language_of_work = models.CharField(max_length=255, blank=True, null=True)
-    incipit = models.TextField(blank=True, null=True)
-    excipit = models.TextField(blank=True, null=True)
-    accession_code = models.CharField(max_length=250, blank=True, null=True)
-    notes_on_letter = models.TextField(blank=True, null=True)
-    notes_on_people_mentioned = models.TextField(blank=True, null=True)
-    upload_status = models.ForeignKey(CofkCollectStatus, models.DO_NOTHING, db_column='upload_status')
-    editors_notes = models.TextField(blank=True, null=True)
-    _id = models.CharField(db_column='_id', max_length=32, blank=True,
-                           null=True)  # Field renamed because it started with '_'.
-    date_of_work2_approx = models.SmallIntegerField(default=0)
-    date_of_work2_inferred = models.SmallIntegerField(default=0)
-    date_of_work2_uncertain = models.SmallIntegerField(default=0)
-    mentioned_as_marked = models.TextField(blank=True, null=True)
-    mentioned_inferred = models.SmallIntegerField(default=0)
-    mentioned_uncertain = models.SmallIntegerField(default=0)
-    notes_on_destination = models.TextField(blank=True, null=True)
-    notes_on_origin = models.TextField(blank=True, null=True)
-    notes_on_place_mentioned = models.TextField(blank=True, null=True)
-    place_mentioned_as_marked = models.TextField(blank=True, null=True)
-    place_mentioned_inferred = models.SmallIntegerField(default=0)
-    place_mentioned_uncertain = models.SmallIntegerField(default=0)
-    upload_name = models.CharField(max_length=254, blank=True, null=True)
-    explicit = models.TextField(blank=True, null=True)
-
-    errors = []
-
-    class Meta:
-        db_table = 'cofk_collect_work'
-        unique_together = (('upload', 'iwork_id'),)
-
-    #def __str__(self):
-    #   return f'Work #{self.iwork_id}'
-
-    @property
-    def date_of_work_std(self):
-        try:
-            return datetime(self.date_of_work_std_year, self.date_of_work_std_month, self.date_of_work_std_day) \
-                .strftime("%d %b %Y")
-        except Exception:
-            pass
-
-    @property
-    def date_of_work2_std(self):
-        try:
-            return datetime(self.date_of_work2_std_year, self.date_of_work2_std_month, self.date_of_work2_std_day) \
-                .strftime("%d %b %Y")
-        except Exception:
-            pass
-
-    @property
-    def display_daterange(self):
-        if self.date_of_work_std and self.date_of_work2_std:
-            return f'{self.date_of_work_std} to {self.date_of_work2_std}'
-        elif self.date_of_work_std:
-            return f'{self.date_of_work_std} to ????-??-??'
-
-        return f'????-??-?? To {self.date_of_work2_std}'
-
-    @property
-    def display_original_calendar(self):
-        if self.original_calendar == 'G':
-            return 'Gregorian'
-        elif self.original_calendar == 'J':
-            return 'Julian'  # This will switch to "JJ" after accepted, see review.php
-        elif self.original_calendar == 'JJ':
-            return 'Julian (January year start)'
-        elif self.original_calendar == 'JM':
-            return 'Julian (March year start)'
-
-    @property
-    def display_date_issues(self):
-        issues = []
-
-        if self.date_of_work_std_is_range == 1:
-            issues.append('estimated or known range')
-
-        if self.date_of_work_inferred == 1:
-            issues.append('inferred')
-
-        if self.date_of_work_uncertain == 1:
-            issues.append('uncertain')
-
-        if self.date_of_work_approx == 1:
-            issues.append('approximate')
-
-        return ', '.join(issues)
-
-    @property
-    def display_origin_issues(self):
-        issues = []
-
-        if self.origin_inferred == 1:
-            issues.append('inferred')
-
-        if self.origin_uncertain == 1:
-            issues.append('uncertain')
-
-        return ', '.join(issues)
-
-    @property
-    def display_destination_issues(self):
-        issues = []
-
-        if self.destination_inferred == 1:
-            issues.append('inferred')
-
-        if self.destination_uncertain == 1:
-            issues.append('uncertain')
-
-        return ', '.join(issues)
-
-    @property
-    def display_authors_issues(self):
-        issues = []
-
-        if self.authors_inferred == 1:
-            issues.append('inferred')
-
-        if self.authors_uncertain == 1:
-            issues.append('uncertain')
-
-        return ', '.join(issues)
-
-    @property
-    def display_addressees_issues(self):
-        issues = []
-
-        if self.addressees_inferred == 1:
-            issues.append('inferred')
-
-        if self.addressees_uncertain == 1:
-            issues.append('uncertain')
-
-        return ', '.join(issues)
-
-    @property
-    def display_mentioned_issues(self):
-        issues = []
-
-        if self.mentioned_inferred == 1:
-            issues.append('inferred')
-
-        if self.mentioned_uncertain == 1:
-            issues.append('uncertain')
-
-        return ', '.join(issues)
-
-
-class CofkCollectAddresseeOfWork(models.Model):
-    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
-    addressee_id = models.IntegerField()
-    iperson = models.ForeignKey('person.CofkCollectPerson', models.CASCADE)
-    iwork = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
-    notes_on_addressee = models.TextField(blank=True, null=True)
-    _id = models.CharField(max_length=32, blank=True, null=True)
-
-    def __str__(self):
-        return str(self.iperson)
-
-    class Meta:
-        db_table = 'cofk_collect_addressee_of_work'
-        unique_together = (('upload', 'iwork_id', 'addressee_id'),)
-
-
-class CofkCollectAuthorOfWork(models.Model):
-    """
-    This table is required only for collect purposes, as best I understand, and is not used
-    in other regards. Only exception is Tweaker, see:
-    https://github.com/culturesofknowledge/site-edit/blob/9a74580d2567755ab068a2d8761df8f81718910e/emlo-edit-php-helper/tweaker/tweaker/uploader.py#L739-L770
-    This table, like other ***OfWork tables is used as a link between CofkCollectWork and the
-    respective main entity table. This table links CofkCollectWork with CofkCollectPerson using
-    iperson_id as a unique key in CofkCollectPerson and iwork_id as a unique key in CofkCollectWork.
-    Author_id is then the unique key in this table, however, in the original schema the primary key
-    is set as a composite key of the three, upload_id, iwork_id and author_id and iperson_id is set
-    as a composite key of upload_id and iperson_id in CofkCollectPerson.
-    However, as Django does not support composite keys in database models, a workaround is to
-    designate iperson_id and iwork_id as many-to-many-relationship fields.
-    """
-    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
-    author_id = models.IntegerField()
-    iperson = models.ForeignKey('person.CofkCollectPerson', models.CASCADE)
-    iwork = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
-    notes_on_author = models.TextField(blank=True, null=True)
-    _id = models.CharField(max_length=32, blank=True, null=True)
-
-    def __str__(self):
-        return str(self.iperson)
-
-    class Meta:
-        db_table = 'cofk_collect_author_of_work'
-        unique_together = (('upload', 'iwork_id', 'author_id'),)
-
-
-class CofkCollectDestinationOfWork(models.Model):
-    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
-    destination_id = models.IntegerField()
-    location = models.ForeignKey('location.CofkCollectLocation', models.CASCADE)
-    iwork = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
-    notes_on_destination = models.TextField(blank=True, null=True)
-    _id = models.CharField(max_length=32, blank=True, null=True)
-
-    def __str__(self):
-        return str(self.location)
-
-    class Meta:
-        db_table = 'cofk_collect_destination_of_work'
-        unique_together = (('upload', 'iwork_id', 'destination_id'),)
-
-
-class CofkCollectLanguageOfWork(models.Model):
-    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
-    language_of_work_id = models.IntegerField()
-    iwork = models.ForeignKey('work.CofkCollectWork', models.DO_NOTHING)
-    language_code = models.ForeignKey('uploader.Iso639LanguageCode', models.DO_NOTHING, db_column='language_code')
-    _id = models.CharField(max_length=32, blank=True, null=True)
-
-    def __str__(self):
-        return str(self.language_code)
-
-    class Meta:
-        db_table = 'cofk_collect_language_of_work'
-        unique_together = (('upload', 'iwork_id', 'language_of_work_id'),)
-
-
-class CofkCollectOriginOfWork(models.Model):
-    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
-    origin_id = models.IntegerField()
-    location = models.ForeignKey('location.CofkCollectLocation', models.CASCADE)
-    iwork = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
-    notes_on_origin = models.TextField(blank=True, null=True)
-    _id = models.CharField(max_length=32, blank=True, null=True)
-
-    def __str__(self):
-        return str(self.location)
-
-    class Meta:
-        db_table = 'cofk_collect_origin_of_work'
-        unique_together = (('upload', 'iwork', 'origin_id'),)
-
-
-class CofkCollectPersonMentionedInWork(models.Model):
-    upload = models.ForeignKey("uploader.CofkCollectUpload", null=False, on_delete=models.CASCADE)
-    mention_id = models.IntegerField()
-    iperson = models.ForeignKey('person.CofkCollectPerson', models.CASCADE)
-    iwork = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
-    notes_on_person_mentioned = models.TextField(blank=True, null=True)
-    _id = models.CharField(max_length=32)
-
-    def __str__(self):
-        return str(self.iperson)
-
-    class Meta:
-        db_table = 'cofk_collect_person_mentioned_in_work'
-        unique_together = (('upload', 'iwork_id', 'mention_id'),)
-
-
-class CofkCollectPlaceMentionedInWork(models.Model):
-    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
-    mention_id = models.IntegerField()
-    location_id = models.IntegerField()
-    iwork_id = models.IntegerField()
-    notes_on_place_mentioned = models.TextField(blank=True, null=True)
-    _id = models.CharField(max_length=32, blank=True, null=True)
-
-    class Meta:
-        db_table = 'cofk_collect_place_mentioned_in_work'
-        unique_together = (('upload', 'iwork_id', 'mention_id'),)
-
-
-class CofkCollectSubjectOfWork(models.Model):
-    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
-    subject_of_work_id = models.IntegerField()
-    iwork_id = models.IntegerField()
-    subject = models.ForeignKey('uploader.CofkUnionSubject', models.DO_NOTHING)
-
-    class Meta:
-        db_table = 'cofk_collect_subject_of_work'
-        unique_together = (('upload', 'iwork_id', 'subject_of_work_id'),)
-
-
-class CofkCollectWorkResource(models.Model):
-    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
-    resource_id = models.IntegerField()
-    iwork = models.ForeignKey('work.CofkCollectWork', models.CASCADE)
-    resource_name = models.TextField()
-    resource_details = models.TextField()
-    resource_url = models.TextField()
-    _id = models.CharField(max_length=32, blank=True, null=True)
-
-    class Meta:
-        db_table = 'cofk_collect_work_resource'
-        unique_together = (('upload', 'iwork_id', 'resource_id'),)
-
-
 class CofkUnionLanguageOfWork(models.Model):
     lang_work_id = models.AutoField(primary_key=True)
     work = models.ForeignKey(CofkUnionWork, models.DO_NOTHING, related_name='language_set')
-    language_code = models.ForeignKey('uploader.Iso639LanguageCode', models.DO_NOTHING,
+    language_code = models.ForeignKey('core.Iso639LanguageCode', models.DO_NOTHING,
                                       db_column='language_code',
                                       to_field='code_639_3',
                                       )
@@ -600,50 +265,3 @@ class CofkUnionQueryableWork(models.Model):
         return CofkLookupCatalogue.objects.filter(catalogue_code=self.original_catalogue)[0].catalogue_name
 
 
-class CofkCollectWorkSummary(models.Model):
-    upload = models.OneToOneField(CofkCollectWork, models.DO_NOTHING, primary_key=True)
-    work_id_in_tool = models.IntegerField()
-    source_of_data = models.CharField(max_length=250, blank=True, null=True)
-    notes_on_letter = models.TextField(blank=True, null=True)
-    date_of_work = models.CharField(max_length=32, blank=True, null=True)
-    date_of_work_as_marked = models.CharField(max_length=250, blank=True, null=True)
-    original_calendar = models.CharField(max_length=30, blank=True, null=True)
-    date_of_work_is_range = models.CharField(max_length=30, blank=True, null=True)
-    date_of_work_inferred = models.CharField(max_length=30, blank=True, null=True)
-    date_of_work_uncertain = models.CharField(max_length=30, blank=True, null=True)
-    date_of_work_approx = models.CharField(max_length=30, blank=True, null=True)
-    notes_on_date_of_work = models.TextField(blank=True, null=True)
-    authors = models.TextField(blank=True, null=True)
-    authors_as_marked = models.TextField(blank=True, null=True)
-    authors_inferred = models.CharField(max_length=30, blank=True, null=True)
-    authors_uncertain = models.CharField(max_length=30, blank=True, null=True)
-    notes_on_authors = models.TextField(blank=True, null=True)
-    addressees = models.TextField(blank=True, null=True)
-    addressees_as_marked = models.TextField(blank=True, null=True)
-    addressees_inferred = models.CharField(max_length=30, blank=True, null=True)
-    addressees_uncertain = models.CharField(max_length=30, blank=True, null=True)
-    notes_on_addressees = models.TextField(blank=True, null=True)
-    destination = models.TextField(blank=True, null=True)
-    destination_as_marked = models.TextField(blank=True, null=True)
-    destination_inferred = models.CharField(max_length=30, blank=True, null=True)
-    destination_uncertain = models.CharField(max_length=30, blank=True, null=True)
-    origin = models.TextField(blank=True, null=True)
-    origin_as_marked = models.TextField(blank=True, null=True)
-    origin_inferred = models.CharField(max_length=30, blank=True, null=True)
-    origin_uncertain = models.CharField(max_length=30, blank=True, null=True)
-    abstract = models.TextField(blank=True, null=True)
-    keywords = models.TextField(blank=True, null=True)
-    languages_of_work = models.TextField(blank=True, null=True)
-    subjects_of_work = models.TextField(blank=True, null=True)
-    incipit = models.TextField(blank=True, null=True)
-    excipit = models.TextField(blank=True, null=True)
-    people_mentioned = models.TextField(blank=True, null=True)
-    notes_on_people_mentioned = models.TextField(blank=True, null=True)
-    places_mentioned = models.TextField(blank=True, null=True)
-    manifestations = models.TextField(blank=True, null=True)
-    related_resources = models.TextField(blank=True, null=True)
-    editors_notes = models.TextField(blank=True, null=True)
-
-    class Meta:
-        db_table = 'cofk_collect_work_summary'
-        unique_together = (('upload', 'work_id_in_tool'),)

@@ -26,7 +26,7 @@ from core.helper.recref_handler import SingleRecrefHandler, RecrefFormsetHandler
 from core.helper.recref_utils import create_recref_if_field_exist
 from core.helper.view_utils import DefaultSearchView
 from core.helper.view_handler import FullFormHandler
-from core.models import Recref
+from core.models import Recref, CofkLookupCatalogue
 from institution import inst_utils
 from location import location_utils
 from location.models import CofkUnionLocation
@@ -34,7 +34,6 @@ from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, cr
     CofkUnionLanguageOfManifestation, CofkManifImageMap
 from person import person_utils
 from person.models import CofkUnionPerson
-from uploader.models import CofkLookupCatalogue
 from work import work_utils
 from work.forms import WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \
@@ -81,7 +80,7 @@ class BasicWorkFFH(FullFormHandler):
             'catalogue': self.safe_work.original_catalogue_id
         })
         self.catalogue_form.fields['catalogue'].widget.choices = [(None, '')] + [
-            (c.catalogue_id, c.catalogue_name) for c in CofkLookupCatalogue.objects.all()
+            (c.catalogue_code, c.catalogue_name) for c in CofkLookupCatalogue.objects.all()
         ]
 
     def create_context(self):
@@ -103,11 +102,11 @@ class BasicWorkFFH(FullFormHandler):
 
         # handle catalogue
         self.catalogue_form.is_valid()
-        cat_id = self.catalogue_form.cleaned_data.get('catalogue')
-        if cat_id and work.original_catalogue_id != cat_id:
+        cat_code = self.catalogue_form.cleaned_data.get('catalogue')
+        if cat_code and work.original_catalogue_id != cat_code:
             log.info('change original_catalogue_id from [{}] to [{}]'.format(
-                work.original_catalogue_id, cat_id))
-            work.original_catalogue_id = cat_id
+                work.original_catalogue_id, cat_code))
+            work.original_catalogue_id = cat_code
 
         if work.description != (cur_desc := work_utils.get_recref_display_name(work)):
             work.description = cur_desc

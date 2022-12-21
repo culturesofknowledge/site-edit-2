@@ -1,17 +1,14 @@
 import logging
-
 from typing import List, Type, Any
 
 from django.db import models
 
-from location.models import CofkCollectLocation
-from person.models import CofkCollectPerson
+from core.models import Iso639LanguageCode
 from uploader.constants import max_year, min_year
 from uploader.entities.entity import CofkEntity
-from uploader.models import CofkCollectUpload, Iso639LanguageCode
-from work.models import CofkCollectWork, CofkCollectLanguageOfWork, CofkCollectWorkResource, \
-    CofkCollectPersonMentionedInWork, CofkCollectAuthorOfWork, CofkCollectAddresseeOfWork, CofkCollectOriginOfWork, \
-    CofkCollectDestinationOfWork
+from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectAddresseeOfWork, \
+    CofkCollectAuthorOfWork, CofkCollectDestinationOfWork, CofkCollectLanguageOfWork, CofkCollectOriginOfWork, \
+    CofkCollectPersonMentionedInWork, CofkCollectWorkResource, CofkCollectLocation, CofkCollectPerson
 
 log = logging.getLogger(__name__)
 
@@ -176,7 +173,7 @@ class CofkWork(CofkEntity):
                 self.bulk_create(entities)
 
     def check_year(self, year_field: str, year: int):
-        if isinstance(year, int) and  not max_year >= year >= min_year:
+        if isinstance(year, int) and not max_year >= year >= min_year:
             self.add_error(f'{year_field}: is {year} but must be between {min_year} and {max_year}')
 
     def check_month(self, month_field: str, month: int):
@@ -198,9 +195,9 @@ class CofkWork(CofkEntity):
     # TODO check date ranges
 
     def get_latest_ids(self):
-        self.resource_id = CofkCollectWorkResource.objects.values_list('resource_id', flat=True)\
+        self.resource_id = CofkCollectWorkResource.objects.values_list('resource_id', flat=True) \
             .order_by('-resource_id').first()
-        self.author_id = CofkCollectAuthorOfWork.objects.values_list('author_id', flat=True)\
+        self.author_id = CofkCollectAuthorOfWork.objects.values_list('author_id', flat=True) \
             .order_by('-author_id').first()
         self.addressee_id = CofkCollectAddresseeOfWork.objects.values_list('addressee_id', flat=True) \
             .order_by('-addressee_id').first()
@@ -216,5 +213,3 @@ class CofkWork(CofkEntity):
     def get_id(self, id_type: str):
         setattr(self, id_type, getattr(self, id_type) + 1)
         return getattr(self, id_type)
-
-

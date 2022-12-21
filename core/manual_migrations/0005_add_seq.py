@@ -7,7 +7,8 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('uploader', '0001_initial'),
+        ('core', '0004_sync_old_schema'),
     ]
     operations = [
+        migrations_utils.create_operation_seq('iso_639_language_codes_id_seq')
     ]

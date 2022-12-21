@@ -1,6 +1,6 @@
 from django import forms
 
-from uploader.models import CofkCollectUpload
+from uploader.models import CofkCollectUpload, CofkCollectWork
 
 excelMimeTypes = ".xls," \
                  ".xlsx," \
@@ -17,3 +17,10 @@ class CofkCollectUploadForm(forms.ModelForm):
             'upload_file': forms.FileInput(attrs={'accept': excelMimeTypes,
                                                   'class': 'btn'})
         }
+
+
+class CofkCollectWorkForm(forms.ModelForm):
+    class Meta:
+        model = CofkCollectWork
+        fields = '__all__'
+        # exclude = ['_id']

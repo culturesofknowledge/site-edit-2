@@ -2,9 +2,9 @@ import logging
 from abc import ABC
 from typing import List
 
-from institution.models import CofkCollectInstitution, CofkUnionInstitution
 from uploader.entities.entity import CofkEntity
-from uploader.models import CofkCollectUpload
+from uploader.models import CofkCollectUpload, CofkCollectInstitution
+from institution.models import CofkUnionInstitution
 
 log = logging.getLogger(__name__)
 
@@ -38,4 +38,3 @@ class CofkRepositories(CofkEntity, ABC):
 
         if self.institutions:
             self.bulk_create(self.institutions)
-

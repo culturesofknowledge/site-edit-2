@@ -28,9 +28,8 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('audit', '0001_initial'),
-        ('location', '0002_initial'),
+        ('location', '0001_initial'),
         ('institution', '0001_initial'),
-        ('manifestation', '0001_initial'),
         ('manifestation', '0001_initial'),
         ('publication', '0001_initial'),
     ]
@@ -68,7 +67,7 @@ class Migration(migrations.Migration):
         'cofk_union_manifestation',
         'cofk_union_person',
         'cofk_union_publication',
-        'cofk_union_relationship',
+        # 'cofk_union_relationship',
         'cofk_union_relationship_type',
         'cofk_union_resource',
         # 'cofk_union_role_category',  # have no change_user

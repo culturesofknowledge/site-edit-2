@@ -88,7 +88,7 @@ class CofkUnionManifestation(models.Model, RecordTracker):
 
     # relation
     work = models.ForeignKey('work.CofkUnionWork', models.CASCADE, null=True)
-    images = models.ManyToManyField('uploader.CofkUnionImage')  # TOBEREMOVE replaced by CofkManifImageMap
+    images = models.ManyToManyField(to='core.CofkUnionImage', through='CofkManifImageMap')
 
     class Meta:
         db_table = 'cofk_union_manifestation'
@@ -100,34 +100,11 @@ class CofkUnionManifestation(models.Model, RecordTracker):
         return self.cofkmanifinstmap_set.filter(relationship_type=REL_TYPE_STORED_IN).first()
 
 
-class CofkCollectManifestation(models.Model):
-    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
-    manifestation_id = models.IntegerField()
-    iwork = models.ForeignKey('work.CofkCollectWork', models.DO_NOTHING)
-    # TODO Union manifestation doesn't really make sense
-    union_manifestation = models.ForeignKey(CofkUnionManifestation, models.DO_NOTHING, blank=True, null=True)
-    manifestation_type = models.CharField(max_length=3)
-    repository = models.ForeignKey('institution.CofkCollectInstitution', models.DO_NOTHING, blank=True, null=True)
-    id_number_or_shelfmark = models.CharField(max_length=500, blank=True, null=True)
-    printed_edition_details = models.TextField(blank=True, null=True)
-    manifestation_notes = models.TextField(blank=True, null=True)
-    image_filenames = models.TextField(blank=True, null=True)
-    upload_name = models.CharField(max_length=254, blank=True, null=True)
-    _id = models.CharField(max_length=32, blank=True, null=True)
-
-    class Meta:
-        db_table = 'cofk_collect_manifestation'
-        unique_together = (('upload', 'iwork_id', 'manifestation_id'),)
-
-    def __str__(self):
-        return f'Manifestation #{self.manifestation_id}'
-
-
 class CofkUnionLanguageOfManifestation(models.Model):
     lang_manif_id = models.AutoField(primary_key=True)
     manifestation = models.ForeignKey(CofkUnionManifestation, models.DO_NOTHING,
                                       related_name='language_set')
-    language_code = models.ForeignKey('uploader.Iso639LanguageCode', models.DO_NOTHING,
+    language_code = models.ForeignKey('core.Iso639LanguageCode', models.DO_NOTHING,
                                       db_column='language_code',
                                       to_field='code_639_3'
                                       )
@@ -136,17 +113,6 @@ class CofkUnionLanguageOfManifestation(models.Model):
     class Meta:
         db_table = 'cofk_union_language_of_manifestation'
         unique_together = (('manifestation', 'language_code'),)
-
-
-class CofkCollectImageOfManif(models.Model):
-    upload = models.ForeignKey('uploader.CofkCollectUpload', models.DO_NOTHING)
-    manifestation_id = models.IntegerField()
-    image_filename = models.CharField(max_length=2000)
-    _id = models.CharField(max_length=32, blank=True, null=True)
-    iwork_id = models.IntegerField(blank=True, null=True)
-
-    class Meta:
-        db_table = 'cofk_collect_image_of_manif'
 
 
 class CofkManifManifMap(Recref):
@@ -171,7 +137,7 @@ class CofkManifInstMap(Recref):
 
 class CofkManifImageMap(Recref):
     manif = models.ForeignKey(CofkUnionManifestation, on_delete=models.CASCADE)
-    image = models.ForeignKey('uploader.CofkUnionImage', on_delete=models.CASCADE)
+    image = models.ForeignKey('core.CofkUnionImage', on_delete=models.CASCADE)
 
     class Meta(Recref.Meta):
         db_table = 'cofk_manif_image_map'

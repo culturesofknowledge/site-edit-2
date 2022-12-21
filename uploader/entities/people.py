@@ -2,9 +2,9 @@ import logging
 from abc import ABC
 from typing import List
 
-from person.models import CofkCollectPerson, CofkUnionPerson
+from person.models import CofkUnionPerson
 from uploader.entities.entity import CofkEntity
-from uploader.models import CofkCollectUpload
+from uploader.models import CofkCollectUpload, CofkCollectPerson
 
 log = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ class CofkPeople(CofkEntity, ABC):
 
         for index, row in enumerate(self.iter_rows(), start=1 + self.sheet.header_length):
             per_dict = self.get_row(row, index)
-            self.check_required(per_dict )
+            self.check_required(per_dict)
             self.check_data_types(per_dict)
 
             if not self.errors:
@@ -28,7 +28,8 @@ class CofkPeople(CofkEntity, ABC):
                                       'primary_name': name,
                                       'union_iperson': CofkUnionPerson.objects.filter(iperson_id=_id).first(),
                                       'upload': upload,
-                                      'editors_notes': per_dict['editors_notes'] if 'editors_notes' in per_dict else None}
+                                      'editors_notes': per_dict[
+                                          'editors_notes'] if 'editors_notes' in per_dict else None}
                             self.people.append(CofkCollectPerson(**person))
                             self.ids.append(_id)
                         else:

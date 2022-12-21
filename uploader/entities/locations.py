@@ -4,9 +4,9 @@ from typing import List, Generator, Tuple
 
 from openpyxl.cell import Cell
 
-from location.models import CofkCollectLocation, CofkUnionLocation
+from location.models import CofkUnionLocation
 from uploader.entities.entity import CofkEntity
-from uploader.models import CofkCollectUpload
+from uploader.models import CofkCollectUpload, CofkCollectLocation
 
 log = logging.getLogger(__name__)
 

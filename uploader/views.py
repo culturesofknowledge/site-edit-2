@@ -3,25 +3,21 @@ import os
 import time
 from zipfile import BadZipFile
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.files.storage import default_storage
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
 from django.utils import timezone
 
-from institution.models import CofkCollectInstitution
-from location.models import CofkCollectLocation
-from manifestation.models import CofkCollectManifestation
-from person.models import CofkCollectPerson
 from uploader.forms import CofkCollectUploadForm
-from django.conf import settings
-
-from uploader.models import CofkCollectUpload
+from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectAddresseeOfWork, CofkCollectAuthorOfWork, \
+    CofkCollectDestinationOfWork, CofkCollectLanguageOfWork, CofkCollectOriginOfWork, CofkCollectPersonMentionedInWork, \
+    CofkCollectWorkResource, CofkCollectInstitution, CofkCollectLocation, CofkCollectManifestation, CofkCollectPerson
 from uploader.review.review import accept_work, reject_work, accept_works, reject_works
 from uploader.spreadsheet import CofkUploadExcelFile
 from uploader.validation import CofkExcelFileError
 
-from work.models import CofkCollectWork, CofkCollectAuthorOfWork, CofkCollectAddresseeOfWork, CofkCollectLanguageOfWork, CofkCollectPersonMentionedInWork, CofkCollectWorkResource, CofkCollectDestinationOfWork, CofkCollectOriginOfWork
 log = logging.getLogger(__name__)
 
 

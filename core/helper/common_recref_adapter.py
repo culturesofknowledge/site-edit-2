@@ -5,12 +5,11 @@ from typing import Type, Iterable
 from django.db import models
 
 from core.helper import recref_utils, model_utils
-from core.models import Recref, CofkUnionComment, CofkUnionResource
+from core.models import Recref, CofkUnionComment, CofkUnionResource, CofkUnionImage
 from location import location_utils
 from location.models import CofkUnionLocation
 from person import person_utils
 from person.models import CofkUnionPerson
-from uploader.models import CofkUnionImage
 
 log = logging.getLogger(__name__)
 

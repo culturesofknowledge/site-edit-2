@@ -9,61 +9,6 @@ from core.models import Recref
 SEQ_NAME_COFKUNIONPERSION__IPERSON_ID = 'cofk_union_person_iperson_id_seq'
 
 
-class CofkCollectPerson(models.Model):
-    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
-    iperson_id = models.IntegerField(blank=True, null=True)
-    # KTODO temporary related_name
-    union_iperson = models.ForeignKey('CofkUnionPerson', models.DO_NOTHING, blank=True, null=True,
-                                      related_name='union_collect_persons')
-    person_id = models.CharField(max_length=100)
-    #person = models.ForeignKey('CofkUnionPerson', models.DO_NOTHING, blank=True, null=True,
-    #                           related_name='collect_persons')
-    primary_name = models.CharField(max_length=200)
-    alternative_names = models.TextField(blank=True, null=True)
-    roles_or_titles = models.TextField(blank=True, null=True)
-    gender = models.CharField(max_length=1)
-    is_organisation = models.CharField(max_length=1)
-    organisation_type = models.IntegerField(blank=True, null=True)
-    date_of_birth_year = models.IntegerField(blank=True, null=True)
-    date_of_birth_month = models.IntegerField(blank=True, null=True)
-    date_of_birth_day = models.IntegerField(blank=True, null=True)
-    date_of_birth_is_range = models.SmallIntegerField(default=0)
-    date_of_birth2_year = models.IntegerField(blank=True, null=True)
-    date_of_birth2_month = models.IntegerField(blank=True, null=True)
-    date_of_birth2_day = models.IntegerField(blank=True, null=True)
-    date_of_birth_inferred = models.SmallIntegerField(default=0)
-    date_of_birth_uncertain = models.SmallIntegerField(default=0)
-    date_of_birth_approx = models.SmallIntegerField(default=0)
-    date_of_death_year = models.IntegerField(blank=True, null=True)
-    date_of_death_month = models.IntegerField(blank=True, null=True)
-    date_of_death_day = models.IntegerField(blank=True, null=True)
-    date_of_death_is_range = models.SmallIntegerField(default=0)
-    date_of_death2_year = models.IntegerField(blank=True, null=True)
-    date_of_death2_month = models.IntegerField(blank=True, null=True)
-    date_of_death2_day = models.IntegerField(blank=True, null=True)
-    date_of_death_inferred = models.SmallIntegerField(default=0)
-    date_of_death_uncertain = models.SmallIntegerField(default=0)
-    date_of_death_approx = models.SmallIntegerField(default=0)
-    flourished_year = models.IntegerField(blank=True, null=True)
-    flourished_month = models.IntegerField(blank=True, null=True)
-    flourished_day = models.IntegerField(blank=True, null=True)
-    flourished_is_range = models.SmallIntegerField(default=0)
-    flourished2_year = models.IntegerField(blank=True, null=True)
-    flourished2_month = models.IntegerField(blank=True, null=True)
-    flourished2_day = models.IntegerField(blank=True, null=True)
-    notes_on_person = models.TextField(blank=True, null=True)
-    editors_notes = models.TextField(blank=True, null=True)
-    upload_name = models.CharField(max_length=254, blank=True, null=True)
-    _id = models.CharField(max_length=32, blank=True, null=True)
-
-    class Meta:
-        db_table = 'cofk_collect_person'
-        unique_together = (('upload', 'iperson_id'),)
-
-    def __str__(self):
-        return str(self.union_iperson) if self.union_iperson is not None else f'{self.primary_name} (collect)'
-
-
 class CofkUnionPerson(models.Model, RecordTracker):
     person_id = models.CharField(primary_key=True, max_length=100)
     foaf_name = models.CharField(max_length=200)
@@ -96,7 +41,7 @@ class CofkUnionPerson(models.Model, RecordTracker):
     change_user = models.CharField(max_length=50)
     editors_notes = models.TextField(blank=True, null=True)
     further_reading = models.TextField(blank=True, null=True)
-    organisation_type = models.ForeignKey('uploader.CofkUnionOrgType', models.DO_NOTHING, db_column='organisation_type',
+    organisation_type = models.ForeignKey('core.CofkUnionOrgType', models.DO_NOTHING, db_column='organisation_type',
                                           blank=True, null=True)
     date_of_birth_calendar = models.CharField(max_length=2)
     date_of_birth_is_range = models.SmallIntegerField(default=0)
@@ -126,7 +71,7 @@ class CofkUnionPerson(models.Model, RecordTracker):
                                        through='person.CofkPersonLocationMap',
                                        through_fields=('person', 'location'))
 
-    images = models.ManyToManyField('uploader.CofkUnionImage')
+    images = models.ManyToManyField(to='core.CofkUnionImage', through='CofkPersonImageMap')
 
     @property
     def comments(self):
@@ -178,7 +123,7 @@ class CofkPersonResourceMap(Recref):
 
 class CofkPersonImageMap(Recref):
     person = models.ForeignKey(CofkUnionPerson, on_delete=models.CASCADE)
-    image = models.ForeignKey('uploader.CofkUnionImage', on_delete=models.CASCADE)
+    image = models.ForeignKey('core.CofkUnionImage', on_delete=models.CASCADE)
 
     class Meta(Recref.Meta):
         db_table = 'cofk_person_image_map'
@@ -186,34 +131,10 @@ class CofkPersonImageMap(Recref):
 
 class CofkPersonRoleMap(Recref):
     person = models.ForeignKey(CofkUnionPerson, on_delete=models.CASCADE)
-    role = models.ForeignKey('uploader.CofkUnionRoleCategory', on_delete=models.CASCADE)
+    role = models.ForeignKey('core.CofkUnionRoleCategory', on_delete=models.CASCADE)
 
     class Meta(Recref.Meta):
         db_table = 'cofk_person_role_map'
-
-
-class CofkCollectOccupationOfPerson(models.Model):
-    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
-    occupation_of_person_id = models.IntegerField()
-    iperson_id = models.IntegerField()
-    occupation = models.ForeignKey('uploader.CofkUnionRoleCategory', models.DO_NOTHING)
-
-    class Meta:
-        db_table = 'cofk_collect_occupation_of_person'
-        unique_together = (('upload', 'occupation_of_person_id'),)
-
-
-class CofkCollectPersonResource(models.Model):
-    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
-    resource_id = models.IntegerField()
-    iperson_id = models.IntegerField()
-    resource_name = models.TextField()
-    resource_details = models.TextField()
-    resource_url = models.TextField()
-
-    class Meta:
-        db_table = 'cofk_collect_person_resource'
-        unique_together = (('upload', 'resource_id'),)
 
 
 class CofkUnionPersonSummary(models.Model):
