@@ -242,10 +242,8 @@ class GeneralSearchFieldset(forms.Form):
     title = 'General'
     template_name = 'person/component/person_search_fieldset.html'
 
-    iperson_id = forms.IntegerField(required=False)
-    iperson_id_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
-
-    foaf_name = forms.CharField(required=False)
+    foaf_name = forms.CharField(required=False, label='Names and titles/roles',
+                                help_text="Primary name normally in 'surname, forename' format, followed by alternative names and titles or roles/professions. Roles and professions may have been entered as free text and/or as a list of standard categories (see below):")
     foaf_name_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     birth_year_from = form_utils.create_year_field()
@@ -278,11 +276,16 @@ class GeneralSearchFieldset(forms.Form):
     further_reading = forms.CharField(required=False)
     further_reading_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    change_timestamp_from = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
-    change_timestamp_to = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
+    change_timestamp_from = forms.CharField(required=False, widget=widgets_utils.NewDateInput())
+    change_timestamp_to = forms.CharField(required=False, widget=widgets_utils.NewDateInput())
+    change_timestamp_info = form_utils.datetime_search_info
 
-    change_user = forms.CharField(required=False)
+    change_user = forms.CharField(required=False, label='Last edited by',
+                                  help_text='Username of the person who last changed the record.')
     change_user_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    iperson_id = forms.IntegerField(required=False)
+    iperson_id_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
 
 class PersonOtherRelationChoices(TextChoices):

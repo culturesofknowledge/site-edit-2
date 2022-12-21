@@ -267,17 +267,17 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
-            # ('names_and_titles', 'Names and titles / roles',), TODO this is in a view cofk_union_person_view
+            ('foaf_name', 'Name',),  # TODO this is in a view cofk_union_person_view
             ('date_of_birth', 'Born',),
             ('date_of_death', 'Died',),
             ('flourished', 'Flourished',),
             ('gender', 'Gender',),
             ('is_organisation', 'Person or group?',),
             ('org_type', 'Type of group',),
-            ('sent', 'Sent',),
-            ('recd', 'Rec\'d',),
-            ('all_works', 'Sent or Rec\'d',),
-            ('mentioned', 'Mentioned',),
+            # ('sent', 'Sent',),
+            # ('recd', 'Rec\'d',),
+            # ('all_works', 'Sent or Rec\'d',),
+            # ('mentioned', 'Mentioned',),
             ('editors_notes', 'Editors\' notes',),
             ('further_reading', 'Further reading',),
             ('images', 'Images',),

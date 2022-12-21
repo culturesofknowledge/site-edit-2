@@ -66,20 +66,31 @@ class CofkUnionPerson(models.Model, RecordTracker):
     flourished_inferred = models.SmallIntegerField(default=0)
     flourished_uncertain = models.SmallIntegerField(default=0)
     flourished_approx = models.SmallIntegerField(default=0)
-
-    locations = models.ManyToManyField('location.CofkUnionLocation',
+    locations = models.ManyToManyField(to='location.CofkUnionLocation',
                                        through='person.CofkPersonLocationMap',
                                        through_fields=('person', 'location'))
-
-    images = models.ManyToManyField(to='core.CofkUnionImage', through='CofkPersonImageMap')
+    images = models.ManyToManyField(to='uploader.CofkUnionImage',
+                                    through='CofkPersonImageMap')
+    resources = models.ManyToManyField(to='core.CofkUnionResource',
+                                       through='CofkPersonResourceMap')
+    comments = models.ManyToManyField(to='core.CofkUnionComment',
+                                      through='CofkPersonCommentMap')
 
     @property
-    def comments(self):
-        return self.cofkpersoncommentmap_set.all()
+    def names_and_roles(self):
+        # Adapted from public.cofk_union_person_view
+        names_and_roles = self.foaf_name
 
-    @property
-    def resources(self):
-        return self.cofkpersonresourcemap_set.all()
+        if self.skos_altlabel:
+            names_and_roles += f' ~ Synonyms: {self.skos_altlabel}'
+
+        if self.person_aliases:
+            names_and_roles += f' ~ Titles/roles: {self.person_aliases}'
+
+        if self.summary.role_categories:
+            names_and_roles += f' ~ Role types: {self.summary.role_categories}'
+
+        return names_and_roles
 
     class Meta:
         db_table = 'cofk_union_person'
@@ -138,7 +149,7 @@ class CofkPersonRoleMap(Recref):
 
 
 class CofkUnionPersonSummary(models.Model):
-    iperson = models.OneToOneField(CofkUnionPerson, models.DO_NOTHING, primary_key=True)
+    iperson = models.OneToOneField(CofkUnionPerson, models.DO_NOTHING, primary_key=True, related_name='summary')
     other_details_summary = models.TextField(blank=True, null=True)
     other_details_summary_searchable = models.TextField(blank=True, null=True)
     sent = models.IntegerField()
