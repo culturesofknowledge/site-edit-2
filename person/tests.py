@@ -1,6 +1,7 @@
 from selenium.webdriver.common.by import By
 
 import person.fixtures
+from core import constant
 from core.helper import selenium_utils, model_utils
 from person.models import CofkUnionPerson
 from siteedit2.utils import test_utils
@@ -8,7 +9,7 @@ from siteedit2.utils.test_utils import EmloSeleniumTestCase, simple_test_create_
     CommentM2MTester, CommonSearchTests
 
 
-class PersonInitFormTest(EmloSeleniumTestCase):
+class PersonFormTest(EmloSeleniumTestCase):
 
     def create_full_form_url(self, iperson_id):
         return self.get_url_by_viewname('person:full_form', iperson_id=iperson_id)
@@ -25,8 +26,8 @@ class PersonInitFormTest(EmloSeleniumTestCase):
                          person.fixtures.person_min_dict_a.get('foaf_name'))
 
     def test_full_form__GET_simple(self):
-        pson_a = CofkUnionPerson(**person.fixtures.person_dict_a)
-        pson_a.save()
+        pson_a = test_utils.create_person_by_dict()
+
         url = self.create_full_form_url(pson_a.iperson_id)
         test_utils.simple_test_full_form__GET(
             self, pson_a,
@@ -64,6 +65,36 @@ class PersonInitFormTest(EmloSeleniumTestCase):
         self.assertEqual(pson_a.further_reading, new_further_reading)
 
         m2m_tester.assert_after_update()
+
+    def test_recref(self):
+        pson_a = test_utils.create_person_by_dict()
+        test_utils.create_location_by_dict()
+
+        form_url = self.create_full_form_url(pson_a.iperson_id)
+        test_cases = [
+            dict(recref_form_name='new_other_loc',
+                 target_obj=pson_a,
+                 related_manager=pson_a.cofkpersonlocationmap_set,
+                 expected_rel_type=constant.REL_TYPE_WAS_IN_LOCATION,
+                 form_url=form_url, ),
+            dict(recref_form_name='death_place',
+                 target_obj=pson_a,
+                 related_manager=pson_a.cofkpersonlocationmap_set,
+                 expected_rel_type=constant.REL_TYPE_DIED_AT_LOCATION,
+                 form_url=form_url, ),
+            dict(recref_form_name='new_parent',
+                 target_obj=pson_a,
+                 related_manager=pson_a.active_relationships,
+                 expected_rel_type=constant.REL_TYPE_PARENT_OF,
+                 form_url=form_url, ),
+
+            dict(recref_form_name='new_protege',
+                 target_obj=pson_a,
+                 related_manager=pson_a.active_relationships,
+                 expected_rel_type=constant.REL_TYPE_WAS_PATRON_OF,
+                 form_url=form_url, ),
+        ]
+        test_utils.run_recref_test_by_test_cases(self, test_cases)
 
 
 def prepare_person_records() -> list[CofkUnionPerson]:

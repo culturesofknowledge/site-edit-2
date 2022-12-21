@@ -8,13 +8,18 @@ from django.db import models
 from django.db.models import Model
 from django.urls import reverse
 from selenium import webdriver
+from selenium.common import NoSuchElementException
 from selenium.webdriver import DesiredCapabilities
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 
 import core.fixtures
+import location.fixtures
+import person.fixtures
 from core.helper.view_utils import BasicSearchView
+from location.models import CofkUnionLocation
 from login.models import CofkUser
+from person.models import CofkUnionPerson
 
 log = logging.getLogger(__name__)
 
@@ -93,6 +98,9 @@ class EmloSeleniumTestCase(StaticLiveServerTestCase):
     def js_click(self, selector):
         script = f"document.querySelector('{selector}').click(); "
         self.selenium.execute_script(script)
+
+    def switch_to_new_window_on_completed(self):
+        return SwitchToNewWindow(self.selenium)
 
 
 def get_selected_radio_val(elements):
@@ -320,3 +328,78 @@ class FieldValTester:
         for field_name, expected_val in self.field_values:
             with self.test_case.subTest(field_name=field_name):
                 self.test_case.assertEqual(getattr(model, field_name), expected_val)
+
+
+def create_person_by_dict(pson_dict: dict = None) -> CofkUnionPerson:
+    pson_dict = pson_dict or person.fixtures.person_dict_a
+    pson_a = CofkUnionPerson(**pson_dict)
+    pson_a.save()
+    return pson_a
+
+
+def create_location_by_dict(loc_dict: dict = None) -> CofkUnionLocation:
+    loc_dict = loc_dict or location.fixtures.location_dict_a
+    loc_a = CofkUnionLocation(**loc_dict)
+    loc_a.save()
+    return loc_a
+
+
+class SwitchToNewWindow:
+    def __init__(self, driver):
+        self.driver = driver
+        self.window_handlers = set()
+
+    def __enter__(self):
+        self.window_handlers = set(self.driver.window_handles)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        new_win_set = set(self.driver.window_handles) - self.window_handlers
+        if not new_win_set:
+            raise RuntimeError(f'No new windows found [{self.driver.window_handles}] ')
+        self.driver.switch_to.window(list(new_win_set)[0])
+
+
+def run_recref_test(test_case: EmloSeleniumTestCase, recref_form_name,
+                    target_obj, related_manager, expected_rel_type, form_url):
+    n_org_recref = related_manager.count()
+    org_id_list = {i.pk for i in related_manager.all()}
+
+    test_case.selenium.get(form_url)
+
+    # select record
+    try:
+        _selector = f'#id_{recref_form_name}-target_id_select_btn'
+        test_case.find_element_by_css(_selector)
+    except NoSuchElementException:
+        _selector = f'#id_{recref_form_name}_select_btn'
+    with test_case.switch_to_new_window_on_completed():
+        test_case.js_click(_selector)
+    test_case.find_element_by_css('.selectable_entry').click()
+    test_case.find_element_by_css('#ok_btn').click()
+    test_case.selenium.switch_to.window(test_case.selenium.window_handles[0])
+
+    # check item selected
+    try:
+        _selector = f'#id_{recref_form_name}-target_id'
+        test_case.find_element_by_css(_selector)
+    except NoSuchElementException:
+        _selector = f'#id_{recref_form_name}'
+    selected_id = test_case.find_element_by_css(_selector).get_attribute('value')
+    test_case.assertTrue(selected_id)
+
+    # submit
+    test_case.click_submit()
+    target_obj.refresh_from_db()
+
+    #  assert
+    test_case.assertEqual(related_manager.count(),
+                          n_org_recref + 1)
+    new_recref = related_manager.exclude(pk__in=org_id_list).first()
+    test_case.assertIsNotNone(new_recref)
+    test_case.assertEqual(new_recref.relationship_type, expected_rel_type)
+
+
+def run_recref_test_by_test_cases(emlo_test: EmloSeleniumTestCase, test_cases: Iterable[dict]):
+    for test_case in test_cases:
+        with emlo_test.subTest(recref=test_case['recref_form_name']):
+            run_recref_test(emlo_test, **test_case)
