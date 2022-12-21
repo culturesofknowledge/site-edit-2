@@ -1,0 +1,28 @@
+{% load cl_filters %}
+
+<div class="row row--centered pagination">
+    <ul>
+        {% if page.has_previous %}
+            <a href="?page=1">&laquo; first</a>
+            <a href="?page={{ page.previous_page_number }}">previous</a>
+        {% endif %}
+
+        {% for i in page|get_elided_page_range %}
+        {% if page.number == i %}
+            <li class="active page-item"><span class="page-link">{{ i }} <span class="sr-only">(current)</span></span>
+            </li>
+        {% else %}
+            {% if i == page.paginator.ELLIPSIS %}
+                <li class="page-item"><span class="page-link">{{ i }}</span></li>
+            {% else %}
+                <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+            {% endif %}
+        {% endif %}
+        {% endfor %}
+
+        {% if page.has_next %}
+            <a href="?page={{ page.next_page_number }}">next</a>
+            <a href="?page={{ page.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+    </ul>
+</div>
