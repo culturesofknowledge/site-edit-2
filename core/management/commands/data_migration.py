@@ -528,4 +528,7 @@ def data_migration(user, password, database, host, port):
     CofkUnionAuditLiteral.objects.all().delete()
     CofkUnionAuditRelationship.objects.all().delete()
 
+    # clone audit
+    clone_rows_by_model_class(conn, CofkUnionAuditLiteral)
+
     conn.close()
