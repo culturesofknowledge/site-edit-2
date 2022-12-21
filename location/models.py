@@ -28,7 +28,7 @@ class CofkUnionLocation(models.Model, RecordTracker):
     uuid = models.UUIDField(blank=True, null=True)
     comments = models.ManyToManyField('core.CofkUnionComment', through='CofkLocationCommentMap')
     resources = models.ManyToManyField('core.CofkUnionResource', through='CofkLocationResourceMap')
-    images = models.ManyToManyField('uploader.CofkUnionImage', through='CofkLocationImageMap')
+    images = models.ManyToManyField('core.CofkUnionImage', through='CofkLocationImageMap')
 
     @property
     def sent(self):

@@ -69,7 +69,7 @@ class CofkUnionPerson(models.Model, RecordTracker):
     locations = models.ManyToManyField(to='location.CofkUnionLocation',
                                        through='person.CofkPersonLocationMap',
                                        through_fields=('person', 'location'))
-    images = models.ManyToManyField(to='uploader.CofkUnionImage',
+    images = models.ManyToManyField(to='core.CofkUnionImage',
                                     through='CofkPersonImageMap')
     resources = models.ManyToManyField(to='core.CofkUnionResource',
                                        through='CofkPersonResourceMap')
