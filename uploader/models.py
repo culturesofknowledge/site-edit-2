@@ -64,7 +64,7 @@ class CofkCollectToolSession(models.Model):
 class CofkCollectLocation(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     location_id = models.IntegerField()
-    union_location = models.ForeignKey('CofkUnionLocation', models.DO_NOTHING, blank=True, null=True)
+    union_location = models.ForeignKey('location.CofkUnionLocation', models.DO_NOTHING, blank=True, null=True)
     location_name = models.CharField(max_length=500, default='')
     element_1_eg_room = models.CharField(max_length=100, default='')
     element_2_eg_building = models.CharField(max_length=100, default='')
@@ -265,7 +265,7 @@ class CofkCollectWorkSummary(models.Model):
 class CofkCollectInstitution(models.Model):
     upload = models.ForeignKey("uploader.CofkCollectUpload", on_delete=models.CASCADE)
     institution_id = models.IntegerField()
-    union_institution = models.ForeignKey('CofkUnionInstitution', models.DO_NOTHING, blank=True, null=True)
+    union_institution = models.ForeignKey('institution.CofkUnionInstitution', models.DO_NOTHING, blank=True, null=True)
     institution_name = models.TextField(default='')
     institution_city = models.TextField(default='')
     institution_country = models.TextField(default='')
