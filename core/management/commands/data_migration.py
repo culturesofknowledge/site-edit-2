@@ -90,7 +90,6 @@ def clone_rows_by_model_class(conn, model_class: Type[Model],
     rows = (model_class(**r) for r in rows)
     rows = itertools.filterfalse(check_duplicate_fn, rows)
     rows = map(record_counter, rows)
-    rows = map(__debug, rows)
     model_class.objects.bulk_create(rows, batch_size=500)
     log_save_records(f'{model_class.__module__}.{model_class.__name__}',
                      record_counter.cur_size(),
@@ -109,10 +108,6 @@ def clone_rows_by_model_class(conn, model_class: Type[Model],
             new_val = max_pk + new_val
 
         cur_conn.cursor().execute(f"select setval('{seq_name}', {new_val})")
-
-
-def __debug(i):
-    return i
 
 
 def log_save_records(target, size, used_sec):
