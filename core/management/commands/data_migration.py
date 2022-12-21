@@ -128,13 +128,15 @@ class Command(BaseCommand):
         parser.add_argument('-d', '--database')
         parser.add_argument('-o', '--host')
         parser.add_argument('-t', '--port')
+        parser.add_argument('-a', '--include-audit', action='store_true', default=False)
 
     def handle(self, *args, **options):
         data_migration(user=options['user'],
                        password=options['password'],
                        database=options['database'],
                        host=options['host'],
-                       port=options['port'])
+                       port=options['port'],
+                       include_audit=options['include_audit'], )
 
 
 def create_common_relation_col_name(table_name):
@@ -457,7 +459,7 @@ def clone_recref_simple_by_field_pairs(conn,
         clone_recref_simple(conn, left_field, right_field)
 
 
-def data_migration(user, password, database, host, port):
+def data_migration(user, password, database, host, port, include_audit=False):
     warnings.filterwarnings('ignore',
                             '.*DateTimeField .+ received a naive datetime .+ while time zone support is active.*')
 
@@ -529,6 +531,7 @@ def data_migration(user, password, database, host, port):
     CofkUnionAuditRelationship.objects.all().delete()
 
     # clone audit
-    clone_rows_by_model_class(conn, CofkUnionAuditLiteral)
+    if include_audit:
+        clone_rows_by_model_class(conn, CofkUnionAuditLiteral)
 
     conn.close()
