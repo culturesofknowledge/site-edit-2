@@ -38,10 +38,12 @@
                 {% else %}
                     <h2>{{ total_record | floatformat:'g' }} {{ total_record|pluralize:entity }} found</h2>
 
-
-
                     <!-- Search components (e.g. sort by, records per page) -->
                     {{ search_components }}
+
+                    <!-- Upper pagination -->
+
+                    {% include 'core/component/pagination.html' %}
 
                     <!-- search function toolbar (e.g. download output, compact, expanded)  -->
                     <aside class="margin-bottom row">
@@ -89,7 +91,7 @@
 
                     {{ results_renderer | safe }}
 
-                    <!-- Pagination -->
+                    <!-- Lower pagination -->
 
                     {% include 'core/component/pagination.html' %}
 

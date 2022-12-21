@@ -11,7 +11,7 @@
 
 <hr/>
 
-{% include "uploader/component/pagination.html" with entity='works' page=works_page page_range=works_page_range %}
+{% include "core/component/pagination.html" with entity='works' page_obj=works_page %}
 
 {% for work in works_page %}
     <div style="margin: 1em;">
@@ -262,4 +262,4 @@
 {% endfor %}
 
 
-{% include "uploader/component/pagination.html" with entity='works' page=works_page page_range=works_page_range %}
+{% include "core/component/pagination.html" with entity='works' page_obj=works_page %}
