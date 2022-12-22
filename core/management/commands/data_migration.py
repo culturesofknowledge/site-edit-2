@@ -483,6 +483,7 @@ def clone_recref_simple_by_field_pairs(conn,
 
 
 def data_migration(user, password, database, host, port, include_audit=False):
+    start_migrate = time.time()
     warnings.filterwarnings('ignore',
                             '.*DateTimeField .+ received a naive datetime .+ while time zone support is active.*')
 
@@ -586,3 +587,5 @@ def data_migration(user, password, database, host, port, include_audit=False):
         clone_rows_by_model_class(conn, CofkUnionAuditLiteral)
 
     conn.close()
+
+    print(f'total sec: {time.time() - start_migrate:,.0f}s')
