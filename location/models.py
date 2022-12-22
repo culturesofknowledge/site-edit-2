@@ -44,7 +44,6 @@ class CofkUnionLocation(models.Model, RecordTracker):
     def sent_received(self):
         return self.sent + self.received
 
-
     def __str__(self):
         return self.location_name
 

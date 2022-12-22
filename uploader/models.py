@@ -90,7 +90,7 @@ class CofkCollectLocation(models.Model):
 
 
 class CofkCollectLocationResource(models.Model):
-    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
+    upload = models.ForeignKey('uploader.CofkCollectUpload', models.DO_NOTHING)
     resource_id = models.IntegerField()
     location_id = models.IntegerField()
     resource_name = models.TextField()
@@ -140,7 +140,7 @@ class CofkCollectPerson(models.Model):
     iperson_id = models.IntegerField(blank=True, null=True)
     union_iperson = models.ForeignKey('person.CofkUnionPerson', models.DO_NOTHING, blank=True, null=True,
                                       related_name='union_collect_persons')
-    person_id = models.CharField(max_length=100)
+    person_id = models.CharField(max_length=100, null=True)
     # person = models.ForeignKey('CofkUnionPerson', models.DO_NOTHING, blank=True, null=True,
     #                           related_name='collect_persons')
     primary_name = models.CharField(max_length=200)
@@ -190,7 +190,7 @@ class CofkCollectPerson(models.Model):
 
 
 class CofkCollectOccupationOfPerson(models.Model):
-    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
+    upload = models.ForeignKey('uploader.CofkCollectUpload', models.DO_NOTHING)
     occupation_of_person_id = models.IntegerField()
     iperson_id = models.IntegerField()
     occupation = models.ForeignKey('core.CofkUnionRoleCategory', models.DO_NOTHING)
@@ -201,7 +201,7 @@ class CofkCollectOccupationOfPerson(models.Model):
 
 
 class CofkCollectPersonResource(models.Model):
-    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
+    upload = models.ForeignKey('uploader.CofkCollectUpload', models.DO_NOTHING)
     resource_id = models.IntegerField()
     iperson_id = models.IntegerField()
     resource_name = models.TextField()
@@ -214,8 +214,8 @@ class CofkCollectPersonResource(models.Model):
 
 
 class CofkCollectWorkSummary(models.Model):
-    upload = models.OneToOneField('uploader.CofkCollectWork', models.DO_NOTHING, primary_key=True)
-    work_id_in_tool = models.IntegerField()
+    upload = models.ForeignKey('uploader.CofkCollectUpload', models.DO_NOTHING)
+    work_id_in_tool = models.OneToOneField('uploader.CofkCollectWork', models.DO_NOTHING)
     source_of_data = models.CharField(max_length=250, blank=True, null=True)
     notes_on_letter = models.TextField(blank=True, null=True)
     date_of_work = models.CharField(max_length=32, blank=True, null=True)
@@ -285,7 +285,7 @@ class CofkCollectInstitution(models.Model):
 
 
 class CofkCollectInstitutionResource(models.Model):
-    upload = models.OneToOneField('uploader.CofkCollectUpload', models.DO_NOTHING)
+    upload = models.ForeignKey('uploader.CofkCollectUpload', models.DO_NOTHING)
     resource_id = models.IntegerField()
     institution_id = models.IntegerField()
     resource_name = models.TextField()
