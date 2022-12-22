@@ -379,24 +379,12 @@ def _val_handler_upload__upload_status(row: dict, conn):
     return row
 
 
-person_mappings = {}
-
-
 def _val_handler_person__organisation_type(row: dict, conn):
     if row['organisation_type']:
         row['organisation_type'] = CofkUnionOrgType.objects.get(pk=row['organisation_type'])
     else:
         row['organisation_type'] = None
 
-    person_mappings[row['iperson_id']] = row['person_id']
-
-    return row
-
-
-def _val_handler_create_summary(row: dict, conn):
-    # CofkUnionPersonSummary links to primary key in CofkUnionPerson which is person_id
-    person_id = person_mappings[row['iperson_id']]
-    row['iperson_id'] = person_id
     return row
 
 
@@ -552,15 +540,7 @@ def data_migration(user, password, database, host, port, include_audit=False):
         int_pk_col_name='iperson_id',
     )
 
-    new_person_list = CofkUnionPerson.objects.values_list('person_id', 'iperson_id').all()
-    for person_ids in new_person_list:
-        new_person_ids[person_ids[0]] = person_ids[1]
-
-    clone_rows_by_model_class(
-        conn, CofkUnionPersonSummary,
-        col_val_handler_fn_list=[_val_handler_create_summary,
-                                 ],
-        seq_name=None)
+    clone_rows_by_model_class(conn, CofkUnionPersonSummary, seq_name=None)
 
     clone_rows_by_model_class(conn, CofkCollectPerson,
                               col_val_handler_fn_list=[_val_handler_union_person])
