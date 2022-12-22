@@ -435,13 +435,6 @@ def _val_handler_collect_person(row: dict, conn):
     return row
 
 
-def _val_handler_union_person(row: dict, conn):
-    if union_person := CofkUnionPerson.objects.filter(iperson_id=row['union_iperson_id']).first():
-        row['union_iperson_id'] = union_person.pk
-
-    return row
-
-
 def _val_handler_collect_work(row: dict, conn):
     row['upload_status_id'] = row.pop('upload_status')
 
@@ -542,8 +535,7 @@ def data_migration(user, password, database, host, port, include_audit=False):
 
     clone_rows_by_model_class(conn, CofkUnionPersonSummary, seq_name=None)
 
-    clone_rows_by_model_class(conn, CofkCollectPerson,
-                              col_val_handler_fn_list=[_val_handler_union_person])
+    clone_rows_by_model_class(conn, CofkCollectPerson)
     clone_rows_by_model_class(conn, CofkCollectOccupationOfPerson)  # What uses this table?
     clone_rows_by_model_class(conn, CofkCollectPersonResource)
 

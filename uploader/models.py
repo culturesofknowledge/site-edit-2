@@ -139,7 +139,7 @@ class CofkCollectPerson(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     iperson_id = models.IntegerField(blank=True, null=True)
     union_iperson = models.ForeignKey('person.CofkUnionPerson', models.DO_NOTHING, blank=True, null=True,
-                                      related_name='union_collect_persons')
+                                      to_field='iperson_id', related_name='union_collect_persons')
     person_id = models.CharField(max_length=100, null=True)
     # person = models.ForeignKey('CofkUnionPerson', models.DO_NOTHING, blank=True, null=True,
     #                           related_name='collect_persons')
