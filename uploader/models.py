@@ -301,7 +301,7 @@ class CofkCollectWork(models.Model):
     upload = models.ForeignKey(CofkCollectUpload, models.CASCADE)
     iwork_id = models.IntegerField()
     union_iwork = models.ForeignKey('work.CofkUnionWork', models.DO_NOTHING, blank=True, null=True,
-                                    related_name='union_collect_works')
+                                    to_field='iwork_id', related_name='union_collect_works')
     work = models.ForeignKey('work.CofkUnionWork', models.DO_NOTHING, blank=True, null=True,
                              related_name='collect_works')
     date_of_work_as_marked = models.CharField(max_length=250, blank=True, null=True)

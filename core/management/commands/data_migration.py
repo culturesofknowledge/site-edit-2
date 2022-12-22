@@ -430,16 +430,12 @@ def _val_handler_work__catalogue(row: dict, conn):
 def _val_handler_collect_person(row: dict, conn):
     if collect_person := CofkCollectPerson.objects.filter(iperson_id=row['iperson_id']).first():
         row['iperson_id'] = collect_person.pk
-    print(row)
 
     return row
 
 
 def _val_handler_collect_work(row: dict, conn):
     row['upload_status_id'] = row.pop('upload_status')
-
-    if union_work := CofkUnionWork.objects.filter(institution_id=row['repository_id']).first():
-        row['repository_id'] = union_work.pk
 
     return row
 
@@ -484,9 +480,6 @@ def clone_recref_simple_by_field_pairs(conn,
                                        field_pairs: Iterable[tuple[Any, Any]]):
     for left_field, right_field in field_pairs:
         clone_recref_simple(conn, left_field, right_field)
-
-
-new_person_ids = {}
 
 
 def data_migration(user, password, database, host, port, include_audit=False):
@@ -561,7 +554,8 @@ def data_migration(user, password, database, host, port, include_audit=False):
                               int_pk_col_name='iwork_id', )
     clone_rows_by_model_class(conn, CofkUnionQueryableWork, seq_name=None)
     clone_rows_by_model_class(conn, CofkCollectWork,
-                              col_val_handler_fn_list=[_val_handler_collect_work],)
+                              col_val_handler_fn_list=[_val_handler_collect_work],
+                              )
     clone_rows_by_model_class(conn, CofkCollectAddresseeOfWork,
                               col_val_handler_fn_list=[_val_handler_collect_person])
     # clone_rows_by_model_class(conn, CofkCollectAuthorOfWork)
