@@ -15,26 +15,31 @@
         <col>
         <col>
         <col>
+        <col>
+        <col>
+        <col>
     </colgroup>
     <thead>
     <tr></tr>
     <tr>
         <!-- KTODO add more fields -->
-        <th>ID</th>
-        <th>Name</th>
+        <th>Names and titles/roles</th>
         <th>Born</th>
         <th>Died</th>
         <th>Fl.</th>
+        <th>Sex</th>
         <th>Org?</th>
         <th>Type of group</th>
         <th>Sent</th>
         <th>Rec'd</th>
         <th>Sent or Rec'd</th>
         <th>Mentioned</th>
+        <th>Person or Group ID</th>
         <th>Editor's notes</th>
         <th>Further reading</th>
         <th>Images</th>
         <th>Other details</th>
+        <th>Last edited by</th>
     </tr>
     </thead>
     <tbody>
@@ -43,13 +48,7 @@
         <tr class="selectable_entry" entry_id="{{ r.iperson_id }}">
             <td>
                 <a href="{% url 'person:full_form' r.iperson_id %}">
-                    {{ r.iperson_id }}
-                </a>
-            </td>
-
-            <td>
-                <a href="{% url 'person:full_form' r.iperson_id %}">
-                    {{ r.foaf_name }}
+                    {{ r.names_and_roles }}
                 </a>
             </td>
 
@@ -72,6 +71,10 @@
             </td>
 
             <td>
+                {{ r.gender }}
+            </td>
+
+            <td>
                 {% if r.is_organisation %}
                     {{ r.is_organisation }}
                 {% endif %}
@@ -82,31 +85,38 @@
                     {{ r.organisation_type.org_type_desc }}
                 {% endif %}
             </td>
-            <td> 0 <!-- KTODO --> </td>
-            <td> 0 <!-- KTODO --> </td>
-            <td> 0 <!-- KTODO --> </td>
-            <td> <!-- KTODO  what is this field   CofkUnionPersonSummary.mentioned --> </td>
-
+            <td> {{ r.summary.sent }}</td>
+            <td> {{ r.summary.recd }} </td>
+            <td> {{ r.summary.all_works }} </td>
+            <td> {{ r.summary.mentioned }} </td>
             <td>
-                {% include "core/component/search_table_layout/details_tag_if_exist.html" with value=r.editors_notes %}
+                {{ r.iperson_id }}<br/>
+                <a href="{% url 'person:full_form' r.iperson_id %}">
+                    Edit
+                </a>
             </td>
 
             <td>
-                {% include "core/component/search_table_layout/details_tag_if_exist.html" with value=r.further_reading %}
-            </td>
-            <td>
-                <!-- KTODO Image -->
+                {% if r.editors_notes %}
+                {{ r.editors_notes }}
+                {% endif %}
             </td>
 
             <td>
-                <details>
-                    <summary>Details</summary>
-                    <div class="table-row-detail">
-                        {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r %}
-                        {% include "core/component/search_table_layout/comment_result.html" with comments=r.comments %}
-                        {% include "core/component/search_table_layout/res_result.html" with r_maps=r.resources %}
-                    </div>
-                </details>
+                {% if r.further_reading %}
+                {{ r.further_reading }}
+                {% endif %}
+            </td>
+            <td>
+                {% include "core/component/search_table_layout/img_result.html" with images=r.images %}
+            </td>
+
+            <td>
+                {% include "core/component/search_table_layout/comment_result.html" with comments=r.comments %}
+                {% include "core/component/search_table_layout/res_result.html" with resources=r.resources %}
+            </td>
+            <td>
+                {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r %}
             </td>
 
         </tr>

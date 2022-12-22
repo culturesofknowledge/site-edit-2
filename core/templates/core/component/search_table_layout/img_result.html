@@ -1,9 +1,9 @@
-{% if resources.count %}
+{% if images.count %}
     <ul>
-        {% for resource in resources.iterator %}
+        {% for image in images.iterator %}
             <li>
                 <a href="{{ resource.resource_url }}" target="_blank">
-                    {{ resource.resource_name }}
+                    {{ image }}
                 </a>
             </li>
         {% endfor %}

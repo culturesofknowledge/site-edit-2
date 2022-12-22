@@ -2,35 +2,29 @@
     <legend>{{ form.title }}</legend>
 
     <!-- Institution name -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.institution_name field_lookup=form.institution_name_lookup search_fields=form.institution_name_search_fields field_title='Name' %}
-
-    <!-- {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.institution_synonyms field_lookup=form.institution_synonyms_lookup field_title='Alternative institution names' %} -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.institution_name field_lookup=form.institution_name_lookup %}
 
     <!-- Institution city -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.institution_city field_lookup=form.institution_city_lookup search_fields=form.institution_city_search_fields field_title='City' %}
-
-    <!-- {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.institution_city_synonyms field_lookup=form.institution_city_synonyms_lookup field_title='Alternative city names' %} -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.institution_city field_lookup=form.institution_city_lookup %}
 
     <!-- Institution country -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.institution_country field_lookup=form.institution_country_lookup search_fields=form.institution_country_search_fields field_title='Country' %}
-
-    <!--{% include "core/component/search_fieldset/field_with_lookup.html" with field=form.institution_country_synonyms field_lookup=form.institution_country_synonyms_lookup field_title='Alternative country names' %} -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.institution_country field_lookup=form.institution_country_lookup %}
 
     <!-- Related resources -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.resource field_lookup=form.resource_lookup field_title='Related resources' %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.resources field_lookup=form.resources_lookup %}
 
      <!-- Editor's notes -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.editors_notes field_lookup=form.editors_notes_lookup field_title="Editors' notes" %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.editors_notes field_lookup=form.editors_notes_lookup %}
 
     <!-- Images -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.images field_lookup=form.images_lookup %}
 
     <!-- Last edit -->
-    {% include "core/component/search_fieldset/from_to_year.html" with title='Last edit' from_field=form.last_edit_from to_field=form.last_edit_to field_info=form.last_edit_info %}
+    {% include "core/component/search_fieldset/from_to_year.html" with title='Last edit' from_field=form.change_timestamp_from to_field=form.change_timestamp_to field_info=form.change_timestamp_info %}
 
     <!-- Last changed by-->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.change_user field_lookup=form.change_user_lookup %}
 
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.institution_id field_lookup=form.institution_id_lookup field_title='Repository id' %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.institution_id field_lookup=form.institution_id_lookup %}
 
 </fieldset>

@@ -42,14 +42,14 @@
                     {{ r.editors_notes }}
                 {% endif %}
             </td>
-            <td></td>
-            <td></td>
-            <td></td>
+            <td>{{ r.sent }}</td>
+            <td>{{ r.received }}</td>
+            <td>{{ r.sent_received }}</td>
             <td>
-                {% include "core/component/search_table_layout/comment_result.html" with c_maps=r.comments %}
+                {% include "core/component/search_table_layout/comment_result.html" with comments=r.comments %}
             </td>
             <td>
-                {% include "core/component/search_table_layout/res_result.html" with r_maps=r.resources %}
+                {% include "core/component/search_table_layout/res_result.html" with resources=r.resources %}
             </td>
             <td> {{ r.latitude }} </td>
             <td> {{ r.longitude }} </td>

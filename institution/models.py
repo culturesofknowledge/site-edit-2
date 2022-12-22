@@ -22,14 +22,8 @@ class CofkUnionInstitution(models.Model, RecordTracker):
     address = models.CharField(max_length=1000, blank=True, null=True)
     latitude = models.CharField(max_length=20, blank=True, null=True)
     longitude = models.CharField(max_length=20, blank=True, null=True)
-
-    @property
-    def resources(self):
-        return self.cofkinstitutionresourcemap_set.all()
-
-    @property
-    def images(self):
-        return self.cofkinstitutionimagemap_set.all()
+    resources = models.ManyToManyField(to='core.CofkUnionResource', through='CofkInstitutionResourceMap')
+    images = models.ManyToManyField(to='core.CofkUnionImage', through='CofkInstitutionImageMap')
 
     class Meta:
         db_table = 'cofk_union_institution'

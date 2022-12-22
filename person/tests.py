@@ -84,7 +84,7 @@ class PersonCommonSearchTests(EmloSeleniumTestCase, CommonSearchTests):
             ele.send_keys(target_record.iperson_id)
 
         def _check(target_record):
-            self.assertEqual(self.find_table_col_element(0, 0).text,
+            self.assertEqual(self.find_entry_id_by_table_rows(0),
                              str(target_record.iperson_id))
 
         self._test_search__search_unique(_fill, _check)

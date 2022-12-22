@@ -18,10 +18,24 @@
     padding: .5em;
     border-radius: 1em;
     margin-right: 0.5em;
+    margin-bottom: 0.5em;
     cursor: pointer;
 }
 
 .page-item {
     display: inline-block;
+    text-align: center;
+    min-width: 50px;
+    border: 1px solid $black;
+    transition: all .15s ease-in-out;
 
+    &:hover {
+        border-color: $white;
+    }
+
+}
+
+.active-page {
+    background-color: $black;
+    color: $white;
 }

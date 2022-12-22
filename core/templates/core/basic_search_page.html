@@ -38,10 +38,12 @@
                 {% else %}
                     <h2>{{ total_record | floatformat:'g' }} {{ total_record|pluralize:entity }} found</h2>
 
-
-
                     <!-- Search components (e.g. sort by, records per page) -->
                     {{ search_components }}
+
+                    <!-- Upper pagination -->
+
+                    {% include 'core/component/pagination.html' %}
 
                     <!-- search function toolbar (e.g. download output, compact, expanded)  -->
                     <aside class="margin-bottom row">
@@ -89,7 +91,7 @@
 
                     {{ results_renderer | safe }}
 
-                    <!-- Pagination -->
+                    <!-- Lower pagination -->
 
                     {% include 'core/component/pagination.html' %}
 
@@ -245,13 +247,27 @@
             $('#hidden_columns').append('<span onclick="show_column(this, ' + column_index + ');">'+ feather.icons['eye'].toSvg() + '&nbsp;' + column_name + '</span>');
         }
 
+        function isEmpty(column) {
+            for(var i = 0; i < column.length; i++) {
+                if($(column[i]).text().trim() != '' || $(column[i]).children().length > 0)
+                        return false;
+
+            }
+         return true;
+        }
+
         function add_hide_buttons_to_columns() {
             var columns = $('#results_table thead')[0].children[1].cells;
             for (var i = 0; i < columns.length; i++) {
-                columns[i].innerHTML += '&nbsp;<a href="#" onclick="hide_column(' + (i + 1) + ', \'' + columns[i].innerText.replace("'", "\\'") + '\');">' + feather.icons['eye-off'].toSvg() + '</span></a>';
+                var header = columns[i].innerText;
 
-                if($('#results_table tr > *:nth-child(' + (i + 1) + ')').filter('td').is(':empty'))    {
-                    hide_column(i + 1, columns[i].innerText);
+                if(header == '')
+                    header = '[Notices]';
+
+                columns[i].innerHTML += '&nbsp;<a href="#" onclick="hide_column(' + (i + 1) + ', \'' + header.replace("'", "\\'") + '\');">' + feather.icons['eye-off'].toSvg() + '</span></a>';
+
+                if(isEmpty($('#results_table tr > *:nth-child(' + (i + 1) + ')').filter('td')))    {
+                    hide_column(i + 1, header);
                 }
             }
         }

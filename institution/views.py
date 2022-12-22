@@ -34,7 +34,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
             ('institution_city_synonyms', 'Alternative city names',),
             ('institution_country', 'Country name',),
             ('institution_country_synonyms', 'Alternative country names',),
-            ('related_resources', 'Related resources',),
+            ('resources', 'Related resources',),
             ('editors_notes', 'Editors\' notes',),
             ('images', 'Images',),
             ('change_timestamp', 'Change timestamp',),
@@ -52,19 +52,25 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
         return 'institution:return_quick_init'
 
     def get_queryset(self):
-        # KTODO
-
         # queries for like_fields
-        field_fn_maps = {
-            # 'institution_id': query_utils.create_eq_query,
-        }
+        field_fn_maps = query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
+                                                            'change_timestamp', )
 
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
+
+        fields = ['institution_name', 'editors_notes', 'institution_city', 'institution_country',
+                  'change_user', 'institution_id', 'resources', 'images']
+        search_fields_maps = {
+            'institution_name': ['institution_name', 'institution_synonyms'],
+            'institution_city': ['institution_city', 'institution_city_synonyms'],
+            'institution_country': ['institution_country', 'institution_country_synonyms'],
+            'resources': ['resources__resource_name', 'resources__resource_details',
+                          'resources__resource_url'],
+            'images': ['images__image_filename', 'images__thumbnail',
+                       'images__licence_details']}
+
         queries.extend(
-            query_utils.create_queries_by_lookup_field(self.request_data, [
-                'institution_name', 'editors_notes', 'institution_city', 'institution_country',
-                'resource', 'change_user', 'institution_id'
-            ])
+            query_utils.create_queries_by_lookup_field(self.request_data, fields, search_fields_maps)
         )
         return self.create_queryset_by_queries(CofkUnionInstitution, queries)
 

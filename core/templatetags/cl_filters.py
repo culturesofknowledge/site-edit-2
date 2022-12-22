@@ -15,5 +15,5 @@ def is_general_true(value):
 
 
 @register.filter
-def get_elided_page_range(page: Page, on_each_side=3, on_ends=2):
+def get_elided_page_range(page: Page, on_each_side=8, on_ends=4):
     return page.paginator.get_elided_page_range(number=page.number, on_each_side=on_each_side, on_ends=on_ends)

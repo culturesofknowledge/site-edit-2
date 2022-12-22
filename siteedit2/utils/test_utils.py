@@ -233,6 +233,10 @@ class CommonSearchTests:
         result_ele = self.find_table_rows()[row_idx]
         return result_ele.find_elements(By.CSS_SELECTOR, 'td')[col_idx]
 
+    def find_entry_id_by_table_rows(self, row_idx):
+        row_ele = self.test_case.selenium.find_elements(By.CSS_SELECTOR, 'tbody tr.selectable_entry')[row_idx]
+        return row_ele.get_attribute('entry_id')
+
     def setup_for_layout_test(self, layout_val):
         self.prepare_records()
         self.goto_search_page()

@@ -3,11 +3,20 @@
 
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.location_name field_lookup=form.location_name_lookup %}
 
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.location_synonyms field_lookup=form.location_synonyms_lookup %}
-
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.location_id field_lookup=form.location_id_lookup %}
 
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.editors_notes field_lookup=form.editors_notes_lookup %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.sent field_lookup=form.sent_lookup %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.received field_lookup=form.received_lookup %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.sent_received field_lookup=form.sent_received_lookup %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.researchers_notes field_lookup=form.researchers_notes_lookup %}
+
+    <!-- Related resources -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.resources field_lookup=form.resources_lookup %}
 
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.latitude field_lookup=form.latitude_lookup %}
 
@@ -26,6 +35,17 @@
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.element_6_eg_country field_lookup=form.element_6_eg_country_lookup %}
 
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.element_7_eg_empire field_lookup=form.element_7_eg_empire_lookup %}
+
+    <!-- Images -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.images field_lookup=form.images_lookup %}
+
+    <!-- Last edit -->
+    {% include "core/component/search_fieldset/from_to_year.html" with title='Last edit' from_field=form.change_timestamp_from to_field=form.change_timestamp_to field_info=form.change_timestamp_info %}
+
+    <!-- Last changed by-->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.change_user field_lookup=form.change_user_lookup %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.institution_id field_lookup=form.institution_id_lookup %}
 
 
 </fieldset>

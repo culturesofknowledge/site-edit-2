@@ -26,9 +26,13 @@ from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from login.models import CofkUser
 from manifestation.models import CofkUnionManifestation
-from person.models import CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID
+from person.models import CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID, CofkUnionPersonSummary
 from publication.models import CofkUnionPublication
-from uploader.models import CofkCollectStatus, CofkCollectUpload
+from uploader.models import CofkCollectStatus, CofkCollectUpload, CofkCollectInstitution, CofkCollectLocation, \
+    CofkCollectLocationResource, CofkCollectPerson, CofkCollectOccupationOfPerson, CofkCollectPersonResource, \
+    CofkCollectInstitutionResource, CofkCollectWork, CofkCollectAddresseeOfWork, CofkCollectAuthorOfWork, \
+    CofkCollectDestinationOfWork, CofkCollectLanguageOfWork, CofkCollectOriginOfWork, CofkCollectPersonMentionedInWork, \
+    CofkCollectSubjectOfWork, CofkCollectWorkResource, CofkCollectManifestation
 from work import models as work_models
 from work.models import CofkUnionWork, CofkUnionQueryableWork
 from audit.models import CofkUnionAuditLiteral, CofkUnionAuditRelationship
@@ -380,6 +384,7 @@ def _val_handler_person__organisation_type(row: dict, conn):
         row['organisation_type'] = CofkUnionOrgType.objects.get(pk=row['organisation_type'])
     else:
         row['organisation_type'] = None
+
     return row
 
 
@@ -422,6 +427,29 @@ def _val_handler_work__catalogue(row: dict, conn):
     return row
 
 
+def _val_handler_collect_person(row: dict, conn):
+    if collect_person := CofkCollectPerson.objects.filter(iperson_id=row['iperson_id']).first():
+        row['iperson_id'] = collect_person.pk
+
+    return row
+
+
+def _val_handler_collect_work(row: dict, conn):
+    row['upload_status_id'] = row.pop('upload_status')
+
+    return row
+
+
+def _val_handler_collect_manifestation(row: dict, conn):
+    if collect_work := CofkCollectWork.objects.filter(iwork_id=row['iwork_id']).first():
+        row['iwork_id'] = collect_work.pk
+
+    if collect_institution := CofkCollectInstitution.objects.filter(institution_id=row['repository_id']).first():
+        row['repository_id'] = collect_institution.pk
+
+    return row
+
+
 def _val_handler_manif__work_id(row: dict, conn):
     sql = 'select right_id_value from cofk_union_relationship ' \
           f" where left_table_name = 'cofk_union_manifestation' " \
@@ -455,6 +483,7 @@ def clone_recref_simple_by_field_pairs(conn,
 
 
 def data_migration(user, password, database, host, port, include_audit=False):
+    start_migrate = time.time()
     warnings.filterwarnings('ignore',
                             '.*DateTimeField .+ received a naive datetime .+ while time zone support is active.*')
 
@@ -487,6 +516,9 @@ def data_migration(user, password, database, host, port, include_audit=False):
     # ### Location
     clone_rows_by_model_class(conn, CofkUnionLocation)
 
+    clone_rows_by_model_class(conn, CofkCollectLocation)
+    clone_rows_by_model_class(conn, CofkCollectLocationResource)
+
     # ### Person
     clone_rows_by_model_class(
         conn, CofkUnionPerson,
@@ -495,9 +527,20 @@ def data_migration(user, password, database, host, port, include_audit=False):
         int_pk_col_name='iperson_id',
     )
 
+    clone_rows_by_model_class(conn, CofkUnionPersonSummary, seq_name=None)
+
+    clone_rows_by_model_class(conn, CofkCollectPerson)
+    clone_rows_by_model_class(conn, CofkCollectOccupationOfPerson)  # What uses this table?
+    clone_rows_by_model_class(conn, CofkCollectPersonResource)
+
     # ### Repositories/institutions
     clone_rows_by_model_class(conn, CofkUnionInstitution,
                               col_val_handler_fn_list=[_val_handler_empty_str_null])
+
+    clone_rows_by_model_class(conn, CofkCollectInstitution)
+    clone_rows_by_model_class(conn, CofkCollectInstitutionResource)
+
+    # ## Users
 
     clone_rows_by_model_class(conn, CofkUser,
                               col_val_handler_fn_list=[_val_handler_users],
@@ -511,11 +554,25 @@ def data_migration(user, password, database, host, port, include_audit=False):
                               seq_name=work_models.SEQ_NAME_COFKUNIONWORK__IWORK_ID,
                               int_pk_col_name='iwork_id', )
     clone_rows_by_model_class(conn, CofkUnionQueryableWork, seq_name=None)
+    clone_rows_by_model_class(conn, CofkCollectWork,
+                              col_val_handler_fn_list=[_val_handler_collect_work],
+                              )
+    clone_rows_by_model_class(conn, CofkCollectAddresseeOfWork,
+                              col_val_handler_fn_list=[_val_handler_collect_person])
+    # clone_rows_by_model_class(conn, CofkCollectAuthorOfWork)
+    # clone_rows_by_model_class(conn, CofkCollectDestinationOfWork)
+    # clone_rows_by_model_class(conn, CofkCollectLanguageOfWork)
+    # clone_rows_by_model_class(conn, CofkCollectOriginOfWork)
+    # clone_rows_by_model_class(conn, CofkCollectPersonMentionedInWork)
+    # clone_rows_by_model_class(conn, CofkCollectSubjectOfWork)
+    # clone_rows_by_model_class(conn, CofkCollectWorkResource)
 
     # ### manif
     clone_rows_by_model_class(conn, CofkUnionManifestation,
                               col_val_handler_fn_list=[_val_handler_manif__work_id],
                               seq_name=None)
+    clone_rows_by_model_class(conn, CofkCollectManifestation,
+                              col_val_handler_fn_list=[_val_handler_collect_manifestation])
 
     # clone recref records
     clone_recref_simple_by_field_pairs(conn, recref_settings.recref_left_right_pairs)
@@ -530,3 +587,5 @@ def data_migration(user, password, database, host, port, include_audit=False):
         clone_rows_by_model_class(conn, CofkUnionAuditLiteral)
 
     conn.close()
+
+    print(f'total sec: {time.time() - start_migrate:,.0f}s')
