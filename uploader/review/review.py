@@ -126,7 +126,7 @@ def accept_work(request, context: dict, upload: CofkCollectUpload):
     if not collect_work or collect_work.upload_status_id != 1:
         return
 
-    work_id = collect_work.iwork_id
+    work_id = collect_work.pk
 
     # Create work
     union_work = create_union_work(collect_work)
@@ -204,7 +204,7 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
     rel_maps = []
 
     for work_count, collect_work in enumerate(collect_works, start=1):
-        work_id = collect_work.iwork_id
+        work_id = collect_work.pk
         # Create work
         union_work = create_union_work(collect_work)
         union_work.save()
