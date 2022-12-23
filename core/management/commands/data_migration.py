@@ -38,6 +38,7 @@ from work.models import CofkUnionWork, CofkUnionQueryableWork
 from audit.models import CofkUnionAuditLiteral, CofkUnionAuditRelationship
 
 log = logging.getLogger(__name__)
+default_schema = 'public'
 
 
 def is_exists(conn, sql, vals=None):
@@ -46,7 +47,7 @@ def is_exists(conn, sql, vals=None):
     return cursor.fetchone() is not None
 
 
-def create_query_all_sql(db_table, schema='public'):
+def create_query_all_sql(db_table, schema=default_schema):
     return f'select * from {schema}.{db_table}'
 
 
@@ -54,8 +55,23 @@ def create_seq_col_name(model_class: Type[Model]):
     return f'{model_class._meta.db_table}_{model_class._meta.pk.name}_seq'
 
 
-def find_rows_by_db_table(conn, db_table):
-    return iter_records(conn, create_query_all_sql(db_table), cursor_factory=DictCursor)
+def find_rows_by_db_table(conn, db_table, batch_size=None):
+    sql = create_query_all_sql(db_table)
+    if batch_size is None:
+        return iter_records(conn, sql, cursor_factory=DictCursor)
+
+    def _batch_records():
+        cur_offset = 0
+        while True:
+            sql = create_query_all_sql(db_table) + ' LIMIT %s OFFSET %s'
+            rows = iter_records(conn, sql, cursor_factory=DictCursor,
+                                vals=[batch_size, cur_offset])
+            yield rows
+            cur_offset += batch_size
+            if len(rows) <= 0:
+                break
+
+    return itertools.chain.from_iterable(_batch_records())
 
 
 def iter_records(conn, sql, cursor_factory=None, vals=None):
@@ -69,8 +85,9 @@ def clone_rows_by_model_class(conn, model_class: Type[Model],
                               col_val_handler_fn_list: list[Callable[[dict, Any], dict]] = None,
                               seq_name: str | None = '',
                               int_pk_col_name='pk',
-                              target_model_class=None
-                              ):
+                              target_model_class=None,
+                              query_size=None,
+                              save_size=100_000):
     """ most simple method to copy rows from old DB to new DB
     * assume all column name are same
     * assume no column have been removed
@@ -83,9 +100,9 @@ def clone_rows_by_model_class(conn, model_class: Type[Model],
     record_counter = iter_utils.RecordCounter()
 
     if target_model_class:
-        rows = find_rows_by_db_table(conn, target_model_class)
+        rows = find_rows_by_db_table(conn, target_model_class, batch_size=query_size)
     else:
-        rows = find_rows_by_db_table(conn, model_class._meta.db_table)
+        rows = find_rows_by_db_table(conn, model_class._meta.db_table, batch_size=query_size)
 
     rows = map(dict, rows)
     if col_val_handler_fn_list:
@@ -94,7 +111,7 @@ def clone_rows_by_model_class(conn, model_class: Type[Model],
     rows = (model_class(**r) for r in rows)
     rows = itertools.filterfalse(check_duplicate_fn, rows)
     rows = map(record_counter, rows)
-    model_class.objects.bulk_create(rows, batch_size=500)
+    model_class.objects.bulk_create(rows, batch_size=save_size)
     log_save_records(f'{model_class.__module__}.{model_class.__name__}',
                      record_counter.cur_size(),
                      used_sec=time.time() - start_sec)
@@ -581,10 +598,14 @@ def data_migration(user, password, database, host, port, include_audit=False):
     print('remove all audit records that created by data_migrations')
     CofkUnionAuditLiteral.objects.all().delete()
     CofkUnionAuditRelationship.objects.all().delete()
+    # _cursor = cur_conn.cursor()
+    # _cursor.execute(f'delete from {CofkUnionAuditLiteral._meta.db_table}')
+    # _cursor.execute(f'delete from {CofkUnionAuditRelationship._meta.db_table}')
+    print('[END] remove all audit')
 
     # clone audit
     if include_audit:
-        clone_rows_by_model_class(conn, CofkUnionAuditLiteral)
+        clone_rows_by_model_class(conn, CofkUnionAuditLiteral, query_size=50_000)
 
     conn.close()
 
