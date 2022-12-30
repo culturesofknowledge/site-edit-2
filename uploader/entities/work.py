@@ -13,6 +13,11 @@ from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectAddre
 log = logging.getLogger(__name__)
 
 
+def get_common_languages():
+    common = list(CofkCollectLanguageOfWork.objects.distinct('language_code').values_list('language_code', flat=True))
+    return Iso639LanguageCode.objects.filter(code_639_3__in=common).all()
+
+
 class CofkWork(CofkEntity):
 
     def __init__(self, upload: CofkCollectUpload, sheet, people, locations):
@@ -21,10 +26,7 @@ class CofkWork(CofkEntity):
         self.works: List[CofkCollectWork] = []
         self.people: List[CofkCollectPerson] = people
         self.locations: List[CofkCollectLocation] = locations
-        self.common_languages: List[str] = list(CofkCollectLanguageOfWork.objects.
-                                                distinct('language_code').
-                                                values_list('language_code', flat=True))
-
+        self.common_languages: List[Iso639LanguageCode] = get_common_languages()
         self.authors: List[CofkCollectAuthorOfWork] = []
         self.mentioned: List[CofkCollectPersonMentionedInWork] = []
         self.addressees: List[CofkCollectAddresseeOfWork] = []
@@ -161,6 +163,8 @@ class CofkWork(CofkEntity):
                 self.add_error(f'The value in column "language_id", "{language}" is not a valid ISO639 language.')
 
     def create_all(self):
+        self.bulk_create(self.works)
+
         for entities in [self.authors, self.mentioned, self.addressees, self.origins, self.destinations,
                          self.resources, self.languages]:
             if entities:
