@@ -53,11 +53,7 @@ class CofkWork(CofkEntity):
             # log.debug(work_dict)
 
             w = CofkCollectWork(**{k: work_dict[k] for k in work_dict if k in CofkCollectWork.__dict__.keys()})
-            # TODO potential efficiency gain if work is bulk saved
-            # however, work needs to exist before related objects are created
-            w.save()
             self.works.append(w)
-            # log.debug({k: work_dict[k] for k in work_dict if k in CofkCollectWork.__dict__.keys()})
 
             if 'author_ids' in work_dict and 'author_names' in work_dict:
                 self.process_people(w, self.authors, CofkCollectAuthorOfWork, work_dict, 'author_ids', 'author_names',
@@ -92,6 +88,8 @@ class CofkWork(CofkEntity):
 
         upload.total_works = len(self.works)
         upload.save()
+
+        self.create_all()
 
     def get_person(self, person_id: str) -> CofkCollectPerson:
         if person := [p for p in self.people if
