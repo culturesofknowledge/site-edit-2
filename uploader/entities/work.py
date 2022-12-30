@@ -13,14 +13,6 @@ from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectAddre
 log = logging.getLogger(__name__)
 
 
-def get_common_languages():
-    # results from select distinct(language_code) from cofk_collect_language_of_work;
-    common_languages = ["otk", "fro", "ara", "ces", "hye", "cat", "syr", "dan", "rus", "por", "swe", "nld", "hrv",
-                        "yes", "nds", "pol", "gla", "heb", "grc", "eng", "spa", "aii", "fas", "chu", "cym", "fra",
-                        "deu", "tam", "kat", "eus", "lat", "cop", "ita", "cor", "tur"]
-    return list(Iso639LanguageCode.objects.filter(code_639_3__in=common_languages).all())
-
-
 class CofkWork(CofkEntity):
 
     def __init__(self, upload: CofkCollectUpload, sheet, people, locations):
@@ -29,7 +21,9 @@ class CofkWork(CofkEntity):
         self.works: List[CofkCollectWork] = []
         self.people: List[CofkCollectPerson] = people
         self.locations: List[CofkCollectLocation] = locations
-        self.common_languages: List[Iso639LanguageCode] = get_common_languages()
+        self.common_languages: List[Iso639LanguageCode] = list(CofkCollectLanguageOfWork.objects.
+                                                               distinct('language_code').
+                                                               values_list('language_code', flat=True))
 
         self.authors: List[CofkCollectAuthorOfWork] = []
         self.mentioned: List[CofkCollectPersonMentionedInWork] = []
