@@ -21,9 +21,9 @@ class CofkWork(CofkEntity):
         self.works: List[CofkCollectWork] = []
         self.people: List[CofkCollectPerson] = people
         self.locations: List[CofkCollectLocation] = locations
-        self.common_languages: List[Iso639LanguageCode] = list(CofkCollectLanguageOfWork.objects.
-                                                               distinct('language_code').
-                                                               values_list('language_code', flat=True))
+        self.common_languages: List[str] = list(CofkCollectLanguageOfWork.objects.
+                                                distinct('language_code').
+                                                values_list('language_code', flat=True))
 
         self.authors: List[CofkCollectAuthorOfWork] = []
         self.mentioned: List[CofkCollectPersonMentionedInWork] = []
