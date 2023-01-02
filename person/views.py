@@ -3,13 +3,15 @@ from typing import Callable, Iterable, Type, Any, NoReturn
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import F
+from django.db import models
+from django.db.models import F, Count, Q
 from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual, Exact
 from django.forms import BaseForm
 from django.shortcuts import render, redirect, get_object_or_404
 
 from core import constant
-from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_BORN_IN_LOCATION, REL_TYPE_DIED_AT_LOCATION
+from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_BORN_IN_LOCATION, REL_TYPE_DIED_AT_LOCATION, \
+    REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_CREATED, REL_TYPE_SENT, REL_TYPE_SIGNED
 from core.forms import CommentForm, PersonRecrefForm
 from core.helper import renderer_utils, view_utils, query_utils, download_csv_utils, recref_utils, form_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
@@ -274,9 +276,9 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             ('gender', 'Gender',),
             ('is_organisation', 'Person or group?',),
             ('org_type', 'Type of group',),
-            # ('sent', 'Sent',),
-            # ('recd', 'Rec\'d',),
-            # ('all_works', 'Sent or Rec\'d',),
+            ('sent', 'Sent',),
+            ('recd', 'Rec\'d',),
+            ('all_works', 'Sent or Rec\'d',),
             # ('mentioned', 'Mentioned',),
             ('editors_notes', 'Editors\' notes',),
             ('further_reading', 'Further reading',),
@@ -296,6 +298,23 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
     def return_quick_init_vname(self) -> str:
         return 'person:return_quick_init'
 
+    def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q]):
+        queryset = model_class.objects.all()
+        annotate = {'sent': Count('works',
+                                  filter=Q(cofkworkpersonmap__relationship_type__in=[REL_TYPE_CREATED, REL_TYPE_SENT, REL_TYPE_SIGNED])),
+                    'recd': Count('works',
+                                  filter=Q(cofkworkpersonmap__relationship_type=REL_TYPE_WAS_ADDRESSED_TO)),
+                    'all_works': Count('works')}
+        queryset = queryset.annotate(**annotate)
+
+        if queries:
+            queryset = queryset.filter(query_utils.all_queries_match(queries))
+
+        if sort_by := self.get_sort_by():
+            queryset = queryset.order_by(sort_by)
+
+        return queryset
+
     def get_queryset(self):
         field_fn_maps = {
             'gender': lambda f, v: Exact(F(f), '' if v == 'U' else v),
@@ -313,7 +332,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
         queries.extend(
             query_utils.create_queries_by_lookup_field(self.request_data, [
-                'foaf_name', 'iperson_id', 'editors_notes',
+                'foaf_name', 'iperson_id', 'editors_notes', 'sent', 'recd', 'all_works',
                 'further_reading', 'change_user'
             ], {'foaf_name': ['foaf_name', 'skos_altlabel', 'person_aliases', 'skos_hiddenlabel',
                               'summary__other_details_summary_searchable']})

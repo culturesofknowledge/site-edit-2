@@ -3,7 +3,7 @@ from typing import Iterable
 
 from django import forms
 from django.db.models import TextChoices, Model
-from django.forms import ModelForm, CharField
+from django.forms import ModelForm, CharField, IntegerField
 from django.forms.utils import ErrorList
 
 from core import constant
@@ -243,7 +243,10 @@ class GeneralSearchFieldset(forms.Form):
     template_name = 'person/component/person_search_fieldset.html'
 
     foaf_name = forms.CharField(required=False, label='Names and titles/roles',
-                                help_text="Primary name normally in 'surname, forename' format, followed by alternative names and titles or roles/professions. Roles and professions may have been entered as free text and/or as a list of standard categories (see below):")
+                                help_text="Primary name normally in 'surname, forename' format, followed by "
+                                          "alternative names and titles or roles/professions. Roles and professions "
+                                          "may have been entered as free text and/or as a list of standard categories "
+                                          "(see below):")
     foaf_name_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     birth_year_from = form_utils.create_year_field()
@@ -269,6 +272,22 @@ class GeneralSearchFieldset(forms.Form):
         ('P', 'Person'),
         ('G', 'Group'),
     ]))
+
+    sent = IntegerField(required=False, label='Sent',
+                        help_text="Number of letters sent from this place of origin."
+                                  " You can search on these 'number' fields using 'Advanced Search', e.g. you could"
+                                  " enter something like 'Sent greater than 100' to identify a place from which many"
+                                  " letters were sent, but please note that these will be slower searches than those"
+                                  " on place name or latitude/longitude.")
+    sent_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
+
+    recd = IntegerField(required=False, label='Received',
+                        help_text='Number of letters sent to this destination.')
+    recd_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
+
+    all_works = IntegerField(required=False, label='Sent and received',
+                             help_text='Total number of letters sent to and from this place.')
+    all_works_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
     editors_notes = forms.CharField(required=False)
     editors_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
