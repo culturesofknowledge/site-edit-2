@@ -61,13 +61,13 @@ class GeneralSearchFieldset(forms.Form):
                                   " on place name or latitude/longitude.")
     sent_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
-    received = IntegerField(required=False, label='Received',
+    recd = IntegerField(required=False, label='Received',
                             help_text='Number of letters sent to this destination.')
-    received_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
+    recd_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
-    sent_received = IntegerField(required=False, label='Sent and received',
+    all_works = IntegerField(required=False, label='Sent and received',
                                  help_text='Total number of letters sent to and from this place.')
-    sent_received_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
+    all_works_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
     researchers_notes = CharField(required=False, label='Researchers\' notes',
                                   help_text='Comments destined for front-end display.')
