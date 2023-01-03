@@ -5,37 +5,37 @@
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.description field_lookup=form.description_lookup %}
 
     <!-- Editor's notes -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.editors_notes field_lookup=form.editors_notes_lookup field_title="Editors' notes" %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.editors_notes field_lookup=form.editors_notes_lookup %}
 
     <!-- Sender/recipient -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.sender_or_recipient field_lookup=form.sender_or_recipient_lookup search_fields=form.sender_or_recipient_search_fields %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.sender_or_recipient field_lookup=form.sender_or_recipient_lookup %}
 
     <!-- Origin/dest -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.origin_or_destination field_lookup=form.origin_or_destination_lookup search_fields=form.origin_or_destination_search_fields %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.origin_or_destination field_lookup=form.origin_or_destination_lookup %}
 
     <!-- Date as marked -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_as_marked field_lookup=form.date_of_work_as_marked_lookup %}
 
     <!-- Year -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_std_year field_lookup=form.date_of_work_std_year_lookup field_title='Year' %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_std_year field_lookup=form.date_of_work_std_year_lookup %}
 
     <!-- Month -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_std_month field_lookup=form.date_of_work_std_month_lookup field_title='Month' %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_std_month field_lookup=form.date_of_work_std_month_lookup %}
 
     <!-- Day -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_std_day field_lookup=form.date_of_work_std_day_lookup field_title='Day' %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_std_day field_lookup=form.date_of_work_std_day_lookup %}
 
     <!-- Year range -->
     {% include "core/component/search_fieldset/from_to_year.html" with title='Date for ordering (in original calendar)' from_field=form.date_of_work_std_from to_field=form.date_of_work_std_to field_info=form.date_of_work_std_info %}
 
     <!-- Author/sender -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.creators_searchable field_lookup=form.creators_searchable_lookup field_title='Author/sender' %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.creators_searchable field_lookup=form.creators_searchable_lookup %}
 
     <!-- Notes on authors/senders -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.notes_on_authors field_lookup=form.notes_on_authors_lookup field_title='Notes on authors/senders' %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.notes_on_authors field_lookup=form.notes_on_authors_lookup %}
 
     <!-- Origin (standardised) -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.places_from_searchable field_lookup=form.places_from_searchable_lookup field_title='Origin (standardised)' %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.places_from_searchable field_lookup=form.places_from_searchable_lookup %}
 
     <!-- Origin as marked -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.origin_as_marked field_lookup=form.origin_as_marked_lookup %}
@@ -44,7 +44,7 @@
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.addressee field_lookup=form.addressee_lookup %}
 
     <!-- Destination (standardised) -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.places_to_searchable field_lookup=form.places_to_searchable_lookup field_title='Destination (standardised)' %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.places_to_searchable field_lookup=form.places_to_searchable_lookup  %}
 
     <!-- Destination as marked -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.destination_as_marked field_lookup=form.destination_as_marked_lookup %}
@@ -68,7 +68,7 @@
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.subjects field_lookup=form.subjects_lookup %}
 
     <!-- Abstracts -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.abstracts field_lookup=form.abstracts_lookup field_title='Abstract' %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.abstracts field_lookup=form.abstracts_lookup %}
 
     <!-- People mentioned -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.people_mentioned field_lookup=form.people_mentioned_lookup %}

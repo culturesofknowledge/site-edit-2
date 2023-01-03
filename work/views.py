@@ -922,17 +922,22 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         field_fn_maps = {}
 
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
+
+        fields = [
+            'description', 'editors_notes', 'date_of_work_as_marked', 'date_of_work_std_year', 'creators_searchable',
+            'sender_or_recipient', 'origin_or_destination', 'date_of_work_std_month', 'date_of_work_std_day',
+            'notes_on_authors', 'origin_as_marked', 'addressee',
+            'destination_as_marked', 'flags', 'images', 'manifestations',
+            'related_resources', 'language_of_work', 'subjects', 'abstracts', 'people_mentioned',
+            'keywords', 'general_notes', 'original_catalogue', 'accession_code', 'work_to_be_deleted',
+            'work_id', 'change_user'
+        ]
+
+        search_fields_maps = {'sender_or_recipient': ['creators_searchable', 'addressees_searchable'],
+                              'origin_or_destination': ['places_to_searchable', 'places_from_searchable']}
+
         queries.extend(
-            query_utils.create_queries_by_lookup_field(self.request_data, [
-                'description', 'iwork_id', 'editors_notes', 'date_of_work_as_marked', 'sender_or_recipient',
-                'origin_or_destination', 'date_of_work_as_marked', 'author', 'date_of_work_std_year',
-                'date_of_work_std_month', 'date_of_work_std_day', 'creators_searchable',
-                'notes_on_authors', 'places_from_searchable', 'origin_as_marked', 'addressee',
-                'places_to_searchable', 'destination_as_marked', 'flags', 'images', 'manifestations',
-                'related_resources', 'language_of_work', 'subjects', 'abstracts', 'people_mentioned',
-                'keywords', 'general_notes', 'original_catalogue', 'accession_code', 'work_to_be_deleted',
-                'work_id', 'change_user'
-            ])
+            query_utils.create_queries_by_lookup_field(self.request_data, fields, search_fields_maps)
         )
         return self.create_queryset_by_queries(CofkUnionQueryableWork, queries)
 
