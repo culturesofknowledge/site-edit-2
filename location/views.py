@@ -193,7 +193,9 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
                                   filter=Q(cofkworklocationmap__relationship_type=REL_TYPE_WAS_SENT_TO)),
                     'recd': Count('works',
                                   filter=Q(cofkworklocationmap__relationship_type=REL_TYPE_WAS_SENT_FROM)),
-                    'all_works': Count('works')}
+                    }
+        annotate['all_works'] = annotate['sent'] + annotate['recd']
+
         queryset = queryset.annotate(**annotate)
 
         if queries:
