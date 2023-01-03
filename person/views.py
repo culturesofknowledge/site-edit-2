@@ -11,7 +11,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 
 from core import constant
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_BORN_IN_LOCATION, REL_TYPE_DIED_AT_LOCATION, \
-    REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_CREATED, REL_TYPE_SENT, REL_TYPE_SIGNED
+    REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_CREATED, REL_TYPE_SENT, REL_TYPE_SIGNED, REL_TYPE_MENTION
 from core.forms import CommentForm, PersonRecrefForm
 from core.helper import renderer_utils, view_utils, query_utils, download_csv_utils, recref_utils, form_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
@@ -279,7 +279,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             ('sent', 'Sent',),
             ('recd', 'Rec\'d',),
             ('all_works', 'Sent or Rec\'d',),
-            # ('mentioned', 'Mentioned',),
+            ('mentioned', 'Mentioned',),
             ('editors_notes', 'Editors\' notes',),
             ('further_reading', 'Further reading',),
             ('images', 'Images',),
@@ -300,11 +300,16 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
     def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q]):
         queryset = model_class.objects.all()
+
         annotate = {'sent': Count('works',
-                                  filter=Q(cofkworkpersonmap__relationship_type__in=[REL_TYPE_CREATED, REL_TYPE_SENT, REL_TYPE_SIGNED])),
-                    'recd': Count('works',
-                                  filter=Q(cofkworkpersonmap__relationship_type=REL_TYPE_WAS_ADDRESSED_TO)),
-                    'all_works': Count('works')}
+                                  filter=Q(cofkworkpersonmap__relationship_type__in=[REL_TYPE_CREATED, REL_TYPE_SENT,
+                                                                                     REL_TYPE_SIGNED])),
+                    'recd': Count('works', filter=Q(cofkworkpersonmap__relationship_type=REL_TYPE_WAS_ADDRESSED_TO)),
+                    'mentioned': Count('works',
+                                       filter=Q(cofkworkpersonmap__relationship_type=REL_TYPE_MENTION))
+                    }
+        annotate['all_works'] = annotate['sent'] + annotate['recd']
+
         queryset = queryset.annotate(**annotate)
 
         if queries:
@@ -332,7 +337,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
         queries.extend(
             query_utils.create_queries_by_lookup_field(self.request_data, [
-                'foaf_name', 'iperson_id', 'editors_notes', 'sent', 'recd', 'all_works',
+                'foaf_name', 'iperson_id', 'editors_notes', 'sent', 'recd', 'all_works', 'mentioned',
                 'further_reading', 'change_user'
             ], {'foaf_name': ['foaf_name', 'skos_altlabel', 'person_aliases', 'skos_hiddenlabel',
                               'summary__other_details_summary_searchable']})

@@ -85,10 +85,10 @@
                     {{ r.organisation_type.org_type_desc }}
                 {% endif %}
             </td>
-            <td> {{ r.summary.sent }}</td>
-            <td> {{ r.summary.recd }} </td>
-            <td> {{ r.summary.all_works }} </td>
-            <td> {{ r.summary.mentioned }} </td>
+            <td> {{ r.sent }}</td>
+            <td> {{ r.recd }} </td>
+            <td> {{ r.all_works }} </td>
+            <td> {{ r.mentioned }} </td>
             <td>
                 {{ r.iperson_id }}<br/>
                 <a href="{% url 'person:full_form' r.iperson_id %}">

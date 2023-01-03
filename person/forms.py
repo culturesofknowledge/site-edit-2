@@ -260,7 +260,7 @@ class GeneralSearchFieldset(forms.Form):
 
     gender = forms.CharField(required=False, widget=forms.Select(
         choices=[
-            (None, 'All'),
+            (None, 'Any'),
             ('M', 'Male'),
             ('F', 'Female'),
             ('U', 'Unknown or not applicable'),
@@ -268,7 +268,7 @@ class GeneralSearchFieldset(forms.Form):
     ))
 
     person_or_group = forms.CharField(required=False, widget=forms.Select(choices=[
-        (None, 'All'),
+        (None, 'Either'),
         ('P', 'Person'),
         ('G', 'Group'),
     ]))
@@ -288,6 +288,10 @@ class GeneralSearchFieldset(forms.Form):
     all_works = IntegerField(required=False, label='Sent and received',
                              help_text='Total number of letters sent to and from this place.')
     all_works_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
+
+    mentioned = IntegerField(required=False, label='Mentioned',
+                             help_text='Number of letters in which this person/organisation was mentioned.')
+    mentioned_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
     editors_notes = forms.CharField(required=False)
     editors_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
