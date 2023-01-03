@@ -295,6 +295,8 @@ tr.selectable_entry:hover {
     position: sticky;
     top: 55px;
     background-color: white;
+    padding: 0.2em;
+    z-index: 999;
   }
 }
 
