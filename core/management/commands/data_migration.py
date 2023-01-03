@@ -18,7 +18,7 @@ from django.db.models.fields.related_descriptors import ForwardManyToOneDescript
 from psycopg2.extras import DictCursor
 
 from core import recref_settings
-from core.helper import iter_utils
+from core.helper import iter_utils, model_utils
 from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType, CofkUnionRelationshipType, \
     CofkUnionImage, CofkUnionOrgType, CofkUnionRoleCategory, CofkUnionSubject, Iso639LanguageCode, CofkLookupCatalogue, \
     SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID
@@ -487,6 +487,22 @@ def clone_recref_simple_by_field_pairs(conn,
         clone_recref_simple(conn, left_field, right_field)
 
 
+def create_check_fn_by_unique_together_model(model: Type[model_utils.ModelLike]):
+    def _fn(instance: model_utils.ModelLike):
+        if not model._meta.unique_together:
+            raise ValueError(f'{model} have no unique_together {model._meta.unique_together}')
+        fields = [getattr(model, field_name) for field_name in model._meta.unique_together[0]]
+        fields = [f.field for f in fields]
+        lookup = {
+            f.attname: f.value_from_object(instance)
+            for f in fields
+        }
+        is_exist = fields[0].model.objects.filter(**lookup).exists()
+        return is_exist
+
+    return _fn
+
+
 def data_migration(user, password, database, host, port, include_audit=False):
     start_migrate = time.time()
     warnings.filterwarnings('ignore',
@@ -521,8 +537,10 @@ def data_migration(user, password, database, host, port, include_audit=False):
     # ### Location
     clone_rows_by_model_class(conn, CofkUnionLocation)
 
-    clone_rows_by_model_class(conn, CofkCollectLocation)
-    clone_rows_by_model_class(conn, CofkCollectLocationResource)
+    clone_rows_by_model_class(conn, CofkCollectLocation,
+                              check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectLocation))
+    clone_rows_by_model_class(conn, CofkCollectLocationResource,
+                              check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectLocationResource))
 
     # ### Person
     clone_rows_by_model_class(
@@ -534,16 +552,23 @@ def data_migration(user, password, database, host, port, include_audit=False):
 
     clone_rows_by_model_class(conn, CofkUnionPersonSummary, seq_name=None)
 
-    clone_rows_by_model_class(conn, CofkCollectPerson)
-    clone_rows_by_model_class(conn, CofkCollectOccupationOfPerson)  # What uses this table?
-    clone_rows_by_model_class(conn, CofkCollectPersonResource)
+    clone_rows_by_model_class(conn, CofkCollectPerson,
+                              check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectPerson))
+    clone_rows_by_model_class(conn, CofkCollectOccupationOfPerson,
+                              check_duplicate_fn=create_check_fn_by_unique_together_model(
+                                  CofkCollectOccupationOfPerson))  # What uses this table?
+    clone_rows_by_model_class(conn, CofkCollectPersonResource,
+                              check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectPersonResource))
 
     # ### Repositories/institutions
     clone_rows_by_model_class(conn, CofkUnionInstitution,
                               col_val_handler_fn_list=[_val_handler_empty_str_null])
 
-    clone_rows_by_model_class(conn, CofkCollectInstitution)
-    clone_rows_by_model_class(conn, CofkCollectInstitutionResource)
+    clone_rows_by_model_class(conn, CofkCollectInstitution,
+                              check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectInstitution))
+    clone_rows_by_model_class(conn, CofkCollectInstitutionResource,
+                              check_duplicate_fn=create_check_fn_by_unique_together_model(
+                                  CofkCollectInstitutionResource))
 
     # ## Users
 
@@ -560,28 +585,31 @@ def data_migration(user, password, database, host, port, include_audit=False):
                               int_pk_col_name='iwork_id', )
     clone_rows_by_model_class(conn, CofkUnionQueryableWork, seq_name=None)
     clone_rows_by_model_class(conn, CofkCollectWork,
+                              check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectWork),
                               col_val_handler_fn_list=[_val_handler_collect_work],
                               )
     clone_rows_by_model_class(conn, CofkCollectAddresseeOfWork,
+                              check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectAddresseeOfWork),
                               col_val_handler_fn_list=[_val_handler_collect_person])
-    # clone_rows_by_model_class(conn, CofkCollectAuthorOfWork)
-    # clone_rows_by_model_class(conn, CofkCollectDestinationOfWork)
-    # clone_rows_by_model_class(conn, CofkCollectLanguageOfWork)
-    # clone_rows_by_model_class(conn, CofkCollectOriginOfWork)
-    # clone_rows_by_model_class(conn, CofkCollectPersonMentionedInWork)
-    # clone_rows_by_model_class(conn, CofkCollectSubjectOfWork)
-    # clone_rows_by_model_class(conn, CofkCollectWorkResource)
+    # clone_rows_by_model_class(conn, CofkCollectAuthorOfWork, check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectAuthorOfWork))
+    # clone_rows_by_model_class(conn, CofkCollectDestinationOfWork, check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectDestinationOfWork))
+    # clone_rows_by_model_class(conn, CofkCollectLanguageOfWork, check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectLanguageOfWork))
+    # clone_rows_by_model_class(conn, CofkCollectOriginOfWork, check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectOriginOfWork))
+    # clone_rows_by_model_class(conn, CofkCollectPersonMentionedInWork, check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectPersonMentionedInWork))
+    # clone_rows_by_model_class(conn, CofkCollectSubjectOfWork, check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectSubjectOfWork))
+    # clone_rows_by_model_class(conn, CofkCollectWorkResource, check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectWorkResource))
 
     # ### manif
     clone_rows_by_model_class(conn, CofkUnionManifestation,
                               col_val_handler_fn_list=[_val_handler_manif__work_id],
                               seq_name=None)
     clone_rows_by_model_class(conn, CofkCollectManifestation,
+                              check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectManifestation),
                               col_val_handler_fn_list=[_val_handler_collect_manifestation])
 
     # clone recref records
     clone_recref_simple_by_field_pairs(conn, recref_settings.recref_left_right_pairs)
-    
+
     # remove all audit records that created by data_migrations
     print('remove all audit records that created by data_migrations')
     CofkUnionAuditLiteral.objects.all().delete()
