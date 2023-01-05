@@ -4,6 +4,7 @@ import re
 import time
 import warnings
 from argparse import ArgumentParser
+from math import floor
 from typing import Type, Callable, Iterable, Any
 
 import django.db.utils
@@ -119,8 +120,15 @@ def clone_rows_by_model_class(conn, model_class: Type[Model],
         cur_conn.cursor().execute(f"select setval('{seq_name}', {new_val})")
 
 
+def sec_to_min(sec):
+    sec = round(sec)
+    if sec < 60:
+        return f'{sec}s'
+    return f'{floor(sec/60)}m,{sec % 60}s'
+
+
 def log_save_records(target, size, used_sec):
-    print(f'save news records [{used_sec:>5,.0f}s][{size:>6,}][{target}]')
+    print(f'migrated records [{sec_to_min(used_sec):>7}][{size:>7,}][{target}]')
 
 
 class Command(BaseCommand):
@@ -636,4 +644,4 @@ def data_migration(user, password, database, host, port, include_audit=False):
 
     conn.close()
 
-    print(f'total sec: {time.time() - start_migrate:,.0f}s')
+    print(f'total sec: {sec_to_min(time.time() - start_migrate)}')
