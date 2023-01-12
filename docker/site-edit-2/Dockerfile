@@ -8,6 +8,7 @@ RUN apt-get update \
     && apt-get -y install libpq-dev gcc build-essential
 COPY requirements.txt /code/
 COPY ./docker/site-edit-2/docker-entrypoint.sh /code/
+RUN mkdir /emlo_home
 RUN pip install --upgrade pip setuptools wheel
 RUN pip install -r requirements.txt
 COPY . /code/
