@@ -31,6 +31,7 @@ db.sqlite3-journal
 
 # Environments
 docker/site-edit-2/.env
+docker/site-edit-2/.gunweb.env
 .venv
 env/
 venv/
@@ -47,7 +48,9 @@ files/
 
 # dev environment file
 siteedit2/settings/local_dev.py
+siteedit2/settings/gunweb.py
 # */migrations
 
 static/core/scss/
+core/static/core/scss/main.css
 upload/
