@@ -537,8 +537,8 @@ class CompactSearchFieldset(forms.Form):
     subjects = forms.CharField(required=False)
     subjects_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    abstracts = forms.CharField(required=False, help_text=abstr_help_text)
-    abstracts_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    abstract = forms.CharField(required=False, help_text=abstr_help_text)
+    abstract_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     general_notes = forms.CharField(required=False)
     general_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
@@ -651,8 +651,8 @@ class ExpandedSearchFieldset(forms.Form):
     subjects = forms.CharField(required=False)
     subjects_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    abstracts = forms.CharField(required=False, label='Abstract', help_text=abstr_help_text)
-    abstracts_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    abstract = forms.CharField(required=False, help_text=abstr_help_text)
+    abstract_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     people_mentioned = forms.CharField(required=False,
                                        help_text='This field contains a list of people mentioned within a work.')

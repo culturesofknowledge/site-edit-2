@@ -928,7 +928,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             'sender_or_recipient', 'origin_or_destination', 'date_of_work_std_month', 'date_of_work_std_day',
             'notes_on_authors', 'origin_as_marked', 'addressee',
             'destination_as_marked', 'flags', 'images', 'manifestations',
-            'related_resources', 'language_of_work', 'subjects', 'abstracts', 'people_mentioned',
+            'related_resources', 'language_of_work', 'subjects', 'abstract', 'people_mentioned',
             'keywords', 'general_notes', 'original_catalogue', 'accession_code', 'work_to_be_deleted',
             'work_id', 'change_user'
         ]
