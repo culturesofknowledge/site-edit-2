@@ -23,8 +23,6 @@ USER=root
 # the group to run as
 GROUP=root
 
-# how many worker processes should Gunicorn spawn
-NUM_WORKERS=3
 
 # WSGI module name
 DJANGO_WSGI_MODULE=siteedit2.wsgi
@@ -63,7 +61,7 @@ echo "Starting server"
         # --bind=unix:$SOCKFILE \
 gunicorn ${DJANGO_WSGI_MODULE}:application \
         --name $NAME \
-        --workers $NUM_WORKERS \
+        --workers ${GUN_NUM_WORKERS:-4} \
         --user=$USER --group=$GROUP \
         --bind=$GUN_BIND \
         --log-level=debug \
