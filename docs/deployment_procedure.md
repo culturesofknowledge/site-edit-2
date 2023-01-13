@@ -3,8 +3,8 @@ last update date: 2023-01-12
 
 Pre-condition
 ----------------------
-* [Docker installed](https://docs.docker.com/engine/install/ubuntu/)
 
+* [Docker installed](https://docs.docker.com/engine/install/ubuntu/)
 
 Procedure for first time deploy
 --------------------------
@@ -45,7 +45,7 @@ Q & A
 * after docker startup, site-edit-2, postgres DB, and nginx will run in background
 * nginx will be running in **8010** port
 
-### How to change nginx port
+### How to change nginx port?
 
 * edit file `docker-compose-gunweb.yml`
 
@@ -55,18 +55,41 @@ Q & A
   editing `nginx-gun.conf` file
 
 ### What is relation of each component ?
-```
----------     --------------------------     ------------
-| nginx | --> | site-edit-2 (gunicorn) | --> | postgres |
----------     --------------------------     ------------
-```
 
+```
+---------     ----------------     ------------
+| nginx | --> | site-edit-2  | --> | postgres |
+---------     |  (gunicorn)  |     ------------
+              ----------------
+```
 
 ### improve throughput of web server
+
 * add number of working `GUN_NUM_WORKERS` in `.gunweb.env`
 
+### How to set up email service ?
 
+* TODO
 
 Procedure for data migration
 ---------------------------------
-* KTODO
+
+* following command for copy data from old DB to new DB.
+* it will process copy and convert to make old data compatible in new system
+* pre condition
+    * web server docker is running
+    * old DB is running and can be connected to docker
+    * at least 8GB RAM in server
+    * command `psql` installed
+* 172.17.0.1 is ip of docker host, is mean 127.0.0.1 of docker host
+* `old_audit_data.sql` is file that contain audit data
+
+```shell
+
+# after web server is up
+
+docker exec -it site-edit-2_gunicorn_web_1 python3 manage.py data_migration -d ouls -p password -u postgres -o 172.17.0.1 -t 15432
+
+# copy audit data to new db by sql
+psql --host localhost --port 25432 -d postgres --password  --username postgres  < old_audit_data.sql
+```
