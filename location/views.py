@@ -220,7 +220,8 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
             'location_name': ['location_name', 'location_synonyms'],
             'resources': ['resources__resource_name', 'resources__resource_details',
                           'resources__resource_url'],
-            'researchers_notes': ['comments__comment']}
+            'researchers_notes': ['comments__comment'],
+            'images': ['images__image_filename']}
 
         # KTODO support lookup query_utils.create_queries_by_lookup_field
 

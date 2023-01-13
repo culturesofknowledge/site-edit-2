@@ -299,6 +299,12 @@ class GeneralSearchFieldset(forms.Form):
     further_reading = forms.CharField(required=False)
     further_reading_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
+    images = forms.CharField(required=False)
+    images_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
+    other_details = forms.CharField(required=False)
+    other_details_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+
     change_timestamp_from = forms.CharField(required=False, widget=widgets_utils.NewDateInput())
     change_timestamp_to = forms.CharField(required=False, widget=widgets_utils.NewDateInput())
     change_timestamp_info = form_utils.datetime_search_info

@@ -15,6 +15,7 @@ from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_BORN_IN_LOCAT
 from core.forms import CommentForm, PersonRecrefForm
 from core.helper import renderer_utils, view_utils, query_utils, download_csv_utils, recref_utils, form_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
+from core.helper.date_utils import str_to_std_datetime
 from core.helper.recref_handler import RecrefFormsetHandler, RoleCategoryHandler, ImageRecrefHandler, \
     TargetResourceFormsetHandler, MultiRecrefAdapterHandler, SingleRecrefHandler
 from core.helper.renderer_utils import CompactSearchResultsRenderer
@@ -321,7 +322,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         return queryset
 
     def get_queryset(self):
-        field_fn_maps = {
+        '''field_fn_maps = {
             'gender': lambda f, v: Exact(F(f), '' if v == 'U' else v),
             'person_or_group': lambda _, v: Exact(F('is_organisation'), 'Y' if v == 'G' else ''),
             'birth_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_birth_year'), v),
@@ -332,15 +333,24 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             'flourished_year_to': lambda _, v: LessThanOrEqual(F('flourished_of_death_year'), v),
             'change_timestamp_from': lambda _, v: GreaterThanOrEqual(F('change_timestamp'), v),
             'change_timestamp_to': lambda _, v: LessThanOrEqual(F('change_timestamp'), v),
-        }
+        }'''
+        field_fn_maps = query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
+                                                            'change_timestamp', str_to_std_datetime)
 
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
+
+        fields = [
+            'foaf_name', 'iperson_id', 'editors_notes', 'sent', 'recd', 'all_works', 'mentioned',
+            'further_reading', 'other_details', 'images', 'change_user'
+        ]
+
+        search_fields_maps = {'foaf_name': ['foaf_name', 'skos_altlabel', 'person_aliases', 'skos_hiddenlabel',
+                              'summary__other_details_summary_searchable'],
+                              'images': ['images__image_filename'],
+                              'other_details': ['summary__other_details_summary_searchable']}
+
         queries.extend(
-            query_utils.create_queries_by_lookup_field(self.request_data, [
-                'foaf_name', 'iperson_id', 'editors_notes', 'sent', 'recd', 'all_works', 'mentioned',
-                'further_reading', 'change_user'
-            ], {'foaf_name': ['foaf_name', 'skos_altlabel', 'person_aliases', 'skos_hiddenlabel',
-                              'summary__other_details_summary_searchable']})
+            query_utils.create_queries_by_lookup_field(self.request_data, fields, search_fields_maps)
         )
 
         return self.create_queryset_by_queries(CofkUnionPerson, queries)
