@@ -117,10 +117,13 @@ nullable_lookup_keys = [
 ]
 
 
-def create_from_to_datetime(from_field_name, to_field_name, db_field_name):
+def create_from_to_datetime(from_field_name, to_field_name, db_field_name, convert_fn=None):
+    if convert_fn is None:
+        convert_fn = date_utils.str_to_search_datetime
+
     return {
         from_field_name: lambda _, v: GreaterThanOrEqual(
-            F(db_field_name), date_utils.str_to_search_datetime(v)),
+            F(db_field_name), convert_fn(v)),
         to_field_name: lambda _, v: LessThanOrEqual(
-            F(db_field_name), date_utils.str_to_search_datetime(v)),
+            F(db_field_name), convert_fn(v)),
     }

@@ -8,6 +8,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 
 from core.helper import renderer_utils, query_utils, view_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
+from core.helper.date_utils import str_to_std_datetime
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView
 from core.helper.recref_handler import ImageRecrefHandler, TargetResourceFormsetHandler
@@ -54,7 +55,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
     def get_queryset(self):
         # queries for like_fields
         field_fn_maps = query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                            'change_timestamp', )
+                                                            'change_timestamp', str_to_std_datetime)
 
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
 

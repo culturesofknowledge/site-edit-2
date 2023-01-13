@@ -14,6 +14,7 @@ from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_SENT_TO, REL_
 from core.forms import CommentForm
 from core.helper import view_utils, renderer_utils, query_utils, download_csv_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
+from core.helper.date_utils import str_to_std_datetime
 from core.helper.recref_handler import RecrefFormsetHandler, ImageRecrefHandler, TargetResourceFormsetHandler
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
@@ -209,7 +210,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
     def get_queryset(self):
         # queries for like_fields
         field_fn_maps = query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                            'change_timestamp', )
+                                                            'change_timestamp', str_to_std_datetime)
 
         fields = ['location_name', 'editors_notes', 'location_id', 'researchers_notes', 'resources', 'latitude',
                   'sent', 'recd', 'all_works', 'longitude', 'element_1_eg_room', 'element_2_eg_building',
