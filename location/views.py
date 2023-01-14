@@ -191,9 +191,9 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
     def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q]):
         queryset = model_class.objects.all()
         annotate = {'sent': Count('works',
-                                  filter=Q(cofkworklocationmap__relationship_type=REL_TYPE_WAS_SENT_TO)),
-                    'recd': Count('works',
                                   filter=Q(cofkworklocationmap__relationship_type=REL_TYPE_WAS_SENT_FROM)),
+                    'recd': Count('works',
+                                  filter=Q(cofkworklocationmap__relationship_type=REL_TYPE_WAS_SENT_TO)),
                     }
         annotate['all_works'] = annotate['sent'] + annotate['recd']
 
