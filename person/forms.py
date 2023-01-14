@@ -251,12 +251,17 @@ class GeneralSearchFieldset(forms.Form):
 
     birth_year_from = form_utils.create_year_field()
     birth_year_to = form_utils.create_year_field()
+    birth_year_info = 'Can be entered in YYYY format. (In the case of organisations, ' \
+                      'this field may hold the date of formation.)'
 
     death_year_from = form_utils.create_year_field()
     death_year_to = form_utils.create_year_field()
+    death_year_info = 'Can be entered in YYYY format. (In the case of organisations, ' \
+                      'this field may hold the date of dissolution.)'
 
     flourished_year_from = form_utils.create_year_field()
     flourished_year_to = form_utils.create_year_field()
+    flourished_info = 'Can be entered in YYYY format.'
 
     gender = forms.CharField(required=False, widget=forms.Select(
         choices=[
@@ -273,27 +278,27 @@ class GeneralSearchFieldset(forms.Form):
         ('G', 'Group'),
     ]))
 
-    sent = IntegerField(required=False, label='Sent',
-                        help_text="Number of letters sent from this place of origin."
-                                  " You can search on these 'number' fields using 'Advanced Search', e.g. you could"
-                                  " enter something like 'Sent greater than 100' to identify a place from which many"
-                                  " letters were sent, but please note that these will be slower searches than those"
-                                  " on place name or latitude/longitude.")
+    sent = IntegerField(required=False,
+                        help_text="Number of letters from this author/sender. "
+                                  "You can search on these 'number' fields using 'Advanced Search', "
+                                  "e.g. you could enter something like 'Sent greater than 100' to "
+                                  "identify the more prolific authors.")
     sent_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
     recd = IntegerField(required=False, label='Received',
-                        help_text='Number of letters sent to this destination.')
+                        help_text='Number of letters sent to this addressee.')
     recd_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
     all_works = IntegerField(required=False, label='Sent and received',
-                             help_text='Total number of letters sent to and from this place.')
+                             help_text='Total of letters to and from this person/organisation.')
     all_works_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
-    mentioned = IntegerField(required=False, label='Mentioned',
+    mentioned = IntegerField(required=False,
                              help_text='Number of letters in which this person/organisation was mentioned.')
     mentioned_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
-    editors_notes = forms.CharField(required=False)
+    editors_notes = forms.CharField(required=False,
+                                    help_text='Notes for internal use, intended to hold temporary queries etc.')
     editors_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     further_reading = forms.CharField(required=False)
@@ -302,7 +307,10 @@ class GeneralSearchFieldset(forms.Form):
     images = forms.CharField(required=False)
     images_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    other_details = forms.CharField(required=False)
+    other_details = forms.CharField(required=False,
+                                    help_text='Summary of any other information about the person or group, '
+                                              'including membership of organisations, known geographical '
+                                              'locations, researchers\' notes and related resources.')
     other_details_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     change_timestamp_from = forms.CharField(required=False, widget=widgets_utils.NewDateInput())
