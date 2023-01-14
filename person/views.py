@@ -322,19 +322,18 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         return queryset
 
     def get_queryset(self):
-        '''field_fn_maps = {
+        field_fn_maps = {
             'gender': lambda f, v: Exact(F(f), '' if v == 'U' else v),
             'person_or_group': lambda _, v: Exact(F('is_organisation'), 'Y' if v == 'G' else ''),
             'birth_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_birth_year'), v),
             'birth_year_to': lambda _, v: LessThanOrEqual(F('date_of_birth_year'), v),
             'death_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_death_year'), v),
             'death_year_to': lambda _, v: LessThanOrEqual(F('date_of_death_year'), v),
-            'flourished_year_from': lambda _, v: GreaterThanOrEqual(F('flourished_of_death_year'), v),
-            'flourished_year_to': lambda _, v: LessThanOrEqual(F('flourished_of_death_year'), v),
-            'change_timestamp_from': lambda _, v: GreaterThanOrEqual(F('change_timestamp'), v),
-            'change_timestamp_to': lambda _, v: LessThanOrEqual(F('change_timestamp'), v),
-        }'''
-        field_fn_maps = query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
+            'flourished_year_from': lambda _, v: GreaterThanOrEqual(F('flourished_year'), v),
+            'flourished_year_to': lambda _, v: LessThanOrEqual(F('flourished2_year'), v),
+            #'change_timestamp_from': lambda _, v: GreaterThanOrEqual(F('change_timestamp'), v),
+            #'change_timestamp_to': lambda _, v: LessThanOrEqual(F('change_timestamp'), v),
+        } | query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
                                                             'change_timestamp', str_to_std_datetime)
 
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
