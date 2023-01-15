@@ -546,7 +546,7 @@ class CompactSearchFieldset(forms.Form):
     original_catalogue = forms.CharField(required=False, help_text=og_help_text)
     original_catalogue_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    accession_code = forms.CharField(required=False, help_text=acc_help_text)
+    accession_code = forms.CharField(required=False, label='Source of record', help_text=acc_help_text)
     accession_code_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     # work_to_be_deleted = form_utils.ZeroOneCheckboxField()
@@ -667,7 +667,7 @@ class ExpandedSearchFieldset(forms.Form):
     original_catalogue = forms.CharField(required=False, help_text=og_help_text)
     original_catalogue_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    accession_code = forms.CharField(required=False, help_text=acc_help_text)
+    accession_code = forms.CharField(required=False, label='Source of record', help_text=acc_help_text)
     accession_code_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     # work_to_be_deleted = form_utils.ZeroOneCheckboxField()
