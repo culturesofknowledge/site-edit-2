@@ -106,19 +106,19 @@ class CofkUnionWork(models.Model, RecordTracker):
         if len(creators) > 0:
             return ",".join([str(c.person) for c in creators])
         else:
-            return "[Author/sender placeholder]"
+            return ''
 
     @property
     def places_from_for_display(self):
         if self.origin_location:
             return str(self.origin_location.location)
-        return '[Origin placeholder]'
+        return ''
 
     @property
     def places_to_for_display(self):
         if self.destination_location:
             return str(self.destination_location.location)
-        return '[Destination placeholder]'
+        return ''
 
     @property
     def addressees_for_display(self):
@@ -126,7 +126,7 @@ class CofkUnionWork(models.Model, RecordTracker):
         if len(addressees) > 0:
             return ",".join([str(a.person) for a in addressees])
         else:
-            return "[Addressee placeholder]"
+            return ''
 
 
 class CofkWorkCommentMap(Recref):
@@ -202,7 +202,7 @@ class CofkUnionLanguageOfWork(models.Model):
 
 class CofkUnionQueryableWork(models.Model):
     iwork_id = models.IntegerField(primary_key=True)
-    work = models.OneToOneField('CofkUnionWork', models.DO_NOTHING)
+    work = models.OneToOneField('CofkUnionWork', models.DO_NOTHING, related_name='queryable')
     description = models.TextField(blank=True, null=True)
     date_of_work_std = models.DateField(blank=True, null=True)
     date_of_work_std_year = models.IntegerField(blank=True, null=True)

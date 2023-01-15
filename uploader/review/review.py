@@ -12,9 +12,8 @@ from core.models import CofkUnionResource
 from institution.models import CofkUnionInstitution
 from manifestation.models import CofkUnionManifestation, CofkManifInstMap
 from uploader.models import CofkCollectUpload, CofkCollectWork
-from work.models import  CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, CofkWorkResourceMap, \
-    CofkUnionLanguageOfWork
-
+from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, CofkWorkResourceMap, \
+    CofkUnionLanguageOfWork, CofkUnionQueryableWork
 
 log = logging.getLogger(__name__)
 
@@ -201,6 +200,7 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
     if any([c.upload_status_id != 1 for c in collect_works]):
         return
 
+    union_works = []
     rel_maps = []
 
     for work_count, collect_work in enumerate(collect_works, start=1):
@@ -208,6 +208,7 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
         # Create work
         union_work = create_union_work(collect_work)
         union_work.save()
+        union_works.append(union_work)
 
         # Link people
         people_maps = link_person_to_work(entities=context['authors'], relationship_type=REL_TYPE_CREATED,
@@ -261,6 +262,19 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
         bulk_create(rel_map)
 
     CofkCollectWork.objects.bulk_update(collect_works, ['upload_status_id'])
+
+    # Update values of related items
+    qws = []
+
+    for work in union_works:
+        work.queryable.creators_for_display = work.creators_for_display
+        work.queryable.places_from_for_display = work.places_from_for_display
+        work.queryable.places_to_for_display = work.places_to_for_display
+        work.queryable.addressees_for_display = work.addressees_for_display
+        qws.append(work.queryable)
+
+    CofkUnionQueryableWork.objects.bulk_update(qws, ['creators_for_display', 'places_from_for_display',
+                                                     'places_to_for_display', 'addressees_for_display'])
 
     # Change state of upload and work
     upload.upload_status_id = 3  # Review complete
