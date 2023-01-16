@@ -207,6 +207,7 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
         work_id = collect_work.pk
         # Create work
         union_work = create_union_work(collect_work)
+        # TODO can this be made more efficient by bulk_create?
         union_work.save()
         union_works.append(union_work)
 
