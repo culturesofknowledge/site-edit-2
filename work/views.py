@@ -892,7 +892,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         return [
             ('addressees_for_display', 'Addressee',),
             ('creators_for_display', 'Author/sender',),
-            ('date_of_work_std', 'Date for ordering',),
+            ('date_of_work_std', 'Date for ordering (in original calendar)',),
             ('date_of_work_as_marked', 'Date of work as marked',),
             ('date_of_work_day', 'Day',),
             ('description', 'Description',),
@@ -917,7 +917,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def default_sort_by_choice(self) -> int:
-        return 3
+        return 2
 
     def get_queryset(self):
         field_fn_maps = query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
