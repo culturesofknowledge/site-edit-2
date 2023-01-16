@@ -67,8 +67,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
             'institution_country': ['institution_country', 'institution_country_synonyms'],
             'resources': ['resources__resource_name', 'resources__resource_details',
                           'resources__resource_url'],
-            'images': ['images__image_filename', 'images__thumbnail',
-                       'images__licence_details']}
+            'images': ['images__image_filename']}
 
         queries.extend(
             query_utils.create_queries_by_lookup_field(self.request_data, fields, search_fields_maps)
