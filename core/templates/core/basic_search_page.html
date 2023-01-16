@@ -226,9 +226,12 @@
 
         ['id_sort_by', 'id_num_record', 'id_order_0', 'id_order_1',
             'display-as-grid', 'display-as-list'].forEach((target_id) => {
-            document.getElementById(target_id).addEventListener('change', () => {
-                submit_page();
-            });
+            if(document.getElementById(target_id)) {
+                    document.getElementById(target_id).addEventListener('change', () => {
+                    submit_page();
+
+                });
+            }
         });
 
         function setup_fieldset_toggle() {
@@ -290,7 +293,9 @@
             setup_merge_btn();
             setup_fieldset_toggle();
             setup_advanced_search_toggle();
-            add_hide_buttons_to_columns();
+            if($('#results_table thead').length)   {
+                add_hide_buttons_to_columns();
+            }
             {% if recref_mode == '1' %}
                 emlojs.recref_select_service.setup_all()
             {% endif %}
