@@ -956,23 +956,11 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def query_fieldset_list(self) -> Iterable:
-        # log.info(self.get_context_data())
-        default_values = {
-            'foaf_name_lookup': 'starts_with',
-        }
-        request_data = default_values | self.request_data.dict()
-
-        return [CompactSearchFieldset(request_data)]
+        return [CompactSearchFieldset(self.request_data.dict())]
 
     @property
     def expanded_query_fieldset_list(self) -> Iterable:
-        # log.info(self.get_context_data())
-        default_values = {
-            'foaf_name_lookup': 'starts_with',
-        }
-        request_data = default_values | self.request_data.dict()
-
-        return [ExpandedSearchFieldset(request_data)]
+        return [ExpandedSearchFieldset(self.request_data.dict())]
 
 
 class WorkCommentFormsetHandler(RecrefFormsetHandler):

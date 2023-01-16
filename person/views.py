@@ -365,7 +365,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
     @property
     def query_fieldset_list(self) -> Iterable:
         default_values = {
-            'foaf_name_lookup': 'starts_with',
+            #'foaf_name_lookup': 'starts_with',
         }
         request_data = default_values | self.request_data.dict()
 
