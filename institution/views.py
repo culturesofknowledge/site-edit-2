@@ -84,10 +84,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
 
     @property
     def query_fieldset_list(self) -> Iterable:
-        default_values = {}
-        request_data = default_values | self.request_data.dict()
-
-        return [GeneralSearchFieldset(request_data)]
+        return [GeneralSearchFieldset(self.request_data.dict())]
 
 
 class InstInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
