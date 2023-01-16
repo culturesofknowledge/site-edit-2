@@ -70,7 +70,7 @@ def create_queries_by_lookup_field(request_data: dict,
             log.warning(f'lookup fn not found -- [{field_name}][{lookup_key}]')
             continue
 
-        if field_name in search_fields_maps:
+        if search_fields_maps and field_name in search_fields_maps:
             q = Q()
             for search_field in search_fields_maps[field_name]:
                 q.add(run_lookup_fn(lookup_fn, search_field, field_val), Q.OR)
