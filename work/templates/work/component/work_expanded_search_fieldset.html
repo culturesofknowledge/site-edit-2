@@ -57,7 +57,7 @@
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.images field_lookup=form.images_lookup %}
 
     <!-- Manifestations -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.manifestations field_lookup=form.manifestations_lookup %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.manifestations_searchable field_lookup=form.manifestations_searchable_lookup %}
 
     <!-- Related resources -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.related_resources field_lookup=form.related_resources_lookup %}

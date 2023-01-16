@@ -921,7 +921,9 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     def get_queryset(self):
         field_fn_maps = query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                            'change_timestamp', str_to_std_datetime)
+                                                            'change_timestamp', str_to_std_datetime) |\
+                        query_utils.create_from_to_datetime('date_of_work_std_from', 'date_of_work_std_to',
+                                            'date_of_work_std', str_to_std_datetime)
 
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
 
@@ -929,7 +931,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             'description', 'editors_notes', 'date_of_work_as_marked', 'date_of_work_std_year', 'creators_searchable',
             'sender_or_recipient', 'origin_or_destination', 'date_of_work_std_month', 'date_of_work_std_day',
             'notes_on_authors', 'origin_as_marked', 'addressee',
-            'destination_as_marked', 'flags', 'images', 'manifestations',
+            'destination_as_marked', 'flags', 'images', 'manifestations_searchable',
             'related_resources', 'language_of_work', 'subjects', 'abstract', 'people_mentioned',
             'keywords', 'general_notes', 'original_catalogue', 'accession_code', 'work_to_be_deleted',
             'work_id', 'change_user'

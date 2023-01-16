@@ -490,8 +490,8 @@ class CompactSearchFieldset(forms.Form):
                                               label='Day', help_text=day_help_text)
     date_of_work_std_day_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
-    date_of_work_std_from = forms.CharField(required=False)
-    date_of_work_std_to = forms.CharField(required=False)
+    date_of_work_std_from = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
+    date_of_work_std_to = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
     date_of_work_std_info = date_of_work_help_text
 
     sender_or_recipient = forms.CharField(required=False, help_text=sender_recipient_help_text)
@@ -525,8 +525,8 @@ class CompactSearchFieldset(forms.Form):
     images = forms.CharField(required=False, help_text=img_help_text)
     images_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    manifestations = forms.CharField(required=False, help_text=manif_help_text)
-    manifestations_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    manifestations_searchable = forms.CharField(required=False, label='Manifestations', help_text=manif_help_text)
+    manifestations_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     related_resources = forms.CharField(required=False)
     related_resources_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
@@ -553,17 +553,14 @@ class CompactSearchFieldset(forms.Form):
     work_to_be_deleted = forms.CharField(required=False, help_text=del_help_text)
     work_to_be_deleted_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    change_timestamp_from = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
-    change_timestamp_to = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
-
     work_id = forms.CharField(required=False, help_text=id_help_text)
     work_id_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    last_edit_from = forms.CharField(required=False)
-    last_edit_to = forms.CharField(required=False)
-    last_edit_info = form_utils.datetime_search_info
+    change_timestamp_from = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
+    change_timestamp_to = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
+    change_timestamp_info = form_utils.datetime_search_info
 
-    change_user = forms.CharField(required=False, help_text=change_help_text)
+    change_user = forms.CharField(required=False, label='Last edited by', help_text=change_help_text)
     change_user_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
 
@@ -606,8 +603,8 @@ class ExpandedSearchFieldset(forms.Form):
                                               label='Day', help_text=day_help_text)
     date_of_work_std_day_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
-    date_of_work_std_from = forms.CharField(required=False)
-    date_of_work_std_to = forms.CharField(required=False)
+    date_of_work_std_from = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
+    date_of_work_std_to = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
     date_of_work_std_info = date_of_work_help_text
 
     creators_searchable = forms.CharField(required=False, label='Author/sender')
@@ -639,8 +636,8 @@ class ExpandedSearchFieldset(forms.Form):
     images = forms.CharField(required=False, help_text=img_help_text)
     images_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    manifestations = forms.CharField(required=False, help_text=manif_help_text)
-    manifestations_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    manifestations_searchable = forms.CharField(required=False, label='Manifestations', help_text=manif_help_text)
+    manifestations_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     related_resources = forms.CharField(required=False)
     related_resources_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
@@ -681,5 +678,5 @@ class ExpandedSearchFieldset(forms.Form):
     change_timestamp_to = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
     change_timestamp_info = form_utils.datetime_search_info
 
-    change_user = forms.CharField(required=False, help_text=change_help_text)
+    change_user = CharField(required=False, label='Last edited by', help_text=change_help_text)
     change_user_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
