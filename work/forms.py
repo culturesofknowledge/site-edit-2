@@ -677,9 +677,9 @@ class ExpandedSearchFieldset(forms.Form):
     work_id = forms.CharField(required=False, help_text=id_help_text)
     work_id_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    last_edit_from = forms.CharField(required=False)
-    last_edit_to = forms.CharField(required=False)
-    last_edit_info = form_utils.datetime_search_info
+    change_timestamp_from = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
+    change_timestamp_to = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
+    change_timestamp_info = form_utils.datetime_search_info
 
     change_user = forms.CharField(required=False, help_text=change_help_text)
     change_user_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)

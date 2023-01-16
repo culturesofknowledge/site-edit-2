@@ -93,7 +93,7 @@
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.work_id field_lookup=form.work_id_lookup %}
 
     <!-- Last edit -->
-    {% include "core/component/search_fieldset/from_to_year.html" with title='Last edit' from_field=form.last_edit_from to_field=form.last_edit_to field_info=form.last_edit_info %}
+    {% include "core/component/search_fieldset/from_to_year.html" with title='Last edit' from_field=form.change_timestamp_from to_field=form.change_timestamp_to field_info=form.change_timestamp_info %}
 
     <!-- Last changed by-->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.change_user field_lookup=form.change_user_lookup %}

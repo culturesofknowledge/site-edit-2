@@ -19,6 +19,7 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, LocRecrefForm
 from core.helper import view_utils, lang_utils, model_utils, query_utils, renderer_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
+from core.helper.date_utils import str_to_std_datetime
 from core.helper.form_utils import save_multi_rel_recref_formset
 from core.helper.lang_utils import LangModelAdapter, NewLangForm
 from core.helper.recref_handler import SingleRecrefHandler, RecrefFormsetHandler, SubjectHandler, ImageRecrefHandler, \
@@ -919,7 +920,8 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         return 3
 
     def get_queryset(self):
-        field_fn_maps = {}
+        field_fn_maps = query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
+                                                            'change_timestamp', str_to_std_datetime)
 
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
 
