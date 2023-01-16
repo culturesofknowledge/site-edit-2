@@ -1,5 +1,6 @@
-<fieldset>
-    <legend>{{ form.title }}</legend>
+{% extends "core/component/search_fieldset/fieldset.html" %}
+
+{% block fields %}
 
     <!-- Description -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.description field_lookup=form.description_lookup %}
@@ -81,4 +82,5 @@
 
     <!-- Last changed by-->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.change_user field_lookup=form.change_user_lookup %}
-</fieldset>
+
+{% endblock %}

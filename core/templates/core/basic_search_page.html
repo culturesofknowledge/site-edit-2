@@ -6,10 +6,6 @@
         <h1> {{ title }} </h1>
     </div>
 
-    {% if total_record %}
-        <button id="fieldset-toggle" class="btn">Toggle</button>
-    {% endif %}
-
     {% for to_user_msg in to_user_messages %}
         <h1>{{ to_user_msg }}</h1>
     {% endfor %}
@@ -48,6 +44,11 @@
                     <!-- search function toolbar (e.g. download output, compact, expanded)  -->
                     <aside class="margin-bottom row">
                         <div class="col col--1of2">
+                            {% if total_record %}
+                            <button id="fieldset-toggle" class="btn margin-right inline_btn" type="button">
+                                Toggle <span data-feather="search" aria-hidden="true"></span>
+                            </button>
+                            {% endif %}
                             <button type='submit' class="btn margin-right inline_btn"
                                     name="__form_action" value="download_csv">
                                 Download output
@@ -237,6 +238,17 @@
             });
         }
 
+        function setup_advanced_search_toggle() {
+            $('#advanced_search').on('click', toggle_advanced_search);
+
+        }
+
+        function toggle_advanced_search()   {
+            $('.advanced_search').toggle();
+            $('.search_input').toggleClass('col--3of4');
+            $('.search_input').toggleClass('col--4of4');
+        }
+
         function show_column(show_tag, column_index) {
             show_tag.remove();
             $('#results_table tr > *:nth-child(' + column_index + ')').show();
@@ -277,6 +289,7 @@
             emlojs.selectable_service.setup_all()
             setup_merge_btn();
             setup_fieldset_toggle();
+            setup_advanced_search_toggle();
             add_hide_buttons_to_columns();
             {% if recref_mode == '1' %}
                 emlojs.recref_select_service.setup_all()

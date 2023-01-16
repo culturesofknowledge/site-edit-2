@@ -5,14 +5,16 @@
 {% endif %}
 
 {% if field.help_text %}
-<div style="display: inline" data-tippy-content="{{ field.help_text }}"><span data-feather="info" aria-hidden="true"></span></div>
+<div class="search-fieldset-tippy-container" data-tippy-content="{{ field.help_text }}">
+    <span data-feather="info" aria-hidden="true"></span>
+</div>
 {% endif %}
 
 <div class="row-no-margin">
-    <div class="col--1of4">
+    <div class="col--1of4 advanced_search">
         {{ field_lookup }}
     </div>
-    <div class="col--3of4">
+    <div class="col--4of4 search_input">
         {{ field }}
     </div>
 </div>
