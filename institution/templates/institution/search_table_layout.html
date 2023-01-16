@@ -21,11 +21,8 @@
 
     {% for r in search_results %}
         <tr class="selectable_entry" entry_id="{{ r.institution_id }}">
-
             <td>
-                <a href="{% url 'institution:full_form' r.institution_id %}">
-                    {{ r.institution_id }}
-                </a>
+                {% include 'core/component/search_table_layout/link_record.html' with id=r.institution_id view='institution:full_form' %}
             </td>
             <td>
                 {{ r.institution_name }}
