@@ -53,7 +53,7 @@ class GeneralSearchFieldset(forms.Form):
                               help_text='Notes for internal use. Not intended for front-end display.')
     editors_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    sent = IntegerField(required=False, label='Sent',
+    sent = IntegerField(required=False,
                         help_text="Number of letters sent from this place of origin."
                                   " You can search on these 'number' fields using 'Advanced Search', e.g. you could"
                                   " enter something like 'Sent greater than 100' to identify a place from which many"
@@ -73,14 +73,14 @@ class GeneralSearchFieldset(forms.Form):
                                   help_text='Comments destined for front-end display.')
     researchers_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    resources = forms.CharField(required=False, label='Related resources')
+    resources = CharField(required=False, label='Related resources')
     resources_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    latitude = IntegerField(required=False, label='Latitude')
-    latitude_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
+    latitude = CharField(required=False)
+    latitude_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    longitude = IntegerField(required=False, label='Longitude')
-    longitude_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
+    longitude = CharField(required=False)
+    longitude_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     element_1_eg_room = CharField(required=False, label='1. E.g. room',
                                   help_text="'Sub-place', e.g. Porter's Lodge")
@@ -110,13 +110,13 @@ class GeneralSearchFieldset(forms.Form):
                                     help_text="'Nation', e.g. United Kingdom")
     element_7_eg_empire_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    images = forms.CharField(required=False)
+    images = CharField(required=False)
     images_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    change_timestamp_from = forms.CharField(required=False, widget=widgets_utils.NewDateInput())
-    change_timestamp_to = forms.CharField(required=False, widget=widgets_utils.NewDateInput())
+    change_timestamp_from = CharField(required=False, widget=widgets_utils.NewDateInput())
+    change_timestamp_to = CharField(required=False, widget=widgets_utils.NewDateInput())
     change_timestamp_info = form_utils.datetime_search_info
 
-    change_user = forms.CharField(required=False, label='Last edited by',
-                                  help_text='Username of the person who last changed the record.')
+    change_user = CharField(required=False, label='Last edited by',
+                            help_text='Username of the person who last changed the record.')
     change_user_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
