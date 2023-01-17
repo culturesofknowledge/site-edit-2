@@ -17,6 +17,9 @@ from siteedit2.utils import log_utils
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+EMLO_APP_HOME = os.environ.get('EMLO_APP_HOME', Path.home().joinpath('emlo_home').as_posix())
+Path(EMLO_APP_HOME).mkdir(parents=True, exist_ok=True)
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
@@ -28,7 +31,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-CSRF_TRUSTED_ORIGINS = ['http://209.97.176.41']  # KTODO temp solution, should be update docker setting
+CSRF_TRUSTED_ORIGINS = ['http://localhost', 'http://127.0.0.1']
 
 # Application definition
 
@@ -157,9 +160,26 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'detailed_web',
-            # 'formatter': 'verbose',
             'level': 'DEBUG',
-        }
+        },
+
+        'roll_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'detailed_web',
+            'level': 'INFO',
+            'filename': Path(EMLO_APP_HOME).joinpath('emlo.log').as_posix(),
+            'backupCount': 10,
+            'maxBytes': 10485760,
+        },
+        'roll_file_debug': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'detailed_web',
+            'level': 'DEBUG',
+            'filename': Path(EMLO_APP_HOME).joinpath('emlo.debug.log').as_posix(),
+            'backupCount': 10,
+            'maxBytes': 10485760,
+        },
+
     },
     'loggers': {
         'uploader': debug_log_setting,
@@ -169,7 +189,11 @@ LOGGING = {
         #     'propagate': True,
         # },
     },
-    'root': debug_log_setting,
+    'root': {
+        'level': 'DEBUG',
+        'handlers': ['console', 'roll_file', 'roll_file_debug'],
+        'propagate': True,
+    },
 }
 
 # Internationalization

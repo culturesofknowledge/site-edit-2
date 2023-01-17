@@ -1,10 +1,7 @@
 #!/bin/bash
 
 
-
-
-APP_HOME=/emlo_home
-test -d $APP_HOME || mkdir -p $APP_HOME
+test -d $EMLO_APP_HOME || mkdir -p $EMLO_APP_HOME
 
 
 # Name of the application
@@ -14,7 +11,7 @@ NAME="siteedit2"
 DJANGODIR=/code
 
 # we will communicte using this unix socket
-#SOCKFILE=$APP_HOME/gunicorn.sock
+#SOCKFILE=$EMLO_APP_HOME/gunicorn.sock
 GUN_BIND=0.0.0.0:8000
 
 # the user to run as
@@ -30,7 +27,8 @@ DJANGO_WSGI_MODULE=siteedit2.wsgi
 echo "Starting $NAME as `whoami`"
 # Activate the virtual environment
 
-export DJANGO_SETTINGS_MODULE=siteedit2.settings.gunweb
+# should be export by .gunweb.env
+# export DJANGO_SETTINGS_MODULE=siteedit2.settings.gunweb
 
 # Create the run directory if it doesn't exist
 RUNDIR=$(dirname $SOCKFILE)
@@ -41,7 +39,7 @@ cd $DJANGODIR
 
 python3 manage.py collectstatic -c --no-input
 python3 manage.py compilescss
-cp $DJANGODIR/core/static/core/scss/main.css $APP_HOME/static/
+cp $DJANGODIR/core/static/core/scss/main.css $EMLO_APP_HOME/static/
 
 
 echo "Making migrations"

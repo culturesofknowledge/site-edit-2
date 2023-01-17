@@ -1,10 +1,10 @@
 from .base import *  # noqa
+from pathlib import Path
 
 DEBUG = False
 
 ALLOWED_HOSTS = ['192.168.56.10']
 CSRF_TRUSTED_ORIGINS = ['http://192.168.56.10', ]
 
-
-MEDIA_ROOT = '/emlo_home/media'
-STATIC_ROOT = '/emlo_home/static'
+MEDIA_ROOT = Path(EMLO_APP_HOME).joinpath('media').as_posix()
+STATIC_ROOT = Path(EMLO_APP_HOME).joinpath('static').as_posix()

@@ -73,7 +73,9 @@ Q & A
 
 ### How to read logs of web server
 
-* TODO
+```
+less -R /var/lib/docker/volumes/site-edit-2_emlo_home/_data/emlo.debug.log
+```
 
 Procedure for data migration
 ---------------------------------

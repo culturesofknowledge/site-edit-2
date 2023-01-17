@@ -8,7 +8,7 @@ services:
     entrypoint: /code/docker/site-edit-2/docker-entrypoint-gunweb.sh
     volumes:
       - ../../:/code
-      - docker_emlo_home:/emlo_home
+      - emlo_home:${EMLO_APP_HOME}
     ports:
       - "8000:8000"
     env_file:
@@ -21,7 +21,7 @@ services:
       context: ../../
       dockerfile: docker/site-edit-2/nginx.Dockerfile
     volumes:
-      - docker_emlo_home:/emlo_home
+      - emlo_home:${EMLO_APP_HOME}
     ports:
       - 8010:80
     command: [nginx, '-g', 'daemon off;']
@@ -33,4 +33,4 @@ services:
       - .gunweb.env
 volumes:
   data:
-  docker_emlo_home:
+  emlo_home:

@@ -17,6 +17,7 @@ services:
     entrypoint: /code/docker/site-edit-2/docker-entrypoint.sh
     volumes:
       - ../../:/code
+      - emlo_home:${EMLO_APP_HOME}
     ports:
       - "8000:8000"
     env_file:
@@ -36,3 +37,4 @@ services:
       - db
 volumes:
   data:
+  emlo_home:
