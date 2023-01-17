@@ -549,8 +549,13 @@ class CompactSearchFieldset(forms.Form):
     accession_code = forms.CharField(required=False, label='Source of record', help_text=acc_help_text)
     accession_code_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    # work_to_be_deleted = form_utils.ZeroOneCheckboxField()
-    work_to_be_deleted = forms.CharField(required=False, help_text=del_help_text)
+    work_to_be_deleted = form_utils.ZeroOneCheckboxField(required=False)
+    '''work_to_be_deleted = forms.CharField(required=False, help_text=del_help_text, widget=forms.Select(
+        choices=[
+            (0, 'No'),
+            (1, 'Yes'),
+        ]
+    ))'''
     work_to_be_deleted_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     work_id = forms.CharField(required=False, help_text=id_help_text)
@@ -667,8 +672,13 @@ class ExpandedSearchFieldset(forms.Form):
     accession_code = forms.CharField(required=False, label='Source of record', help_text=acc_help_text)
     accession_code_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    # work_to_be_deleted = form_utils.ZeroOneCheckboxField()
-    work_to_be_deleted = forms.CharField(required=False, help_text=del_help_text)
+    work_to_be_deleted = form_utils.ZeroOneCheckboxField(required=False, is_str=False, initial=0)
+    '''work_to_be_deleted = forms.IntegerField(required=False, help_text=del_help_text, widget=forms.Select(
+        choices=[
+            (0, 'No'),
+            (1, 'Yes'),
+        ]
+    ))'''
     work_to_be_deleted_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     work_id = forms.CharField(required=False, help_text=id_help_text)

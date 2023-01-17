@@ -5,6 +5,8 @@ from typing import Iterable
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models
+from django.db.models import F
+from django.db.models.lookups import Exact
 from django.forms import ModelForm, BaseForm
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
@@ -920,7 +922,8 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         return 2
 
     def get_queryset(self):
-        field_fn_maps = query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
+        field_fn_maps = {'work_to_be_deleted': lambda f, v: Exact(F(f), '0' if v == 'On' else '1'),} |\
+            query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
                                                             'change_timestamp', str_to_std_datetime) |\
                         query_utils.create_from_to_datetime('date_of_work_std_from', 'date_of_work_std_to',
                                             'date_of_work_std', str_to_std_datetime)
@@ -933,7 +936,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             'notes_on_authors', 'origin_as_marked', 'addressee',
             'destination_as_marked', 'flags', 'images', 'manifestations_searchable',
             'related_resources', 'language_of_work', 'subjects', 'abstract', 'people_mentioned',
-            'keywords', 'general_notes', 'original_catalogue', 'accession_code', 'work_to_be_deleted',
+            'keywords', 'general_notes', 'original_catalogue', 'accession_code', # 'work_to_be_deleted',
             'work_id', 'change_user'
         ]
 

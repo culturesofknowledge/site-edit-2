@@ -86,8 +86,17 @@
     <!-- Accession code -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.accession_code field_lookup=form.accession_code_lookup %}
 
-    <!-- Record to be deleted -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.work_to_be_deleted field_lookup=form.work_to_be_deleted_lookup %}
+    <!-- Record to be deleted
+        This is a zero/one checkbox -->
+
+    <div class="row-no-margin" style="margin-top: 1em; margin-bottom: 1em;">
+        <div class="col--4of4">
+
+        {{ form.work_to_be_deleted }}
+        {{ form.work_to_be_deleted.label_tag }}
+        </div>
+    </div>
+    {{ form.work_to_be_deleted.errors }}
 
     <!-- Work ID -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.work_id field_lookup=form.work_id_lookup %}
