@@ -107,4 +107,26 @@
     <!-- Last changed by-->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.change_user field_lookup=form.change_user_lookup %}
 
+    <script>
+
+      var manif_autocomplete = [{% for mtype in form.manif_type %}
+      { label: "{{ mtype }}", category: "Document type" },
+      {% endfor %}
+
+      {% for inst in form.institution_names %}
+      { label: "{{ inst }}", category: "Repository" },
+      {% endfor %}];
+
+    var subjects_autocomplete = [{% for subject in form.subject_names %}
+      '{{ subject }}',
+      {% endfor %}];
+
+     var catalogs_autocomplete = [{% for catalog in form.catalog_names %}
+      "{{ catalog|safe }}",
+      {% endfor %}];
+
+    </script>
+
+    <script src="/static/core/js/work_fieldset_autocomplete.js"></script>
+
 {% endblock %}

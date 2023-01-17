@@ -11,7 +11,8 @@ from core.helper import form_utils
 from core.helper import widgets_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter, TargetPersonRecrefAdapter
 from core.helper.form_utils import TargetPersonMRRForm, LocationRecrefField, InstRecrefField
-from core.models import Recref
+from core.models import Recref, CofkUnionSubject, CofkLookupCatalogue
+from institution.models import CofkUnionInstitution
 from manifestation.models import CofkUnionManifestation, CofkManifPersonMap
 from work.models import CofkUnionWork, CofkWorkPersonMap
 
@@ -447,27 +448,32 @@ flags_help_text = "May contain the words 'Date of work', 'Author/sender', 'Addre
 date_as_marked_help_text = "This field could contain the actual words marked within the " \
                            "letter, such as 'ipsis Kalendis Decembribus C I. I. CCVI', or" \
                            " a modern researcher's notation such as 'n.d.'"
-manif_help_text = '<p>The Manifestations field contains a very brief summary of all the ' \
+manif_help_text = 'The Manifestations field contains a very brief summary of all the ' \
                   'manifestations of a work. This summary includes document type plus ' \
                   'either repository and shelfmark or printed edition details.</p><p><i>You can ' \
                   'search on both document type and repository at once if you wish, but ' \
                   'please remember, document type comes first in the summary, then ' \
                   'repository, so you need to enter your search terms in that same order. ' \
                   'Also, if entering multiple search terms, you need to separate them ' \
-                  'using the wildcard % (percent-sign).</i></p>' \
-                  '<div>Document type:<select style="width: unset;"><option>Test</option></select></div>' \
-                  '<div>Repository:<select style="width: unset;"><option>Test</option></select></div>'
+                  'using the wildcard % (percent-sign).</i>'
 img_help_text = 'Contains filenames of any scanned images of manifestations.'
 abstr_help_text = 'Contains a summary of the contents of the work'
 keywords_help_text = 'This field contains keywords, plus a list of places and works mentioned within a work.'
-og_help_text = '<select><option>Possible values</option></select>'
 acc_help_text = 'Typically contains the name of the researcher who contributed the data.'
 del_help_text = "Yes or No. If 'Yes', the record is marked for deletion."
 id_help_text = 'The unique ID for the record within the current CofK database.'
 change_help_text = 'Username of the person who last changed the record.'
 
+class FieldsetForm(forms.Form):
+    institution_names = CofkUnionInstitution.objects\
+        .order_by('institution_name').values_list('institution_name', flat=True).distinct()
+    manif_type = [t[1] for t in manif_type_choices]
+    subject_names = CofkUnionSubject.objects.order_by('subject_desc').values_list('subject_desc', flat=True).distinct()
+    catalog_names = CofkLookupCatalogue.objects\
+        .order_by('catalogue_name').values_list('catalogue_name', flat=True).distinct()
 
-class CompactSearchFieldset(forms.Form):
+
+class CompactSearchFieldset(FieldsetForm):
     title = 'Compact Search'
     template_name = 'work/component/work_compact_search_fieldset.html'
 
@@ -543,7 +549,7 @@ class CompactSearchFieldset(forms.Form):
     general_notes = forms.CharField(required=False)
     general_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    original_catalogue = forms.CharField(required=False, help_text=og_help_text)
+    original_catalogue = forms.CharField(required=False)
     original_catalogue_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     accession_code = forms.CharField(required=False, label='Source of record', help_text=acc_help_text)
@@ -576,7 +582,7 @@ class SearchFieldSetField:
         self.description = description
 
 
-class ExpandedSearchFieldset(forms.Form):
+class ExpandedSearchFieldset(FieldsetForm):
     title = 'Expanded Search'
     template_name = 'work/component/work_expanded_search_fieldset.html'
 
@@ -666,7 +672,7 @@ class ExpandedSearchFieldset(forms.Form):
     general_notes = forms.CharField(required=False)
     general_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    original_catalogue = forms.CharField(required=False, help_text=og_help_text)
+    original_catalogue = forms.CharField(required=False)
     original_catalogue_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     accession_code = forms.CharField(required=False, label='Source of record', help_text=acc_help_text)
