@@ -297,6 +297,15 @@
             setup_advanced_search_toggle();
             if($('#results_table thead').length)   {
                 add_hide_buttons_to_columns();
+
+                $(function(){
+                    $('#results_table').tablesorter({
+                        widgets        : ['zebra', 'columns'],
+                        usNumberFormat : false,
+                        sortReset      : true,
+                        sortRestart    : true
+                    });
+                });
             }
             {% if recref_mode == '1' %}
                 emlojs.recref_select_service.setup_all()
