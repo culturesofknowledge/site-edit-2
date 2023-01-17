@@ -152,7 +152,6 @@ class BasicSearchView(ListView):
         context.update({'query_fieldset_list': query_fieldset_list,
                         'search_components': search_components_factory(default_search_components_dict |
                                                                        self.request_data.dict()),
-                        'total_record': self.get_queryset().count(),
                         'entity': self.entity or '',
                         'title': self.entity.split(',')[1].title() if self.entity else 'Title',
                         'results_renderer': results_renderer(self.get_search_results_context(context)),

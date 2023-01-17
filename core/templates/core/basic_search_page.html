@@ -29,10 +29,10 @@
 
 
             <div id="query-result" class="col col--3of4">
-                {% if total_record == 0 %}
+                {% if paginator.count == 0 %}
                     <h2>No results</h2>
                 {% else %}
-                    <h2>{{ total_record | floatformat:'g' }} {{ total_record|pluralize:entity }} found</h2>
+                    <h2>{{ paginator.count | floatformat:'g' }} {{ paginator.count|pluralize:entity }} found</h2>
 
                     <!-- Search components (e.g. sort by, records per page) -->
                     {{ search_components }}
@@ -44,7 +44,7 @@
                     <!-- search function toolbar (e.g. download output, compact, expanded)  -->
                     <aside class="margin-bottom row">
                         <div class="col col--1of2">
-                            {% if total_record %}
+                            {% if paginator.count %}
                             <button id="fieldset-toggle" class="btn margin-right inline_btn" type="button">
                                 Toggle <span data-feather="search" aria-hidden="true"></span>
                             </button>
