@@ -27,7 +27,6 @@
                 {% include "core/component/actionbox.html" with submit_title='Search' action='reset' %}
             </aside>
 
-
             <div id="query-result" class="col col--3of4">
                 {% if paginator.count == 0 %}
                     <h2>No results</h2>
@@ -61,6 +60,8 @@
                             </button>
                             <a href="" class="btn margin-right">Save query</a>
                         </div>
+                        {# Only display search rendering selection for work #}
+                        {% if 'work' in entity %}
                         <div class="col col--1of2">
                             <h3 class="sr-only">Layout</h3>
                             <div class="align-right">
@@ -88,6 +89,7 @@
                                 </label>
                             </div>
                         </div>
+                        {% endif %}
                     </aside>
 
                     {{ results_renderer | safe }}
