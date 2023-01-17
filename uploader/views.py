@@ -126,7 +126,7 @@ def upload_review(request, upload_id, **kwargs):
     template_url = 'uploader/review.html'
     upload = CofkCollectUpload.objects.filter(upload_id=upload_id).first()
 
-    works_paginator = Paginator(CofkCollectWork.objects.filter(upload=upload), 25)
+    works_paginator = Paginator(CofkCollectWork.objects.filter(upload=upload).order_by('pk'), 25)
     page_number = request.GET.get('page', 1)
     works_page = works_paginator.get_page(page_number)
 
