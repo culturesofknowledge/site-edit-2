@@ -8,8 +8,8 @@
                             break;
 
                         if(!['hidden', 'fieldset'].includes(element.type))  {
-                            if(element.type == 'select-one')    {
-                                //element.selectedIndex = 0;
+                            if(element.type == 'select-one' && element.name.indexOf('_lookup') > -1)    {
+                                element.selectedIndex = 0;
                             }
                             else {
                                 element.value = null;

@@ -15,9 +15,7 @@
         <tr class="selectable_entry" entry_id="{{ r.publication_id }}">
 
             <td>
-                <a href="{% url 'publication:full_form' r.publication_id %}">
-                    {{ r.publication_id }}
-                </a>
+                {% include 'core/component/search_table_layout/link_record.html' with id=r.publication_id view='publication:full_form' %}
             </td>
             <td>
                 {{ r.publication_details }}

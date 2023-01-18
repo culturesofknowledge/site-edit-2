@@ -99,7 +99,9 @@
         </tr>
         <tr>
             <td class="header">Origin</td>
-            <td>{% get_location work.origin_id %}
+            <td>{% if work.origin_id %}
+                    {% get_location work.origin_id %}
+                {% endif %}
 
                 {% if work.origin_as_marked %}
                     <br/>As marked: {{ work.origin_as_marked }}
@@ -135,7 +137,9 @@
         </tr>
         <tr>
             <td class="header">Destination</td>
-            <td>{% get_location work.destination_id %}
+            <td>{% if work.destination_id %}
+                    {% get_location work.destination_id %}
+                {% endif %}
 
                 {% if work.destination_as_marked %}
                     <br/>As marked: {{ work.destination_as_marked }}

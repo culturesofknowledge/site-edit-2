@@ -29,6 +29,7 @@ recref_left_right_pairs = [
     (work_models.CofkWorkSubjectMap.work, work_models.CofkWorkSubjectMap.subject),
     (work_models.CofkWorkPersonMap.work, work_models.CofkWorkPersonMap.person),
     (work_models.CofkWorkLocationMap.work, work_models.CofkWorkLocationMap.location),
+    (work_models.CofkWorkPersonMap.person, work_models.CofkWorkPersonMap.work),
 
     # manif
     (manif_models.CofkManifManifMap.manif_from, manif_models.CofkManifManifMap.manif_to),

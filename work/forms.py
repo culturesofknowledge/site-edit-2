@@ -11,7 +11,8 @@ from core.helper import form_utils
 from core.helper import widgets_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter, TargetPersonRecrefAdapter
 from core.helper.form_utils import TargetPersonMRRForm, LocationRecrefField, InstRecrefField
-from core.models import Recref
+from core.models import Recref, CofkUnionSubject, CofkLookupCatalogue
+from institution.models import CofkUnionInstitution
 from manifestation.models import CofkUnionManifestation, CofkManifPersonMap
 from work.models import CofkUnionWork, CofkWorkPersonMap
 
@@ -447,27 +448,32 @@ flags_help_text = "May contain the words 'Date of work', 'Author/sender', 'Addre
 date_as_marked_help_text = "This field could contain the actual words marked within the " \
                            "letter, such as 'ipsis Kalendis Decembribus C I. I. CCVI', or" \
                            " a modern researcher's notation such as 'n.d.'"
-manif_help_text = '<p>The Manifestations field contains a very brief summary of all the ' \
+manif_help_text = 'The Manifestations field contains a very brief summary of all the ' \
                   'manifestations of a work. This summary includes document type plus ' \
                   'either repository and shelfmark or printed edition details.</p><p><i>You can ' \
                   'search on both document type and repository at once if you wish, but ' \
                   'please remember, document type comes first in the summary, then ' \
                   'repository, so you need to enter your search terms in that same order. ' \
                   'Also, if entering multiple search terms, you need to separate them ' \
-                  'using the wildcard % (percent-sign).</i></p>' \
-                  '<div>Document type:<select style="width: unset;"><option>Test</option></select></div>' \
-                  '<div>Repository:<select style="width: unset;"><option>Test</option></select></div>'
+                  'using the wildcard % (percent-sign).</i>'
 img_help_text = 'Contains filenames of any scanned images of manifestations.'
 abstr_help_text = 'Contains a summary of the contents of the work'
 keywords_help_text = 'This field contains keywords, plus a list of places and works mentioned within a work.'
-og_help_text = '<select><option>Possible values</option></select>'
 acc_help_text = 'Typically contains the name of the researcher who contributed the data.'
 del_help_text = "Yes or No. If 'Yes', the record is marked for deletion."
 id_help_text = 'The unique ID for the record within the current CofK database.'
 change_help_text = 'Username of the person who last changed the record.'
 
+class FieldsetForm(forms.Form):
+    institution_names = CofkUnionInstitution.objects\
+        .order_by('institution_name').values_list('institution_name', flat=True).distinct()
+    manif_type = [t[1] for t in manif_type_choices]
+    subject_names = CofkUnionSubject.objects.order_by('subject_desc').values_list('subject_desc', flat=True).distinct()
+    catalog_names = CofkLookupCatalogue.objects\
+        .order_by('catalogue_name').values_list('catalogue_name', flat=True).distinct()
 
-class CompactSearchFieldset(forms.Form):
+
+class CompactSearchFieldset(FieldsetForm):
     title = 'Compact Search'
     template_name = 'work/component/work_compact_search_fieldset.html'
 
@@ -479,33 +485,31 @@ class CompactSearchFieldset(forms.Form):
     date_of_work_as_marked_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     date_of_work_std_year = forms.IntegerField(required=False, min_value=1000, max_value=1850,
-                                               help_text=year_help_text)
+                                               label='Year', help_text=year_help_text)
     date_of_work_std_year_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
     date_of_work_std_month = forms.IntegerField(required=False, min_value=1, max_value=12,
-                                                help_text=month_help_text)
+                                                label='Month', help_text=month_help_text)
     date_of_work_std_month_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
     date_of_work_std_day = forms.IntegerField(required=False, min_value=1, max_value=31,
-                                              help_text=day_help_text)
+                                              label='Day', help_text=day_help_text)
     date_of_work_std_day_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
-    date_of_work_std_from = forms.CharField(required=False)
-    date_of_work_std_to = forms.CharField(required=False)
+    date_of_work_std_from = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
+    date_of_work_std_to = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
     date_of_work_std_info = date_of_work_help_text
 
     sender_or_recipient = forms.CharField(required=False, help_text=sender_recipient_help_text)
     sender_or_recipient_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
-    sender_or_recipient_search_fields = 'creators_searchable,addressees_searchable'
 
     origin_or_destination = forms.CharField(required=False, help_text=origin_destination_help_text)
     origin_or_destination_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
-    origin_or_destination_search_fields = "places_to_searchable,places_from_searchable"
 
     creators_searchable = forms.CharField(required=False)
     creators_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    notes_on_authors = forms.CharField(required=False)
+    notes_on_authors = forms.CharField(required=False, label='Notes on authors/senders')
     notes_on_authors_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     addressee = forms.CharField(required=False)
@@ -514,10 +518,11 @@ class CompactSearchFieldset(forms.Form):
     places_from_searchable = forms.CharField(required=False, help_text=places_from_searchable)
     places_from_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    editors_notes = forms.CharField(required=False)
+    editors_notes = forms.CharField(required=False, label="Editors' notes")
     editors_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    places_to_searchable = forms.CharField(required=False, help_text=places_to_searchable)
+    places_to_searchable = forms.CharField(required=False, label='Destination (standardised)',
+                                           help_text=places_to_searchable)
     places_to_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     flags = forms.CharField(required=False, help_text=flags_help_text)
@@ -526,8 +531,8 @@ class CompactSearchFieldset(forms.Form):
     images = forms.CharField(required=False, help_text=img_help_text)
     images_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    manifestations = forms.CharField(required=False, help_text=manif_help_text)
-    manifestations_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    manifestations_searchable = forms.CharField(required=False, label='Manifestations', help_text=manif_help_text)
+    manifestations_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     related_resources = forms.CharField(required=False)
     related_resources_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
@@ -538,33 +543,35 @@ class CompactSearchFieldset(forms.Form):
     subjects = forms.CharField(required=False)
     subjects_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    abstracts = forms.CharField(required=False, help_text=abstr_help_text)
-    abstracts_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    abstract = forms.CharField(required=False, help_text=abstr_help_text)
+    abstract_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     general_notes = forms.CharField(required=False)
     general_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    original_catalogue = forms.CharField(required=False, help_text=og_help_text)
+    original_catalogue = forms.CharField(required=False)
     original_catalogue_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    accession_code = forms.CharField(required=False, help_text=acc_help_text)
+    accession_code = forms.CharField(required=False, label='Source of record', help_text=acc_help_text)
     accession_code_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    # work_to_be_deleted = form_utils.ZeroOneCheckboxField()
-    work_to_be_deleted = forms.CharField(required=False, help_text=del_help_text)
+    work_to_be_deleted = form_utils.ZeroOneCheckboxField(required=False)
+    '''work_to_be_deleted = forms.CharField(required=False, help_text=del_help_text, widget=forms.Select(
+        choices=[
+            (0, 'No'),
+            (1, 'Yes'),
+        ]
+    ))'''
     work_to_be_deleted_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
-
-    change_timestamp_from = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
-    change_timestamp_to = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
 
     work_id = forms.CharField(required=False, help_text=id_help_text)
     work_id_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    last_edit_from = forms.CharField(required=False)
-    last_edit_to = forms.CharField(required=False)
-    last_edit_info = form_utils.datetime_search_info
+    change_timestamp_from = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
+    change_timestamp_to = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
+    change_timestamp_info = form_utils.datetime_search_info
 
-    change_user = forms.CharField(required=False, help_text=change_help_text)
+    change_user = forms.CharField(required=False, label='Last edited by', help_text=change_help_text)
     change_user_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
 
@@ -575,7 +582,7 @@ class SearchFieldSetField:
         self.description = description
 
 
-class ExpandedSearchFieldset(forms.Form):
+class ExpandedSearchFieldset(FieldsetForm):
     title = 'Expanded Search'
     template_name = 'work/component/work_expanded_search_fieldset.html'
 
@@ -583,46 +590,42 @@ class ExpandedSearchFieldset(forms.Form):
                                   help_text=description_help_text)
     description_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    editors_notes = forms.CharField(required=False)
+    editors_notes = forms.CharField(required=False, label="Editors' notes")
     editors_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     sender_or_recipient = forms.CharField(required=False, help_text=sender_recipient_help_text)
     sender_or_recipient_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
-    sender_or_recipient_search_fields = 'creators_searchable,addressees_searchable'
 
     origin_or_destination = forms.CharField(required=False, help_text=origin_destination_help_text)
     origin_or_destination_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
-    origin_or_destination_search_fields = "places_to_searchable,places_from_searchable"
 
     date_of_work_as_marked = forms.CharField(required=False, help_text=date_as_marked_help_text)
     date_of_work_as_marked_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    author = forms.CharField(required=False)
-    author_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
-
     date_of_work_std_year = forms.IntegerField(required=False, min_value=1000, max_value=1850,
-                                               help_text=year_help_text)
+                                               label='Year', help_text=year_help_text)
     date_of_work_std_year_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
     date_of_work_std_month = forms.IntegerField(required=False, min_value=1, max_value=12,
-                                                help_text=month_help_text)
+                                                label='Month', help_text=month_help_text)
     date_of_work_std_month_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
     date_of_work_std_day = forms.IntegerField(required=False, min_value=1, max_value=31,
-                                              help_text=day_help_text)
+                                              label='Day', help_text=day_help_text)
     date_of_work_std_day_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
-    date_of_work_std_from = forms.CharField(required=False)
-    date_of_work_std_to = forms.CharField(required=False)
+    date_of_work_std_from = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
+    date_of_work_std_to = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
     date_of_work_std_info = date_of_work_help_text
 
-    creators_searchable = forms.CharField(required=False)
+    creators_searchable = forms.CharField(required=False, label='Author/sender')
     creators_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    notes_on_authors = forms.CharField(required=False)
+    notes_on_authors = forms.CharField(required=False, label='Notes on authors/senders')
     notes_on_authors_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    places_from_searchable = forms.CharField(required=False, help_text=places_from_searchable)
+    places_from_searchable = forms.CharField(required=False, label='Origin (standardised)',
+                                             help_text=places_from_searchable)
     places_from_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     origin_as_marked = forms.CharField(required=False)
@@ -631,7 +634,8 @@ class ExpandedSearchFieldset(forms.Form):
     addressee = forms.CharField(required=False)
     addressee_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    places_to_searchable = forms.CharField(required=False, help_text=places_to_searchable)
+    places_to_searchable = forms.CharField(required=False, label='Destination (standardised)',
+                                           help_text=places_to_searchable)
     places_to_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     destination_as_marked = forms.CharField(required=False)
@@ -643,8 +647,8 @@ class ExpandedSearchFieldset(forms.Form):
     images = forms.CharField(required=False, help_text=img_help_text)
     images_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    manifestations = forms.CharField(required=False, help_text=manif_help_text)
-    manifestations_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    manifestations_searchable = forms.CharField(required=False, label='Manifestations', help_text=manif_help_text)
+    manifestations_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     related_resources = forms.CharField(required=False)
     related_resources_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
@@ -655,8 +659,8 @@ class ExpandedSearchFieldset(forms.Form):
     subjects = forms.CharField(required=False)
     subjects_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    abstracts = forms.CharField(required=False, help_text=abstr_help_text)
-    abstracts_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    abstract = forms.CharField(required=False, help_text=abstr_help_text)
+    abstract_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     people_mentioned = forms.CharField(required=False,
                                        help_text='This field contains a list of people mentioned within a work.')
@@ -668,22 +672,27 @@ class ExpandedSearchFieldset(forms.Form):
     general_notes = forms.CharField(required=False)
     general_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    original_catalogue = forms.CharField(required=False, help_text=og_help_text)
+    original_catalogue = forms.CharField(required=False)
     original_catalogue_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    accession_code = forms.CharField(required=False, help_text=acc_help_text)
+    accession_code = forms.CharField(required=False, label='Source of record', help_text=acc_help_text)
     accession_code_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    # work_to_be_deleted = form_utils.ZeroOneCheckboxField()
-    work_to_be_deleted = forms.CharField(required=False, help_text=del_help_text)
+    work_to_be_deleted = form_utils.ZeroOneCheckboxField(required=False, is_str=False, initial=0)
+    '''work_to_be_deleted = forms.IntegerField(required=False, help_text=del_help_text, widget=forms.Select(
+        choices=[
+            (0, 'No'),
+            (1, 'Yes'),
+        ]
+    ))'''
     work_to_be_deleted_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     work_id = forms.CharField(required=False, help_text=id_help_text)
     work_id_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    last_edit_from = forms.CharField(required=False)
-    last_edit_to = forms.CharField(required=False)
-    last_edit_info = form_utils.datetime_search_info
+    change_timestamp_from = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
+    change_timestamp_to = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
+    change_timestamp_info = form_utils.datetime_search_info
 
-    change_user = forms.CharField(required=False, help_text=change_help_text)
+    change_user = CharField(required=False, label='Last edited by', help_text=change_help_text)
     change_user_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)

@@ -70,14 +70,9 @@ def create_queries_by_lookup_field(request_data: dict,
             log.warning(f'lookup fn not found -- [{field_name}][{lookup_key}]')
             continue
 
-        _request_search_fields = request_data.get(f'{field_name}_search_fields')
-        _request_search_fields = str(_request_search_fields or '')
-        _request_search_fields = _request_search_fields.split(',') if _request_search_fields else []
-        search_fields_maps = search_fields_maps or dict()
-        search_fields = search_fields_maps.get(field_name, _request_search_fields)
-        if search_fields:
+        if search_fields_maps and field_name in search_fields_maps:
             q = Q()
-            for search_field in search_fields:
+            for search_field in search_fields_maps[field_name]:
                 q.add(run_lookup_fn(lookup_fn, search_field, field_val), Q.OR)
             yield q
         else:
@@ -104,11 +99,11 @@ choices_lookup_map = {
     'contains': lookups.IContains,
     'starts_with': lookups.IStartsWith,
     'ends_with': lookups.IEndsWith,
-    'equals': lookups.Exact,
+    'equals': lookups.IExact,
     'not_contain': cond_not(lookups.IContains),
     'not_start_with': cond_not(lookups.IStartsWith),
     'not_end_with': cond_not(lookups.IEndsWith),
-    'not_equal_to': cond_not(lookups.Exact),
+    'not_equal_to': cond_not(lookups.IExact),
     'is_blank': is_blank,
     'not_blank': cond_not(is_blank),
     'less_than': lookups.LessThan,
@@ -122,10 +117,13 @@ nullable_lookup_keys = [
 ]
 
 
-def create_from_to_datetime(from_field_name, to_field_name, db_field_name):
+def create_from_to_datetime(from_field_name, to_field_name, db_field_name, convert_fn=None):
+    if convert_fn is None:
+        convert_fn = date_utils.str_to_search_datetime
+
     return {
         from_field_name: lambda _, v: GreaterThanOrEqual(
-            F(db_field_name), date_utils.str_to_search_datetime(v)),
+            F(db_field_name), convert_fn(v)),
         to_field_name: lambda _, v: LessThanOrEqual(
-            F(db_field_name), date_utils.str_to_search_datetime(v)),
+            F(db_field_name), convert_fn(v)),
     }

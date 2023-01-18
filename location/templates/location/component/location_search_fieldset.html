@@ -1,5 +1,6 @@
-<fieldset>
-    <legend>{{ form.title }}</legend>
+{% extends "core/component/search_fieldset/fieldset.html" %}
+
+{% block fields %}
 
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.location_name field_lookup=form.location_name_lookup %}
 
@@ -7,11 +8,14 @@
 
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.editors_notes field_lookup=form.editors_notes_lookup %}
 
+    <!-- Sent -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.sent field_lookup=form.sent_lookup %}
 
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.received field_lookup=form.received_lookup %}
+    <!-- Rec'd -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.recd field_lookup=form.recd_lookup %}
 
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.sent_received field_lookup=form.sent_received_lookup %}
+    <!-- Sent and rec'd -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.all_works field_lookup=form.all_works_lookup %}
 
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.researchers_notes field_lookup=form.researchers_notes_lookup %}
 
@@ -47,5 +51,4 @@
 
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.institution_id field_lookup=form.institution_id_lookup %}
 
-
-</fieldset>
+{% endblock %}

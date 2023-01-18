@@ -56,12 +56,7 @@
                 {% endif %}
             </td>
             <td>
-                <a href="{% url 'work:overview_form' r.iwork_id %}"
-                   title="Full details of record no. {{ r.iwork_id }}" target="_blank">{{ r.iwork_id }}</a>
-                <br/>
-                <br/>
-                <button class="btn inline_btn" type="button"
-                        onclick="window.open('{% url 'work:full_form' r.iwork_id %}', '_blank').focus();">Edit</button>
+                {% include 'core/component/search_table_layout/link_record.html' with id=r.iwork_id view='work:full_form' %}
             </td>
             <td>
                 {{ r.change_timestamp }} by {{ r.change_user }}<br/>

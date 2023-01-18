@@ -5,6 +5,8 @@ from typing import Iterable
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models
+from django.db.models import F
+from django.db.models.lookups import Exact
 from django.forms import ModelForm, BaseForm
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
@@ -19,6 +21,7 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, LocRecrefForm
 from core.helper import view_utils, lang_utils, model_utils, query_utils, renderer_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
+from core.helper.date_utils import str_to_std_datetime
 from core.helper.form_utils import save_multi_rel_recref_formset
 from core.helper.lang_utils import LangModelAdapter, NewLangForm
 from core.helper.recref_handler import SingleRecrefHandler, RecrefFormsetHandler, SubjectHandler, ImageRecrefHandler, \
@@ -891,7 +894,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         return [
             ('addressees_for_display', 'Addressee',),
             ('creators_for_display', 'Author/sender',),
-            ('date_of_work_std', 'Date for ordering',),
+            ('date_of_work_std', 'Date for ordering (in original calendar)',),
             ('date_of_work_as_marked', 'Date of work as marked',),
             ('date_of_work_day', 'Day',),
             ('description', 'Description',),
@@ -916,23 +919,32 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def default_sort_by_choice(self) -> int:
-        return 3
+        return 2
 
     def get_queryset(self):
-        field_fn_maps = {}
+        field_fn_maps = {'work_to_be_deleted': lambda f, v: Exact(F(f), '0' if v == 'On' else '1'),} |\
+            query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
+                                                            'change_timestamp', str_to_std_datetime) |\
+                        query_utils.create_from_to_datetime('date_of_work_std_from', 'date_of_work_std_to',
+                                            'date_of_work_std', str_to_std_datetime)
 
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
+
+        fields = [
+            'description', 'editors_notes', 'date_of_work_as_marked', 'date_of_work_std_year', 'creators_searchable',
+            'sender_or_recipient', 'origin_or_destination', 'date_of_work_std_month', 'date_of_work_std_day',
+            'notes_on_authors', 'origin_as_marked', 'addressee',
+            'destination_as_marked', 'flags', 'images', 'manifestations_searchable',
+            'related_resources', 'language_of_work', 'subjects', 'abstract', 'people_mentioned',
+            'keywords', 'general_notes', 'original_catalogue', 'accession_code', # 'work_to_be_deleted',
+            'work_id', 'change_user'
+        ]
+
+        search_fields_maps = {'sender_or_recipient': ['creators_searchable', 'addressees_searchable'],
+                              'origin_or_destination': ['places_to_searchable', 'places_from_searchable']}
+
         queries.extend(
-            query_utils.create_queries_by_lookup_field(self.request_data, [
-                'description', 'iwork_id', 'editors_notes', 'date_of_work_as_marked', 'sender_or_recipient',
-                'origin_or_destination', 'date_of_work_as_marked', 'author', 'date_of_work_std_year',
-                'date_of_work_std_month', 'date_of_work_std_day', 'creators_searchable',
-                'notes_on_authors', 'places_from_searchable', 'origin_as_marked', 'addressee',
-                'places_to_searchable', 'destination_as_marked', 'flags', 'images', 'manifestations',
-                'related_resources', 'language_of_work', 'subjects', 'abstracts', 'people_mentioned',
-                'keywords', 'general_notes', 'original_catalogue', 'accession_code', 'work_to_be_deleted',
-                'work_id', 'change_user'
-            ])
+            query_utils.create_queries_by_lookup_field(self.request_data, fields, search_fields_maps)
         )
         return self.create_queryset_by_queries(CofkUnionQueryableWork, queries)
 
@@ -951,23 +963,11 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def query_fieldset_list(self) -> Iterable:
-        # log.info(self.get_context_data())
-        default_values = {
-            'foaf_name_lookup': 'starts_with',
-        }
-        request_data = default_values | self.request_data.dict()
-
-        return [CompactSearchFieldset(request_data)]
+        return [CompactSearchFieldset(self.request_data.dict())]
 
     @property
     def expanded_query_fieldset_list(self) -> Iterable:
-        # log.info(self.get_context_data())
-        default_values = {
-            'foaf_name_lookup': 'starts_with',
-        }
-        request_data = default_values | self.request_data.dict()
-
-        return [ExpandedSearchFieldset(request_data)]
+        return [ExpandedSearchFieldset(self.request_data.dict())]
 
 
 class WorkCommentFormsetHandler(RecrefFormsetHandler):

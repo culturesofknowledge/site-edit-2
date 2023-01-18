@@ -133,8 +133,6 @@ class CofkUploadExcelFile:
                                                                        'Repositories'].entities.institutions,
                                                                    works=self.sheets['Work'].entities.works)
 
-        self.sheets['Work'].entities.create_all()
-
         if self.sheets['People'].entities.other_errors:
             for row_index in self.sheets['People'].entities.other_errors:
                 for error in self.sheets['People'].entities.other_errors[row_index]:

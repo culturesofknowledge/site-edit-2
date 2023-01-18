@@ -1,5 +1,6 @@
-<fieldset>
-    <legend>{{ form.title }}</legend>
+{% extends "core/component/search_fieldset/fieldset.html" %}
+
+{% block fields %}
 
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.publication_details field_lookup=form.publication_details_lookup %}
 
@@ -11,4 +12,4 @@
 
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.publication_id field_lookup=form.publication_id_lookup %}
 
-</fieldset>
+{% endblock %}

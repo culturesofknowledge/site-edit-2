@@ -4,6 +4,7 @@ import re
 import time
 import warnings
 from argparse import ArgumentParser
+from math import floor
 from typing import Type, Callable, Iterable, Any
 
 import django.db.utils
@@ -119,8 +120,15 @@ def clone_rows_by_model_class(conn, model_class: Type[Model],
         cur_conn.cursor().execute(f"select setval('{seq_name}', {new_val})")
 
 
+def sec_to_min(sec):
+    sec = round(sec)
+    if sec < 60:
+        return f'{sec}s'
+    return f'{floor(sec/60)}m,{sec % 60}s'
+
+
 def log_save_records(target, size, used_sec):
-    print(f'save news records [{used_sec:>5,.0f}s][{size:>6,}][{target}]')
+    print(f'migrated records [{sec_to_min(used_sec):>7}][{size:>7,}][{target}]')
 
 
 class Command(BaseCommand):
@@ -439,6 +447,13 @@ def _val_handler_collect_person(row: dict, conn):
     return row
 
 
+def _val_handler_collect_language(row: dict, conn):
+    if language := Iso639LanguageCode.objects.filter(code_639_3=row['language_code']).first():
+        row['language_code'] = language
+
+    return row
+
+
 def _val_handler_collect_work(row: dict, conn):
     row['upload_status_id'] = row.pop('upload_status')
 
@@ -591,13 +606,16 @@ def data_migration(user, password, database, host, port, include_audit=False):
     clone_rows_by_model_class(conn, CofkCollectAddresseeOfWork,
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectAddresseeOfWork),
                               col_val_handler_fn_list=[_val_handler_collect_person])
+
     # clone_rows_by_model_class(conn, CofkCollectAuthorOfWork, check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectAuthorOfWork))
     # clone_rows_by_model_class(conn, CofkCollectDestinationOfWork, check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectDestinationOfWork))
-    # clone_rows_by_model_class(conn, CofkCollectLanguageOfWork, check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectLanguageOfWork))
+    clone_rows_by_model_class(conn, CofkCollectLanguageOfWork, col_val_handler_fn_list=[_val_handler_collect_language],
+                              check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectLanguageOfWork))
     # clone_rows_by_model_class(conn, CofkCollectOriginOfWork, check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectOriginOfWork))
     # clone_rows_by_model_class(conn, CofkCollectPersonMentionedInWork, check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectPersonMentionedInWork))
     # clone_rows_by_model_class(conn, CofkCollectSubjectOfWork, check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectSubjectOfWork))
     # clone_rows_by_model_class(conn, CofkCollectWorkResource, check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectWorkResource))
+
 
     # ### manif
     clone_rows_by_model_class(conn, CofkUnionManifestation,
@@ -626,4 +644,4 @@ def data_migration(user, password, database, host, port, include_audit=False):
 
     conn.close()
 
-    print(f'total sec: {time.time() - start_migrate:,.0f}s')
+    print(f'total sec: {sec_to_min(time.time() - start_migrate)}')

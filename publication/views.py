@@ -7,6 +7,7 @@ from django.shortcuts import redirect, get_object_or_404
 from django.shortcuts import render
 
 from core.helper import renderer_utils, query_utils
+from core.helper.date_utils import str_to_std_datetime
 from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView
 from publication.forms import PublicationForm, GeneralSearchFieldset
 from publication.models import CofkUnionPublication
@@ -42,9 +43,8 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
 
     def get_queryset(self):
         # queries for like_fields
-        field_fn_maps = {
-            # 'institution_id': query_utils.create_eq_query,
-        }
+        field_fn_maps = query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
+                                                            'change_timestamp', str_to_std_datetime)
 
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
 

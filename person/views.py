@@ -3,16 +3,19 @@ from typing import Callable, Iterable, Type, Any, NoReturn
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import F
+from django.db import models
+from django.db.models import F, Count, Q
 from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual, Exact
 from django.forms import BaseForm
 from django.shortcuts import render, redirect, get_object_or_404
 
 from core import constant
-from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_BORN_IN_LOCATION, REL_TYPE_DIED_AT_LOCATION
+from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_BORN_IN_LOCATION, REL_TYPE_DIED_AT_LOCATION, \
+    REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_CREATED, REL_TYPE_SENT, REL_TYPE_SIGNED, REL_TYPE_MENTION
 from core.forms import CommentForm, PersonRecrefForm
 from core.helper import renderer_utils, view_utils, query_utils, download_csv_utils, recref_utils, form_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
+from core.helper.date_utils import str_to_std_datetime
 from core.helper.recref_handler import RecrefFormsetHandler, RoleCategoryHandler, ImageRecrefHandler, \
     TargetResourceFormsetHandler, MultiRecrefAdapterHandler, SingleRecrefHandler
 from core.helper.renderer_utils import CompactSearchResultsRenderer
@@ -274,10 +277,10 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             ('gender', 'Gender',),
             ('is_organisation', 'Person or group?',),
             ('org_type', 'Type of group',),
-            # ('sent', 'Sent',),
-            # ('recd', 'Rec\'d',),
-            # ('all_works', 'Sent or Rec\'d',),
-            # ('mentioned', 'Mentioned',),
+            ('sent', 'Sent',),
+            ('recd', 'Rec\'d',),
+            ('all_works', 'Sent or Rec\'d',),
+            ('mentioned', 'Mentioned',),
             ('editors_notes', 'Editors\' notes',),
             ('further_reading', 'Further reading',),
             ('images', 'Images',),
@@ -296,6 +299,28 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
     def return_quick_init_vname(self) -> str:
         return 'person:return_quick_init'
 
+    def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q]):
+        queryset = model_class.objects.all()
+
+        annotate = {'sent': Count('works',
+                                  filter=Q(cofkworkpersonmap__relationship_type__in=[REL_TYPE_CREATED, REL_TYPE_SENT,
+                                                                                     REL_TYPE_SIGNED])),
+                    'recd': Count('works', filter=Q(cofkworkpersonmap__relationship_type=REL_TYPE_WAS_ADDRESSED_TO)),
+                    'mentioned': Count('works',
+                                       filter=Q(cofkworkpersonmap__relationship_type=REL_TYPE_MENTION))
+                    }
+        annotate['all_works'] = annotate['sent'] + annotate['recd']
+
+        queryset = queryset.annotate(**annotate)
+
+        if queries:
+            queryset = queryset.filter(query_utils.all_queries_match(queries))
+
+        if sort_by := self.get_sort_by():
+            queryset = queryset.order_by(sort_by)
+
+        return queryset
+
     def get_queryset(self):
         field_fn_maps = {
             'gender': lambda f, v: Exact(F(f), '' if v == 'U' else v),
@@ -304,19 +329,27 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             'birth_year_to': lambda _, v: LessThanOrEqual(F('date_of_birth_year'), v),
             'death_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_death_year'), v),
             'death_year_to': lambda _, v: LessThanOrEqual(F('date_of_death_year'), v),
-            'flourished_year_from': lambda _, v: GreaterThanOrEqual(F('flourished_of_death_year'), v),
-            'flourished_year_to': lambda _, v: LessThanOrEqual(F('flourished_of_death_year'), v),
-            'change_timestamp_from': lambda _, v: GreaterThanOrEqual(F('change_timestamp'), v),
-            'change_timestamp_to': lambda _, v: LessThanOrEqual(F('change_timestamp'), v),
-        }
+            'flourished_year_from': lambda _, v: GreaterThanOrEqual(F('flourished_year'), v),
+            'flourished_year_to': lambda _, v: LessThanOrEqual(F('flourished2_year'), v),
+            #'change_timestamp_from': lambda _, v: GreaterThanOrEqual(F('change_timestamp'), v),
+            #'change_timestamp_to': lambda _, v: LessThanOrEqual(F('change_timestamp'), v),
+        } | query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
+                                                            'change_timestamp', str_to_std_datetime)
 
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
+
+        fields = [
+            'foaf_name', 'iperson_id', 'editors_notes', 'sent', 'recd', 'all_works', 'mentioned',
+            'further_reading', 'other_details', 'images', 'change_user'
+        ]
+
+        search_fields_maps = {'foaf_name': ['foaf_name', 'skos_altlabel', 'person_aliases', 'skos_hiddenlabel',
+                              'summary__other_details_summary_searchable'],
+                              'images': ['images__image_filename'],
+                              'other_details': ['summary__other_details_summary_searchable']}
+
         queries.extend(
-            query_utils.create_queries_by_lookup_field(self.request_data, [
-                'foaf_name', 'iperson_id', 'editors_notes',
-                'further_reading', 'change_user'
-            ], {'foaf_name': ['foaf_name', 'skos_altlabel', 'person_aliases', 'skos_hiddenlabel',
-                              'summary__other_details_summary_searchable']})
+            query_utils.create_queries_by_lookup_field(self.request_data, fields, search_fields_maps)
         )
 
         return self.create_queryset_by_queries(CofkUnionPerson, queries)
@@ -332,7 +365,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
     @property
     def query_fieldset_list(self) -> Iterable:
         default_values = {
-            'foaf_name_lookup': 'starts_with',
+            #'foaf_name_lookup': 'starts_with',
         }
         request_data = default_values | self.request_data.dict()
 

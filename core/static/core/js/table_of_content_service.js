@@ -19,7 +19,7 @@ function build_table_of_content_ui() {
     container.append()
 
 
-    let title = $('<h3>Table of Content</h3>')
+    let title = $('<h3>Table of Contents</h3>')
 
     let body = $('<div id="toc-body">')
     body.append(title)

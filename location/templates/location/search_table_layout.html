@@ -28,14 +28,10 @@
     {% for r in search_results %}
         <tr class="selectable_entry" entry_id="{{ r.location_id }}">
             <td>
-                <a href="{% url 'location:full_form' r.location_id %}">
-                    {{ r.location_name }}
-                </a>
+                {{ r.location_name }}
             </td>
             <td>
-                <a href="{% url 'location:full_form' r.location_id %}">
-                    {{ r.location_id }}
-                </a>
+                {% include 'core/component/search_table_layout/link_record.html' with id=r.location_id view='location:full_form' %}
             </td>
             <td style="min-width: 150px; word-break: break-all;">
                 {% if r.editors_notes %}
@@ -43,8 +39,8 @@
                 {% endif %}
             </td>
             <td>{{ r.sent }}</td>
-            <td>{{ r.received }}</td>
-            <td>{{ r.sent_received }}</td>
+            <td>{{ r.recd }}</td>
+            <td>{{ r.all_works }}</td>
             <td>
                 {% include "core/component/search_table_layout/comment_result.html" with comments=r.comments %}
             </td>

@@ -225,6 +225,24 @@ input[type="radio"] {
     top: 4px;
   }
 
+  + label.control::after {
+    all: unset;
+  }
+
+  + label.control::before {
+    content: '\a0';
+    display: inline-block;
+    margin: 0 $space-xxs 0 0;
+    width: $space-sm;
+    height: $space-sm;
+    line-height: 1.25;
+    transition: all 0.35s;
+    border: 1px solid $black;
+    margin-left: $space-xxs;
+    position: relative;
+    top: 4px;
+  }
+
   &:checked + label {
     color: $midnight;
 
@@ -234,6 +252,18 @@ input[type="radio"] {
       border: 1px solid $white;
       box-shadow: inset 0 0 0 1px $white, 0 0 0 1px $midnight;
     }
+
+    &.control::after {
+      all: unset;
+    }
+
+    &.control::before {
+      content: '\a0';
+      background: $midnight;
+      border: 1px solid $white;
+      box-shadow: inset 0 0 0 1px $white, 0 0 0 1px $midnight;
+    }
+
   }
 }
 

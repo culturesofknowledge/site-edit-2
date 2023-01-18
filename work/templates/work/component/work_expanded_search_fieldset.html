@@ -1,41 +1,42 @@
-<fieldset>
-    <legend>{{ form.title }}</legend>
+{% extends "core/component/search_fieldset/fieldset.html" %}
+
+{% block fields %}
 
     <!-- Description -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.description field_lookup=form.description_lookup %}
 
     <!-- Editor's notes -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.editors_notes field_lookup=form.editors_notes_lookup field_title="Editors' notes" %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.editors_notes field_lookup=form.editors_notes_lookup %}
 
     <!-- Sender/recipient -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.sender_or_recipient field_lookup=form.sender_or_recipient_lookup search_fields=form.sender_or_recipient_search_fields %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.sender_or_recipient field_lookup=form.sender_or_recipient_lookup %}
 
     <!-- Origin/dest -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.origin_or_destination field_lookup=form.origin_or_destination_lookup search_fields=form.origin_or_destination_search_fields %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.origin_or_destination field_lookup=form.origin_or_destination_lookup %}
 
     <!-- Date as marked -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_as_marked field_lookup=form.date_of_work_as_marked_lookup %}
 
     <!-- Year -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_std_year field_lookup=form.date_of_work_std_year_lookup field_title='Year' %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_std_year field_lookup=form.date_of_work_std_year_lookup %}
 
     <!-- Month -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_std_month field_lookup=form.date_of_work_std_month_lookup field_title='Month' %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_std_month field_lookup=form.date_of_work_std_month_lookup %}
 
     <!-- Day -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_std_day field_lookup=form.date_of_work_std_day_lookup field_title='Day' %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_std_day field_lookup=form.date_of_work_std_day_lookup %}
 
     <!-- Year range -->
     {% include "core/component/search_fieldset/from_to_year.html" with title='Date for ordering (in original calendar)' from_field=form.date_of_work_std_from to_field=form.date_of_work_std_to field_info=form.date_of_work_std_info %}
 
     <!-- Author/sender -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.creators_searchable field_lookup=form.creators_searchable_lookup field_title='Author/sender' %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.creators_searchable field_lookup=form.creators_searchable_lookup %}
 
     <!-- Notes on authors/senders -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.notes_on_authors field_lookup=form.notes_on_authors_lookup field_title='Notes on authors/senders' %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.notes_on_authors field_lookup=form.notes_on_authors_lookup %}
 
     <!-- Origin (standardised) -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.places_from_searchable field_lookup=form.places_from_searchable_lookup field_title='Origin (standardised)' %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.places_from_searchable field_lookup=form.places_from_searchable_lookup %}
 
     <!-- Origin as marked -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.origin_as_marked field_lookup=form.origin_as_marked_lookup %}
@@ -44,7 +45,7 @@
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.addressee field_lookup=form.addressee_lookup %}
 
     <!-- Destination (standardised) -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.places_to_searchable field_lookup=form.places_to_searchable_lookup field_title='Destination (standardised)' %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.places_to_searchable field_lookup=form.places_to_searchable_lookup  %}
 
     <!-- Destination as marked -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.destination_as_marked field_lookup=form.destination_as_marked_lookup %}
@@ -56,7 +57,7 @@
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.images field_lookup=form.images_lookup %}
 
     <!-- Manifestations -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.manifestations field_lookup=form.manifestations_lookup %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.manifestations_searchable field_lookup=form.manifestations_searchable_lookup %}
 
     <!-- Related resources -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.related_resources field_lookup=form.related_resources_lookup %}
@@ -67,8 +68,8 @@
     <!-- Subjects -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.subjects field_lookup=form.subjects_lookup %}
 
-    <!-- Abstracts -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.abstracts field_lookup=form.abstracts_lookup field_title='Abstract' %}
+    <!-- Abstract -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.abstract field_lookup=form.abstract_lookup %}
 
     <!-- People mentioned -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.people_mentioned field_lookup=form.people_mentioned_lookup %}
@@ -85,17 +86,47 @@
     <!-- Accession code -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.accession_code field_lookup=form.accession_code_lookup %}
 
-    <!-- Record to be deleted -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.work_to_be_deleted field_lookup=form.work_to_be_deleted_lookup %}
+    <!-- Record to be deleted
+        This is a zero/one checkbox -->
+
+    <div class="row-no-margin" style="margin-top: 1em; margin-bottom: 1em;">
+        <div class="col--4of4">
+
+        {{ form.work_to_be_deleted }}
+        {{ form.work_to_be_deleted.label_tag }}
+        </div>
+    </div>
+    {{ form.work_to_be_deleted.errors }}
 
     <!-- Work ID -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.work_id field_lookup=form.work_id_lookup %}
 
     <!-- Last edit -->
-    {% include "core/component/search_fieldset/from_to_year.html" with title='Last edit' from_field=form.last_edit_from to_field=form.last_edit_to field_info=form.last_edit_info %}
+    {% include "core/component/search_fieldset/from_to_year.html" with title='Last edit' from_field=form.change_timestamp_from to_field=form.change_timestamp_to field_info=form.change_timestamp_info %}
 
     <!-- Last changed by-->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.change_user field_lookup=form.change_user_lookup %}
 
+    <script>
 
-</fieldset>
+      var manif_autocomplete = [{% for mtype in form.manif_type %}
+      { label: "{{ mtype }}", category: "Document type" },
+      {% endfor %}
+
+      {% for inst in form.institution_names %}
+      { label: "{{ inst }}", category: "Repository" },
+      {% endfor %}];
+
+    var subjects_autocomplete = [{% for subject in form.subject_names %}
+      '{{ subject }}',
+      {% endfor %}];
+
+     var catalogs_autocomplete = [{% for catalog in form.catalog_names %}
+      "{{ catalog|safe }}",
+      {% endfor %}];
+
+    </script>
+
+    <script src="/static/core/js/work_fieldset_autocomplete.js"></script>
+
+{% endblock %}

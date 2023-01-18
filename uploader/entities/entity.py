@@ -58,9 +58,16 @@ class CofkEntity:
                 if isinstance(str_field, tuple):
                     entity[str_field[0]] = str(entity[str_field[0]])
 
-                    if len(entity[str_field[0]]) > str_field[1]:
-                        self.add_error(f'The field {str_field[0]} is longer than the limit of {str_field[1]} '
-                                       f'characters for that field.')
+                    # People names can be multiple names separated by a semi-colon
+                    if 'primary_name' == str_field[0]:
+                        for value in entity[str_field[0]].split(';'):
+                            if len(value) > str_field[1]:
+                                self.add_error(f'A value in the field {str_field[0]} is longer than the limit of'
+                                               f' {str_field[1]} characters for that field.')
+                    else:
+                        if len(entity[str_field[0]]) > str_field[1]:
+                            self.add_error(f'A value in the field {str_field[0]} is longer than the limit of'
+                                           f' {str_field[1]} characters for that field.')
                 else:
                     entity[str_field] = str(entity[str_field])
 

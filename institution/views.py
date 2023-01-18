@@ -8,6 +8,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 
 from core.helper import renderer_utils, query_utils, view_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
+from core.helper.date_utils import str_to_std_datetime
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView
 from core.helper.recref_handler import ImageRecrefHandler, TargetResourceFormsetHandler
@@ -54,7 +55,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
     def get_queryset(self):
         # queries for like_fields
         field_fn_maps = query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                            'change_timestamp', )
+                                                            'change_timestamp', str_to_std_datetime)
 
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
 
@@ -66,8 +67,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
             'institution_country': ['institution_country', 'institution_country_synonyms'],
             'resources': ['resources__resource_name', 'resources__resource_details',
                           'resources__resource_url'],
-            'images': ['images__image_filename', 'images__thumbnail',
-                       'images__licence_details']}
+            'images': ['images__image_filename']}
 
         queries.extend(
             query_utils.create_queries_by_lookup_field(self.request_data, fields, search_fields_maps)
@@ -84,10 +84,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
 
     @property
     def query_fieldset_list(self) -> Iterable:
-        default_values = {}
-        request_data = default_values | self.request_data.dict()
-
-        return [GeneralSearchFieldset(request_data)]
+        return [GeneralSearchFieldset(self.request_data.dict())]
 
 
 class InstInitView(LoginRequiredMixin, CommonInitFormViewTemplate):

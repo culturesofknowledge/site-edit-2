@@ -1,5 +1,7 @@
 {% load cl_filters %}
 
+{% if page_obj.paginator.num_pages > 1 %}
+
 <div class="row row--centered pagination">
     <ul>
         {% if page_obj.has_previous %}
@@ -26,3 +28,5 @@
         {% endif %}
     </ul>
 </div>
+
+{% endif %}

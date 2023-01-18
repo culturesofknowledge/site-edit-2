@@ -14,11 +14,8 @@ log = logging.getLogger(__name__)
 
 
 def get_common_languages():
-    # results from select distinct(language_code) from cofk_collect_language_of_work;
-    common_languages = ["otk", "fro", "ara", "ces", "hye", "cat", "syr", "dan", "rus", "por", "swe", "nld", "hrv",
-                        "yes", "nds", "pol", "gla", "heb", "grc", "eng", "spa", "aii", "fas", "chu", "cym", "fra",
-                        "deu", "tam", "kat", "eus", "lat", "cop", "ita", "cor", "tur"]
-    return list(Iso639LanguageCode.objects.filter(code_639_3__in=common_languages).all())
+    common = list(CofkCollectLanguageOfWork.objects.distinct('language_code').values_list('language_code', flat=True))
+    return Iso639LanguageCode.objects.filter(code_639_3__in=common).all()
 
 
 class CofkWork(CofkEntity):
@@ -30,7 +27,6 @@ class CofkWork(CofkEntity):
         self.people: List[CofkCollectPerson] = people
         self.locations: List[CofkCollectLocation] = locations
         self.common_languages: List[Iso639LanguageCode] = get_common_languages()
-
         self.authors: List[CofkCollectAuthorOfWork] = []
         self.mentioned: List[CofkCollectPersonMentionedInWork] = []
         self.addressees: List[CofkCollectAddresseeOfWork] = []
@@ -57,11 +53,7 @@ class CofkWork(CofkEntity):
             # log.debug(work_dict)
 
             w = CofkCollectWork(**{k: work_dict[k] for k in work_dict if k in CofkCollectWork.__dict__.keys()})
-            # TODO potential efficiency gain if work is bulk saved
-            # however, work needs to exist before related objects are created
-            w.save()
             self.works.append(w)
-            # log.debug({k: work_dict[k] for k in work_dict if k in CofkCollectWork.__dict__.keys()})
 
             if 'author_ids' in work_dict and 'author_names' in work_dict:
                 self.process_people(w, self.authors, CofkCollectAuthorOfWork, work_dict, 'author_ids', 'author_names',
@@ -96,6 +88,8 @@ class CofkWork(CofkEntity):
 
         upload.total_works = len(self.works)
         upload.save()
+
+        self.create_all()
 
     def get_person(self, person_id: str) -> CofkCollectPerson:
         if person := [p for p in self.people if
@@ -167,6 +161,8 @@ class CofkWork(CofkEntity):
                 self.add_error(f'The value in column "language_id", "{language}" is not a valid ISO639 language.')
 
     def create_all(self):
+        self.bulk_create(self.works)
+
         for entities in [self.authors, self.mentioned, self.addressees, self.origins, self.destinations,
                          self.resources, self.languages]:
             if entities:

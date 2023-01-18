@@ -1,0 +1,22 @@
+.advanced_search {
+    display: none;
+}
+
+.ui-autocomplete {
+    background-color: $white;
+    border: 1px dotted $black;
+}
+
+.ui-menu-item {
+    list-style-type: none;
+    cursor: pointer;
+    padding: $space-xs;
+
+    &:hover, &:focus, &:active {
+        background-color: $midnight-50;
+        border-color: $black-15;
+        color: $white;
+
+  }
+
+}

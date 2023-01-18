@@ -1,0 +1,12 @@
+<fieldset>
+    <legend>{{ form.title }}</legend>
+
+    <!-- Advanced search toggle -->
+    <div class="row-no-margin" style="padding: 1em;">
+        <input type="checkbox" id="advanced_search"> <label for="advanced_search" class="control">Advanced search</label>
+    </div>
+
+    {% block fields %}
+    {% endblock %}
+
+</fieldset>

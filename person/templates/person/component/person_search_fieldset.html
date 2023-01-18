@@ -1,19 +1,39 @@
-<fieldset>
-    <legend>{{ form.title }}</legend>
+{% extends "core/component/search_fieldset/fieldset.html" %}
 
+{% block fields %}
+
+    <!-- Name -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.foaf_name field_lookup=form.foaf_name_lookup %}
 
-    {% include "core/component/search_fieldset/from_to_year.html" with title='Born year' from_field=form.birth_year_from to_field=form.birth_year_to %}
-    {% include "core/component/search_fieldset/from_to_year.html" with title='Died year' from_field=form.death_year_from to_field=form.death_year_to %}
-    {% include "core/component/search_fieldset/from_to_year.html" with title='Flourished year' from_field=form.flourished_year_from to_field=form.flourished_year_to %}
+    {% include "core/component/search_fieldset/from_to_year.html" with title='Born year' from_field=form.birth_year_from to_field=form.birth_year_to field_info=form.birth_year_info %}
+    {% include "core/component/search_fieldset/from_to_year.html" with title='Died year' from_field=form.death_year_from to_field=form.death_year_to field_info=form.death_year_info %}
+    {% include "core/component/search_fieldset/from_to_year.html" with title='Flourished year' from_field=form.flourished_year_from to_field=form.flourished_year_to field_info=form.flourished_info %}
 
     {% include "core/component/common_field_layout.html" with field=form.gender %}
 
     {% include "core/component/common_field_layout.html" with field=form.person_or_group %}
 
+    <!-- Sent -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.sent field_lookup=form.sent_lookup %}
+
+    <!-- Rec'd -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.recd field_lookup=form.recd_lookup %}
+
+    <!-- Sent and rec'd -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.all_works field_lookup=form.all_works_lookup %}
+
+    <!-- Mentioned -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.mentioned field_lookup=form.mentioned_lookup %}
+
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.editors_notes field_lookup=form.editors_notes_lookup %}
 
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.further_reading field_lookup=form.further_reading_lookup %}
+
+    <!-- Images -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.images field_lookup=form.images_lookup %}
+
+    <!-- Other details -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.other_details field_lookup=form.other_details_lookup %}
 
     <!-- Last edit -->
     {% include "core/component/search_fieldset/from_to_year.html" with title='Last edit' from_field=form.change_timestamp_from to_field=form.change_timestamp_to field_info=form.change_timestamp_info %}
@@ -23,4 +43,4 @@
 
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.iperson_id field_lookup=form.iperson_id_lookup %}
 
-</fieldset>
+{% endblock %}
