@@ -1,46 +1,64 @@
-from institution.models import CofkInstitutionImageMap, CofkInstitutionResourceMap
-from location.models import CofkLocationCommentMap, CofkLocationResourceMap
-from person.models import CofkPersonLocationMap, CofkPersonPersonMap, CofkPersonCommentMap, CofkPersonResourceMap, \
-    CofkPersonImageMap
+from core.models import CofkUnionComment, CofkUnionImage, CofkUnionResource, CofkUnionRoleCategory, CofkUnionSubject
+from institution.models import CofkUnionInstitution
+from location.models import CofkUnionLocation
+from manifestation.models import CofkUnionManifestation
+from person.models import CofkUnionPerson
 
-from work import models as work_models
-from manifestation import models as manif_models
+from work.models import CofkUnionWork
 
-recref_left_right_pairs = [
-    # Location
-    (CofkLocationCommentMap.comment, CofkLocationCommentMap.location),
-    (CofkLocationResourceMap.location, CofkLocationResourceMap.resource),
-
-    # Person
-    (CofkPersonLocationMap.person, CofkPersonLocationMap.location),
-    (CofkPersonPersonMap.person, CofkPersonPersonMap.related),
-    (CofkPersonCommentMap.comment, CofkPersonCommentMap.person),
-    (CofkPersonResourceMap.person, CofkPersonResourceMap.resource),
-    (CofkPersonImageMap.image, CofkPersonImageMap.person),
-
-    # Repositories
-    (CofkInstitutionImageMap.image, CofkInstitutionImageMap.institution),
-    (CofkInstitutionResourceMap.institution, CofkInstitutionResourceMap.resource),
-
-    # Work
-    (work_models.CofkWorkCommentMap.comment, work_models.CofkWorkCommentMap.work),
-    (work_models.CofkWorkResourceMap.work, work_models.CofkWorkResourceMap.resource),
-    (work_models.CofkWorkWorkMap.work_from, work_models.CofkWorkWorkMap.work_to),
-    (work_models.CofkWorkSubjectMap.work, work_models.CofkWorkSubjectMap.subject),
-    (work_models.CofkWorkPersonMap.work, work_models.CofkWorkPersonMap.person),
-    (work_models.CofkWorkLocationMap.work, work_models.CofkWorkLocationMap.location),
-    (work_models.CofkWorkPersonMap.person, work_models.CofkWorkPersonMap.work),
-
-    # manif
-    (manif_models.CofkManifManifMap.manif_from, manif_models.CofkManifManifMap.manif_to),
-    (manif_models.CofkManifCommentMap.comment, manif_models.CofkManifCommentMap.manifestation),
-    (manif_models.CofkManifPersonMap.person, manif_models.CofkManifPersonMap.manifestation),
-    (manif_models.CofkManifInstMap.manif, manif_models.CofkManifInstMap.inst),
-    (manif_models.CofkManifImageMap.image, manif_models.CofkManifImageMap.manif),
-
+recref_left_right_list = [
+    ('refers_to', CofkUnionComment, CofkUnionLocation),
+    ('refers_to', CofkUnionComment, CofkUnionManifestation),
+    ('refers_to_date', CofkUnionComment, CofkUnionManifestation),
+    ('refers_to_receipt_date', CofkUnionComment, CofkUnionManifestation),
+    ('refers_to', CofkUnionComment, CofkUnionPerson),
+    ('refers_to', CofkUnionComment, CofkUnionWork),
+    ('refers_to_addressee', CofkUnionComment, CofkUnionWork),
+    ('refers_to_author', CofkUnionComment, CofkUnionWork),
+    ('refers_to_date', CofkUnionComment, CofkUnionWork),
+    ('refers_to_destination', CofkUnionComment, CofkUnionWork),
+    ('refers_to_origin', CofkUnionComment, CofkUnionWork),
+    ('refers_to_people_mentioned_in_work', CofkUnionComment, CofkUnionWork),
+    ('route', CofkUnionComment, CofkUnionWork),
+    ('image_of', CofkUnionImage, CofkUnionManifestation),
+    ('image_of', CofkUnionImage, CofkUnionPerson),
+    ('is_related_to', CofkUnionInstitution, CofkUnionResource),
+    ('is_related_to', CofkUnionLocation, CofkUnionResource),
+    ('stored_in', CofkUnionManifestation, CofkUnionInstitution),
+    ('enclosed_in', CofkUnionManifestation, CofkUnionManifestation),
+    ('is_manifestation_of', CofkUnionManifestation, CofkUnionWork),
+    ('died_at_location', CofkUnionPerson, CofkUnionLocation),
+    ('was_born_in_location', CofkUnionPerson, CofkUnionLocation),
+    ('was_in_location', CofkUnionPerson, CofkUnionLocation),
+    ('formerly_owned', CofkUnionPerson, CofkUnionManifestation),
+    ('handwrote', CofkUnionPerson, CofkUnionManifestation),
+    ('partly_handwrote', CofkUnionPerson, CofkUnionManifestation),
+    ('acquaintance_of', CofkUnionPerson, CofkUnionPerson),
+    ('collaborated_with', CofkUnionPerson, CofkUnionPerson),
+    ('colleague_of', CofkUnionPerson, CofkUnionPerson),
+    ('employed', CofkUnionPerson, CofkUnionPerson),
+    ('friend_of', CofkUnionPerson, CofkUnionPerson),
+    ('member_of', CofkUnionPerson, CofkUnionPerson),
+    ('parent_of', CofkUnionPerson, CofkUnionPerson),
+    ('relative_of', CofkUnionPerson, CofkUnionPerson),
+    ('sibling_of', CofkUnionPerson, CofkUnionPerson),
+    ('spouse_of', CofkUnionPerson, CofkUnionPerson),
+    ('taught', CofkUnionPerson, CofkUnionPerson),
+    ('unspecified_relationship_with', CofkUnionPerson, CofkUnionPerson),
+    ('was_patron_of', CofkUnionPerson, CofkUnionPerson),
+    ('is_related_to', CofkUnionPerson, CofkUnionResource),
+    ('member_of', CofkUnionPerson, CofkUnionRoleCategory),
+    ('created', CofkUnionPerson, CofkUnionWork),
+    ('signed', CofkUnionPerson, CofkUnionWork),
+    ('mentions_place', CofkUnionWork, CofkUnionLocation),
+    ('was_sent_from', CofkUnionWork, CofkUnionLocation),
+    ('was_sent_to', CofkUnionWork, CofkUnionLocation),
+    ('intended_for', CofkUnionWork, CofkUnionPerson),
+    ('mentions', CofkUnionWork, CofkUnionPerson),
+    ('was_addressed_to', CofkUnionWork, CofkUnionPerson),
+    ('is_related_to', CofkUnionWork, CofkUnionResource),
+    ('deals_with', CofkUnionWork, CofkUnionSubject),
+    ('is_reply_to', CofkUnionWork, CofkUnionWork),
+    ('matches', CofkUnionWork, CofkUnionWork),
+    ('mentions_work', CofkUnionWork, CofkUnionWork),
 ]
-
-recref_left_right_dict = {
-    l.field.model: (l, r)
-    for l, r in recref_left_right_pairs
-}
