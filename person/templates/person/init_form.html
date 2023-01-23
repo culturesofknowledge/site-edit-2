@@ -11,7 +11,7 @@
         <div class="form-col-right">
 
             <h1 class="align-center">
-                {% if person_form.is_org_form or person_form.is_organisation.value == 'Y' %}
+                {% if is_org_form %}
                     Organisation
                 {% else %}
                     Person
@@ -47,7 +47,7 @@
                     </div>
 
                     <div class="org-type-div margin-bottom"
-                            {% if not person_form.is_org_form or person_form.is_organisation.value != 'Y' %}
+                            {% if not is_org_form %}
                          style="display: none"
                             {% endif %}
                     >
@@ -105,8 +105,8 @@
                 <fieldset>
                     <legend id="header_dates" class="toc-item">Dates</legend>
 
-                    {% include "person/component/date_fields.html" with title_name='date of birth' calendar=person_form.date_of_birth_calendar  is_range=person_form.date_of_birth_is_range  inferred=person_form.date_of_birth_inferred  uncertain=person_form.date_of_birth_uncertain  approx=person_form.date_of_birth_approx day_field=person_form.date_of_birth_day month_field=person_form.date_of_birth_month year_field=person_form.date_of_birth_year day_field2=person_form.date_of_birth2_day month_field2=person_form.date_of_birth2_month year_field2=person_form.date_of_birth2_year %}
-                    {% include "person/component/date_fields.html" with title_name='date of death' calendar=person_form.date_of_death_calendar  is_range=person_form.date_of_death_is_range  inferred=person_form.date_of_death_inferred  uncertain=person_form.date_of_death_uncertain  approx=person_form.date_of_death_approx day_field=person_form.date_of_death_day month_field=person_form.date_of_death_month year_field=person_form.date_of_death_year day_field2=person_form.date_of_death2_day month_field2=person_form.date_of_death2_month year_field2=person_form.date_of_death2_year %}
+                    {% include "person/component/date_fields.html" with title_name=is_org_form|yesno:'date formed,date of birth' calendar=person_form.date_of_birth_calendar  is_range=person_form.date_of_birth_is_range  inferred=person_form.date_of_birth_inferred  uncertain=person_form.date_of_birth_uncertain  approx=person_form.date_of_birth_approx day_field=person_form.date_of_birth_day month_field=person_form.date_of_birth_month year_field=person_form.date_of_birth_year day_field2=person_form.date_of_birth2_day month_field2=person_form.date_of_birth2_month year_field2=person_form.date_of_birth2_year %}
+                    {% include "person/component/date_fields.html" with title_name=is_org_form|yesno:'date disbanded,date of death' calendar=person_form.date_of_death_calendar  is_range=person_form.date_of_death_is_range  inferred=person_form.date_of_death_inferred  uncertain=person_form.date_of_death_uncertain  approx=person_form.date_of_death_approx day_field=person_form.date_of_death_day month_field=person_form.date_of_death_month year_field=person_form.date_of_death_year day_field2=person_form.date_of_death2_day month_field2=person_form.date_of_death2_month year_field2=person_form.date_of_death2_year %}
                     {% include "person/component/date_fields.html" with title_name='date when flourished' calendar=person_form.flourished_calendar  is_range=person_form.flourished_is_range  inferred=person_form.flourished_inferred  uncertain=person_form.flourished_uncertain  approx=person_form.flourished_approx day_field=person_form.flourished_day month_field=person_form.flourished_month year_field=person_form.flourished_year day_field2=person_form.flourished2_day month_field2=person_form.flourished2_month year_field2=person_form.flourished2_year %}
 
                 </fieldset>
