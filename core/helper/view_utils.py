@@ -1,7 +1,8 @@
+import dataclasses
 import logging
 import os
 from multiprocessing import Process
-from typing import Iterable, Type, Callable
+from typing import Iterable, Type, Callable, Any
 from typing import NoReturn
 from urllib.parse import urlencode
 
@@ -10,6 +11,7 @@ from django.db import models
 from django.db.models import Q
 from django.forms import ModelForm
 from django.forms import formset_factory
+from django.http import HttpResponseNotFound
 from django.shortcuts import render
 from django.urls import reverse
 from django.views import View
@@ -17,7 +19,7 @@ from django.views.generic import ListView
 
 import core.constant as core_constant
 from core.forms import build_search_components
-from core.helper import file_utils, email_utils, query_utils
+from core.helper import file_utils, email_utils, query_utils, general_model_utils, recref_utils
 from core.helper.model_utils import ModelLike, RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
     demo_table_search_results_renderer
@@ -373,3 +375,66 @@ class FormDescriptor:
 
     def create_context(self):
         return {'form_descriptor': self}
+
+
+@dataclasses.dataclass
+class MergeChoiceContext:
+    model_pk: Any
+    name: str
+    related_records: list[tuple[str, list[str]]]
+
+
+def create_merge_choice_context(model: ModelLike) -> MergeChoiceContext:
+    name = general_model_utils.get_display_name(model)
+    bounded_data_list = (r for r in recref_utils.all_recref_bounded_data
+                         if model.__class__ in set(r.pair_related_models))
+    related_records = []
+    for bounded_data in bounded_data_list:
+        field_a, field_b = list(bounded_data.pair)
+        if field_a.field.related_model == model.__class__:
+            parent_field = field_a
+            related_field = field_b
+        else:
+            parent_field = field_b
+            related_field = field_a
+
+        records = bounded_data.recref_class.objects.filter(**{parent_field.field.name: model})
+        print(related_records)
+        if records:
+            related_records.append((general_model_utils.get_name_by_model_class(related_field.field.related_model),
+                                    [general_model_utils.get_display_name(related_field.get_object(r))
+                                     for r in records]))
+
+    return MergeChoiceContext(model_pk=model.pk, name=name, related_records=related_records)
+
+
+class MergeChoiceViews(View):
+
+    def to_context_list(self, merge_id_list: list[str]) -> Iterable['MergeChoiceContext']:
+        raise NotImplementedError()
+
+    @property
+    def action_vname(self):
+        raise NotImplementedError()
+
+    def get(self, request, *args, **kwargs):
+        id_list = request.GET.getlist('__merge_id')
+        return render(request, 'core/merge_choice.html', {
+            'choice_list': self.to_context_list(id_list),
+            'merge_action_url': reverse(self.action_vname),
+        })
+
+
+class MergeActionViews(View):
+    @property
+    def target_model_class(self) -> Type[ModelLike]:
+        raise NotImplementedError()
+
+    def post(self, request, *args, **kwargs):
+        selected_pk = request.POST.get('selected_pk')
+        merge_pk_list = set(request.POST.getlist('merge_pk')) - {selected_pk}
+        other_models = list(self.target_model_class.objects.filter(**{'pk__in': merge_pk_list}).iterator())
+        selected_model = self.target_model_class.objects.filter(**{'pk': selected_pk}).first()
+        if selected_model and len(other_models) == 0:
+            log.warning('input merge_pk_list empty')
+            return HttpResponseNotFound()

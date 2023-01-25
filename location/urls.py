@@ -8,7 +8,8 @@ urlpatterns.extend(
         init_view=views.LocationInitView.as_view(),
         edit_view=views.full_form,
         search_view=views.LocationSearchView.as_view(),
-        merge_view=views.LocationMergeView.as_view(),
+        merge_view=views.LocationMergeChoiceView.as_view(),
+        merge_action_view=views.LocationMergeActionView.as_view(),
         edit_id_name='location_id',
     )
 )

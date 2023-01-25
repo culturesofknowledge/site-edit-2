@@ -95,6 +95,10 @@ class RecrefBoundedData:
     recref_class: Type[RecrefLike]
     pair: list[ForwardManyToOneDescriptor]
 
+    @property
+    def pair_related_models(self) -> Iterable[Type['ModelLike']]:
+        return (m.field.related_model for m in self.pair)
+
 
 def get_bounded_members(recref_class: Type[RecrefLike]) -> list[ForwardManyToOneDescriptor]:
     bounded_members = recref_class.__dict__.items()
@@ -107,7 +111,7 @@ def get_bounded_members(recref_class: Type[RecrefLike]) -> list[ForwardManyToOne
     return bounded_members
 
 
-def find_all_recref_bounded_data(models: Iterable['ModelLike'] = None) -> Iterable[RecrefBoundedData]:
+def find_all_recref_bounded_data(models: Iterable[Type['ModelLike']] = None) -> Iterable[RecrefBoundedData]:
     models = models or django_utils.all_model_classes()
     recref_class_list = (m for m in models
                          if inspect_utils.issubclass_safe(m, Recref) and m != Recref)
@@ -120,3 +124,6 @@ def find_all_recref_bounded_data(models: Iterable['ModelLike'] = None) -> Iterab
         bounded_data = RecrefBoundedData(recref_class=recref_class,
                                          pair=bounded_members)
         yield bounded_data
+
+
+all_recref_bounded_data = list(find_all_recref_bounded_data(django_utils.all_model_classes()))

@@ -6,6 +6,7 @@ def create_common_urls_for_section(
         edit_view=None,
         search_view=None,
         merge_view=None,
+        merge_action_view=None,
         edit_id_name='pk',
 ) -> list:
     if edit_view is None:
@@ -21,6 +22,8 @@ def create_common_urls_for_section(
         paths.append(path('', search_view, name='home'))
     if merge_view is not None:
         paths.append(path('merge', merge_view, name='merge'))
+    if merge_action_view is not None:
+        paths.append(path('merge/action', merge_action_view, name='merge_action'))
     return paths
 
 

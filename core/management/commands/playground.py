@@ -6,10 +6,12 @@ import re
 
 from django.conf import settings
 from django.core.management import BaseCommand
+from django.db.models.manager import Manager
 
-from core.helper import email_utils, model_utils, view_utils, django_utils, recref_utils
+from core.helper import email_utils, model_utils, view_utils, django_utils, recref_utils, inspect_utils
 from location.models import CofkUnionLocation, CofkLocationCommentMap
 import csv
+import inspect
 
 log = logging.getLogger(__name__)
 
@@ -18,7 +20,33 @@ class Command(BaseCommand):
     help = 'playground for try some python code'
 
     def handle(self, *args, **options):
-        main12()
+        main14()
+
+
+def main14():
+    _values = recref_utils.find_all_recref_bounded_data()
+    _values = (v for v in _values if CofkUnionLocation in set(v.pair_related_models))
+    for r in _values:
+        print(r)
+
+
+def main13():
+    loc = CofkUnionLocation.objects.all().first()
+    print(loc)
+
+    # BaseManagerFromQuerySet
+    members = inspect.getmembers(loc)
+    # members = (m for m in members if inspect_utils.issubclass_safe(type(m), Manager))
+    for name, obj in members:
+        print('---------------')
+        print(name)
+        print(obj)
+        print(type(obj))
+        x = inspect.getclasstree([type(obj)])
+        print(x)
+        m = Manager()
+
+    breakpoint()
 
 
 def main12():

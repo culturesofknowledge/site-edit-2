@@ -301,3 +301,15 @@ tr.selectable_entry:hover {
 }
 
 
+.merge-div .merge-items {
+  @extend .col--4of5;
+  margin-bottom: 0.8rem;
+}
+
+.merge-div .merge-detail {
+  font-size: 0.8rem;
+
+  & > ul {
+    margin: 0;
+  }
+}

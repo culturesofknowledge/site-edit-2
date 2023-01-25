@@ -1,0 +1,39 @@
+{% extends "core/emlo_logined.html" %}
+
+{% block content %}
+    <h1> Merge -- choice master records </h1>
+    <form method="post" action="{{ merge_action_url }}">
+        <div class="merge-div">
+            {% for m in choice_list %}
+                <div class="row-no-margin ">
+                    <input type="hidden" name="merge_pk" value="{{ m.model_pk }}">
+                    <div>
+                        <input type="radio" id="merge_id_{{ forloop.counter0 }}" name="selected_pk"
+                               value="{{ m.model_pk }}"
+                                {% if forloop.first %}
+                               checked
+                                {% endif %}
+                        >
+                        <label></label> <!-- required by radio scss -->
+                    </div>
+                    <div class="merge-items">
+                        <div>
+                            <label for="merge_id_{{ forloop.counter0 }}">{{ m.name }}</label>
+                        </div>
+                        <div class="merge-detail">
+                            {% for recref_class, records in m.related_records %}
+                                <strong>{{ recref_class }} ({{ records|length }})</strong>
+                                <ul>
+                                    {% for r in records %}
+                                        <li>{{ r }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <input type="submit" value="Submit"/>
+    </form>
+{% endblock %}

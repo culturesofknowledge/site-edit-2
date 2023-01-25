@@ -8,7 +8,6 @@ from django.db import models
 from django.db.models import Count, Q
 from django.forms import BaseForm, BaseFormSet
 from django.shortcuts import render, get_object_or_404, redirect
-from django.views.generic import ListView
 
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM
 from core.forms import CommentForm
@@ -19,7 +18,8 @@ from core.helper.recref_handler import RecrefFormsetHandler, ImageRecrefHandler,
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
 from core.helper.view_handler import FullFormHandler
-from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate
+from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate, MergeChoiceViews, MergeChoiceContext, \
+    MergeActionViews
 from core.models import Recref
 from location import location_utils
 from location.forms import LocationForm, GeneralSearchFieldset
@@ -139,22 +139,19 @@ def full_form(request, location_id):
     return fhandler.render_form(request)
 
 
-class LocationMergeView(LoginRequiredMixin, ListView):
-    template_name = 'location/merge.html'
-
+class LocationMergeChoiceView(LoginRequiredMixin, MergeChoiceViews):
     @property
-    def request_data(self):
-        """ by default requests data would be GET  """
-        return self.request.GET
+    def action_vname(self):
+        return 'location:merge_action'
 
-    def get_queryset(self):
-        # KTODO
-        return []
+    def to_context_list(self, merge_id_list: list[str]) -> Iterable['MergeChoiceContext']:
+        choice_list = CofkUnionLocation.objects.filter(location_id__in=(int(i) for i in merge_id_list)).iterator()
+        choice_list = (view_utils.create_merge_choice_context(m) for m in choice_list)
+        return choice_list
 
-    def get(self, request, *args, **kwargs):
-        # response for search query
-        print(self.request_data)
-        return super().get(request, *args, **kwargs)
+
+class LocationMergeActionView(LoginRequiredMixin, MergeActionViews):
+    pass
 
 
 class LocationSearchView(LoginRequiredMixin, BasicSearchView):
