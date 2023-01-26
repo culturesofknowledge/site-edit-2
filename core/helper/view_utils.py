@@ -454,6 +454,12 @@ class MergeActionViews(View):
             log.warning('input merge_pk_list empty')
             return HttpResponseNotFound()
 
+        log.info('merge type[{}] selected[{}] other[{}]'.format(
+            selected_model.__class__.__name__,
+            selected_model.pk,
+            [m.pk for m in other_models]
+        ))
+
         results = defaultdict(list)
         for recref in find_all_recref_by_models(other_models, selected_model):
             parent_field, related_field = recref_utils.get_parent_related_field_by_recref(recref, selected_model)
