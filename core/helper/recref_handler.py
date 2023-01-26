@@ -52,7 +52,7 @@ class SingleRecrefHandler:
 
     def _find_recref_by_parent(self, parent, recref_adapter=None):
         recref_adapter = recref_adapter or self.create_recref_adapter(parent)
-        recref = next(recref_adapter.find_recref_list_by_bounded_data(self.rel_type), None)
+        recref = next(recref_adapter.find_recref_records(self.rel_type), None)
         return recref
 
     def upsert_recref_if_field_exist(self, form: forms.BaseForm, parent, username,

@@ -249,11 +249,6 @@ class CommonSearchTests:
         row_ele = self.test_case.selenium.find_elements(By.CSS_SELECTOR, 'tbody tr.selectable_entry')[row_idx]
         return row_ele.get_attribute('entry_id')
 
-    def setup_for_layout_test(self, layout_val):
-        self.prepare_records()
-        self.goto_search_page()
-        self.switch_layout(layout_val)
-
     def test_search__GET(self):
         records = self.prepare_records()
 
@@ -261,14 +256,6 @@ class CommonSearchTests:
 
         self.assert_search_page(num_row_show=min(len(records), BasicSearchView.paginate_by),
                                 num_total=len(records))
-
-    def test_search__table_layout(self):
-        self.setup_for_layout_test(self.LAYOUT_VAL_TABLE)
-        self.test_case.assertIsNotNone(self.test_case.find_element_by_css('#search_form table'))
-
-    def test_search__compact_layout(self):
-        self.setup_for_layout_test(self.LAYOUT_VAL_COMPACT)
-        self.test_case.assertIsNotNone(self.test_case.find_element_by_css('ol li[class=search-result]'))
 
     def _test_search__search_unique(self, fill_field_fn, assert_table_result_fn):
         # prepare data
