@@ -69,3 +69,5 @@ SEARCH_DATE_FORMAT = '%d/%m/%Y'
 SEARCH_DATETIME_FORMAT = '%d/%m/%Y %H:%M'
 
 DEFAULT_CHANGE_USER = '__unknown_user'
+
+TRUE_CHAR = 'Y'

@@ -1,12 +1,15 @@
 import datetime
-import re
+import datetime
+import io
 import logging
+import re
 
 from django.conf import settings
 from django.core.management import BaseCommand
 
-from core.helper import email_utils, model_utils, view_utils
-from location.models import CofkUnionLocation
+from core.helper import email_utils, model_utils, view_utils, django_utils, recref_utils
+from location.models import CofkUnionLocation, CofkLocationCommentMap
+import csv
 
 log = logging.getLogger(__name__)
 
@@ -15,7 +18,91 @@ class Command(BaseCommand):
     help = 'playground for try some python code'
 
     def handle(self, *args, **options):
-        main10()
+        main12()
+
+
+def main12():
+    records = """
+cofk_union_comment,cofk_union_location,refers_to
+cofk_union_comment,cofk_union_manifestation,refers_to
+cofk_union_comment,cofk_union_manifestation,refers_to_date
+cofk_union_comment,cofk_union_manifestation,refers_to_receipt_date
+cofk_union_comment,cofk_union_person,refers_to
+cofk_union_comment,cofk_union_work,refers_to
+cofk_union_comment,cofk_union_work,refers_to_addressee
+cofk_union_comment,cofk_union_work,refers_to_author
+cofk_union_comment,cofk_union_work,refers_to_date
+cofk_union_comment,cofk_union_work,refers_to_destination
+cofk_union_comment,cofk_union_work,refers_to_origin
+cofk_union_comment,cofk_union_work,refers_to_people_mentioned_in_work
+cofk_union_comment,cofk_union_work,route
+cofk_union_image,cofk_union_manifestation,image_of
+cofk_union_image,cofk_union_person,image_of
+cofk_union_institution,cofk_union_resource,is_related_to
+cofk_union_location,cofk_union_resource,is_related_to
+cofk_union_manifestation,cofk_union_institution,stored_in
+cofk_union_manifestation,cofk_union_manifestation,enclosed_in
+cofk_union_manifestation,cofk_union_work,is_manifestation_of
+cofk_union_person,cofk_union_location,died_at_location
+cofk_union_person,cofk_union_location,was_born_in_location
+cofk_union_person,cofk_union_location,was_in_location
+cofk_union_person,cofk_union_manifestation,formerly_owned
+cofk_union_person,cofk_union_manifestation,handwrote
+cofk_union_person,cofk_union_manifestation,partly_handwrote
+cofk_union_person,cofk_union_person,acquaintance_of
+cofk_union_person,cofk_union_person,collaborated_with
+cofk_union_person,cofk_union_person,colleague_of
+cofk_union_person,cofk_union_person,employed
+cofk_union_person,cofk_union_person,friend_of
+cofk_union_person,cofk_union_person,member_of
+cofk_union_person,cofk_union_person,parent_of
+cofk_union_person,cofk_union_person,relative_of
+cofk_union_person,cofk_union_person,sibling_of
+cofk_union_person,cofk_union_person,spouse_of
+cofk_union_person,cofk_union_person,taught
+cofk_union_person,cofk_union_person,unspecified_relationship_with
+cofk_union_person,cofk_union_person,was_patron_of
+cofk_union_person,cofk_union_resource,is_related_to
+cofk_union_person,cofk_union_role_category,member_of
+cofk_union_person,cofk_union_work,created
+cofk_union_person,cofk_union_work,signed
+cofk_union_work,cofk_union_location,mentions_place
+cofk_union_work,cofk_union_location,was_sent_from
+cofk_union_work,cofk_union_location,was_sent_to
+cofk_union_work,cofk_union_person,intended_for
+cofk_union_work,cofk_union_person,mentions
+cofk_union_work,cofk_union_person,was_addressed_to
+cofk_union_work,cofk_union_resource,is_related_to
+cofk_union_work,cofk_union_subject,deals_with
+cofk_union_work,cofk_union_work,is_reply_to
+cofk_union_work,cofk_union_work,matches
+cofk_union_work,cofk_union_work,mentions_work
+    """
+
+    def _to_class_name(text):
+        text = re.sub(r'_(\w)', lambda i: i.group(1).upper(), text)
+        text = text[0].upper() + text[1:]
+        return text
+
+    x = csv.reader(io.StringIO(records.strip()))
+    print(x)
+    cc = []
+    for a, b, rel_type in x:
+        a = _to_class_name(a)
+        b = _to_class_name(b)
+        print(f"('{rel_type}', {a}, {b}),")
+
+
+def main11():
+    print('hihihi')
+    print(CofkLocationCommentMap.comment)
+    print(type(CofkLocationCommentMap.comment))
+
+    _models = recref_utils.find_all_recref_bounded_data()
+    _models = list(_models)
+    for c in _models:
+        print(c)
+    print(len(_models))
 
 
 def main10():

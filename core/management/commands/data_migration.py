@@ -14,12 +14,13 @@ from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import BaseCommand
 from django.db import connection as cur_conn
-from django.db.models import Model, Max, fields
+from django.db.models import Model, fields
 from django.db.models.fields.related_descriptors import ForwardManyToOneDescriptor
 from psycopg2.extras import DictCursor
 
-from core import recref_settings
-from core.helper import iter_utils, model_utils
+from audit.models import CofkUnionAuditLiteral, CofkUnionAuditRelationship
+from core.helper import iter_utils, model_utils, recref_utils
+from core.helper.model_utils import ModelLike
 from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType, CofkUnionRelationshipType, \
     CofkUnionImage, CofkUnionOrgType, CofkUnionRoleCategory, CofkUnionSubject, Iso639LanguageCode, CofkLookupCatalogue, \
     SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID
@@ -31,12 +32,10 @@ from person.models import CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID
 from publication.models import CofkUnionPublication
 from uploader.models import CofkCollectStatus, CofkCollectUpload, CofkCollectInstitution, CofkCollectLocation, \
     CofkCollectLocationResource, CofkCollectPerson, CofkCollectOccupationOfPerson, CofkCollectPersonResource, \
-    CofkCollectInstitutionResource, CofkCollectWork, CofkCollectAddresseeOfWork, CofkCollectAuthorOfWork, \
-    CofkCollectDestinationOfWork, CofkCollectLanguageOfWork, CofkCollectOriginOfWork, CofkCollectPersonMentionedInWork, \
-    CofkCollectSubjectOfWork, CofkCollectWorkResource, CofkCollectManifestation
+    CofkCollectInstitutionResource, CofkCollectWork, CofkCollectAddresseeOfWork, CofkCollectLanguageOfWork, \
+    CofkCollectManifestation
 from work import models as work_models
 from work.models import CofkUnionWork, CofkUnionQueryableWork
-from audit.models import CofkUnionAuditLiteral, CofkUnionAuditRelationship
 
 log = logging.getLogger(__name__)
 default_schema = 'public'
@@ -71,7 +70,7 @@ def iter_records(conn, sql, cursor_factory=None, vals=None, batch_size=100_000):
     return itertools.chain.from_iterable(_batch_records())
 
 
-def clone_rows_by_model_class(conn, model_class: Type[Model],
+def clone_rows_by_model_class(conn, model_class: Type[ModelLike],
                               check_duplicate_fn=None,
                               col_val_handler_fn_list: list[Callable[[dict, Any], dict]] = None,
                               seq_name: str | None = '',
@@ -109,7 +108,7 @@ def clone_rows_by_model_class(conn, model_class: Type[Model],
         seq_name = create_seq_col_name(model_class)
 
     if seq_name and int_pk_col_name:
-        max_pk = list(model_class.objects.aggregate(Max(int_pk_col_name)).values())[0]
+        max_pk = model_utils.find_max_id(model_class, int_pk_col_name)
         if isinstance(max_pk, str):
             raise ValueError(f'max_pk should be int -- [{max_pk}][{type(max_pk)}]')
 
@@ -124,7 +123,7 @@ def sec_to_min(sec):
     sec = round(sec)
     if sec < 60:
         return f'{sec}s'
-    return f'{floor(sec/60)}m,{sec % 60}s'
+    return f'{floor(sec / 60)}m,{sec % 60}s'
 
 
 def log_save_records(target, size, used_sec):
@@ -496,10 +495,12 @@ def clone_recref_simple(conn,
     )
 
 
-def clone_recref_simple_by_field_pairs(conn,
-                                       field_pairs: Iterable[tuple[Any, Any]]):
-    for left_field, right_field in field_pairs:
-        clone_recref_simple(conn, left_field, right_field)
+def clone_recref_simple_by_field_pairs(
+        conn, field_pairs: Iterable[tuple[ForwardManyToOneDescriptor, ForwardManyToOneDescriptor]]
+):
+    for field_a, field_b in field_pairs:
+        clone_recref_simple(conn, field_a, field_b)
+        clone_recref_simple(conn, field_b, field_a)
 
 
 def create_check_fn_by_unique_together_model(model: Type[model_utils.ModelLike]):
@@ -526,6 +527,8 @@ def data_migration(user, password, database, host, port, include_audit=False):
     conn = psycopg2.connect(database=database, password=password,
                             user=user, host=host, port=port)
     print(conn)
+    max_audit_literal_id = model_utils.find_max_id(CofkUnionAuditLiteral, 'audit_id') or 0
+    max_audit_relationship_id = model_utils.find_max_id(CofkUnionAuditRelationship, 'audit_id') or 0
 
     clone_rows_by_model_class(conn, CofkLookupCatalogue)
     clone_rows_by_model_class(conn, CofkLookupDocumentType)
@@ -616,7 +619,6 @@ def data_migration(user, password, database, host, port, include_audit=False):
     # clone_rows_by_model_class(conn, CofkCollectSubjectOfWork, check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectSubjectOfWork))
     # clone_rows_by_model_class(conn, CofkCollectWorkResource, check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectWorkResource))
 
-
     # ### manif
     clone_rows_by_model_class(conn, CofkUnionManifestation,
                               col_val_handler_fn_list=[_val_handler_manif__work_id],
@@ -626,15 +628,13 @@ def data_migration(user, password, database, host, port, include_audit=False):
                               col_val_handler_fn_list=[_val_handler_collect_manifestation])
 
     # clone recref records
-    clone_recref_simple_by_field_pairs(conn, recref_settings.recref_left_right_pairs)
+    bounded_pairs = (b.pair for b in recref_utils.find_all_recref_bounded_data())
+    clone_recref_simple_by_field_pairs(conn, bounded_pairs)
 
     # remove all audit records that created by data_migrations
     print('remove all audit records that created by data_migrations')
-    CofkUnionAuditLiteral.objects.all().delete()
-    CofkUnionAuditRelationship.objects.all().delete()
-    # _cursor = cur_conn.cursor()
-    # _cursor.execute(f'delete from {CofkUnionAuditLiteral._meta.db_table}')
-    # _cursor.execute(f'delete from {CofkUnionAuditRelationship._meta.db_table}')
+    CofkUnionAuditLiteral.objects.filter(audit_id__gt=max_audit_literal_id).delete()
+    CofkUnionAuditRelationship.objects.filter(audit_id__gt=max_audit_relationship_id).delete()
     print('[END] remove all audit')
 
     # clone audit

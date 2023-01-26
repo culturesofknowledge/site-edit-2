@@ -7,7 +7,7 @@ import django
 import django.utils.timezone
 from django.conf import settings
 from django.db import models
-from django.db.models import Model
+from django.db.models import Model, Max
 
 ModelLike = typing.TypeVar('ModelLike', bound=models.Model)
 
@@ -84,3 +84,7 @@ def get_or_create(model_class: Type[Model], **field_values) -> Model:
         return obj
 
     return model_class(**field_values)
+
+
+def find_max_id(model: Type[ModelLike], field_name: str):
+    return list(model.objects.aggregate(Max(field_name)).values())[0]

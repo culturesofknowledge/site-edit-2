@@ -11,7 +11,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 
 from core import constant
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_BORN_IN_LOCATION, REL_TYPE_DIED_AT_LOCATION, \
-    REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_CREATED, REL_TYPE_SENT, REL_TYPE_SIGNED, REL_TYPE_MENTION
+    REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_CREATED, REL_TYPE_SENT, REL_TYPE_SIGNED, REL_TYPE_MENTION, TRUE_CHAR
 from core.forms import CommentForm, PersonRecrefForm
 from core.helper import renderer_utils, view_utils, query_utils, download_csv_utils, recref_utils, form_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
@@ -34,10 +34,18 @@ from person.view_components import PersonFormDescriptor
 log = logging.getLogger(__name__)
 
 
+def create_context_is_org_form(is_organisation: str):
+    return {
+        'is_org_form': is_organisation == TRUE_CHAR,
+    }
+
+
 class PersonInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
 
     def resp_form_page(self, request, form):
-        return render(request, 'person/init_form.html', {'person_form': form})
+        return render(request, 'person/init_form.html', {
+            'person_form': form
+        } | create_context_is_org_form(form.initial.get('is_organisation')))
 
     def resp_after_saved(self, request, form, new_instance):
         return redirect('person:full_form', new_instance.iperson_id)
@@ -53,14 +61,11 @@ class PersonInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
     def get(self, request, *args, **kwargs):
         is_org_form = request and request.GET.get('person_form_type') == 'org'
         if is_org_form:
-            initial = {'is_organisation': 'Y', }
+            initial = {'is_organisation': TRUE_CHAR, }
         else:
             initial = {}
 
         form = self.form_factory(initial=initial)
-        if is_org_form:
-            form.is_org_form = True
-
         return self.resp_form_page(request, form)
 
 
@@ -213,6 +218,7 @@ class PersonFFH(FullFormHandler):
         context.update(
             self.role_handler.create_context()
             | PersonFormDescriptor(self.person).create_context()
+            | create_context_is_org_form(self.person.is_organisation)
         )
         return context
 
@@ -322,19 +328,18 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         return queryset
 
     def get_queryset(self):
-        field_fn_maps = {
-            'gender': lambda f, v: Exact(F(f), '' if v == 'U' else v),
-            'person_or_group': lambda _, v: Exact(F('is_organisation'), 'Y' if v == 'G' else ''),
-            'birth_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_birth_year'), v),
-            'birth_year_to': lambda _, v: LessThanOrEqual(F('date_of_birth_year'), v),
-            'death_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_death_year'), v),
-            'death_year_to': lambda _, v: LessThanOrEqual(F('date_of_death_year'), v),
-            'flourished_year_from': lambda _, v: GreaterThanOrEqual(F('flourished_year'), v),
-            'flourished_year_to': lambda _, v: LessThanOrEqual(F('flourished2_year'), v),
-            #'change_timestamp_from': lambda _, v: GreaterThanOrEqual(F('change_timestamp'), v),
-            #'change_timestamp_to': lambda _, v: LessThanOrEqual(F('change_timestamp'), v),
-        } | query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                            'change_timestamp', str_to_std_datetime)
+        field_fn_maps = {'gender': lambda f, v: Exact(F(f), '' if v == 'U' else v),
+                         'person_or_group': lambda _, v: Exact(F('is_organisation'), 'Y' if v == 'G' else ''),
+                         'birth_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_birth_year'), v),
+                         'birth_year_to': lambda _, v: LessThanOrEqual(F('date_of_birth_year'), v),
+                         'death_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_death_year'), v),
+                         'death_year_to': lambda _, v: LessThanOrEqual(F('date_of_death_year'), v),
+                         'flourished_year_from': lambda _, v: GreaterThanOrEqual(F('flourished_year'), v),
+                         'flourished_year_to': lambda _, v: LessThanOrEqual(F('flourished2_year'), v),
+                         # 'change_timestamp_from': lambda _, v: GreaterThanOrEqual(F('change_timestamp'), v),
+                         # 'change_timestamp_to': lambda _, v: LessThanOrEqual(F('change_timestamp'), v),
+                         } | query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
+                                                                 'change_timestamp', str_to_std_datetime)
 
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
 
@@ -344,7 +349,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         ]
 
         search_fields_maps = {'foaf_name': ['foaf_name', 'skos_altlabel', 'person_aliases', 'skos_hiddenlabel',
-                              'summary__other_details_summary_searchable'],
+                                            'summary__other_details_summary_searchable'],
                               'images': ['images__image_filename'],
                               'other_details': ['summary__other_details_summary_searchable']}
 
@@ -365,7 +370,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
     @property
     def query_fieldset_list(self) -> Iterable:
         default_values = {
-            #'foaf_name_lookup': 'starts_with',
+            # 'foaf_name_lookup': 'starts_with',
         }
         request_data = default_values | self.request_data.dict()
 

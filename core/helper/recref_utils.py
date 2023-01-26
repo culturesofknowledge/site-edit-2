@@ -1,11 +1,22 @@
+import dataclasses
 import logging
 from typing import Callable, Any, Optional
 
+import typing
+from typing import Type, Iterable, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from core.helper.model_utils import ModelLike
+
+from django.db.models.fields.related_descriptors import ForwardManyToOneDescriptor
 from django.forms import BaseForm
 
+from core.helper import inspect_utils, django_utils
 from core.models import Recref
 
 log = logging.getLogger(__name__)
+
+RecrefLike = typing.TypeVar('RecrefLike', bound=Recref)
 
 
 def convert_to_recref_form_dict(record_dict: dict, target_id_name: str,
@@ -77,3 +88,35 @@ def fill_common_recref_field(recref: Recref, cleaned_data: dict, username):
     recref.from_date = cleaned_data.get('from_date')
     recref.update_current_user_timestamp(username)
     return recref
+
+
+@dataclasses.dataclass
+class RecrefBoundedData:
+    recref_class: Type[RecrefLike]
+    pair: list[ForwardManyToOneDescriptor]
+
+
+def get_bounded_members(recref_class: Type[RecrefLike]) -> list[ForwardManyToOneDescriptor]:
+    bounded_members = recref_class.__dict__.items()
+    bounded_members = (m for n, m in bounded_members
+                       if isinstance(m, ForwardManyToOneDescriptor))
+    bounded_members = list(bounded_members)
+    if len(bounded_members) != 2:
+        log.warning('unexpected number of bounded members'
+                    f' [{len(bounded_members)}][{recref_class}][{bounded_members}]')
+    return bounded_members
+
+
+def find_all_recref_bounded_data(models: Iterable['ModelLike'] = None) -> Iterable[RecrefBoundedData]:
+    models = models or django_utils.all_model_classes()
+    recref_class_list = (m for m in models
+                         if inspect_utils.issubclass_safe(m, Recref) and m != Recref)
+
+    for recref_class in recref_class_list:
+        bounded_members = get_bounded_members(recref_class)
+        if len(bounded_members) != 2:
+            continue
+
+        bounded_data = RecrefBoundedData(recref_class=recref_class,
+                                         pair=bounded_members)
+        yield bounded_data
