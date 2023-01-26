@@ -153,7 +153,15 @@ def get_parent_related_field_by_recref(recref: Recref,
     return get_parent_related_field(*get_bounded_members(recref.__class__)[:2], parent_model)
 
 
-def find_recref_list_by_bounded_data(bounded_data, parent_model) -> Iterable['Recref']:
-    parent_field, _ = get_parent_related_field(bounded_data, parent_model)
-    records = bounded_data.recref_class.objects.filter(**{parent_field.field.name: parent_model})
+def get_parent_related_field_by_bounded_data(bounded_data, parent_model):
+    return get_parent_related_field(*list(bounded_data.pair), parent_model)
+
+
+def find_recref_list(recref_class, parent_model, parent_field) -> Iterable['Recref']:
+    records = recref_class.objects.filter(**{parent_field.field.name: parent_model})
     return records
+
+
+def find_recref_list_by_bounded_data(bounded_data, parent_model) -> Iterable['Recref']:
+    parent_field, _ = get_parent_related_field_by_bounded_data(bounded_data, parent_model)
+    return find_recref_list(bounded_data.recref_class, parent_model, parent_field=parent_field)

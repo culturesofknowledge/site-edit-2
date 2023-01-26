@@ -385,17 +385,13 @@ class MergeChoiceContext:
     related_records: list[tuple[str, list[str]]]
 
 
-def get_parent_related_field(bounded_data, parent_model):
-    return recref_utils.get_parent_related_field(*list(bounded_data.pair), parent_model)
-
-
 def create_merge_choice_context(model: ModelLike) -> 'MergeChoiceContext':
     name = general_model_utils.get_display_name(model)
 
     bounded_data_list = recref_utils.find_bounded_data_list_by_related_model(model)
     related_records = []
     for bounded_data in bounded_data_list:
-        parent_field, related_field = get_parent_related_field(bounded_data, model)
+        parent_field, related_field = recref_utils.get_parent_related_field_by_bounded_data(bounded_data, model)
         recref_list = list(recref_utils.find_recref_list_by_bounded_data(bounded_data, model))
         if recref_list:
             related_records.append((general_model_utils.get_name_by_model_class(related_field.field.related_model),
