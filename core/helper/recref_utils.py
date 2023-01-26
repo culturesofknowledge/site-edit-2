@@ -126,4 +126,34 @@ def find_all_recref_bounded_data(models: Iterable[Type['ModelLike']] = None) -> 
         yield bounded_data
 
 
-all_recref_bounded_data = list(find_all_recref_bounded_data(django_utils.all_model_classes()))
+all_recref_bounded_data: list[RecrefBoundedData] = list(find_all_recref_bounded_data(django_utils.all_model_classes()))
+
+
+def find_bounded_data_list_by_related_model(model) -> Iterable[RecrefBoundedData]:
+    return (r for r in all_recref_bounded_data
+            if model.__class__ in set(r.pair_related_models))
+
+
+def get_parent_related_field(field_a: 'ForwardManyToOneDescriptor',
+                             field_b: 'ForwardManyToOneDescriptor',
+                             parent_model: 'ModelLike',
+                             ) -> tuple['ForwardManyToOneDescriptor', 'ForwardManyToOneDescriptor']:
+    if field_a.field.related_model == parent_model.__class__:
+        parent_field = field_a
+        related_field = field_b
+    else:
+        parent_field = field_b
+        related_field = field_a
+    return parent_field, related_field
+
+
+def get_parent_related_field_by_recref(recref: Recref,
+                                       parent_model: 'ModelLike',
+                                       ) -> tuple['ForwardManyToOneDescriptor', 'ForwardManyToOneDescriptor']:
+    return get_parent_related_field(*get_bounded_members(recref.__class__)[:2], parent_model)
+
+
+def find_recref_list_by_bounded_data(bounded_data, parent_model) -> Iterable['Recref']:
+    parent_field, _ = get_parent_related_field(bounded_data, parent_model)
+    records = bounded_data.recref_class.objects.filter(**{parent_field.field.name: parent_model})
+    return records

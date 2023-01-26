@@ -1,8 +1,9 @@
 {% extends "core/emlo_logined.html" %}
 
 {% block content %}
-    <h1> Merge -- choice master records </h1>
+    <h1> Merge -- Choice master records </h1>
     <form method="post" action="{{ merge_action_url }}">
+        {% csrf_token %}
         <div class="merge-div">
             {% for m in choice_list %}
                 <div class="row-no-margin ">
@@ -20,20 +21,13 @@
                         <div>
                             <label for="merge_id_{{ forloop.counter0 }}">{{ m.name }}</label>
                         </div>
-                        <div class="merge-detail">
-                            {% for recref_class, records in m.related_records %}
-                                <strong>{{ recref_class }} ({{ records|length }})</strong>
-                                <ul>
-                                    {% for r in records %}
-                                        <li>{{ r }}</li>
-                                    {% endfor %}
-                                </ul>
-                            {% endfor %}
-                        </div>
+                        {% include "core/component/merge_details.html" with related_records=m.related_records %}
                     </div>
                 </div>
             {% endfor %}
         </div>
-        <input type="submit" value="Submit"/>
+        <div class="sticky-bottom">
+            <input type="submit" value="Submit"/>
+        </div>
     </form>
 {% endblock %}

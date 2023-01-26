@@ -14,6 +14,7 @@ from core.forms import CommentForm
 from core.helper import view_utils, renderer_utils, query_utils, download_csv_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.date_utils import str_to_std_datetime
+from core.helper.model_utils import ModelLike
 from core.helper.recref_handler import RecrefFormsetHandler, ImageRecrefHandler, TargetResourceFormsetHandler
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
@@ -151,7 +152,13 @@ class LocationMergeChoiceView(LoginRequiredMixin, MergeChoiceViews):
 
 
 class LocationMergeActionView(LoginRequiredMixin, MergeActionViews):
-    pass
+    @property
+    def return_vname(self) -> str:
+        return 'location:search'
+
+    @property
+    def target_model_class(self) -> Type[ModelLike]:
+        return CofkUnionLocation
 
 
 class LocationSearchView(LoginRequiredMixin, BasicSearchView):

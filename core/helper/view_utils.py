@@ -1,6 +1,7 @@
 import dataclasses
 import logging
 import os
+from collections import defaultdict
 from multiprocessing import Process
 from typing import Iterable, Type, Callable, Any
 from typing import NoReturn
@@ -384,27 +385,21 @@ class MergeChoiceContext:
     related_records: list[tuple[str, list[str]]]
 
 
-def create_merge_choice_context(model: ModelLike) -> MergeChoiceContext:
+def get_parent_related_field(bounded_data, parent_model):
+    return recref_utils.get_parent_related_field(*list(bounded_data.pair), parent_model)
+
+
+def create_merge_choice_context(model: ModelLike) -> 'MergeChoiceContext':
     name = general_model_utils.get_display_name(model)
-    bounded_data_list = (r for r in recref_utils.all_recref_bounded_data
-                         if model.__class__ in set(r.pair_related_models))
+
+    bounded_data_list = recref_utils.find_bounded_data_list_by_related_model(model)
     related_records = []
     for bounded_data in bounded_data_list:
-        field_a, field_b = list(bounded_data.pair)
-        if field_a.field.related_model == model.__class__:
-            parent_field = field_a
-            related_field = field_b
-        else:
-            parent_field = field_b
-            related_field = field_a
-
-        records = bounded_data.recref_class.objects.filter(**{parent_field.field.name: model})
-        print(related_records)
-        if records:
+        parent_field, related_field = get_parent_related_field(bounded_data, model)
+        recref_list = list(recref_utils.find_recref_list_by_bounded_data(bounded_data, model))
+        if recref_list:
             related_records.append((general_model_utils.get_name_by_model_class(related_field.field.related_model),
-                                    [general_model_utils.get_display_name(related_field.get_object(r))
-                                     for r in records]))
-
+                                    [get_recref_ref_name(related_field, r) for r in recref_list]))
     return MergeChoiceContext(model_pk=model.pk, name=name, related_records=related_records)
 
 
@@ -425,9 +420,29 @@ class MergeChoiceViews(View):
         })
 
 
+def find_all_recref_by_models(model_list, parent_model):
+    for model in model_list:
+        for bounded_data in recref_utils.find_bounded_data_list_by_related_model(parent_model):
+            records = recref_utils.find_recref_list_by_bounded_data(bounded_data, model)
+            yield from records
+
+
+def get_recref_ref_name(related_field, recref) -> str:
+    related_model = related_field.get_object(recref)
+    return '[{}] {}'.format(
+        related_model.pk,
+        general_model_utils.get_display_name(related_model)
+    )
+
+
 class MergeActionViews(View):
     @property
     def target_model_class(self) -> Type[ModelLike]:
+        raise NotImplementedError()
+
+    @property
+    def return_vname(self) -> str:
+        """ vname for return button """
         raise NotImplementedError()
 
     def post(self, request, *args, **kwargs):
@@ -438,3 +453,27 @@ class MergeActionViews(View):
         if selected_model and len(other_models) == 0:
             log.warning('input merge_pk_list empty')
             return HttpResponseNotFound()
+
+        results = defaultdict(list)
+        for recref in find_all_recref_by_models(other_models, selected_model):
+            parent_field, related_field = recref_utils.get_parent_related_field_by_recref(recref, selected_model)
+
+            # update related_field on recref r
+            related_field_name = parent_field.field.name
+            log.debug(f'change related record. recref[{recref.pk}] related_name[{related_field_name}] '
+                      f'from[{getattr(recref, related_field_name).pk}] to[{selected_model.pk}]')
+            setattr(recref, related_field_name, selected_model)
+            recref.update_current_user_timestamp(request.user.username)
+            recref.save()
+
+            results[general_model_utils.get_name_by_model_class(related_field.field.related_model)].append(
+                get_recref_ref_name(related_field, recref)
+            )
+
+        # KTODO update query work if needed
+
+        return render(request, 'core/merge_report.html', {
+            'summary': results.items(),
+            'return_vname': self.return_vname,
+            'name': general_model_utils.get_display_name(selected_model),
+        })
