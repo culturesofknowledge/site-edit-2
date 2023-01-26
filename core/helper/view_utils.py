@@ -1,9 +1,10 @@
 import dataclasses
+import itertools
 import logging
 import os
 from collections import defaultdict
 from multiprocessing import Process
-from typing import Iterable, Type, Callable, Any
+from typing import Iterable, Type, Callable, Any, TYPE_CHECKING
 from typing import NoReturn
 from urllib.parse import urlencode
 
@@ -20,11 +21,16 @@ from django.views.generic import ListView
 
 import core.constant as core_constant
 from core.forms import build_search_components
-from core.helper import file_utils, email_utils, query_utils, general_model_utils, recref_utils
+from core.helper import file_utils, email_utils, query_utils, general_model_utils, recref_utils, model_utils
 from core.helper.model_utils import ModelLike, RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
     demo_table_search_results_renderer
 from core.helper.view_components import DownloadCsvHandler
+from work import work_utils
+from work.models import CofkUnionWork
+
+if TYPE_CHECKING:
+    from core.models import Recref
 
 register = template.Library()
 log = logging.getLogger(__name__)
@@ -431,6 +437,19 @@ def get_recref_ref_name(related_field, recref) -> str:
     )
 
 
+def find_work_by_recref_list(recref_list: Iterable['Recref']):
+    pk_set = set()
+    for recref in recref_list:
+        field = model_utils.get_related_field(recref.__class__, CofkUnionWork)
+        if field is None:
+            continue
+
+        work = getattr(recref, field.name)
+        if work.pk not in pk_set:
+            pk_set.add(work.pk)
+            yield work
+
+
 class MergeActionViews(View):
     @property
     def target_model_class(self) -> Type[ModelLike]:
@@ -457,7 +476,8 @@ class MergeActionViews(View):
         ))
 
         results = defaultdict(list)
-        for recref in find_all_recref_by_models(other_models, selected_model):
+        recref_list_a, recref_list_b = itertools.tee(find_all_recref_by_models(other_models, selected_model), 2)
+        for recref in recref_list_a:
             parent_field, related_field = recref_utils.get_parent_related_field_by_recref(recref, selected_model)
 
             # update related_field on recref r
@@ -472,7 +492,14 @@ class MergeActionViews(View):
                 get_recref_ref_name(related_field, recref)
             )
 
-        # KTODO update query work if needed
+        # update query work if needed
+        for work in find_work_by_recref_list(recref_list_b):
+            work_utils.clone_queryable_work(work)
+
+        # remove other_models
+        # for m in other_models:
+        #     log.info(f'remove [{m.__class__.__name__}] {m.pk}')
+        #     m.delete()  # KTODO to be define how to handle CofkCollect records
 
         return render(request, 'core/merge_report.html', {
             'summary': results.items(),
