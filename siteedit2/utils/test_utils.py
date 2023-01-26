@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.db import models
 from django.db.models import Model
+from django.test import TestCase
 from django.urls import reverse
 from selenium import webdriver
 from selenium.common import NoSuchElementException
@@ -16,9 +17,12 @@ from selenium.webdriver.support.select import Select
 import core.fixtures
 import location.fixtures
 import person.fixtures
-from core.helper import model_utils
+from core.constant import REL_TYPE_COMMENT_REFERS_TO
+from core.helper import model_utils, recref_utils
+from core.helper.common_recref_adapter import RecrefFormAdapter
+from core.helper.model_utils import ModelLike
 from core.helper.view_utils import BasicSearchView
-from core.models import CofkLookupCatalogue
+from core.models import CofkLookupCatalogue, CofkUnionComment
 from location.models import CofkUnionLocation
 from login.models import CofkUser
 from person.models import CofkUnionPerson
@@ -26,6 +30,15 @@ from work.fixtures import work_dict_a
 from work.models import CofkUnionWork
 
 log = logging.getLogger(__name__)
+
+
+def create_test_user():
+    login_user = CofkUser()
+    login_user.username = 'test_user_a'
+    login_user.raw_password = 'pass'
+    login_user.set_password(login_user.raw_password)
+    login_user.save()
+    return login_user
 
 
 class EmloSeleniumTestCase(StaticLiveServerTestCase):
@@ -47,10 +60,7 @@ class EmloSeleniumTestCase(StaticLiveServerTestCase):
         cls.selenium.maximize_window()  # avoid something is not clickable
         cls.selenium.implicitly_wait(10)
 
-        cls.login_user = CofkUser()
-        cls.login_user.username = 'test_user_a'
-        cls.login_user.raw_password = 'pass'
-        cls.login_user.set_password(cls.login_user.raw_password)
+        cls.login_user = create_test_user()
 
     def setUp(self) -> None:
         """ Developer can change login_user by overwrite setUpClass
@@ -420,3 +430,29 @@ def create_empty_lookup_cat() -> CofkLookupCatalogue:
     )
     cat.save()
     return cat
+
+
+def add_comments_by_msgs(msgs: Iterable[str], parent, recref_form_adapter_class: Type[RecrefFormAdapter]):
+    for comment_msg in msgs:
+        _comment = CofkUnionComment(comment=comment_msg)
+        _comment.save()
+        recref_form_adapter_class(parent).upsert_recref(REL_TYPE_COMMENT_REFERS_TO, parent, _comment).save()
+
+
+def cnt_recref(recref_class, instance: ModelLike):
+    recref_list = recref_utils.find_recref_list(recref_class, instance)
+    return len(list(recref_list))
+
+
+class LoginTestCase(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.login_user = create_test_user()
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.client.post(reverse('login:gate'), data={
+            'username': self.login_user.username,
+            'password': self.login_user.raw_password,
+        }, follow=True)

@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 from django.db.models.fields.related_descriptors import ForwardManyToOneDescriptor
 from django.forms import BaseForm
 
-from core.helper import inspect_utils, django_utils
+from core.helper import inspect_utils, django_utils, model_utils
 from core.models import Recref
 
 log = logging.getLogger(__name__)
@@ -157,8 +157,16 @@ def get_parent_related_field_by_bounded_data(bounded_data, parent_model):
     return get_parent_related_field(*list(bounded_data.pair), parent_model)
 
 
-def find_recref_list(recref_class, parent_model, parent_field) -> Iterable['Recref']:
-    records = recref_class.objects.filter(**{parent_field.field.name: parent_model})
+def find_recref_list(recref_class, parent_model, parent_field=None) -> Iterable['Recref']:
+    if parent_field is None:
+        parent_field = model_utils.get_related_field(recref_class, parent_model.__class__)
+
+    if isinstance(parent_field, ForwardManyToOneDescriptor):
+        field_name = parent_field.field.name
+    else:
+        field_name = parent_field.name
+
+    records = recref_class.objects.filter(**{field_name: parent_model})
     return records
 
 
