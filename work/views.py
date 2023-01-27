@@ -933,7 +933,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         fields = [
             'description', 'editors_notes', 'date_of_work_as_marked', 'date_of_work_std_year', 'creators_searchable',
             'sender_or_recipient', 'origin_or_destination', 'date_of_work_std_month', 'date_of_work_std_day',
-            'notes_on_authors', 'origin_as_marked', 'addressee',
+            'notes_on_authors', 'origin_as_marked', 'addressees_searchable',
             'destination_as_marked', 'flags', 'images', 'manifestations_searchable',
             'related_resources', 'language_of_work', 'subjects', 'abstract', 'people_mentioned',
             'keywords', 'general_notes', 'original_catalogue', 'accession_code', # 'work_to_be_deleted',

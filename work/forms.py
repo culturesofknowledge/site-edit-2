@@ -512,8 +512,8 @@ class CompactSearchFieldset(FieldsetForm):
     notes_on_authors = forms.CharField(required=False, label='Notes on authors/senders')
     notes_on_authors_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    addressee = forms.CharField(required=False)
-    addressee_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    addressees_searchable = forms.CharField(required=False)
+    addressees_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     places_from_searchable = forms.CharField(required=False, help_text=places_from_searchable)
     places_from_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)

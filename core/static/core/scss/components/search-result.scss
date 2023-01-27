@@ -52,6 +52,15 @@ tr.selectable_entry td button {
     color: $black;
 }
 
+tr.selectable_entry td a {
+    text-decoration: underline;
+
+    &:hover, &:focus, &:active {
+        text-decoration: none;
+
+    }
+}
+
 tr.even {
     background-color: $faint-grey;
 }

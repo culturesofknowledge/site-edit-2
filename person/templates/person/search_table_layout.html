@@ -85,9 +85,15 @@
                     {{ r.organisation_type.org_type_desc }}
                 {% endif %}
             </td>
-            <td> {{ r.sent }}</td>
-            <td> {{ r.recd }} </td>
-            <td> {{ r.all_works }} </td>
+            <td>
+                <a href="{% url 'work:search' %}?creators_searchable={{ r.foaf_name }}&creators_searchable_lookup=contains" class="search_link">{{ r.sent }}</a>
+            </td>
+            <td>
+                <a href="{% url 'work:search' %}?addressees_searchable={{ r.foaf_name }}&addressees_searchable_lookup=contains" class="search_link">{{ r.recd }}</a>
+            </td>
+            <td>
+                <a href="{% url 'work:search' %}?sender_or_recipient={{ r.foaf_name }}&sender_or_recipient_lookup=contains" class="search_link">{{ r.all_works }}</a>
+            </td>
             <td> {{ r.mentioned }} </td>
             <td>
                 {% include 'core/component/search_table_layout/link_record.html' with id=r.iperson_id view='person:full_form' %}
