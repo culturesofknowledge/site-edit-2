@@ -33,7 +33,7 @@
             <td>
                 {% include 'core/component/search_table_layout/link_record.html' with id=r.location_id view='location:full_form' %}
             </td>
-            <td style="min-width: 150px; word-break: break-all;">
+            <td class="text-heavy">
                 {% if r.editors_notes %}
                     {{ r.editors_notes }}
                 {% endif %}

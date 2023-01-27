@@ -68,3 +68,8 @@ tr.even {
 tr.odd {
     background-color: $fainter-grey;
 }
+
+td.text-heavy {
+    min-width: 150px;
+    word-break: break-all;
+}
