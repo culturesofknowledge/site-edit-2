@@ -38,9 +38,21 @@
                     {{ r.editors_notes }}
                 {% endif %}
             </td>
-            <td>{{ r.sent }}</td>
-            <td>{{ r.recd }}</td>
-            <td>{{ r.all_works }}</td>
+            <td>
+                <a href="{% url 'work:search' %}?places_from_searchable={{ r.location_name }}&places_from_searchable_lookup=contains" class="search_link" target="_blank">
+                    {{ r.sent }}
+                </a>
+            </td>
+            <td>
+                <a href="{% url 'work:search' %}?places_to_searchable={{ r.location_name }}&places_to_searchable_lookup=contains" class="search_link" target="_blank">
+                    {{ r.recd }}
+                </a>
+            </td>
+            <td>
+                <a href="{% url 'work:search' %}?origin_or_destination={{ r.location_name }}&origin_or_destination_lookup=contains" class="search_link" target="_blank">
+                    {{ r.all_works }}
+                </a>
+            </td>
             <td>
                 {% include "core/component/search_table_layout/comment_result.html" with comments=r.comments %}
             </td>
