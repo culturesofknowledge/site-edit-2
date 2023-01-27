@@ -51,3 +51,11 @@ tr.selectable_entry td button {
     background-color: $faint-grey;
     color: $black;
 }
+
+tr.even {
+    background-color: $faint-grey;
+}
+
+tr.odd {
+    background-color: $fainter-grey;
+}

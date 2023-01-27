@@ -45,7 +45,7 @@
     <tbody>
 
     {% for r in search_results %}
-        <tr class="selectable_entry" entry_id="{{ r.iperson_id }}">
+        <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}" entry_id="{{ r.iperson_id }}">
             <td>
                 <a href="{% url 'person:full_form' r.iperson_id %}">
                     {{ r.names_and_roles }}

@@ -20,7 +20,7 @@
     <tbody>
 
     {% for r in search_results %}
-        <tr class="selectable_entry" entry_id="{{ r.institution_id }}">
+        <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}" entry_id="{{ r.iperson_id }}" entry_id="{{ r.institution_id }}">
             <td>
                 {% include 'core/component/search_table_layout/link_record.html' with id=r.institution_id view='institution:full_form' %}
             </td>
