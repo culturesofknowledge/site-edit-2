@@ -23,7 +23,13 @@ class Command(BaseCommand):
     help = 'playground for try some python code'
 
     def handle(self, *args, **options):
-        main15()
+        main16()
+
+
+def main16():
+    a = CofkUnionLocation
+    b = CofkUnionLocation.objects.first()
+    breakpoint()
 
 
 def main15():

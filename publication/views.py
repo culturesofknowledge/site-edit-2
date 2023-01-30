@@ -34,10 +34,6 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
         ]
 
     @property
-    def merge_page_vname(self) -> str:
-        return 'publication:merge'
-
-    @property
     def return_quick_init_vname(self) -> str:
         return 'publication:return_quick_init'
 
