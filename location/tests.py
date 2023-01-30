@@ -109,8 +109,7 @@ class LocationMergeTests(LoginTestCase):
         self.assertEqual(test_utils.cnt_recref(CofkLocationCommentMap, loc_a),
                          len(other_models) * len(comment_msg_list))
 
-        # KTODO to be define how to handle delete
-        # self.assertTrue(not any(
-        #     CofkUnionLocation.objects.filter(pk=m.pk).exists()
-        #     for m in other_models
-        # ))
+        self.assertTrue(not any(
+            CofkUnionLocation.objects.filter(pk=m.pk).exists()
+            for m in other_models
+        ))

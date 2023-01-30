@@ -10,7 +10,7 @@ from urllib.parse import urlencode
 
 from django import template
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, ForeignKey
 from django.db.models.query_utils import DeferredAttribute
 from django.forms import ModelForm
 from django.forms import formset_factory
@@ -22,7 +22,8 @@ from django.views.generic import ListView
 
 import core.constant as core_constant
 from core.forms import build_search_components
-from core.helper import file_utils, email_utils, query_utils, general_model_utils, recref_utils, model_utils
+from core.helper import file_utils, email_utils, query_utils, general_model_utils, recref_utils, model_utils, \
+    django_utils, inspect_utils
 from core.helper.model_utils import ModelLike, RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
     demo_table_search_results_renderer
@@ -460,6 +461,18 @@ def find_work_by_recref_list(recref_list: Iterable['Recref']):
             yield work
 
 
+def find_related_collect_field(target_model_class: Type[ModelLike]) -> Iterable[tuple[Type[ModelLike], ForeignKey]]:
+    def _is_target_field(f):
+        return isinstance(f, ForeignKey) and inspect_utils.issubclass_safe(f.related_model, target_model_class)
+
+    _models = django_utils.all_model_classes()
+    _models = (m for m in _models if m.__name__.startswith('CofkCollect'))
+    _models = itertools.chain.from_iterable(
+        ((m, f) for f in m._meta.fields if _is_target_field(f))
+        for m in _models)
+    return _models
+
+
 class MergeActionViews(View):
     @property
     def target_model_class(self) -> Type[ModelLike]:
@@ -470,14 +483,12 @@ class MergeActionViews(View):
         """ vname for return button """
         raise NotImplementedError()
 
-    def post(self, request, *args, **kwargs):
-        selected_pk = request.POST.get('selected_pk')
-        merge_pk_list = set(request.POST.getlist('merge_pk')) - {selected_pk}
-        other_models = list(self.target_model_class.objects.filter(**{'pk__in': merge_pk_list}).iterator())
-        selected_model = self.target_model_class.objects.filter(**{'pk': selected_pk}).first()
+    @staticmethod
+    def merge(selected_model: ModelLike, other_models: list[ModelLike], username=None):
         if selected_model and len(other_models) == 0:
-            log.warning('input merge_pk_list empty')
-            return HttpResponseNotFound()
+            msg = f'invalid selected_model[{selected_model}], empty other_models[{len(other_models)}] '
+            log.warning(msg)
+            return ValueError(msg)
 
         log.info('merge type[{}] selected[{}] other[{}]'.format(
             selected_model.__class__.__name__,
@@ -485,31 +496,62 @@ class MergeActionViews(View):
             [m.pk for m in other_models]
         ))
 
-        results = defaultdict(list)
-        recref_list_a, recref_list_b = itertools.tee(find_all_recref_by_models(other_models, selected_model), 2)
-        for recref in recref_list_a:
+        recref_list: Iterable[Recref] = find_all_recref_by_models(other_models, selected_model)
+        recref_list = list(recref_list)
+        for recref in recref_list:
             parent_field, related_field = recref_utils.get_parent_related_field_by_recref(recref, selected_model)
 
-            # update related_field on recref r
+            # update related_field on recref
             related_field_name = parent_field.field.name
             log.debug(f'change related record. recref[{recref.pk}] related_name[{related_field_name}] '
                       f'from[{getattr(recref, related_field_name).pk}] to[{selected_model.pk}]')
             setattr(recref, related_field_name, selected_model)
-            recref.update_current_user_timestamp(request.user.username)
+            if username:
+                recref.update_current_user_timestamp(username)
             recref.save()
 
+        # update query work if needed
+        for work in find_work_by_recref_list(recref_list):
+            work_utils.clone_queryable_work(work)
+
+        # change ForeignKey value to master's id in cofk_collect
+        for model_class, foreign_field in find_related_collect_field(selected_model.__class__):
+            new_id = foreign_field.target_field.value_from_object(selected_model)
+            old_ids = [foreign_field.target_field.value_from_object(o) for o in other_models]
+            outdated_records = model_class.objects.filter(**{
+                f'{foreign_field.attname}__in': old_ids
+            })
+            log.info('update [{}.{}] with old_ids[{}] to new_id[{}], total[{}]'.format(
+                model_class.__name__, foreign_field.attname,
+                old_ids, new_id, outdated_records.count()
+            ))
+            outdated_records.update(**{foreign_field.attname: new_id})
+
+        # remove other_models
+        for m in other_models:
+            log.info(f'remove [{m.__class__.__name__}] pk[{m.pk}]')
+            m.delete()
+
+        return recref_list
+
+    def post(self, request, *args, **kwargs):
+        selected_pk = request.POST.get('selected_pk')
+        merge_pk_list = set(request.POST.getlist('merge_pk')) - {selected_pk}
+        other_models = list(self.target_model_class.objects.filter(**{'pk__in': merge_pk_list}).iterator())
+        selected_model = self.target_model_class.objects.filter(**{'pk': selected_pk}).first()
+
+        try:
+            recref_list = self.merge(selected_model, other_models, username=request.user.username)
+        except ValueError:
+            return HttpResponseNotFound()
+
+        # prepare results context
+        results = defaultdict(list)
+        for recref in recref_list:
+            _, related_field = recref_utils.get_parent_related_field_by_recref(recref, selected_model)
             results[general_model_utils.get_name_by_model_class(related_field.field.related_model)].append(
                 get_recref_ref_name(related_field, recref)
             )
-
-        # update query work if needed
-        for work in find_work_by_recref_list(recref_list_b):
-            work_utils.clone_queryable_work(work)
-
-        # remove other_models
-        # for m in other_models:
-        #     log.info(f'remove [{m.__class__.__name__}] {m.pk}')
-        #     m.delete()  # KTODO to be define how to handle CofkCollect records
 
         return render(request, 'core/merge_report.html', {
             'summary': results.items(),

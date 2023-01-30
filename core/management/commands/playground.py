@@ -1,17 +1,20 @@
 import datetime
+import csv
 import datetime
+import inspect
 import io
 import logging
 import re
+from typing import Type
 
 from django.conf import settings
 from django.core.management import BaseCommand
 from django.db.models.manager import Manager
 
-from core.helper import email_utils, model_utils, view_utils, django_utils, recref_utils, inspect_utils
+from core.helper import email_utils, model_utils, view_utils, recref_utils
+from core.helper.model_utils import ModelLike
 from location.models import CofkUnionLocation, CofkLocationCommentMap
-import csv
-import inspect
+from person.models import CofkUnionPerson
 
 log = logging.getLogger(__name__)
 
@@ -20,7 +23,18 @@ class Command(BaseCommand):
     help = 'playground for try some python code'
 
     def handle(self, *args, **options):
-        main14()
+        main15()
+
+
+def main15():
+    # target_model_class = CofkUnionLocation
+    target_model_class = CofkUnionPerson
+    for m, f in view_utils.find_related_collect_field(target_model_class):
+        m: Type[ModelLike]
+        m.objects.filter()
+        print(m)
+        print(f, type(f), f.attname)
+        breakpoint()
 
 
 def main14():
