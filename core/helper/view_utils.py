@@ -67,10 +67,6 @@ class BasicSearchView(ListView):
         return self.query_fieldset_list
 
     @property
-    def title(self) -> str:
-        raise NotImplementedError()
-
-    @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
         """
         return list of tuple for "django field value" and "Label"
@@ -239,10 +235,6 @@ def urlparams(*_, **kwargs):
 
 
 class DefaultSearchView(BasicSearchView):
-
-    @property
-    def title(self) -> str:
-        return '__title__'
 
     @property
     def query_fieldset_list(self) -> Iterable:
