@@ -7,6 +7,7 @@ import sys
 def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'siteedit2.settings')
+    # print('current DJANGO_SETTINGS_MODULE={}'.format(os.environ.get('DJANGO_SETTINGS_MODULE')))
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

@@ -23,8 +23,7 @@ Path(EMLO_APP_HOME).mkdir(parents=True, exist_ok=True)
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-0s-b#1j!$4!2e$u-ibm*5p$e_o1i%w-6%v$fu*5+bjkaj2j%tr'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-0s-b#1j!$4!2e$u-ibm*5p$e_o1i%w-6%v$fu*5+bjkaj2j%tr')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
