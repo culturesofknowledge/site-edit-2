@@ -100,9 +100,8 @@ class BasicSearchView(ListView):
         raise NotImplementedError('missing download_csv_handler')
 
     @property
-    def merge_page_vname(self) -> str:
-        # KTODO merge feature can be disable
-        raise NotImplementedError('missing merge_page_vname')
+    def merge_page_vname(self) -> str | None:
+        return None
 
     @property
     def return_quick_init_vname(self) -> str | None:
@@ -164,8 +163,9 @@ class BasicSearchView(ListView):
                         'results_renderer': results_renderer(self.get_search_results_context(context)),
                         'is_compact_layout': is_compact_layout,
                         'to_user_messages': getattr(self, 'to_user_messages', []),
-                        'merge_page_url': reverse(self.merge_page_vname),
                         })
+        if self.merge_page_vname:
+            context['merge_page_url'] = reverse(self.merge_page_vname)
 
         if self.return_quick_init_vname:
             context['return_quick_init_vname'] = self.return_quick_init_vname
@@ -262,10 +262,6 @@ class DefaultSearchView(BasicSearchView):
     @property
     def download_csv_handler(self) -> DownloadCsvHandler:
         return None
-
-    @property
-    def merge_page_vname(self) -> str:
-        return 'login:gate'
 
     def get_queryset(self):
         class _FakeQueryset(list):
