@@ -10,7 +10,8 @@ from urllib.parse import urlencode
 
 from django import template
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, lookups, F
+from django.db.models.query_utils import DeferredAttribute
 from django.forms import ModelForm
 from django.forms import formset_factory
 from django.http import HttpResponseNotFound
@@ -391,20 +392,6 @@ class MergeChoiceContext:
     related_records: list[tuple[str, list[str]]]
 
 
-def create_merge_choice_context(model: ModelLike) -> 'MergeChoiceContext':
-    name = general_model_utils.get_display_name(model)
-
-    bounded_data_list = recref_utils.find_bounded_data_list_by_related_model(model)
-    related_records = []
-    for bounded_data in bounded_data_list:
-        parent_field, related_field = recref_utils.get_parent_related_field_by_bounded_data(bounded_data, model)
-        recref_list = list(recref_utils.find_recref_list_by_bounded_data(bounded_data, model))
-        if recref_list:
-            related_records.append((general_model_utils.get_name_by_model_class(related_field.field.related_model),
-                                    [get_recref_ref_name(related_field, r) for r in recref_list]))
-    return MergeChoiceContext(model_pk=model.pk, name=name, related_records=related_records)
-
-
 class MergeChoiceViews(View):
 
     def to_context_list(self, merge_id_list: list[str]) -> Iterable['MergeChoiceContext']:
@@ -420,6 +407,29 @@ class MergeChoiceViews(View):
             'choice_list': self.to_context_list(id_list),
             'merge_action_url': reverse(self.action_vname),
         })
+
+    @staticmethod
+    def create_merge_choice_context(model: ModelLike) -> 'MergeChoiceContext':
+        name = general_model_utils.get_display_name(model)
+
+        bounded_data_list = recref_utils.find_bounded_data_list_by_related_model(model)
+        related_records = []
+        for bounded_data in bounded_data_list:
+            parent_field, related_field = recref_utils.get_parent_related_field_by_bounded_data(bounded_data, model)
+            recref_list = list(recref_utils.find_recref_list_by_bounded_data(bounded_data, model))
+            if recref_list:
+                related_records.append((general_model_utils.get_name_by_model_class(related_field.field.related_model),
+                                        [get_recref_ref_name(related_field, r) for r in recref_list]))
+        return MergeChoiceContext(model_pk=model.pk, name=name, related_records=related_records)
+
+    @staticmethod
+    def create_merge_choice_context_by_id_field(field: DeferredAttribute, merge_id_list: list):
+        records = field.field.model.objects.filter(
+            **{
+                f'{field.field.name}__in': merge_id_list
+            }
+        ).iterator()
+        return (MergeChoiceViews.create_merge_choice_context(m) for m in records)
 
 
 def find_all_recref_by_models(model_list, parent_model):
