@@ -71,7 +71,7 @@ cofk_union_work
         return
 
     if not (change_user := getattr(instance, 'change_user', None)):
-        log.warning(f'skip update audit user, {sender} has no {change_user} ')
+        log.warning(f'skip update audit user, {sender} has no [{change_user}] ')
         return
 
     cond = dict(
@@ -85,12 +85,6 @@ cofk_union_work
         objects_filter.update(change_user=change_user)
     else:
         log.warning(f'related audit not found .. {cond}')
-
-
-def random_choice_left_right(instance: models.Model):
-    values = (v for _, v in inspect.getmembers(instance))
-    values = [v for v in values if isinstance(v, models.Model)]
-    return values[:2]
 
 
 def save_audit_records(instance: Recref, old_instance: Recref = None, ):
@@ -146,12 +140,8 @@ def to_audit_adapter(instance: models.Model):
         return AuditRecrefAdapter(instance)
 
 
-def get_left_right_adapters(instance):
-    # KTODO left right mapping by recref
-
-    log.warning(f'undefined left right mapping for [{instance}]')
-    left_right_instances = random_choice_left_right(instance)
-
+def get_left_right_adapters(instance: Recref):
+    left_right_instances = get_left_right_rel_obj(instance)
     adapters = [to_audit_adapter(i) for i in left_right_instances]
     return adapters
 
