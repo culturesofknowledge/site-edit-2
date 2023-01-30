@@ -10,7 +10,7 @@ from urllib.parse import urlencode
 
 from django import template
 from django.db import models
-from django.db.models import Q, lookups, F
+from django.db.models import Q
 from django.db.models.query_utils import DeferredAttribute
 from django.forms import ModelForm
 from django.forms import formset_factory
