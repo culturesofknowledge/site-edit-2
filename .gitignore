@@ -48,6 +48,7 @@ files/
 
 # dev environment file
 siteedit2/settings/local_dev.py
+siteedit2/settings/local_test.py
 siteedit2/settings/gunweb.py
 # */migrations
 
