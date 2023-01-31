@@ -294,8 +294,8 @@
             for (var i = 0; i < columns.length; i++) {
                 var header = columns[i].innerText;
 
-                if (header == '')
-                    header = '[Notices]';
+                if(header == '')
+                    header = '[Uncertainties]';
 
                 columns[i].innerHTML += '&nbsp;<a href="#" onclick="hide_column(' + (i + 1) + ', \'' + header.replace("'", "\\'") + '\');">' + feather.icons['eye-off'].toSvg() + '</span></a>';
 
