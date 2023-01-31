@@ -23,7 +23,7 @@ from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate, 
     MergeActionViews
 from core.models import Recref
 from location import location_utils
-from location.forms import LocationForm, GeneralSearchFieldset
+from location.forms import LocationForm, GeneralSearchFieldset, field_label_map
 from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap, CofkLocationImageMap
 from location.recref_adapter import LocationCommentRecrefAdapter, LocationResourceRecrefAdapter, \
     LocationImageRecrefAdapter
@@ -162,6 +162,22 @@ class LocationMergeActionView(LoginRequiredMixin, MergeActionViews):
 class LocationSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
+    def search_fields(self) -> list[str]:
+        return ['location_name', 'editors_notes', 'location_id', 'researchers_notes', 'resources', 'latitude',
+                  'sent', 'recd', 'all_works', 'longitude', 'element_1_eg_room', 'element_2_eg_building',
+                  'element_3_eg_parish', 'element_4_eg_city', 'element_5_eg_county', 'element_6_eg_country',
+                  'element_7_eg_empire', 'images', 'change_user']
+
+    @property
+    def search_field_label_map(self) -> dict:
+        return field_label_map
+
+    @property
+    def search_field_fn_maps(self) -> dict:
+        return query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
+                                                   'change_timestamp', str_to_std_datetime)
+
+    @property
     def query_fieldset_list(self) -> Iterable:
         return [GeneralSearchFieldset(self.request_data)]
 
@@ -192,10 +208,8 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
 
     def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q]):
         queryset = model_class.objects.all()
-        annotate = {'sent': Count('works',
-                                  filter=Q(cofkworklocationmap__relationship_type=REL_TYPE_WAS_SENT_FROM)),
-                    'recd': Count('works',
-                                  filter=Q(cofkworklocationmap__relationship_type=REL_TYPE_WAS_SENT_TO)),
+        annotate = {'sent': Count('works', filter=Q(cofkworklocationmap__relationship_type=REL_TYPE_WAS_SENT_FROM)),
+                    'recd': Count('works', filter=Q(cofkworklocationmap__relationship_type=REL_TYPE_WAS_SENT_TO)),
                     }
         annotate['all_works'] = annotate['sent'] + annotate['recd']
 
@@ -211,28 +225,19 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
 
     def get_queryset(self):
         # queries for like_fields
-        field_fn_maps = query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                            'change_timestamp', str_to_std_datetime)
-
-        fields = ['location_name', 'editors_notes', 'location_id', 'researchers_notes', 'resources', 'latitude',
-                  'sent', 'recd', 'all_works', 'longitude', 'element_1_eg_room', 'element_2_eg_building',
-                  'element_3_eg_parish', 'element_4_eg_city', 'element_5_eg_county', 'element_6_eg_country',
-                  'element_7_eg_empire', 'images', 'change_user']
-        search_fields_maps = {
-            'location_name': ['location_name', 'location_synonyms'],
-            'resources': ['resources__resource_name', 'resources__resource_details',
-                          'resources__resource_url'],
-            'researchers_notes': ['comments__comment'],
-            'images': ['images__image_filename']}
+        search_fields_maps = { 'location_name': ['location_name', 'location_synonyms'],
+                 'resources': ['resources__resource_name', 'resources__resource_details', 'resources__resource_url'],
+                 'researchers_notes': ['comments__comment'],
+                 'images': ['images__image_filename']}
 
         # KTODO support lookup query_utils.create_queries_by_lookup_field
 
-        queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
+        queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
         queries.extend(
-            query_utils.create_queries_by_lookup_field(self.request_data, fields, search_fields_maps)
+            query_utils.create_queries_by_lookup_field(self.request_data, self.search_fields, search_fields_maps)
         )
 
-        return self.create_queryset_by_queries(CofkUnionLocation, queries)
+        return self.create_queryset_by_queries(CofkUnionLocation, queries).distinct()
 
     @property
     def entity(self) -> str:

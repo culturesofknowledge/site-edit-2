@@ -238,6 +238,38 @@ class PersonForm(ModelForm):
         return super().clean()
 
 
+field_label_map = { 'foaf_name': 'Names and titles/roles',
+                    'sent': 'Sent',
+                    'recd': 'Received',
+                    'all_works': 'Sent and received',
+                    'editors_notes': 'Editors\' notes',
+                    'resources': 'Related resources',
+                    'mentioned': 'Mentioned',
+                    'further_reading': 'Further reading',
+                    'element_1_eg_room': '1. E.g. room',
+                    'element_2_eg_building': '2. E.g. building',
+                    'element_3_eg_parish': '3. E.g. parish',
+                    'element_4_eg_city': '4. E.g. city',
+                    'element_5_eg_county': '5. E.g. county',
+                    'element_6_eg_country': '6. E.g. country',
+                    'element_7_eg_empire': '7. E.g. empire',
+                    'images': 'Images',
+                    'change_user': 'Last edited by',
+                    }
+
+search_gender_choices = [
+            (None, 'Any'),
+            ('M', 'Male'),
+            ('F', 'Female'),
+            ('U', 'Unknown or not applicable'),
+        ]
+
+search_person_or_group = [
+        (None, 'Either'),
+        ('P', 'Person'),
+        ('G', 'Group'),
+    ]
+
 class GeneralSearchFieldset(forms.Form):
     title = 'General'
     template_name = 'person/component/person_search_fieldset.html'
@@ -264,19 +296,9 @@ class GeneralSearchFieldset(forms.Form):
     flourished_info = 'Can be entered in YYYY format.'
 
     gender = forms.CharField(required=False, widget=forms.Select(
-        choices=[
-            (None, 'Any'),
-            ('M', 'Male'),
-            ('F', 'Female'),
-            ('U', 'Unknown or not applicable'),
-        ]
-    ))
+        choices=search_gender_choices))
 
-    person_or_group = forms.CharField(required=False, widget=forms.Select(choices=[
-        (None, 'Either'),
-        ('P', 'Person'),
-        ('G', 'Group'),
-    ]))
+    person_or_group = forms.CharField(required=False, widget=forms.Select(choices=search_person_or_group))
 
     sent = IntegerField(required=False,
                         help_text="Number of letters from this author/sender. "
@@ -297,7 +319,7 @@ class GeneralSearchFieldset(forms.Form):
                              help_text='Number of letters in which this person/organisation was mentioned.')
     mentioned_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
-    editors_notes = forms.CharField(required=False,
+    editors_notes = forms.CharField(required=False, label='Editors\' notes',
                                     help_text='Notes for internal use, intended to hold temporary queries etc.')
     editors_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 

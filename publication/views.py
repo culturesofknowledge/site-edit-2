@@ -9,7 +9,7 @@ from django.shortcuts import render
 from core.helper import renderer_utils, query_utils
 from core.helper.date_utils import str_to_std_datetime
 from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView
-from publication.forms import PublicationForm, GeneralSearchFieldset
+from publication.forms import PublicationForm, GeneralSearchFieldset, field_label_map
 from publication.models import CofkUnionPublication
 
 
@@ -18,6 +18,19 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def query_fieldset_list(self) -> Iterable:
         return [GeneralSearchFieldset(self.request_data)]
+
+    @property
+    def search_fields(self) -> list[str]:
+        return ['publication_details', 'abbrev', 'change_user', 'publication_id',]
+
+    @property
+    def search_field_label_map(self) -> dict:
+        return field_label_map
+
+    @property
+    def search_field_fn_maps(self) -> dict:
+        return query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
+                                                   'change_timestamp', str_to_std_datetime)
 
     @property
     def entity(self) -> str:
@@ -39,17 +52,12 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
 
     def get_queryset(self):
         # queries for like_fields
-        field_fn_maps = query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                            'change_timestamp', str_to_std_datetime)
-
-        queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
+        queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
 
         queries.extend(
-            query_utils.create_queries_by_lookup_field(self.request_data, [
-                'publication_details', 'abbrev', 'change_user', 'publication_id',
-            ])
+            query_utils.create_queries_by_lookup_field(self.request_data, self.search_fields)
         )
-        return self.create_queryset_by_queries(CofkUnionPublication, queries)
+        return self.create_queryset_by_queries(CofkUnionPublication, queries).distinct()
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:

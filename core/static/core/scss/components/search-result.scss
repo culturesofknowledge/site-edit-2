@@ -73,3 +73,37 @@ td.text-heavy {
     min-width: 150px;
     word-break: break-all;
 }
+
+.simplified_query_container {
+    color: $mid-grey;
+
+    &:hover {
+        color: $black;
+    }
+}
+
+.simplified_query {
+    float: left;
+}
+
+.simplified_query ul {
+    margin: unset;
+    padding-right: 1em;
+    display: grid;
+    grid-auto-flow: column;
+    grid-gap: 0;
+    grid-template-rows: 30px 40px;
+    grid-column-gap: 1.5em;
+}
+
+.simplified_query ul li, span {
+    font-size: $typescale-6;
+}
+
+.result_count {
+    float: left;
+}
+
+.result_count h2 {
+    line-height: unset;
+}

@@ -31,7 +31,19 @@
                 {% if paginator.count == 0 %}
                     <h2>No results</h2>
                 {% else %}
-                    <h2>{{ paginator.count | floatformat:'g' }} {{ paginator.count|pluralize:entity }} found</h2>
+
+                    <!-- Number of results -->
+                    <div class="col">
+                        <div class="result_count">
+                            <h2>{{ paginator.count | floatformat:'g' }} {{ paginator.count|pluralize:entity }} found </h2>
+                        </div>
+
+                        <!-- Show search criteria -->
+                        {% if simplified_query %}
+                            {% include "core/component/simplified_query.html" with simpliefied_query=simplified_query %}
+                        {% endif %}
+
+                    </div>
 
                     <!-- Search components (e.g. sort by, records per page) -->
                     {{ search_components }}
