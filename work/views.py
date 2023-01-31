@@ -959,9 +959,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         simplified_query = super().simplified_query
 
         if self.search_field_fn_maps:
-            log.debug(self.search_field_fn_maps)
             work_to_be_deleted = self.request_data['work_to_be_deleted'] if 'work_to_be_deleted' in self.request_data else None
-            log.debug(work_to_be_deleted)
 
             if work_to_be_deleted:
                 if work_to_be_deleted == 'on':

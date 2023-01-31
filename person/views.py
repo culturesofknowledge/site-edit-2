@@ -337,7 +337,6 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         simplified_query = super().simplified_query
 
         if self.search_field_fn_maps:
-            log.debug(self.search_field_fn_maps)
             gender = self.request_data['gender'] if 'gender' in self.request_data else None
             person_or_group = self.request_data['person_or_group'] if 'person_or_group' in self.request_data else None
 
