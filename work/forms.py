@@ -497,6 +497,7 @@ field_label_map = { 'description': 'Description',
                     'original_catalogue': 'Original catalogue',
                     'accession_code': 'Source of record',
                     'people_mentioned': 'People mentioned',
+                    'origin_as_marked': 'Origin as marked',
                     'work_id': 'Work ID',}
 
 work_to_be_deleted_choices =[(0, 'No'), (1, 'Yes')]
