@@ -1,3 +1,17 @@
+
+if(localStorage.getItem('fieldset-toggle') == 'false')  {
+   $('#query-fieldset').toggle();
+   $('#query-result').toggleClass('col--3of4');
+}
+
+if(localStorage.getItem('advanced-search-toggle') == 'true')  {
+    $('.advanced_search').toggle();
+    $('.search_input').toggleClass('col--3of4');
+    $('.search_input').toggleClass('col--4of4');
+    $( "#advanced_search" ).prop( "checked", true);
+}
+
+
 var emlojs = emlojs || {};
 emlojs.selectable_service = {
     _mode_change_listener_fn_list: [],
@@ -127,19 +141,19 @@ function setup_merge_btn() {
 function setup_fieldset_toggle() {
     $('#fieldset-toggle-btn').click(function () {
         $('#query-fieldset').toggle();
-        $('#query-result').toggleClass('col--3of4')
+        $('#query-result').toggleClass('col--3of4');
+        localStorage.setItem('fieldset-toggle', $('#query-fieldset').is(':visible'));
     });
 }
 
 function setup_advanced_search_toggle() {
-    $('#advanced_search').on('click', toggle_advanced_search);
+    $('#advanced_search').on('click', function () {
+        $('.advanced_search').toggle();
+        $('.search_input').toggleClass('col--3of4');
+        $('.search_input').toggleClass('col--4of4');
+        localStorage.setItem('advanced-search-toggle', $('#advanced_search').prop('checked'));
+    });
 
-}
-
-function toggle_advanced_search()   {
-    $('.advanced_search').toggle();
-    $('.search_input').toggleClass('col--3of4');
-    $('.search_input').toggleClass('col--4of4');
 }
 
 function show_column(show_tag, column_index) {

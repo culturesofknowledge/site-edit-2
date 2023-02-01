@@ -59,7 +59,6 @@
                             <button id="fieldset-toggle-btn" class="btn margin-right inline_btn" type="button">
                                 Toggle <span data-feather="search" aria-hidden="true"></span>
                             </button>
-                            <input type="hidden" name="fieldset-toggle"
                             {% endif %}
                             <button type='submit' class="btn margin-right inline_btn"
                                     name="__form_action" value="download_csv">
@@ -129,7 +128,9 @@
     <script>
 
         let return_quick_init_vname = "{{ return_quick_init_vname }}";
+        {%  if return_quick_init_vname %}
         let vname_action_url = "{% url return_quick_init_vname '__entry_id__' %}";
+        {% endif %}
         let recref_mode = "{{ recref_mode }}";
 
     </script>

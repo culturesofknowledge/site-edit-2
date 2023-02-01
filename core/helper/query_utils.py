@@ -108,8 +108,8 @@ choices_lookup_map = {
     'not_blank': cond_not(is_blank),
     'less_than': lookups.LessThan,
     'greater_than': lookups.GreaterThan,
-    None: lookups.Exact,
-    '': lookups.Exact,
+    None: lookups.IExact,
+    '': lookups.IExact,
 }
 
 nullable_lookup_keys = [
