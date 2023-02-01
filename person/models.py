@@ -151,7 +151,7 @@ class CofkPersonRoleMap(Recref):
 
 
 class CofkUnionPersonSummary(models.Model):
-    iperson = models.OneToOneField(CofkUnionPerson, models.DO_NOTHING,
+    iperson = models.OneToOneField(CofkUnionPerson, models.CASCADE,
                                    primary_key=True, related_name='summary', to_field='iperson_id')
     other_details_summary = models.TextField(blank=True, null=True)
     other_details_summary_searchable = models.TextField(blank=True, null=True)

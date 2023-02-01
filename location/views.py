@@ -8,18 +8,19 @@ from django.db import models
 from django.db.models import Count, Q
 from django.forms import BaseForm, BaseFormSet
 from django.shortcuts import render, get_object_or_404, redirect
-from django.views.generic import ListView
 
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM
 from core.forms import CommentForm
 from core.helper import view_utils, renderer_utils, query_utils, download_csv_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.date_utils import str_to_std_datetime
+from core.helper.model_utils import ModelLike
 from core.helper.recref_handler import RecrefFormsetHandler, ImageRecrefHandler, TargetResourceFormsetHandler
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
 from core.helper.view_handler import FullFormHandler
-from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate
+from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate, MergeChoiceViews, MergeChoiceContext, \
+    MergeActionViews
 from core.models import Recref
 from location import location_utils
 from location.forms import LocationForm, GeneralSearchFieldset
@@ -139,22 +140,23 @@ def full_form(request, location_id):
     return fhandler.render_form(request)
 
 
-class LocationMergeView(LoginRequiredMixin, ListView):
-    template_name = 'location/merge.html'
+class LocationMergeChoiceView(LoginRequiredMixin, MergeChoiceViews):
+    @property
+    def action_vname(self):
+        return 'location:merge_action'
+
+    def to_context_list(self, merge_id_list: list[str]) -> Iterable['MergeChoiceContext']:
+        return self.create_merge_choice_context_by_id_field(CofkUnionLocation.location_id, merge_id_list)
+
+
+class LocationMergeActionView(LoginRequiredMixin, MergeActionViews):
+    @property
+    def return_vname(self) -> str:
+        return 'location:search'
 
     @property
-    def request_data(self):
-        """ by default requests data would be GET  """
-        return self.request.GET
-
-    def get_queryset(self):
-        # KTODO
-        return []
-
-    def get(self, request, *args, **kwargs):
-        # response for search query
-        print(self.request_data)
-        return super().get(request, *args, **kwargs)
+    def target_model_class(self) -> Type[ModelLike]:
+        return CofkUnionLocation
 
 
 class LocationSearchView(LoginRequiredMixin, BasicSearchView):

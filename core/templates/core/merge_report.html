@@ -1,0 +1,15 @@
+{% extends "core/emlo_logined.html" %}
+
+{% block content %}
+    <h1> Merge -- Report </h1>
+    <h1>{{ name }}</h1>
+    <span>The following related records were merged:</span>
+    {% include "core/component/merge_details.html" with related_records=summary %}
+    {% if return_vname %}
+        <div class="sticky-bottom">
+            <a href="{% url return_vname %}">
+                <button>Return</button>
+            </a>
+        </div>
+    {% endif %}
+{% endblock %}

@@ -7,3 +7,6 @@ STATIC_ROOT = '/static'
 
 TEST_WEB_HOST = 'pycharm-py'
 SELENIUM_HOST_PORT = 'chrome:4444'
+
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False

@@ -44,51 +44,53 @@
                     <aside class="margin-bottom row">
                         <div class="col col--1of2">
                             {% if paginator.count %}
-                            <button id="fieldset-toggle" class="btn margin-right inline_btn" type="button">
-                                Toggle <span data-feather="search" aria-hidden="true"></span>
-                            </button>
+                                <button id="fieldset-toggle" class="btn margin-right inline_btn" type="button">
+                                    Toggle <span data-feather="search" aria-hidden="true"></span>
+                                </button>
                             {% endif %}
                             <button type='submit' class="btn margin-right inline_btn"
                                     name="__form_action" value="download_csv">
                                 Download output
                             </button>
-                            <button class="btn margin-right inline_btn selectable_mode_btn">
-                                Select
-                            </button>
-                            <button id="merge_btn" class="btn margin-right inline_btn">
-                                Merge
-                            </button>
-                            <a href="" class="btn margin-right">Save query</a>
+
+                            {% if merge_page_url %}
+                                <button class="btn margin-right inline_btn selectable_mode_btn">
+                                    Select
+                                </button>
+                                <button id="merge_btn" class="btn margin-right inline_btn" style="display: none">
+                                    Merge
+                                </button>
+                            {% endif %}
                         </div>
                         {# Only display search rendering selection for work #}
                         {% if 'work' in entity %}
-                        <div class="col col--1of2">
-                            <h3 class="sr-only">Layout</h3>
-                            <div class="align-right">
-                                <input type="radio" id="display-as-grid" value="grid"
-                                       name="display-style"
-                                        {% if is_compact_layout %}
-                                       checked
-                                        {% endif %}
+                            <div class="col col--1of2">
+                                <h3 class="sr-only">Layout</h3>
+                                <div class="align-right">
+                                    <input type="radio" id="display-as-grid" value="grid"
+                                           name="display-style"
+                                            {% if is_compact_layout %}
+                                           checked
+                                            {% endif %}
 
-                                />
-                                <label for="display-as-grid">
-                                    Compact
-                                    <small> <span data-feather="grid" aria-hidden="true"></span> </small>
-                                </label>
+                                    />
+                                    <label for="display-as-grid">
+                                        Compact
+                                        <small> <span data-feather="grid" aria-hidden="true"></span> </small>
+                                    </label>
 
-                                <input type="radio" id="display-as-list" value="table"
-                                       name="display-style"
-                                        {% if not is_compact_layout %}
-                                       checked
-                                        {% endif %}
-                                />
-                                <label for="display-as-list">
-                                    Expanded
-                                    <small><span data-feather="list" aria-hidden="true"></span></small>
-                                </label>
+                                    <input type="radio" id="display-as-list" value="table"
+                                           name="display-style"
+                                            {% if not is_compact_layout %}
+                                           checked
+                                            {% endif %}
+                                    />
+                                    <label for="display-as-list">
+                                        Expanded
+                                        <small><span data-feather="list" aria-hidden="true"></span></small>
+                                    </label>
+                                </div>
                             </div>
-                        </div>
                         {% endif %}
                     </aside>
 
@@ -106,7 +108,9 @@
 
     </form>
 
-    <form id="merge_form" action="{{ merge_page_url }}"></form>
+    {% if merge_page_url %}
+        <form id="merge_form" action="{{ merge_page_url }}"></form>
+    {% endif %}
 
     <!-- script -->
     <script>
@@ -228,8 +232,8 @@
 
         ['id_sort_by', 'id_num_record', 'id_order_0', 'id_order_1',
             'display-as-grid', 'display-as-list'].forEach((target_id) => {
-            if(document.getElementById(target_id)) {
-                    document.getElementById(target_id).addEventListener('change', () => {
+            if (document.getElementById(target_id)) {
+                document.getElementById(target_id).addEventListener('change', () => {
                     submit_page();
 
                 });
@@ -248,7 +252,7 @@
 
         }
 
-        function toggle_advanced_search()   {
+        function toggle_advanced_search() {
             $('.advanced_search').toggle();
             $('.search_input').toggleClass('col--3of4');
             $('.search_input').toggleClass('col--4of4');
@@ -261,16 +265,16 @@
 
         function hide_column(column_index, column_name) {
             $('#results_table tr > *:nth-child(' + column_index + ')').hide();
-            $('#hidden_columns').append('<span onclick="show_column(this, ' + column_index + ');">'+ feather.icons['eye'].toSvg() + '&nbsp;' + column_name + '</span>');
+            $('#hidden_columns').append('<span onclick="show_column(this, ' + column_index + ');">' + feather.icons['eye'].toSvg() + '&nbsp;' + column_name + '</span>');
         }
 
         function isEmpty(column) {
-            for(var i = 0; i < column.length; i++) {
-                if($(column[i]).text().trim() != '' || $(column[i]).children().length > 0)
-                        return false;
+            for (var i = 0; i < column.length; i++) {
+                if ($(column[i]).text().trim() != '' || $(column[i]).children().length > 0)
+                    return false;
 
             }
-         return true;
+            return true;
         }
 
         function add_hide_buttons_to_columns() {
@@ -278,12 +282,12 @@
             for (var i = 0; i < columns.length; i++) {
                 var header = columns[i].innerText;
 
-                if(header == '')
+                if (header == '')
                     header = '[Notices]';
 
                 columns[i].innerHTML += '&nbsp;<a href="#" onclick="hide_column(' + (i + 1) + ', \'' + header.replace("'", "\\'") + '\');">' + feather.icons['eye-off'].toSvg() + '</span></a>';
 
-                if(isEmpty($('#results_table tr > *:nth-child(' + (i + 1) + ')').filter('td')))    {
+                if (isEmpty($('#results_table tr > *:nth-child(' + (i + 1) + ')').filter('td'))) {
                     hide_column(i + 1, header);
                 }
             }
@@ -295,7 +299,7 @@
             setup_merge_btn();
             setup_fieldset_toggle();
             setup_advanced_search_toggle();
-            if($('#results_table thead').length)   {
+            if ($('#results_table thead').length) {
                 add_hide_buttons_to_columns();
             }
             {% if recref_mode == '1' %}

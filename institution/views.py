@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Callable, Iterable, Type
+from typing import Callable, Iterable, Type, TYPE_CHECKING
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -9,8 +9,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from core.helper import renderer_utils, query_utils, view_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.date_utils import str_to_std_datetime
+from core.helper.model_utils import ModelLike
 from core.helper.renderer_utils import CompactSearchResultsRenderer
-from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView
+from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView, MergeChoiceViews, MergeActionViews
 from core.helper.recref_handler import ImageRecrefHandler, TargetResourceFormsetHandler
 from core.models import Recref
 from institution import inst_utils, models
@@ -18,6 +19,9 @@ from institution.forms import InstitutionForm, GeneralSearchFieldset
 from institution.models import CofkUnionInstitution
 from institution.recref_adapter import InstResourceRecrefAdapter, InstImageRecrefAdapter
 from institution.view_components import InstFormDescriptor
+
+if TYPE_CHECKING:
+    from core.helper.view_utils import MergeChoiceContext
 
 
 class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
@@ -167,3 +171,22 @@ class InstImageRecrefHandler(ImageRecrefHandler):
 
     def find_org_recref_fn(self, parent, target) -> Recref | None:
         return models.CofkInstitutionImageMap.objects.filter(institution=parent, image=target).first()
+
+
+class InstMergeChoiceView(LoginRequiredMixin, MergeChoiceViews):
+    @property
+    def action_vname(self):
+        return 'institution:merge_action'
+
+    def to_context_list(self, merge_id_list: list[str]) -> Iterable['MergeChoiceContext']:
+        return self.create_merge_choice_context_by_id_field(CofkUnionInstitution.institution_id, merge_id_list)
+
+
+class InstMergeActionView(LoginRequiredMixin, MergeActionViews):
+    @property
+    def return_vname(self) -> str:
+        return 'institution:search'
+
+    @property
+    def target_model_class(self) -> Type[ModelLike]:
+        return CofkUnionInstitution

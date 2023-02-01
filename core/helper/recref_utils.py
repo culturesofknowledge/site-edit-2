@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 from django.db.models.fields.related_descriptors import ForwardManyToOneDescriptor
 from django.forms import BaseForm
 
-from core.helper import inspect_utils, django_utils
+from core.helper import inspect_utils, django_utils, model_utils
 from core.models import Recref
 
 log = logging.getLogger(__name__)
@@ -95,6 +95,10 @@ class RecrefBoundedData:
     recref_class: Type[RecrefLike]
     pair: list[ForwardManyToOneDescriptor]
 
+    @property
+    def pair_related_models(self) -> Iterable[Type['ModelLike']]:
+        return (m.field.related_model for m in self.pair)
+
 
 def get_bounded_members(recref_class: Type[RecrefLike]) -> list[ForwardManyToOneDescriptor]:
     bounded_members = recref_class.__dict__.items()
@@ -107,7 +111,7 @@ def get_bounded_members(recref_class: Type[RecrefLike]) -> list[ForwardManyToOne
     return bounded_members
 
 
-def find_all_recref_bounded_data(models: Iterable['ModelLike'] = None) -> Iterable[RecrefBoundedData]:
+def find_all_recref_bounded_data(models: Iterable[Type['ModelLike']] = None) -> Iterable[RecrefBoundedData]:
     models = models or django_utils.all_model_classes()
     recref_class_list = (m for m in models
                          if inspect_utils.issubclass_safe(m, Recref) and m != Recref)
@@ -120,3 +124,52 @@ def find_all_recref_bounded_data(models: Iterable['ModelLike'] = None) -> Iterab
         bounded_data = RecrefBoundedData(recref_class=recref_class,
                                          pair=bounded_members)
         yield bounded_data
+
+
+all_recref_bounded_data: list[RecrefBoundedData] = list(find_all_recref_bounded_data(django_utils.all_model_classes()))
+
+
+def find_bounded_data_list_by_related_model(model) -> Iterable[RecrefBoundedData]:
+    return (r for r in all_recref_bounded_data
+            if model.__class__ in set(r.pair_related_models))
+
+
+def get_parent_related_field(field_a: 'ForwardManyToOneDescriptor',
+                             field_b: 'ForwardManyToOneDescriptor',
+                             parent_model: 'ModelLike',
+                             ) -> tuple['ForwardManyToOneDescriptor', 'ForwardManyToOneDescriptor']:
+    if field_a.field.related_model == parent_model.__class__:
+        parent_field = field_a
+        related_field = field_b
+    else:
+        parent_field = field_b
+        related_field = field_a
+    return parent_field, related_field
+
+
+def get_parent_related_field_by_recref(recref: Recref,
+                                       parent_model: 'ModelLike',
+                                       ) -> tuple['ForwardManyToOneDescriptor', 'ForwardManyToOneDescriptor']:
+    return get_parent_related_field(*get_bounded_members(recref.__class__)[:2], parent_model)
+
+
+def get_parent_related_field_by_bounded_data(bounded_data, parent_model):
+    return get_parent_related_field(*list(bounded_data.pair), parent_model)
+
+
+def find_recref_list(recref_class, parent_model, parent_field=None) -> Iterable['Recref']:
+    if parent_field is None:
+        parent_field = model_utils.get_related_field(recref_class, parent_model.__class__)
+
+    if isinstance(parent_field, ForwardManyToOneDescriptor):
+        field_name = parent_field.field.name
+    else:
+        field_name = parent_field.name
+
+    records = recref_class.objects.filter(**{field_name: parent_model})
+    return records
+
+
+def find_recref_list_by_bounded_data(bounded_data, parent_model) -> Iterable['Recref']:
+    parent_field, _ = get_parent_related_field_by_bounded_data(bounded_data, parent_model)
+    return find_recref_list(bounded_data.recref_class, parent_model, parent_field=parent_field)

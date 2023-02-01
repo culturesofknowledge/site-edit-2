@@ -8,7 +8,8 @@ urlpatterns.extend(
         init_view=views.PersonInitView.as_view(),
         edit_view=views.full_form,
         search_view=views.PersonSearchView.as_view(),
-        merge_view=views.PersonInitView.as_view(),
+        merge_view=views.PersonMergeChoiceView.as_view(),
+        merge_action_view=views.PersonMergeActionView.as_view(),
         edit_id_name='iperson_id',
     )
 )

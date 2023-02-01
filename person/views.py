@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Iterable, Type, Any, NoReturn
+from typing import Callable, Iterable, Type, Any, NoReturn, TYPE_CHECKING
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -16,12 +16,13 @@ from core.forms import CommentForm, PersonRecrefForm
 from core.helper import renderer_utils, view_utils, query_utils, download_csv_utils, recref_utils, form_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.date_utils import str_to_std_datetime
+from core.helper.model_utils import ModelLike
 from core.helper.recref_handler import RecrefFormsetHandler, RoleCategoryHandler, ImageRecrefHandler, \
     TargetResourceFormsetHandler, MultiRecrefAdapterHandler, SingleRecrefHandler
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
 from core.helper.view_handler import FullFormHandler
-from core.helper.view_utils import CommonInitFormViewTemplate, BasicSearchView
+from core.helper.view_utils import CommonInitFormViewTemplate, BasicSearchView, MergeChoiceViews, MergeActionViews
 from core.models import Recref
 from person import person_utils
 from person.forms import PersonForm, GeneralSearchFieldset, PersonOtherRecrefForm
@@ -30,6 +31,9 @@ from person.models import CofkUnionPerson, CofkPersonPersonMap, create_person_id
 from person.recref_adapter import PersonCommentRecrefAdapter, PersonResourceRecrefAdapter, PersonRoleRecrefAdapter, \
     ActivePersonRecrefAdapter, PassivePersonRecrefAdapter, PersonImageRecrefAdapter, PersonLocRecrefAdapter
 from person.view_components import PersonFormDescriptor
+
+if TYPE_CHECKING:
+    from core.helper.view_utils import MergeChoiceContext
 
 log = logging.getLogger(__name__)
 
@@ -460,3 +464,22 @@ class PersonImageRecrefHandler(ImageRecrefHandler):
 
     def find_org_recref_fn(self, parent, target) -> Recref | None:
         return CofkPersonImageMap.objects.filter(person=parent, image=target).first()
+
+
+class PersonMergeChoiceView(LoginRequiredMixin, MergeChoiceViews):
+    @property
+    def action_vname(self):
+        return 'person:merge_action'
+
+    def to_context_list(self, merge_id_list: list[str]) -> Iterable['MergeChoiceContext']:
+        return self.create_merge_choice_context_by_id_field(CofkUnionPerson.iperson_id, merge_id_list)
+
+
+class PersonMergeActionView(LoginRequiredMixin, MergeActionViews):
+    @property
+    def return_vname(self) -> str:
+        return 'person:search'
+
+    @property
+    def target_model_class(self) -> Type[ModelLike]:
+        return CofkUnionPerson
