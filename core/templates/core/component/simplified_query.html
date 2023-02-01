@@ -1,0 +1,24 @@
+
+<div class="simplified_query_container">
+    <div style="padding-left: 1em;" class="simplified_query">
+        <h2>{</h2>
+    </div>
+
+    <div class="simplified_query">
+        {% if simplified_query|length > 1 %}
+            <ul>
+            {% for s_q in simplified_query %}
+                    <li>{{ s_q }}</li>
+            {% endfor %}
+            </ul>
+        {% elif simplified_query|length == 1 %}
+            <ul>
+                <li style="list-style-type: none;">{{ simplified_query.0 }}</li>
+            </ul>
+        {% endif %}
+    </div>
+
+    <div class="simplified_query">
+        <h2>}</h2>
+    </div>
+</div>

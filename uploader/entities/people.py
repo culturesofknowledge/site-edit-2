@@ -10,6 +10,9 @@ log = logging.getLogger(__name__)
 
 
 class CofkPeople(CofkEntity, ABC):
+    """
+    This class processes the People spreadsheet
+    """
     def __init__(self, upload: CofkCollectUpload, sheet):
         super().__init__(upload, sheet)
         self.people: List[CofkCollectPerson] = []
@@ -35,7 +38,11 @@ class CofkPeople(CofkEntity, ABC):
                         else:
                             log.warning(f'{_id} duplicated in People sheet.')
                 else:
-                    log.warning(f'{per_dict} missing an id')
+                    new_person = CofkCollectPerson()
+                    new_person.upload = upload
+                    new_person.primary_name = per_dict['primary_name']
+                    self.people.append(new_person)
+                    log.debug(f'Added new person "{new_person.primary_name}" for upload {upload.upload_id}.')
 
         if self.people:
             self.bulk_create(self.people)

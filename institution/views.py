@@ -1,3 +1,4 @@
+import logging
 from abc import ABC
 from typing import Callable, Iterable, Type, TYPE_CHECKING
 
@@ -15,7 +16,7 @@ from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView
 from core.helper.recref_handler import ImageRecrefHandler, TargetResourceFormsetHandler
 from core.models import Recref
 from institution import inst_utils, models
-from institution.forms import InstitutionForm, GeneralSearchFieldset
+from institution.forms import InstitutionForm, GeneralSearchFieldset, field_label_map
 from institution.models import CofkUnionInstitution
 from institution.recref_adapter import InstResourceRecrefAdapter, InstImageRecrefAdapter
 from institution.view_components import InstFormDescriptor
@@ -24,7 +25,25 @@ if TYPE_CHECKING:
     from core.helper.view_utils import MergeChoiceContext
 
 
+log = logging.getLogger(__name__)
+
 class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
+
+    @property
+    def search_fields(self) -> list[str]:
+        return  ['institution_name', 'editors_notes', 'institution_city', 'institution_country',
+                  'change_user', 'institution_id', 'resources', 'images']
+
+    @property
+    def search_field_fn_maps(self) -> dict:
+        return query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
+                                                            'change_timestamp', str_to_std_datetime)
+    @property
+    def search_field_label_map(self) -> dict:
+        """
+        return
+        """
+        return field_label_map
 
     @property
     def entity(self) -> str:
@@ -58,13 +77,8 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
 
     def get_queryset(self):
         # queries for like_fields
-        field_fn_maps = query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                            'change_timestamp', str_to_std_datetime)
+        queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
 
-        queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
-
-        fields = ['institution_name', 'editors_notes', 'institution_city', 'institution_country',
-                  'change_user', 'institution_id', 'resources', 'images']
         search_fields_maps = {
             'institution_name': ['institution_name', 'institution_synonyms'],
             'institution_city': ['institution_city', 'institution_city_synonyms'],
@@ -74,9 +88,9 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
             'images': ['images__image_filename']}
 
         queries.extend(
-            query_utils.create_queries_by_lookup_field(self.request_data, fields, search_fields_maps)
+            query_utils.create_queries_by_lookup_field(self.request_data, self.search_fields, search_fields_maps)
         )
-        return self.create_queryset_by_queries(CofkUnionInstitution, queries)
+        return self.create_queryset_by_queries(CofkUnionInstitution, queries).distinct()
 
     @property
     def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:

@@ -473,6 +473,35 @@ class FieldsetForm(forms.Form):
         .order_by('catalogue_name').values_list('catalogue_name', flat=True).distinct()
 
 
+field_label_map = { 'description': 'Description',
+                    'date_of_work_as_marked': 'Date of work as marked',
+                    'date_of_work_std_year': 'Year',
+                    'date_of_work_std_month': 'Month',
+                    'date_of_work_std_day': 'Day',
+                    'sender_or_recipient': 'Sender or recipient',
+                    'origin_or_destination': 'Origin or destination',
+                    'creators_searchable': 'Author/sender',
+                    'notes_on_authors': 'Notes on authors/senders',
+                    'addressees_searchable': 'Addressee',
+                    'places_from_searchable': 'Origin (standardised)',
+                    'editors_notes': "Editors' notes",
+                    'places_to_searchable': 'Destination (standardised)',
+                    'flags': 'Flags',
+                    'images': 'Images',
+                    'manifestations_searchable': 'Manifestations',
+                    'related_resources': 'Related resources',
+                    'change_user': 'Last edited by',
+                    'language_of_work': 'Language of work',
+                    'abstract': 'Abstract',
+                    'general_notes': 'General notes',
+                    'original_catalogue': 'Original catalogue',
+                    'accession_code': 'Source of record',
+                    'people_mentioned': 'People mentioned',
+                    'origin_as_marked': 'Origin as marked',
+                    'work_id': 'Work ID',}
+
+work_to_be_deleted_choices =[(0, 'No'), (1, 'Yes')]
+
 class CompactSearchFieldset(FieldsetForm):
     title = 'Compact Search'
     template_name = 'work/component/work_compact_search_fieldset.html'
@@ -506,16 +535,17 @@ class CompactSearchFieldset(FieldsetForm):
     origin_or_destination = forms.CharField(required=False, help_text=origin_destination_help_text)
     origin_or_destination_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    creators_searchable = forms.CharField(required=False)
+    creators_searchable = forms.CharField(required=False, label='Author/sender')
     creators_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     notes_on_authors = forms.CharField(required=False, label='Notes on authors/senders')
     notes_on_authors_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    addressee = forms.CharField(required=False)
-    addressee_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    addressees_searchable = forms.CharField(required=False, label='Addressee')
+    addressees_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    places_from_searchable = forms.CharField(required=False, help_text=places_from_searchable)
+    places_from_searchable = forms.CharField(required=False, label='Origin (standardised)',
+                                             help_text=places_from_searchable)
     places_from_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     editors_notes = forms.CharField(required=False, label="Editors' notes")
@@ -631,8 +661,8 @@ class ExpandedSearchFieldset(FieldsetForm):
     origin_as_marked = forms.CharField(required=False)
     origin_as_marked_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    addressee = forms.CharField(required=False)
-    addressee_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    addressees_searchable = forms.CharField(required=False, label='Addressee')
+    addressees_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     places_to_searchable = forms.CharField(required=False, label='Destination (standardised)',
                                            help_text=places_to_searchable)

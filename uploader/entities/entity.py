@@ -170,26 +170,29 @@ class CofkEntity:
         return {'errors': errors,
                 'total': total_errors}
 
-    def clean_lists(self, entity_dict: dict, ids, names) -> Tuple[List[int], List[int]]:
-        if isinstance(entity_dict[ids], str):
+    def clean_lists(self, entity_dict: dict, ids_key, names_key) -> Tuple[List[int], List[int]]:
+        """
+        Validates lists of either people or locations and returns a tuple of lists.
+        """
+        if isinstance(entity_dict[ids_key], str):
             try:
-                id_list = [int(i) for i in entity_dict[ids].split(';')]
+                id_list = [int(i) for i in entity_dict[ids_key].split(';')]
             except ValueError:
                 return [], []
         else:
-            id_list = [entity_dict[ids]]
+            id_list = [entity_dict[ids_key]]
 
-        name_list = entity_dict[names].split(';')
+        name_list = entity_dict[names_key].split(';')
 
         if len(id_list) < len(name_list):
-            self.add_error(f'Fewer ids in {ids} than names in {names}.')
+            self.add_error(f'Fewer ids in {ids_key} than names in {names_key}.')
         elif len(id_list) > len(name_list):
-            self.add_error(f'Fewer names in {names} than ids in {ids}')
+            self.add_error(f'Fewer names in {names_key} than ids in {ids_key}')
 
         if '' in id_list:
-            self.add_error(f'Empty string in ids in {ids}')
+            self.add_error(f'Empty string in ids in {ids_key}')
         if '' in name_list:
-            self.add_error(f'Empty string in names in {names}')
+            self.add_error(f'Empty string in names in {names_key}')
 
         return id_list, name_list
 

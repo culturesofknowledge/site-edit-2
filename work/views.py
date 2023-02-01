@@ -43,7 +43,7 @@ from work.forms import WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     ManifPersonRecrefAdapter, ScribeRelationChoices, \
     DetailsForm, WorkPersonRecrefAdapter, \
     CatalogueForm, manif_type_choices, original_calendar_choices, CompactSearchFieldset, ExpandedSearchFieldset, \
-    ManifPersonMRRForm
+    ManifPersonMRRForm, field_label_map, work_to_be_deleted_choices
 from work.models import CofkWorkPersonMap, CofkUnionWork, CofkWorkCommentMap, CofkWorkResourceMap, \
     CofkUnionLanguageOfWork, \
     CofkUnionQueryableWork
@@ -921,32 +921,61 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     def default_sort_by_choice(self) -> int:
         return 2
 
-    def get_queryset(self):
-        field_fn_maps = {'work_to_be_deleted': lambda f, v: Exact(F(f), '0' if v == 'On' else '1'),} |\
+    @property
+    def search_fields(self) -> list[str]:
+        return ['description', 'editors_notes', 'date_of_work_as_marked', 'date_of_work_std_year',
+                'creators_searchable', 'sender_or_recipient', 'origin_or_destination', 'date_of_work_std_month',
+                'date_of_work_std_day', 'notes_on_authors', 'origin_as_marked', 'addressees_searchable',
+                'places_from_searchable', 'destination_as_marked', 'flags', 'images', 'manifestations_searchable',
+                'places_to_searchable', 'related_resources', 'language_of_work', 'subjects', 'abstract',
+                'people_mentioned', 'keywords', 'general_notes', 'original_catalogue', 'accession_code',
+                'work_id', 'change_user']
+
+    @property
+    def search_field_label_map(self) -> dict:
+        return field_label_map
+
+    @property
+    def search_field_fn_maps(self) -> dict:
+        return {'work_to_be_deleted': lambda f, v: Exact(F(f), '0' if v == 'On' else '1'),} |\
             query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                            'change_timestamp', str_to_std_datetime) |\
-                        query_utils.create_from_to_datetime('date_of_work_std_from', 'date_of_work_std_to',
-                                            'date_of_work_std', str_to_std_datetime)
+                                                'change_timestamp', str_to_std_datetime) |\
+            query_utils.create_from_to_datetime('date_of_work_std_from', 'date_of_work_std_to',
+                                                'date_of_work_std', str_to_std_datetime)
 
-        queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
-
-        fields = [
-            'description', 'editors_notes', 'date_of_work_as_marked', 'date_of_work_std_year', 'creators_searchable',
-            'sender_or_recipient', 'origin_or_destination', 'date_of_work_std_month', 'date_of_work_std_day',
-            'notes_on_authors', 'origin_as_marked', 'addressee',
-            'destination_as_marked', 'flags', 'images', 'manifestations_searchable',
-            'related_resources', 'language_of_work', 'subjects', 'abstract', 'people_mentioned',
-            'keywords', 'general_notes', 'original_catalogue', 'accession_code', # 'work_to_be_deleted',
-            'work_id', 'change_user'
-        ]
+    def get_queryset(self):
+        queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
 
         search_fields_maps = {'sender_or_recipient': ['creators_searchable', 'addressees_searchable'],
                               'origin_or_destination': ['places_to_searchable', 'places_from_searchable']}
 
         queries.extend(
-            query_utils.create_queries_by_lookup_field(self.request_data, fields, search_fields_maps)
+            query_utils.create_queries_by_lookup_field(self.request_data, self.search_fields, search_fields_maps)
         )
-        return self.create_queryset_by_queries(CofkUnionQueryableWork, queries)
+        return self.create_queryset_by_queries(CofkUnionQueryableWork, queries).distinct()
+
+    @property
+    def simplified_query(self) -> list[str]:
+        simplified_query = super().simplified_query
+
+        if self.search_field_fn_maps:
+            work_to_be_deleted = self.request_data['work_to_be_deleted'] if 'work_to_be_deleted' in self.request_data else None
+
+            if work_to_be_deleted:
+                if work_to_be_deleted == 'on':
+                    simplified_query.append(f'Is to be deleted.')
+
+            _from = self.request_data['date_of_work_std_from'] if 'date_of_work_std_from' in self.request_data else None
+            _to = self.request_data['date_of_work_std_to'] if 'date_of_work_std_to' in self.request_data else None
+
+            if _to and _from:
+                simplified_query.append(f'Date for ordering (in original calendar) between {_from} and {_to}.')
+            elif _to:
+                simplified_query.append(f'Date for ordering (in original calendar) before {_to}.')
+            elif _from:
+                simplified_query.append(f'Date for ordering (in original calendar) after {_from}.')
+
+        return simplified_query
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:

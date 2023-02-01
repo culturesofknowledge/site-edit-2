@@ -14,7 +14,7 @@ from uploader.forms import CofkCollectUploadForm
 from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectAddresseeOfWork, CofkCollectAuthorOfWork, \
     CofkCollectDestinationOfWork, CofkCollectLanguageOfWork, CofkCollectOriginOfWork, CofkCollectPersonMentionedInWork, \
     CofkCollectWorkResource, CofkCollectInstitution, CofkCollectLocation, CofkCollectManifestation, CofkCollectPerson
-from uploader.review.review import accept_work, reject_work, accept_works, reject_works
+from uploader.review.review import accept_works, reject_works
 from uploader.spreadsheet import CofkUploadExcelFile
 from uploader.validation import CofkExcelFileError
 
@@ -147,14 +147,9 @@ def upload_review(request, upload_id, **kwargs):
                'manifestations': CofkCollectManifestation.objects.filter(upload=upload),
                'resources': CofkCollectWorkResource.objects.filter(upload=upload)}
 
-    if 'work_id' in request.GET:
-        if 'accept_work' in request.GET:
-            accept_work(request, context, upload)
-        elif 'reject_work' in request.GET:
-            reject_work(request, context, upload)
-    elif 'accept_all' in request.GET:
+    if 'accept_all' in request.GET or 'accept_work' in request.GET:
         accept_works(request, context, upload)
-    elif 'reject_all' in request.GET:
-        reject_works(context, upload)
+    elif 'reject_all' in request.GET or 'reject_work' in request.GET:
+        reject_works(request, context, upload)
 
     return render(request, template_url, context)

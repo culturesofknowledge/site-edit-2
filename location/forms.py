@@ -38,6 +38,28 @@ class LocationForm(ModelForm):
         )
 
 
+field_label_map = { 'location_name': 'Name',
+                    'location_id': 'Location id',
+                    'editors_notes': 'Editors\' notes',
+                    'sent': 'Sent',
+                    'recd': 'Received',
+                    'all_works': 'Sent and received',
+                    'researchers_notes': 'Researchers\' notes',
+                    'resources': 'Related resources',
+                    'latitude': 'Latitude',
+                    'longitude': 'Longitude',
+                    'publication_id': 'Publication id',
+                    'element_1_eg_room': '1. E.g. room',
+                    'element_2_eg_building': '2. E.g. building',
+                    'element_3_eg_parish': '3. E.g. parish',
+                    'element_4_eg_city': '4. E.g. city',
+                    'element_5_eg_county': '5. E.g. county',
+                    'element_6_eg_country': '6. E.g. country',
+                    'element_7_eg_empire': '7. E.g. empire',
+                    'images': 'Images',
+                    'change_user': 'Last edited by',
+                    }
+
 class GeneralSearchFieldset(forms.Form):
     title = 'General'
     template_name = 'location/component/location_search_fieldset.html'

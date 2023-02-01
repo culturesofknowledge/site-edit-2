@@ -25,7 +25,8 @@ from core.helper.view_handler import FullFormHandler
 from core.helper.view_utils import CommonInitFormViewTemplate, BasicSearchView, MergeChoiceViews, MergeActionViews
 from core.models import Recref
 from person import person_utils
-from person.forms import PersonForm, GeneralSearchFieldset, PersonOtherRecrefForm
+from person.forms import PersonForm, GeneralSearchFieldset, PersonOtherRecrefForm, field_label_map, \
+    search_gender_choices, search_person_or_group
 from person.models import CofkUnionPerson, CofkPersonPersonMap, create_person_id, \
     CofkPersonCommentMap, CofkPersonResourceMap, CofkPersonImageMap
 from person.recref_adapter import PersonCommentRecrefAdapter, PersonResourceRecrefAdapter, PersonRoleRecrefAdapter, \
@@ -278,6 +279,28 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         return 'person,people'
 
     @property
+    def search_fields(self) -> list[str]:
+        return ['foaf_name', 'iperson_id', 'editors_notes', 'sent', 'recd', 'all_works', 'mentioned',
+                'further_reading', 'other_details', 'images', 'change_user']
+
+    @property
+    def search_field_label_map(self) -> dict:
+        return field_label_map
+
+    @property
+    def search_field_fn_maps(self) -> dict:
+        return {'gender': lambda f, v: Exact(F(f), '' if v == 'U' else v),
+                'person_or_group': lambda _, v: Exact(F('is_organisation'), 'Y' if v == 'G' else ''),
+                'birth_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_birth_year'), v),
+                'birth_year_to': lambda _, v: LessThanOrEqual(F('date_of_birth_year'), v),
+                'death_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_death_year'), v),
+                'death_year_to': lambda _, v: LessThanOrEqual(F('date_of_death_year'), v),
+                'flourished_year_from': lambda _, v: GreaterThanOrEqual(F('flourished_year'), v),
+                'flourished_year_to': lambda _, v: LessThanOrEqual(F('flourished2_year'), v),
+                } | query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
+                                                     'change_timestamp', str_to_std_datetime)
+
+    @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
             ('foaf_name', 'Name',),  # TODO this is in a view cofk_union_person_view
@@ -309,6 +332,37 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
     def return_quick_init_vname(self) -> str:
         return 'person:return_quick_init'
 
+    @property
+    def simplified_query(self) -> list[str]:
+        simplified_query = super().simplified_query
+
+        if self.search_field_fn_maps:
+            gender = self.request_data['gender'] if 'gender' in self.request_data else None
+            person_or_group = self.request_data['person_or_group'] if 'person_or_group' in self.request_data else None
+
+            if gender:
+                gender = [g[1].lower() for g in search_gender_choices if g[0] == gender][0]
+                simplified_query.append(f'Of {gender} gender.')
+
+            if person_or_group:
+                person_or_group = [pog[1].lower() for pog in search_person_or_group if pog[0] == person_or_group][0]
+                simplified_query.append(f'Is a {person_or_group}.')
+
+            for _range in [('birth_year_from', 'birth_year_to', 'Born'),
+                           ('death_year_from', 'death_year_to', 'Died'),
+                           ('flourished_year_from', 'flourished_year_to', 'Flourished')]:
+                _from = self.request_data[_range[0]] if _range[0] in self.request_data else None
+                _to = self.request_data[_range[1]] if _range[1] in self.request_data else None
+
+                if _to and _from:
+                    simplified_query.append(f'{_range[2]} between {_from} and {_to}.')
+                elif _to:
+                    simplified_query.append(f'{_range[2]} before {_to}.')
+                elif _from:
+                    simplified_query.append(f'{_range[2]} after {_from}.')
+
+        return simplified_query
+
     def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q]):
         queryset = model_class.objects.all()
 
@@ -316,9 +370,9 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
                                   filter=Q(cofkworkpersonmap__relationship_type__in=[REL_TYPE_CREATED, REL_TYPE_SENT,
                                                                                      REL_TYPE_SIGNED])),
                     'recd': Count('works', filter=Q(cofkworkpersonmap__relationship_type=REL_TYPE_WAS_ADDRESSED_TO)),
-                    'mentioned': Count('works',
-                                       filter=Q(cofkworkpersonmap__relationship_type=REL_TYPE_MENTION))
+                    'mentioned': Count('works', filter=Q(cofkworkpersonmap__relationship_type=REL_TYPE_MENTION))
                     }
+
         annotate['all_works'] = annotate['sent'] + annotate['recd']
 
         queryset = queryset.annotate(**annotate)
@@ -332,36 +386,18 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         return queryset
 
     def get_queryset(self):
-        field_fn_maps = {'gender': lambda f, v: Exact(F(f), '' if v == 'U' else v),
-                         'person_or_group': lambda _, v: Exact(F('is_organisation'), 'Y' if v == 'G' else ''),
-                         'birth_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_birth_year'), v),
-                         'birth_year_to': lambda _, v: LessThanOrEqual(F('date_of_birth_year'), v),
-                         'death_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_death_year'), v),
-                         'death_year_to': lambda _, v: LessThanOrEqual(F('date_of_death_year'), v),
-                         'flourished_year_from': lambda _, v: GreaterThanOrEqual(F('flourished_year'), v),
-                         'flourished_year_to': lambda _, v: LessThanOrEqual(F('flourished2_year'), v),
-                         # 'change_timestamp_from': lambda _, v: GreaterThanOrEqual(F('change_timestamp'), v),
-                         # 'change_timestamp_to': lambda _, v: LessThanOrEqual(F('change_timestamp'), v),
-                         } | query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                                 'change_timestamp', str_to_std_datetime)
+        queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
 
-        queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
-
-        fields = [
-            'foaf_name', 'iperson_id', 'editors_notes', 'sent', 'recd', 'all_works', 'mentioned',
-            'further_reading', 'other_details', 'images', 'change_user'
-        ]
-
-        search_fields_maps = {'foaf_name': ['foaf_name', 'skos_altlabel', 'person_aliases', 'skos_hiddenlabel',
-                                            'summary__other_details_summary_searchable'],
+        search_fields_maps = {'foaf_name': ['foaf_name', 'skos_altlabel', 'person_aliases', 'skos_hiddenlabel',],
+                                            #'summary__other_details_summary_searchable'],
                               'images': ['images__image_filename'],
                               'other_details': ['summary__other_details_summary_searchable']}
 
         queries.extend(
-            query_utils.create_queries_by_lookup_field(self.request_data, fields, search_fields_maps)
+            query_utils.create_queries_by_lookup_field(self.request_data, self.search_fields, search_fields_maps)
         )
 
-        return self.create_queryset_by_queries(CofkUnionPerson, queries)
+        return self.create_queryset_by_queries(CofkUnionPerson, queries).distinct()
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:

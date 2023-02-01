@@ -87,7 +87,7 @@ hr {
 
 table {
   width: 100%;
-  font-size: small;
+  font-size: $typescale-6;
   border-collapse: separate; /* can not collapse borders if they are to appear when sticky header is scrolled */
   border-spacing: 0;
 }
@@ -164,7 +164,6 @@ input[readonly] {
 
 label {
   display: inline-block;
-  font-weight: 600;
   font-weight: 700;
   letter-spacing: 0.045em;
 }
@@ -177,7 +176,7 @@ input, select, textarea {
   background-color: $white;
   border-radius: 0;
   border: 1px solid;
-  font-size: $typescale-6;
+  font-size: $typescale-5a;
   font-family: $sans-serif;
 }
 

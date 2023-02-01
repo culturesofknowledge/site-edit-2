@@ -4,6 +4,10 @@ from django.forms import ModelForm, CharField, IntegerField
 from core.helper import form_utils, widgets_utils
 from publication.models import CofkUnionPublication
 
+field_label_map = { 'publication_details': 'Publication details',
+                    'abbrev': 'Abbreviation',
+                    'change_user': 'Last edited by',
+                    'publication_id': 'Publication id'}
 
 class PublicationForm(ModelForm):
     publication_details = form_utils.CommonTextareaField(required=True)
@@ -34,5 +38,5 @@ class GeneralSearchFieldset(forms.Form):
     change_timestamp_to = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
     change_timestamp_info = form_utils.datetime_search_info
 
-    publication_id = IntegerField(required=False, label='Publication id')
+    publication_id = IntegerField(required=False)
     publication_id_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)

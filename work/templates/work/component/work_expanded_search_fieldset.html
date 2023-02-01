@@ -42,7 +42,7 @@
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.origin_as_marked field_lookup=form.origin_as_marked_lookup %}
 
     <!-- Addressee -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.addressee field_lookup=form.addressee_lookup %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.addressees_searchable field_lookup=form.addressees_searchable_lookup %}
 
     <!-- Destination (standardised) -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.places_to_searchable field_lookup=form.places_to_searchable_lookup  %}

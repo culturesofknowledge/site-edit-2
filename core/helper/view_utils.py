@@ -47,6 +47,68 @@ class BasicSearchView(ListView):
     context_object_name = 'records'
 
     @property
+    def search_fields(self) -> list[str]:
+        """
+        returns a list of all the standard model fields to search on.
+        """
+        raise NotImplementedError()
+
+    def search_field_label_map(self) -> dict:
+        """
+        A dictionary mapping between the model field name and the labelling of that field.
+
+        Only used by self.simplified_query.
+        """
+        raise NotImplementedError()
+
+    @property
+    def search_field_fn_maps(self) -> dict:
+        """
+        A dictionary mapping between form field names where there is more than one field to search against
+        simultaneously, such as with ranges.
+
+        Used with query_utils.create_queries_by_field_fn_maps and query_utils.create_from_to_datetime for instance.
+        """
+        raise NotImplementedError()
+
+    @property
+    def simplified_query(self) -> list[str]:
+        """
+        returns a simplified, human-readable version of the search criteria, this is inserted into the context at
+        self.get_context_data
+        """
+        simplified_query = []
+
+        for field_name in self.search_fields:
+            field_val = self.request_data.get(field_name)
+
+            if (field_val is not None and field_val != '') or (
+                    field_name in self.request_data and 'blank' in self.request_data.get(f'{field_name}_lookup')):
+                label_name = self.search_field_label_map[field_name]
+                lookup_key = self.request_data.get(f'{field_name}_lookup').replace('_', ' ')
+
+                if 'blank' in lookup_key:
+                    simplified_query.append(f'{label_name} {lookup_key}.')
+                else:
+                    if lookup_key.startswith('not'):
+                        lookup_key = 'does ' + lookup_key
+
+                    simplified_query.append(f'{label_name} {lookup_key} "{field_val}".')
+
+        if self.search_field_fn_maps:
+            _from = self.request_data['change_timestamp_from'] if 'change_timestamp_from' in self.request_data else None
+            _to = self.request_data['change_timestamp_to'] if 'change_timestamp_to' in self.request_data else None
+
+            if _to and _from:
+                simplified_query.append(f'Last edited between {_from} and {_to}.')
+            elif _to:
+                simplified_query.append(f'Last edited before {_to}.')
+            elif _from:
+                simplified_query.append(f'Last edited after {_from}.')
+
+        return simplified_query
+
+    @property
     def query_fieldset_list(self) -> Iterable:
         """
         return iterable form that can render search fieldset for searching
@@ -163,6 +225,7 @@ class BasicSearchView(ListView):
                         'results_renderer': results_renderer(self.get_search_results_context(context)),
                         'is_compact_layout': is_compact_layout,
                         'to_user_messages': getattr(self, 'to_user_messages', []),
+                        'simplified_query': self.simplified_query
                         })
         if self.merge_page_vname:
             context['merge_page_url'] = reverse(self.merge_page_vname)
@@ -235,6 +298,31 @@ def urlparams(*_, **kwargs):
 
 
 class DefaultSearchView(BasicSearchView):
+
+    @property
+    def title(self) -> str:
+        return '__title__'
+
+    @property
+    def search_fields(self) -> list[str]:
+        """
+        return
+        """
+        return []
+
+    @property
+    def search_field_fn_maps(self) -> dict:
+        """
+        return
+        """
+        return {}
+
+    @property
+    def search_field_label_map(self) -> dict:
+        """
+        return
+        """
+        return {}
 
     @property
     def query_fieldset_list(self) -> Iterable:
