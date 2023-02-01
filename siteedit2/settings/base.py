@@ -181,7 +181,6 @@ LOGGING = {
 
     },
     'loggers': {
-        'uploader': debug_log_setting,
         # # uncomment to log all sql
         # 'django': {
         #     'level': 'DEBUG',
