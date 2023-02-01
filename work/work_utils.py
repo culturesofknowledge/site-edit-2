@@ -38,7 +38,7 @@ def get_recref_display_name(work: CofkUnionWork):
     from_location_str = find_related_location_as_display_name(work, REL_TYPE_WAS_SENT_FROM)
     to_location_str = find_related_location_as_display_name(work, REL_TYPE_WAS_SENT_TO)
 
-    return f'{work_date_str}: {from_person_str}{from_location_str} to {to_person_str}{to_location_str}'
+    return f'{work_date_str}: {from_person_str} {from_location_str} to {to_person_str} {to_location_str}'
 
 
 def join_names(names):
