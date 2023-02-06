@@ -38,18 +38,28 @@
                     {% endif %}
                 </td>
                 <td>
-                    <input id="del_manif_{{ manif.manifestation_id }}" name="del_manif_id_list" type="checkbox" value="{{ manif.manifestation_id }}" />
+                    <input id="del_manif_{{ manif.manifestation_id }}" name="del_manif_id_list" type="checkbox"
+                           value="{{ manif.manifestation_id }}"/>
                     <label for="del_manif_{{ manif.manifestation_id }}"></label>
                 </td>
                 <td>
                     {% if manif.inst_display_name %}
-                    {{ manif.inst_display_name }}
+                        {{ manif.inst_display_name }}
                     {% endif %}
                 </td>
                 <td>
                     {% if manif.id_number_or_shelfmark %}
-                    {{ manif.id_number_or_shelfmark }}
+                        {{ manif.id_number_or_shelfmark }}
                     {% endif %}
+
+                    {% if manif.id_number_or_shelfmark and manif.printed_edition_details %}
+                        <br/>
+                    {% endif %}
+
+                    {% if manif.printed_edition_details %}
+                        {{ manif.printed_edition_details }}
+                    {% endif %}
+
                 </td>
                 <td> {{ manif.manifestation_type }} </td>
                 <td> <!-- KTODO Image --> </td>
@@ -58,7 +68,7 @@
                         <span>Language of this manifestation: </span>
                         {{ manif.lang_list_str }}
                     {% endif %}
-                    {% if manif.manifestation_is_translation  %}
+                    {% if manif.manifestation_is_translation %}
                         <span>Manifestation is translation.</span>
                     {% endif %}
                 </td>
