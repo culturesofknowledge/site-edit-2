@@ -112,10 +112,23 @@ class RecrefFormsetHandler:
         raise NotImplementedError()
 
     def save(self, parent, request):
-        self.save_form_list(
-            parent, request,
+        del_forms, saved_forms = iter_utils.split(
             (f for f in self.formset if f.has_changed()),
+            lambda f: f.cleaned_data['is_delete'],
         )
+
+        # handle del
+        recref_adapter: RecrefFormAdapter = self.create_recref_adapter(parent)
+        for form in del_forms:
+            target_id_name = recref_adapter.target_id_name()
+            if form_target_id := form.cleaned_data.get(target_id_name):
+                form.instance._meta.model.objects.filter(**{target_id_name: form_target_id}).delete()
+                log.info(f'del recref [{form_target_id}][{form.cleaned_data}]')
+            else:
+                log.warning(f'skip del, form target id not found [{target_id_name}][{form_target_id}]')
+
+        # handle save / update
+        self.save_form_list(parent, request, forms=saved_forms)
 
     @staticmethod
     def _save_formset(forms: Iterable[ModelForm],
@@ -329,25 +342,6 @@ class TargetResourceFormsetHandler(RecrefFormsetHandler, ABC):
                  form: Type[ModelForm] = ResourceForm,
                  context_name=None):
         super().__init__(prefix, request_data, form, rel_type, parent, context_name)
-
-    def save(self, parent, request):
-        del_forms, saved_forms = iter_utils.split(
-            (f for f in self.formset if f.has_changed()),
-            lambda f: f.cleaned_data['is_delete'],
-        )
-
-        # handle del
-        recref_adapter: RecrefFormAdapter = self.create_recref_adapter(parent)
-        for form in del_forms:
-            target_id_name = recref_adapter.target_id_name()
-            if form_target_id := form.cleaned_data.get(target_id_name):
-                form.instance._meta.model.objects.filter(**{target_id_name: form_target_id}).delete()
-                log.info(f'del resources recref [{form_target_id}][{form.cleaned_data}]')
-            else:
-                log.warning(f'skip del, form target id not found [{target_id_name}][{form_target_id}]')
-
-        # handle save / update
-        super().save_form_list(parent, request, forms=saved_forms)
 
 
 class MultiRecrefHandler:

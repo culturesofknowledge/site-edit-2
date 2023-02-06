@@ -34,12 +34,7 @@ Remember call setup_url_checker, setup_standtext functions
                     {% include "core/component/common_field_layout.html" with field=form.resource_details %}
                 </div>
 
-                {% if form.resource_id.value %}
-                    <div class="margin-bottom">
-                        {% include "core/component/common_checkbox.html" with field=form.is_delete name='Delete' %}
-                    </div>
-                {% endif %}
-
+                {% include "core/component/common_delete_checkbox.html" with show_cond=form.resource_id.value field=form.is_delete %}
 
                 {{ form.record_tracker_label }}
 

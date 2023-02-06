@@ -26,6 +26,8 @@
                 </label>
                 {{ form.comment }}
                 {{ form.comment_id }}
+
+                {% include "core/component/common_delete_checkbox.html" with show_cond=form.comment_id.value field=form.is_delete %}
                 {{ form.record_tracker_label }}
                 <div class="ref-publication-row" textbox_id="{{ form.comment.id_for_label }}"></div>
             </div>

@@ -92,6 +92,9 @@ class CommentForm(ModelForm):
 
     comment = form_utils.CommonTextareaField(required=True)
 
+    is_delete = ZeroOneCheckboxField(is_str=False, label='Delete')
+    is_delete.widget.attrs.update({'class': 'warn-checked'})
+
     class Meta:
         model = CofkUnionComment
         fields = (
