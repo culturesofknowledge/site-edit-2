@@ -16,7 +16,7 @@
             {% endif %}
         </legend>
         {% for form in comment_formset|reverse_list %}
-            <div>
+            <div class="form-note-root">
                 <label id="{{ header_id }}_{{ forloop.counter0 }}" class="toc-sub-item">
                     {% if forloop.first %}
                         New note

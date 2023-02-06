@@ -148,7 +148,7 @@ tr.selectable_entry:hover {
 
 .ref-publication-row {
   @extend .row;
-  margin: $space-xxs;
+  margin: $space-xxs $space-xxs $space-xxs 0;
 
   button {
     margin-left: $space-xs;
@@ -312,4 +312,8 @@ tr.selectable_entry:hover {
   & > ul {
     margin: 0;
   }
+}
+
+.form-note-root {
+  margin: 1em 1em 2em;
 }

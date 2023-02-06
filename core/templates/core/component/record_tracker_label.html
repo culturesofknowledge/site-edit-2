@@ -1,17 +1,14 @@
-<div class="record_tracker_label">
-
-    {% if creation_timestamp or change_timestamp  %}
+{% if creation_timestamp or change_timestamp %}
+    <div class="record_tracker_label">
         (
-    {% endif %}
 
-    {% if creation_timestamp %}
-        {{ subject }} created {{ creation_timestamp }} by {{ creation_user }}.
-    {% endif %}
-    {% if change_timestamp and change_timestamp != creation_timestamp  %}
-        Last changed {{ change_timestamp }} by {{ change_user }}
-    {% endif %}
+        {% if creation_timestamp %}
+            {{ subject }} created {{ creation_timestamp }} by {{ creation_user }}.
+        {% endif %}
+        {% if change_timestamp and change_timestamp != creation_timestamp %}
+            Last changed {{ change_timestamp }} by {{ change_user }}
+        {% endif %}
 
-    {% if creation_timestamp or change_timestamp  %}
         )
-    {% endif %}
-</div>
+    </div>
+{% endif %}
