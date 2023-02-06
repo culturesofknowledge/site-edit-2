@@ -1,7 +1,7 @@
 """
 contain method that support multi / general model
 """
-from typing import Type
+from typing import Type, Iterable
 
 from django.db.models import Model
 
@@ -53,6 +53,10 @@ def get_display_name(model: ModelLike) -> str:
         return f'{model.__class__.__name__}__{model.pk}'
     except Exception:
         return str(model)
+
+
+def get_multi_display_name(model_list: Iterable[ModelLike], join_keys=', ') -> str:
+    return join_keys.join([get_display_name(c.person) for c in model_list])
 
 
 def get_name_by_model_class(model_or_class: ModelOrClass) -> str:

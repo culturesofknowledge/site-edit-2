@@ -115,7 +115,7 @@ class BasicWorkFFH(FullFormHandler):
             work.description = cur_desc
 
         work.update_current_user_timestamp(request.user.username)
-        work.save()
+        work.save(clone_queryable=False)
         log.info(f'save work {work}')  # KTODO fix iwork_id plus more than 1
         self.saved_work = work
 
@@ -184,6 +184,7 @@ class PlacesFFH(BasicWorkFFH):
         self.destination_loc_handler.upsert_recref_if_field_exist(
             self.places_form, work, request.user.username
         )
+        work_utils.clone_queryable_work(work, reload=True)
 
 
 class DatesFFH(BasicWorkFFH):
@@ -211,6 +212,7 @@ class DatesFFH(BasicWorkFFH):
 
         work = self.save_work(request, self.dates_form)
         self.save_all_recref_formset(work, request)
+        work_utils.clone_queryable_work(work, reload=True)
 
 
 class CorrFFH(BasicWorkFFH):
@@ -300,6 +302,7 @@ class CorrFFH(BasicWorkFFH):
 
         # handle recref_handler
         self.maintain_all_recref_records(request, work)
+        work_utils.clone_queryable_work(work, reload=True)
 
 
 class ManifFFH(BasicWorkFFH):
@@ -457,6 +460,8 @@ class ManifFFH(BasicWorkFFH):
         self.inst_handler.upsert_recref_if_field_exist(
             self.manif_form, manif, request.user.username)
 
+        work_utils.clone_queryable_work(work_utils.reload_work(manif.work), reload=True)
+
 
 class ResourcesFFH(BasicWorkFFH):
     def __init__(self, pk, request_data=None, request=None, *args, **kwargs):
@@ -474,6 +479,7 @@ class ResourcesFFH(BasicWorkFFH):
             log.debug('skip save resources when no changed')
             return
         self.save_all_recref_formset(self.work, request)
+        work_utils.clone_queryable_work(self.work, reload=True)
 
 
 class DetailsFFH(BasicWorkFFH):
@@ -557,6 +563,7 @@ class DetailsFFH(BasicWorkFFH):
         self.save_all_recref_formset(work, request)
         self.maintain_all_recref_records(request, work)
         self.subject_handler.save(request, work)
+        work_utils.clone_queryable_work(work, reload=True)
 
 
 class ManifLangModelAdapter(LangModelAdapter):
