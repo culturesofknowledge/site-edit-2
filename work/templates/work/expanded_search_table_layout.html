@@ -26,7 +26,7 @@
     <tbody>
 
     {% for r in search_results %}
-        <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}" entry_id="{{ r.iperson_id }}" entry_id="{{ r.iwork_id }}">
+        <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}" entry_id="{{ r.iwork_id }}">
 
             <td>
                 {% if r.editors_notes %}
