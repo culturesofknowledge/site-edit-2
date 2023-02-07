@@ -94,6 +94,25 @@ class CofkUnionPerson(models.Model, RecordTracker):
 
         return names_and_roles
 
+    def __str__(self):
+        dob = self.date_of_birth_year
+        dod = self.date_of_death_year
+
+        if self.date_of_death_is_range == 1:
+            dod += ' or after'
+
+        if self.date_of_birth_is_range == 1:
+            dob += ' or before'
+
+        if self.date_of_birth_year and self.date_of_death_year:
+            return f'{self.foaf_name} {dob}-{dod}'
+        elif self.date_of_birth_year:
+            return f'{self.foaf_name} b. {dob}'
+        elif self.date_of_death_year:
+            return f'{self.foaf_name} d. {dod}'
+
+        return self.foaf_name
+
     class Meta:
         db_table = 'cofk_union_person'
 
