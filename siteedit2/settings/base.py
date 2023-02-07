@@ -236,5 +236,6 @@ EMLO_SEQ_VAL_INIT = {
 }
 
 # SECURE
+### change to True if you are using *https*
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
