@@ -3,7 +3,11 @@
     <input class="sf-select" type="text" readonly/>
     <div class="sf-search-div">
         <input class="sf-hidden" type="hidden"/>
-        <input class="sf-input" type="text"/>
+        <input class="sf-input" type="text"
+                {% if selected_name %}
+               name="{{ selected_name }}"
+                {% endif %}
+        />
         <div class="sf-list"></div>
     </div>
     {{ datalist_field }}
