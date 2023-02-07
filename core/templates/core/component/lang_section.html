@@ -26,4 +26,6 @@
     {{ new_lang_form.language_list }}
     <button class="lang_add_btn">+</button>
     <div class="new_lang_div"></div>
+
+    {% include "core/component/selectfilter.html" with datalist_field=new_lang_form.language_list %}
 </div>
