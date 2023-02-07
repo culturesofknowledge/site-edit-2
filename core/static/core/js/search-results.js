@@ -1,4 +1,8 @@
 
+
+var search_controls = ['id_sort_by', 'id_num_record', 'id_order_0', 'id_order_1',
+    'display-as-grid', 'display-as-list'];
+
 if(localStorage.getItem('fieldset-toggle') == 'false')  {
    $('#query-fieldset').toggle();
    $('#query-result').toggleClass('col--3of4');
@@ -128,8 +132,7 @@ function setup_merge_btn() {
     }
 });
 
-['id_sort_by', 'id_num_record', 'id_order_0', 'id_order_1',
-    'display-as-grid', 'display-as-list'].forEach((target_id) => {
+search_controls.forEach((target_id) => {
     if(document.getElementById(target_id)) {
             document.getElementById(target_id).addEventListener('change', () => {
             submit_page();
@@ -137,6 +140,25 @@ function setup_merge_btn() {
         });
     }
 });
+
+
+function setup_discard_page_on_new_search() {
+    document.getElementById('search_form').addEventListener('change', function(e) {
+        // No need to mark if search controls change
+        if(search_controls.indexOf(e.srcElement.id) == -1)   {
+            e.srcElement.dataset['changed'] =  true;
+        }
+    });
+
+    document.getElementById('search_form').addEventListener('submit', function(e) {
+        if(Array.from(e.srcElement.elements).some((a) => a.dataset['changed'] == 'true'))  {
+            e.srcElement.elements['page'].value = 1;
+        }
+
+   });
+
+
+}
 
 function setup_fieldset_toggle() {
     $('#fieldset-toggle-btn').click(function () {
@@ -197,6 +219,10 @@ $(function () {
     setup_merge_btn();
     setup_fieldset_toggle();
     setup_advanced_search_toggle();
+    // If user changes search conditions on page > 1, and does a new search, the page attribute must be set to 1
+    if(document.getElementById('search_form').elements['page'] && document.getElementById('search_form').elements['page'].value != '') {
+        setup_discard_page_on_new_search();
+    }
 
     if($('#results_table thead').length)   {
         add_hide_buttons_to_columns();
