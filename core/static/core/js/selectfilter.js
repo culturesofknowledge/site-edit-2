@@ -16,10 +16,13 @@ emlojs.selectfilter_service = {
     on_input_change: function (e) {
         // build item list
         let root_ele = emlojs.selectfilter_service.find_root_ele(e.target)
-        let list_jqe = root_ele.find('.sf-list')
+        emlojs.selectfilter_service.define_list(root_ele)
+    },
+    define_list: function (root_jqe) {
+        let list_jqe = root_jqe.find('.sf-list')
         list_jqe.html('')
-        let selected_text = e.target.value
-        let selected_list = root_ele.find('datalist option')
+        let selected_text = root_jqe.find('.sf-input').val()
+        let selected_list = root_jqe.find('datalist option')
         selected_list = selected_list.map((i, e) => [[e.value, e.text]])
         if (selected_text !== '') {
             selected_list = selected_list.filter((i, e) => e.some((item) => item.includes(selected_text)));
@@ -32,9 +35,6 @@ emlojs.selectfilter_service = {
             list_jqe.append(item_jqe)
         }
 
-        // choice first item
-        emlojs.selectfilter_service.select_first()
-
     },
 
     on_item_click: function (e) {
@@ -43,8 +43,11 @@ emlojs.selectfilter_service = {
     },
 
     select_choice: function (item_jqe) {
-        $('.sf-select').val(item_jqe.text())
-        $('.sf-hidden').val(item_jqe.attr('value'))
+        let root_ele = emlojs.selectfilter_service.find_root_ele(item_jqe);
+        root_ele.find('.sf-select').val(item_jqe.text())
+        root_ele.find('.sf-hidden').val(item_jqe.attr('value'))
+
+        root_ele.trigger('select-changed', [item_jqe.text(), item_jqe.attr('value')]);
     },
     select_first: function () {
         let first_item_jqe = emlojs.selectfilter_service.find_root_ele().find('.sf-list .sf-item:first')
@@ -69,6 +72,11 @@ emlojs.selectfilter_service = {
         }
 
     },
+    on_root_clean: function (e) {
+        let root_jqe = $(e.target)
+        root_jqe.find('.sf-select,.sf-hidden,.sf-input').val('')
+        emlojs.selectfilter_service.define_list(root_jqe)
+    },
 
 
 }
@@ -78,4 +86,9 @@ function setup_selectfilter() {
     $('.selectfilter-root .sf-input')
         .keyup(emlojs.selectfilter_service.on_input_change)
         .keydown(emlojs.selectfilter_service.on_input_keydown);
+
+    $('.selectfilter-root').on('clean', emlojs.selectfilter_service.on_root_clean);
+
+    emlojs.selectfilter_service.define_list($('.selectfilter-root'))
+
 }
