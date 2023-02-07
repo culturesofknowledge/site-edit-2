@@ -194,7 +194,11 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
 
         # Link resources
         for resource in context['resources'].filter(iwork_id=work_id).all():
-            union_resource = CofkUnionResource(**resource)
+            union_resource = CofkUnionResource()
+            union_resource.resource_url = resource.resource_url
+            union_resource.resource_name = resource.resource_name
+            union_resource.resource_details = resource.resource_details
+            union_resource.resource_id = resource.resource_id
 
             cwrm = CofkWorkResourceMap(relationship_type=REL_TYPE_IS_RELATED_TO, work=union_work,
                                        resource=union_resource, resource_id=union_resource.resource_id)
