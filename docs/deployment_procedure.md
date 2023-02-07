@@ -99,3 +99,8 @@ docker exec -it site-edit-2_gunicorn_web_1 python3 manage.py data_migration -d o
 # copy audit data to new db by sql
 psql --host localhost --port 25432 -d postgres --password  --username postgres  < old_audit_data.sql
 ```
+
+
+Config for `HTTPS` 
+-------------------------------
+* set `SESSION_COOKIE_SECURE` and `CSRF_COOKIE_SECURE` to `True` in django files

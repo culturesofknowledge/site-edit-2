@@ -55,10 +55,6 @@ def get_display_name(model: ModelLike) -> str:
         return str(model)
 
 
-def get_multi_display_name(model_list: Iterable[ModelLike], join_keys=', ') -> str:
-    return join_keys.join([get_display_name(c.person) for c in model_list])
-
-
 def get_name_by_model_class(model_or_class: ModelOrClass) -> str:
     model_class = get_model_class_safe(model_or_class)
 

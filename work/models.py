@@ -103,8 +103,10 @@ class CofkUnionWork(models.Model, RecordTracker):
     @property
     def creators_for_display(self):
         creators = self.find_people_by_rel_type(REL_TYPE_CREATED)
-        from core.helper import general_model_utils
-        return general_model_utils.get_multi_display_name(model_list=creators)
+        if len(creators) > 0:
+            return ", ".join([str(c.person.to_string()) for c in creators])
+        else:
+            return ''
 
     @property
     def places_from_for_display(self):
@@ -121,8 +123,10 @@ class CofkUnionWork(models.Model, RecordTracker):
     @property
     def addressees_for_display(self):
         addressees = self.find_people_by_rel_type(REL_TYPE_WAS_ADDRESSED_TO)
-        from core.helper import general_model_utils
-        return general_model_utils.get_multi_display_name(model_list=addressees)
+        if len(addressees) > 0:
+            return ", ".join([str(a.person.to_string()) for a in addressees])
+        else:
+            return ''
 
     def save(self, clone_queryable=True, force_insert=False, force_update=False,
              using=None, update_fields=None, **kwargs):
