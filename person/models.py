@@ -94,7 +94,10 @@ class CofkUnionPerson(models.Model, RecordTracker):
 
         return names_and_roles
 
-    def __str__(self):
+    def to_string(self):
+        """
+        Used by work.creators_for_display and work.addressees_for_display
+        """
         dob = self.date_of_birth_year
         dod = self.date_of_death_year
 

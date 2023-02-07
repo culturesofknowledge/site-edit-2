@@ -104,7 +104,7 @@ class CofkUnionWork(models.Model, RecordTracker):
     def creators_for_display(self):
         creators = self.find_people_by_rel_type(REL_TYPE_CREATED)
         if len(creators) > 0:
-            return ", ".join([str(c.person) for c in creators])
+            return ", ".join([str(c.person.to_string()) for c in creators])
         else:
             return ''
 
@@ -124,7 +124,7 @@ class CofkUnionWork(models.Model, RecordTracker):
     def addressees_for_display(self):
         addressees = self.find_people_by_rel_type(REL_TYPE_COMMENT_ADDRESSEE)
         if len(addressees) > 0:
-            return ", ".join([str(a.person) for a in addressees])
+            return ", ".join([str(a.person.to_string()) for a in addressees])
         else:
             return ''
 
