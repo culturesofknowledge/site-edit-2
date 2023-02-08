@@ -114,8 +114,9 @@ emlojs.selectfilter_service = {
 function setup_selectfilter() {
     $('.selectfilter-root .sf-select').click(emlojs.selectfilter_service.on_select_clicked);
     $('.selectfilter-root .sf-input')
+        .keydown(emlojs.selectfilter_service.on_input_keydown)
         .keyup(emlojs.selectfilter_service.on_input_change)
-        .keydown(emlojs.selectfilter_service.on_input_keydown);
+    ;
 
     let root_jqe = $('.selectfilter-root');
     root_jqe.on('clean', emlojs.selectfilter_service.on_root_clean);

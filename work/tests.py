@@ -205,13 +205,17 @@ class WorkFormTests(EmloSeleniumTestCase):
             lang.save()
         return lang_list
 
-    def select_languages(self, input_lang_list, lang_selector,
-                         add_selector='button.lang_add_btn'):
-        lang_ele = self.find_element_by_css(lang_selector)
+    def select_languages(self, input_lang_list):
+        self.js_click('.lang_div .sf-select')
         for lang in input_lang_list:
-            lang_ele.send_keys(lang)
-            lang_ele.send_keys(Keys.ESCAPE)
-            self.js_click(add_selector)
+            js = f"""
+            let input_ele = document.querySelector('.lang_div .sf-input');
+            input_ele.value = '{lang}';
+            $(input_ele).trigger('keyup'); 
+            input_ele.dispatchEvent(new KeyboardEvent("keydown", {{key: "Enter", bubbles: true}}))
+            """
+            self.selenium.execute_script(js)
+
 
     def test_details__create(self):
         self.prepare_language_data()
@@ -229,7 +233,7 @@ class WorkFormTests(EmloSeleniumTestCase):
         self.find_element_by_css('#id_people_comment-0-comment').send_keys('xxxxxx')
 
         # select language
-        self.select_languages(input_lang_list, '#id_new_language')
+        self.select_languages(input_lang_list)
 
         self.click_submit()
 
@@ -276,7 +280,7 @@ class WorkFormTests(EmloSeleniumTestCase):
         ])
         field_val_tester.fill()
 
-        self.select_languages(input_lang_list, '#id_new_language')
+        self.select_languages(input_lang_list)
 
         self.click_submit()
 
