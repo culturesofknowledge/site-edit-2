@@ -944,9 +944,9 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def search_field_fn_maps(self) -> dict:
-        return {'work_to_be_deleted': lambda f, v: Exact(F(f), '0' if v == 'On' else '1'),} |\
+        return {'work_to_be_deleted': lambda f, v: Exact(F(f), '0' if v == 'On' else '1'), } | \
             query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                'change_timestamp', str_to_std_datetime) |\
+                                                'change_timestamp', str_to_std_datetime) | \
             query_utils.create_from_to_datetime('date_of_work_std_from', 'date_of_work_std_to',
                                                 'date_of_work_std', str_to_std_datetime)
 
@@ -966,7 +966,8 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         simplified_query = super().simplified_query
 
         if self.search_field_fn_maps:
-            work_to_be_deleted = self.request_data['work_to_be_deleted'] if 'work_to_be_deleted' in self.request_data else None
+            work_to_be_deleted = self.request_data[
+                'work_to_be_deleted'] if 'work_to_be_deleted' in self.request_data else None
 
             if work_to_be_deleted:
                 if work_to_be_deleted == 'on':
