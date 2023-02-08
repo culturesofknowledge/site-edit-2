@@ -95,6 +95,12 @@ class ZeroOneCheckboxField(forms.BooleanField):
         return new_value
 
 
+class DeleteCheckboxField(ZeroOneCheckboxField):
+    def __init__(self, is_str=False, required=False, *args, **kwargs):
+        super().__init__(is_str, *args, required=required, **kwargs)
+        self.widget.attrs.update({'class': 'warn-checked'})
+
+
 class ThreeFieldDateField(forms.Field):
     """
     remember update form (get_initial_for_field, clean) to trigger

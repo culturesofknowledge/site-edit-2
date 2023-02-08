@@ -17,8 +17,7 @@
         {{ form.lang_name }}
         {{ form.notes }}
         {{ form.lang_rec_id }}
-        {{ form.is_del }}
-        <label for="{{ form.is_del.id_for_label }}">delete?</label>
+        {% include "core/component/common_delete_checkbox.html" with show_cond=True field=form.is_delete %}
     </div>
 {% endfor %}
 
