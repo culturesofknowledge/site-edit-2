@@ -282,8 +282,7 @@ class CommonSearchTests:
         self.find_search_btn().click()
 
         # only have one record match
-        self.assert_search_page(num_row_show=1,
-                                num_total=1)
+        self.assert_search_page(num_row_show=1, num_total=1)
 
         # check value in record result
         assert_table_result_fn(target_rec)
