@@ -10,7 +10,7 @@ emlojs.selectfilter_service = {
     },
 
     on_select_clicked: function (e) {
-        emlojs.selectfilter_service.toggle_search()
+        emlojs.selectfilter_service.toggle_search($(e.target))
     },
 
     on_input_change: function (event) {
@@ -44,8 +44,9 @@ emlojs.selectfilter_service = {
     },
 
     on_item_click: function (e) {
-        emlojs.selectfilter_service.select_choice($(e.target));
-        emlojs.selectfilter_service.close_search();
+        let target_jqe = $(e.target);
+        emlojs.selectfilter_service.select_choice(target_jqe);
+        emlojs.selectfilter_service.close_search(target_jqe);
     },
 
     select_choice: function (item_jqe) {
@@ -56,12 +57,12 @@ emlojs.selectfilter_service = {
         root_ele.trigger('select-changed', [item_jqe.text(), item_jqe.attr('value')]);
     },
 
-    close_search: function () {
-        $('.sf-search-div').hide();
+    close_search: function (jqe) {
+        emlojs.selectfilter_service.find_root_ele(jqe).find('.sf-search-div').hide();
     },
 
-    toggle_search: function () {
-        let search_div_jqe = $('.sf-search-div');
+    toggle_search: function (jqe) {
+        let search_div_jqe = emlojs.selectfilter_service.find_root_ele(jqe).find('.sf-search-div');
         search_div_jqe.toggle()
         if (search_div_jqe.is(":visible")) {
             search_div_jqe.find('.sf-input').focus()
@@ -92,7 +93,7 @@ emlojs.selectfilter_service = {
             if (item_jqe.length) {
                 emlojs.selectfilter_service.select_choice(item_jqe)
             }
-            emlojs.selectfilter_service.close_search();
+            emlojs.selectfilter_service.close_search($(event.target));
         } else if (event.key === 'ArrowUp') {
             replace_other_item(e => e.previousElementSibling)
 
@@ -116,8 +117,10 @@ function setup_selectfilter() {
         .keyup(emlojs.selectfilter_service.on_input_change)
         .keydown(emlojs.selectfilter_service.on_input_keydown);
 
-    $('.selectfilter-root').on('clean', emlojs.selectfilter_service.on_root_clean);
-
-    emlojs.selectfilter_service.define_list($('.selectfilter-root'))
+    let root_jqe = $('.selectfilter-root');
+    root_jqe.on('clean', emlojs.selectfilter_service.on_root_clean);
+    for (let root_ele of root_jqe) {
+        emlojs.selectfilter_service.define_list($(root_ele))
+    }
 
 }

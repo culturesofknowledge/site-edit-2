@@ -77,14 +77,15 @@ class BasicWorkFFH(FullFormHandler):
         else:
             self.work = None
 
-        self.safe_work = self.work or CofkUnionWork()  # KTODO iwork_id sequence number +1 by this ??
+        self.safe_work = self.work or CofkUnionWork()
 
         self.catalogue_form = CatalogueForm(request_data, initial={
             'catalogue': self.safe_work.original_catalogue_id
         })
-        self.catalogue_form.fields['catalogue'].widget.choices = [(None, '')] + [
-            (c.catalogue_code, c.catalogue_name) for c in CofkLookupCatalogue.objects.all()
-        ]
+        catalogue_list = [(None, '')] + [(c.catalogue_name, c.catalogue_code) for c in
+                                         CofkLookupCatalogue.objects.all().order_by('catalogue_name')]
+        self.catalogue_form.fields['catalogue'].widget.choices = catalogue_list
+        self.catalogue_form.fields['catalogue_list'].widget.choices = catalogue_list
 
     def create_context(self):
         context = super().create_context()
@@ -116,7 +117,7 @@ class BasicWorkFFH(FullFormHandler):
 
         work.update_current_user_timestamp(request.user.username)
         work.save(clone_queryable=False)
-        log.info(f'save work {work}')  # KTODO fix iwork_id plus more than 1
+        log.info(f'save work {work}')
         self.saved_work = work
 
         return work
