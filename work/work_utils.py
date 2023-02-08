@@ -88,7 +88,8 @@ def _get_original_catalogue_val(work: CofkUnionWork, field_name):
     if work.original_catalogue_id:
         return work.original_catalogue.catalogue_code
     else:
-        return CofkLookupCatalogue.objects.filter(catalogue_code='').first().catalogue_code or ''
+        cat = CofkLookupCatalogue.objects.filter(catalogue_code='').first()
+        return cat.catalogue_code if cat else ''
 
 
 special_clone_fields = {

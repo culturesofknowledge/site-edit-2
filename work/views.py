@@ -82,10 +82,10 @@ class BasicWorkFFH(FullFormHandler):
         self.catalogue_form = CatalogueForm(request_data, initial={
             'catalogue': self.safe_work.original_catalogue_id
         })
-        catalogue_list = [(None, '')] + [(c.catalogue_name, c.catalogue_code) for c in
+        catalogue_list = [('', None)] + [(c.catalogue_name, c.catalogue_code) for c in
                                          CofkLookupCatalogue.objects.all().order_by('catalogue_name')]
-        self.catalogue_form.fields['catalogue'].widget.choices = catalogue_list
         self.catalogue_form.fields['catalogue_list'].widget.choices = catalogue_list
+        self.catalogue_form.fields['catalogue'].widget.choices = [(i[1], i[0]) for i in catalogue_list]
 
     def create_context(self):
         context = super().create_context()
