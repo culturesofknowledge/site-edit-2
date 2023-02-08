@@ -672,8 +672,8 @@ class ManifView(BasicWorkFormView):
                         request=request, *args, **kwargs)
 
     def resp_after_saved(self, request, fhandler):
-        if vname := GotoVname().get_vname_by_request_data(
-                request.POST) or not fhandler.manif_form.instance.manifestation_id:
+        if '__goto' in request.POST or not fhandler.manif_form.instance.manifestation_id:
+            vname = GotoVname().get_vname_by_request_data(request.POST, 'work:manif_init')
             return redirect(vname, fhandler.request_iwork_id)
 
         return redirect('work:manif_update',
