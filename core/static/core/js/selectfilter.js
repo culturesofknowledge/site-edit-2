@@ -13,9 +13,13 @@ emlojs.selectfilter_service = {
         emlojs.selectfilter_service.toggle_search()
     },
 
-    on_input_change: function (e) {
+    on_input_change: function (event) {
+        if (['ArrowUp', 'ArrowDown', 'Enter'].includes(event.key)) {
+            return
+        }
+
         // build item list
-        let root_ele = emlojs.selectfilter_service.find_root_ele(e.target)
+        let root_ele = emlojs.selectfilter_service.find_root_ele(event.target)
         emlojs.selectfilter_service.define_list(root_ele)
     },
     define_list: function (root_jqe) {
@@ -35,6 +39,8 @@ emlojs.selectfilter_service = {
             list_jqe.append(item_jqe)
         }
 
+        // select the first items
+        list_jqe.find('.sf-item:first').addClass('selected')
     },
 
     on_item_click: function (e) {
@@ -49,26 +55,49 @@ emlojs.selectfilter_service = {
 
         root_ele.trigger('select-changed', [item_jqe.text(), item_jqe.attr('value')]);
     },
-    select_first: function () {
-        let first_item_jqe = emlojs.selectfilter_service.find_root_ele().find('.sf-list .sf-item:first')
-        if (first_item_jqe.length) {
-            emlojs.selectfilter_service.select_choice(first_item_jqe)
-        }
-    },
 
     close_search: function () {
         $('.sf-search-div').hide();
     },
 
     toggle_search: function () {
-        $('.sf-search-div').toggle()
+        let search_div_jqe = $('.sf-search-div');
+        search_div_jqe.toggle()
+        if (search_div_jqe.is(":visible")) {
+            search_div_jqe.find('.sf-input').focus()
+        }
+
     },
 
     on_input_keydown: function (event) {
+
+        function replace_other_item(get_other_fn) {
+            let cur_item_ele = event.target.parentElement.querySelector('.sf-item.selected')
+            let other = get_other_fn(cur_item_ele)
+            if (other) {
+                cur_item_ele.classList.remove(selected_class_name)
+                other.classList.add(selected_class_name)
+            }
+        }
+
+
+        const selected_class_name = 'selected'
         if (event.key === 'Enter') {
             event.preventDefault();
-            emlojs.selectfilter_service.select_first();
+            let root_ele = emlojs.selectfilter_service.find_root_ele($(event.target));
+            let item_jqe = root_ele.find('.sf-item.selected')
+            if (!item_jqe.length) {
+                item_jqe = root_ele.find('.sf-item:first')
+            }
+            if (item_jqe.length) {
+                emlojs.selectfilter_service.select_choice(item_jqe)
+            }
             emlojs.selectfilter_service.close_search();
+        } else if (event.key === 'ArrowUp') {
+            replace_other_item(e => e.previousElementSibling)
+
+        } else if (event.key === 'ArrowDown') {
+            replace_other_item(e => e.nextElementSibling)
         }
 
     },
