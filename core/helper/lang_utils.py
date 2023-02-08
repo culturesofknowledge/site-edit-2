@@ -83,6 +83,7 @@ class LangForm(forms.Form):
     notes = forms.CharField(required=False)
     lang_name = forms.CharField(required=False, widget=forms.HiddenInput())
     is_del = form_utils.ZeroOneCheckboxField(is_str=False)
+    is_del.widget.attrs.update({'class': 'warn-checked'})
     lang_rec_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
 
 

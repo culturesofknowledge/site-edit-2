@@ -351,5 +351,18 @@ tr.selectable_entry:hover {
 
   }
 
+}
+
+
+// for lang_section
+.lang-item {
+  @extend .row-no-margin;
+  & > .lang-label {
+    @extend .col--1of5;
+  }
+
+  & > input[type=text] {
+    @extend .col--2of5;
+  }
 
 }
