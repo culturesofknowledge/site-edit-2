@@ -598,32 +598,6 @@ def create_work_person_map_if_field_exist(form: BaseForm, work, username,
     return work_person_map
 
 
-class GotoVname:
-    def __init__(self):
-        self.goto_vname_map = {
-            'corr': 'work:corr_form',
-            'dates': 'work:dates_form',
-            'places': 'work:places_form',
-            'manif': 'work:manif_init',
-            'resources': 'work:resources_form',
-            'details': 'work:details_form',
-            'overview': 'work:overview_form',
-        }
-
-    def get_vname_by_request_data(self, request_data, cur_vname=None):
-        goto = request_data.get('__goto')
-        vname = self.goto_vname_map.get(goto, cur_vname)
-        return vname
-
-    def redirect_by_goto(self, request_data, cur_vname=None, iwork_id=None, params=None):
-        params = params or {}
-        if iwork_id:
-            params['iwork_id'] = iwork_id
-
-        vname = self.get_vname_by_request_data(request_data, cur_vname=cur_vname)
-        return redirect(vname, **params)
-
-
 class BasicWorkFormView(LoginRequiredMixin, View):
 
     @staticmethod
@@ -647,7 +621,7 @@ class BasicWorkFormView(LoginRequiredMixin, View):
         if fhandler.saved_work:
             iwork_id = fhandler.saved_work.iwork_id
 
-        return GotoVname().redirect_by_goto(request.POST, cur_vname=self.cur_vname, iwork_id=iwork_id)
+        return redirect(self.cur_vname, iwork_id=iwork_id)
 
     def post(self, request, iwork_id=None, *args, **kwargs):
         fhandler = self.create_fhandler(request, iwork_id=iwork_id, *args, **kwargs)
@@ -673,9 +647,8 @@ class ManifView(BasicWorkFormView):
                         request=request, *args, **kwargs)
 
     def resp_after_saved(self, request, fhandler):
-        if '__goto' in request.POST or not fhandler.manif_form.instance.manifestation_id:
-            vname = GotoVname().get_vname_by_request_data(request.POST, 'work:manif_init')
-            return redirect(vname, fhandler.request_iwork_id)
+        if not fhandler.manif_form.instance.manifestation_id:
+            return redirect('work:manif_init', fhandler.request_iwork_id)
 
         return redirect('work:manif_update',
                         fhandler.manif_form.instance.work.iwork_id,
@@ -826,7 +799,7 @@ def to_overview_manif(manif: CofkUnionManifestation):
 @login_required()
 def overview_view(request, iwork_id):
     if request.POST:
-        return GotoVname().redirect_by_goto(request.POST, cur_vname='work:overview_form', iwork_id=iwork_id)
+        return redirect('work:overview_form', iwork_id=iwork_id)
 
     work = get_object_or_404(CofkUnionWork, iwork_id=iwork_id)
 
