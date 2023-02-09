@@ -1,13 +1,12 @@
-{% extends "core/emlo_logined.html" %}
+{% extends "core/emlo_common_form.html" %}
 {% load static %}
 
 {% block head %}
+    {{ block.super }}
     <script src="{% static 'location/js/init_loc_form.js' %}" defer></script>
-    <script src="{% static 'core/js/table_of_content_service.js' %}" defer></script>
     <script defer>
         document.addEventListener('DOMContentLoaded', (e) => {
             setup_location_form_listener();
-            setup_table_of_content();
         });
     </script>
 {% endblock %}

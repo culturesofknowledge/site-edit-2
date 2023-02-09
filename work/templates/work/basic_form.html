@@ -1,66 +1,13 @@
-{% extends "core/emlo_logined.html" %}
+{% extends "core/emlo_common_form.html" %}
 {% load static %}
 
 {% block head %}
+    {{ block.super }}
     <script src="/static/core/js/recref_service.js"></script>
     <script src="{% static 'core/js/ref_publication_service.js' %}" defer></script>
-    <script src="{% static 'core/js/table_of_content_service.js' %}" defer></script>
     <script src="{% static 'core/js/selectfilter.js' %}" defer></script>
     <script>
-
-        var emlojs = emlojs || {};
-        emlojs.leave_warning = {
-            is_submit: false,
-            setup_leave_warning: function () {
-                function load_input_map() {
-                    let input_map = new Map();
-                    for (let ele of document.querySelectorAll('input[name],textarea[name],select[name]')) {
-                        if (['checkbox', 'radio'].includes(ele.type)) {
-                            input_map.set(ele.name, ele.checked);
-                        } else {
-                            input_map.set(ele.name, ele.value);
-                        }
-                    }
-                    return input_map
-                }
-
-                function compare_map(map_old, map_new) {
-                    let diff_map = new Map();
-                    for (let [key, new_val] of map_new) {
-                        let old_val = map_old.get(key);
-                        if (old_val !== new_val) {
-                            diff_map.set(key, [old_val, new_val])
-                        }
-                    }
-                    return diff_map
-                }
-
-                // event beforeunload
-                const org_input_map = load_input_map()
-                window.addEventListener('beforeunload', function (e) {
-                    if (emlojs.leave_warning.is_submit) {
-                        return
-                    }
-                    const new_input_map = load_input_map();
-                    const diff_map = compare_map(org_input_map, new_input_map);
-                    if (diff_map.size) {
-                        console.log('diff_map changed:')
-                        console.log(diff_map)
-                        e.preventDefault()
-                        e.returnValue = 'Changes that you made may not be saved.'
-                    }
-                });
-
-                // event submit
-                $('form').on('submit', function (event) {
-                    emlojs.leave_warning.is_submit = true;
-                });
-            },
-        }
-
-
         $(function () {
-            setup_table_of_content();
             setup_selectfilter();
             $('.catalogue-div .selectfilter-root').on('select-changed', function (e, selected_text, selected_val) {
                 document.querySelector('#id_catalogue').value = selected_val;
@@ -69,9 +16,6 @@
                 e.preventDefault()
                 this.blur()
             });
-
-            emlojs.leave_warning.setup_leave_warning();
-
         });
     </script>
 {% endblock %}

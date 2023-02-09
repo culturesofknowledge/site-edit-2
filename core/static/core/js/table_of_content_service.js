@@ -50,6 +50,10 @@ function find_new_cur_toc_item() {
 }
 
 function setup_table_of_content() {
+    if (!document.querySelector('.toc-host')) {
+        return
+    }
+
     const cur_toc_item_class = 'toc-cur-item';
     let old_toc_id = null;
 

@@ -1,4 +1,3 @@
-// KTODO extract following javascript to js file and emlojs object
 // otherwise, it will duplicate following javascript when include by django
 
 var emlojs = emlojs || {};
