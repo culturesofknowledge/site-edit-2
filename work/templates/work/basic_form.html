@@ -14,8 +14,12 @@
             setup_leave_warning: function () {
                 function load_input_map() {
                     let input_map = new Map();
-                    for (let ele of document.querySelectorAll('input[name]')) {
-                        input_map.set(ele.name, ele.value);
+                    for (let ele of document.querySelectorAll('input[name],textarea[name],select[name]')) {
+                        if (['checkbox', 'radio'].includes(ele.type)) {
+                            input_map.set(ele.name, ele.checked);
+                        } else {
+                            input_map.set(ele.name, ele.value);
+                        }
                     }
                     return input_map
                 }
@@ -87,7 +91,7 @@
                 </div>
 
                 <div class="row-no-margin">
-                    {% include "work/component/tab_link.html" with name='Correspondents' vname='work:corr_form' iwork_id=iwork_id  %}
+                    {% include "work/component/tab_link.html" with name='Correspondents' vname='work:corr_form' iwork_id=iwork_id %}
                     {% include "work/component/tab_link.html" with name='Dates' vname='work:dates_form' iwork_id=iwork_id %}
                     {% include "work/component/tab_link.html" with name='Places' vname='work:places_form' iwork_id=iwork_id %}
                     {% if iwork_id %}
