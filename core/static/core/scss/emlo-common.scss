@@ -353,6 +353,17 @@ tr.selectable_entry:hover {
 
 }
 
+.tab-link {
+  padding: $space-xs;
+  background-color: black;
+  color: white;
+  &:hover{
+    color: white;
+  }
+
+
+}
+
 
 // for lang_section
 .lang-item {

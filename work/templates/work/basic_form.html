@@ -87,18 +87,18 @@
                 </div>
 
                 <div class="row-no-margin">
-                    <button type="submit" name="__goto" value="corr">Correspondents</button>
-                    <button type="submit" name="__goto" value="dates">Dates</button>
-                    <button type="submit" name="__goto" value="places">Places</button>
+                    {% include "work/component/tab_link.html" with name='Correspondents' vname='work:corr_form' iwork_id=iwork_id  %}
+                    {% include "work/component/tab_link.html" with name='Dates' vname='work:dates_form' iwork_id=iwork_id %}
+                    {% include "work/component/tab_link.html" with name='Places' vname='work:places_form' iwork_id=iwork_id %}
                     {% if iwork_id %}
-                        <button type="submit" name="__goto" value="manif">Manifestation</button>
+                        {% include "work/component/tab_link.html" with name='Manifestation' vname='work:manif_init' iwork_id=iwork_id %}
                     {% endif %}
                     {% if iwork_id %}
-                        <button type="submit" name="__goto" value="resources">Resources</button>
+                        {% include "work/component/tab_link.html" with name='Resources' vname='work:resources_form' iwork_id=iwork_id %}
                     {% endif %}
-                    <button type="submit" name="__goto" value="details">Other Details</button>
+                    {% include "work/component/tab_link.html" with name='Other Details' vname='work:details_form' iwork_id=iwork_id %}
                     {% if iwork_id %}
-                        <button type="submit" name="__goto" value="overview">Overview</button>
+                        {% include "work/component/tab_link.html" with name='Overview' vname='work:overview_form' iwork_id=iwork_id %}
                     {% endif %}
                 </div>
 

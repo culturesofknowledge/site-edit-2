@@ -1,0 +1,7 @@
+<a class="tab-link" href="{% if iwork_id %}
+             {% url vname iwork_id %}
+         {% else %}
+             {% url vname %}
+         {% endif %}">
+    {{ name }}
+</a>
