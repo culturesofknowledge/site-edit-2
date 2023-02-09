@@ -509,9 +509,9 @@ class MergeChoiceViews(View):
         return (MergeChoiceViews.create_merge_choice_context(m) for m in records)
 
 
-def find_all_recref_by_models(model_list, parent_model):
+def find_all_recref_by_models(model_list):
     for model in model_list:
-        for bounded_data in recref_utils.find_bounded_data_list_by_related_model(parent_model):
+        for bounded_data in recref_utils.find_bounded_data_list_by_related_model(model):
             records = recref_utils.find_recref_list_by_bounded_data(bounded_data, model)
             yield from records
 
@@ -572,7 +572,7 @@ class MergeActionViews(View):
             [m.pk for m in other_models]
         ))
 
-        recref_list: Iterable[Recref] = find_all_recref_by_models(other_models, selected_model)
+        recref_list: Iterable[Recref] = find_all_recref_by_models(other_models)
         recref_list = list(recref_list)
         for recref in recref_list:
             parent_field, related_field = recref_utils.get_parent_related_field_by_recref(recref, selected_model)
