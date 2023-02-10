@@ -30,12 +30,12 @@
   display: inline;
 }
 
-tr.selectable_entry:hover {
+tr.selectable_entry:not(.selected):hover {
   background: $lighter-grey;
 }
 
 .selectable_entry.selected {
-  background-color: cadetblue !important;
+  background-color: cadetblue;
 }
 
 .menu-item {
