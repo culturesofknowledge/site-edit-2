@@ -1,4 +1,14 @@
 <div class="merge-detail">
+
+    {% if related_records %}
+        <strong>Summary</strong>
+        <ul>
+            {% for recref_class, records in related_records %}
+                <li>({{ records|length }}) {{ recref_class }} </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
     {% for recref_class, records in related_records %}
         <strong>{{ recref_class }} ({{ records|length }})</strong>
         <ul>

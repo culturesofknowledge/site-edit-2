@@ -304,6 +304,8 @@ tr.selectable_entry:not(.selected):hover {
 .merge-div .merge-items {
   @extend .col--4of5;
   margin-bottom: 0.8rem;
+  border: 1px solid;
+  padding: 0 1em 1em;
 }
 
 .merge-detail {

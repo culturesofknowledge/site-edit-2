@@ -21,6 +21,7 @@ from django.views import View
 from django.views.generic import ListView
 
 import core.constant as core_constant
+from core import constant
 from core.forms import build_search_components
 from core.helper import file_utils, email_utils, query_utils, general_model_utils, recref_utils, model_utils, \
     django_utils, inspect_utils
@@ -28,6 +29,7 @@ from core.helper.model_utils import ModelLike, RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
     demo_table_search_results_renderer
 from core.helper.view_components import DownloadCsvHandler
+from core.models import CofkUnionResource, CofkUnionComment
 from work import work_utils
 from work.models import CofkUnionWork
 
@@ -486,17 +488,50 @@ class MergeChoiceViews(View):
         })
 
     @staticmethod
+    def create_work_recref_map(recref_list: list['Recref']):
+
+        def _name_key(rel_type: str):
+            if rel_type in [constant.REL_TYPE_CREATED,
+                            constant.REL_TYPE_SENT,
+                            constant.REL_TYPE_SIGNED,
+                            ]:
+                return "Work [Author/sender of]"
+            elif rel_type in [constant.REL_TYPE_WAS_ADDRESSED_TO,
+                              constant.REL_TYPE_INTENDED_FOR, ]:
+                return 'Work [Addressee of]'
+            elif rel_type == constant.REL_TYPE_WAS_SENT_FROM:
+                return 'Work [Origin]'
+            elif rel_type == constant.REL_TYPE_WAS_SENT_TO:
+                return 'Work [Destination]'
+            else:
+                return 'Work'
+
+        recref_dict = defaultdict(list)
+        for r in recref_list:
+            recref_dict[_name_key(r.relationship_type)].append(r)
+        return recref_dict
+
+    @staticmethod
     def create_merge_choice_context(model: ModelLike) -> 'MergeChoiceContext':
         name = general_model_utils.get_display_name(model)
 
         bounded_data_list = recref_utils.find_bounded_data_list_by_related_model(model)
         related_records = []
         for bounded_data in bounded_data_list:
-            parent_field, related_field = recref_utils.get_parent_related_field_by_bounded_data(bounded_data, model)
+            _, related_field = recref_utils.get_parent_related_field_by_bounded_data(bounded_data, model)
             recref_list = list(recref_utils.find_recref_list_by_bounded_data(bounded_data, model))
-            if recref_list:
-                related_records.append((general_model_utils.get_name_by_model_class(related_field.field.related_model),
+            if not recref_list:
+                continue
+
+            related_model = related_field.field.related_model
+            if inspect_utils.issubclass_safe(related_model, CofkUnionWork):
+                for _name, _recref_list in MergeChoiceViews.create_work_recref_map(recref_list).items():
+                    related_records.append((_name,
+                                            [get_recref_ref_name(related_field, r) for r in _recref_list]))
+            else:
+                related_records.append((general_model_utils.get_name_by_model_class(related_model),
                                         [get_recref_ref_name(related_field, r) for r in recref_list]))
+
         return MergeChoiceContext(model_pk=model.pk, name=name, related_records=related_records)
 
     @staticmethod
@@ -518,10 +553,13 @@ def find_all_recref_by_models(model_list):
 
 def get_recref_ref_name(related_field, recref) -> str:
     related_model = related_field.get_object(recref)
-    return '[{}] {}'.format(
-        related_model.pk,
-        general_model_utils.get_display_name(related_model)
-    )
+    if isinstance(related_model, (CofkUnionComment, CofkUnionResource)):
+        return '[{}] {}'.format(
+            related_model.pk,
+            general_model_utils.get_display_name(related_model)
+        )
+    else:
+        return general_model_utils.get_display_name(related_model)
 
 
 def find_work_by_recref_list(recref_list: Iterable['Recref']):

@@ -1,5 +1,16 @@
 {% extends "core/emlo_logined.html" %}
 
+
+{% block head %}
+    <script>
+    $(function (){
+        $('.merge-items').click(function (e){
+            $(e.target).closest('.merge-items').parent().find('input[type=radio]').click()
+        })
+    });
+    </script>
+{% endblock %}
+
 {% block content %}
     <h1> Merge -- Select the master record </h1>
     <form method="post" action="{{ merge_action_url }}">
@@ -19,7 +30,7 @@
                     </div>
                     <div class="merge-items">
                         <div>
-                            <label for="merge_id_{{ forloop.counter0 }}">{{ m.name }}</label>
+                            <label>{{ m.name }}</label>
                         </div>
                         {% include "core/component/merge_details.html" with related_records=m.related_records %}
                     </div>
