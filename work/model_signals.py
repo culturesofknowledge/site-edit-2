@@ -6,14 +6,7 @@ from django.db.models.base import ModelBase
 
 from work.models import CofkUnionWork, CofkUnionQueryableWork
 
-from work.work_utils import clone_queryable_work
-
 log = logging.getLogger(__name__)
-
-
-def on_clone_queryable_work(sender: ModelBase, instance: models.Model, created: bool,
-                            raw: bool, using, update_fields, **kwargs):
-    handle_work_signal(sender, instance, clone_queryable_work, **kwargs)
 
 
 def on_delete_queryable_work(sender: ModelBase, instance: models.Model, using, **kwargs):

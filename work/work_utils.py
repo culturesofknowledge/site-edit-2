@@ -88,7 +88,8 @@ def _get_original_catalogue_val(work: CofkUnionWork, field_name):
     if work.original_catalogue_id:
         return work.original_catalogue.catalogue_code
     else:
-        return CofkLookupCatalogue.objects.filter(catalogue_code='').first().catalogue_code or ''
+        cat = CofkLookupCatalogue.objects.filter(catalogue_code='').first()
+        return cat.catalogue_code if cat else ''
 
 
 special_clone_fields = {
@@ -108,7 +109,14 @@ def _get_clone_value(work: CofkUnionWork, field_name):
     return val_fn(work, field_name)
 
 
-def clone_queryable_work(work: CofkUnionWork):
+def clone_queryable_work(work: CofkUnionWork, reload=False):
+    if work is None:
+        log.debug('skip clone_queryable_work work is None')
+        return
+
+    if reload:
+        work = reload_work(work)
+
     exclude_fields = {'iwork_id'}
     queryable_work = model_utils.get_safe(
         CofkUnionQueryableWork, iwork_id=work.iwork_id
@@ -138,3 +146,7 @@ def clone_queryable_work(work: CofkUnionWork):
 
     queryable_work.save()
     log.info(f'queryable_work saved. [{work.iwork_id}][{list(updated_field_dict.keys())}]  ')
+
+
+def reload_work(work: CofkUnionWork) -> CofkUnionWork | None:
+    return CofkUnionWork.objects.filter(pk=work.pk).first()

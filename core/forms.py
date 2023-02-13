@@ -45,7 +45,7 @@ class RecrefForm(forms.Form):
     rec_name = forms.CharField(required=False)
     from_date = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
     to_date = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
-    is_delete = form_utils.ZeroOneCheckboxField(required=False, is_str=False)
+    is_delete = form_utils.DeleteCheckboxField()
 
     @property
     def target_url(self) -> str:
@@ -91,6 +91,8 @@ class CommentForm(ModelForm):
     record_tracker_label = form_utils.record_tracker_label_fn_factory('Note')
 
     comment = form_utils.CommonTextareaField(required=True)
+
+    is_delete = form_utils.DeleteCheckboxField()
 
     class Meta:
         model = CofkUnionComment

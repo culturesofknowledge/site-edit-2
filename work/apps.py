@@ -12,5 +12,6 @@ class WorkConfig(AppConfig):
 
     def ready(self):
         from . import model_signals  # avoid import models before app ready
-        post_save.connect(model_signals.on_clone_queryable_work)
+
+        # KTODO queryable work can be delete by on_delete=cascase
         post_delete.connect(model_signals.on_delete_queryable_work)

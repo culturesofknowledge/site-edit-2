@@ -1,0 +1,21 @@
+<!-- remember import core/js/selectfilter.js -->
+
+{% load cl_filters %}
+<div class="selectfilter-root">
+    {% if select_field %}
+        {{ select_field|add_classes:"sf-select" }}
+    {% else %}
+        <input class="sf-select" type="text" readonly/>
+    {% endif %}
+    <div class="sf-search-div" style="display: none">
+        <input class="sf-hidden" type="hidden"/>
+        <input class="sf-input" type="text"
+                {% if selected_name %}
+               name="{{ selected_name }}"
+                {% endif %}
+        />
+        <div class="sf-list"></div>
+    </div>
+    {{ datalist_field }}
+
+</div>

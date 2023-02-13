@@ -1,7 +1,7 @@
 """
 contain method that support multi / general model
 """
-from typing import Type
+from typing import Type, Iterable
 
 from django.db.models import Model
 

@@ -313,6 +313,7 @@ class ManifForm(forms.ModelForm):
 
 class CatalogueForm(forms.Form):
     catalogue = forms.CharField(required=False, widget=forms.Select())
+    catalogue_list = forms.Field(required=False, widget=widgets_utils.Datalist())
 
 
 class AuthorRelationChoices(TextChoices):

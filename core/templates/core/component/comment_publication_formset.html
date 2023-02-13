@@ -16,7 +16,7 @@
             {% endif %}
         </legend>
         {% for form in comment_formset|reverse_list %}
-            <div>
+            <div class="form-note-root">
                 <label id="{{ header_id }}_{{ forloop.counter0 }}" class="toc-sub-item">
                     {% if forloop.first %}
                         New note
@@ -26,6 +26,8 @@
                 </label>
                 {{ form.comment }}
                 {{ form.comment_id }}
+
+                {% include "core/component/common_delete_checkbox.html" with show_cond=form.comment_id.value field=form.is_delete %}
                 {{ form.record_tracker_label }}
                 <div class="ref-publication-row" textbox_id="{{ form.comment.id_for_label }}"></div>
             </div>

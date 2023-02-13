@@ -4,7 +4,7 @@ from typing import Iterable
 from django.db import models
 
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_COMMENT_DATE, \
-    REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE_CREATED
+    REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 from core.models import Recref, CofkLookupCatalogue
@@ -122,11 +122,18 @@ class CofkUnionWork(models.Model, RecordTracker):
 
     @property
     def addressees_for_display(self):
-        addressees = self.find_people_by_rel_type(REL_TYPE_COMMENT_ADDRESSEE)
+        addressees = self.find_people_by_rel_type(REL_TYPE_WAS_ADDRESSED_TO)
         if len(addressees) > 0:
             return ", ".join([str(a.person.to_string()) for a in addressees])
         else:
             return ''
+
+    def save(self, clone_queryable=True, force_insert=False, force_update=False,
+             using=None, update_fields=None, **kwargs):
+        super().save(force_insert, force_update, using, update_fields, **kwargs)
+        if clone_queryable:
+            from work import work_utils
+            work_utils.clone_queryable_work(self, reload=False)
 
 
 class CofkWorkCommentMap(Recref):
@@ -263,5 +270,3 @@ class CofkUnionQueryableWork(models.Model):
     @property
     def catalogue(self) -> str:
         return CofkLookupCatalogue.objects.filter(catalogue_code=self.original_catalogue)[0].catalogue_name
-
-

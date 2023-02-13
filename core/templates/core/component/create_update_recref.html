@@ -19,8 +19,7 @@
                     {{ form.to_date }}
                 </div>
             {% endif %}
-            {{ form.is_delete }}
-            <label class="recref-del" for="{{ form.is_delete.id_for_label }}">Delete</label>
+            {% include "core/component/common_checkbox.html" with field=form.is_delete name='Delete' class_name="recref-del" %}
         </div>
     {% endfor %}
 </div>

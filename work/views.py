@@ -77,14 +77,15 @@ class BasicWorkFFH(FullFormHandler):
         else:
             self.work = None
 
-        self.safe_work = self.work or CofkUnionWork()  # KTODO iwork_id sequence number +1 by this ??
+        self.safe_work = self.work or CofkUnionWork()
 
         self.catalogue_form = CatalogueForm(request_data, initial={
             'catalogue': self.safe_work.original_catalogue_id
         })
-        self.catalogue_form.fields['catalogue'].widget.choices = [(None, '')] + [
-            (c.catalogue_code, c.catalogue_name) for c in CofkLookupCatalogue.objects.all()
-        ]
+        catalogue_list = [('', None)] + [(c.catalogue_name, c.catalogue_code) for c in
+                                         CofkLookupCatalogue.objects.all().order_by('catalogue_name')]
+        self.catalogue_form.fields['catalogue_list'].widget.choices = catalogue_list
+        self.catalogue_form.fields['catalogue'].widget.choices = [(i[1], i[0]) for i in catalogue_list]
 
     def create_context(self):
         context = super().create_context()
@@ -115,8 +116,8 @@ class BasicWorkFFH(FullFormHandler):
             work.description = cur_desc
 
         work.update_current_user_timestamp(request.user.username)
-        work.save()
-        log.info(f'save work {work}')  # KTODO fix iwork_id plus more than 1
+        work.save(clone_queryable=False)
+        log.info(f'save work {work}')
         self.saved_work = work
 
         return work
@@ -184,6 +185,7 @@ class PlacesFFH(BasicWorkFFH):
         self.destination_loc_handler.upsert_recref_if_field_exist(
             self.places_form, work, request.user.username
         )
+        work_utils.clone_queryable_work(work, reload=True)
 
 
 class DatesFFH(BasicWorkFFH):
@@ -211,6 +213,7 @@ class DatesFFH(BasicWorkFFH):
 
         work = self.save_work(request, self.dates_form)
         self.save_all_recref_formset(work, request)
+        work_utils.clone_queryable_work(work, reload=True)
 
 
 class CorrFFH(BasicWorkFFH):
@@ -300,6 +303,7 @@ class CorrFFH(BasicWorkFFH):
 
         # handle recref_handler
         self.maintain_all_recref_records(request, work)
+        work_utils.clone_queryable_work(work, reload=True)
 
 
 class ManifFFH(BasicWorkFFH):
@@ -457,6 +461,8 @@ class ManifFFH(BasicWorkFFH):
         self.inst_handler.upsert_recref_if_field_exist(
             self.manif_form, manif, request.user.username)
 
+        work_utils.clone_queryable_work(work_utils.reload_work(manif.work), reload=True)
+
 
 class ResourcesFFH(BasicWorkFFH):
     def __init__(self, pk, request_data=None, request=None, *args, **kwargs):
@@ -474,6 +480,7 @@ class ResourcesFFH(BasicWorkFFH):
             log.debug('skip save resources when no changed')
             return
         self.save_all_recref_formset(self.work, request)
+        work_utils.clone_queryable_work(self.work, reload=True)
 
 
 class DetailsFFH(BasicWorkFFH):
@@ -557,6 +564,7 @@ class DetailsFFH(BasicWorkFFH):
         self.save_all_recref_formset(work, request)
         self.maintain_all_recref_records(request, work)
         self.subject_handler.save(request, work)
+        work_utils.clone_queryable_work(work, reload=True)
 
 
 class ManifLangModelAdapter(LangModelAdapter):
@@ -665,8 +673,8 @@ class ManifView(BasicWorkFormView):
                         request=request, *args, **kwargs)
 
     def resp_after_saved(self, request, fhandler):
-        if vname := GotoVname().get_vname_by_request_data(
-                request.POST) or not fhandler.manif_form.instance.manifestation_id:
+        if '__goto' in request.POST or not fhandler.manif_form.instance.manifestation_id:
+            vname = GotoVname().get_vname_by_request_data(request.POST, 'work:manif_init')
             return redirect(vname, fhandler.request_iwork_id)
 
         return redirect('work:manif_update',
@@ -937,9 +945,9 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def search_field_fn_maps(self) -> dict:
-        return {'work_to_be_deleted': lambda f, v: Exact(F(f), '0' if v == 'On' else '1'),} |\
+        return {'work_to_be_deleted': lambda f, v: Exact(F(f), '0' if v == 'On' else '1'), } | \
             query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                'change_timestamp', str_to_std_datetime) |\
+                                                'change_timestamp', str_to_std_datetime) | \
             query_utils.create_from_to_datetime('date_of_work_std_from', 'date_of_work_std_to',
                                                 'date_of_work_std', str_to_std_datetime)
 
@@ -959,7 +967,8 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         simplified_query = super().simplified_query
 
         if self.search_field_fn_maps:
-            work_to_be_deleted = self.request_data['work_to_be_deleted'] if 'work_to_be_deleted' in self.request_data else None
+            work_to_be_deleted = self.request_data[
+                'work_to_be_deleted'] if 'work_to_be_deleted' in self.request_data else None
 
             if work_to_be_deleted:
                 if work_to_be_deleted == 'on':

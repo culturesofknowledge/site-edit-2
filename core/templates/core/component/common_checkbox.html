@@ -1,4 +1,8 @@
 {{ field }}
-<label for="{{ field.id_for_label }}">
+<label for="{{ field.id_for_label }}"
+        {% if class_name %}
+       class="{{ class_name }}"
+        {% endif %}
+>
     <small> {{ name }} </small>
 </label>

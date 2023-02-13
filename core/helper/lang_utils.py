@@ -82,7 +82,7 @@ def create_lang_formset(lang_models: Iterable, lang_rec_id_name: str,
 class LangForm(forms.Form):
     notes = forms.CharField(required=False)
     lang_name = forms.CharField(required=False, widget=forms.HiddenInput())
-    is_del = form_utils.ZeroOneCheckboxField(is_str=False)
+    is_delete = form_utils.DeleteCheckboxField()
     lang_rec_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
 
 
@@ -114,7 +114,7 @@ def maintain_lang_records(lang_forms: Iterable[LangForm], find_lang_fn):
     for lang_form in lang_forms:
         lang_rec_id = lang_form.cleaned_data['lang_rec_id']
 
-        if lang_form.cleaned_data['is_del']:
+        if lang_form.cleaned_data['is_delete']:
             # delete record
             log.info('delete language record [{}] '.format(lang_rec_id))
             find_lang_fn(lang_rec_id).delete()

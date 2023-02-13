@@ -5,9 +5,19 @@
     <script src="/static/core/js/recref_service.js"></script>
     <script src="{% static 'core/js/ref_publication_service.js' %}" defer></script>
     <script src="{% static 'core/js/table_of_content_service.js' %}" defer></script>
+    <script src="{% static 'core/js/selectfilter.js' %}" defer></script>
     <script>
-        $(function (){
+        $(function () {
             setup_table_of_content();
+            setup_selectfilter();
+            $('.catalogue-div .selectfilter-root').on('select-changed', function (e, selected_text, selected_val) {
+                document.querySelector('#id_catalogue').value = selected_val;
+            });
+            $('.sf-select').mousedown(function (e){
+                e.preventDefault()
+                this.blur()
+            })
+
         });
     </script>
 {% endblock %}
@@ -22,7 +32,9 @@
                 {% include "core/component/form_descriptor.html" with descriptor=form_descriptor %}
 
                 <label>Original catalogue:</label>
-                {{ catalogue_form.catalogue }}
+                <div class="catalogue-div">
+                    {% include "core/component/selectfilter.html" with select_field=catalogue_form.catalogue  datalist_field=catalogue_form.catalogue_list %}
+                </div>
 
                 <div class="row-no-margin">
                     <button type="submit" name="__goto" value="corr">Correspondents</button>
