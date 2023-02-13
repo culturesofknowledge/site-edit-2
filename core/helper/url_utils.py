@@ -1,4 +1,5 @@
-from django.urls import path
+from django.urls import path, reverse
+from django.utils.http import urlencode
 
 
 def create_common_urls_for_section(
@@ -7,6 +8,7 @@ def create_common_urls_for_section(
         search_view=None,
         merge_view=None,
         merge_action_view=None,
+        merge_confirm_view=None,
         edit_id_name='pk',
 ) -> list:
     if edit_view is None:
@@ -24,6 +26,8 @@ def create_common_urls_for_section(
         paths.append(path('merge', merge_view, name='merge'))
     if merge_action_view is not None:
         paths.append(path('merge/action', merge_action_view, name='merge_action'))
+    if merge_confirm_view is not None:
+        paths.append(path('merge/confirm', merge_confirm_view, name='merge_confirm'))
     return paths
 
 
@@ -32,3 +36,11 @@ def create_urls_for_quick_init(quick_init_view, return_quick_init_view):
         path('quick_init', quick_init_view, name='quick_init'),
         path('return_quick_init/<pk>', return_quick_init_view, name='return_quick_init'),
     ]
+
+
+def build_url_query(vname, query=None):
+    url = reverse(vname)
+    if query:
+        return f'{url}?' + urlencode(query)
+    else:
+        return url

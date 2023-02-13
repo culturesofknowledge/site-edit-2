@@ -15,7 +15,7 @@ from django.db.models.query_utils import DeferredAttribute
 from django.forms import ModelForm
 from django.forms import formset_factory
 from django.http import HttpResponseNotFound
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views import View
 from django.views.generic import ListView
@@ -24,7 +24,7 @@ import core.constant as core_constant
 from core import constant
 from core.forms import build_search_components
 from core.helper import file_utils, email_utils, query_utils, general_model_utils, recref_utils, model_utils, \
-    django_utils, inspect_utils
+    django_utils, inspect_utils, url_utils
 from core.helper.model_utils import ModelLike, RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
     demo_table_search_results_renderer
@@ -477,7 +477,11 @@ class MergeChoiceViews(View):
         raise NotImplementedError()
 
     @property
-    def action_vname(self):
+    def action_vname(self):  # KTODO rename confirm_vname
+        raise NotImplementedError()
+
+    @staticmethod
+    def get_id_field():
         raise NotImplementedError()
 
     def get(self, request, *args, **kwargs):
@@ -587,6 +591,25 @@ def find_related_collect_field(target_model_class: Type[ModelLike]) -> Iterable[
     return _models
 
 
+class MergeConfirmViews(View):
+
+    @property
+    def target_model_class(self) -> Type[ModelLike]:
+        raise NotImplementedError()
+
+    @property
+    def action_vname(self) -> str:
+        raise NotImplementedError()
+
+    def post(self, request, *args, **kwargs):
+        selected_model, other_models = load_merge_parameter(request.POST, self.target_model_class)
+        return render(request, 'core/merge_confirm.html', {
+            'selected': MergeChoiceViews.create_merge_choice_context(selected_model),
+            'others': (MergeChoiceViews.create_merge_choice_context(m) for m in other_models),
+            'merge_action_url': reverse(self.action_vname),
+        })
+
+
 class MergeActionViews(View):
     @property
     def target_model_class(self) -> Type[ModelLike]:
@@ -595,6 +618,11 @@ class MergeActionViews(View):
     @property
     def return_vname(self) -> str:
         """ vname for return button """
+        raise NotImplementedError()
+
+    @property
+    def choice_vname(self) -> str:
+        """ vname for choice button """
         raise NotImplementedError()
 
     @staticmethod
@@ -648,11 +676,20 @@ class MergeActionViews(View):
 
         return recref_list
 
+    @staticmethod
+    def get_id_field():
+        raise NotImplementedError()
+
     def post(self, request, *args, **kwargs):
-        selected_pk = request.POST.get('selected_pk')
-        merge_pk_list = set(request.POST.getlist('merge_pk')) - {selected_pk}
-        other_models = list(self.target_model_class.objects.filter(**{'pk__in': merge_pk_list}).iterator())
-        selected_model = self.target_model_class.objects.filter(**{'pk': selected_pk}).first()
+        selected_model, other_models = load_merge_parameter(request.POST, self.target_model_class)
+
+        if request.POST.get('action_type') != 'confirm':
+            query = [
+                ('__merge_id', self.get_id_field().field.value_from_object(m))
+                for m in [selected_model] + list(other_models)
+            ]
+            url = url_utils.build_url_query(self.choice_vname, query)
+            return redirect(url)
 
         try:
             recref_list = self.merge(selected_model, other_models, username=request.user.username)
@@ -672,3 +709,29 @@ class MergeActionViews(View):
             'return_vname': self.return_vname,
             'name': general_model_utils.get_display_name(selected_model),
         })
+
+
+def log_value_error(msg):
+    log.debug(msg)
+    return ValueError(msg)
+
+
+def get_merge_parameter(request_data):
+    selected_pk = request_data.get('selected_pk')
+    merge_pk_list = set(request_data.getlist('merge_pk')) - {selected_pk}
+    if not merge_pk_list:
+        raise log_value_error(f'input parameter {merge_pk_list=} should not empty')
+    return selected_pk, merge_pk_list
+
+
+def load_merge_parameter(request_data, target_model_class):
+    selected_pk, merge_pk_list = get_merge_parameter(request_data)
+    other_models = list(target_model_class.objects.filter(**{'pk__in': merge_pk_list}).iterator())
+    selected_model = target_model_class.objects.filter(**{'pk': selected_pk}).first()
+    if not selected_model:
+        raise log_value_error(f'selected_model not found [{selected_pk=}]')
+
+    if not other_models or len(other_models) != len(merge_pk_list):
+        raise log_value_error(f'some other_models not found, [{other_models=}] [{merge_pk_list=}]')
+
+    return selected_model, other_models

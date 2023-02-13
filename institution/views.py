@@ -11,9 +11,10 @@ from core.helper import renderer_utils, query_utils, view_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.date_utils import str_to_std_datetime
 from core.helper.model_utils import ModelLike
-from core.helper.renderer_utils import CompactSearchResultsRenderer
-from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView, MergeChoiceViews, MergeActionViews
 from core.helper.recref_handler import ImageRecrefHandler, TargetResourceFormsetHandler
+from core.helper.renderer_utils import CompactSearchResultsRenderer
+from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView, MergeChoiceViews, MergeActionViews, \
+    MergeConfirmViews
 from core.models import Recref
 from institution import inst_utils, models
 from institution.forms import InstitutionForm, GeneralSearchFieldset, field_label_map
@@ -24,20 +25,21 @@ from institution.view_components import InstFormDescriptor
 if TYPE_CHECKING:
     from core.helper.view_utils import MergeChoiceContext
 
-
 log = logging.getLogger(__name__)
+
 
 class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
 
     @property
     def search_fields(self) -> list[str]:
-        return  ['institution_name', 'editors_notes', 'institution_city', 'institution_country',
-                  'change_user', 'institution_id', 'resources', 'images']
+        return ['institution_name', 'editors_notes', 'institution_city', 'institution_country',
+                'change_user', 'institution_id', 'resources', 'images']
 
     @property
     def search_field_fn_maps(self) -> dict:
         return query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                            'change_timestamp', str_to_std_datetime)
+                                                   'change_timestamp', str_to_std_datetime)
+
     @property
     def search_field_label_map(self) -> dict:
         """
@@ -188,15 +190,37 @@ class InstImageRecrefHandler(ImageRecrefHandler):
 
 
 class InstMergeChoiceView(LoginRequiredMixin, MergeChoiceViews):
+    @staticmethod
+    def get_id_field():
+        return CofkUnionInstitution.institution_id
+
     @property
     def action_vname(self):
-        return 'institution:merge_action'
+        return 'institution:merge_confirm'
 
     def to_context_list(self, merge_id_list: list[str]) -> Iterable['MergeChoiceContext']:
-        return self.create_merge_choice_context_by_id_field(CofkUnionInstitution.institution_id, merge_id_list)
+        return self.create_merge_choice_context_by_id_field(self.get_id_field(), merge_id_list)
+
+
+class InstMergeConfirmView(LoginRequiredMixin, MergeConfirmViews):
+    @property
+    def target_model_class(self) -> Type[ModelLike]:
+        return CofkUnionInstitution
+
+    @property
+    def action_vname(self) -> str:
+        return 'institution:merge_action'
 
 
 class InstMergeActionView(LoginRequiredMixin, MergeActionViews):
+    @property
+    def choice_vname(self) -> str:
+        return 'institution:merge'
+
+    @staticmethod
+    def get_id_field():
+        return InstMergeChoiceView.get_id_field()
+
     @property
     def return_vname(self) -> str:
         return 'institution:search'
