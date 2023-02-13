@@ -58,7 +58,13 @@
           return matcher.test( value ) || matcher.test( normalize( value ) );
         }) );
       },
+      minLength: 0,
       appendTo: '#query-fieldset'
+    });
+
+    // Search all values on select
+    $( "#id_original_catalogue" ).on("click", function()    {
+        $(this).autocomplete('search', ' ');
     });
 
   } );
