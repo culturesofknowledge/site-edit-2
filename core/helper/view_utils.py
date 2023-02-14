@@ -13,7 +13,6 @@ from django.db import models
 from django.db.models import Q, ForeignKey
 from django.db.models.query_utils import DeferredAttribute
 from django.forms import ModelForm
-from django.forms import formset_factory
 from django.http import HttpResponseNotFound
 from django.shortcuts import render, redirect
 from django.urls import reverse
@@ -22,7 +21,7 @@ from django.views.generic import ListView
 
 import core.constant as core_constant
 from core import constant
-from core.forms import build_search_components
+from core.helper.form_utils import build_search_components
 from core.helper import file_utils, email_utils, query_utils, general_model_utils, recref_utils, model_utils, \
     django_utils, inspect_utils, url_utils
 from core.helper.model_utils import ModelLike, RecordTracker
@@ -414,18 +413,6 @@ def any_invalid_with_log(form_formsets: Iterable):
             return True
 
     return False
-
-
-def create_formset(form_class, post_data=None, prefix=None,
-                   initial_list: Iterable[dict] = None,
-                   extra=1):
-    initial_list = initial_list or []
-    initial_list = list(initial_list)
-    return formset_factory(form_class, extra=extra)(
-        post_data or None,
-        prefix=prefix,
-        initial=initial_list,
-    )
 
 
 class FormDescriptor:

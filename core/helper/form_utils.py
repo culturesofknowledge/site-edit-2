@@ -4,10 +4,10 @@ from typing import Iterable, Type
 
 from django import forms
 from django.db.models import TextChoices, Choices, Model
-from django.forms import BoundField, CharField
+from django.forms import BoundField, CharField, Form, formset_factory
 from django.template.loader import render_to_string
 
-from core.helper import widgets_utils, data_utils, view_utils, recref_utils
+from core.helper import widgets_utils, data_utils, recref_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.models import Recref
 from person import person_utils
@@ -441,7 +441,7 @@ class MultiRelRecrefForm(forms.Form):
                 'recref_list': recref_list,
             })
 
-        formset = view_utils.create_formset(
+        formset = create_formset(
             cls, post_data=post_data, prefix=prefix,
             initial_list=initial_list,
             extra=0,
@@ -479,3 +479,42 @@ class LocationRecrefField(SelectedRecrefField):
 class InstRecrefField(SelectedRecrefField):
     def get_recref_name(self, target_id):
         return ManifInstRecrefAdapter().find_target_display_name_by_id(target_id)
+
+
+def build_search_components(sort_by_choices: list[tuple[str, str]], entity: str):
+    class SearchComponents(Form):
+        template_name = 'core/form/search_components.html'
+        sort_by = forms.CharField(label='Sort by',
+                                  widget=forms.Select(choices=sort_by_choices),
+                                  required=False, )
+
+        order = forms.CharField(label='Order',
+                                widget=forms.RadioSelect(choices=[
+                                    ('asc', 'Ascending'),
+                                    ('desc', 'Descending')
+                                ]),
+                                required=False)
+
+        num_record = forms.IntegerField(label=f'{entity} per page',
+                                        widget=forms.Select(choices=[
+                                            (10, 10),
+                                            (25, 25),
+                                            (50, 50),
+                                            (100, 100),
+                                        ]),
+                                        required=False, )
+        page = forms.IntegerField(widget=forms.HiddenInput())
+
+    return SearchComponents
+
+
+def create_formset(form_class, post_data=None, prefix=None,
+                   initial_list: Iterable[dict] = None,
+                   extra=1):
+    initial_list = initial_list or []
+    initial_list = list(initial_list)
+    return formset_factory(form_class, extra=extra)(
+        post_data or None,
+        prefix=prefix,
+        initial=initial_list,
+    )

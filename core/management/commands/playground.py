@@ -1,4 +1,3 @@
-import datetime
 import csv
 import datetime
 import inspect
@@ -11,7 +10,7 @@ from django.conf import settings
 from django.core.management import BaseCommand
 from django.db.models.manager import Manager
 
-from core.helper import email_utils, model_utils, view_utils, recref_utils
+from core.helper import email_utils, model_utils, view_utils, recref_utils, form_utils
 from core.helper.model_utils import ModelLike
 from location.models import CofkUnionLocation, CofkLocationCommentMap
 from person.models import CofkUnionPerson
@@ -539,7 +538,7 @@ def main6():
     #     # initial_list=model_utils.models_to_dict_list(comments_query_fn(rel_type))
     # )
     from core.forms import CommentForm
-    comment_formset = view_utils.create_formset(CommentForm,
+    comment_formset = form_utils.create_formset(CommentForm,
                                                 prefix='loc_comment',
                                                 initial_list=[], )
     breakpoint()

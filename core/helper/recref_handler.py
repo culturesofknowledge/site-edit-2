@@ -22,7 +22,7 @@ from core import constant as core_constant
 from core.forms import ImageForm, UploadImageForm, ResourceForm, RecrefForm
 from core.helper import recref_utils, model_utils, iter_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
-from core.helper.view_utils import create_formset
+from core.helper.form_utils import create_formset
 from core.models import Recref, CofkUnionImage, CofkUnionRoleCategory, CofkUnionSubject
 from core.services import media_service
 
