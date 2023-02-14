@@ -554,10 +554,15 @@ def find_all_recref_by_models(model_list):
 
 def get_recref_ref_name(related_field, recref) -> str:
     related_model = related_field.get_object(recref)
-    if isinstance(related_model, (CofkUnionComment, CofkUnionResource)):
+    if isinstance(related_model, CofkUnionComment):
         return '[{}] {}'.format(
             related_model.pk,
             general_model_utils.get_display_name(related_model)
+        )
+    elif isinstance(related_model, CofkUnionResource):
+        return '{} ({}) '.format(
+            general_model_utils.get_display_name(related_model),
+            related_model.resource_url,
         )
     else:
         return general_model_utils.get_display_name(related_model)
