@@ -17,12 +17,12 @@ from selenium.webdriver.support.select import Select
 import core.fixtures
 import location.fixtures
 import person.fixtures
-from core.constant import REL_TYPE_COMMENT_REFERS_TO
+from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_IS_RELATED_TO
 from core.helper import model_utils, recref_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.model_utils import ModelLike
 from core.helper.view_utils import BasicSearchView
-from core.models import CofkLookupCatalogue, CofkUnionComment
+from core.models import CofkLookupCatalogue, CofkUnionComment, CofkUnionResource
 from location.models import CofkUnionLocation
 from login.models import CofkUser
 from person.models import CofkUnionPerson
@@ -436,6 +436,13 @@ def add_comments_by_msgs(msgs: Iterable[str], parent, recref_form_adapter_class:
         _comment = CofkUnionComment(comment=comment_msg)
         _comment.save()
         recref_form_adapter_class(parent).upsert_recref(REL_TYPE_COMMENT_REFERS_TO, parent, _comment).save()
+
+
+def add_resources_by_msgs(msgs: Iterable[str], parent, recref_form_adapter_class: Type[RecrefFormAdapter]):
+    for comment_msg in msgs:
+        r = CofkUnionResource(resource_name=comment_msg, resource_url=comment_msg)
+        r.save()
+        recref_form_adapter_class(parent).upsert_recref(REL_TYPE_IS_RELATED_TO, parent, r).save()
 
 
 def cnt_recref(recref_class, instance: ModelLike):

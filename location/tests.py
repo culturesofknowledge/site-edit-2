@@ -1,14 +1,20 @@
+from typing import TYPE_CHECKING, Type
+
 from django.urls import reverse
 from selenium.webdriver.common.by import By
 
 import location.fixtures
 import location.fixtures
 from core.helper import model_utils
-from location.models import CofkUnionLocation, CofkLocationCommentMap
-from location.recref_adapter import LocationCommentRecrefAdapter
+from location.models import CofkUnionLocation, CofkLocationResourceMap
+from location.recref_adapter import LocationResourceRecrefAdapter
 from siteedit2.utils import test_utils
 from siteedit2.utils.test_utils import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
     CommentM2MTester, CommonSearchTests, LoginTestCase
+
+if TYPE_CHECKING:
+    from core.helper.common_recref_adapter import TargetResourceRecrefAdapter
+    from core.models import Recref
 
 
 class LocationFormTests(EmloSeleniumTestCase):
@@ -88,28 +94,36 @@ class LocationCommonSearchTests(EmloSeleniumTestCase, CommonSearchTests):
 
 
 class LocationMergeTests(LoginTestCase):
+    ResourceRecrefAdapter: Type['TargetResourceRecrefAdapter'] = LocationResourceRecrefAdapter
+    RecrefResourceMap: Type['Recref'] = CofkLocationResourceMap
+    app_name = 'location'
+
+    @property
+    def create_obj_fn(self):
+        return location.fixtures.create_location_a
 
     def test_merge_action(self):
-        loc_a = location.fixtures.create_location_a()
+        loc_a = self.create_obj_fn()
         loc_a.save()
 
-        other_models = [location.fixtures.create_location_a() for _ in range(2)]
-        comment_msg_list = ['aaaaa', 'bbbb', 'ccc']
+        other_models = [self.create_obj_fn() for _ in range(2)]
+        resource_msg_list = ['aaaaa', 'bbbb', 'ccc']
         for m in other_models:
             m.save()
-            test_utils.add_comments_by_msgs(comment_msg_list, m, LocationCommentRecrefAdapter)
+            test_utils.add_resources_by_msgs(resource_msg_list, m, self.ResourceRecrefAdapter)
 
         # test response
-        self.assertEqual(test_utils.cnt_recref(CofkLocationCommentMap, loc_a), 0)
-        response = self.client.post(reverse('location:merge_action'), data={
+        self.assertEqual(test_utils.cnt_recref(self.RecrefResourceMap, loc_a), 0)
+        response = self.client.post(reverse(f'{self.app_name}:merge_action'), data={
             'selected_pk': loc_a.pk,
-            'merge_pk': [m.pk for m in other_models]
+            'merge_pk': [m.pk for m in other_models],
+            'action_type': 'confirm',
         })
         print(response)
-        self.assertEqual(test_utils.cnt_recref(CofkLocationCommentMap, loc_a),
-                         len(other_models) * len(comment_msg_list))
+        self.assertEqual(test_utils.cnt_recref(self.RecrefResourceMap, loc_a),
+                         len(other_models) * len(resource_msg_list))
 
         self.assertTrue(not any(
-            CofkUnionLocation.objects.filter(pk=m.pk).exists()
+            m._meta.model.objects.filter(pk=m.pk).exists()
             for m in other_models
         ))
