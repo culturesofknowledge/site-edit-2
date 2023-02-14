@@ -195,7 +195,7 @@ class InstMergeChoiceView(LoginRequiredMixin, MergeChoiceViews):
         return CofkUnionInstitution.institution_id
 
     @property
-    def action_vname(self):
+    def confirm_vname(self):
         return 'institution:merge_confirm'
 
     def to_context_list(self, merge_id_list: list[str]) -> Iterable['MergeChoiceContext']:

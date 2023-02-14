@@ -146,7 +146,7 @@ class LocationMergeChoiceView(LoginRequiredMixin, MergeChoiceViews):
         return CofkUnionLocation.location_id
 
     @property
-    def action_vname(self):
+    def confirm_vname(self):
         return 'location:merge_confirm'
 
     def to_context_list(self, merge_id_list: list[str]) -> Iterable['MergeChoiceContext']:

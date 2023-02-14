@@ -477,7 +477,7 @@ class MergeChoiceViews(View):
         raise NotImplementedError()
 
     @property
-    def action_vname(self):  # KTODO rename confirm_vname
+    def confirm_vname(self):  # KTODO rename confirm_vname
         raise NotImplementedError()
 
     @staticmethod
@@ -488,7 +488,7 @@ class MergeChoiceViews(View):
         id_list = request.GET.getlist('__merge_id')
         return render(request, 'core/merge_choice.html', {
             'choice_list': self.to_context_list(id_list),
-            'merge_action_url': reverse(self.action_vname),
+            'merge_action_url': reverse(self.confirm_vname),
         })
 
     @staticmethod

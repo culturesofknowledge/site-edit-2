@@ -505,7 +505,7 @@ class PersonImageRecrefHandler(ImageRecrefHandler):
 
 class PersonMergeChoiceView(LoginRequiredMixin, MergeChoiceViews):
     @property
-    def action_vname(self):
+    def confirm_vname(self):
         return 'person:merge_confirm'
 
     def to_context_list(self, merge_id_list: list[str]) -> Iterable['MergeChoiceContext']:
