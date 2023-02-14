@@ -120,3 +120,24 @@ def render_queryable_images(values: str):
         html += f'<a href="{img[1]}" target="_blank"><img src="{img[1]}" class="search_result_img"></a>'
 
     return mark_safe(html)
+
+@register.filter
+def other_details(work: CofkUnionQueryableWork):
+    _other_details = []
+
+    if work.abstract:
+        _other_details.append(f'<strong>Abstract</strong>: {work.abstract}')
+
+    if work.language_of_work:
+        if len(work.language_of_work.split(',')) > 1:
+            _other_details.append(f'<strong>Languages</strong>: {work.language_of_work}')
+        else:
+            _other_details.append(f'<strong>Language</strong>: {work.language_of_work}')
+
+    if work.general_notes:
+        _other_details.append(f'<strong>Notes</strong>: {work.general_notes}')
+
+    if work.people_mentioned:
+        _other_details.append(f'<strong>People mentioned</strong>: {work.people_mentioned}')
+
+    return mark_safe('<br/><br/>'.join(_other_details))
