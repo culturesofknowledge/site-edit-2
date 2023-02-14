@@ -13,7 +13,7 @@
 
             <h1>Others</h1>
             {% for m in others %}
-                {% include "core/component/merge_box.html" with merge_context=selected no_details=True %}
+                {% include "core/component/merge_box.html" with merge_context=m no_details=True %}
                 <input type="hidden" name="merge_pk" value="{{ m.model_pk }}">
             {% endfor %}
         </div>
