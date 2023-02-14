@@ -59,6 +59,10 @@
                 {% endif %}
             </td>
             <td>
+                 {% if r.work_to_be_deleted|is_general_true %}
+                    {% include 'work/component/delete.html' %}
+                {% endif %}
+
                 {% include 'work/component/exclamation.html' with work=r %}
             </td>
             <td>
