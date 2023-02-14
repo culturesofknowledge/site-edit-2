@@ -3,11 +3,11 @@
 
 {% block head %}
     <script>
-    $(function (){
-        $('.merge-items').click(function (e){
-            $(e.target).closest('.merge-items').parent().find('input[type=radio]').click()
-        })
-    });
+        $(function () {
+            $('.merge-items').click(function (e) {
+                $(e.target).closest('.merge-items').parent().find('input[type=radio]').click()
+            });
+        });
     </script>
 {% endblock %}
 
@@ -37,8 +37,11 @@
                 </div>
             {% endfor %}
         </div>
-        <div class="sticky-bottom">
-            <input type="submit" value="Submit"/>
+
+        <div class="sticky-bottom row-no-margin actionbox">
+            <a class="cancel" href="{{ return_url }}"> Cancel </a>
+            <button class="save" name="action_type" value="confirm">Submit</button>
         </div>
+
     </form>
 {% endblock %}

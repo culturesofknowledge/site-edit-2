@@ -504,9 +504,6 @@ class PersonImageRecrefHandler(ImageRecrefHandler):
 
 
 class PersonMergeChoiceView(LoginRequiredMixin, MergeChoiceViews):
-    @property
-    def confirm_vname(self):
-        return 'person:merge_confirm'
 
     def to_context_list(self, merge_id_list: list[str]) -> Iterable['MergeChoiceContext']:
         return self.create_merge_choice_context_by_id_field(self.get_id_field(), merge_id_list)
@@ -521,23 +518,11 @@ class PersonMergeConfirmView(LoginRequiredMixin, MergeConfirmViews):
     def target_model_class(self) -> Type[ModelLike]:
         return CofkUnionPerson
 
-    @property
-    def action_vname(self) -> str:
-        return 'person:merge_action'
-
 
 class PersonMergeActionView(LoginRequiredMixin, MergeActionViews):
-    @property
-    def choice_vname(self) -> str:
-        return 'person:merge'
-
     @staticmethod
     def get_id_field():
         return PersonMergeChoiceView.get_id_field()
-
-    @property
-    def return_vname(self) -> str:
-        return 'person:search'
 
     @property
     def target_model_class(self) -> Type[ModelLike]:

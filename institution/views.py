@@ -194,10 +194,6 @@ class InstMergeChoiceView(LoginRequiredMixin, MergeChoiceViews):
     def get_id_field():
         return CofkUnionInstitution.institution_id
 
-    @property
-    def confirm_vname(self):
-        return 'institution:merge_confirm'
-
     def to_context_list(self, merge_id_list: list[str]) -> Iterable['MergeChoiceContext']:
         return self.create_merge_choice_context_by_id_field(self.get_id_field(), merge_id_list)
 
@@ -207,23 +203,12 @@ class InstMergeConfirmView(LoginRequiredMixin, MergeConfirmViews):
     def target_model_class(self) -> Type[ModelLike]:
         return CofkUnionInstitution
 
-    @property
-    def action_vname(self) -> str:
-        return 'institution:merge_action'
-
 
 class InstMergeActionView(LoginRequiredMixin, MergeActionViews):
-    @property
-    def choice_vname(self) -> str:
-        return 'institution:merge'
 
     @staticmethod
     def get_id_field():
         return InstMergeChoiceView.get_id_field()
-
-    @property
-    def return_vname(self) -> str:
-        return 'institution:search'
 
     @property
     def target_model_class(self) -> Type[ModelLike]:

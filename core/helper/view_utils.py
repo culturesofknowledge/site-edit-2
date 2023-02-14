@@ -476,10 +476,6 @@ class MergeChoiceViews(View):
     def to_context_list(self, merge_id_list: list[str]) -> Iterable['MergeChoiceContext']:
         raise NotImplementedError()
 
-    @property
-    def confirm_vname(self):  # KTODO rename confirm_vname
-        raise NotImplementedError()
-
     @staticmethod
     def get_id_field():
         raise NotImplementedError()
@@ -488,7 +484,8 @@ class MergeChoiceViews(View):
         id_list = request.GET.getlist('__merge_id')
         return render(request, 'core/merge_choice.html', {
             'choice_list': self.to_context_list(id_list),
-            'merge_action_url': reverse(self.confirm_vname),
+            'merge_action_url': url_utils.reverse_url_by_request(url_utils.VNAME_MERGE_CONFIRM, request),
+            'return_url': url_utils.reverse_url_by_request(url_utils.VNAME_SEARCH, request),
         })
 
     @staticmethod
@@ -597,32 +594,18 @@ class MergeConfirmViews(View):
     def target_model_class(self) -> Type[ModelLike]:
         raise NotImplementedError()
 
-    @property
-    def action_vname(self) -> str:
-        raise NotImplementedError()
-
     def post(self, request, *args, **kwargs):
         selected_model, other_models = load_merge_parameter(request.POST, self.target_model_class)
         return render(request, 'core/merge_confirm.html', {
             'selected': MergeChoiceViews.create_merge_choice_context(selected_model),
             'others': (MergeChoiceViews.create_merge_choice_context(m) for m in other_models),
-            'merge_action_url': reverse(self.action_vname),
+            'merge_action_url': url_utils.reverse_url_by_request(url_utils.VNAME_MERGE_ACTION, request),
         })
 
 
 class MergeActionViews(View):
     @property
     def target_model_class(self) -> Type[ModelLike]:
-        raise NotImplementedError()
-
-    @property
-    def return_vname(self) -> str:
-        """ vname for return button """
-        raise NotImplementedError()
-
-    @property
-    def choice_vname(self) -> str:
-        """ vname for choice button """
         raise NotImplementedError()
 
     @staticmethod
@@ -688,7 +671,9 @@ class MergeActionViews(View):
                 ('__merge_id', self.get_id_field().field.value_from_object(m))
                 for m in [selected_model] + list(other_models)
             ]
-            url = url_utils.build_url_query(self.choice_vname, query)
+            url = url_utils.build_url_query(
+                url_utils.reverse_url_by_request(url_utils.VNAME_MERGE_CHOICE, request),
+                query)
             return redirect(url)
 
         try:
@@ -706,7 +691,7 @@ class MergeActionViews(View):
 
         return render(request, 'core/merge_report.html', {
             'summary': results.items(),
-            'return_vname': self.return_vname,
+            'return_url': url_utils.reverse_url_by_request(url_utils.VNAME_SEARCH, request),
             'name': general_model_utils.get_display_name(selected_model),
         })
 

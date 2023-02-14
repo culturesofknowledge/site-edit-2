@@ -145,10 +145,6 @@ class LocationMergeChoiceView(LoginRequiredMixin, MergeChoiceViews):
     def get_id_field():
         return CofkUnionLocation.location_id
 
-    @property
-    def confirm_vname(self):
-        return 'location:merge_confirm'
-
     def to_context_list(self, merge_id_list: list[str]) -> Iterable['MergeChoiceContext']:
         return self.create_merge_choice_context_by_id_field(self.get_id_field(), merge_id_list)
 
@@ -158,23 +154,11 @@ class LocationMergeConfirmView(LoginRequiredMixin, MergeConfirmViews):
     def target_model_class(self) -> Type[ModelLike]:
         return CofkUnionLocation
 
-    @property
-    def action_vname(self) -> str:
-        return 'location:merge_action'
-
 
 class LocationMergeActionView(LoginRequiredMixin, MergeActionViews):
     @staticmethod
     def get_id_field():
         return LocationMergeChoiceView.get_id_field()
-
-    @property
-    def choice_vname(self) -> str:
-        return 'location:merge'
-
-    @property
-    def return_vname(self) -> str:
-        return 'location:search'
 
     @property
     def target_model_class(self) -> Type[ModelLike]:
