@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import Iterable, Type, Any
+from typing import Iterable, Type, Any, TYPE_CHECKING
 
 from django.conf import settings
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
@@ -28,6 +28,11 @@ from login.models import CofkUser
 from person.models import CofkUnionPerson
 from work.fixtures import work_dict_a
 from work.models import CofkUnionWork
+
+if TYPE_CHECKING:
+    from core.helper.common_recref_adapter import TargetResourceRecrefAdapter
+    from core.models import Recref
+    from django.views import View
 
 log = logging.getLogger(__name__)
 
@@ -462,3 +467,11 @@ class LoginTestCase(TestCase):
             'username': self.login_user.username,
             'password': self.login_user.raw_password,
         }, follow=True)
+
+
+class MergeTests(LoginTestCase):
+    ResourceRecrefAdapter: Type['TargetResourceRecrefAdapter'] = None
+    RecrefResourceMap: Type['Recref'] = None
+    ChoiceView: Type['View'] = None
+    app_name: str = None
+    resource_msg_list = ['aaaaa', 'bbbb', 'ccc']
