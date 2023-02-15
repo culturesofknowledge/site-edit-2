@@ -1,12 +1,15 @@
 from selenium.webdriver.common.by import By
 
 import person.fixtures
+import person.fixtures
 from core import constant
 from core.helper import selenium_utils, model_utils
-from person.models import CofkUnionPerson
+from person.models import CofkUnionPerson, CofkPersonResourceMap
+from person.recref_adapter import PersonResourceRecrefAdapter
+from person.views import PersonMergeChoiceView
 from siteedit2.utils import test_utils
 from siteedit2.utils.test_utils import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
-    CommentM2MTester, CommonSearchTests
+    CommentM2MTester, CommonSearchTests, MergeTests
 
 
 class PersonFormTest(EmloSeleniumTestCase):
@@ -119,3 +122,14 @@ class PersonCommonSearchTests(EmloSeleniumTestCase, CommonSearchTests):
                              str(target_record.iperson_id))
 
         self._test_search__search_unique(_fill, _check)
+
+
+class PersonMergeTests(MergeTests):
+    ResourceRecrefAdapter = PersonResourceRecrefAdapter
+    RecrefResourceMap = CofkPersonResourceMap
+    ChoiceView = PersonMergeChoiceView
+    app_name = 'person'
+
+    @property
+    def create_obj_fn(self):
+        return person.fixtures.create_person_obj

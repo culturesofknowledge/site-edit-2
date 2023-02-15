@@ -1,5 +1,6 @@
 import logging
 import re
+import unittest
 from typing import Iterable, Type, Any, TYPE_CHECKING, Callable
 
 import bs4
@@ -476,6 +477,11 @@ class MergeTests(LoginTestCase):
     ChoiceView: Type['View'] = None
     app_name: str = None
     resource_msg_list = ['aaaaa', 'bbbb', 'ccc']
+
+    def setUp(self) -> None:
+        if type(self) is MergeTests:
+            raise unittest.SkipTest("MergeTests is an abstract class and should not be run directly")
+        super().setUp()
 
     @property
     def create_obj_fn(self) -> Callable:

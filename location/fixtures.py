@@ -30,6 +30,5 @@ location_dict_b = dict(
 )
 
 
-
 def create_location_a():
     return CofkUnionLocation(**location_dict_a)
