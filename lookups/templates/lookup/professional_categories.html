@@ -1,0 +1,65 @@
+{% extends "core/emlo_logined.html" %}
+{% load cl_filters %}
+{% block content %}
+    <h1>Professional Category List</h1>
+
+    {% include "core/component/messages.html" %}
+
+    <p>A professional category can only be deleted if it has no works associated with it, in
+        which case a delete button is displayed alongside the save button.</p>
+    <p>If any people are associated with a catalogue the number of people is displayed that links to search
+        results for all people of that professional category..</p>
+
+        <fieldset class="lookup_fieldset">
+        <legend>Add new professional category</legend>
+        <form method="post">
+            {% csrf_token %}
+
+            {{ form.role_category_desc.label_tag }}
+            {{ form.role_category_desc }}
+
+            <input type="submit" class="btn" value="Add" name="add">
+        </form>
+    </fieldset>
+
+    <div class="result_count">
+        <h2>{{ page_obj|get_results_on_page }} out of {{ paginator.count | floatformat:'g' }} roles</h2>
+    </div>
+
+    <!-- Upper pagination -->
+
+    {% include 'core/component/pagination.html' %}
+
+    {% for c in object_list %}
+        <fieldset class="lookup_fieldset">
+            <legend>{{ c.role_category_desc }} ({{ c.pk }})</legend>
+            <form method="post" onsubmit="console.log(typeof(this)); return false;">
+                {% csrf_token %}
+
+                <label for="id_catalogue_name_{{ c.pk }}">Description:</label>
+                <input type="text" value="{{ c.catalogue_name }}" name="catalogue_name"
+                 id="id_catalogue_name_{{ c.pk }}">
+
+                <input type="hidden" name="catalogue_id" value="{{ c.catalogue_id }}">
+
+                {% if c.person_count > 0 %}
+                <label>Number of works:&nbsp;</label><a href="{% url 'person:search' %}?&original_catalogue_lookup=equals&original_catalogue={{ c.catalogue_name|urlencode }}">{{ c.person_count }}</a><br/>
+                <input type="submit" class="btn" value="Save" name="save">
+                {% else %}
+                <input type="submit" class="btn inline_btn" value="Save" name="save">
+                <input type="submit" class="btn inline_btn" value="Delete" name="delete">
+
+                {% endif %}
+
+            </form>
+
+            <a href="#top">Top of page</a>
+
+      </fieldset>
+    {% endfor %}
+
+    <!-- Lower pagination -->
+
+    {% include 'core/component/pagination.html' %}
+
+{% endblock %}

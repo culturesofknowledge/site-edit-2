@@ -227,7 +227,8 @@ class BasicSearchView(ListView):
                         'results_renderer': results_renderer(self.get_search_results_context(context)),
                         'is_compact_layout': is_compact_layout,
                         'to_user_messages': getattr(self, 'to_user_messages', []),
-                        'simplified_query': self.simplified_query
+                        'simplified_query': self.simplified_query,
+                        'paginate_by': self.paginate_by
                         })
         if self.merge_page_vname:
             context['merge_page_url'] = reverse(self.merge_page_vname)

@@ -18,6 +18,12 @@ def is_general_true(value):
 def get_elided_page_range(page: Page, on_each_side=8, on_ends=4):
     return page.paginator.get_elided_page_range(number=page.number, on_each_side=on_each_side, on_ends=on_ends)
 
+@register.filter
+def get_results_on_page(page: Page) -> str:
+    start = (1 + (page.number - 1) * page.paginator.per_page)
+    end = min(page.paginator.per_page * page.number, page.paginator.count)
+    return f'{start:,}–{end:,}'
+
 
 @register.filter
 def add_classes(value, arg):

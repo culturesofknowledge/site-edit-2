@@ -77,6 +77,8 @@ class CofkUnionPerson(models.Model, RecordTracker):
                                       through='CofkPersonCommentMap')
     works = models.ManyToManyField(to='work.CofkUnionWork',
                                    through='work.CofkWorkPersonMap')
+    roles = models.ManyToManyField(to='core.CofkUnionRoleCategory',
+                                   through='CofkPersonRoleMap', related_name='person')
 
     @property
     def names_and_roles(self):

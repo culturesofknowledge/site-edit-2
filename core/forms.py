@@ -6,7 +6,7 @@ from django.urls import reverse
 from core.helper import form_utils, model_utils
 from core.helper import widgets_utils
 from core.helper.form_utils import CommonTextareaField, ZeroOneCheckboxField
-from core.models import CofkUnionComment, CofkUnionResource, CofkUnionImage
+from core.models import CofkUnionComment, CofkUnionResource, CofkUnionImage, CofkLookupCatalogue, CofkUnionRoleCategory
 from manifestation.models import CofkUnionManifestation
 from person import person_utils
 from work import work_utils
@@ -148,3 +148,22 @@ class ImageForm(ModelForm):
 
 class UploadImageForm(Form):
     selected_image = forms.ImageField(required=False)
+
+
+class CatalogueForm(ModelForm):
+    catalogue_name = forms.CharField(label="Description")
+    catalogue_code = forms.CharField(label="Code")
+    publish_status = form_utils.ZeroOneCheckboxField(required=False, label='Publish', initial='1', )
+
+    class Meta:
+        model = CofkLookupCatalogue
+        fields = '__all__'
+        # exclude = ['is_in_union']
+
+class RoleForm(ModelForm):
+    role_category_desc = forms.CharField(label="Description")
+
+    class Meta:
+        model = CofkUnionRoleCategory
+        fields = '__all__'
+        # exclude = ['is_in_union']
