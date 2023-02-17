@@ -84,7 +84,8 @@ class BasicSearchView(ListView):
 
             if (field_val is not None and field_val != '') or (
                     field_name in self.request_data and 'blank' in self.request_data.get(f'{field_name}_lookup')):
-                label_name = self.search_field_label_map[field_name]
+                label_name = self.search_field_label_map[field_name] if field_name in self.search_field_label_map\
+                    else field_name.replace('_', ' ').capitalize()
                 lookup_key = self.request_data.get(f'{field_name}_lookup').replace('_', ' ')
 
                 if 'blank' in lookup_key:

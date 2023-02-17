@@ -42,11 +42,13 @@
           return matcher.test( value ) || matcher.test( normalize( value ) );
         }) );
       },
+      minLength: 0,
       appendTo: '#query-fieldset'
     });
 
-  $( "#id_subjects" ).autocomplete({
+    $( "#id_subjects" ).autocomplete({
       source: subjects_autocomplete,
+      minLength: 0,
       appendTo: '#query-fieldset'
     });
 
@@ -58,7 +60,21 @@
           return matcher.test( value ) || matcher.test( normalize( value ) );
         }) );
       },
+      minLength: 0,
       appendTo: '#query-fieldset'
+    });
+
+    // Search all values on select
+    $( "#id_original_catalogue" ).on("click", function()    {
+        $(this).autocomplete('search', '');
+    });
+
+    $( "#id_manifestations_searchable" ).on("click", function()    {
+        $(this).catcomplete('search', '');
+    });
+
+    $( "#id_subjects" ).on("click", function()    {
+        $(this).autocomplete('search', '');
     });
 
   } );
