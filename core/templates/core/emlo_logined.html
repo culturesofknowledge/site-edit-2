@@ -14,6 +14,24 @@
             {% include "core/component/common_section_menu_item.html" with search_vname='location:search' init_vname='location:init_form' section_name='Locations' singular='location' %}
             {% include "core/component/common_section_menu_item.html" with search_vname='institution:search' init_vname='institution:init_form' section_name='Repositories' singular='repository'  %}
             {% include "core/component/common_section_menu_item.html" with search_vname='publication:search' init_vname='publication:init_form' section_name='Publications' singular='publication' %}
+
+            <li class="menu-item">
+                <a href="">Lists</a>
+                <ul class='unstyled-list no-margin menu-subitem'>
+                    <a href="{% url 'lookups:roles' %}">
+                        <li>Roles</li>
+                    </a>
+                    <a href="{% url 'lookups:catalogues' %}">
+                        <li>Catalogues</li>
+                    </a>
+                    <a href="{% url 'lookups:subjects' %}">
+                        <li>Subjects</li>
+                    </a>
+                    <a href="{% url 'lookups:orgtypes' %}">
+                        <li>Org. types</li>
+                    </a>
+                </ul>
+            </li>
         </ul>
         <ul class="no-margin">
             <li class="menu-item">

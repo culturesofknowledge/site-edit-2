@@ -1,0 +1,70 @@
+{% extends "core/emlo_logined.html" %}
+{% load cl_filters %}
+{% block content %}
+    <h1>Organisation Types List</h1>
+
+    {% include "core/component/messages.html" %}
+
+    <p>An organisation type can only be deleted if no organisations are associated with it, in
+        which case a delete button is displayed alongside the save button.</p>
+    <p>If any organisations are of that type the number of such organisations is displayed that links to search
+        results for all organisations of that type.</p>
+
+        <fieldset class="lookup_fieldset">
+        <legend>Add new organisation type</legend>
+        <form method="post">
+            {% csrf_token %}
+
+            {{ form.org_type_desc.label_tag }}
+            {{ form.org_type_desc }}
+
+            <input type="submit" class="btn" value="Add" name="add">
+        </form>
+    </fieldset>
+
+    {% if paginator.count > 20 %}
+    <div class="result_count">
+        <h2>{{ page_obj|get_results_on_page }} out of {{ paginator.count | floatformat:'g' }} organisation types</h2>
+    </div>
+    {% endif %}
+
+
+    <!-- Upper pagination -->
+
+    {% include 'core/component/pagination.html' %}
+
+    {% for c in object_list %}
+        <fieldset class="lookup_fieldset">
+            <legend>{{ c.org_type_desc }} ({{ c.pk }})</legend>
+            <form method="post" class="edit_forms">
+                {% csrf_token %}
+
+                <label for="id_org_type_desc_{{ c.pk }}">Description:</label>
+                <input type="text" value="{{ c.org_type_desc }}" name="org_type_desc"
+                 id="id_org_type_desc_{{ c.pk }}">
+
+                <input type="hidden" name="org_type_id" value="{{ c.pk }}">
+
+                {% if c.person_count > 0 %}
+                <label>Number of organisations:&nbsp;</label><a href="{% url 'person:search' %}?&organisation_type_lookup=equals&organisation_type={{ c.org_type_desc|urlencode }}" target="_blank">{{ c.person_count }}</a><br/>
+                <input type="submit" class="btn" value="Save" name="save">
+                {% else %}
+                <input type="submit" class="btn inline_btn" value="Save" name="save">
+                <input type="submit" class="btn inline_btn" value="Delete" name="delete">
+
+                {% endif %}
+
+            </form>
+
+            <a href="#top">Top of page</a>
+
+      </fieldset>
+    {% endfor %}
+
+    <!-- Lower pagination -->
+
+    {% include 'core/component/pagination.html' %}
+
+    {% include 'lookup/confirm_delete.html' %}
+
+{% endblock %}

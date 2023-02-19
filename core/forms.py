@@ -6,7 +6,8 @@ from django.urls import reverse
 from core.helper import form_utils, model_utils
 from core.helper import widgets_utils
 from core.helper.form_utils import CommonTextareaField, ZeroOneCheckboxField
-from core.models import CofkUnionComment, CofkUnionResource, CofkUnionImage, CofkLookupCatalogue, CofkUnionRoleCategory
+from core.models import CofkUnionComment, CofkUnionResource, CofkUnionImage, CofkLookupCatalogue, CofkUnionRoleCategory, \
+    CofkUnionSubject, CofkUnionOrgType
 from manifestation.models import CofkUnionManifestation
 from person import person_utils
 from work import work_utils
@@ -158,7 +159,6 @@ class CatalogueForm(ModelForm):
     class Meta:
         model = CofkLookupCatalogue
         fields = '__all__'
-        # exclude = ['is_in_union']
 
 class RoleForm(ModelForm):
     role_category_desc = forms.CharField(label="Description")
@@ -166,4 +166,17 @@ class RoleForm(ModelForm):
     class Meta:
         model = CofkUnionRoleCategory
         fields = '__all__'
-        # exclude = ['is_in_union']
+
+class SubjectForm(ModelForm):
+    subject_desc = forms.CharField(label="Description")
+
+    class Meta:
+        model = CofkUnionSubject
+        fields = '__all__'
+
+class OrgTypeForm(ModelForm):
+    org_type_desc = forms.CharField(label="Description")
+
+    class Meta:
+        model = CofkUnionOrgType
+        fields = '__all__'

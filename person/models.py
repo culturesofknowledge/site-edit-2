@@ -1,10 +1,15 @@
 import functools
+import logging
 
 from django.db import models
+from django.utils.safestring import mark_safe
 
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 from core.models import Recref
+
+
+log = logging.getLogger(__name__)
 
 SEQ_NAME_COFKUNIONPERSION__IPERSON_ID = 'cofk_union_person_iperson_id_seq'
 
@@ -12,9 +17,9 @@ SEQ_NAME_COFKUNIONPERSION__IPERSON_ID = 'cofk_union_person_iperson_id_seq'
 class CofkUnionPerson(models.Model, RecordTracker):
     person_id = models.CharField(primary_key=True, max_length=100)
     foaf_name = models.CharField(max_length=200)
-    skos_altlabel = models.TextField(blank=True, null=True)
-    skos_hiddenlabel = models.TextField(blank=True, null=True)
-    person_aliases = models.TextField(blank=True, null=True)
+    skos_altlabel = models.TextField(blank=True, null=True) # Synonyms
+    skos_hiddenlabel = models.TextField(blank=True, null=True) # 'Other versions of name'
+    person_aliases = models.TextField(blank=True, null=True) # Difference between synonyms and aliases?
     date_of_birth_year = models.IntegerField(blank=True, null=True)
     date_of_birth_month = models.IntegerField(blank=True, null=True)
     date_of_birth_day = models.IntegerField(blank=True, null=True)
@@ -42,7 +47,7 @@ class CofkUnionPerson(models.Model, RecordTracker):
     editors_notes = models.TextField(blank=True, null=True)
     further_reading = models.TextField(blank=True, null=True)
     organisation_type = models.ForeignKey('core.CofkUnionOrgType', models.DO_NOTHING, db_column='organisation_type',
-                                          blank=True, null=True)
+                                          blank=True, null=True, related_name='person')
     date_of_birth_calendar = models.CharField(max_length=2)
     date_of_birth_is_range = models.SmallIntegerField(default=0)
     date_of_birth2_year = models.IntegerField(blank=True, null=True)
@@ -79,22 +84,26 @@ class CofkUnionPerson(models.Model, RecordTracker):
                                    through='work.CofkWorkPersonMap')
     roles = models.ManyToManyField(to='core.CofkUnionRoleCategory',
                                    through='CofkPersonRoleMap', related_name='person')
+    #related_people = models.ManyToManyField(to='CofkUnionPerson',
+    #                                        through='CofkPersonPersonMap',
+    #                                        through_fields=('person', 'related'))
 
     @property
     def names_and_roles(self):
         # Adapted from public.cofk_union_person_view
-        names_and_roles = self.foaf_name
+        names_and_roles = f'<p>{self.foaf_name}</p>'
 
         if self.skos_altlabel:
-            names_and_roles += f' ~ Synonyms: {self.skos_altlabel}'
+            names_and_roles += f'<p>~ Synonyms: {self.skos_altlabel}</p>'
 
         if self.person_aliases:
-            names_and_roles += f' ~ Titles/roles: {self.person_aliases}'
+            names_and_roles += f'<p>~ Titles/roles: {self.person_aliases}</p>'
 
-        if self.summary.role_categories:
-            names_and_roles += f' ~ Role types: {self.summary.role_categories}'
+        if (roles :=self.roles.all()).exists():
+            roles = ', '.join([r.role_category_desc for r in roles])
+            names_and_roles += f'<p>~ Role types: {roles}</p>'
 
-        return names_and_roles
+        return mark_safe(names_and_roles)
 
     def to_string(self):
         """
@@ -173,7 +182,7 @@ class CofkPersonRoleMap(Recref):
     class Meta(Recref.Meta):
         db_table = 'cofk_person_role_map'
 
-
+'''
 class CofkUnionPersonSummary(models.Model):
     iperson = models.OneToOneField(CofkUnionPerson, models.CASCADE,
                                    primary_key=True, related_name='summary', to_field='iperson_id')
@@ -188,7 +197,7 @@ class CofkUnionPersonSummary(models.Model):
 
     class Meta:
         db_table = 'cofk_union_person_summary'
-
+'''
 
 def create_person_id(iperson_id) -> str:
     return f'cofk_union_person-iperson_id:{iperson_id}'

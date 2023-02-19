@@ -4,126 +4,177 @@ from django.contrib import messages
 from django.db.models import Count
 from django.views.generic import ListView
 
-from core.forms import CatalogueForm, RoleForm
-from core.models import CofkLookupCatalogue, CofkUnionRoleCategory
+from core.forms import CatalogueForm, RoleForm, SubjectForm, OrgTypeForm
+from core.models import CofkLookupCatalogue, CofkUnionRoleCategory, CofkUnionSubject, CofkUnionOrgType
 
 log = logging.getLogger(__name__)
 
 
-class RoleListView(ListView):
-    model = CofkUnionRoleCategory
+class CofkListView(ListView):
     paginate_by = 100
-    template_name = 'lookup/professional_categories.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Form to create new catalogue
-        context['form'] = RoleForm()
+        # Form to create new list object
+        context['form'] = self.form
         return context
 
     def get_queryset(self):
-        return CofkUnionRoleCategory.objects.annotate(person_count=Count('person')).order_by('role_category_desc').all()
+        # When a group by is used, as with annotate, the default ordering is ignored.
+        # see https://docs.djangoproject.com/en/dev/releases/2.2/#features-deprecated-in-2-2
+        # The ordering will be done by the first of the fields to be updated.
+        return self.model.objects\
+            .annotate(**{f'{self.count}_count': Count(self.count)}).order_by(self.updated_fields[0]).all()
+
+    def get_obj_by_id(self):
+        if self.model._meta.pk.name in self.request.POST:
+            return self.model.objects.filter(pk=self.request.POST[self.model._meta.pk.name]).first()
 
     def post(self, request, *args, **kwargs):
         log.info(self.request.POST)
         if 'delete' in self.request.POST:
-            role = CofkUnionRoleCategory.objects.filter(pk=self.request.POST['role_category_id']).first()
+            list_obj = self.get_obj_by_id()
 
-            if role and role.works.count() == 0:
-                msg = f'Successfully deleted role {role.role_category_desc}" ({role.role_category_id})'
-                role.delete()
+            if list_obj and getattr(list_obj, self.count).count() == 0:
+                msg = f'Successfully deleted {self.list_type}' \
+                      f' "{getattr(list_obj, self.updated_fields[0])}" ({list_obj.pk})'
+                list_obj.delete()
                 messages.success(request, msg)
         elif 'save' in self.request.POST:
             # Update
-            role = CofkUnionRoleCategory.objects.filter(pk=self.request.POST['role_category_id']).first()
-            role.role_category_desc = self.request.POST['role_category_desc']
-            role.save()
+            list_obj = self.get_obj_by_id()
 
-            messages.success(request, f'Successfully updated role "'
-                                      f'{role.role_category_desc}" ({role.role_category_id})')
+            if list_obj:
+                for attr in self.updated_fields:
+                    setattr(list_obj, attr, self.request.POST[attr] if attr in self.request.POST else 0)
+                list_obj.save()
+
+                messages.success(request, f'Successfully updated {self.list_type}'
+                                          f' "{getattr(list_obj, self.updated_fields[0])}"({list_obj.pk})')
         elif 'add' in self.request.POST:
-            cat_form = CatalogueForm(self.request.POST)
+            list_form = self.form(self.request.POST)
 
-            # Create new catalogue
-            if cat_form.is_valid():
-                saved = cat_form.save()
-                messages.success(request, f'Successfully created new role "'
-                                          f'{saved.role_category_desc}" ({saved.role_category_id})')
+            # Create new list object
+            if list_form.is_valid():
+                list_obj = list_form.save()
+                messages.success(request, f'Successfully created new {self.list_type}'
+                                          f' "{getattr(list_obj, self.updated_fields[0])}"({list_obj.pk})')
 
             else:
-                errors = cat_form.errors.as_data()
+                errors = list_form.errors.as_data()
                 for error_field in errors:
                     for field_error in errors[error_field]:
                         if field_error.code == 'unique':
-                            messages.error(request, f'A catalogue with the {cat_form.fields[error_field].label}'
-                                                    f' "{cat_form.data[error_field]}" already exists.')
+                            messages.error(request, f'A {self.list_type} with the {list_form.fields[error_field].label}'
+                                                    f' "{list_form.data[error_field]}" already exists.')
                         elif field_error.code == 'max_length':
                             limit_value = field_error.params['limit_value']
                             show_value = field_error.params['show_value']
                             messages.error(request,
-                                           f'{cat_form.fields[error_field].label} can at most have {limit_value}'
+                                           f'{list_form.fields[error_field].label} can at most have {limit_value}'
                                            f' characters but has {show_value}.')
                         else:
-                            messages.error(request, 'Error creating catalogue.')
+                            messages.error(request, f'Error creating {self.list_type}.')
 
         return super().get(self, request, *args, **kwargs)
 
+    @property
+    def form(self):
+        raise NotImplementedError
 
-class CatalogueListView(ListView):
+    @property
+    def count(self):
+        raise NotImplementedError
+
+    @property
+    def list_type(self):
+        raise NotImplementedError
+
+    @property
+    def updated_fields(self):
+        raise NotImplementedError
+
+
+class RoleListView(CofkListView):
+    model = CofkUnionRoleCategory
+    template_name = 'lookup/roles.html'
+
+    @property
+    def form(self):
+        return RoleForm
+
+    @property
+    def count(self):
+        return 'person'
+
+    @property
+    def updated_fields(self):
+        return ['role_category_desc']
+
+    @property
+    def list_type(self):
+        return 'role'
+
+
+class CatalogueListView(CofkListView):
     model = CofkLookupCatalogue
-    paginate_by = 100
     template_name = 'lookup/catalogue.html'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+    @property
+    def form(self):
+        return CatalogueForm
 
-        # Form to create new catalogue
-        context['form'] = CatalogueForm()
-        return context
+    @property
+    def count(self):
+        return 'work'
 
-    def get_queryset(self):
-        return CofkLookupCatalogue.objects.annotate(work_count=Count('works')).order_by('catalogue_name').all()
+    @property
+    def updated_fields(self):
+        return ['catalogue_name', 'publish_status']
 
-    def post(self, request, *args, **kwargs):
-        if 'delete' in self.request.POST:
-            cat = CofkLookupCatalogue.objects.filter(pk=self.request.POST['catalogue_id']).first()
+    @property
+    def list_type(self):
+        return 'catalogue'
 
-            if cat and cat.works.count() == 0:
-                msg = f'Successfully deleted catalogue {cat.catalogue_code} {cat.catalogue_name}" ({cat.catalogue_id})'
-                cat.delete()
-                messages.success(request, msg)
-        elif 'save' in self.request.POST:
-            # Update
-            cat = CofkLookupCatalogue.objects.filter(pk=self.request.POST['catalogue_id']).first()
-            cat.catalogue_name = self.request.POST['catalogue_name']
-            cat.save()
 
-            messages.success(request, f'Successfully updated catalogue "'
-                                      f'{cat.catalogue_code} {cat.catalogue_name}" ({cat.catalogue_id})')
-        elif 'add' in self.request.POST:
-            cat_form = CatalogueForm(self.request.POST)
+class SubjectListView(CofkListView):
+    model = CofkUnionSubject
+    template_name = 'lookup/subjects.html'
 
-            # Create new catalogue
-            if cat_form.is_valid():
-                saved = cat_form.save()
-                messages.success(request, f'Successfully created new catalogue "'
-                                          f'{saved.catalogue_code} {saved.catalogue_name}" ({saved.catalogue_id})')
+    @property
+    def form(self):
+        return SubjectForm
 
-            else:
-                errors = cat_form.errors.as_data()
-                for error_field in errors:
-                    for field_error in errors[error_field]:
-                        if field_error.code == 'unique':
-                            messages.error(request, f'A catalogue with the {cat_form.fields[error_field].label}'
-                                                    f' "{cat_form.data[error_field]}" already exists.')
-                        elif field_error.code == 'max_length':
-                            limit_value = field_error.params['limit_value']
-                            show_value = field_error.params['show_value']
-                            messages.error(request,
-                                           f'{cat_form.fields[error_field].label} can at most have {limit_value}'
-                                           f' characters but has {show_value}.')
-                        else:
-                            messages.error(request, 'Error creating catalogue.')
+    @property
+    def count(self):
+        return 'work'
 
-        return super().get(self, request, *args, **kwargs)
+    @property
+    def updated_fields(self):
+        return ['subject_desc']
+
+    @property
+    def list_type(self):
+        return 'subject'
+
+
+class OrgTypeListView(CofkListView):
+    model = CofkUnionOrgType
+    template_name = 'lookup/orgtypes.html'
+
+    @property
+    def form(self):
+        return OrgTypeForm
+
+    @property
+    def count(self):
+        return 'person'
+
+    @property
+    def updated_fields(self):
+        return ['org_type_desc']
+
+    @property
+    def list_type(self):
+        return 'organisation type'

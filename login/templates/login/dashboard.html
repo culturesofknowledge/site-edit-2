@@ -25,30 +25,19 @@ has the capacity to include letter metadata for a wide range of fields. </p>
         <li>
             <a href="{% url 'publication:search' %}"><span data-feather="edit" class="feather-large" aria-hidden="true"></span>Publications</a>
         </li>
+        <ul>
         <li>
             <a href="{% url 'lookups:roles' %}" title="Add or edit catalogues" target="_self" tabindex="1"><span data-feather="clipboard" class="feather-large" aria-hidden="true"></span>Professional categories</a>
         </li>
         <li>
-            <a href="{% url 'lookups:catalogues' %}" title="Add or edit catalogues" target="_self" tabindex="1"><span data-feather="clipboard" class="feather-large" aria-hidden="true"></span>Subjects</a>
+            <a href="{% url 'lookups:subjects' %}" title="Add or edit catalogues" target="_self" tabindex="1"><span data-feather="clipboard" class="feather-large" aria-hidden="true"></span>Subjects</a>
         </li>
         <li>
             <a href="{% url 'lookups:catalogues' %}" title="Add or edit catalogues" target="_self" tabindex="1"><span data-feather="clipboard" class="feather-large" aria-hidden="true"></span>Catalogues</a>
         </li>
         <li>
-            <a href="{% url 'lookups:catalogues' %}" title="Add or edit catalogues" target="_self" tabindex="1"><span data-feather="clipboard" class="feather-large" aria-hidden="true"></span>Organisation types</a>
-        </li>
-        <!--<li class="item_109">
-            <a href="/union.php?menu_item_id=109" title="Add or edit 'speed entry' titles for resources" target="_self" tabindex="1">Add or edit 'speed entry' titles for resources</a>
-        </li>
-        <li class="item_111">
-            <a href="/union.php?menu_item_id=111" title="Add or edit professional categories" target="_self" tabindex="1">Add or edit professional categories</a>
-        </li>
-        <li class="item_113">
-            <a href="/union.php?menu_item_id=113" title="Add or edit organisation types" target="_self" tabindex="1">Add or edit organisation types</a>
-        </li>
-        <li class="item_115">
-            <a href="/union.php?menu_item_id=115" title="Add or edit catalogues" target="_self" tabindex="1">Add or edit catalogues</a>
-        </li>-->
+            <a href="{% url 'lookups:orgtypes' %}" title="Add or edit catalogues" target="_self" tabindex="1"><span data-feather="clipboard" class="feather-large" aria-hidden="true"></span>Organisation types</a>
+        </li></ul>
     </ul>
 
 {% endblock %}

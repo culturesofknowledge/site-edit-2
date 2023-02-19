@@ -281,8 +281,8 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
     def search_fields(self) -> list[str]:
-        return ['foaf_name', 'iperson_id', 'editors_notes', 'sent', 'recd', 'all_works', 'mentioned',
-                'further_reading', 'other_details', 'images', 'change_user']
+        return ['foaf_name', 'iperson_id', 'editors_notes', 'sent', 'recd', 'all_works', 'mentioned', 'roles',
+                'further_reading', 'other_details', 'images', 'change_user', 'organisation_type']
 
     @property
     def search_field_label_map(self) -> dict:
@@ -304,7 +304,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
-            ('foaf_name', 'Name',),  # TODO this is in a view cofk_union_person_view
+            ('foaf_name', 'Name',),
             ('date_of_birth', 'Born',),
             ('date_of_death', 'Died',),
             ('flourished', 'Flourished',),
@@ -318,8 +318,9 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             ('editors_notes', 'Editors\' notes',),
             ('further_reading', 'Further reading',),
             ('images', 'Images',),
-            ('other_details_summary', 'Other details',),
-            ('other_details_summary_searchable', 'Other details',),
+            # It's not possible to order by a composite field
+            # ('other_details_summary', 'Other details',),
+            # ('other_details_summary_searchable', 'Other details',),
             ('change_timestamp', 'Change Timestamp',),
             ('change_user', 'Change user',),
             ('iperson_id', 'Person or Group ID',),
@@ -389,10 +390,13 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
     def get_queryset(self):
         queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
 
-        search_fields_maps = {'foaf_name': ['foaf_name', 'skos_altlabel', 'person_aliases', 'skos_hiddenlabel', ],
-                              # 'summary__other_details_summary_searchable'],
+        search_fields_maps = {'foaf_name': ['foaf_name', 'skos_altlabel',  'skos_hiddenlabel', 'person_aliases',
+                                            'roles__role_category_desc'], # names and roles search
+                              'roles': ['roles__role_category_desc'],
                               'images': ['images__image_filename'],
-                              'other_details': ['summary__other_details_summary_searchable']}
+                              'organisation_type': ['organisation_type__org_type_desc'],
+                              'other_details': ['comments__comment', 'resources__resource_name',
+                                                'resources__resource_details']}
 
         queries.extend(
             query_utils.create_queries_by_lookup_field(self.request_data, self.search_fields, search_fields_maps)
