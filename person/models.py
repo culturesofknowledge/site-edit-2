@@ -1,5 +1,4 @@
 import functools
-import logging
 
 from django.db import models
 from django.utils.safestring import mark_safe
@@ -8,8 +7,6 @@ from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 from core.models import Recref
 
-
-log = logging.getLogger(__name__)
 
 SEQ_NAME_COFKUNIONPERSION__IPERSON_ID = 'cofk_union_person_iperson_id_seq'
 
