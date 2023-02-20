@@ -33,7 +33,7 @@ urlpatterns = [
     path('manif/', include('manifestation.urls')),
     path('work/', include('work.urls')),
     path('audit/', include('audit.urls')),
-    path('lookup/', include('lookups.urls') ),
+    path('list/', include('list.urls') ),
 ]
 
 urlpatterns += static(settings.MEDIA_URL + 'img',

@@ -98,7 +98,7 @@ class CofkListView(ListView):
 
 class RoleListView(CofkListView):
     model = CofkUnionRoleCategory
-    template_name = 'lookup/roles.html'
+    template_name = 'list/roles.html'
 
     @property
     def form(self):
@@ -119,7 +119,7 @@ class RoleListView(CofkListView):
 
 class CatalogueListView(CofkListView):
     model = CofkLookupCatalogue
-    template_name = 'lookup/catalogue.html'
+    template_name = 'list/catalogue.html'
 
     @property
     def form(self):
@@ -140,7 +140,7 @@ class CatalogueListView(CofkListView):
 
 class SubjectListView(CofkListView):
     model = CofkUnionSubject
-    template_name = 'lookup/subjects.html'
+    template_name = 'list/subjects.html'
 
     @property
     def form(self):
@@ -161,7 +161,7 @@ class SubjectListView(CofkListView):
 
 class OrgTypeListView(CofkListView):
     model = CofkUnionOrgType
-    template_name = 'lookup/orgtypes.html'
+    template_name = 'list/orgtypes.html'
 
     @property
     def form(self):
