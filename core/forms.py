@@ -12,33 +12,6 @@ from person import person_utils
 from work import work_utils
 
 
-def build_search_components(sort_by_choices: list[tuple[str, str]], entity: str):
-    class SearchComponents(Form):
-        template_name = 'core/form/search_components.html'
-        sort_by = forms.CharField(label='Sort by',
-                                  widget=forms.Select(choices=sort_by_choices),
-                                  required=False, )
-
-        order = forms.CharField(label='Order',
-                                widget=forms.RadioSelect(choices=[
-                                    ('asc', 'Ascending'),
-                                    ('desc', 'Descending')
-                                ]),
-                                required=False)
-
-        num_record = forms.IntegerField(label=f'{entity} per page',
-                                        widget=forms.Select(choices=[
-                                            (10, 10),
-                                            (25, 25),
-                                            (50, 50),
-                                            (100, 100),
-                                        ]),
-                                        required=False, )
-        page = forms.IntegerField(widget=forms.HiddenInput())
-
-    return SearchComponents
-
-
 class RecrefForm(forms.Form):
     recref_id = forms.CharField(required=False, widget=forms.HiddenInput())
     target_id = forms.CharField(required=False, widget=forms.HiddenInput())

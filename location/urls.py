@@ -10,6 +10,7 @@ urlpatterns.extend(
         search_view=views.LocationSearchView.as_view(),
         merge_view=views.LocationMergeChoiceView.as_view(),
         merge_action_view=views.LocationMergeActionView.as_view(),
+        merge_confirm_view=views.LocationMergeConfirmView.as_view(),
         edit_id_name='location_id',
     )
 )

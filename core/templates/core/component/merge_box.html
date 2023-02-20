@@ -1,0 +1,9 @@
+<div class="row-no-margin ">
+    <input type="hidden" name="merge_pk" value="{{ merge_context.model_pk }}">
+    <div class="merge-items">
+        <div>
+            <label>{{ merge_context.name }}</label>
+        </div>
+        {% include "core/component/merge_details.html" with related_records=merge_context.related_records no_details=no_details %}
+    </div>
+</div>

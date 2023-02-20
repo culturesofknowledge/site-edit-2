@@ -11,6 +11,7 @@ urlpatterns.extend(
         search_view=views.InstSearchView.as_view(),
         merge_view=views.InstMergeChoiceView.as_view(),
         merge_action_view=views.InstMergeActionView.as_view(),
+        merge_confirm_view=views.InstMergeConfirmView.as_view(),
         edit_id_name='pk',
     )
 )

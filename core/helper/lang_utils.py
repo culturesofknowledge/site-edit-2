@@ -3,7 +3,7 @@ from typing import Iterable
 
 from django import forms
 
-from core.helper import view_utils, model_utils, form_utils, widgets_utils
+from core.helper import model_utils, form_utils, widgets_utils
 
 log = logging.getLogger(__name__)
 
@@ -70,7 +70,7 @@ def create_lang_formset(lang_models: Iterable, lang_rec_id_name: str,
                                                   'Unknown Language')
         initial['lang_rec_id'] = initial[lang_rec_id_name]
 
-    return view_utils.create_formset(
+    return form_utils.create_formset(
         LangForm,
         post_data=request_data or None,
         prefix=prefix,

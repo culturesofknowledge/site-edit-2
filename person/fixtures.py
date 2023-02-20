@@ -21,3 +21,11 @@ person_dict_b = dict(
     further_reading='further_reading bbb',
     editors_notes='editors_notes bbb',
 )
+
+
+def create_person_obj():
+    from person.models import CofkUnionPerson
+    import uuid
+    obj = CofkUnionPerson(**person_min_dict_a)
+    obj.pk = uuid.uuid4()
+    return obj

@@ -13,21 +13,22 @@ from django.db import models
 from django.db.models import Q, ForeignKey
 from django.db.models.query_utils import DeferredAttribute
 from django.forms import ModelForm
-from django.forms import formset_factory
 from django.http import HttpResponseNotFound
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views import View
 from django.views.generic import ListView
 
 import core.constant as core_constant
-from core.forms import build_search_components
+from core import constant
+from core.helper.form_utils import build_search_components
 from core.helper import file_utils, email_utils, query_utils, general_model_utils, recref_utils, model_utils, \
-    django_utils, inspect_utils
+    django_utils, inspect_utils, url_utils
 from core.helper.model_utils import ModelLike, RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
     demo_table_search_results_renderer
 from core.helper.view_components import DownloadCsvHandler
+from core.models import CofkUnionResource, CofkUnionComment
 from work import work_utils
 from work.models import CofkUnionWork
 
@@ -415,18 +416,6 @@ def any_invalid_with_log(form_formsets: Iterable):
     return False
 
 
-def create_formset(form_class, post_data=None, prefix=None,
-                   initial_list: Iterable[dict] = None,
-                   extra=1):
-    initial_list = initial_list or []
-    initial_list = list(initial_list)
-    return formset_factory(form_class, extra=extra)(
-        post_data or None,
-        prefix=prefix,
-        initial=initial_list,
-    )
-
-
 class FormDescriptor:
 
     def __init__(self, obj: ModelLike):
@@ -475,16 +464,41 @@ class MergeChoiceViews(View):
     def to_context_list(self, merge_id_list: list[str]) -> Iterable['MergeChoiceContext']:
         raise NotImplementedError()
 
-    @property
-    def action_vname(self):
+    @staticmethod
+    def get_id_field():
         raise NotImplementedError()
 
     def get(self, request, *args, **kwargs):
         id_list = request.GET.getlist('__merge_id')
         return render(request, 'core/merge_choice.html', {
             'choice_list': self.to_context_list(id_list),
-            'merge_action_url': reverse(self.action_vname),
+            'merge_action_url': url_utils.reverse_url_by_request(url_utils.VNAME_MERGE_CONFIRM, request),
+            'return_url': url_utils.reverse_url_by_request(url_utils.VNAME_SEARCH, request),
         })
+
+    @staticmethod
+    def create_work_recref_map(recref_list: list['Recref']):
+
+        def _name_key(rel_type: str):
+            if rel_type in [constant.REL_TYPE_CREATED,
+                            constant.REL_TYPE_SENT,
+                            constant.REL_TYPE_SIGNED,
+                            ]:
+                return "Work [Author/sender of]"
+            elif rel_type in [constant.REL_TYPE_WAS_ADDRESSED_TO,
+                              constant.REL_TYPE_INTENDED_FOR, ]:
+                return 'Work [Addressee of]'
+            elif rel_type == constant.REL_TYPE_WAS_SENT_FROM:
+                return 'Work [Origin]'
+            elif rel_type == constant.REL_TYPE_WAS_SENT_TO:
+                return 'Work [Destination]'
+            else:
+                return 'Work'
+
+        recref_dict = defaultdict(list)
+        for r in recref_list:
+            recref_dict[_name_key(r.relationship_type)].append(r)
+        return recref_dict
 
     @staticmethod
     def create_merge_choice_context(model: ModelLike) -> 'MergeChoiceContext':
@@ -493,11 +507,20 @@ class MergeChoiceViews(View):
         bounded_data_list = recref_utils.find_bounded_data_list_by_related_model(model)
         related_records = []
         for bounded_data in bounded_data_list:
-            parent_field, related_field = recref_utils.get_parent_related_field_by_bounded_data(bounded_data, model)
+            _, related_field = recref_utils.get_parent_related_field_by_bounded_data(bounded_data, model)
             recref_list = list(recref_utils.find_recref_list_by_bounded_data(bounded_data, model))
-            if recref_list:
-                related_records.append((general_model_utils.get_name_by_model_class(related_field.field.related_model),
+            if not recref_list:
+                continue
+
+            related_model = related_field.field.related_model
+            if inspect_utils.issubclass_safe(related_model, CofkUnionWork):
+                for _name, _recref_list in MergeChoiceViews.create_work_recref_map(recref_list).items():
+                    related_records.append((_name,
+                                            [get_recref_ref_name(related_field, r) for r in _recref_list]))
+            else:
+                related_records.append((general_model_utils.get_name_by_model_class(related_model),
                                         [get_recref_ref_name(related_field, r) for r in recref_list]))
+
         return MergeChoiceContext(model_pk=model.pk, name=name, related_records=related_records)
 
     @staticmethod
@@ -510,19 +533,27 @@ class MergeChoiceViews(View):
         return (MergeChoiceViews.create_merge_choice_context(m) for m in records)
 
 
-def find_all_recref_by_models(model_list, parent_model):
+def find_all_recref_by_models(model_list):
     for model in model_list:
-        for bounded_data in recref_utils.find_bounded_data_list_by_related_model(parent_model):
+        for bounded_data in recref_utils.find_bounded_data_list_by_related_model(model):
             records = recref_utils.find_recref_list_by_bounded_data(bounded_data, model)
             yield from records
 
 
 def get_recref_ref_name(related_field, recref) -> str:
     related_model = related_field.get_object(recref)
-    return '[{}] {}'.format(
-        related_model.pk,
-        general_model_utils.get_display_name(related_model)
-    )
+    if isinstance(related_model, CofkUnionComment):
+        return '[{}] {}'.format(
+            related_model.pk,
+            general_model_utils.get_display_name(related_model)
+        )
+    elif isinstance(related_model, CofkUnionResource):
+        return '{} ({}) '.format(
+            general_model_utils.get_display_name(related_model),
+            related_model.resource_url,
+        )
+    else:
+        return general_model_utils.get_display_name(related_model)
 
 
 def find_work_by_recref_list(recref_list: Iterable['Recref']):
@@ -550,14 +581,24 @@ def find_related_collect_field(target_model_class: Type[ModelLike]) -> Iterable[
     return _models
 
 
-class MergeActionViews(View):
+class MergeConfirmViews(View):
+
     @property
     def target_model_class(self) -> Type[ModelLike]:
         raise NotImplementedError()
 
+    def post(self, request, *args, **kwargs):
+        selected_model, other_models = load_merge_parameter(request.POST, self.target_model_class)
+        return render(request, 'core/merge_confirm.html', {
+            'selected': MergeChoiceViews.create_merge_choice_context(selected_model),
+            'others': (MergeChoiceViews.create_merge_choice_context(m) for m in other_models),
+            'merge_action_url': url_utils.reverse_url_by_request(url_utils.VNAME_MERGE_ACTION, request),
+        })
+
+
+class MergeActionViews(View):
     @property
-    def return_vname(self) -> str:
-        """ vname for return button """
+    def target_model_class(self) -> Type[ModelLike]:
         raise NotImplementedError()
 
     @staticmethod
@@ -573,7 +614,7 @@ class MergeActionViews(View):
             [m.pk for m in other_models]
         ))
 
-        recref_list: Iterable[Recref] = find_all_recref_by_models(other_models, selected_model)
+        recref_list: Iterable[Recref] = find_all_recref_by_models(other_models)
         recref_list = list(recref_list)
         for recref in recref_list:
             parent_field, related_field = recref_utils.get_parent_related_field_by_recref(recref, selected_model)
@@ -611,11 +652,22 @@ class MergeActionViews(View):
 
         return recref_list
 
+    @staticmethod
+    def get_id_field():
+        raise NotImplementedError()
+
     def post(self, request, *args, **kwargs):
-        selected_pk = request.POST.get('selected_pk')
-        merge_pk_list = set(request.POST.getlist('merge_pk')) - {selected_pk}
-        other_models = list(self.target_model_class.objects.filter(**{'pk__in': merge_pk_list}).iterator())
-        selected_model = self.target_model_class.objects.filter(**{'pk': selected_pk}).first()
+        selected_model, other_models = load_merge_parameter(request.POST, self.target_model_class)
+
+        if request.POST.get('action_type') != 'confirm':
+            query = [
+                ('__merge_id', self.get_id_field().field.value_from_object(m))
+                for m in [selected_model] + list(other_models)
+            ]
+            url = url_utils.build_url_query(
+                url_utils.reverse_url_by_request(url_utils.VNAME_MERGE_CHOICE, request),
+                query)
+            return redirect(url)
 
         try:
             recref_list = self.merge(selected_model, other_models, username=request.user.username)
@@ -632,6 +684,32 @@ class MergeActionViews(View):
 
         return render(request, 'core/merge_report.html', {
             'summary': results.items(),
-            'return_vname': self.return_vname,
+            'return_url': url_utils.reverse_url_by_request(url_utils.VNAME_SEARCH, request),
             'name': general_model_utils.get_display_name(selected_model),
         })
+
+
+def log_value_error(msg):
+    log.debug(msg)
+    return ValueError(msg)
+
+
+def get_merge_parameter(request_data):
+    selected_pk = request_data.get('selected_pk')
+    merge_pk_list = set(request_data.getlist('merge_pk')) - {selected_pk}
+    if not merge_pk_list:
+        raise log_value_error(f'input parameter {merge_pk_list=} should not empty')
+    return selected_pk, merge_pk_list
+
+
+def load_merge_parameter(request_data, target_model_class):
+    selected_pk, merge_pk_list = get_merge_parameter(request_data)
+    other_models = list(target_model_class.objects.filter(**{'pk__in': merge_pk_list}).iterator())
+    selected_model = target_model_class.objects.filter(**{'pk': selected_pk}).first()
+    if not selected_model:
+        raise log_value_error(f'selected_model not found [{selected_pk=}]')
+
+    if not other_models or len(other_models) != len(merge_pk_list):
+        raise log_value_error(f'some other_models not found, [{other_models=}] [{merge_pk_list=}]')
+
+    return selected_model, other_models

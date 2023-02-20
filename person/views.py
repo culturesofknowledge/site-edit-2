@@ -22,7 +22,8 @@ from core.helper.recref_handler import RecrefFormsetHandler, RoleCategoryHandler
 from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
 from core.helper.view_handler import FullFormHandler
-from core.helper.view_utils import CommonInitFormViewTemplate, BasicSearchView, MergeChoiceViews, MergeActionViews
+from core.helper.view_utils import CommonInitFormViewTemplate, BasicSearchView, MergeChoiceViews, MergeActionViews, \
+    MergeConfirmViews
 from core.models import Recref
 from person import person_utils
 from person.forms import PersonForm, GeneralSearchFieldset, PersonOtherRecrefForm, field_label_map, \
@@ -298,7 +299,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
                 'flourished_year_from': lambda _, v: GreaterThanOrEqual(F('flourished_year'), v),
                 'flourished_year_to': lambda _, v: LessThanOrEqual(F('flourished2_year'), v),
                 } | query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                     'change_timestamp', str_to_std_datetime)
+                                                        'change_timestamp', str_to_std_datetime)
 
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
@@ -388,8 +389,8 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
     def get_queryset(self):
         queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
 
-        search_fields_maps = {'foaf_name': ['foaf_name', 'skos_altlabel', 'person_aliases', 'skos_hiddenlabel',],
-                                            #'summary__other_details_summary_searchable'],
+        search_fields_maps = {'foaf_name': ['foaf_name', 'skos_altlabel', 'person_aliases', 'skos_hiddenlabel', ],
+                              # 'summary__other_details_summary_searchable'],
                               'images': ['images__image_filename'],
                               'other_details': ['summary__other_details_summary_searchable']}
 
@@ -503,18 +504,25 @@ class PersonImageRecrefHandler(ImageRecrefHandler):
 
 
 class PersonMergeChoiceView(LoginRequiredMixin, MergeChoiceViews):
-    @property
-    def action_vname(self):
-        return 'person:merge_action'
 
     def to_context_list(self, merge_id_list: list[str]) -> Iterable['MergeChoiceContext']:
-        return self.create_merge_choice_context_by_id_field(CofkUnionPerson.iperson_id, merge_id_list)
+        return self.create_merge_choice_context_by_id_field(self.get_id_field(), merge_id_list)
+
+    @staticmethod
+    def get_id_field():
+        return CofkUnionPerson.iperson_id
+
+
+class PersonMergeConfirmView(LoginRequiredMixin, MergeConfirmViews):
+    @property
+    def target_model_class(self) -> Type[ModelLike]:
+        return CofkUnionPerson
 
 
 class PersonMergeActionView(LoginRequiredMixin, MergeActionViews):
-    @property
-    def return_vname(self) -> str:
-        return 'person:search'
+    @staticmethod
+    def get_id_field():
+        return PersonMergeChoiceView.get_id_field()
 
     @property
     def target_model_class(self) -> Type[ModelLike]:

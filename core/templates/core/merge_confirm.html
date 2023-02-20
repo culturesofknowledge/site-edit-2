@@ -1,0 +1,25 @@
+{% extends "core/emlo_logined.html" %}
+
+{% block content %}
+    <h1> Merge -- Confirm </h1>
+    <form method="post" action="{{ merge_action_url }}">
+        {% csrf_token %}
+        <div class="merge-div">
+
+            <h1>Selected</h1>
+            {% include "core/component/merge_box.html" with merge_context=selected %}
+            <input type="hidden" name="selected_pk" value="{{ selected.model_pk }}">
+
+
+            <h1>Others</h1>
+            {% for m in others %}
+                {% include "core/component/merge_box.html" with merge_context=m no_details=True %}
+                <input type="hidden" name="merge_pk" value="{{ m.model_pk }}">
+            {% endfor %}
+        </div>
+        <div class="sticky-bottom row-no-margin actionbox">
+            <button class="cancel" name="action_type" value="cancel">Cancel</button>
+            <button class="save" name="action_type" value="confirm">Confirm</button>
+        </div>
+    </form>
+{% endblock %}

@@ -1,12 +1,25 @@
 <div class="merge-detail">
-    {% for recref_class, records in related_records %}
-        <strong>{{ recref_class }} ({{ records|length }})</strong>
+
+    {% if related_records %}
+        <strong>Summary</strong>
         <ul>
-            {% for r in records %}
-                <li>{{ r }}</li>
+            {% for recref_class, records in related_records %}
+                <li>({{ records|length }}) {{ recref_class }} </li>
             {% endfor %}
         </ul>
-    {% empty %}
-        <span>No related records.</span>
-    {% endfor %}
+    {% endif %}
+
+
+    {% if not no_details %}
+        {% for recref_class, records in related_records %}
+            <strong>{{ recref_class }} ({{ records|length }})</strong>
+            <ul>
+                {% for r in records %}
+                    <li>{{ r }}</li>
+                {% endfor %}
+            </ul>
+        {% empty %}
+            <span>No related records.</span>
+        {% endfor %}
+    {% endif %}
 </div>

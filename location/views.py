@@ -20,7 +20,7 @@ from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate, MergeChoiceViews, MergeChoiceContext, \
-    MergeActionViews
+    MergeActionViews, MergeConfirmViews
 from core.models import Recref
 from location import location_utils
 from location.forms import LocationForm, GeneralSearchFieldset, field_label_map
@@ -141,18 +141,24 @@ def full_form(request, location_id):
 
 
 class LocationMergeChoiceView(LoginRequiredMixin, MergeChoiceViews):
-    @property
-    def action_vname(self):
-        return 'location:merge_action'
+    @staticmethod
+    def get_id_field():
+        return CofkUnionLocation.location_id
 
     def to_context_list(self, merge_id_list: list[str]) -> Iterable['MergeChoiceContext']:
-        return self.create_merge_choice_context_by_id_field(CofkUnionLocation.location_id, merge_id_list)
+        return self.create_merge_choice_context_by_id_field(self.get_id_field(), merge_id_list)
+
+
+class LocationMergeConfirmView(LoginRequiredMixin, MergeConfirmViews):
+    @property
+    def target_model_class(self) -> Type[ModelLike]:
+        return CofkUnionLocation
 
 
 class LocationMergeActionView(LoginRequiredMixin, MergeActionViews):
-    @property
-    def return_vname(self) -> str:
-        return 'location:search'
+    @staticmethod
+    def get_id_field():
+        return LocationMergeChoiceView.get_id_field()
 
     @property
     def target_model_class(self) -> Type[ModelLike]:
@@ -164,9 +170,9 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
     @property
     def search_fields(self) -> list[str]:
         return ['location_name', 'editors_notes', 'location_id', 'researchers_notes', 'resources', 'latitude',
-                  'sent', 'recd', 'all_works', 'longitude', 'element_1_eg_room', 'element_2_eg_building',
-                  'element_3_eg_parish', 'element_4_eg_city', 'element_5_eg_county', 'element_6_eg_country',
-                  'element_7_eg_empire', 'images', 'change_user']
+                'sent', 'recd', 'all_works', 'longitude', 'element_1_eg_room', 'element_2_eg_building',
+                'element_3_eg_parish', 'element_4_eg_city', 'element_5_eg_county', 'element_6_eg_country',
+                'element_7_eg_empire', 'images', 'change_user']
 
     @property
     def search_field_label_map(self) -> dict:
@@ -225,10 +231,11 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
 
     def get_queryset(self):
         # queries for like_fields
-        search_fields_maps = { 'location_name': ['location_name', 'location_synonyms'],
-                 'resources': ['resources__resource_name', 'resources__resource_details', 'resources__resource_url'],
-                 'researchers_notes': ['comments__comment'],
-                 'images': ['images__image_filename']}
+        search_fields_maps = {'location_name': ['location_name', 'location_synonyms'],
+                              'resources': ['resources__resource_name', 'resources__resource_details',
+                                            'resources__resource_url'],
+                              'researchers_notes': ['comments__comment'],
+                              'images': ['images__image_filename']}
 
         # KTODO support lookup query_utils.create_queries_by_lookup_field
 

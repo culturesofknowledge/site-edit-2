@@ -10,6 +10,7 @@ urlpatterns.extend(
         search_view=views.PersonSearchView.as_view(),
         merge_view=views.PersonMergeChoiceView.as_view(),
         merge_action_view=views.PersonMergeActionView.as_view(),
+        merge_confirm_view=views.PersonMergeConfirmView.as_view(),
         edit_id_name='iperson_id',
     )
 )

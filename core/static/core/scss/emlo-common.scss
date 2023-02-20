@@ -30,12 +30,12 @@
   display: inline;
 }
 
-tr.selectable_entry:hover {
+tr.selectable_entry:not(.selected):hover {
   background: $lighter-grey;
 }
 
 .selectable_entry.selected {
-  background-color: gray;
+  background-color: cadetblue;
 }
 
 .menu-item {
@@ -304,6 +304,8 @@ tr.selectable_entry:hover {
 .merge-div .merge-items {
   @extend .col--4of5;
   margin-bottom: 0.8rem;
+  border: 1px solid;
+  padding: 0 1em 1em;
 }
 
 .merge-detail {
