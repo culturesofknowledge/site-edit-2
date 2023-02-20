@@ -192,6 +192,7 @@ class CofkUnionRoleCategory(models.Model):
 
     class Meta:
         db_table = 'cofk_union_role_category'
+        ordering = ['role_category_desc']
 
 
 class CofkUnionSubject(models.Model):
@@ -235,6 +236,7 @@ class CofkLookupCatalogue(models.Model):
 
     class Meta:
         db_table = 'cofk_lookup_catalogue'
+        ordering = ['catalogue_name']
 
 
 class CofkUserSavedQuery(models.Model):

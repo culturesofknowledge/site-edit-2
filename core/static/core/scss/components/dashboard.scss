@@ -1,0 +1,16 @@
+.main_menu {
+    list-style: none;
+}
+
+.main_menu li a {
+    font-size: $typescale-3;
+
+    &:hover, &:active, &:focus {
+      color: $midnight;
+      transition: 400ms all ease-in-out;
+      svg {
+        transform: scale(1.06);
+        transition: 400ms all ease-in-out;
+      }
+    }
+}

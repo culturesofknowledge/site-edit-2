@@ -25,6 +25,8 @@
     <!-- Mentioned -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.mentioned field_lookup=form.mentioned_lookup %}
 
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.roles field_lookup=form.roles_lookup %}
+
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.editors_notes field_lookup=form.editors_notes_lookup %}
 
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.further_reading field_lookup=form.further_reading_lookup %}
@@ -42,5 +44,23 @@
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.change_user field_lookup=form.change_user_lookup %}
 
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.iperson_id field_lookup=form.iperson_id_lookup %}
+
+    <script>
+        var roles_autocomplete = [{% for role in form.role_category_names %}
+      "{{ role|safe }}",
+      {% endfor %}];
+
+      $( "#id_roles" ).autocomplete({
+        source: roles_autocomplete,
+        minLength: 0,
+        appendTo: '#query-fieldset'
+    });
+
+    // Search all values on select
+$( "#id_roles" ).on("click", function()    {
+    $(this).autocomplete('search', '');
+});
+
+    </script>
 
 {% endblock %}
