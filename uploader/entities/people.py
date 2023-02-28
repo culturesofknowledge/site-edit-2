@@ -37,12 +37,12 @@ class CofkPeople(CofkEntity, ABC):
                             self.ids.append(_id)
                         else:
                             log.warning(f'{_id} duplicated in People sheet.')
-                else:
-                    new_person = CofkCollectPerson()
-                    new_person.upload = upload
-                    new_person.primary_name = per_dict['primary_name']
-                    self.people.append(new_person)
-                    log.debug(f'Added new person "{new_person.primary_name}" for upload {upload.upload_id}.')
+                #else:
+                #    new_person = CofkCollectPerson()
+                #    new_person.upload = upload
+                #    new_person.primary_name = per_dict['primary_name']
+                #    self.people.append(new_person)
+                #    log.debug(f'Added new person "{new_person.primary_name}" for upload {upload.upload_id}.')
 
         if self.people:
             self.bulk_create(self.people)

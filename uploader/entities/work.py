@@ -109,7 +109,7 @@ class CofkWork(CofkEntity):
             for _id, name in zip(id_list, name_list):
                 if person := self.get_person(_id):
                     related_person = people_model(upload=self.upload, iwork=work, iperson=person)
-                    setattr(related_person, id_type, self.get_id(id_type))
+                    setattr(related_person, id_type, self.get_new_id(id_type))
                     people_list.append(related_person)
                 else:
                     # Person not present in people sheet
@@ -124,7 +124,7 @@ class CofkWork(CofkEntity):
             for _id, name in zip(id_list, name_list):
                 if location := self.get_location(_id):
                     related_location = location_model(upload=self.upload, iwork=work, location=location)
-                    setattr(related_location, id_type, self.get_id(id_type))
+                    setattr(related_location, id_type, self.get_new_id(id_type))
                     location_list.append(related_location)
                 else:
                     # Location not present in places sheet
@@ -156,7 +156,7 @@ class CofkWork(CofkEntity):
 
             if lan is not None:
                 self.languages.append(CofkCollectLanguageOfWork(upload=self.upload, iwork=work, language_code=lan,
-                                                                language_of_work_id=self.get_id('language_of_work_id')))
+                                                                language_of_work_id=self.get_new_id('language_of_work_id')))
             else:
                 self.add_error(f'The value in column "language_id", "{language}" is not a valid ISO639 language.')
 
@@ -206,6 +206,6 @@ class CofkWork(CofkEntity):
         self.language_of_work_id = CofkCollectLanguageOfWork.objects.values_list('language_of_work_id', flat=True) \
             .order_by('-language_of_work_id').first()
 
-    def get_id(self, id_type: str):
+    def get_new_id(self, id_type: str):
         setattr(self, id_type, getattr(self, id_type) + 1)
         return getattr(self, id_type)

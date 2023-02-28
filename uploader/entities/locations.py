@@ -36,8 +36,8 @@ class CofkLocations(CofkEntity, ABC):
                         self.ids.append(loc_id)
                     else:
                         log.warning(f'{loc_id} duplicated in {self.sheet.name} sheet.')
-                else:
-                    log.warning(f'New location {loc_dict} to be created?')
+                #else:
+                #    log.warning(f'New location {loc_dict} to be created?')
 
         if self.locations:
             self.bulk_create(self.locations)
