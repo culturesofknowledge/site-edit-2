@@ -106,8 +106,8 @@ class CofkUnionPerson(models.Model, RecordTracker):
         """
         Used by work.creators_for_display and work.addressees_for_display
         """
-        dob = self.date_of_birth_year
-        dod = self.date_of_death_year
+        dob = str(self.date_of_birth_year)
+        dod = str(self.date_of_death_year)
 
         if self.date_of_death_is_range == 1:
             dod += ' or after'
