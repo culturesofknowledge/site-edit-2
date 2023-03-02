@@ -1,0 +1,34 @@
+<fieldset style="max-width: 50%; margin-top: 1em;">
+    <h2>
+        {% if work or works_page.object_list|length == 1 %}
+            Accept the following work?
+        {% else %}
+            Accept the following {{ works_page.paginator.count }} works<!-- and any new people, places or repositories referenced by it-->?
+        {% endif %}
+    </h2>
+    <label>Source of data:</label>
+
+    <div>
+        <input type="text" name="accession_code" value="{{ upload.upload_name }}" maxlength="250">
+        <p><span>(max. 250 characters)</span></p>
+    </div>
+
+    <label>Original catalogue:</label>
+    <div>
+        <select name="catalogue_code">
+            <option></option>
+            {% for catalogue in catalogues %}
+                <option value="{{ catalogue.catalogue_code }}">{{ catalogue.catalogue_name }}</option>
+            {% endfor %}
+        </select>
+        <p><span>You can optionally set the 'Source of data' and 'Original catalogue' fields for this work.
+            Change the default value for 'Source of data', and/or choose a catalogue from the drop-down list, then click Accept.</span></p>
+    </div>
+    <div>
+        {% if work %}
+        <input type="hidden" value="{{ work.id }}" name="work_id"/>
+        {% endif %}
+        <button class="btn inline_btn" name="confirm_accept">Confirm</button>
+        <button type="button" class="btn inline_btn" onclick="location.href='{% url 'uploader:upload_review' upload.upload_id %}'">Cancel</button>
+    </div>
+</fieldset>
