@@ -10,6 +10,7 @@ register = template.Library()
 link_pattern = re.compile(r'(xxxCofkLinkStartxxx)(xxxCofkHrefStartxxx)(.*?)(xxxCofkHrefEndxxx)(.*?)(xxxCofkLinkEndxxx)')
 img_pattern = re.compile(r'(xxxCofkImageIDStartxxx)(.*?)(xxxCofkImageIDEndxxx)')
 
+
 @register.filter
 def exclamation(work: CofkUnionQueryableWork):
     tooltip = []
@@ -120,6 +121,7 @@ def render_queryable_images(values: str):
         html += f'<a href="{img[1]}" target="_blank"><img src="{img[1]}" class="search_result_img"></a>'
 
     return mark_safe(html)
+
 
 @register.filter
 def other_details(work: CofkUnionQueryableWork):
