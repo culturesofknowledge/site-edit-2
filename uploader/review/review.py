@@ -9,6 +9,7 @@ from django.db.models import QuerySet
 
 from core.constant import REL_TYPE_STORED_IN, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, \
     REL_TYPE_PEOPLE_MENTIONED_IN_WORK, REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_IS_RELATED_TO
+from core.helper import model_utils
 from core.models import CofkUnionResource, CofkLookupCatalogue
 from institution.models import CofkUnionInstitution
 from manifestation.models import CofkUnionManifestation, CofkManifInstMap
@@ -21,6 +22,7 @@ log = logging.getLogger(__name__)
 
 def create_union_work(union_work_dict: dict, collect_work: CofkCollectWork):
     # work_id is primary key in CofkUnionWork
+    # note that work_utils.create_work_id uses a different less detailed format
     union_work_dict['work_id'] = f'work_{datetime.now().strftime("%Y%m%d%H%M%S%f")}_{collect_work.iwork_id}'
 
     for field in [f for f in collect_work._meta.get_fields() if f.name != 'iwork_id']:
@@ -132,6 +134,7 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
 
     union_works = []
     union_manifs = []
+    union_manif_id = model_utils.next_seq_safe("cofk_union_manif_manif_id_seq")
     union_resources = []
     rel_maps = []
 
@@ -174,8 +177,10 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
         rel_maps.append(loc_maps)
 
         union_maps = []
+
         for manif in context['manifestations'].filter(iwork_id=work_id).all():
             union_manif_dict = {'manifestation_creation_date_is_range': 0,
+                                'manifestation_id': f'W{union_work.iwork_id}-{union_manif_id}',
                                 'work': union_work}
             for field in [f for f in manif._meta.get_fields() if f.name != 'manifestation_id']:
                 try:
@@ -198,6 +203,9 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
                                         manif=union_manif, inst=union_inst, inst_id=union_inst.institution_id)
                 cmim.update_current_user_timestamp(request.user.username)
                 union_maps.append(cmim)
+
+            union_manif_id += 1
+
         rel_maps.append(union_maps)
 
         res_maps = []
