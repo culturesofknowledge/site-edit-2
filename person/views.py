@@ -310,7 +310,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             ('flourished', 'Flourished',),
             ('gender', 'Gender',),
             ('is_organisation', 'Person or group?',),
-            ('org_type', 'Type of group',),
+            ('organisation_type', 'Type of group',),
             ('sent', 'Sent',),
             ('recd', 'Rec\'d',),
             ('all_works', 'Sent or Rec\'d',),
