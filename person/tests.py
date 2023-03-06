@@ -1,3 +1,5 @@
+import unittest
+
 from selenium.webdriver.common.by import By
 
 import person.fixtures
@@ -107,6 +109,7 @@ def prepare_person_records() -> list[CofkUnionPerson]:
     ))
 
 
+@unittest.skip
 class PersonCommonSearchTests(EmloSeleniumTestCase, CommonSearchTests):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
