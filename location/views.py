@@ -230,18 +230,18 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
         return queryset
 
     def get_queryset(self):
-        # queries for like_fields
+        return self.get_queryset_by_request_data(self.request_data)
+
+    def get_queryset_by_request_data(self, request_data) -> Iterable:
         search_fields_maps = {'location_name': ['location_name', 'location_synonyms'],
                               'resources': ['resources__resource_name', 'resources__resource_details',
                                             'resources__resource_url'],
                               'researchers_notes': ['comments__comment'],
                               'images': ['images__image_filename']}
 
-        # KTODO support lookup query_utils.create_queries_by_lookup_field
-
-        queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
+        queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
         queries.extend(
-            query_utils.create_queries_by_lookup_field(self.request_data, self.search_fields, search_fields_maps)
+            query_utils.create_queries_by_lookup_field(request_data, self.search_fields, search_fields_maps)
         )
 
         return self.create_queryset_by_queries(CofkUnionLocation, queries).distinct()

@@ -3,7 +3,7 @@ import itertools
 import logging
 import os
 from collections import defaultdict
-from multiprocessing import Process
+from threading import Thread
 from typing import Iterable, Type, Callable, Any, TYPE_CHECKING
 from typing import NoReturn
 from urllib.parse import urlencode
@@ -21,9 +21,9 @@ from django.views.generic import ListView
 
 import core.constant as core_constant
 from core import constant
-from core.helper.form_utils import build_search_components
 from core.helper import file_utils, email_utils, query_utils, general_model_utils, recref_utils, model_utils, \
     django_utils, inspect_utils, url_utils
+from core.helper.form_utils import build_search_components
 from core.helper.model_utils import ModelLike, RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
     demo_table_search_results_renderer
@@ -85,7 +85,7 @@ class BasicSearchView(ListView):
 
             if (field_val is not None and field_val != '') or (
                     field_name in self.request_data and 'blank' in self.request_data.get(f'{field_name}_lookup')):
-                label_name = self.search_field_label_map[field_name] if field_name in self.search_field_label_map\
+                label_name = self.search_field_label_map[field_name] if field_name in self.search_field_label_map \
                     else field_name.replace('_', ' ').capitalize()
                 lookup_key = self.request_data.get(f'{field_name}_lookup').replace('_', ' ')
 
@@ -258,19 +258,20 @@ class BasicSearchView(ListView):
         )
         log.info(f'csv file email have be send to [{to_email}]')
         os.remove(csv_path)
-        log.debug('email resp', resp)
+        log.debug(f'email resp {resp}')
 
     def resp_download_csv(self, request, *args, **kwargs):
 
         def _fn():
             try:
+                log.debug(f'start send csv email[{request.user}]....')
                 self.send_csv_email(self.download_csv_handler, self.get_queryset(), request.user.email)
             except Exception as e:
                 log.error('send csv email fail....')
                 log.exception(e)
 
         # create csv file and send email in other process
-        Process(target=_fn).start()
+        Thread(target=_fn).start()
 
         # stay as same page
         self.to_user_messages = ['Csv file will be send to your email later.']
