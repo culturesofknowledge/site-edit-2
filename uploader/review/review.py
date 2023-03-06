@@ -15,7 +15,8 @@ from institution.models import CofkUnionInstitution
 from manifestation.models import CofkUnionManifestation, CofkManifInstMap
 from uploader.models import CofkCollectUpload, CofkCollectWork
 from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, CofkWorkResourceMap, \
-    CofkUnionLanguageOfWork, CofkUnionQueryableWork
+    CofkUnionLanguageOfWork
+from work.work_utils import clone_queryable_work
 
 log = logging.getLogger(__name__)
 
@@ -149,9 +150,6 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
 
         # Create work
         union_work = create_union_work(union_work_dict, collect_work)
-        # TODO can this be made more efficient by bulk_create?
-        # using bulk_create means that signals won't create CofkUnionQueryableWorks
-        union_work.save()
         union_works.append(union_work)
 
         # Link people
@@ -227,26 +225,19 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
 
         collect_work.upload_status_id = 4  # Accepted and saved into main database
 
-    for entity in [union_manifs, union_resources]:
+    # Creating the union entities
+    for entity in [union_works, union_manifs, union_resources]:
         bulk_create(entity)
 
+    # Creating the relation entities
     for rel_map in rel_maps:
         bulk_create(rel_map)
 
+    # Creating derived queryable works
+    bulk_create([clone_queryable_work(work=w, _return=True) for w in union_works])
+
+    # Update upload status of collect works
     CofkCollectWork.objects.bulk_update(collect_works, ['upload_status'])
-
-    # Update values of related items
-    qws = []
-
-    for work in union_works:
-        work.queryable.creators_for_display = work.creators_for_display
-        work.queryable.places_from_for_display = work.places_from_for_display
-        work.queryable.places_to_for_display = work.places_to_for_display
-        work.queryable.addressees_for_display = work.addressees_for_display
-        qws.append(work.queryable)
-
-    CofkUnionQueryableWork.objects.bulk_update(qws, ['creators_for_display', 'places_from_for_display',
-                                                     'places_to_for_display', 'addressees_for_display'])
 
     accepted_works = len(collect_works)
 

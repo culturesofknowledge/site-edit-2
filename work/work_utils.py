@@ -109,7 +109,7 @@ def _get_clone_value(work: CofkUnionWork, field_name):
     return val_fn(work, field_name)
 
 
-def clone_queryable_work(work: CofkUnionWork, reload=False):
+def clone_queryable_work(work: CofkUnionWork, reload=False, _return=False):
     if work is None:
         log.debug('skip clone_queryable_work work is None')
         return
@@ -143,6 +143,9 @@ def clone_queryable_work(work: CofkUnionWork, reload=False):
     queryable_work.places_from_for_display = work.places_from_for_display
     queryable_work.places_to_for_display = work.places_to_for_display
     queryable_work.addressees_for_display = work.addressees_for_display
+
+    if _return:
+        return queryable_work
 
     queryable_work.save()
     log.info(f'queryable_work saved. [{work.iwork_id}][{list(updated_field_dict.keys())}]  ')
