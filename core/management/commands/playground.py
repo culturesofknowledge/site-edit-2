@@ -22,7 +22,20 @@ class Command(BaseCommand):
     help = 'playground for try some python code'
 
     def handle(self, *args, **options):
-        main16()
+        main17()
+
+
+def main17():
+    print('aaaaaaaaaaaaaaa')
+    # email = EmailMessage(subject='aaaa', body='bbbb',
+    #                      from_email=f"Excited User <mailgun@{settings.MAILGUN_DOMAIN}>",
+    #                      to=['kkh900922@gmail.com'])
+    # email.attach_file('/tmp/aaafile')
+    # email.send()
+
+    email_utils.send_email('kkh900922@gmail.com', 'ksksksksksk',
+                           attachment_paths=['/tmp/aaafile'])
+    print('bbbbbbbbbbbbbb')
 
 
 def main16():

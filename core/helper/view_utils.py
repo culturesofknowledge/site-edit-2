@@ -243,18 +243,17 @@ class BasicSearchView(ListView):
 
     @staticmethod
     def send_csv_email(csv_handler, queryset, to_email):
-        csv_path = file_utils.create_new_tmp_file_path()
+        csv_path = file_utils.create_new_tmp_file_path(prefix='search_results_', suffix='.csv')
         csv_handler.create_csv_file(csv_path, queryset)
 
         if not to_email:
             log.error(f'unknown user email -- [{to_email}]')
+            return
 
         resp = email_utils.send_email(
             to_email,
             subject='Search result',
-            attachments=[
-                ('search_result.csv', open(csv_path, mode='rb'), 'text/csv')
-            ],
+            attachment_paths=[csv_path],
         )
         log.info(f'csv file email have be send to [{to_email}]')
         os.remove(csv_path)
