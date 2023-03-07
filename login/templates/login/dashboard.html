@@ -2,24 +2,42 @@
 
 {% block content %}
 
-    <h1> Login </h1>
-    <ul>
-        <li><a href="{% url 'login:gate' %}">Login page</a></li>
+    <h1> Welcome to EMLO Edit </h1>
+    <br>
+    <p>Early Modern Letters Online is a union catalogue that stores metadata, i.e. data about letters. The EMLO database
+has the capacity to include letter metadata for a wide range of fields. </p>
+    <p>EMLO Edit interface deals with letters, referred to as a work. Each work is associated with the following entities</p>
+    <ul class="main_menu">
+        <li>
+            <a href="{% url 'work:search' %}">
+                <span data-feather="file" class="feather-large" aria-hidden="true"></span>Works</a>
+        </li>
+        <li>
+            <a href="{% url 'person:search' %}">
+                <span data-feather="user" class="feather-large" aria-hidden="true"></span>People</a>
+        </li>
+        <li>
+            <a href="{% url 'location:search' %}"><span data-feather="map" class="feather-large" aria-hidden="true"></span>Locations</a>
+        </li>
+        <li>
+            <a href="{% url 'institution:search' %}"><span data-feather="package" class="feather-large" aria-hidden="true"></span>Repositories</a>
+        </li>
+        <li>
+            <a href="{% url 'publication:search' %}"><span data-feather="edit" class="feather-large" aria-hidden="true"></span>Publications</a>
+        </li>
+        <ul>
+        <li>
+            <a href="{% url 'list:roles' %}" title="Add or edit roles" target="_self" tabindex="1"><span data-feather="clipboard" class="feather-large" aria-hidden="true"></span>Roles</a>
+        </li>
+        <li>
+            <a href="{% url 'list:subjects' %}" title="Add or edit subjects" target="_self" tabindex="1"><span data-feather="clipboard" class="feather-large" aria-hidden="true"></span>Subjects</a>
+        </li>
+        <li>
+            <a href="{% url 'list:catalogues' %}" title="Add or edit catalogues" target="_self" tabindex="1"><span data-feather="clipboard" class="feather-large" aria-hidden="true"></span>Catalogues</a>
+        </li>
+        <li>
+            <a href="{% url 'list:orgtypes' %}" title="Add or edit organisation types" target="_self" tabindex="1"><span data-feather="clipboard" class="feather-large" aria-hidden="true"></span>Organisation types</a>
+        </li></ul>
     </ul>
 
-    <h1>Admin</h1>
-    <ul>
-        <li><a href="{% url 'admin:index' %}">Admin</a></li>
-    </ul>
-
-    <h1> Location </h1>
-    <ul>
-        <li><a href="{% url 'location:init_form' %}">Create</a></li>
-        <li><a href="{% url 'location:search' %}">Search</a></li>
-    </ul>
-
-    <h1>Uploader</h1>
-    <ul>
-        <li><a href="{% url 'uploader:upload_form' %}">Upload form</a></li>
-    </ul>
 {% endblock %}

@@ -933,7 +933,8 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
 
         search_fields_maps = {'sender_or_recipient': ['creators_searchable', 'addressees_searchable'],
-                              'origin_or_destination': ['places_to_searchable', 'places_from_searchable']}
+                              'origin_or_destination': ['places_to_searchable', 'places_from_searchable'],
+                              'original_catalogue': ['work__original_catalogue__catalogue_name']}
 
         queries.extend(
             query_utils.create_queries_by_lookup_field(self.request_data, self.search_fields, search_fields_maps)

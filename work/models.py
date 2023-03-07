@@ -50,9 +50,8 @@ class CofkUnionWork(models.Model, RecordTracker):
     ps = models.TextField(blank=True, null=True)
     original_catalogue = models.ForeignKey("core.CofkLookupCatalogue", models.DO_NOTHING,
                                            db_column='original_catalogue', blank=True, null=False,
-                                           to_field='catalogue_code',
-                                           default='',
-                                           db_constraint=False, )
+                                           to_field='catalogue_code', default='', db_constraint=False,
+                                           related_name='work')
     accession_code = models.CharField(max_length=1000, blank=True, null=True)
     work_to_be_deleted = models.SmallIntegerField(default=0)
     iwork_id = models.IntegerField(
@@ -67,6 +66,8 @@ class CofkUnionWork(models.Model, RecordTracker):
     change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
     change_user = models.CharField(max_length=50)
     uuid = models.UUIDField(blank=True, null=True, default=model_utils.default_uuid)
+    subjects = models.ManyToManyField(to='core.CofkUnionSubject',
+                                      through='CofkWorkSubjectMap', related_name='work')
 
     class Meta:
         db_table = 'cofk_union_work'

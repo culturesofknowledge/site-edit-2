@@ -5,6 +5,7 @@
 .ui-autocomplete {
     background-color: $white;
     border: 1px dotted $black;
+    z-index:30 !important;
 }
 
 .ui-menu-item {

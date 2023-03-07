@@ -1,0 +1,71 @@
+{% extends "core/emlo_logined.html" %}
+{% load cl_filters %}
+{% block content %}
+    <h1>Subjects List</h1>
+
+    {% include "core/component/messages.html" %}
+
+    <p>An subject can only be deleted if no works are associated with it, in
+        which case a delete button is displayed alongside the save button.</p>
+    <p>If any works are associated with a subject the number of works is displayed that links to search
+        results for all works of that subject.</p>
+
+        <fieldset class="lookup_fieldset">
+        <legend>Add new subject</legend>
+        <form method="post">
+            {% csrf_token %}
+
+            {{ form.subject_desc.label_tag }}
+            {{ form.subject_desc }}
+
+            <input type="submit" class="btn" value="Add" name="add">
+        </form>
+    </fieldset>
+
+    {% if paginator.count > 20 %}
+
+    <div class="result_count">
+        <h2>{{ page_obj|get_results_on_page }} out of {{ paginator.count | floatformat:'g' }} roles</h2>
+    </div>
+
+    {% endif %}
+
+    <!-- Upper pagination -->
+
+    {% include 'core/component/pagination.html' %}
+
+    {% for c in object_list %}
+        <fieldset class="lookup_fieldset">
+            <legend>{{ c.subject_desc }} ({{ c.pk }})</legend>
+            <form method="post" class="edit_forms">
+                {% csrf_token %}
+
+                <label for="id_subject_desc_{{ c.pk }}">Description:</label>
+                <input type="text" value="{{ c.subject_desc }}" name="subject_desc"
+                 id="id_subject_desc_{{ c.pk }}">
+
+                <input type="hidden" name="subject_id" value="{{ c.pk }}">
+
+                {% if c.work_count > 0 %}
+                <label>Number of works:&nbsp;</label><a href="{% url 'work:search' %}?&subjects_lookup=equals&subjects={{ c.subject_desc|urlencode }}" target="_blank">{{ c.work_count }}</a><br/>
+                <input type="submit" class="btn" value="Save" name="save">
+                {% else %}
+                <input type="submit" class="btn inline_btn" value="Save" name="save">
+                <input type="submit" class="btn inline_btn" value="Delete" name="delete">
+
+                {% endif %}
+
+            </form>
+
+            <a href="#top">Top of page</a>
+
+      </fieldset>
+    {% endfor %}
+
+    <!-- Lower pagination -->
+
+    {% include 'core/component/pagination.html' %}
+
+    {% include 'list/confirm_delete.html' %}
+
+{% endblock %}

@@ -12,7 +12,7 @@ from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.form_utils import TargetPersonMRRForm, LocationRecrefField
 from person.models import CofkUnionPerson
 from person.recref_adapter import ActivePersonRecrefAdapter
-from core.models import CofkUnionOrgType
+from core.models import CofkUnionOrgType, CofkUnionRoleCategory
 
 log = logging.getLogger(__name__)
 
@@ -271,6 +271,9 @@ search_person_or_group = [
     ]
 
 class GeneralSearchFieldset(forms.Form):
+    role_category_names = CofkUnionRoleCategory.objects \
+        .order_by('role_category_desc').values_list('role_category_desc', flat=True).distinct()
+
     title = 'General'
     template_name = 'person/component/person_search_fieldset.html'
 
@@ -318,6 +321,10 @@ class GeneralSearchFieldset(forms.Form):
     mentioned = IntegerField(required=False,
                              help_text='Number of letters in which this person/organisation was mentioned.')
     mentioned_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
+
+    roles = forms.CharField(required=False, label='Professional roles',
+                                    help_text='Also known as Professional categories.')
+    roles_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     editors_notes = forms.CharField(required=False, label='Editors\' notes',
                                     help_text='Notes for internal use, intended to hold temporary queries etc.')

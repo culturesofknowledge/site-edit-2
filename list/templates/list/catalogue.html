@@ -1,0 +1,82 @@
+{% extends "core/emlo_logined.html" %}
+{% load cl_filters %}
+{% block content %}
+    <h1>Catalogue List</h1>
+
+    {% include "core/component/messages.html" %}
+
+    <p>A catalogue can only be deleted if it has no works associated with it, in
+        which case a delete button is displayed alongside the save button.</p>
+    <p>If any works are associated with a catalogue the number of works is displayed that links to search
+        results for all works in that catalogue.</p>
+
+        <fieldset class="lookup_fieldset">
+        <legend>Add new catalogue</legend>
+        <form method="post">
+            {% csrf_token %}
+
+            {{ form.catalogue_code.label_tag }}
+            {{ form.catalogue_code }}
+
+            {{ form.catalogue_name.label_tag }}
+            {{ form.catalogue_name }}
+
+            <input type="hidden" name="is_in_union" value="1">
+
+            <input type="submit" class="btn" value="Add" name="add">
+        </form>
+    </fieldset>
+
+    <div class="result_count">
+        <h2>{{ page_obj|get_results_on_page }} out of {{ paginator.count | floatformat:'g' }} catalogues</h2>
+    </div>
+
+    <!-- Upper pagination -->
+
+    {% include 'core/component/pagination.html' %}
+
+    {% for c in object_list %}
+        <fieldset class="lookup_fieldset">
+            <legend>{{ c.catalogue_name }} ({{ c.catalogue_id }})</legend>
+            <form method="post" class="edit_forms">
+                {% csrf_token %}
+
+                <label >Code:&nbsp;</label>{{ c.catalogue_code }}<br/>
+                <input type="hidden" value="{{ c.catalogue_code }}" name="catalogue_code">
+                {{ c.catalogue_code.error }}
+
+                <label for="id_catalogue_name_{{ c.catalogue_id }}">Description:</label>
+                <input type="text" value="{{ c.catalogue_name }}" name="catalogue_name"
+                 id="id_catalogue_name_{{ c.catalogue_id }}">
+
+                <input type="checkbox" name="publish_status" class="elcheckbox"
+                       value="{{ c.publish_status }}" id="id_publish_status_{{ c.catalogue_id }}"
+                       {% if c.publish_status == 1 %} checked{% endif %}>
+                <label for="id_publish_status_{{ c.catalogue_id }}">Publish:</label><br/>
+
+                <input type="hidden" name="is_in_union" value="1">
+                <input type="hidden" name="catalogue_id" value="{{ c.catalogue_id }}">
+
+                {% if c.work_count > 0 %}
+                <label>Number of works:&nbsp;</label><a href="{% url 'work:search' %}?&original_catalogue_lookup=equals&original_catalogue={{ c.catalogue_name|urlencode }}" target="_blank">{{ c.work_count }}</a><br/>
+                <input type="submit" class="btn" value="Save" name="save">
+                {% else %}
+                <input type="submit" class="btn inline_btn" value="Save" name="save">
+                <input type="submit" class="btn inline_btn" value="Delete" name="delete">
+
+                {% endif %}
+
+            </form>
+
+            <a href="#top">Top of page</a>
+
+      </fieldset>
+    {% endfor %}
+
+    <!-- Lower pagination -->
+
+    {% include 'core/component/pagination.html' %}
+
+    {% include 'list/confirm_delete.html' %}
+
+{% endblock %}

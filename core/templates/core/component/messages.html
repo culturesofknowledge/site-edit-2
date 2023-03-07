@@ -1,0 +1,9 @@
+{% if messages %}
+    <div class="messages">
+        <ul class="banner-message">
+            {% for message in messages %}
+                <li{% if message.tags %} class="banner-message--{{ message.tags }}" {% else %} class="banner-message--info" {% endif %}>{{ message|safe }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}

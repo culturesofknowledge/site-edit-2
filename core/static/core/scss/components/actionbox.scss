@@ -21,6 +21,7 @@
   button, a {
     font-size: $typescale-6;
     padding: calc(.6 * 1rem);
+    margin: 1em;
   }
 
   a:hover, button:hover, .sticky-btn:focus, .sticky-btn:active {

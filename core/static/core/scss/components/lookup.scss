@@ -1,0 +1,9 @@
+fieldset.lookup_fieldset {
+    max-width: 40%;
+    background-color: $faint-grey;
+    clear: both;
+}
+
+.lookup_fieldset a:hover {
+    text-decoration: underline;
+}

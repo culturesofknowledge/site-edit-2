@@ -28,7 +28,7 @@ from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from login.models import CofkUser
 from manifestation.models import CofkUnionManifestation
-from person.models import CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID, CofkUnionPersonSummary
+from person.models import CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID
 from publication.models import CofkUnionPublication
 from uploader.models import CofkCollectStatus, CofkCollectUpload, CofkCollectInstitution, CofkCollectLocation, \
     CofkCollectLocationResource, CofkCollectPerson, CofkCollectOccupationOfPerson, CofkCollectPersonResource, \
@@ -568,7 +568,7 @@ def data_migration(user, password, database, host, port, include_audit=False):
         int_pk_col_name='iperson_id',
     )
 
-    clone_rows_by_model_class(conn, CofkUnionPersonSummary, seq_name=None)
+    # clone_rows_by_model_class(conn, CofkUnionPersonSummary, seq_name=None)
 
     clone_rows_by_model_class(conn, CofkCollectPerson,
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectPerson))

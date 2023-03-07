@@ -85,7 +85,8 @@ class BasicSearchView(ListView):
 
             if (field_val is not None and field_val != '') or (
                     field_name in self.request_data and 'blank' in self.request_data.get(f'{field_name}_lookup')):
-                label_name = self.search_field_label_map[field_name]
+                label_name = self.search_field_label_map[field_name] if field_name in self.search_field_label_map\
+                    else field_name.replace('_', ' ').capitalize()
                 lookup_key = self.request_data.get(f'{field_name}_lookup').replace('_', ' ')
 
                 if 'blank' in lookup_key:
@@ -226,7 +227,8 @@ class BasicSearchView(ListView):
                         'results_renderer': results_renderer(self.get_search_results_context(context)),
                         'is_compact_layout': is_compact_layout,
                         'to_user_messages': getattr(self, 'to_user_messages', []),
-                        'simplified_query': self.simplified_query
+                        'simplified_query': self.simplified_query,
+                        'paginate_by': self.paginate_by
                         })
         if self.merge_page_vname:
             context['merge_page_url'] = reverse(self.merge_page_vname)

@@ -1,5 +1,5 @@
 {% extends "core/emlo_logined.html" %}
-{% load static %}
+{% load static cl_filters %}
 {% block content %}
 
     <div class="col col--1of3" style="text-align: center;">
@@ -35,7 +35,7 @@
                     <!-- Number of results -->
                     <div class="col">
                         <div class="result_count">
-                            <h2>{{ paginator.count | floatformat:'g' }} {{ paginator.count|pluralize:entity }} found </h2>
+                            <h2>{{ page_obj|get_results_on_page }} out of {{ paginator.count | floatformat:'g' }} {{ paginator.count|pluralize:entity }}</h2>
                         </div>
 
                         <!-- Show search criteria -->
