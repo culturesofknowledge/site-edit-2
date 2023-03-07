@@ -143,3 +143,18 @@ def other_details(work: CofkUnionQueryableWork):
         _other_details.append(f'<strong>People mentioned</strong>: {work.people_mentioned}')
 
     return mark_safe('<br/><br/>'.join(_other_details))
+
+@register.filter
+def date_for_ordering(work: CofkUnionQueryableWork):
+    date = []
+
+    if work.date_of_work_std_year:
+        date.append(str(work.date_of_work_std_year))
+
+    if work.date_of_work_std_month:
+        date.append(str(work.date_of_work_std_month))
+
+    if work.date_of_work_std_day:
+        date.append(str(work.date_of_work_std_day))
+
+    return '-'.join(date)
