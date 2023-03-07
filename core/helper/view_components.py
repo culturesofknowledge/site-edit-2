@@ -18,7 +18,8 @@ class DownloadCsvHandler:
         raise NotImplementedError('missing obj_to_csv_row')
 
     def obj_to_str_values(self, obj) -> Iterable[str]:
-        return map(str, self.obj_to_values(obj))
+        values = (v if v is not None else '' for v in self.obj_to_values(obj))
+        return map(str, values)
 
     def create_csv_file(self, file_path: str | Path, objects: Iterable):
         writer = csv.writer(open(file_path, 'w'), delimiter=self.get_delimiter())

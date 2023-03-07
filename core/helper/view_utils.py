@@ -10,7 +10,7 @@ from urllib.parse import urlencode
 
 from django import template
 from django.db import models
-from django.db.models import Q, ForeignKey
+from django.db.models import Q, ForeignKey, QuerySet
 from django.db.models.query_utils import DeferredAttribute
 from django.forms import ModelForm
 from django.http import HttpResponseNotFound
@@ -34,6 +34,7 @@ from work.models import CofkUnionWork
 
 if TYPE_CHECKING:
     from core.models import Recref
+    from django.db.models import QuerySet
 
 register = template.Library()
 log = logging.getLogger(__name__)
@@ -178,13 +179,18 @@ class BasicSearchView(ListView):
     def get_queryset(self):
         raise NotImplementedError('missing get_queryset')
 
-    def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q]):
+    def create_queryset_by_queries(self, model_class: Type[models.Model],
+                                   queries: Iterable[Q],
+                                   sort_by: str | None = None) -> 'QuerySet':
         queryset = model_class.objects.all()
 
         if queries:
             queryset = queryset.filter(query_utils.all_queries_match(queries))
 
-        if sort_by := self.get_sort_by():
+        if sort_by is None:
+            sort_by = self.get_sort_by()
+
+        if sort_by:
             queryset = queryset.order_by(sort_by)
 
         return queryset

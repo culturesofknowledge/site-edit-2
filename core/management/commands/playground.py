@@ -18,6 +18,7 @@ from location.models import CofkUnionLocation, CofkLocationCommentMap
 from location.views import LocationDownloadCsvHandler, LocationSearchView
 from person.models import CofkUnionPerson
 from person.views import PersonSearchView, PersonDownloadCsvHandler
+from work.views import WorkSearchView, WorkDownloadCsvHandler
 
 log = logging.getLogger(__name__)
 
@@ -26,17 +27,26 @@ class Command(BaseCommand):
     help = 'playground for try some python code'
 
     def handle(self, *args, **options):
-        main19()
+        main20()
 
 
 def try_csv_handler(search_view, request_data, csv_handler):
-    queryset = search_view.get_queryset_by_request_data(request_data)
+    queryset = search_view.get_queryset_by_request_data(request_data, sort_by='')
     file_path = '/tmp/aaa.csv'
     csv_handler.create_csv_file(file_path, queryset)
     csv_txt = Path(file_path).read_text()
     print(csv_txt)
     print(len(csv_txt.splitlines()))
     subprocess.Popen(['xdg-open', file_path])
+
+
+def main20():
+    search_view = WorkSearchView()
+    request_data = {'description': 'aarle',
+                    'description_lookup': 'contains'}
+
+    csv_handler = WorkDownloadCsvHandler()
+    try_csv_handler(search_view, request_data, csv_handler)
 
 
 def main19():

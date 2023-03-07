@@ -27,8 +27,9 @@ from core.helper.lang_utils import LangModelAdapter, NewLangForm
 from core.helper.recref_handler import SingleRecrefHandler, RecrefFormsetHandler, SubjectHandler, ImageRecrefHandler, \
     TargetResourceFormsetHandler, MultiRecrefAdapterHandler
 from core.helper.recref_utils import create_recref_if_field_exist
-from core.helper.view_utils import DefaultSearchView
+from core.helper.view_components import DownloadCsvHandler
 from core.helper.view_handler import FullFormHandler
+from core.helper.view_utils import DefaultSearchView
 from core.models import Recref, CofkLookupCatalogue
 from institution import inst_utils
 from location import location_utils
@@ -43,7 +44,7 @@ from work.forms import WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     ManifPersonRecrefAdapter, ScribeRelationChoices, \
     DetailsForm, WorkPersonRecrefAdapter, \
     CatalogueForm, manif_type_choices, original_calendar_choices, CompactSearchFieldset, ExpandedSearchFieldset, \
-    ManifPersonMRRForm, field_label_map, work_to_be_deleted_choices
+    ManifPersonMRRForm, field_label_map
 from work.models import CofkWorkPersonMap, CofkUnionWork, CofkWorkCommentMap, CofkWorkResourceMap, \
     CofkUnionLanguageOfWork, \
     CofkUnionQueryableWork
@@ -925,16 +926,19 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                                                 'date_of_work_std', str_to_std_datetime)
 
     def get_queryset(self):
-        queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
+        return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
+
+    def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:
+        queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
 
         search_fields_maps = {'sender_or_recipient': ['creators_searchable', 'addressees_searchable'],
                               'origin_or_destination': ['places_to_searchable', 'places_from_searchable'],
                               'original_catalogue': ['work__original_catalogue__catalogue_name']}
 
         queries.extend(
-            query_utils.create_queries_by_lookup_field(self.request_data, self.search_fields, search_fields_maps)
+            query_utils.create_queries_by_lookup_field(request_data, self.search_fields, search_fields_maps)
         )
-        return self.create_queryset_by_queries(CofkUnionQueryableWork, queries).distinct()
+        return self.create_queryset_by_queries(CofkUnionQueryableWork, queries, sort_by=sort_by).distinct()
 
     @property
     def simplified_query(self) -> list[str]:
@@ -981,6 +985,10 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     def expanded_query_fieldset_list(self) -> Iterable:
         return [ExpandedSearchFieldset(self.request_data.dict())]
 
+    @property
+    def download_csv_handler(self) -> DownloadCsvHandler:
+        return super().download_csv_handler
+
 
 class WorkCommentFormsetHandler(RecrefFormsetHandler):
 
@@ -1013,3 +1021,75 @@ class ManifImageRecrefHandler(ImageRecrefHandler):
 
     def find_org_recref_fn(self, parent, target) -> Recref | None:
         return CofkManifImageMap.objects.filter(manif=parent, image=target).first()
+
+
+class WorkDownloadCsvHandler(DownloadCsvHandler):
+    def get_header_list(self) -> list[str]:
+        return [
+            "Description",
+            "Editor's notes",
+            "Date of work as marked",
+            "Year",
+            "Month",
+            "Day",
+            "Date in original calendar",
+            "Creators",
+            "Notes on authors/senders",
+            "Places from",
+            "Origin as marked",
+            "Addressees",
+            "Places to",
+            "Destination as marked",
+            "Flags",
+            "Images",
+            "Manifestations",
+            "Related resources",
+            "Language of work",
+            "Subjects",
+            "Abstract",
+            "People mentioned",
+            "Keywords",
+            "General notes",
+            "Original catalogue",
+            "Source of record",
+            "Record to be deleted",
+            "Work ID",
+            "Date/time of last change",
+            "Changed by user",
+        ]
+
+    def obj_to_values(self, obj) -> Iterable[str]:
+        obj: CofkUnionQueryableWork
+        values = (
+            obj.description,
+            obj.editors_notes,
+            obj.date_of_work_as_marked,
+            obj.date_of_work_std_year,
+            obj.date_of_work_std_month,
+            obj.date_of_work_std_day,
+            obj.work.original_calendar,
+            obj.creators_for_display,
+            obj.notes_on_authors,
+            obj.places_from_for_display,
+            obj.origin_as_marked,
+            obj.addressees_for_display,
+            obj.places_to_for_display,
+            obj.destination_as_marked,
+            obj.flags,
+            obj.images,
+            obj.manifestations_for_display,
+            obj.related_resources,
+            obj.language_of_work,
+            obj.subjects,
+            obj.abstract,
+            obj.people_mentioned,
+            obj.keywords,
+            obj.general_notes,
+            obj.original_catalogue,
+            obj.accession_code,
+            obj.work_to_be_deleted,
+            obj.iwork_id,
+            obj.change_timestamp,
+            obj.change_user,
+        )
+        return values
