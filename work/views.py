@@ -987,7 +987,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def download_csv_handler(self) -> DownloadCsvHandler:
-        return super().download_csv_handler
+        return WorkDownloadCsvHandler()
 
 
 class WorkCommentFormsetHandler(RecrefFormsetHandler):
