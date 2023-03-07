@@ -365,7 +365,8 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
         return simplified_query
 
-    def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q]):
+    def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q],
+                                   sort_by=None):
         queryset = model_class.objects.all()
 
         annotate = {'sent': Count('works',
@@ -382,27 +383,27 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         if queries:
             queryset = queryset.filter(query_utils.all_queries_match(queries))
 
-        if sort_by := self.get_sort_by():
+        if sort_by:
             queryset = queryset.order_by(sort_by)
 
         return queryset
 
     def get_queryset(self):
-        queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
+        return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
 
-        search_fields_maps = {'foaf_name': ['foaf_name', 'skos_altlabel',  'skos_hiddenlabel', 'person_aliases',
-                                            'roles__role_category_desc'], # names and roles search
+    def get_queryset_by_request_data(self, request_data, sort_by=None):
+        queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
+        search_fields_maps = {'foaf_name': ['foaf_name', 'skos_altlabel', 'skos_hiddenlabel', 'person_aliases',
+                                            'roles__role_category_desc'],  # names and roles search
                               'roles': ['roles__role_category_desc'],
                               'images': ['images__image_filename'],
                               'organisation_type': ['organisation_type__org_type_desc'],
                               'other_details': ['comments__comment', 'resources__resource_name',
                                                 'resources__resource_details']}
-
         queries.extend(
-            query_utils.create_queries_by_lookup_field(self.request_data, self.search_fields, search_fields_maps)
+            query_utils.create_queries_by_lookup_field(request_data, self.search_fields, search_fields_maps)
         )
-
-        return self.create_queryset_by_queries(CofkUnionPerson, queries).distinct()
+        return self.create_queryset_by_queries(CofkUnionPerson, queries, sort_by=sort_by).distinct()
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
@@ -468,12 +469,12 @@ class PersonDownloadCsvHandler(DownloadCsvHandler):
             self.to_date_str(obj.flourished_year, obj.flourished_month, obj.flourished_day),
             obj.is_organisation,
             org_type,
-            '0',  # KTODO send value
-            '0',  # KTODO recd value
-            '0',  # KTODO All works, should be send + recd
+            obj.sent,
+            obj.recd,
+            obj.all_works,
             download_csv_utils.join_comment_lines(obj.comments.iterator()),
             download_csv_utils.join_resource_lines(obj.resources.iterator()),
-            '',  # KTODO mentioned
+            obj.mentioned,
             obj.editors_notes,
             obj.further_reading,
             download_csv_utils.join_image_lines(obj.images.iterator()),

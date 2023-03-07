@@ -4,6 +4,8 @@ import inspect
 import io
 import logging
 import re
+import subprocess
+from pathlib import Path
 from typing import Type
 
 from django.conf import settings
@@ -13,7 +15,9 @@ from django.db.models.manager import Manager
 from core.helper import email_utils, model_utils, view_utils, recref_utils, form_utils
 from core.helper.model_utils import ModelLike
 from location.models import CofkUnionLocation, CofkLocationCommentMap
+from location.views import LocationDownloadCsvHandler, LocationSearchView
 from person.models import CofkUnionPerson
+from person.views import PersonSearchView, PersonDownloadCsvHandler
 
 log = logging.getLogger(__name__)
 
@@ -22,7 +26,36 @@ class Command(BaseCommand):
     help = 'playground for try some python code'
 
     def handle(self, *args, **options):
-        main17()
+        main19()
+
+
+def try_csv_handler(search_view, request_data, csv_handler):
+    queryset = search_view.get_queryset_by_request_data(request_data)
+    file_path = '/tmp/aaa.csv'
+    csv_handler.create_csv_file(file_path, queryset)
+    csv_txt = Path(file_path).read_text()
+    print(csv_txt)
+    print(len(csv_txt.splitlines()))
+    subprocess.Popen(['xdg-open', file_path])
+
+
+def main19():
+    search_view = PersonSearchView()
+    request_data = {'foaf_name': 'aal',
+                    'foaf_name_lookup': 'contains'}
+
+    csv_handler = PersonDownloadCsvHandler()
+    try_csv_handler(search_view, request_data, csv_handler)
+
+
+def main18():
+    search_view = LocationSearchView()
+    request_data = {'location_name': 'aar',
+                    'location_name_lookup': 'contains'}
+    queryset = search_view.get_queryset_by_request_data(request_data)
+
+    csv_handler = LocationDownloadCsvHandler()
+    try_csv_handler(search_view, request_data, csv_handler)
 
 
 def main17():

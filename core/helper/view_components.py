@@ -4,8 +4,7 @@ from typing import Iterable, Any
 
 
 class DownloadCsvHandler:
-    """ define how to convert objects to csv rows
-    KTODO move to download_csv_utils
+    """ define how to convert objects to csv file for export features
     """
 
     @staticmethod

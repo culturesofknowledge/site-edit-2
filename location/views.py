@@ -212,7 +212,8 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
             ('change_timestamp', 'Last edit',),
         ]
 
-    def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q]):
+    def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q],
+                                   sort_by=None):
         queryset = model_class.objects.all()
         annotate = {'sent': Count('works', filter=Q(cofkworklocationmap__relationship_type=REL_TYPE_WAS_SENT_FROM)),
                     'recd': Count('works', filter=Q(cofkworklocationmap__relationship_type=REL_TYPE_WAS_SENT_TO)),
@@ -224,15 +225,15 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
         if queries:
             queryset = queryset.filter(query_utils.all_queries_match(queries))
 
-        if sort_by := self.get_sort_by():
+        if sort_by:
             queryset = queryset.order_by(sort_by)
 
         return queryset
 
     def get_queryset(self):
-        return self.get_queryset_by_request_data(self.request_data)
+        return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
 
-    def get_queryset_by_request_data(self, request_data) -> Iterable:
+    def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:
         search_fields_maps = {'location_name': ['location_name', 'location_synonyms'],
                               'resources': ['resources__resource_name', 'resources__resource_details',
                                             'resources__resource_url'],
@@ -244,7 +245,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
             query_utils.create_queries_by_lookup_field(request_data, self.search_fields, search_fields_maps)
         )
 
-        return self.create_queryset_by_queries(CofkUnionLocation, queries).distinct()
+        return self.create_queryset_by_queries(CofkUnionLocation, queries, sort_by=sort_by).distinct()
 
     @property
     def entity(self) -> str:
@@ -286,13 +287,13 @@ class LocationDownloadCsvHandler(DownloadCsvHandler):
             "Related resources",
             "Latitude",
             "Longitude",
-            "Element 1 eg room"
-            "Element 2 eg building"
-            "Element 3 eg parish"
-            "Element 4 eg city"
-            "Element 5 eg county"
-            "Element 6 eg country"
-            "Element 7 eg empire"
+            "Element 1 eg room",
+            "Element 2 eg building",
+            "Element 3 eg parish",
+            "Element 4 eg city",
+            "Element 5 eg county",
+            "Element 6 eg country",
+            "Element 7 eg empire",
             "Images",
             "Change user",
             "Change timestamp",
@@ -304,9 +305,9 @@ class LocationDownloadCsvHandler(DownloadCsvHandler):
             obj.location_name,
             obj.location_id,
             obj.editors_notes,
-            '0',  # KTODO send value
-            '0',  # KTODO recd value
-            '0',  # KTODO All works, should be send + recd
+            obj.sent,
+            obj.recd,
+            obj.all_works,
             download_csv_utils.join_comment_lines(obj.comments.iterator()),
             download_csv_utils.join_resource_lines(obj.resources.iterator()),
             obj.latitude,
