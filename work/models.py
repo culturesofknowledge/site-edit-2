@@ -49,7 +49,7 @@ class CofkUnionWork(models.Model, RecordTracker):
     origin_uncertain = models.SmallIntegerField(default=0)
     abstract = models.TextField(blank=True, null=True)
     keywords = models.TextField(blank=True, null=True)
-    language_of_work = models.CharField(max_length=255, blank=True, null=True)
+    # language_of_work = models.CharField(max_length=255, blank=True, null=True)
     work_is_translation = models.SmallIntegerField(default=0)
     incipit = models.TextField(blank=True, null=True)
     explicit = models.TextField(blank=True, null=True)
