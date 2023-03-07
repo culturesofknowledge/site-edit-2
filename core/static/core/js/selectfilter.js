@@ -2,11 +2,15 @@ var emlojs = emlojs || {};
 emlojs.selectfilter_service = {
 
     find_root_ele: function (ele) {
+        const root_name = 'selectfilter-root';
         if (ele) {
-            return $(ele).closest('.selectfilter-root')
-        } else {
-            return $('.selectfilter-root')
+            for (let p of $(ele).parents()) {
+                if (p.classList.contains(root_name)){
+                    return $(p)
+                }
+            }
         }
+        return $('.' + root_name)
     },
 
     on_select_clicked: function (e) {
