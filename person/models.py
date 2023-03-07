@@ -86,7 +86,7 @@ class CofkUnionPerson(models.Model, RecordTracker):
     #                                        through_fields=('person', 'related'))
 
     @property
-    def names_and_roles(self):
+    def names_and_roles(self) -> str:
         # Adapted from public.cofk_union_person_view
         names_and_roles = f'<p>{self.foaf_name}</p>'
 
@@ -102,7 +102,7 @@ class CofkUnionPerson(models.Model, RecordTracker):
 
         return mark_safe(names_and_roles)
 
-    def to_string(self):
+    def to_string(self, searchable=False) -> str:
         """
         Used by work.creators_for_display and work.addressees_for_display
         """
@@ -116,13 +116,24 @@ class CofkUnionPerson(models.Model, RecordTracker):
             dob += ' or before'
 
         if self.date_of_birth_year and self.date_of_death_year:
-            return f'{self.foaf_name} {dob}-{dod}'
+            person = f'{self.foaf_name}, {dob}-{dod}'
         elif self.date_of_birth_year:
-            return f'{self.foaf_name} b. {dob}'
+            person = f'{self.foaf_name} b. {dob}'
         elif self.date_of_death_year:
-            return f'{self.foaf_name} d. {dod}'
+            person = f'{self.foaf_name} d. {dod}'
+        else:
+            person = str(self.foaf_name)
 
-        return self.foaf_name
+        if not searchable:
+            return person
+
+        if self.skos_altlabel:
+            person += f', also known as: {self.skos_altlabel}'
+
+        if self.person_aliases:
+            person += f' (titles/roles: {self.person_aliases}'
+
+        return person
 
     class Meta:
         db_table = 'cofk_union_person'

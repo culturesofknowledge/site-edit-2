@@ -2,6 +2,7 @@ import functools
 from typing import Iterable
 
 from django.db import models
+from django.urls import reverse
 
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_COMMENT_DATE, \
     REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO
@@ -11,6 +12,11 @@ from core.models import Recref, CofkLookupCatalogue
 
 SEQ_NAME_COFKUNIONWORK__IWORK_ID = 'cofk_union_work_iwork_id_seq'
 
+
+def format_language(lang: 'CofkUnionLanguageOfWork') -> str:
+    if lang.notes:
+        return f'{lang.language_code.language_name} ({lang.notes})'
+    return lang.language_code.language_name
 
 class CofkUnionWork(models.Model, RecordTracker):
     work_id = models.CharField(primary_key=True, max_length=100)
@@ -101,40 +107,89 @@ class CofkUnionWork(models.Model, RecordTracker):
     def find_people_by_rel_type(self, rel_type) -> Iterable['CofkWorkPersonMap']:
         return self.cofkworkpersonmap_set.filter(relationship_type=rel_type).all()
 
-    @property
-    def creators_for_display(self):
-        creators = self.find_people_by_rel_type(REL_TYPE_CREATED)
-        if len(creators) > 0:
-            return ", ".join([str(c.person.to_string()) for c in creators])
+    def queryable_people(self, rel_type: str, searchable: bool=False) -> str:
+        # Derived value for CofkUnionQueryable
+        people = self.find_people_by_rel_type(rel_type)
+
+        if len(people) > 0:
+            return ", ".join([str(p.person.to_string(searchable=searchable)) for p in people])
         else:
             return ''
 
     @property
-    def places_from_for_display(self):
+    def places_from_for_display(self) -> str:
+        # Derived value for CofkUnionQueryable
         if self.origin_location:
             return str(self.origin_location.location)
         return ''
 
     @property
-    def places_to_for_display(self):
+    def places_to_for_display(self) -> str:
+        # Derived value for CofkUnionQueryable
         if self.destination_location:
             return str(self.destination_location.location)
         return ''
 
     @property
-    def addressees_for_display(self):
-        addressees = self.find_people_by_rel_type(REL_TYPE_WAS_ADDRESSED_TO)
-        if len(addressees) > 0:
-            return ", ".join([str(a.person.to_string()) for a in addressees])
+    def manifestations_for_display(self):
+        # Derived value for CofkUnionQueryable
+        # Example:
+        # Letter.Bodleian Library, University of Oxford: MS.Locke c. 19, f. 48 - - Printed copy. ‘The Clarendon Edition of the Works of John Locke: The Correspondence of John Locke’, ed.E.S.de Beer, 8 vols(Oxford: OUP, 1978), vol. 4, letter 1282.
+        # see https://github.com/culturesofknowledge/site-edit/blob/9a74580d2567755ab068a2d8761df8f81718910e/docker-postgres/cofk-empty.postgres.schema.sql#L6541
+        manifestations = self.cofkunionmanifestation_set.all()
+        if len(manifestations) > 0:
+            return ", ".join([str(m.to_string()) for m in manifestations])
         else:
             return ''
+
+    @property
+    def queryable_subjects(self):
+        # Derived value for CofkUnionQueryable
+        if self.subjects:
+            return ", ".join([s.subject_desc for s in self.subjects.all()])
+
+    @property
+    def languages(self):
+        if self.language_set:
+            return ", ".join([format_language(l) for l in self.language_set.all()])
+
+    @property
+    def resources(self):
+        '''
+        This field combines related resources and related works.
+        '''
+        start = 'xxxCofkLinkStartxxx'
+        end = 'xxxCofkLinkEndxxx'
+        start_href = 'xxxCofkHrefStartxxx'
+        end_href = 'xxxCofkHrefEndxxx'
+        resources = ''
+
+        if to_works := self.work_to_set.all():
+            resources += ", ".join([f'{start}{start_href}{reverse("work:overview_form", args=[t.work_from.iwork_id])}{end_href}{t.work_from.description}{end}' for t in to_works])
+
+        if linked_resources := self.cofkworkresourcemap_set.all():
+            resources += ", ".join([f'{start}{start_href}{r.resource.resource_url}{end_href}{r.resource.resource_name}{end}' for r in linked_resources])
+
+        return resources
+    @property
+    def images(self):
+        start = 'xxxCofkImageIDStartxxx'
+        end = 'xxxCofkImageIDEndxxx'
+
+        manifestations = self.cofkunionmanifestation_set.all()
+        images = []
+        if len(manifestations) > 0:
+            for m in manifestations:
+                images.extend(list(m.images.all()))
+
+        return ", ".join(f'{start}{i.image_filename}{end}' for i in images)
 
     def save(self, clone_queryable=True, force_insert=False, force_update=False,
              using=None, update_fields=None, **kwargs):
         super().save(force_insert, force_update, using, update_fields, **kwargs)
         if clone_queryable:
             from work import work_utils
-            work_utils.clone_queryable_work(self, reload=False)
+            work_utils.clone_queryable_work(self)
 
 
 class CofkWorkCommentMap(Recref):
@@ -199,8 +254,7 @@ class CofkUnionLanguageOfWork(models.Model):
     work = models.ForeignKey(CofkUnionWork, models.DO_NOTHING, related_name='language_set')
     language_code = models.ForeignKey('core.Iso639LanguageCode', models.DO_NOTHING,
                                       db_column='language_code',
-                                      to_field='code_639_3',
-                                      )
+                                      to_field='code_639_3',)
     notes = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
@@ -250,6 +304,7 @@ class CofkUnionQueryableWork(models.Model):
     related_resources = models.TextField(blank=True, null=True)
     language_of_work = models.CharField(max_length=255, blank=True, null=True)
     work_is_translation = models.SmallIntegerField()
+    # flags does not need to be populated, this is done by work_util_tags.exclamation
     flags = models.TextField(blank=True, null=True)
     edit_status = models.CharField(max_length=3)
     general_notes = models.TextField(blank=True, null=True)

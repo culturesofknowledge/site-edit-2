@@ -117,7 +117,7 @@ def clone_queryable_work(work: CofkUnionWork, reload=False, _return=False):
     if reload:
         work = reload_work(work)
 
-    exclude_fields = {'iwork_id'}
+    exclude_fields = ['iwork_id', 'subjects']
     queryable_work = model_utils.get_safe(
         CofkUnionQueryableWork, iwork_id=work.iwork_id
     ) or CofkUnionQueryableWork()
@@ -139,10 +139,24 @@ def clone_queryable_work(work: CofkUnionWork, reload=False, _return=False):
         setattr(queryable_work, name, val)
 
     queryable_work.iwork_id = work.iwork_id
-    queryable_work.creators_for_display = work.creators_for_display
+    # People
+    queryable_work.creators_for_display = work.queryable_people(REL_TYPE_CREATED)
+    queryable_work.creators_searchable = work.queryable_people(REL_TYPE_CREATED, searchable=True)
+    queryable_work.addressees_for_display = work.queryable_people(REL_TYPE_WAS_ADDRESSED_TO)
+    queryable_work.addressees_searchable = work.queryable_people(REL_TYPE_WAS_ADDRESSED_TO, searchable=True)
+
+    #Places
     queryable_work.places_from_for_display = work.places_from_for_display
+    queryable_work.places_from_searchable = queryable_work.places_from_for_display
     queryable_work.places_to_for_display = work.places_to_for_display
-    queryable_work.addressees_for_display = work.addressees_for_display
+    queryable_work.places_to_searchable = queryable_work.places_to_for_display
+
+    queryable_work.manifestations_for_display = work.manifestations_for_display
+    queryable_work.subjects = work.queryable_subjects
+    queryable_work.language_of_work = work.languages
+    queryable_work.related_resources = work.resources
+    queryable_work.images = work.images
+    # queryable_work.flags = exclamation(queryable_work)
 
     if _return:
         return queryable_work
