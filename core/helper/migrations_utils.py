@@ -54,7 +54,7 @@ def load_sql_by_path(module_name, path):
 
 def create_function_by_file(module_name, path) -> Operation:
     create_sql = load_sql_by_path(module_name, path)
-    if fn_name := re.findall(r'create function (\w+)\(', create_sql):
+    if fn_name := re.findall(r'create\s+(or replace)?\s*function (\w+)\(', create_sql):
         fn_name = fn_name[0]
     else:
         raise ValueError(f'function name not found [{module_name}][{path}]')
