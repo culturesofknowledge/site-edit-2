@@ -48,8 +48,12 @@ def create_operation_add_index(index_name, table_name, fields: list) -> Operatio
     )
 
 
+def load_sql_by_path(module_name, path):
+    return pkg_resources.resource_stream(module_name, path).read().decode()
+
+
 def create_function_by_file(module_name, path) -> Operation:
-    create_sql = pkg_resources.resource_stream(module_name, path).read().decode()
+    create_sql = load_sql_by_path(module_name, path)
     if fn_name := re.findall(r'create function (\w+)\(', create_sql):
         fn_name = fn_name[0]
     else:
@@ -58,6 +62,13 @@ def create_function_by_file(module_name, path) -> Operation:
     return migrations.RunSQL(
         create_sql,
         f"DROP function {fn_name}",
+    )
+
+
+def update_function_by_file(module_name, new_path, old_path) -> Operation:
+    return migrations.RunSQL(
+        load_sql_by_path(module_name, new_path),
+        load_sql_by_path(module_name, old_path),
     )
 
 
