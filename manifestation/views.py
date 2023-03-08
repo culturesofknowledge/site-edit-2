@@ -53,7 +53,7 @@ class ManifSearchView(LoginRequiredMixin, DefaultSearchView):
     #     return [GeneralSearchFieldset(request_data)]
     # @property
     # def download_csv_handler(self) -> DownloadCsvHandler:
-    #     return PersonDownloadCsvHandler()
+    #     return DownloadCsvHandler(PersonCsvHeaderValues())
 
 
 @login_required

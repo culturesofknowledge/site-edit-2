@@ -27,7 +27,7 @@ from core.helper.lang_utils import LangModelAdapter, NewLangForm
 from core.helper.recref_handler import SingleRecrefHandler, RecrefFormsetHandler, SubjectHandler, ImageRecrefHandler, \
     TargetResourceFormsetHandler, MultiRecrefAdapterHandler
 from core.helper.recref_utils import create_recref_if_field_exist
-from core.helper.view_components import DownloadCsvHandler
+from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_utils import DefaultSearchView
 from core.models import Recref, CofkLookupCatalogue
@@ -987,7 +987,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def download_csv_handler(self) -> DownloadCsvHandler:
-        return WorkDownloadCsvHandler()
+        return DownloadCsvHandler(WorkCsvHeaderValues())
 
 
 class WorkCommentFormsetHandler(RecrefFormsetHandler):
@@ -1023,7 +1023,7 @@ class ManifImageRecrefHandler(ImageRecrefHandler):
         return CofkManifImageMap.objects.filter(manif=parent, image=target).first()
 
 
-class WorkDownloadCsvHandler(DownloadCsvHandler):
+class WorkCsvHeaderValues(HeaderValues):
     def get_header_list(self) -> list[str]:
         return [
             "Description",

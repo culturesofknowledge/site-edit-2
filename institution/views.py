@@ -213,3 +213,7 @@ class InstMergeActionView(LoginRequiredMixin, MergeActionViews):
     @property
     def target_model_class(self) -> Type[ModelLike]:
         return CofkUnionInstitution
+
+# KTODO
+# class InstCsvHeaderValues(HeaderValues):
+

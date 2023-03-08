@@ -20,7 +20,7 @@ from core.helper.model_utils import ModelLike
 from core.helper.recref_handler import RecrefFormsetHandler, RoleCategoryHandler, ImageRecrefHandler, \
     TargetResourceFormsetHandler, MultiRecrefAdapterHandler, SingleRecrefHandler
 from core.helper.renderer_utils import CompactSearchResultsRenderer
-from core.helper.view_components import DownloadCsvHandler
+from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_utils import CommonInitFormViewTemplate, BasicSearchView, MergeChoiceViews, MergeActionViews, \
     MergeConfirmViews
@@ -424,10 +424,10 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
     def download_csv_handler(self) -> DownloadCsvHandler:
-        return PersonDownloadCsvHandler()
+        return DownloadCsvHandler(PersonCsvHeaderValues())
 
 
-class PersonDownloadCsvHandler(DownloadCsvHandler):
+class PersonCsvHeaderValues(HeaderValues):
     def get_header_list(self) -> list[str]:
         return [
             "ID",
