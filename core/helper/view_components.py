@@ -2,12 +2,14 @@ import csv
 from pathlib import Path
 from typing import Iterable, Any, Callable
 
+from core.helper import data_utils
+
 
 class HeaderValues:
     def get_header_list(self) -> list[str]:
         raise NotImplementedError('missing header list')
 
-    def obj_to_values(self, obj) -> Iterable[str]:
+    def obj_to_values(self, obj) -> Iterable:
         """
         convert object to values of columns
         """
@@ -27,8 +29,7 @@ class DownloadCsvHandler:
 
     @staticmethod
     def _obj_to_str_values(obj_to_values: Callable, obj) -> Iterable[str]:
-        values = (v if v is not None else ''
-                  for v in obj_to_values(obj))
+        values = (data_utils.to_str_list_no_none(v) for v in obj_to_values(obj))
         return map(str, values)
 
     def create_csv_file(self, file_path: str | Path, objects: Iterable):

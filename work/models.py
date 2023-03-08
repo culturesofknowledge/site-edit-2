@@ -73,7 +73,7 @@ class CofkUnionWork(models.Model, RecordTracker):
         db_table = 'cofk_union_work'
 
     def find_comments_by_rel_type(self, rel_type) -> Iterable['CofkUnionComment']:
-        return (r.comment for r in self.cofkworkcomment_set.filter(relationship_type=rel_type))
+        return (r.comment for r in self.cofkworkcommentmap_set.filter(relationship_type=rel_type))
 
     @property
     def author_comments(self) -> Iterable['CofkUnionComment']:
