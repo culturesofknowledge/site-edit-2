@@ -298,7 +298,7 @@ class CommonSearchTests:
         self.test_case.assertEqual(len(self.find_table_rows()), num_row_show, )
 
         size_titles = (e.text for e in self.test_case.selenium.find_elements(By.CSS_SELECTOR, 'h2'))
-        size_titles = (re.findall(r'(\d+) .+? found', t) for t in size_titles)
+        size_titles = (re.findall(r'out of ([\d,]+)', t) for t in size_titles)
         size_titles = (s for s in size_titles if s)
         size_titles = list(size_titles)
         self.test_case.assertEqual(len(size_titles), 1)

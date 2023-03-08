@@ -2982,26 +2982,6 @@ begin
         new.keywords::text );
     end if;
 
-    -- cofk_union_work 31. language_of_work
-    if TG_OP = 'UPDATE' then
-      perform dbf_cofk_union_audit_literal_update( 'cofk_union_work',
-        new.work_id,
-        new.iwork_id,
-        new.description,
-        'language_of_work',
-        new.language_of_work::text,
-        old.language_of_work::text );
-    end if;
-
-    if TG_OP = 'INSERT' then
-      perform dbf_cofk_union_audit_literal_insert( 'cofk_union_work',
-        new.work_id,
-        new.iwork_id,
-        new.description,
-        'language_of_work',
-        new.language_of_work::text );
-    end if;
-
     -- cofk_union_work 32. work_is_translation
     if TG_OP = 'UPDATE' then
       perform dbf_cofk_union_audit_literal_update( 'cofk_union_work',

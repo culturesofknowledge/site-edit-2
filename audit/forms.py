@@ -124,7 +124,7 @@ changed_field_choices = [
     ('keywords', 'Keywords'),
     ('language_code', 'Language Code'),
     ('language_of_manifestation', 'Language Of Manifestation'),
-    ('language_of_work', 'Language Of Work'),
+    #('language_of_work', 'Language Of Work'),
     ('latitude', 'Latitude'),
     ('licence_details', 'Licence Details'),
     ('licence_url', 'Licence Url'),
