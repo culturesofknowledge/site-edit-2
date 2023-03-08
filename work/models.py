@@ -5,7 +5,7 @@ from django.db import models
 from django.urls import reverse
 
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_COMMENT_DATE, \
-    REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO
+    REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 from core.models import Recref, CofkLookupCatalogue
@@ -17,6 +17,7 @@ def format_language(lang: 'CofkUnionLanguageOfWork') -> str:
     if lang.notes:
         return f'{lang.language_code.language_name} ({lang.notes})'
     return lang.language_code.language_name
+
 
 class CofkUnionWork(models.Model, RecordTracker):
     work_id = models.CharField(primary_key=True, max_length=100)
@@ -107,7 +108,7 @@ class CofkUnionWork(models.Model, RecordTracker):
     def find_people_by_rel_type(self, rel_type) -> Iterable['CofkWorkPersonMap']:
         return self.cofkworkpersonmap_set.filter(relationship_type=rel_type).all()
 
-    def queryable_people(self, rel_type: str, searchable: bool=False) -> str:
+    def queryable_people(self, rel_type: str, searchable: bool = False) -> str:
         # Derived value for CofkUnionQueryable
         people = self.find_people_by_rel_type(rel_type)
 
@@ -165,12 +166,17 @@ class CofkUnionWork(models.Model, RecordTracker):
         resources = ''
 
         if to_works := self.work_to_set.all():
-            resources += ", ".join([f'{start}{start_href}{reverse("work:overview_form", args=[t.work_from.iwork_id])}{end_href}{t.work_from.description}{end}' for t in to_works])
+            resources += ", ".join([
+                f'{start}{start_href}{reverse("work:overview_form", args=[t.work_from.iwork_id])}{end_href}{t.work_from.description}{end}'
+                for t in to_works])
 
         if linked_resources := self.cofkworkresourcemap_set.all():
-            resources += ", ".join([f'{start}{start_href}{r.resource.resource_url}{end_href}{r.resource.resource_name}{end}' for r in linked_resources])
+            resources += ", ".join(
+                [f'{start}{start_href}{r.resource.resource_url}{end_href}{r.resource.resource_name}{end}' for r in
+                 linked_resources])
 
         return resources
+
     @property
     def images(self):
         start = 'xxxCofkImageIDStartxxx'
@@ -254,7 +260,7 @@ class CofkUnionLanguageOfWork(models.Model):
     work = models.ForeignKey(CofkUnionWork, models.DO_NOTHING, related_name='language_set')
     language_code = models.ForeignKey('core.Iso639LanguageCode', models.DO_NOTHING,
                                       db_column='language_code',
-                                      to_field='code_639_3',)
+                                      to_field='code_639_3', )
     notes = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
