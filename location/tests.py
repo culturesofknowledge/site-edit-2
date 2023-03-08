@@ -7,9 +7,10 @@ from selenium.webdriver.common.by import By
 import location.fixtures
 import location.fixtures
 from core.helper import model_utils, file_utils
+from core.helper.view_components import DownloadCsvHandler
 from location.models import CofkUnionLocation, CofkLocationResourceMap
 from location.recref_adapter import LocationResourceRecrefAdapter
-from location.views import LocationMergeChoiceView, LocationDownloadCsvHandler
+from location.views import LocationMergeChoiceView, LocationCsvHeaderValues
 from siteedit2.utils import test_utils
 from siteedit2.utils.test_utils import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
     CommentM2MTester, CommonSearchTests, MergeTests
@@ -112,7 +113,7 @@ class LocationDownloadCsvHandlerTests(unittest.TestCase):
         queryset = CofkUnionLocation.objects.all()[:10]
         record_size = queryset.count()
         csv_path = file_utils.create_new_tmp_file_path()
-        csv_handler = LocationDownloadCsvHandler()
+        csv_handler = DownloadCsvHandler(LocationCsvHeaderValues())
         csv_handler.create_csv_file(csv_path, queryset)
 
         csv_text = Path(csv_path).read_text()

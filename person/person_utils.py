@@ -16,6 +16,10 @@ def get_form_url(iperson_id):
     return reverse('person:full_form', args=[iperson_id])
 
 
+def get_display_id(person: CofkUnionPerson):
+    return person and person.iperson_id
+
+
 @log_no_url
 def get_checked_form_url_by_pk(pk):
     if person := CofkUnionPerson.objects.get(pk=pk):

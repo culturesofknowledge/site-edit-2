@@ -1,7 +1,7 @@
 """
 contain method that support multi / general model
 """
-from typing import Type, Iterable
+from typing import Type, Any
 
 from django.db.models import Model
 
@@ -29,6 +29,20 @@ def get_model_class_safe(model: ModelOrClass) -> Type[ModelLike]:
     return model
 
 
+class NoMappingFoundError(Exception):
+    pass
+
+
+def _call_obj_fn_map(obj, fn_map: list[tuple[Type[ModelLike], Any]]) -> Any:
+    for c, fn in fn_map:
+        if isinstance(obj, c):
+            try:
+                return fn(obj)
+            except Exception:
+                pass
+    raise NoMappingFoundError(f'no mapping found for {obj}')
+
+
 def get_display_name(model: ModelLike) -> str:
     if not model:
         return ''
@@ -41,13 +55,10 @@ def get_display_name(model: ModelLike) -> str:
         (CofkUnionComment, lambda c: c and c.comment),
         (CofkUnionResource, lambda c: c and c.resource_name),
     ]
-
-    for c, fn in name_fn_map:
-        if isinstance(model, c):
-            try:
-                return fn(model)
-            except Exception:
-                pass
+    try:
+        return _call_obj_fn_map(model, name_fn_map)
+    except NoMappingFoundError:
+        pass
 
     try:
         return f'{model.__class__.__name__}__{model.pk}'
@@ -72,3 +83,18 @@ def get_name_by_model_class(model_or_class: ModelOrClass) -> str:
             return name
 
     return model_class.__name__
+
+
+def get_display_id(model: ModelLike) -> Any:
+    if not model:
+        return ''
+
+    id_fn_map = [
+        (CofkUnionWork, work_utils.get_display_id),
+        (CofkUnionPerson, person_utils.get_display_id),
+    ]
+
+    try:
+        return _call_obj_fn_map(model, id_fn_map)
+    except NoMappingFoundError:
+        return model.pk

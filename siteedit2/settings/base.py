@@ -240,3 +240,7 @@ EMLO_SEQ_VAL_INIT = {
 ### change to True if you are using *https*
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
+
+# export
+# root url for generate url in export
+EXPORT_ROOT_URL = 'http://localhost:8020'

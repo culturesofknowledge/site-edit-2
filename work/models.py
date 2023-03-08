@@ -6,7 +6,7 @@ from django.urls import reverse
 
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_COMMENT_DATE, \
     REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO
-from core.helper import model_utils
+from core.helper import model_utils, recref_utils
 from core.helper.model_utils import RecordTracker
 from core.models import Recref, CofkLookupCatalogue
 
@@ -80,7 +80,20 @@ class CofkUnionWork(models.Model, RecordTracker):
         db_table = 'cofk_union_work'
 
     def find_comments_by_rel_type(self, rel_type) -> Iterable['CofkUnionComment']:
-        return (r.comment for r in self.cofkworkcommentmap_set.filter(relationship_type=rel_type))
+        filter_kwargs = recref_utils.create_rel_type_filter_kwargs(rel_type)
+        return (r.comment for r in self.cofkworkcommentmap_set.filter(**filter_kwargs))
+
+    def find_persons_by_rel_type(self, rel_type: str | Iterable) -> Iterable['CofkUnionPerson']:
+        filter_kwargs = recref_utils.create_rel_type_filter_kwargs(rel_type)
+        return (r.person for r in self.cofkworkpersonmap_set.filter(**filter_kwargs))
+
+    def find_locations_by_rel_type(self, rel_type) -> Iterable['CofkUnionLocation']:
+        filter_kwargs = recref_utils.create_rel_type_filter_kwargs(rel_type)
+        return (r.location for r in self.cofkworklocationmap_set.filter(**filter_kwargs))
+
+    def find_work_to_list_by_rel_type(self, rel_type) -> Iterable['CofkUnionWork']:
+        filter_kwargs = recref_utils.create_rel_type_filter_kwargs(rel_type)
+        return (r.work_to for r in self.work_from_set.filter(**filter_kwargs))
 
     @property
     def author_comments(self) -> Iterable['CofkUnionComment']:
@@ -94,41 +107,30 @@ class CofkUnionWork(models.Model, RecordTracker):
     def date_comments(self) -> Iterable['CofkUnionComment']:
         return self.find_comments_by_rel_type(REL_TYPE_COMMENT_DATE)
 
-    def find_location_by_rel_type(self, rel_type) -> 'CofkWorkLocationMap':
-        return self.cofkworklocationmap_set.filter(relationship_type=rel_type).first()
+    @property
+    def origin_location(self) -> 'CofkUnionLocation':
+        return next(self.find_locations_by_rel_type(REL_TYPE_WAS_SENT_FROM), None)
 
     @property
-    def origin_location(self) -> 'CofkWorkLocationMap':
-        return self.find_location_by_rel_type(REL_TYPE_WAS_SENT_FROM)
-
-    @property
-    def destination_location(self) -> 'CofkWorkLocationMap':
-        return self.find_location_by_rel_type(REL_TYPE_WAS_SENT_TO)
-
-    def find_people_by_rel_type(self, rel_type) -> Iterable['CofkWorkPersonMap']:
-        return self.cofkworkpersonmap_set.filter(relationship_type=rel_type).all()
+    def destination_location(self) -> 'CofkUnionLocation':
+        return next(self.find_locations_by_rel_type(REL_TYPE_WAS_SENT_TO), None)
 
     def queryable_people(self, rel_type: str, searchable: bool = False) -> str:
         # Derived value for CofkUnionQueryable
-        people = self.find_people_by_rel_type(rel_type)
-
-        if len(people) > 0:
-            return ", ".join([str(p.person.to_string(searchable=searchable)) for p in people])
-        else:
-            return ''
+        return ", ".join([p.to_string(searchable=searchable) for p in self.find_persons_by_rel_type(rel_type)])
 
     @property
     def places_from_for_display(self) -> str:
         # Derived value for CofkUnionQueryable
         if self.origin_location:
-            return str(self.origin_location.location)
+            return str(self.origin_location)
         return ''
 
     @property
     def places_to_for_display(self) -> str:
         # Derived value for CofkUnionQueryable
         if self.destination_location:
-            return str(self.destination_location.location)
+            return str(self.destination_location)
         return ''
 
     @property

@@ -145,7 +145,7 @@ def clone_queryable_work(work: CofkUnionWork, reload=False, _return=False):
     queryable_work.addressees_for_display = work.queryable_people(REL_TYPE_WAS_ADDRESSED_TO)
     queryable_work.addressees_searchable = work.queryable_people(REL_TYPE_WAS_ADDRESSED_TO, searchable=True)
 
-    #Places
+    # Places
     queryable_work.places_from_for_display = work.places_from_for_display
     queryable_work.places_from_searchable = queryable_work.places_from_for_display
     queryable_work.places_to_for_display = work.places_to_for_display
@@ -167,3 +167,7 @@ def clone_queryable_work(work: CofkUnionWork, reload=False, _return=False):
 
 def reload_work(work: CofkUnionWork) -> CofkUnionWork | None:
     return CofkUnionWork.objects.filter(pk=work.pk).first()
+
+
+def get_display_id(work: CofkUnionWork | CofkUnionQueryableWork):
+    return work and work.iwork_id

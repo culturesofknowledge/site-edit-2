@@ -1,18 +1,17 @@
 import dataclasses
 import logging
-from typing import Callable, Any, Optional
-
 import typing
+from typing import Callable, Any, Optional
 from typing import Type, Iterable, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from core.helper.model_utils import ModelLike
 
 from django.db.models.fields.related_descriptors import ForwardManyToOneDescriptor
 from django.forms import BaseForm
 
 from core.helper import inspect_utils, django_utils, model_utils
 from core.models import Recref
+
+if TYPE_CHECKING:
+    from core.helper.model_utils import ModelLike
 
 log = logging.getLogger(__name__)
 
@@ -173,3 +172,12 @@ def find_recref_list(recref_class, parent_model, parent_field=None) -> Iterable[
 def find_recref_list_by_bounded_data(bounded_data, parent_model) -> Iterable['Recref']:
     parent_field, _ = get_parent_related_field_by_bounded_data(bounded_data, parent_model)
     return find_recref_list(bounded_data.recref_class, parent_model, parent_field=parent_field)
+
+
+def create_rel_type_filter_kwargs(rel_type: str | Iterable) -> dict:
+    filter_kwargs = {}
+    if isinstance(rel_type, str):
+        filter_kwargs['relationship_type'] = rel_type
+    else:
+        filter_kwargs['relationship_type__in'] = rel_type
+    return filter_kwargs

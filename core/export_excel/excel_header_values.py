@@ -1,5 +1,9 @@
 from typing import Iterable
 
+from django.conf import settings
+from django.urls import reverse
+
+from core import constant
 from core.export_excel import export_excel_utils
 from core.helper.view_components import HeaderValues
 from work.models import CofkUnionQueryableWork
@@ -67,6 +71,29 @@ class WorkExcelHeaderValues(HeaderValues):
         ]
 
     def obj_to_values(self, obj: CofkUnionQueryableWork) -> Iterable:
+        author_name, author_id = export_excel_utils.name_id(
+            obj.work.find_persons_by_rel_type([
+                constant.REL_TYPE_CREATED,
+                constant.REL_TYPE_SENT,
+                constant.REL_TYPE_SIGNED,
+            ]))
+        recipient_name, recipient_id = export_excel_utils.name_id(
+            obj.work.find_persons_by_rel_type([
+                constant.REL_TYPE_WAS_ADDRESSED_TO,
+                constant.REL_TYPE_INTENDED_FOR,
+            ]))
+
+        origin_name, origin_id = export_excel_utils.name_id(
+            obj.work.find_locations_by_rel_type(constant.REL_TYPE_WAS_SENT_FROM))
+        dest_name, dest_id = export_excel_utils.name_id(
+            obj.work.find_locations_by_rel_type(constant.REL_TYPE_WAS_SENT_TO))
+
+        person_mentioned_name, person_mentioned_id = export_excel_utils.name_id(
+            obj.work.find_persons_by_rel_type(constant.REL_TYPE_PEOPLE_MENTIONED_IN_WORK))
+
+        match_work_name, match_work_id = export_excel_utils.name_id(
+            obj.work.find_work_to_list_by_rel_type(constant.REL_TYPE_WORK_MATCHES))
+
         return (
             obj.iwork_id,
             obj.work.date_of_work_std_year,
@@ -83,44 +110,48 @@ class WorkExcelHeaderValues(HeaderValues):
             obj.date_of_work_approx,
             obj.date_of_work_inferred,
             export_excel_utils.notes(obj.work.date_comments),
-            '',  # KTODO Author
-            '',  # KTODO Author EMLO ID
+            author_name,
+            author_id,
             obj.authors_as_marked,
             obj.authors_inferred,
             obj.authors_uncertain,
-            '',  # KTODO Notes on Author in relation to letter
-            '',  # KTODO Recipient
-            '',  # KTODO Recipient EMLO ID
+            export_excel_utils.notes(obj.work.find_comments_by_rel_type(constant.REL_TYPE_COMMENT_AUTHOR)),
+            recipient_name,
+            recipient_id,
             obj.addressees_as_marked,
             obj.addressees_inferred,
             obj.addressees_uncertain,
-            '',  # KTODO Notes on Recipient in relation to letter
-            '',  # KTODO Origin name
-            '',  # KTODO Origin EMLO ID
+            export_excel_utils.notes(obj.work.addressee_comments),
+            origin_name,
+            origin_id,
             obj.origin_as_marked,
             obj.origin_inferred,
             obj.origin_uncertain,
-            '',  # KTODO Notes on Origin in relation to letter
-            '',  # KTODO Destination name
-            '',  # KTODO Destination EMLO ID
+            export_excel_utils.notes(obj.work.find_comments_by_rel_type(constant.REL_TYPE_COMMENT_ORIGIN)),
+            dest_name,
+            dest_id,
             obj.destination_as_marked,
             obj.destination_inferred,
             obj.destination_uncertain,
-            '',  # KTODO Notes on Destination in relation to letter
+            export_excel_utils.notes(obj.work.find_comments_by_rel_type(constant.REL_TYPE_COMMENT_DESTINATION)),
             obj.abstract,
             obj.keywords,
-            '',  # KTODO Language(s)
+            obj.language_of_work,
             obj.work.incipit,
             obj.work.explicit,
-            '',  # KTODO People mentioned
-            '',  # KTODO EMLO IDs of people mentioned
-            '',  # KTODO Notes on people mentioned
-            '',  # KTODO Original Catalogue name
+            person_mentioned_name,
+            person_mentioned_id,
+            export_excel_utils.notes(obj.work.find_comments_by_rel_type(constant.REL_TYPE_PEOPLE_MENTIONED_IN_WORK)),
+            obj.original_catalogue,
             obj.accession_code,
-            '',  # KTODO Matching letter(s) in alternative EMLO catalogue(s) (self reference also)
-            '',  # KTODO Match id number
-            '',  # KTODO Related Resource IDs [er = number for link to EMLO letter]
-            '',  # KTODO General notes for public display
+            match_work_name,
+            match_work_id,
+            export_excel_utils.common_join_text((r.resource_id for r in obj.work.cofkworkresourcemap_set.all())),
+            export_excel_utils.notes(obj.work.find_comments_by_rel_type(constant.REL_TYPE_COMMENT_REFERS_TO)),
+            obj.editors_notes,
             obj.work.uuid,
-            '',  # KTODO EMLO URL
+            '{}{}'.format(
+                settings.EXPORT_ROOT_URL,
+                reverse('work:corr_form', args=[obj.iwork_id])
+            ),
         )
