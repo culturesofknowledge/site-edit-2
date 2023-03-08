@@ -93,6 +93,13 @@ class NewLangForm(forms.Form):
 
     language_list = forms.Field(required=False, widget=widgets_utils.Datalist(choices=language_choices))
 
+    def remove_selected_lang_choices(self, selected_langs: Iterable):
+        choices = self.fields['language_list'].widget.choices
+        selected_codes = {l.language_code_id for l in selected_langs}
+        new_choices = [c for c in choices if c[1] not in selected_codes]
+        new_choices = sorted(new_choices)
+        self.fields['language_list'].widget.choices = new_choices
+
 
 def add_new_lang_record(note_list: Iterable[str], lang_name_list: Iterable[str],
                         owner_id, lang_model_adapter: "LangModelAdapter"):

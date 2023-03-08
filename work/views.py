@@ -34,8 +34,9 @@ from core.models import Recref, CofkLookupCatalogue
 from institution import inst_utils
 from location import location_utils
 from location.models import CofkUnionLocation
-from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, create_manif_id, \
+from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, \
     CofkUnionLanguageOfManifestation, CofkManifImageMap
+from manifestation.manif_utils import create_manif_id
 from person import person_utils
 from person.models import CofkUnionPerson
 from work import work_utils
@@ -338,6 +339,7 @@ class ManifFFH(BasicWorkFFH):
         self.manif_form = ManifForm(request_data or None,
                                     instance=self.manif, initial=manif_form_initial)
         self.new_lang_form = NewLangForm()
+        self.new_lang_form.remove_selected_lang_choices(self.safe_manif.language_set.iterator())
 
         self.former_recref_handler = MultiRecrefAdapterHandler(
             request_data, name='former',
@@ -427,7 +429,8 @@ class ManifFFH(BasicWorkFFH):
 
         # handle save
         manif: CofkUnionManifestation = self.manif_form.instance
-        if not manif.manifestation_id and not self.manif_form.has_changed():
+        if not manif.manifestation_id and not (
+                self.manif_form.has_changed() or request.POST.getlist('lang_name')):
             log.debug('ignore save new manif, if manif_form has no changed')
             return
 
@@ -530,12 +533,13 @@ class DetailsFFH(BasicWorkFFH):
         )
 
         # language
-        self.new_lang_form = NewLangForm()
         self.lang_formset = lang_utils.create_lang_formset(
             self.safe_work.language_set.iterator(),
             lang_rec_id_name='lang_work_id',
             request_data=request_data,
             prefix='lang')
+        self.new_lang_form = NewLangForm()
+        self.new_lang_form.remove_selected_lang_choices(self.safe_work.language_set.iterator())
 
         self.subject_handler = SubjectHandler(WorkSubjectRecrefAdapter(self.safe_work))
 
@@ -545,7 +549,9 @@ class DetailsFFH(BasicWorkFFH):
         return context
 
     def has_changed(self, request):
-        return super(DetailsFFH, self).is_any_changed() or self.subject_handler.has_changed(request)
+        return (super(DetailsFFH, self).is_any_changed()
+                or self.subject_handler.has_changed(request)
+                or request.POST.getlist('lang_name'))
 
     def save(self, request):
         if not self.has_changed(request):

@@ -1,6 +1,8 @@
 {% extends "core/emlo_logined.html" %}
 
 {% block content %}
+<form method="post">
+    {% csrf_token %}
 
 <div id="upload-header">
     <h3>Contribution by {{ upload.upload_username }} uploaded {{ upload.upload_timestamp }}</h3>
@@ -8,22 +10,36 @@
     <span id="upload-summary">Status: {{ upload.upload_status }} | Number of works uploaded: {{ upload.total_works }} | Accepted: {{ upload.works_accepted}} | Rejected: {{ upload.works_rejected}}</span>
 
     <div id="upload-options">
-    <form>
         Back to list of contributions <button type="button" class="btn inline_btn" onclick="location.href='/upload'">Back</button>
 
         Accept entire contribution <button class="btn inline_btn" name="accept_all">Accept all</button>
 
         Reject entire contribution <button class="btn inline_btn" name="reject_all">Reject all</button>
-    </form>
     </div>
     <em>Note: confirmation will be required before Accept/Reject of entire contribution.</em>
 </div>
 
-{% include "uploader/component/works.html" %}
+{% include "core/component/messages.html" %}
 
+{% if accept_work %}
+    {% include "uploader/component/confirm.html" %}
+{% endif %}
+</form>
+
+{% if work %}
+    <table class="review">
+        <tr>
+            <td class="header">ID</td>
+            <td>{{ work.iwork_id }}</td>
+        </tr>
+        {% include "uploader/component/work.html" %}
+    </table>
+{% else %}
+    {% include "uploader/component/works.html" %}
+{% endif %}
+<!--
 {% include "uploader/component/people.html" %}
 
-<!--
 {% for location in places %}
 
     <p>{{ location }}</p>

@@ -2,10 +2,10 @@ from typing import Iterable, Optional
 
 from django.db import models
 
-from core.constant import REL_TYPE_STORED_IN
+from core.constant import REL_TYPE_STORED_IN, REL_TYPE_ENCLOSED_IN
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
-from core.models import Recref
+from core.models import Recref, CofkLookupDocumentType
 
 
 class CofkManifCommentMap(Recref):
@@ -99,6 +99,46 @@ class CofkUnionManifestation(models.Model, RecordTracker):
     def find_selected_inst(self) -> Optional['CofkManifInstMap']:
         return self.cofkmanifinstmap_set.filter(relationship_type=REL_TYPE_STORED_IN).first()
 
+    def find_enclosed_in(self):
+        return self.manif_from_set.filter(relationship_type=REL_TYPE_ENCLOSED_IN).all()
+
+    def find_encloses(self):
+        return self.manif_to_set.filter(relationship_type=REL_TYPE_ENCLOSED_IN).all()
+
+    def to_string(self):
+        manifestation_summary = ''
+
+        if doctype := CofkLookupDocumentType.objects.filter(document_type_code=self.manifestation_type).first():
+            manifestation_summary += f'{doctype.document_type_desc}. '
+        else:
+            manifestation_summary += f'{self.manifestation_type}. '
+
+        if self.postage_marks:
+            manifestation_summary += f'Postmark: {self.postage_marks}. '
+
+        if manif_inst := self.find_selected_inst():
+            manifestation_summary += manif_inst.inst.institution_name
+
+        if manif_inst and self.id_number_or_shelfmark:
+            manifestation_summary += ': '
+
+        if self.id_number_or_shelfmark:
+            manifestation_summary += self.id_number_or_shelfmark
+
+        if self.manifestation_incipit:
+            manifestation_summary +=  f'\n ~ Incipit: {self.manifestation_incipit}. '
+
+        if self.manifestation_excipit:
+            manifestation_summary +=  f'\n ~ Excipit: {self.manifestation_excipit}. '
+
+        for enclosed_in in self.find_enclosed_in():
+            manifestation_summary += f'\n ~ {enclosed_in.id_number_or_shelfmark}'
+
+        for encloses in self.find_encloses():
+            manifestation_summary += f'\n ~ {encloses.id_number_or_shelfmark}'
+
+        return manifestation_summary
+
 
 class CofkUnionLanguageOfManifestation(models.Model):
     lang_manif_id = models.AutoField(primary_key=True)
@@ -106,8 +146,7 @@ class CofkUnionLanguageOfManifestation(models.Model):
                                       related_name='language_set')
     language_code = models.ForeignKey('core.Iso639LanguageCode', models.DO_NOTHING,
                                       db_column='language_code',
-                                      to_field='code_639_3'
-                                      )
+                                      to_field='code_639_3')
     notes = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
@@ -143,5 +182,3 @@ class CofkManifImageMap(Recref):
         db_table = 'cofk_manif_image_map'
 
 
-def create_manif_id(iwork_id) -> str:
-    return f'W{iwork_id}-{model_utils.next_seq_safe("cofk_union_manif_manif_id_seq")}'

@@ -18,6 +18,7 @@ def is_general_true(value):
 def get_elided_page_range(page: Page, on_each_side=8, on_ends=4):
     return page.paginator.get_elided_page_range(number=page.number, on_each_side=on_each_side, on_ends=on_ends)
 
+
 @register.filter
 def get_results_on_page(page: Page) -> str:
     start = (1 + (page.number - 1) * page.paginator.per_page)
@@ -30,7 +31,7 @@ def add_classes(value, arg):
     """
     Add provided classes to form field
     :param value: form field
-    :param arg: string of classes seperated by ' '
+    :param arg: string of classes separated by ' '
     :return: edited field
     """
     css_classes = value.field.widget.attrs.get('class', '').strip()
@@ -50,3 +51,10 @@ def add_classes(value, arg):
 
     # join back to single string
     return value.as_widget(attrs={'class': ' '.join(css_classes)})
+
+
+@register.simple_tag
+def url_replace(request, field, value):
+    d = request.GET.copy()
+    d[field] = value
+    return d.urlencode()

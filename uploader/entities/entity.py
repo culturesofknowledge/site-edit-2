@@ -107,7 +107,7 @@ class CofkEntity:
                     self.add_error(f'Column {bool_value} in {self.sheet.name}'
                                    f' sheet is not a boolean value of either 0 or 1.')
 
-        if 'combos' in self.fields:
+        '''if 'combos' in self.fields:
             for combo in self.fields['combos']:
                 log.debug(f'---- {combo}')
                 if combo[0] in entity and isinstance(entity[combo[0]], str) and ';' in entity[combo[0]]\
@@ -116,6 +116,7 @@ class CofkEntity:
                         self.add_error(f'Column {combo[0]} has fewer ids than there are names in {combo[1]}.')
                     elif len(entity[combo[1]].split(';')) < len(entity[combo[0]].split(';')):
                         self.add_error(f'Column {combo[1]} has fewer names than there are ids in {combo[0]}.')
+                        '''
 
         if 'years' in self.fields:
             for year_field in [y for y in self.fields['years'] if y in entity]:
@@ -184,10 +185,10 @@ class CofkEntity:
 
         name_list = entity_dict[names_key].split(';')
 
-        if len(id_list) < len(name_list):
+        '''if len(id_list) < len(name_list):
             self.add_error(f'Fewer ids in {ids_key} than names in {names_key}.')
         elif len(id_list) > len(name_list):
-            self.add_error(f'Fewer names in {names_key} than ids in {ids_key}')
+            self.add_error(f'Fewer names in {names_key} than ids in {ids_key}')'''
 
         if '' in id_list:
             self.add_error(f'Empty string in ids in {ids_key}')
