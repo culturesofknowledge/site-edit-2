@@ -9,9 +9,9 @@ from django.db.models import QuerySet
 
 from core.constant import REL_TYPE_STORED_IN, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, \
     REL_TYPE_PEOPLE_MENTIONED_IN_WORK, REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_IS_RELATED_TO
-from core.helper import model_utils
 from core.models import CofkUnionResource, CofkLookupCatalogue
 from institution.models import CofkUnionInstitution
+from manifestation import manif_utils
 from manifestation.models import CofkUnionManifestation, CofkManifInstMap
 from uploader.models import CofkCollectUpload, CofkCollectWork
 from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, CofkWorkResourceMap, \
@@ -135,7 +135,6 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
 
     union_works = []
     union_manifs = []
-    union_manif_id = model_utils.next_seq_safe("cofk_union_manif_manif_id_seq")
     union_resources = []
     rel_maps = []
 
@@ -178,7 +177,7 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
 
         for manif in context['manifestations'].filter(iwork_id=work_id).all():
             union_manif_dict = {'manifestation_creation_date_is_range': 0,
-                                'manifestation_id': f'W{union_work.iwork_id}-{union_manif_id}',
+                                'manifestation_id': manif_utils.create_manif_id(union_work.iwork_id),
                                 'work': union_work}
             for field in [f for f in manif._meta.get_fields() if f.name != 'manifestation_id']:
                 try:
@@ -202,7 +201,6 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
                 cmim.update_current_user_timestamp(request.user.username)
                 union_maps.append(cmim)
 
-            union_manif_id += 1
 
         rel_maps.append(union_maps)
 

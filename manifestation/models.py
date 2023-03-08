@@ -182,5 +182,3 @@ class CofkManifImageMap(Recref):
         db_table = 'cofk_manif_image_map'
 
 
-def create_manif_id(iwork_id) -> str:
-    return f'W{iwork_id}-{model_utils.next_seq_safe("cofk_union_manif_manif_id_seq")}'

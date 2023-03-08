@@ -33,8 +33,9 @@ from core.models import Recref, CofkLookupCatalogue
 from institution import inst_utils
 from location import location_utils
 from location.models import CofkUnionLocation
-from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, create_manif_id, \
+from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, \
     CofkUnionLanguageOfManifestation, CofkManifImageMap
+from manifestation.manif_utils import create_manif_id
 from person import person_utils
 from person.models import CofkUnionPerson
 from work import work_utils
