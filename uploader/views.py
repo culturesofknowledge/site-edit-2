@@ -10,11 +10,12 @@ from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
 from django.utils import timezone
 
+from core.models import CofkLookupCatalogue
 from uploader.forms import CofkCollectUploadForm
 from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectAddresseeOfWork, CofkCollectAuthorOfWork, \
     CofkCollectDestinationOfWork, CofkCollectLanguageOfWork, CofkCollectOriginOfWork, CofkCollectPersonMentionedInWork, \
     CofkCollectWorkResource, CofkCollectInstitution, CofkCollectLocation, CofkCollectManifestation, CofkCollectPerson
-from uploader.review.review import accept_works, reject_works
+from uploader.review.review import accept_works, reject_works, get_work
 from uploader.spreadsheet import CofkUploadExcelFile
 from uploader.validation import CofkExcelFileError
 
@@ -147,9 +148,17 @@ def upload_review(request, upload_id, **kwargs):
                'manifestations': CofkCollectManifestation.objects.filter(upload=upload),
                'resources': CofkCollectWorkResource.objects.filter(upload=upload)}
 
-    if 'accept_all' in request.GET or 'accept_work' in request.GET:
+    if 'accept_all' in request.POST or 'accept_work' in request.POST:
+        context['accept_work'] = True
+        context['catalogues'] = CofkLookupCatalogue.objects.all()
+
+        work_id = request.POST['work_id'] if 'work_id' in request.POST else None
+
+        if work_id:
+            context['work'] = get_work(context['works_page'].paginator.object_list, work_id)[0]
+    elif 'confirm_accept' in request.POST:
         accept_works(request, context, upload)
-    elif 'reject_all' in request.GET or 'reject_work' in request.GET:
+    elif 'reject_all' in request.POST or 'reject_work' in request.POST:
         reject_works(request, context, upload)
 
     return render(request, template_url, context)

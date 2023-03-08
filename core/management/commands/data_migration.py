@@ -27,7 +27,7 @@ from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentT
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from login.models import CofkUser
-from manifestation.models import CofkUnionManifestation
+from manifestation.models import CofkUnionManifestation, CofkUnionLanguageOfManifestation
 from person.models import CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID
 from publication.models import CofkUnionPublication
 from uploader.models import CofkCollectStatus, CofkCollectUpload, CofkCollectInstitution, CofkCollectLocation, \
@@ -35,7 +35,7 @@ from uploader.models import CofkCollectStatus, CofkCollectUpload, CofkCollectIns
     CofkCollectInstitutionResource, CofkCollectWork, CofkCollectAddresseeOfWork, CofkCollectLanguageOfWork, \
     CofkCollectManifestation
 from work import models as work_models
-from work.models import CofkUnionWork, CofkUnionQueryableWork
+from work.models import CofkUnionWork, CofkUnionQueryableWork, CofkUnionLanguageOfWork
 
 log = logging.getLogger(__name__)
 default_schema = 'public'
@@ -446,7 +446,7 @@ def _val_handler_collect_person(row: dict, conn):
     return row
 
 
-def _val_handler_collect_language(row: dict, conn):
+def _val_handler_language(row: dict, conn):
     if language := Iso639LanguageCode.objects.filter(code_639_3=row['language_code']).first():
         row['language_code'] = language
 
@@ -602,6 +602,12 @@ def data_migration(user, password, database, host, port, include_audit=False):
                               seq_name=work_models.SEQ_NAME_COFKUNIONWORK__IWORK_ID,
                               int_pk_col_name='iwork_id', )
     clone_rows_by_model_class(conn, CofkUnionQueryableWork, seq_name=None)
+    clone_rows_by_model_class(conn, CofkUnionLanguageOfWork, col_val_handler_fn_list=[_val_handler_language],
+                              check_duplicate_fn=create_check_fn_by_unique_together_model(CofkUnionLanguageOfWork))
+    clone_rows_by_model_class(conn, CofkUnionLanguageOfManifestation, col_val_handler_fn_list=[_val_handler_language],
+                              check_duplicate_fn=create_check_fn_by_unique_together_model(CofkUnionLanguageOfManifestation))
+
+    
     clone_rows_by_model_class(conn, CofkCollectWork,
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectWork),
                               col_val_handler_fn_list=[_val_handler_collect_work],
@@ -612,7 +618,7 @@ def data_migration(user, password, database, host, port, include_audit=False):
 
     # clone_rows_by_model_class(conn, CofkCollectAuthorOfWork, check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectAuthorOfWork))
     # clone_rows_by_model_class(conn, CofkCollectDestinationOfWork, check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectDestinationOfWork))
-    clone_rows_by_model_class(conn, CofkCollectLanguageOfWork, col_val_handler_fn_list=[_val_handler_collect_language],
+    clone_rows_by_model_class(conn, CofkCollectLanguageOfWork, col_val_handler_fn_list=[_val_handler_language],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectLanguageOfWork))
     # clone_rows_by_model_class(conn, CofkCollectOriginOfWork, check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectOriginOfWork))
     # clone_rows_by_model_class(conn, CofkCollectPersonMentionedInWork, check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectPersonMentionedInWork))
