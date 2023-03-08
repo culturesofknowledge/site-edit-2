@@ -59,20 +59,25 @@
                     <aside class="margin-bottom row">
                         <div class="col col--1of2">
                             {% if paginator.count %}
-                                <button id="fieldset-toggle-btn" class="btn margin-right inline_btn" type="button">
+                                <button id="fieldset-toggle-btn" class="search-form-btn" type="button">
                                     Toggle <span data-feather="search" aria-hidden="true"></span>
                                 </button>
                             {% endif %}
-                            <button type='submit' class="btn margin-right inline_btn"
+                            <button type='submit' class="search-form-btn"
                                     name="__form_action" value="download_csv">
-                                Download output
+                                CSV output
+                            </button>
+
+                            <button type='submit' class="search-form-btn"
+                                    name="__form_action" value="download_excel">
+                                Excel output
                             </button>
 
                             {% if merge_page_url %}
-                                <button class="btn margin-right inline_btn selectable_mode_btn">
+                                <button class="search-form-btn selectable_mode_btn">
                                     Select
                                 </button>
-                                <button id="merge_btn" class="btn margin-right inline_btn" style="display: none">
+                                <button id="merge_btn" class="search-form-btn" style="display: none">
                                     Merge
                                 </button>
                             {% endif %}

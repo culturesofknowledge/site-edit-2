@@ -379,3 +379,20 @@ tr.selectable_entry:not(.selected):hover {
   }
 
 }
+
+
+
+.search-form-btn {
+  @extend .btn;
+  @extend .margin-right;
+  @extend .inline_btn;
+}
+
+
+
+
+
+
+
+
+
