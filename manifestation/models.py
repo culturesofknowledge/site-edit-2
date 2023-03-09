@@ -89,6 +89,13 @@ class CofkUnionManifestation(models.Model, RecordTracker):
     # relation
     work = models.ForeignKey('work.CofkUnionWork', models.CASCADE, null=True)
     images = models.ManyToManyField(to='core.CofkUnionImage', through='CofkManifImageMap')
+    comments = models.ManyToManyField(to='core.CofkUnionComment', through='CofkManifCommentMap')
+
+    @property
+    def inst(self) -> 'CofkUnionInstitution':
+        inst = self.cofkmanifinstmap_set.first()
+        inst = inst and inst.inst
+        return inst
 
     class Meta:
         db_table = 'cofk_union_manifestation'
@@ -126,10 +133,10 @@ class CofkUnionManifestation(models.Model, RecordTracker):
             manifestation_summary += self.id_number_or_shelfmark
 
         if self.manifestation_incipit:
-            manifestation_summary +=  f'\n ~ Incipit: {self.manifestation_incipit}. '
+            manifestation_summary += f'\n ~ Incipit: {self.manifestation_incipit}. '
 
         if self.manifestation_excipit:
-            manifestation_summary +=  f'\n ~ Excipit: {self.manifestation_excipit}. '
+            manifestation_summary += f'\n ~ Excipit: {self.manifestation_excipit}. '
 
         for enclosed_in in self.find_enclosed_in():
             manifestation_summary += f'\n ~ {enclosed_in.id_number_or_shelfmark}'
@@ -180,5 +187,3 @@ class CofkManifImageMap(Recref):
 
     class Meta(Recref.Meta):
         db_table = 'cofk_manif_image_map'
-
-

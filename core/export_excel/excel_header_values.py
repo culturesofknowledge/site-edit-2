@@ -1,12 +1,193 @@
 from typing import Iterable
 
-from django.conf import settings
 from django.urls import reverse
 
 from core import constant
 from core.export_excel import export_excel_utils
+from core.helper import general_model_utils
 from core.helper.view_components import HeaderValues
+from core.models import CofkUnionResource
+from institution.models import CofkUnionInstitution
+from location.models import CofkUnionLocation
+from manifestation.models import CofkUnionManifestation
+from person import person_utils
+from person.models import CofkUnionPerson
 from work.models import CofkUnionQueryableWork
+
+
+class ResourceExcelHeaderValues(HeaderValues):
+    def get_header_list(self) -> list[str]:
+        return [
+            "Resource ID",
+            "Resource Name",
+            "Resource Details",
+            "Resource URL",
+            "UUID",
+        ]
+
+    def obj_to_values(self, obj: CofkUnionResource) -> Iterable:
+        return [
+            obj.resource_id,
+            obj.resource_name,
+            obj.resource_details,
+            obj.resource_url,
+            obj.uuid,
+        ]
+
+
+class InstExcelHeaderValues(HeaderValues):
+
+    def get_header_list(self) -> list[str]:
+        return [
+            "Repository ID",
+            "Repository Name",
+            "Repository City",
+            "Repository Country",
+            "Repository Full Address",
+            "Repository Latitude",
+            "Repository Longitude",
+            "Related Resource IDs",
+            "UUID",
+            "EMLO URL",
+            "Create date in database",
+            "Last update in database",
+        ]
+
+    def obj_to_values(self, obj: CofkUnionInstitution) -> Iterable:
+        return [
+            obj.institution_id,
+            obj.institution_name,
+            obj.institution_city,
+            obj.institution_country,
+            obj.address,
+            obj.latitude,
+            obj.longitude,
+            export_excel_utils.resources_id(obj.resources.all()),
+            obj.uuid,
+            export_excel_utils.editor_url(reverse('institution:full_form', args=[obj.institution_id])),
+            export_excel_utils.simple_datetime(obj.creation_timestamp),
+            export_excel_utils.simple_datetime(obj.change_timestamp),
+        ]
+
+
+class ManifExcelHeaderValues(HeaderValues):
+
+    def get_header_list(self) -> list[str]:
+        return [
+            "Work (Letter) ID",
+            "Manifestation [Letter] ID",
+            "Manifestation type",
+            "Repository name",
+            "Repository ID",
+            "Shelfmark and pagination",
+            "Printed copy details",
+            "Notes on manifestation",
+            "UUID",
+        ]
+
+    def obj_to_values(self, obj: CofkUnionManifestation) -> Iterable:
+        inst = obj.inst
+        return [
+            obj.work.iwork_id,
+            obj.manifestation_id,
+            obj.manifestation_type,
+            inst and inst.institution_name,
+            inst and inst.institution_id,
+            obj.id_number_or_shelfmark,
+            obj.printed_edition_details,
+            export_excel_utils.notes(obj.comments.all()),
+            obj.uuid,
+        ]
+
+
+class LocationExcelHeaderValues(HeaderValues):
+
+    def get_header_list(self) -> list[str]:
+        return [
+            "Place ID",
+            "Place name",
+            "Room",
+            "Building",
+            "Street or parish",
+            "Primary place name (city, town, village)",
+            "County, State, or Province",
+            "Country",
+            "Empire",
+            "Place name synonyms",
+            "Coordinates: Latitude",
+            "Coordinates: Longitude",
+            "Related Resource IDs",
+            "General notes on place",
+            "Editors' working notes",
+            "UUID",
+            "EMLO URL",
+        ]
+
+    def obj_to_values(self, obj: CofkUnionLocation) -> Iterable:
+        return [
+            obj.location_id,
+            general_model_utils.get_display_name(obj),
+            obj.element_1_eg_room,
+            obj.element_2_eg_building,
+            obj.element_3_eg_parish,
+            obj.element_4_eg_city,
+            obj.element_5_eg_county,
+            obj.element_6_eg_country,
+            obj.element_7_eg_empire,
+            obj.location_synonyms,
+            obj.latitude,
+            obj.longitude,
+            export_excel_utils.resources_id(obj.cofklocationresourcemap_set.all()),
+            export_excel_utils.notes(obj.comments.all()),
+            obj.editors_notes,
+            obj.uuid,
+            export_excel_utils.editor_url(reverse('location:full_form', args=[obj.location_id])),
+        ]
+
+
+class PersonExcelHeaderValues(HeaderValues):
+
+    def get_header_list(self) -> list[str]:
+        return [
+            "EMLO Person ID",
+            "Person primary name in EMLO",
+            "Synonyms",
+            "Roles/Titles",
+            "Gender",
+            "Is Organization (Y=yes;black=no)",
+            "Birth year",
+            "Death year",
+            "Fl. year 1",
+            "Fl. year 2",
+            "Fl. year is range (0=No; 1=Yes)",
+            "General notes on person",
+            "Editors' working notes",
+            "Related Resource IDs",
+            "UUID",
+            "EMLO URL",
+        ]
+
+    def obj_to_values(self, obj: CofkUnionPerson) -> Iterable:
+        return [
+            person_utils.get_display_id(obj),
+            obj.foaf_name,
+            obj.skos_altlabel,
+            export_excel_utils.common_join_text(
+                r.role_category_desc for r in obj.roles.all()
+            ),
+            obj.gender,
+            obj.is_organisation,
+            obj.date_of_birth_year,
+            obj.date_of_death_year,
+            obj.flourished_year,
+            obj.flourished2_year,
+            obj.flourished_is_range,
+            export_excel_utils.notes(obj.comments.all()),
+            obj.editors_notes,
+            export_excel_utils.resources_id(obj.cofkpersonresourcemap_set.all()),
+            obj.uuid,
+            export_excel_utils.editor_url(reverse('person:full_form', args=[obj.iperson_id])),
+        ]
 
 
 class WorkExcelHeaderValues(HeaderValues):
@@ -146,12 +327,9 @@ class WorkExcelHeaderValues(HeaderValues):
             obj.accession_code,
             match_work_name,
             match_work_id,
-            export_excel_utils.common_join_text((r.resource_id for r in obj.work.cofkworkresourcemap_set.all())),
+            export_excel_utils.resources_id(obj.work.cofkworkresourcemap_set.all()),
             export_excel_utils.notes(obj.work.find_comments_by_rel_type(constant.REL_TYPE_COMMENT_REFERS_TO)),
             obj.editors_notes,
             obj.work.uuid,
-            '{}{}'.format(
-                settings.EXPORT_ROOT_URL,
-                reverse('work:corr_form', args=[obj.iwork_id])
-            ),
+            export_excel_utils.editor_url(reverse('work:corr_form', args=[obj.iwork_id])),
         )

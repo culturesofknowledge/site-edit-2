@@ -1,4 +1,10 @@
+"""
+This module contains the functions to
+convert input to required format of cell value
+"""
 from collections.abc import Iterable
+
+from django.conf import settings
 
 from core.helper import general_model_utils
 from core.models import CofkUnionComment
@@ -24,3 +30,15 @@ def name_id(objects: Iterable) -> [str, str]:
     id_str = map(str, id_str)
     id_str = common_join_text(id_str)
     return name, id_str
+
+
+def editor_url(url_path: str) -> str:
+    return '{}{}'.format(settings.EXPORT_ROOT_URL, url_path, )
+
+
+def resources_id(resource_recref_list) -> str:
+    return common_join_text(r.resource_id for r in resource_recref_list)
+
+
+def simple_datetime(dt) -> str:
+    return dt.strftime('%Y-%m-%d %H:%M:%S')
