@@ -4,10 +4,11 @@ for modules (e.g. work, person, location, etc.)
 """
 import itertools
 import logging
-from typing import Iterable, NoReturn
+from typing import Iterable, NoReturn, Callable
 
 import openpyxl
 from openpyxl.styles import Font, PatternFill
+from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
 from core import constant
@@ -15,6 +16,7 @@ from core.export_excel import excel_header_values, excel_utils
 from core.helper import data_utils, model_utils
 from core.helper.view_components import HeaderValues
 from core.models import CofkUnionResource
+from person.models import CofkUnionPerson
 from work.models import CofkUnionQueryableWork
 
 log = logging.getLogger(__name__)
@@ -92,9 +94,23 @@ def get_flat_resource_list(objects, get_resource_map_set_fn) -> Iterable['CofkUn
     return itertools.chain.from_iterable((r.resource for r in get_resource_map_set_fn(w).all()) for w in objects)
 
 
+def _create_excel_by_fill_fn(fill_fn: Callable[[Workbook], NoReturn],
+                             file_path: str = None):
+    log.info('[Start] create excel')
+    wb = openpyxl.Workbook()
+    wb.remove_sheet(wb.active)
+
+    fill_fn(wb)
+
+    if file_path:
+        wb.save(file_path)
+
+    log.info(f'[Completed] create excel [{file_path=}] ')
+    return wb
+
+
 def create_work_excel(queryable_works: Iterable[CofkUnionQueryableWork],
                       file_path: str = None) -> 'openpyxl.Workbook':
-    log.info('[Start] create work excel')
     def _find_manif_list():
         manif_list = itertools.chain.from_iterable(w.work.cofkunionmanifestation_set.all()
                                                    for w in queryable_works)
@@ -123,25 +139,36 @@ def create_work_excel(queryable_works: Iterable[CofkUnionQueryableWork],
         inst_list = filter(None, inst_list)
         return model_utils.UniqueModelPkFilter(inst_list)
 
-    wb = openpyxl.Workbook()
-    wb.remove_sheet(wb.active)
+    def _fill_fn(workbook: Workbook):
+        fill_work_sheet(workbook.create_sheet(), queryable_works)
+        fill_person_sheet(workbook.create_sheet(), _find_person_list())
+        fill_location_sheet(workbook.create_sheet(), _find_location_list())
+        fill_manif_sheet(workbook.create_sheet(), _find_manif_list())
+        fill_inst_sheet(workbook.create_sheet(), _find_inst_list())
 
-    fill_work_sheet(wb.create_sheet(), queryable_works)
-    fill_person_sheet(wb.create_sheet(), _find_person_list())
-    fill_location_sheet(wb.create_sheet(), _find_location_list())
-    fill_manif_sheet(wb.create_sheet(), _find_manif_list())
-    fill_inst_sheet(wb.create_sheet(), _find_inst_list())
+        resource_list = itertools.chain(
+            get_flat_resource_list(queryable_works, lambda obj: obj.work.cofkworkresourcemap_set),
+            get_flat_resource_list(_find_person_list(), lambda obj: obj.cofkpersonresourcemap_set),
+            get_flat_resource_list(_find_location_list(), lambda obj: obj.cofklocationresourcemap_set),
+            get_flat_resource_list(_find_inst_list(), lambda obj: obj.cofkinstitutionresourcemap_set),
+        )
+        fill_resource_sheet(workbook.create_sheet(), resource_list)
 
-    resource_list = itertools.chain(
-        get_flat_resource_list(queryable_works, lambda w: w.work.cofkworkresourcemap_set),
-        get_flat_resource_list(_find_person_list(), lambda obj: obj.cofkpersonresourcemap_set),
-        get_flat_resource_list(_find_location_list(), lambda obj: obj.cofklocationresourcemap_set),
-        get_flat_resource_list(_find_inst_list(), lambda obj: obj.cofkinstitutionresourcemap_set),
-    )
-    fill_resource_sheet(wb.create_sheet(), resource_list)
+    return _create_excel_by_fill_fn(_fill_fn, file_path=file_path)
 
-    if file_path:
-        wb.save(file_path)
 
-    log.info(f'[Completed] create work excel [{file_path=}] ')
-    return wb
+def create_person_excel(persons: Iterable[CofkUnionPerson],
+                        file_path: str = None):
+    # KTODO to be define format of person excel
+    def _fill_fn(workbook: Workbook):
+        fill_person_sheet(workbook.create_sheet(), persons)
+
+        resource_list = itertools.chain(
+            get_flat_resource_list(persons, lambda obj: obj.cofkpersonresourcemap_set),
+            get_flat_resource_list(queryable_works, lambda obj: obj.work.cofkworkresourcemap_set),
+            get_flat_resource_list(_find_location_list(), lambda obj: obj.cofklocationresourcemap_set),
+            get_flat_resource_list(_find_inst_list(), lambda obj: obj.cofkinstitutionresourcemap_set),
+        )
+        fill_resource_sheet(workbook.create_sheet(), resource_list)
+
+    return _create_excel_by_fill_fn(_fill_fn, file_path=file_path)
