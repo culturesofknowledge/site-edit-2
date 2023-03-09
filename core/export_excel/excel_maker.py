@@ -94,6 +94,7 @@ def get_flat_resource_list(objects, get_resource_map_set_fn) -> Iterable['CofkUn
 
 def create_work_excel(queryable_works: Iterable[CofkUnionQueryableWork],
                       file_path: str = None) -> 'openpyxl.Workbook':
+    log.info('[Start] create work excel')
     def _find_manif_list():
         manif_list = itertools.chain.from_iterable(w.work.cofkunionmanifestation_set.all()
                                                    for w in queryable_works)
@@ -142,5 +143,5 @@ def create_work_excel(queryable_works: Iterable[CofkUnionQueryableWork],
     if file_path:
         wb.save(file_path)
 
-    log.info(f'[Completed] create work excel [{file_path}] ')
+    log.info(f'[Completed] create work excel [{file_path=}] ')
     return wb

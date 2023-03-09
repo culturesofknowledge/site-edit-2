@@ -3,7 +3,7 @@ from typing import Iterable
 from django.urls import reverse
 
 from core import constant
-from core.export_excel import export_excel_utils
+from core.export_excel import cell_values
 from core.helper import general_model_utils
 from core.helper.view_components import HeaderValues
 from core.models import CofkUnionResource
@@ -62,11 +62,11 @@ class InstExcelHeaderValues(HeaderValues):
             obj.address,
             obj.latitude,
             obj.longitude,
-            export_excel_utils.resources_id(obj.resources.all()),
+            cell_values.resources_id(obj.resources.all()),
             obj.uuid,
-            export_excel_utils.editor_url(reverse('institution:full_form', args=[obj.institution_id])),
-            export_excel_utils.simple_datetime(obj.creation_timestamp),
-            export_excel_utils.simple_datetime(obj.change_timestamp),
+            cell_values.editor_url(reverse('institution:full_form', args=[obj.institution_id])),
+            cell_values.simple_datetime(obj.creation_timestamp),
+            cell_values.simple_datetime(obj.change_timestamp),
         ]
 
 
@@ -95,7 +95,7 @@ class ManifExcelHeaderValues(HeaderValues):
             inst and inst.institution_id,
             obj.id_number_or_shelfmark,
             obj.printed_edition_details,
-            export_excel_utils.notes(obj.comments.all()),
+            cell_values.notes(obj.comments.all()),
             obj.uuid,
         ]
 
@@ -137,11 +137,11 @@ class LocationExcelHeaderValues(HeaderValues):
             obj.location_synonyms,
             obj.latitude,
             obj.longitude,
-            export_excel_utils.resources_id(obj.cofklocationresourcemap_set.all()),
-            export_excel_utils.notes(obj.comments.all()),
+            cell_values.resources_id(obj.cofklocationresourcemap_set.all()),
+            cell_values.notes(obj.comments.all()),
             obj.editors_notes,
             obj.uuid,
-            export_excel_utils.editor_url(reverse('location:full_form', args=[obj.location_id])),
+            cell_values.editor_url(reverse('location:full_form', args=[obj.location_id])),
         ]
 
 
@@ -172,7 +172,7 @@ class PersonExcelHeaderValues(HeaderValues):
             person_utils.get_display_id(obj),
             obj.foaf_name,
             obj.skos_altlabel,
-            export_excel_utils.common_join_text(
+            cell_values.common_join_text(
                 r.role_category_desc for r in obj.roles.all()
             ),
             obj.gender,
@@ -182,11 +182,11 @@ class PersonExcelHeaderValues(HeaderValues):
             obj.flourished_year,
             obj.flourished2_year,
             obj.flourished_is_range,
-            export_excel_utils.notes(obj.comments.all()),
+            cell_values.notes(obj.comments.all()),
             obj.editors_notes,
-            export_excel_utils.resources_id(obj.cofkpersonresourcemap_set.all()),
+            cell_values.resources_id(obj.cofkpersonresourcemap_set.all()),
             obj.uuid,
-            export_excel_utils.editor_url(reverse('person:full_form', args=[obj.iperson_id])),
+            cell_values.editor_url(reverse('person:full_form', args=[obj.iperson_id])),
         ]
 
 
@@ -252,27 +252,27 @@ class WorkExcelHeaderValues(HeaderValues):
         ]
 
     def obj_to_values(self, obj: CofkUnionQueryableWork) -> Iterable:
-        author_name, author_id = export_excel_utils.name_id(
+        author_name, author_id = cell_values.name_id(
             obj.work.find_persons_by_rel_type([
                 constant.REL_TYPE_CREATED,
                 constant.REL_TYPE_SENT,
                 constant.REL_TYPE_SIGNED,
             ]))
-        recipient_name, recipient_id = export_excel_utils.name_id(
+        recipient_name, recipient_id = cell_values.name_id(
             obj.work.find_persons_by_rel_type([
                 constant.REL_TYPE_WAS_ADDRESSED_TO,
                 constant.REL_TYPE_INTENDED_FOR,
             ]))
 
-        origin_name, origin_id = export_excel_utils.name_id(
+        origin_name, origin_id = cell_values.name_id(
             obj.work.find_locations_by_rel_type(constant.REL_TYPE_WAS_SENT_FROM))
-        dest_name, dest_id = export_excel_utils.name_id(
+        dest_name, dest_id = cell_values.name_id(
             obj.work.find_locations_by_rel_type(constant.REL_TYPE_WAS_SENT_TO))
 
-        person_mentioned_name, person_mentioned_id = export_excel_utils.name_id(
+        person_mentioned_name, person_mentioned_id = cell_values.name_id(
             obj.work.find_persons_by_rel_type(constant.REL_TYPE_PEOPLE_MENTIONED_IN_WORK))
 
-        match_work_name, match_work_id = export_excel_utils.name_id(
+        match_work_name, match_work_id = cell_values.name_id(
             obj.work.find_work_to_list_by_rel_type(constant.REL_TYPE_WORK_MATCHES))
 
         return (
@@ -290,31 +290,31 @@ class WorkExcelHeaderValues(HeaderValues):
             obj.date_of_work_uncertain,
             obj.date_of_work_approx,
             obj.date_of_work_inferred,
-            export_excel_utils.notes(obj.work.date_comments),
+            cell_values.notes(obj.work.date_comments),
             author_name,
             author_id,
             obj.authors_as_marked,
             obj.authors_inferred,
             obj.authors_uncertain,
-            export_excel_utils.notes(obj.work.find_comments_by_rel_type(constant.REL_TYPE_COMMENT_AUTHOR)),
+            cell_values.notes(obj.work.find_comments_by_rel_type(constant.REL_TYPE_COMMENT_AUTHOR)),
             recipient_name,
             recipient_id,
             obj.addressees_as_marked,
             obj.addressees_inferred,
             obj.addressees_uncertain,
-            export_excel_utils.notes(obj.work.addressee_comments),
+            cell_values.notes(obj.work.addressee_comments),
             origin_name,
             origin_id,
             obj.origin_as_marked,
             obj.origin_inferred,
             obj.origin_uncertain,
-            export_excel_utils.notes(obj.work.find_comments_by_rel_type(constant.REL_TYPE_COMMENT_ORIGIN)),
+            cell_values.notes(obj.work.find_comments_by_rel_type(constant.REL_TYPE_COMMENT_ORIGIN)),
             dest_name,
             dest_id,
             obj.destination_as_marked,
             obj.destination_inferred,
             obj.destination_uncertain,
-            export_excel_utils.notes(obj.work.find_comments_by_rel_type(constant.REL_TYPE_COMMENT_DESTINATION)),
+            cell_values.notes(obj.work.find_comments_by_rel_type(constant.REL_TYPE_COMMENT_DESTINATION)),
             obj.abstract,
             obj.keywords,
             obj.language_of_work,
@@ -322,14 +322,14 @@ class WorkExcelHeaderValues(HeaderValues):
             obj.work.explicit,
             person_mentioned_name,
             person_mentioned_id,
-            export_excel_utils.notes(obj.work.find_comments_by_rel_type(constant.REL_TYPE_PEOPLE_MENTIONED_IN_WORK)),
+            cell_values.notes(obj.work.find_comments_by_rel_type(constant.REL_TYPE_PEOPLE_MENTIONED_IN_WORK)),
             obj.original_catalogue,
             obj.accession_code,
             match_work_name,
             match_work_id,
-            export_excel_utils.resources_id(obj.work.cofkworkresourcemap_set.all()),
-            export_excel_utils.notes(obj.work.find_comments_by_rel_type(constant.REL_TYPE_COMMENT_REFERS_TO)),
+            cell_values.resources_id(obj.work.cofkworkresourcemap_set.all()),
+            cell_values.notes(obj.work.find_comments_by_rel_type(constant.REL_TYPE_COMMENT_REFERS_TO)),
             obj.editors_notes,
             obj.work.uuid,
-            export_excel_utils.editor_url(reverse('work:corr_form', args=[obj.iwork_id])),
+            cell_values.editor_url(reverse('work:corr_form', args=[obj.iwork_id])),
         )
