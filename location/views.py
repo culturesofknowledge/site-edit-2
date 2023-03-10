@@ -10,7 +10,7 @@ from django.forms import BaseForm, BaseFormSet
 from django.shortcuts import render, get_object_or_404, redirect
 
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM
-from core.export_data import download_csv_utils
+from core.export_data import download_csv_utils, cell_values
 from core.forms import CommentForm
 from core.helper import view_utils, renderer_utils, query_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
@@ -321,7 +321,7 @@ class LocationCsvHeaderValues(HeaderValues):
             obj.element_6_eg_country,
             obj.element_7_eg_empire,
             download_csv_utils.join_image_lines(obj.images.iterator()),
-            obj.change_timestamp,
+            cell_values.simple_datetime(obj.change_timestamp),
             obj.change_user,
         )
         return values

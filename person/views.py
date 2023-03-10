@@ -475,7 +475,7 @@ class PersonCsvHeaderValues(HeaderValues):
             obj.further_reading,
             download_csv_utils.join_image_lines(obj.images.iterator()),
             cell_values.person_other_details(obj, type_name_cache=self.type_name_caches),
-            obj.change_timestamp,
+            cell_values.simple_datetime(obj.change_timestamp),
             obj.change_user,
         ]
         return values
