@@ -3,7 +3,7 @@ from typing import Iterable
 from django.urls import reverse
 
 from core import constant
-from core.export_excel import cell_values
+from core.export_data import cell_values
 from core.helper import general_model_utils
 from core.helper.view_components import HeaderValues
 from core.models import CofkUnionResource

@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from core.export_excel.excel_header_values import WorkExcelHeaderValues
+from core.export_data.excel_header_values import WorkExcelHeaderValues
 from siteedit2.utils.test_utils import EmloSeleniumTestCase
 from work import work_utils
 from work.models import CofkUnionWork
