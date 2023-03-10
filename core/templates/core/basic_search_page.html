@@ -12,6 +12,8 @@
         {% endfor %}
     </div>
 
+    <input id="num_records" type="hidden" value="{{ paginator.count }}" />
+
     <form id="search_form" method="get">
         {% csrf_token %}
 
@@ -72,7 +74,7 @@
                             {% endif %}
 
                             {% if can_export_excel %}
-                                <button type='submit' class="search-form-btn"
+                                <button id="export_excel_btn" type='submit' class="search-form-btn"
                                         name="__form_action" value="download_excel">
                                     Excel output
                                 </button>
@@ -145,6 +147,19 @@
             let vname_action_url = "{% url return_quick_init_vname '__entry_id__' %}";
         {% endif %}
         let recref_mode = "{{ recref_mode }}";
+
+        $('#export_excel_btn').click(function (e){
+            let msg = 'Are you sure export Excel?'
+            let num_records = $('#num_records').val()
+            if (num_records) {
+                msg = 'Are you sure export ' + num_records + ' records in Excel?'
+            }
+
+            if (! confirm(msg)) {
+                e.preventDefault();
+                return ;
+            }
+        });
 
     </script>
     <script src="{% static 'core/js/search-results.js' %}"></script>
