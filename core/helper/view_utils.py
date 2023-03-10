@@ -175,12 +175,14 @@ class BasicSearchView(ListView):
         raise NotImplementedError('missing table_search_results_renderer_factory')
 
     @property
-    def download_csv_handler(self) -> DownloadCsvHandler:
-        raise NotImplementedError('missing download_csv_handler')
+    def download_csv_handler(self) -> DownloadCsvHandler | None:
+        """ overrider this to enable download csv """
+        return None
 
     @property
-    def create_excel_fn(self) -> Callable[[Iterable, str], Any]:
-        raise NotImplementedError('missing create_excel_fn')
+    def create_excel_fn(self) -> Callable[[Iterable, str], Any] | None:
+        """ overrider this to enable create excel """
+        return None
 
     @property
     def merge_page_vname(self) -> str | None:
@@ -252,7 +254,9 @@ class BasicSearchView(ListView):
                         'is_compact_layout': is_compact_layout,
                         'to_user_messages': getattr(self, 'to_user_messages', []),
                         'simplified_query': self.simplified_query,
-                        'paginate_by': self.paginate_by
+                        'paginate_by': self.paginate_by,
+                        'can_export_csv': self.download_csv_handler is not None,
+                        'can_export_excel': self.create_excel_fn is not None,
                         })
         if self.merge_page_vname:
             context['merge_page_url'] = reverse(self.merge_page_vname)
@@ -377,10 +381,6 @@ class DefaultSearchView(BasicSearchView):
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
         return demo_table_search_results_renderer
-
-    @property
-    def download_csv_handler(self) -> DownloadCsvHandler:
-        return None
 
     def get_queryset(self):
         class _FakeQueryset(list):

@@ -63,15 +63,20 @@
                                     Toggle <span data-feather="search" aria-hidden="true"></span>
                                 </button>
                             {% endif %}
-                            <button type='submit' class="search-form-btn"
-                                    name="__form_action" value="download_csv">
-                                CSV output
-                            </button>
 
-                            <button type='submit' class="search-form-btn"
-                                    name="__form_action" value="download_excel">
-                                Excel output
-                            </button>
+                            {% if can_export_csv %}
+                                <button type='submit' class="search-form-btn"
+                                        name="__form_action" value="download_csv">
+                                    CSV output
+                                </button>
+                            {% endif %}
+
+                            {% if can_export_excel %}
+                                <button type='submit' class="search-form-btn"
+                                        name="__form_action" value="download_excel">
+                                    Excel output
+                                </button>
+                            {% endif %}
 
                             {% if merge_page_url %}
                                 <button class="search-form-btn selectable_mode_btn">
