@@ -78,7 +78,6 @@ def prepare_loc_records() -> list[CofkUnionLocation]:
     ))
 
 
-@unittest.skip
 class LocationCommonSearchTests(EmloSeleniumTestCase, CommonSearchTests):
 
     def __init__(self, *args, **kwargs):
