@@ -310,7 +310,7 @@ class LocationCsvHeaderValues(HeaderValues):
             obj.recd,
             obj.all_works,
             download_csv_utils.join_comment_lines(obj.comments.iterator()),
-            download_csv_utils.join_resource_lines(obj.resources.iterator()),
+            cell_values.resource_str_by_list(obj.resources.iterator()),
             obj.latitude,
             obj.longitude,
             obj.element_1_eg_room,
