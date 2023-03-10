@@ -7,12 +7,14 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.forms import ModelForm
 from django.shortcuts import render, redirect, get_object_or_404
 
+from core.export_data import cell_values, download_csv_utils
 from core.helper import renderer_utils, query_utils, view_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.date_utils import str_to_std_datetime
 from core.helper.model_utils import ModelLike
 from core.helper.recref_handler import ImageRecrefHandler, TargetResourceFormsetHandler
 from core.helper.renderer_utils import CompactSearchResultsRenderer
+from core.helper.view_components import HeaderValues, DownloadCsvHandler
 from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView, MergeChoiceViews, MergeActionViews, \
     MergeConfirmViews
 from core.models import Recref
@@ -66,7 +68,6 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
             ('change_timestamp', 'Change timestamp',),
             ('change_user', 'Change user',),
             ('institution_id', 'Repository ID',),
-
         ]
 
     @property
@@ -78,8 +79,11 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
         return 'institution:return_quick_init'
 
     def get_queryset(self):
+        return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
+
+    def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:
         # queries for like_fields
-        queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
+        queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
 
         search_fields_maps = {
             'institution_name': ['institution_name', 'institution_synonyms'],
@@ -90,9 +94,9 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
             'images': ['images__image_filename']}
 
         queries.extend(
-            query_utils.create_queries_by_lookup_field(self.request_data, self.search_fields, search_fields_maps)
+            query_utils.create_queries_by_lookup_field(request_data, self.search_fields, search_fields_maps)
         )
-        return self.create_queryset_by_queries(CofkUnionInstitution, queries).distinct()
+        return self.create_queryset_by_queries(CofkUnionInstitution, queries, sort_by=sort_by).distinct()
 
     @property
     def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
@@ -105,6 +109,10 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
     @property
     def query_fieldset_list(self) -> Iterable:
         return [GeneralSearchFieldset(self.request_data.dict())]
+
+    @property
+    def download_csv_handler(self) -> DownloadCsvHandler:
+        return DownloadCsvHandler(InstCsvHeaderValues())
 
 
 class InstInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
@@ -214,6 +222,36 @@ class InstMergeActionView(LoginRequiredMixin, MergeActionViews):
     def target_model_class(self) -> Type[ModelLike]:
         return CofkUnionInstitution
 
-# KTODO
-# class InstCsvHeaderValues(HeaderValues):
 
+class InstCsvHeaderValues(HeaderValues):
+    def get_header_list(self) -> list[str]:
+        return [
+            "Repository ID",
+            "Institution name",
+            "Alternative institution  names",
+            "City name",
+            "Alternative city  names",
+            "Country name",
+            "Alternative country  names",
+            "Related resources",
+            "Editors' notes",
+            "Images",
+            "Change timestamp",
+            "Change user"
+        ]
+
+    def obj_to_values(self, obj: CofkUnionInstitution) -> Iterable:
+        return [
+            obj.institution_id,
+            obj.institution_name,
+            obj.institution_synonyms,
+            obj.institution_city,
+            obj.institution_city_synonyms,
+            obj.institution_country,
+            obj.institution_country_synonyms,
+            cell_values.resource_str_by_list(obj.resources.iterator()),
+            obj.editors_notes,
+            download_csv_utils.join_image_lines(obj.images.iterator()),
+            cell_values.simple_datetime(obj.change_timestamp),
+            obj.change_user,
+        ]
