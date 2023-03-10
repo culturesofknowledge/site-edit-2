@@ -10,8 +10,9 @@ from django.forms import BaseForm, BaseFormSet
 from django.shortcuts import render, get_object_or_404, redirect
 
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM
+from core.export_data import download_csv_utils
 from core.forms import CommentForm
-from core.helper import view_utils, renderer_utils, query_utils, download_csv_utils
+from core.helper import view_utils, renderer_utils, query_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.date_utils import str_to_std_datetime
 from core.helper.model_utils import ModelLike

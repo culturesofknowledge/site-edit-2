@@ -7,7 +7,10 @@ from collections.abc import Iterable
 from django.conf import settings
 
 from core.helper import general_model_utils
-from core.models import CofkUnionComment
+from core.models import CofkUnionComment, CofkUnionResource
+from person import person_utils
+from person.models import CofkUnionPerson
+import collections
 
 
 def common_join_text(text_list: Iterable, delimiter='; ') -> str:
@@ -40,5 +43,69 @@ def resources_id(resource_recref_list) -> str:
     return common_join_text(r.resource_id for r in resource_recref_list)
 
 
+def resource_str(obj: CofkUnionResource) -> str:
+    return f'{obj.resource_url} ({obj.resource_name})'
+
+
 def simple_datetime(dt) -> str:
     return dt.strftime('%Y-%m-%d %H:%M:%S')
+
+
+def year_month_day(year, month, day) -> str:
+    if year and not month and not day:
+        return str(year)
+
+    if not year and not month and not day:
+        return ''
+
+    return f'{year}-{month}-{day}'
+
+
+def person_roles(obj: CofkUnionPerson) -> str:
+    return person_utils.role_name_str(obj)
+
+
+def person_names_titles_roles(obj: CofkUnionPerson) -> str:
+    join_list = []
+    if obj.foaf_name:
+        join_list.append(obj.foaf_name)
+
+    if obj.person_aliases:
+        join_list.append(obj.person_aliases)
+
+    if role := person_roles(obj):
+        join_list.append(role)
+
+    return ' ~ '.join(join_list)
+
+
+def person_other_details(obj: CofkUnionPerson, type_name_cache: dict = None) -> str:
+    result_map = collections.defaultdict(list)
+    for person_map in obj.active_relationships.all():
+        result_map[person_map.relationship_type].append(
+            person_utils.get_recref_display_name(person_map.related)
+        )
+
+    if type_name_cache:
+        keys = [k for k in result_map.keys() if k in type_name_cache]
+        for k in keys:
+            result_map[type_name_cache[k]] = result_map[k]
+            del result_map[k]
+
+    # add resources
+    if _resources := [resource_str(r) for r in obj.resources.all()]:
+        result_map['Related resources'] = _resources
+
+    title_value_list = []
+    for title, values in result_map.items():
+        values = (f'~{v}' for v in values)
+        title = title[0].upper() + title[1:]
+        title_value_list.append(f'*{title}\n' + '\n'.join(values))
+
+    return '\n\n'.join(title_value_list)
+
+
+def person_org_type(obj: CofkUnionPerson) -> str:
+    org_type = obj.organisation_type
+    org_type = org_type.org_type_desc if org_type else ''
+    return org_type

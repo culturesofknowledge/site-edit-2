@@ -172,9 +172,7 @@ class PersonExcelHeaderValues(HeaderValues):
             person_utils.get_display_id(obj),
             obj.foaf_name,
             obj.skos_altlabel,
-            cell_values.common_join_text(
-                r.role_category_desc for r in obj.roles.all()
-            ),
+            cell_values.person_roles(obj),
             obj.gender,
             obj.is_organisation,
             obj.date_of_birth_year,

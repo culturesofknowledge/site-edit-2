@@ -12,8 +12,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from core import constant
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_BORN_IN_LOCATION, REL_TYPE_DIED_AT_LOCATION, \
     REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_CREATED, REL_TYPE_SENT, REL_TYPE_SIGNED, REL_TYPE_MENTION, TRUE_CHAR
+from core.export_data import cell_values, download_csv_utils
 from core.forms import CommentForm, PersonRecrefForm
-from core.helper import renderer_utils, view_utils, query_utils, download_csv_utils, recref_utils, form_utils
+from core.helper import renderer_utils, view_utils, query_utils, recref_utils, form_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.date_utils import str_to_std_datetime
 from core.helper.model_utils import ModelLike
@@ -24,7 +25,7 @@ from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_utils import CommonInitFormViewTemplate, BasicSearchView, MergeChoiceViews, MergeActionViews, \
     MergeConfirmViews
-from core.models import Recref
+from core.models import Recref, CofkUnionRelationshipType
 from person import person_utils
 from person.forms import PersonForm, GeneralSearchFieldset, PersonOtherRecrefForm, field_label_map, \
     search_gender_choices, search_person_or_group
@@ -428,59 +429,52 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
 
 class PersonCsvHeaderValues(HeaderValues):
+    def __init__(self):
+        self.type_name_caches = {r.relationship_code: r.desc_left_to_right
+                                 for r in CofkUnionRelationshipType.objects.all()}
+
     def get_header_list(self) -> list[str]:
         return [
-            "ID",
-            "Name",
-            "Born",
-            "Died",
+            "Names/titles/roles",
+            "Date of birth",
+            "Date of death",
             "Flourished",
-            "Org?",
+            "Gender",
+            "Is organisation",
             "Type of group",
             "Sent",
             "Recd",
             "All works",
-            "Researchers notes",
-            "Related resources",
             "Mentioned",
-            "Editor's notes",
+            "Person or Group ID",
+            "Editors' notes",
             "Further reading",
             "Images",
-            "Change user",
+            "Other details",
+            "Other details",
             "Change timestamp",
+            "Change user",
         ]
-
-    @staticmethod
-    def to_date_str(year, month, day) -> str:
-        if year and not month and not day:
-            return str(year)
-
-        if not year and not month and not day:
-            return ''
-
-        return f'{year}-{month}-{day}'
 
     def obj_to_values(self, obj) -> Iterable[Any]:
         obj: CofkUnionPerson
-        org_type = obj.organisation_type
-        org_type = org_type.org_type_desc if org_type else ''
         values = [
-            obj.iperson_id,
-            obj.foaf_name,
-            self.to_date_str(obj.date_of_birth_year, obj.date_of_birth_month, obj.date_of_birth_day),
-            self.to_date_str(obj.date_of_death_year, obj.date_of_death_month, obj.date_of_death_day),
-            self.to_date_str(obj.flourished_year, obj.flourished_month, obj.flourished_day),
+            cell_values.person_names_titles_roles(obj),
+            cell_values.year_month_day(obj.date_of_birth_year, obj.date_of_birth_month, obj.date_of_birth_day),
+            cell_values.year_month_day(obj.date_of_death_year, obj.date_of_death_month, obj.date_of_death_day),
+            cell_values.year_month_day(obj.flourished_year, obj.flourished_month, obj.flourished_day),
+            obj.gender,
             obj.is_organisation,
-            org_type,
+            cell_values.person_org_type(obj),
             obj.sent,
             obj.recd,
             obj.all_works,
-            download_csv_utils.join_comment_lines(obj.comments.iterator()),
-            download_csv_utils.join_resource_lines(obj.resources.iterator()),
             obj.mentioned,
+            obj.iperson_id,
             obj.editors_notes,
             obj.further_reading,
             download_csv_utils.join_image_lines(obj.images.iterator()),
+            cell_values.person_other_details(obj, type_name_cache=self.type_name_caches),
             obj.change_timestamp,
             obj.change_user,
         ]
