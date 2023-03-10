@@ -29,7 +29,8 @@ class DownloadCsvHandler:
 
     @staticmethod
     def _obj_to_str_values(obj_to_values: Callable, obj) -> Iterable[str]:
-        values = (data_utils.to_str_list_no_none(v) for v in obj_to_values(obj))
+        values = obj_to_values(obj)
+        values = data_utils.to_str_list_no_none(values)
         return map(str, values)
 
     def create_csv_file(self, file_path: str | Path, objects: Iterable):
