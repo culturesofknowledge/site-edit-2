@@ -993,11 +993,11 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         return [ExpandedSearchFieldset(self.request_data.dict())]
 
     @property
-    def download_csv_handler(self) -> DownloadCsvHandler:
-        return DownloadCsvHandler(WorkCsvHeaderValues())
+    def csv_handler_factory(self) -> Callable[[], DownloadCsvHandler] | None:
+        return lambda: DownloadCsvHandler(WorkCsvHeaderValues())
 
     @property
-    def create_excel_fn(self) -> Callable[[Iterable, str], Any]:
+    def excel_factory(self) -> Callable[[Iterable, str], Any]:
         return excel_maker.create_work_excel
 
 

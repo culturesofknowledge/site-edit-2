@@ -111,8 +111,8 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
         return [GeneralSearchFieldset(self.request_data.dict())]
 
     @property
-    def download_csv_handler(self) -> DownloadCsvHandler:
-        return DownloadCsvHandler(InstCsvHeaderValues())
+    def csv_handler_factory(self) -> Callable[[], DownloadCsvHandler] | None:
+        return lambda: DownloadCsvHandler(InstCsvHeaderValues())
 
 
 class InstInitView(LoginRequiredMixin, CommonInitFormViewTemplate):

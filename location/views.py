@@ -271,8 +271,8 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
         )
 
     @property
-    def download_csv_handler(self) -> DownloadCsvHandler:
-        return DownloadCsvHandler(LocationCsvHeaderValues())
+    def csv_handler_factory(self) -> Callable[[], DownloadCsvHandler] | None:
+        return lambda: DownloadCsvHandler(LocationCsvHeaderValues())
 
 
 class LocationCsvHeaderValues(HeaderValues):

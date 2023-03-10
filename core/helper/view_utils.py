@@ -175,12 +175,12 @@ class BasicSearchView(ListView):
         raise NotImplementedError('missing table_search_results_renderer_factory')
 
     @property
-    def download_csv_handler(self) -> DownloadCsvHandler | None:
+    def csv_handler_factory(self) -> Callable[[], DownloadCsvHandler] | None:
         """ overrider this to enable download csv """
         return None
 
     @property
-    def create_excel_fn(self) -> Callable[[Iterable, str], Any] | None:
+    def excel_factory(self) -> Callable[[Iterable, str], Any] | None:
         """ overrider this to enable create excel """
         return None
 
@@ -255,8 +255,8 @@ class BasicSearchView(ListView):
                         'to_user_messages': getattr(self, 'to_user_messages', []),
                         'simplified_query': self.simplified_query,
                         'paginate_by': self.paginate_by,
-                        'can_export_csv': self.download_csv_handler is not None,
-                        'can_export_excel': self.create_excel_fn is not None,
+                        'can_export_csv': self.csv_handler_factory is not None,
+                        'can_export_excel': self.excel_factory is not None,
                         })
         if self.merge_page_vname:
             context['merge_page_url'] = reverse(self.merge_page_vname)
@@ -294,7 +294,7 @@ class BasicSearchView(ListView):
     def resp_download_csv(self, request, *args, **kwargs):
         def file_fn():
             tmp_path = file_utils.create_new_tmp_file_path(prefix='search_results_', suffix='.csv')
-            self.download_csv_handler.create_csv_file(tmp_path, self.get_queryset())
+            self.csv_handler_factory().create_csv_file(tmp_path, self.get_queryset())
             return tmp_path
 
         return self.resp_file_download(request, file_fn, *args, **kwargs)
@@ -302,7 +302,7 @@ class BasicSearchView(ListView):
     def resp_download_excel(self, request, *args, **kwargs):
         def file_fn():
             tmp_path = file_utils.create_new_tmp_file_path(prefix='search_results_', suffix='.xlsx')
-            self.create_excel_fn(self.get_queryset(), tmp_path)
+            self.excel_factory(self.get_queryset(), tmp_path)
             return tmp_path
 
         return self.resp_file_download(request, file_fn, *args, **kwargs)

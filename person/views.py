@@ -424,8 +424,8 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         return [GeneralSearchFieldset(request_data)]
 
     @property
-    def download_csv_handler(self) -> DownloadCsvHandler:
-        return DownloadCsvHandler(PersonCsvHeaderValues())
+    def csv_handler_factory(self) -> Callable[[], DownloadCsvHandler] | None:
+        return lambda: DownloadCsvHandler(PersonCsvHeaderValues())
 
 
 class PersonCsvHeaderValues(HeaderValues):
