@@ -125,11 +125,8 @@ def find_all_recref_bounded_data(models: Iterable[Type['ModelLike']] = None) -> 
         yield bounded_data
 
 
-all_recref_bounded_data: list[RecrefBoundedData] = list(find_all_recref_bounded_data(django_utils.all_model_classes()))
-
-
 def find_bounded_data_list_by_related_model(model) -> Iterable[RecrefBoundedData]:
-    return (r for r in all_recref_bounded_data
+    return (r for r in find_all_recref_bounded_data()
             if model.__class__ in set(r.pair_related_models))
 
 
