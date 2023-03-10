@@ -20,6 +20,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
+from urllib.parse import urljoin
 
 urlpatterns = [
     path('', RedirectView.as_view(url='/login/dashboard')),
@@ -33,8 +34,11 @@ urlpatterns = [
     path('manif/', include('manifestation.urls')),
     path('work/', include('work.urls')),
     path('audit/', include('audit.urls')),
-    path('list/', include('list.urls') ),
+    path('list/', include('list.urls')),
 ]
 
-urlpatterns += static(settings.MEDIA_URL + 'img',
+urlpatterns += static(urljoin(settings.MEDIA_URL, 'img'),
                       document_root=os.path.join(settings.MEDIA_ROOT, 'img'))
+
+urlpatterns += static(urljoin(settings.MEDIA_URL, 'export_data'),
+                      document_root=settings.MEDIA_EXPORT_PATH)

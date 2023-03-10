@@ -1,6 +1,6 @@
 import logging
 from collections.abc import Callable
-from typing import Iterable
+from typing import Iterable, Any
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -18,6 +18,7 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_ENCLOSED_IN, REL_TYPE_COMMENT_RECEIPT_DATE, REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_STORED_IN, \
     REL_TYPE_PEOPLE_MENTIONED_IN_WORK, REL_TYPE_MENTION, REL_TYPE_MENTION_PLACE, \
     REL_TYPE_MENTION_WORK
+from core.export_excel import excel_maker
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, LocRecrefForm
 from core.helper import view_utils, lang_utils, model_utils, query_utils, renderer_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
@@ -994,6 +995,10 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def download_csv_handler(self) -> DownloadCsvHandler:
         return DownloadCsvHandler(WorkCsvHeaderValues())
+
+    @property
+    def create_excel_fn(self) -> Callable[[Iterable, str], Any]:
+        return excel_maker.create_work_excel
 
 
 class WorkCommentFormsetHandler(RecrefFormsetHandler):

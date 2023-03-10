@@ -40,6 +40,20 @@ register = template.Library()
 log = logging.getLogger(__name__)
 
 
+def send_file_by_email(tmp_path, to_email, ):
+    if not to_email:
+        log.error(f'unknown user email -- [{to_email}]')
+        return
+
+    resp = email_utils.send_email(
+        to_email,
+        subject='Search result',
+        attachment_paths=[tmp_path],
+    )
+    log.info(f'file email have be send to [{to_email}]')
+    log.debug(f'email resp {resp}')
+
+
 class BasicSearchView(ListView):
     """
     Helper for you to build common style of search page for emlo editor
@@ -165,6 +179,10 @@ class BasicSearchView(ListView):
         raise NotImplementedError('missing download_csv_handler')
 
     @property
+    def create_excel_fn(self) -> Callable[[Iterable, str], Any]:
+        raise NotImplementedError('missing create_excel_fn')
+
+    @property
     def merge_page_vname(self) -> str | None:
         return None
 
@@ -247,44 +265,48 @@ class BasicSearchView(ListView):
     def get_search_results_context(self, context):
         return context[self.context_object_name]
 
-    @staticmethod
-    def send_csv_email(csv_handler, queryset, to_email):
-        csv_path = file_utils.create_new_tmp_file_path(prefix='search_results_', suffix='.csv')
-        csv_handler.create_csv_file(csv_path, queryset)
-
-        if not to_email:
-            log.error(f'unknown user email -- [{to_email}]')
-            return
-
-        resp = email_utils.send_email(
-            to_email,
-            subject='Search result',
-            attachment_paths=[csv_path],
-        )
-        log.info(f'csv file email have be send to [{to_email}]')
-        os.remove(csv_path)
-        log.debug(f'email resp {resp}')
-
-    def resp_download_csv(self, request, *args, **kwargs):
+    def resp_file_download(self, request,
+                           file_fn: Callable[[], str],
+                           *args, **kwargs):
 
         def _fn():
             try:
-                log.debug(f'start send csv email[{request.user}]....')
-                self.send_csv_email(self.download_csv_handler, self.get_queryset(), request.user.email)
+                log.debug(f'start send email[{request.user}]....')
+                tmp_path = file_fn()
+                send_file_by_email(tmp_path, request.user.email)
+                log.debug(f'remove tmp file [{tmp_path}]')
+                os.remove(tmp_path)
             except Exception as e:
-                log.error('send csv email fail....')
+                log.error('send email fail....')
                 log.exception(e)
 
-        # create csv file and send email in other process
+        # create file and send email in other thread
         Thread(target=_fn).start()
 
         # stay as same page
-        self.to_user_messages = ['Csv file will be send to your email later.']
+        self.to_user_messages = ['File will be send to your email later.']
         return super().get(request, *args, **kwargs)
+
+    def resp_download_csv(self, request, *args, **kwargs):
+        def file_fn():
+            tmp_path = file_utils.create_new_tmp_file_path(prefix='search_results_', suffix='.csv')
+            self.download_csv_handler.create_csv_file(tmp_path, self.get_queryset())
+            return tmp_path
+
+        return self.resp_file_download(request, file_fn, *args, **kwargs)
+
+    def resp_download_excel(self, request, *args, **kwargs):
+        def file_fn():
+            tmp_path = file_utils.create_new_tmp_file_path(prefix='search_results_', suffix='.xlsx')
+            self.create_excel_fn(self.get_queryset(), tmp_path)
+            return tmp_path
+
+        return self.resp_file_download(request, file_fn, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         simple_form_action_map = {
             'download_csv': self.resp_download_csv,
+            'download_excel': self.resp_download_excel,
         }
 
         # simple routing with __form_action

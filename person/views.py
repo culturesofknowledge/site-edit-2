@@ -455,6 +455,9 @@ class PersonCsvHeaderValues(HeaderValues):
         if year and not month and not day:
             return str(year)
 
+        if not year and not month and not day:
+            return ''
+
         return f'{year}-{month}-{day}'
 
     def obj_to_values(self, obj) -> Iterable[Any]:
