@@ -131,10 +131,6 @@ def clone_queryable_work(work: CofkUnionWork, reload=False, _return=False):
     updated_field_val_list = ((name, val) for name, val in field_val_list
                               if getattr(queryable_work, name) != val)
     updated_field_dict = dict(updated_field_val_list)
-    if not updated_field_dict:
-        log.debug(f'skip save queryable work, no update_fields found [{work.iwork_id=}]')
-        return
-
     for name, val in updated_field_dict.items():
         setattr(queryable_work, name, val)
 
