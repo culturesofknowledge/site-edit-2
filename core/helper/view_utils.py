@@ -306,25 +306,21 @@ class BasicSearchView(ListView):
         self.to_user_messages = ['File will be send to your email later.']
         return super().get(request, *args, **kwargs)
 
-    def resp_download_csv(self, request, *args, **kwargs):
+    def resp_download_by_export_setting(self, request, export_setting, *args, **kwargs):
         def file_fn():
-            file_name_factory, csv_handler_factory = self.csv_export_setting
+            file_name_factory, file_factory = export_setting
             file_name = file_name_factory()
             tmp_path = media_service.FILE_DOWNLOAD_PATH.joinpath(file_name)
-            csv_handler_factory().create_csv_file(tmp_path, self.get_queryset())
+            file_factory(self.get_queryset(), tmp_path)
             return file_name
 
         return self.resp_file_download(request, file_fn, *args, **kwargs)
+
+    def resp_download_csv(self, request, *args, **kwargs):
+        return self.resp_download_by_export_setting(request, self.csv_export_setting, *args, **kwargs)
 
     def resp_download_excel(self, request, *args, **kwargs):
-        def file_fn():
-            file_name_factory, excel_factory = self.excel_export_setting
-            file_name = file_name_factory()
-            tmp_path = media_service.FILE_DOWNLOAD_PATH.joinpath(file_name)
-            excel_factory(self.get_queryset(), tmp_path)
-            return file_name
-
-        return self.resp_file_download(request, file_fn, *args, **kwargs)
+        return self.resp_download_by_export_setting(request, self.excel_export_setting, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         simple_form_action_map = {

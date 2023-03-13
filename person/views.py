@@ -426,7 +426,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
     @property
     def csv_export_setting(self):
         return (lambda: view_utils.create_export_file_name('person', 'csv'),
-                lambda: DownloadCsvHandler(PersonCsvHeaderValues()))
+                lambda: DownloadCsvHandler(PersonCsvHeaderValues()).create_csv_file)
 
 
 class PersonCsvHeaderValues(HeaderValues):

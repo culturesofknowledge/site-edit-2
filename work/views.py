@@ -995,7 +995,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def csv_export_setting(self):
         return (lambda: view_utils.create_export_file_name('work', 'csv'),
-                lambda: DownloadCsvHandler(WorkCsvHeaderValues()))
+                lambda: DownloadCsvHandler(WorkCsvHeaderValues()).create_csv_file)
 
     @property
     def excel_export_setting(self) -> tuple[Callable[[], str], Callable[[Iterable, str], Any]] | None:

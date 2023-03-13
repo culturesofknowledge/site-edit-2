@@ -273,7 +273,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
     @property
     def csv_export_setting(self):
         return (lambda: view_utils.create_export_file_name('location', 'csv'),
-                lambda: DownloadCsvHandler(LocationCsvHeaderValues()))
+                lambda: DownloadCsvHandler(LocationCsvHeaderValues()).create_csv_file)
 
 
 class LocationCsvHeaderValues(HeaderValues):

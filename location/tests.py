@@ -113,7 +113,7 @@ class LocationDownloadCsvHandlerTests(unittest.TestCase):
         record_size = queryset.count()
         csv_path = file_utils.create_new_tmp_file_path()
         csv_handler = DownloadCsvHandler(LocationCsvHeaderValues())
-        csv_handler.create_csv_file(csv_path, queryset)
+        csv_handler.create_csv_file(queryset, csv_path)
 
         csv_text = Path(csv_path).read_text()
         self.assertGreater(len(csv_text.splitlines()), record_size)

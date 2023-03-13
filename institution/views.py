@@ -113,7 +113,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
     @property
     def csv_export_setting(self):
         return (lambda: view_utils.create_export_file_name('inst', 'csv'),
-                lambda: DownloadCsvHandler(InstCsvHeaderValues()))
+                lambda: DownloadCsvHandler(InstCsvHeaderValues()).create_csv_file)
 
 
 class InstInitView(LoginRequiredMixin, CommonInitFormViewTemplate):

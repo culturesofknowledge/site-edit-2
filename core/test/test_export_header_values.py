@@ -38,7 +38,7 @@ class TestDownloadCsvHandler(TestCase):
     def assert_with_search_view(self, search_view, header_values, expected_len):
         file_path = file_utils.create_new_tmp_file_path(prefix='search_results_', suffix='.csv')
         csv_handler = DownloadCsvHandler(header_values)
-        csv_handler.create_csv_file(file_path, search_view.get_queryset_by_request_data({}, sort_by=''))
+        csv_handler.create_csv_file(search_view.get_queryset_by_request_data({}, sort_by=''), file_path)
         self.assertEqual(
             len(Path(file_path).read_text().splitlines()),
             expected_len
