@@ -231,8 +231,7 @@ MEDIA_URL = '/media/'
 
 DEFAULT_IMG_LICENCE_URL = 'http://cofk2.bodleian.ox.ac.uk/culturesofknowledge/licence/terms_of_use.html'
 
-MAILGUN_DOMAIN = "<your mailgun messages url>"
-MAILGUN_API_KEY = "<your mailgun api key>"
+EMAIL_FROM_EMAIL = f"Excited User <mailgun@<your mailgun messages url>>"
 
 EMLO_SEQ_VAL_INIT = {
     'COFKUNIONPERSION__IPERSON_ID': 1000,

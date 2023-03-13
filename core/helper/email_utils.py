@@ -20,7 +20,6 @@ def send_email(to: str | Iterable[str],
     else:
         to = list(to)
 
-    settings.EMAIL_FROM_EMAIL = f"Excited User <mailgun@{settings.MAILGUN_DOMAIN}>"
     email = EmailMessage(subject=subject, body=content,
                          from_email=settings.EMAIL_FROM_EMAIL,
                          to=to,
