@@ -1,14 +1,16 @@
 import dataclasses
 import itertools
 import logging
-import os
 from collections import defaultdict
+from datetime import datetime
 from threading import Thread
 from typing import Iterable, Type, Callable, Any, TYPE_CHECKING
 from typing import NoReturn
 from urllib.parse import urlencode
+from urllib.parse import urljoin
 
 from django import template
+from django.conf import settings
 from django.db import models
 from django.db.models import Q, ForeignKey, QuerySet
 from django.db.models.query_utils import DeferredAttribute
@@ -21,14 +23,15 @@ from django.views.generic import ListView
 
 import core.constant as core_constant
 from core import constant
-from core.helper import file_utils, email_utils, query_utils, general_model_utils, recref_utils, model_utils, \
-    django_utils, inspect_utils, url_utils
+from core.helper import email_utils, query_utils, general_model_utils, recref_utils, model_utils, \
+    django_utils, inspect_utils, url_utils, date_utils, str_utils
 from core.helper.form_utils import build_search_components
 from core.helper.model_utils import ModelLike, RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
     demo_table_search_results_renderer
 from core.helper.view_components import DownloadCsvHandler
 from core.models import CofkUnionResource, CofkUnionComment
+from core.services import media_service
 from work import work_utils
 from work.models import CofkUnionWork
 
@@ -40,18 +43,27 @@ register = template.Library()
 log = logging.getLogger(__name__)
 
 
-def send_file_by_email(tmp_path, to_email, ):
+def send_email_file_by_url(file_name, to_email):
     if not to_email:
         log.error(f'unknown user email -- [{to_email}]')
         return
 
-    resp = email_utils.send_email(
-        to_email,
-        subject='Search result',
-        attachment_paths=[tmp_path],
-    )
+    download_path = reverse('file-download', kwargs={'file_path': file_name})
+    download_url = urljoin(settings.EXPORT_ROOT_URL, download_path)
+    print(download_url)
+    content = f'file can be download from this url: {download_url}'
+    resp = email_utils.send_email(to_email,
+                                  subject='Search result',
+                                  content=content, )
     log.info(f'file email have be send to [{to_email}]')
     log.debug(f'email resp {resp}')
+
+
+def create_export_file_name(name, suffix):
+    return '{}_{}_{}.{}'.format(name,
+                                date_utils.date_to_simple_date_str(datetime.utcnow()),
+                                str_utils.create_random_str(10),
+                                suffix)
 
 
 class BasicSearchView(ListView):
@@ -180,8 +192,13 @@ class BasicSearchView(ListView):
         return None
 
     @property
-    def excel_factory(self) -> Callable[[Iterable, str], Any] | None:
-        """ overrider this to enable create excel """
+    def csv_export_setting(self) -> tuple[Callable[[], str], Callable[[], DownloadCsvHandler]] | None:
+        """ overrider this to enable download csv """
+        return None
+
+    @property
+    def excel_export_setting(self) -> tuple[Callable[[], str], Callable[[Iterable, str], Any]] | None:
+        """ overrider this to enable download csv """
         return None
 
     @property
@@ -276,10 +293,8 @@ class BasicSearchView(ListView):
         def _fn():
             try:
                 log.debug(f'start send email[{request.user}]....')
-                tmp_path = file_fn()
-                send_file_by_email(tmp_path, request.user.email)
-                log.debug(f'remove tmp file [{tmp_path}]')
-                os.remove(tmp_path)
+                file_name = file_fn()
+                send_email_file_by_url(file_name, request.user.email)
             except Exception as e:
                 log.error('send email fail....')
                 log.exception(e)
@@ -293,17 +308,21 @@ class BasicSearchView(ListView):
 
     def resp_download_csv(self, request, *args, **kwargs):
         def file_fn():
-            tmp_path = file_utils.create_new_tmp_file_path(prefix='search_results_', suffix='.csv')
-            self.csv_handler_factory().create_csv_file(tmp_path, self.get_queryset())
-            return tmp_path
+            file_name_factory, csv_handler_factory = self.csv_export_setting
+            file_name = file_name_factory()
+            tmp_path = media_service.FILE_DOWNLOAD_PATH.joinpath(file_name)
+            csv_handler_factory().create_csv_file(tmp_path, self.get_queryset())
+            return file_name
 
         return self.resp_file_download(request, file_fn, *args, **kwargs)
 
     def resp_download_excel(self, request, *args, **kwargs):
         def file_fn():
-            tmp_path = file_utils.create_new_tmp_file_path(prefix='search_results_', suffix='.xlsx')
-            self.excel_factory(self.get_queryset(), tmp_path)
-            return tmp_path
+            file_name_factory, excel_factory = self.excel_export_setting
+            file_name = file_name_factory()
+            tmp_path = media_service.FILE_DOWNLOAD_PATH.joinpath(file_name)
+            excel_factory(self.get_queryset(), tmp_path)
+            return file_name
 
         return self.resp_file_download(request, file_fn, *args, **kwargs)
 

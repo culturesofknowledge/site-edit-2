@@ -223,7 +223,6 @@ LOGIN_URL = '/login/gate'
 LOGIN_REDIRECT_URL = '/login/dashboard'  # KTODO this value to be update
 
 MEDIA_ROOT = '/code/files/'  # TODO this needs to be updated
-MEDIA_EXPORT_PATH = os.path.join(MEDIA_ROOT, 'export_data')
 
 MEDIA_URL = '/media/'
 

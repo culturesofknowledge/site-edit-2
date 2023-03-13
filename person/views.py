@@ -424,8 +424,9 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         return [GeneralSearchFieldset(request_data)]
 
     @property
-    def csv_handler_factory(self) -> Callable[[], DownloadCsvHandler] | None:
-        return lambda: DownloadCsvHandler(PersonCsvHeaderValues())
+    def csv_export_setting(self):
+        return (lambda: view_utils.create_export_file_name('person', 'csv'),
+                lambda: DownloadCsvHandler(PersonCsvHeaderValues()))
 
 
 class PersonCsvHeaderValues(HeaderValues):

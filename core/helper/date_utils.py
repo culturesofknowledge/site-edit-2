@@ -10,3 +10,7 @@ def str_to_search_datetime(datetime_str):
 
 def str_to_std_datetime(datetime_str):
     return datetime.datetime.strptime(datetime_str, constant.STD_DATE_FORMAT)
+
+
+def date_to_simple_date_str(dt):
+    return dt.strftime(constant.SEARCH_DATE_FORMAT)

@@ -993,12 +993,15 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         return [ExpandedSearchFieldset(self.request_data.dict())]
 
     @property
-    def csv_handler_factory(self) -> Callable[[], DownloadCsvHandler] | None:
-        return lambda: DownloadCsvHandler(WorkCsvHeaderValues())
+    def csv_export_setting(self):
+        return (lambda: view_utils.create_export_file_name('work', 'csv'),
+                lambda: DownloadCsvHandler(WorkCsvHeaderValues()))
 
     @property
-    def excel_factory(self) -> Callable[[Iterable, str], Any]:
-        return excel_maker.create_work_excel
+    def excel_export_setting(self) -> tuple[Callable[[], str], Callable[[Iterable, str], Any]] | None:
+        """ overrider this to enable download csv """
+        return (lambda: view_utils.create_export_file_name('work', 'excel'),
+                lambda: excel_maker.create_work_excel)
 
 
 class WorkCommentFormsetHandler(RecrefFormsetHandler):
