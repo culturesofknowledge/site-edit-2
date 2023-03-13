@@ -187,11 +187,6 @@ class BasicSearchView(ListView):
         raise NotImplementedError('missing table_search_results_renderer_factory')
 
     @property
-    def csv_handler_factory(self) -> Callable[[], DownloadCsvHandler] | None:
-        """ overrider this to enable download csv """
-        return None
-
-    @property
     def csv_export_setting(self) -> tuple[Callable[[], str], Callable[[], DownloadCsvHandler]] | None:
         """ overrider this to enable download csv """
         return None
@@ -272,8 +267,8 @@ class BasicSearchView(ListView):
                         'to_user_messages': getattr(self, 'to_user_messages', []),
                         'simplified_query': self.simplified_query,
                         'paginate_by': self.paginate_by,
-                        'can_export_csv': self.csv_handler_factory is not None,
-                        'can_export_excel': self.excel_factory is not None,
+                        'can_export_csv': self.csv_export_setting is not None,
+                        'can_export_excel': self.excel_export_setting is not None,
                         })
         if self.merge_page_vname:
             context['merge_page_url'] = reverse(self.merge_page_vname)
@@ -311,7 +306,7 @@ class BasicSearchView(ListView):
             file_name_factory, file_factory = export_setting
             file_name = file_name_factory()
             tmp_path = media_service.FILE_DOWNLOAD_PATH.joinpath(file_name)
-            file_factory(self.get_queryset(), tmp_path)
+            file_factory()(self.get_queryset(), tmp_path)
             return file_name
 
         return self.resp_file_download(request, file_fn, *args, **kwargs)

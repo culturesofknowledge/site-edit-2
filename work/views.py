@@ -1000,7 +1000,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def excel_export_setting(self) -> tuple[Callable[[], str], Callable[[Iterable, str], Any]] | None:
         """ overrider this to enable download csv """
-        return (lambda: view_utils.create_export_file_name('work', 'excel'),
+        return (lambda: view_utils.create_export_file_name('work', 'xlsx'),
                 lambda: excel_maker.create_work_excel)
 
 

@@ -13,4 +13,4 @@ def str_to_std_datetime(datetime_str):
 
 
 def date_to_simple_date_str(dt):
-    return dt.strftime(constant.SEARCH_DATE_FORMAT)
+    return dt.strftime(constant.SIMPLE_DATE_FORMAT)
