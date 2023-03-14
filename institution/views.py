@@ -163,7 +163,6 @@ def full_form(request, pk):
 
         inst.update_current_user_timestamp(request.user.username)
         inst_form.save()
-        #return redirect('institution:search')
 
     return _render_form()
 

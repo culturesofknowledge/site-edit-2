@@ -93,7 +93,6 @@ def full_form(request, pk):
 
         pub.update_current_user_timestamp(request.user.username)
         pub_form.save()
-        #sreturn redirect('publication:search')
 
     return _render_form()
 
