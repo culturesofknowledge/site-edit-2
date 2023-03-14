@@ -13,13 +13,18 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-import os
+
+from urllib.parse import urljoin
 
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
+
+from core.services import media_service
+
+import core.views
 
 urlpatterns = [
     path('', RedirectView.as_view(url='/login/dashboard')),
@@ -33,8 +38,14 @@ urlpatterns = [
     path('manif/', include('manifestation.urls')),
     path('work/', include('work.urls')),
     path('audit/', include('audit.urls')),
-    path('list/', include('list.urls') ),
+    path('list/', include('list.urls')),
 ]
 
-urlpatterns += static(settings.MEDIA_URL + 'img',
-                      document_root=os.path.join(settings.MEDIA_ROOT, 'img'))
+for url_path, file_path in [
+    ('img', media_service.IMG_PATH),
+]:
+    urlpatterns += static(urljoin(settings.MEDIA_URL, url_path), document_root=file_path)
+
+urlpatterns += [
+    path('file-download/<path:file_path>', core.views.download_file, name='file-download'),
+]

@@ -1,13 +1,16 @@
+import unittest
+from pathlib import Path
 from typing import TYPE_CHECKING, Type
 
 from selenium.webdriver.common.by import By
 
 import location.fixtures
 import location.fixtures
-from core.helper import model_utils
+from core.helper import model_utils, file_utils
+from core.helper.view_components import DownloadCsvHandler
 from location.models import CofkUnionLocation, CofkLocationResourceMap
 from location.recref_adapter import LocationResourceRecrefAdapter
-from location.views import LocationMergeChoiceView
+from location.views import LocationMergeChoiceView, LocationCsvHeaderValues
 from siteedit2.utils import test_utils
 from siteedit2.utils.test_utils import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
     CommentM2MTester, CommonSearchTests, MergeTests
@@ -102,3 +105,15 @@ class LocationMergeTests(MergeTests):
     @property
     def create_obj_fn(self):
         return location.fixtures.create_location_a
+
+
+class LocationDownloadCsvHandlerTests(unittest.TestCase):
+    def test_create_csv_file(self):
+        queryset = CofkUnionLocation.objects.all()[:10]
+        record_size = queryset.count()
+        csv_path = file_utils.create_new_tmp_file_path()
+        csv_handler = DownloadCsvHandler(LocationCsvHeaderValues())
+        csv_handler.create_csv_file(queryset, csv_path)
+
+        csv_text = Path(csv_path).read_text()
+        self.assertGreater(len(csv_text.splitlines()), record_size)

@@ -12,19 +12,20 @@ from django.shortcuts import render, redirect, get_object_or_404
 from core import constant
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_BORN_IN_LOCATION, REL_TYPE_DIED_AT_LOCATION, \
     REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_CREATED, REL_TYPE_SENT, REL_TYPE_SIGNED, REL_TYPE_MENTION, TRUE_CHAR
+from core.export_data import cell_values, download_csv_utils
 from core.forms import CommentForm, PersonRecrefForm
-from core.helper import renderer_utils, view_utils, query_utils, download_csv_utils, recref_utils, form_utils
+from core.helper import renderer_utils, view_utils, query_utils, recref_utils, form_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.date_utils import str_to_std_datetime
 from core.helper.model_utils import ModelLike
 from core.helper.recref_handler import RecrefFormsetHandler, RoleCategoryHandler, ImageRecrefHandler, \
     TargetResourceFormsetHandler, MultiRecrefAdapterHandler, SingleRecrefHandler
 from core.helper.renderer_utils import CompactSearchResultsRenderer
-from core.helper.view_components import DownloadCsvHandler
+from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_utils import CommonInitFormViewTemplate, BasicSearchView, MergeChoiceViews, MergeActionViews, \
     MergeConfirmViews
-from core.models import Recref
+from core.models import Recref, CofkUnionRelationshipType
 from person import person_utils
 from person.forms import PersonForm, GeneralSearchFieldset, PersonOtherRecrefForm, field_label_map, \
     search_gender_choices, search_person_or_group
@@ -365,7 +366,8 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
         return simplified_query
 
-    def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q]):
+    def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q],
+                                   sort_by=None):
         queryset = model_class.objects.all()
 
         annotate = {'sent': Count('works',
@@ -382,27 +384,27 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         if queries:
             queryset = queryset.filter(query_utils.all_queries_match(queries))
 
-        if sort_by := self.get_sort_by():
+        if sort_by:
             queryset = queryset.order_by(sort_by)
 
         return queryset
 
     def get_queryset(self):
-        queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
+        return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
 
-        search_fields_maps = {'foaf_name': ['foaf_name', 'skos_altlabel',  'skos_hiddenlabel', 'person_aliases',
-                                            'roles__role_category_desc'], # names and roles search
+    def get_queryset_by_request_data(self, request_data, sort_by=None):
+        queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
+        search_fields_maps = {'foaf_name': ['foaf_name', 'skos_altlabel', 'skos_hiddenlabel', 'person_aliases',
+                                            'roles__role_category_desc'],  # names and roles search
                               'roles': ['roles__role_category_desc'],
                               'images': ['images__image_filename'],
                               'organisation_type': ['organisation_type__org_type_desc'],
                               'other_details': ['comments__comment', 'resources__resource_name',
                                                 'resources__resource_details']}
-
         queries.extend(
-            query_utils.create_queries_by_lookup_field(self.request_data, self.search_fields, search_fields_maps)
+            query_utils.create_queries_by_lookup_field(request_data, self.search_fields, search_fields_maps)
         )
-
-        return self.create_queryset_by_queries(CofkUnionPerson, queries).distinct()
+        return self.create_queryset_by_queries(CofkUnionPerson, queries, sort_by=sort_by).distinct()
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
@@ -422,62 +424,58 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         return [GeneralSearchFieldset(request_data)]
 
     @property
-    def download_csv_handler(self) -> DownloadCsvHandler:
-        return PersonDownloadCsvHandler()
+    def csv_export_setting(self):
+        return (lambda: view_utils.create_export_file_name('person', 'csv'),
+                lambda: DownloadCsvHandler(PersonCsvHeaderValues()).create_csv_file)
 
 
-class PersonDownloadCsvHandler(DownloadCsvHandler):
+class PersonCsvHeaderValues(HeaderValues):
+    def __init__(self):
+        self.type_name_caches = {r.relationship_code: r.desc_left_to_right
+                                 for r in CofkUnionRelationshipType.objects.all()}
+
     def get_header_list(self) -> list[str]:
         return [
-            "ID",
-            "Name",
-            "Born",
-            "Died",
+            "Names/titles/roles",
+            "Date of birth",
+            "Date of death",
             "Flourished",
-            "Org?",
+            "Gender",
+            "Is organisation",
             "Type of group",
             "Sent",
             "Recd",
             "All works",
-            "Researchers notes",
-            "Related resources",
             "Mentioned",
-            "Editor's notes",
+            "Person or Group ID",
+            "Editors' notes",
             "Further reading",
             "Images",
-            "Change user",
+            "Other details",
             "Change timestamp",
+            "Change user",
         ]
-
-    @staticmethod
-    def to_date_str(year, month, day) -> str:
-        if year and not month and not day:
-            return str(year)
-
-        return f'{year}-{month}-{day}'
 
     def obj_to_values(self, obj) -> Iterable[Any]:
         obj: CofkUnionPerson
-        org_type = obj.organisation_type
-        org_type = org_type.org_type_desc if org_type else ''
         values = [
-            obj.iperson_id,
-            obj.foaf_name,
-            self.to_date_str(obj.date_of_birth_year, obj.date_of_birth_month, obj.date_of_birth_day),
-            self.to_date_str(obj.date_of_death_year, obj.date_of_death_month, obj.date_of_death_day),
-            self.to_date_str(obj.flourished_year, obj.flourished_month, obj.flourished_day),
+            cell_values.person_names_titles_roles(obj),
+            cell_values.year_month_day(obj.date_of_birth_year, obj.date_of_birth_month, obj.date_of_birth_day),
+            cell_values.year_month_day(obj.date_of_death_year, obj.date_of_death_month, obj.date_of_death_day),
+            cell_values.year_month_day(obj.flourished_year, obj.flourished_month, obj.flourished_day),
+            obj.gender,
             obj.is_organisation,
-            org_type,
-            '0',  # KTODO send value
-            '0',  # KTODO recd value
-            '0',  # KTODO All works, should be send + recd
-            download_csv_utils.join_comment_lines(obj.comments.iterator()),
-            download_csv_utils.join_resource_lines(obj.resources.iterator()),
-            '',  # KTODO mentioned
+            cell_values.person_org_type(obj),
+            obj.sent,
+            obj.recd,
+            obj.all_works,
+            obj.mentioned,
+            obj.iperson_id,
             obj.editors_notes,
             obj.further_reading,
             download_csv_utils.join_image_lines(obj.images.iterator()),
-            obj.change_timestamp,
+            cell_values.person_other_details(obj, type_name_cache=self.type_name_caches),
+            cell_values.simple_datetime(obj.change_timestamp),
             obj.change_user,
         ]
         return values

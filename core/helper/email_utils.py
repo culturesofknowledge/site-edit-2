@@ -1,43 +1,41 @@
 import logging
+from pathlib import Path
 from typing import Iterable
 
-import requests
 from django.conf import settings
+from django.core.mail import EmailMessage
 
 log = logging.getLogger(__name__)
+
 
 
 def send_email(to: str | Iterable[str],
                subject='No subject',
                content='No content',
-               attachments=None,
+               attachment_paths: list[str | Path] = None,
+               attach_args: Iterable[tuple] = None,
                **kwargs):
-    if to == '' or to is None or to == []:
-        log.warning('skip send email, [to] should not empty')
-        return
-
-    attachments = attachments or []
     if isinstance(to, str):
-        to = [to, settings.MAILGUN_DOMAIN]
+        to = [to]
     else:
         to = list(to)
 
-    log.debug(f'send email -- [{to=}][{settings.MAILGUN_DOMAIN}][{subject}]')
+    email = EmailMessage(subject=subject, body=content,
+                         from_email=settings.EMAIL_FROM_EMAIL,
+                         to=to,
+                         **kwargs)
 
-    resp = requests.post(
-        f"https://api.mailgun.net/v3/{settings.MAILGUN_DOMAIN}/messages",
-        auth=("api", settings.MAILGUN_API_KEY),
-        data={
-            "from": f"Excited User <mailgun@{settings.MAILGUN_DOMAIN}>",
-            "to": to,
-            "subject": subject,
-            "text": content
-        },
-        files=[
-            ('attachment', name_and_bytes) for name_and_bytes in attachments
-        ],
-        **kwargs,
-    )
-    if resp.status_code != 200:
-        log.error(f'send mail fail -- [{resp.text}][{to}][{subject=}][{settings.MAILGUN_DOMAIN}]')
-    return resp
+    if attachment_paths:
+        for p in attachment_paths:
+            email.attach_file(Path(p).as_posix())
+
+    if attach_args:
+        for att_data in attach_args:
+            if len(att_data) == 2:
+                att_name, att_content = att_data
+                att_type = None
+            else:
+                att_name, att_content, att_type = att_data
+            email.attach(filename=att_name, content=att_content, mimetype=att_type)
+
+    return email.send()

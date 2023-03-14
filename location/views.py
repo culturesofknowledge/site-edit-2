@@ -10,14 +10,15 @@ from django.forms import BaseForm, BaseFormSet
 from django.shortcuts import render, get_object_or_404, redirect
 
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM
+from core.export_data import download_csv_utils, cell_values
 from core.forms import CommentForm
-from core.helper import view_utils, renderer_utils, query_utils, download_csv_utils
+from core.helper import view_utils, renderer_utils, query_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.date_utils import str_to_std_datetime
 from core.helper.model_utils import ModelLike
 from core.helper.recref_handler import RecrefFormsetHandler, ImageRecrefHandler, TargetResourceFormsetHandler
 from core.helper.renderer_utils import CompactSearchResultsRenderer
-from core.helper.view_components import DownloadCsvHandler
+from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate, MergeChoiceViews, MergeChoiceContext, \
     MergeActionViews, MergeConfirmViews
@@ -212,7 +213,8 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
             ('change_timestamp', 'Last edit',),
         ]
 
-    def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q]):
+    def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q],
+                                   sort_by=None):
         queryset = model_class.objects.all()
         annotate = {'sent': Count('works', filter=Q(cofkworklocationmap__relationship_type=REL_TYPE_WAS_SENT_FROM)),
                     'recd': Count('works', filter=Q(cofkworklocationmap__relationship_type=REL_TYPE_WAS_SENT_TO)),
@@ -224,27 +226,27 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
         if queries:
             queryset = queryset.filter(query_utils.all_queries_match(queries))
 
-        if sort_by := self.get_sort_by():
+        if sort_by:
             queryset = queryset.order_by(sort_by)
 
         return queryset
 
     def get_queryset(self):
-        # queries for like_fields
+        return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
+
+    def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:
         search_fields_maps = {'location_name': ['location_name', 'location_synonyms'],
                               'resources': ['resources__resource_name', 'resources__resource_details',
                                             'resources__resource_url'],
                               'researchers_notes': ['comments__comment'],
                               'images': ['images__image_filename']}
 
-        # KTODO support lookup query_utils.create_queries_by_lookup_field
-
-        queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
+        queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
         queries.extend(
-            query_utils.create_queries_by_lookup_field(self.request_data, self.search_fields, search_fields_maps)
+            query_utils.create_queries_by_lookup_field(request_data, self.search_fields, search_fields_maps)
         )
 
-        return self.create_queryset_by_queries(CofkUnionLocation, queries).distinct()
+        return self.create_queryset_by_queries(CofkUnionLocation, queries, sort_by=sort_by).distinct()
 
     @property
     def entity(self) -> str:
@@ -269,11 +271,12 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
         )
 
     @property
-    def download_csv_handler(self) -> DownloadCsvHandler:
-        return LocationDownloadCsvHandler()
+    def csv_export_setting(self):
+        return (lambda: view_utils.create_export_file_name('location', 'csv'),
+                lambda: DownloadCsvHandler(LocationCsvHeaderValues()).create_csv_file)
 
 
-class LocationDownloadCsvHandler(DownloadCsvHandler):
+class LocationCsvHeaderValues(HeaderValues):
     def get_header_list(self) -> list[str]:
         return [
             "Location name",
@@ -286,13 +289,13 @@ class LocationDownloadCsvHandler(DownloadCsvHandler):
             "Related resources",
             "Latitude",
             "Longitude",
-            "Element 1 eg room"
-            "Element 2 eg building"
-            "Element 3 eg parish"
-            "Element 4 eg city"
-            "Element 5 eg county"
-            "Element 6 eg country"
-            "Element 7 eg empire"
+            "Element 1 eg room",
+            "Element 2 eg building",
+            "Element 3 eg parish",
+            "Element 4 eg city",
+            "Element 5 eg county",
+            "Element 6 eg country",
+            "Element 7 eg empire",
             "Images",
             "Change user",
             "Change timestamp",
@@ -304,11 +307,11 @@ class LocationDownloadCsvHandler(DownloadCsvHandler):
             obj.location_name,
             obj.location_id,
             obj.editors_notes,
-            '0',  # KTODO send value
-            '0',  # KTODO recd value
-            '0',  # KTODO All works, should be send + recd
+            obj.sent,
+            obj.recd,
+            obj.all_works,
             download_csv_utils.join_comment_lines(obj.comments.iterator()),
-            download_csv_utils.join_resource_lines(obj.resources.iterator()),
+            cell_values.resource_str_by_list(obj.resources.iterator()),
             obj.latitude,
             obj.longitude,
             obj.element_1_eg_room,
@@ -319,7 +322,7 @@ class LocationDownloadCsvHandler(DownloadCsvHandler):
             obj.element_6_eg_country,
             obj.element_7_eg_empire,
             download_csv_utils.join_image_lines(obj.images.iterator()),
-            obj.change_timestamp,
+            cell_values.simple_datetime(obj.change_timestamp),
             obj.change_user,
         )
         return values

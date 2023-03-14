@@ -1,16 +1,18 @@
 import dataclasses
 import itertools
 import logging
-import os
 from collections import defaultdict
-from multiprocessing import Process
+from datetime import datetime
+from threading import Thread
 from typing import Iterable, Type, Callable, Any, TYPE_CHECKING
 from typing import NoReturn
 from urllib.parse import urlencode
+from urllib.parse import urljoin
 
 from django import template
+from django.conf import settings
 from django.db import models
-from django.db.models import Q, ForeignKey
+from django.db.models import Q, ForeignKey, QuerySet
 from django.db.models.query_utils import DeferredAttribute
 from django.forms import ModelForm
 from django.http import HttpResponseNotFound
@@ -21,22 +23,46 @@ from django.views.generic import ListView
 
 import core.constant as core_constant
 from core import constant
+from core.helper import email_utils, query_utils, general_model_utils, recref_utils, model_utils, \
+    django_utils, inspect_utils, url_utils, date_utils, str_utils
 from core.helper.form_utils import build_search_components
-from core.helper import file_utils, email_utils, query_utils, general_model_utils, recref_utils, model_utils, \
-    django_utils, inspect_utils, url_utils
 from core.helper.model_utils import ModelLike, RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
     demo_table_search_results_renderer
 from core.helper.view_components import DownloadCsvHandler
 from core.models import CofkUnionResource, CofkUnionComment
+from core.services import media_service
 from work import work_utils
 from work.models import CofkUnionWork
 
 if TYPE_CHECKING:
     from core.models import Recref
+    from django.db.models import QuerySet
 
 register = template.Library()
 log = logging.getLogger(__name__)
+
+
+def send_email_file_by_url(file_name, to_email):
+    if not to_email:
+        log.error(f'unknown user email -- [{to_email}]')
+        return
+
+    download_path = reverse('file-download', kwargs={'file_path': file_name})
+    download_url = urljoin(settings.EXPORT_ROOT_URL, download_path)
+    content = f'file can be download from this url: {download_url}'
+    resp = email_utils.send_email(to_email,
+                                  subject='Search result',
+                                  content=content, )
+    log.info(f'file email have be send to [{to_email}]')
+    log.debug(f'email resp {resp}')
+
+
+def create_export_file_name(name, suffix):
+    return '{}_{}_{}.{}'.format(name,
+                                date_utils.date_to_simple_date_str(datetime.utcnow()),
+                                str_utils.create_random_str(10),
+                                suffix)
 
 
 class BasicSearchView(ListView):
@@ -85,7 +111,7 @@ class BasicSearchView(ListView):
 
             if (field_val is not None and field_val != '') or (
                     field_name in self.request_data and 'blank' in self.request_data.get(f'{field_name}_lookup')):
-                label_name = self.search_field_label_map[field_name] if field_name in self.search_field_label_map\
+                label_name = self.search_field_label_map[field_name] if field_name in self.search_field_label_map \
                     else field_name.replace('_', ' ').capitalize()
                 lookup_key = self.request_data.get(f'{field_name}_lookup').replace('_', ' ')
 
@@ -160,8 +186,14 @@ class BasicSearchView(ListView):
         raise NotImplementedError('missing table_search_results_renderer_factory')
 
     @property
-    def download_csv_handler(self) -> DownloadCsvHandler:
-        raise NotImplementedError('missing download_csv_handler')
+    def csv_export_setting(self) -> tuple[Callable[[], str], Callable[[], DownloadCsvHandler]] | None:
+        """ overrider this to enable download csv """
+        return None
+
+    @property
+    def excel_export_setting(self) -> tuple[Callable[[], str], Callable[[Iterable, str], Any]] | None:
+        """ overrider this to enable download csv """
+        return None
 
     @property
     def merge_page_vname(self) -> str | None:
@@ -178,13 +210,18 @@ class BasicSearchView(ListView):
     def get_queryset(self):
         raise NotImplementedError('missing get_queryset')
 
-    def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q]):
+    def create_queryset_by_queries(self, model_class: Type[models.Model],
+                                   queries: Iterable[Q],
+                                   sort_by: str | None = None) -> 'QuerySet':
         queryset = model_class.objects.all()
 
         if queries:
             queryset = queryset.filter(query_utils.all_queries_match(queries))
 
-        if sort_by := self.get_sort_by():
+        if sort_by is None:
+            sort_by = self.get_sort_by()
+
+        if sort_by:
             queryset = queryset.order_by(sort_by)
 
         return queryset
@@ -228,7 +265,9 @@ class BasicSearchView(ListView):
                         'is_compact_layout': is_compact_layout,
                         'to_user_messages': getattr(self, 'to_user_messages', []),
                         'simplified_query': self.simplified_query,
-                        'paginate_by': self.paginate_by
+                        'paginate_by': self.paginate_by,
+                        'can_export_csv': self.csv_export_setting is not None,
+                        'can_export_excel': self.excel_export_setting is not None,
                         })
         if self.merge_page_vname:
             context['merge_page_url'] = reverse(self.merge_page_vname)
@@ -241,44 +280,46 @@ class BasicSearchView(ListView):
     def get_search_results_context(self, context):
         return context[self.context_object_name]
 
-    @staticmethod
-    def send_csv_email(csv_handler, queryset, to_email):
-        csv_path = file_utils.create_new_tmp_file_path()
-        csv_handler.create_csv_file(csv_path, queryset)
-
-        if not to_email:
-            log.error(f'unknown user email -- [{to_email}]')
-
-        resp = email_utils.send_email(
-            to_email,
-            subject='Search result',
-            attachments=[
-                ('search_result.csv', open(csv_path, mode='rb'), 'text/csv')
-            ],
-        )
-        log.info(f'csv file email have be send to [{to_email}]')
-        os.remove(csv_path)
-        log.debug('email resp', resp)
-
-    def resp_download_csv(self, request, *args, **kwargs):
+    def resp_file_download(self, request,
+                           file_fn: Callable[[], str],
+                           *args, **kwargs):
 
         def _fn():
             try:
-                self.send_csv_email(self.download_csv_handler, self.get_queryset(), request.user.email)
+                log.debug(f'start send email[{request.user}]....')
+                file_name = file_fn()
+                send_email_file_by_url(file_name, request.user.email)
             except Exception as e:
-                log.error('send csv email fail....')
+                log.error('send email fail....')
                 log.exception(e)
 
-        # create csv file and send email in other process
-        Process(target=_fn).start()
+        # create file and send email in other thread
+        Thread(target=_fn).start()
 
         # stay as same page
-        self.to_user_messages = ['Csv file will be send to your email later.']
+        self.to_user_messages = ['The selected data is being processed and will be sent to your email soon.']
         return super().get(request, *args, **kwargs)
+
+    def resp_download_by_export_setting(self, request, export_setting, *args, **kwargs):
+        def file_fn():
+            file_name_factory, file_factory = export_setting
+            file_name = file_name_factory()
+            tmp_path = media_service.FILE_DOWNLOAD_PATH.joinpath(file_name)
+            file_factory()(self.get_queryset(), tmp_path)
+            return file_name
+
+        return self.resp_file_download(request, file_fn, *args, **kwargs)
+
+    def resp_download_csv(self, request, *args, **kwargs):
+        return self.resp_download_by_export_setting(request, self.csv_export_setting, *args, **kwargs)
+
+    def resp_download_excel(self, request, *args, **kwargs):
+        return self.resp_download_by_export_setting(request, self.excel_export_setting, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         simple_form_action_map = {
             'download_csv': self.resp_download_csv,
+            'download_excel': self.resp_download_excel,
         }
 
         # simple routing with __form_action
@@ -349,10 +390,6 @@ class DefaultSearchView(BasicSearchView):
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
         return demo_table_search_results_renderer
-
-    @property
-    def download_csv_handler(self) -> DownloadCsvHandler:
-        return None
 
     def get_queryset(self):
         class _FakeQueryset(list):

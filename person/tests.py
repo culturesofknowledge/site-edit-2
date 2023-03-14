@@ -1,3 +1,5 @@
+import unittest
+
 from selenium.webdriver.common.by import By
 
 import person.fixtures

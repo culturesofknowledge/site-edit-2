@@ -95,3 +95,16 @@ def get_related_field(model_class: Type[ModelLike], target_class: Type[ModelLike
         if f.related_model == target_class:
             return f
     return None
+
+
+class UniqueModelPkFilter:
+    def __init__(self, model_list: Iterable[ModelLike]):
+        self.pk_list = set()
+        self.model_list = model_list
+
+    def __iter__(self):
+        self.pk_list = set()
+        for model in self.model_list:
+            if model.pk not in self.pk_list:
+                self.pk_list.add(model.pk)
+                yield model

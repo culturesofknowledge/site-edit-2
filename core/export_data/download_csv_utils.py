@@ -10,9 +10,5 @@ def join_comment_lines(comments: Iterable) -> str:
     return join_csv_value_common((r.comment for r in comments))
 
 
-def join_resource_lines(resources: Iterable) -> str:
-    return join_csv_value_common((r.resource_url for r in resources))
-
-
 def join_image_lines(images: Iterable) -> str:
     return join_csv_value_common((r.image_filename for r in images))

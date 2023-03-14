@@ -6,9 +6,13 @@
         <h1> {{ title }} </h1>
     </div>
 
-    {% for to_user_msg in to_user_messages %}
-        <h1>{{ to_user_msg }}</h1>
-    {% endfor %}
+    <div style="background: darkgray;">
+        {% for to_user_msg in to_user_messages %}
+            <h1>{{ to_user_msg }}</h1>
+        {% endfor %}
+    </div>
+
+    <input id="num_records" type="hidden" value="{{ paginator.count }}" />
 
     <form id="search_form" method="get">
         {% csrf_token %}
@@ -35,7 +39,8 @@
                     <!-- Number of results -->
                     <div class="col">
                         <div class="result_count">
-                            <h2>{{ page_obj|get_results_on_page }} out of {{ paginator.count | floatformat:'g' }} {{ paginator.count|pluralize:entity }}</h2>
+                            <h2>{{ page_obj|get_results_on_page }} out
+                                of {{ paginator.count | floatformat:'g' }} {{ paginator.count|pluralize:entity }}</h2>
                         </div>
 
                         <!-- Show search criteria -->
@@ -56,20 +61,30 @@
                     <aside class="margin-bottom row">
                         <div class="col col--1of2">
                             {% if paginator.count %}
-                            <button id="fieldset-toggle-btn" class="btn margin-right inline_btn" type="button">
-                                Toggle <span data-feather="search" aria-hidden="true"></span>
-                            </button>
+                                <button id="fieldset-toggle-btn" class="search-form-btn" type="button">
+                                    Toggle <span data-feather="search" aria-hidden="true"></span>
+                                </button>
                             {% endif %}
-                            <button type='submit' class="btn margin-right inline_btn"
-                                    name="__form_action" value="download_csv">
-                                Download output
-                            </button>
+
+                            {% if can_export_csv %}
+                                <button type='submit' class="search-form-btn"
+                                        name="__form_action" value="download_csv">
+                                    CSV output
+                                </button>
+                            {% endif %}
+
+                            {% if can_export_excel %}
+                                <button id="export_excel_btn" type='submit' class="search-form-btn"
+                                        name="__form_action" value="download_excel">
+                                    Excel output
+                                </button>
+                            {% endif %}
 
                             {% if merge_page_url %}
-                                <button class="btn margin-right inline_btn selectable_mode_btn">
+                                <button class="search-form-btn selectable_mode_btn">
                                     Select
                                 </button>
-                                <button id="merge_btn" class="btn margin-right inline_btn" style="display: none">
+                                <button id="merge_btn" class="search-form-btn" style="display: none">
                                     Merge
                                 </button>
                             {% endif %}
@@ -129,9 +144,22 @@
 
         let return_quick_init_vname = "{{ return_quick_init_vname }}";
         {%  if return_quick_init_vname %}
-        let vname_action_url = "{% url return_quick_init_vname '__entry_id__' %}";
+            let vname_action_url = "{% url return_quick_init_vname '__entry_id__' %}";
         {% endif %}
         let recref_mode = "{{ recref_mode }}";
+
+        $('#export_excel_btn').click(function (e){
+            let msg = 'Are you sure you want to export the search results to Excel?'
+            let num_records = $('#num_records').val()
+            if (num_records) {
+                msg = `Are you sure you want to export ${num_records} search results to Excel?`
+            }
+
+            if (! confirm(msg)) {
+                e.preventDefault();
+                return ;
+            }
+        });
 
     </script>
     <script src="{% static 'core/js/search-results.js' %}"></script>

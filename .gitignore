@@ -54,4 +54,5 @@ siteedit2/settings/gunweb.py
 
 static/core/scss/
 core/static/core/scss/main.css
+core/management/commands/playground.py
 upload/

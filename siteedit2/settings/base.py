@@ -223,14 +223,14 @@ LOGIN_URL = '/login/gate'
 LOGIN_REDIRECT_URL = '/login/dashboard'  # KTODO this value to be update
 
 MEDIA_ROOT = '/code/files/'  # TODO this needs to be updated
+
 MEDIA_URL = '/media/'
 
 # ######### EMLO settings
 
 DEFAULT_IMG_LICENCE_URL = 'http://cofk2.bodleian.ox.ac.uk/culturesofknowledge/licence/terms_of_use.html'
 
-MAILGUN_DOMAIN = "<your mailgun messages url>"
-MAILGUN_API_KEY = "<your mailgun api key>"
+EMAIL_FROM_EMAIL = f"Excited User <mailgun@<your mailgun messages url>>"
 
 EMLO_SEQ_VAL_INIT = {
     'COFKUNIONPERSION__IPERSON_ID': 1000,
@@ -240,3 +240,7 @@ EMLO_SEQ_VAL_INIT = {
 ### change to True if you are using *https*
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
+
+# export
+# root url for generate url in export
+EXPORT_ROOT_URL = 'http://localhost:8020'
