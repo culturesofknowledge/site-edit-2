@@ -107,7 +107,7 @@ def _get_other_persons_by_type(person: CofkUnionPerson, person_type: str) -> Ite
 class PersonFFH(FullFormHandler):
 
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
-        self.person = get_object_or_404(CofkUnionPerson, iperson_id=pk)
+        self.person: CofkUnionPerson | None = get_object_or_404(CofkUnionPerson, iperson_id=pk)
 
         self.birth_loc_handler = SingleRecrefHandler(
             form_field_name='birth_place',
@@ -247,6 +247,7 @@ def full_form(request, iperson_id):
         # ------- save
         fhandler.maintain_all_recref_records(request, fhandler.person_form.instance)
 
+        fhandler.person.update_current_user_timestamp(request.user.username)
         fhandler.person_form.save()
         fhandler.save_all_recref_formset(fhandler.person, request)
         fhandler.img_recref_handler.save(fhandler.person_form.instance, request)

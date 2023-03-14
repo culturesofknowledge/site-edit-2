@@ -89,7 +89,7 @@ def save_changed_forms(form_formsets: Iterable[FormOrFormSet]):
 class LocationFFH(FullFormHandler):
 
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
-        self.loc = None
+        self.loc: CofkUnionLocation | None = None
         self.location_id = pk or request.POST.get('location_id')
         if self.location_id:
             self.loc = get_object_or_404(CofkUnionLocation, pk=self.location_id)
@@ -132,6 +132,7 @@ def full_form(request, location_id):
             return fhandler.render_form(request)
 
         # save formset
+        fhandler.loc.update_current_user_timestamp(request.user.username)
         fhandler.loc_form.save()
         fhandler.save_all_recref_formset(fhandler.loc_form.instance, request)
 

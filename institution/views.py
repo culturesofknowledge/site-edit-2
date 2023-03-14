@@ -131,7 +131,7 @@ class InstInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
 
 @login_required
 def full_form(request, pk):
-    inst = get_object_or_404(CofkUnionInstitution, pk=pk)
+    inst: CofkUnionInstitution | None = get_object_or_404(CofkUnionInstitution, pk=pk)
     inst_form = InstitutionForm(request.POST or None, instance=inst)
 
     res_handler = InstResourceFormsetHandler(request_data=request.POST or None,
@@ -161,8 +161,9 @@ def full_form(request, pk):
         res_handler.save(inst, request)
         img_recref_handler.save(inst, request)
 
+        inst.update_current_user_timestamp(request.user.username)
         inst_form.save()
-        return redirect('institution:search')
+        #return redirect('institution:search')
 
     return _render_form()
 

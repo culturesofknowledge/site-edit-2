@@ -18,7 +18,9 @@ class InstitutionForm(ModelForm):
         model = CofkUnionInstitution
         exclude = (
             'creation_user',
-            'change_user'
+            'change_user',
+            'resources',
+            'images'
         )
 
 

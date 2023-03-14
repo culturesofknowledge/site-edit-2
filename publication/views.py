@@ -79,7 +79,7 @@ class PubInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
 
 @login_required
 def full_form(request, pk):
-    pub = get_object_or_404(CofkUnionPublication, pk=pk)
+    pub: CofkUnionPublication | None = get_object_or_404(CofkUnionPublication, pk=pk)
     pub_form = PublicationForm(request.POST or None, instance=pub)
 
     def _render_form():
@@ -91,8 +91,9 @@ def full_form(request, pk):
         if not pub_form.is_valid():
             return _render_form()
 
+        pub.update_current_user_timestamp(request.user.username)
         pub_form.save()
-        return redirect('publication:search')
+        #sreturn redirect('publication:search')
 
     return _render_form()
 
