@@ -50,7 +50,6 @@ def send_email_file_by_url(file_name, to_email):
 
     download_path = reverse('file-download', kwargs={'file_path': file_name})
     download_url = urljoin(settings.EXPORT_ROOT_URL, download_path)
-    print(download_url)
     content = f'file can be download from this url: {download_url}'
     resp = email_utils.send_email(to_email,
                                   subject='Search result',
