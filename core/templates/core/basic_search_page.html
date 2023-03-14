@@ -149,10 +149,10 @@
         let recref_mode = "{{ recref_mode }}";
 
         $('#export_excel_btn').click(function (e){
-            let msg = 'Are you sure export Excel?'
+            let msg = 'Are you sure you want to export the search results to Excel?'
             let num_records = $('#num_records').val()
             if (num_records) {
-                msg = 'Are you sure export ' + num_records + ' records in Excel?'
+                msg = `Are you sure you want to export ${num_records} search results to Excel?`
             }
 
             if (! confirm(msg)) {

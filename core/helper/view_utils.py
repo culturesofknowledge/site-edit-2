@@ -297,7 +297,7 @@ class BasicSearchView(ListView):
         Thread(target=_fn).start()
 
         # stay as same page
-        self.to_user_messages = ['File will be send to your email later.']
+        self.to_user_messages = ['The selected data is being processed and will be sent to your email soon.']
         return super().get(request, *args, **kwargs)
 
     def resp_download_by_export_setting(self, request, export_setting, *args, **kwargs):
