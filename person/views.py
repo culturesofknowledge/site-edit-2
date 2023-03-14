@@ -452,7 +452,6 @@ class PersonCsvHeaderValues(HeaderValues):
             "Further reading",
             "Images",
             "Other details",
-            "Other details",
             "Change timestamp",
             "Change user",
         ]
