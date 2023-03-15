@@ -12,6 +12,10 @@ def create_common_checkbox(**attrs):
 
 
 class NewDateInput(widgets.Input):
+    input_type = "date"
+
+
+class SearchDateTimeInput(widgets.Input):
     input_type = "text"
 
     def __init__(self, attrs=None):

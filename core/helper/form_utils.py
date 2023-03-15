@@ -4,7 +4,7 @@ from typing import Iterable, Type
 
 from django import forms
 from django.db.models import TextChoices, Choices, Model
-from django.forms import BoundField, CharField, Form, formset_factory
+from django.forms import BoundField, CharField, Form, formset_factory, IntegerField
 from django.template.loader import render_to_string
 
 from core.helper import widgets_utils, data_utils, recref_utils
@@ -518,3 +518,15 @@ def create_formset(form_class, post_data=None, prefix=None,
         prefix=prefix,
         initial=initial_list,
     )
+
+class BasicSearchFieldset(forms.Form):
+    change_user = forms.CharField(required=False, label='Last edited by',
+                                  help_text='Username of the person who last changed the record.')
+    change_user_lookup = create_lookup_field(StrLookupChoices.choices)
+
+    change_timestamp_from = forms.DateField(required=False, widget=widgets_utils.SearchDateTimeInput())
+    change_timestamp_to = forms.DateField(required=False, widget=widgets_utils.SearchDateTimeInput())
+    change_timestamp_info = datetime_search_info
+
+    publication_id = IntegerField(required=False)
+    publication_id_lookup = create_lookup_field(IntLookupChoices.choices)

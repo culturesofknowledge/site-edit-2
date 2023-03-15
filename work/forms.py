@@ -3,14 +3,14 @@ from typing import Type
 
 from django import forms
 from django.db.models import TextChoices, Model
-from django.forms import CharField, Field
+from django.forms import CharField
 
 from core import constant
 from core.constant import DEFAULT_EMPTY_DATE_STR, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO
 from core.helper import form_utils
 from core.helper import widgets_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter, TargetPersonRecrefAdapter
-from core.helper.form_utils import TargetPersonMRRForm, LocationRecrefField, InstRecrefField
+from core.helper.form_utils import TargetPersonMRRForm, LocationRecrefField, InstRecrefField, BasicSearchFieldset
 from core.models import Recref, CofkUnionSubject, CofkLookupCatalogue
 from institution.models import CofkUnionInstitution
 from manifestation.models import CofkUnionManifestation, CofkManifPersonMap
@@ -465,7 +465,8 @@ del_help_text = "Yes or No. If 'Yes', the record is marked for deletion."
 id_help_text = 'The unique ID for the record within the current CofK database.'
 change_help_text = 'Username of the person who last changed the record.'
 
-class FieldsetForm(forms.Form):
+
+class FieldsetForm(BasicSearchFieldset):
     institution_names = CofkUnionInstitution.objects\
         .order_by('institution_name').values_list('institution_name', flat=True).distinct()
     manif_type = [t[1] for t in manif_type_choices]
@@ -598,20 +599,6 @@ class CompactSearchFieldset(FieldsetForm):
     work_id = forms.CharField(required=False, help_text=id_help_text)
     work_id_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    change_timestamp_from = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
-    change_timestamp_to = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
-    change_timestamp_info = form_utils.datetime_search_info
-
-    change_user = forms.CharField(required=False, label='Last edited by', help_text=change_help_text)
-    change_user_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
-
-
-class SearchFieldSetField:
-    def __init__(self, field: Field, lookup: Field, description: str):
-        self.field = field
-        self.lookup = lookup
-        self.description = description
-
 
 class ExpandedSearchFieldset(FieldsetForm):
     title = 'Expanded Search'
@@ -720,10 +707,3 @@ class ExpandedSearchFieldset(FieldsetForm):
 
     work_id = forms.CharField(required=False, help_text=id_help_text)
     work_id_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
-
-    change_timestamp_from = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
-    change_timestamp_to = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
-    change_timestamp_info = form_utils.datetime_search_info
-
-    change_user = CharField(required=False, label='Last edited by', help_text=change_help_text)
-    change_user_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)

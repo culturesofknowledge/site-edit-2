@@ -7,9 +7,9 @@ from django.forms import ModelForm, CharField, IntegerField
 from django.forms.utils import ErrorList
 
 from core import constant
-from core.helper import form_utils, widgets_utils
+from core.helper import form_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
-from core.helper.form_utils import TargetPersonMRRForm, LocationRecrefField
+from core.helper.form_utils import TargetPersonMRRForm, LocationRecrefField, BasicSearchFieldset
 from person.models import CofkUnionPerson
 from person.recref_adapter import ActivePersonRecrefAdapter
 from core.models import CofkUnionOrgType, CofkUnionRoleCategory
@@ -270,7 +270,7 @@ search_person_or_group = [
         ('G', 'Group'),
     ]
 
-class GeneralSearchFieldset(forms.Form):
+class GeneralSearchFieldset(BasicSearchFieldset):
     role_category_names = CofkUnionRoleCategory.objects \
         .order_by('role_category_desc').values_list('role_category_desc', flat=True).distinct()
 
@@ -298,8 +298,7 @@ class GeneralSearchFieldset(forms.Form):
     flourished_year_to = form_utils.create_year_field()
     flourished_info = 'Can be entered in YYYY format.'
 
-    gender = forms.CharField(required=False, widget=forms.Select(
-        choices=search_gender_choices))
+    gender = forms.CharField(required=False, widget=forms.Select(choices=search_gender_choices))
 
     person_or_group = forms.CharField(required=False, widget=forms.Select(choices=search_person_or_group))
 
@@ -341,14 +340,6 @@ class GeneralSearchFieldset(forms.Form):
                                               'including membership of organisations, known geographical '
                                               'locations, researchers\' notes and related resources.')
     other_details_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
-
-    change_timestamp_from = forms.CharField(required=False, widget=widgets_utils.NewDateInput())
-    change_timestamp_to = forms.CharField(required=False, widget=widgets_utils.NewDateInput())
-    change_timestamp_info = form_utils.datetime_search_info
-
-    change_user = forms.CharField(required=False, label='Last edited by',
-                                  help_text='Username of the person who last changed the record.')
-    change_user_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     iperson_id = forms.IntegerField(required=False, label='Person or Group ID',
                                     help_text='The unique ID for the record within this database.')

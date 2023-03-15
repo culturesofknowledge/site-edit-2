@@ -1,7 +1,7 @@
 from django import forms
 from django.forms import ModelForm, HiddenInput, IntegerField, CharField
 
-from core.helper import form_utils, widgets_utils
+from core.helper import form_utils
 from location.models import CofkUnionLocation
 
 
@@ -60,7 +60,7 @@ field_label_map = { 'location_name': 'Name',
                     'change_user': 'Last edited by',
                     }
 
-class GeneralSearchFieldset(forms.Form):
+class GeneralSearchFieldset(form_utils.BasicSearchFieldset):
     title = 'General'
     template_name = 'location/component/location_search_fieldset.html'
 
@@ -134,11 +134,3 @@ class GeneralSearchFieldset(forms.Form):
 
     images = CharField(required=False)
     images_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
-
-    change_timestamp_from = CharField(required=False, widget=widgets_utils.NewDateInput())
-    change_timestamp_to = CharField(required=False, widget=widgets_utils.NewDateInput())
-    change_timestamp_info = form_utils.datetime_search_info
-
-    change_user = CharField(required=False, label='Last edited by',
-                            help_text='Username of the person who last changed the record.')
-    change_user_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
