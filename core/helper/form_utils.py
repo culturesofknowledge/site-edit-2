@@ -527,6 +527,3 @@ class BasicSearchFieldset(forms.Form):
     change_timestamp_from = forms.DateField(required=False, widget=widgets_utils.SearchDateTimeInput())
     change_timestamp_to = forms.DateField(required=False, widget=widgets_utils.SearchDateTimeInput())
     change_timestamp_info = datetime_search_info
-
-    publication_id = IntegerField(required=False)
-    publication_id_lookup = create_lookup_field(IntLookupChoices.choices)
