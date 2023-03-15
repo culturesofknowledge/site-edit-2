@@ -131,7 +131,7 @@ class InstInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
 
 @login_required
 def full_form(request, pk):
-    inst: CofkUnionInstitution | None = get_object_or_404(CofkUnionInstitution, pk=pk)
+    inst: CofkUnionInstitution = get_object_or_404(CofkUnionInstitution, pk=pk)
     inst_form = InstitutionForm(request.POST or None, instance=inst)
 
     res_handler = InstResourceFormsetHandler(request_data=request.POST or None,

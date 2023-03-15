@@ -79,7 +79,7 @@ class PubInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
 
 @login_required
 def full_form(request, pk):
-    pub: CofkUnionPublication | None = get_object_or_404(CofkUnionPublication, pk=pk)
+    pub: CofkUnionPublication = get_object_or_404(CofkUnionPublication, pk=pk)
     pub_form = PublicationForm(request.POST or None, instance=pub)
 
     def _render_form():

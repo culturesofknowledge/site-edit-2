@@ -107,7 +107,7 @@ def _get_other_persons_by_type(person: CofkUnionPerson, person_type: str) -> Ite
 class PersonFFH(FullFormHandler):
 
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
-        self.person: CofkUnionPerson | None = get_object_or_404(CofkUnionPerson, iperson_id=pk)
+        self.person: CofkUnionPerson = get_object_or_404(CofkUnionPerson, iperson_id=pk)
 
         self.birth_loc_handler = SingleRecrefHandler(
             form_field_name='birth_place',
