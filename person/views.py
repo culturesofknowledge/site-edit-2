@@ -16,7 +16,7 @@ from core.export_data import cell_values, download_csv_utils
 from core.forms import CommentForm, PersonRecrefForm
 from core.helper import renderer_utils, view_utils, query_utils, recref_utils, form_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
-from core.helper.date_utils import str_to_std_datetime
+from core.helper.date_utils import str_to_search_datetime
 from core.helper.model_utils import ModelLike
 from core.helper.recref_handler import RecrefFormsetHandler, RoleCategoryHandler, ImageRecrefHandler, \
     TargetResourceFormsetHandler, MultiRecrefAdapterHandler, SingleRecrefHandler
@@ -301,7 +301,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
                 'flourished_year_from': lambda _, v: GreaterThanOrEqual(F('flourished_year'), v),
                 'flourished_year_to': lambda _, v: LessThanOrEqual(F('flourished2_year'), v),
                 } | query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                        'change_timestamp', str_to_std_datetime)
+                                                        'change_timestamp', str_to_search_datetime)
 
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:

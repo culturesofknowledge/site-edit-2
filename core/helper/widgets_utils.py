@@ -12,7 +12,14 @@ def create_common_checkbox(**attrs):
 
 
 class NewDateInput(widgets.Input):
-    input_type = "date"
+    input_type = "text"
+
+    def __init__(self, attrs=None):
+        if attrs is None:
+            attrs = {'class': 'dateinput'}
+        else:
+            attrs['class'] = 'dateinput'
+        super().__init__(attrs)
 
 
 class Datalist(widgets.ChoiceWidget):

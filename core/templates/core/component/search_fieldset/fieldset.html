@@ -1,3 +1,5 @@
+{% load static %}
+
 <fieldset>
     <legend>{{ form.title }}</legend>
 
@@ -10,3 +12,5 @@
     {% endblock %}
 
 </fieldset>
+
+<script src="{% static 'core/js/dateinput.js' %}"></script>

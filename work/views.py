@@ -22,7 +22,7 @@ from core.export_data import excel_maker, cell_values
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, LocRecrefForm
 from core.helper import view_utils, lang_utils, model_utils, query_utils, renderer_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
-from core.helper.date_utils import str_to_std_datetime
+from core.helper.date_utils import str_to_search_datetime
 from core.helper.form_utils import save_multi_rel_recref_formset
 from core.helper.lang_utils import LangModelAdapter, NewLangForm
 from core.helper.recref_handler import SingleRecrefHandler, RecrefFormsetHandler, SubjectHandler, ImageRecrefHandler, \
@@ -928,9 +928,9 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     def search_field_fn_maps(self) -> dict:
         return {'work_to_be_deleted': lambda f, v: Exact(F(f), '0' if v == 'On' else '1'), } | \
             query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                'change_timestamp', str_to_std_datetime) | \
+                                                'change_timestamp', str_to_search_datetime) | \
             query_utils.create_from_to_datetime('date_of_work_std_from', 'date_of_work_std_to',
-                                                'date_of_work_std', str_to_std_datetime)
+                                                'date_of_work_std', str_to_search_datetime)
 
     def get_queryset(self):
         return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
