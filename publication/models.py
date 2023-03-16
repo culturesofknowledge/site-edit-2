@@ -1,9 +1,10 @@
 from django.db import models
 
 from core.helper import model_utils
+from core.helper.model_utils import RecordTracker
 
 
-class CofkUnionPublication(models.Model):
+class CofkUnionPublication(models.Model, RecordTracker):
     publication_id = models.AutoField(primary_key=True)
     publication_details = models.TextField()
     change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)

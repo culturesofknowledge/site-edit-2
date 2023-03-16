@@ -15,16 +15,22 @@ function isElementInViewpoint(ele) {
 
 
 function build_table_of_content_ui() {
+    let toc_items = $('.toc-item, .toc-sub-item');
+
+    if(toc_items.length === 0)  {
+        // Publications has no toc items
+        return
+    }
+
     let container = $('<div id="toc-div">')
     container.append()
-
 
     let title = $('<h3>Table of Contents</h3>')
 
     let body = $('<div id="toc-body">')
     body.append(title)
 
-    $('.toc-item, .toc-sub-item').each(function (idx, ele) {
+    toc_items.each(function (idx, ele) {
         let link_jqe;
         if (ele.classList.contains('toc-sub-item')) {
             link_jqe = $(`<li><a href="#${ele.id}">${ele.textContent}</a></li>`)

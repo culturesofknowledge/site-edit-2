@@ -7,7 +7,6 @@ from django.shortcuts import redirect, get_object_or_404
 from django.shortcuts import render
 
 from core.helper import renderer_utils, query_utils
-from core.helper.date_utils import str_to_std_datetime
 from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView
 from publication.forms import PublicationForm, GeneralSearchFieldset, field_label_map
 from publication.models import CofkUnionPublication
@@ -30,7 +29,7 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def search_field_fn_maps(self) -> dict:
         return query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                   'change_timestamp', str_to_std_datetime)
+                                                   'change_timestamp')
 
     @property
     def entity(self) -> str:
@@ -79,7 +78,7 @@ class PubInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
 
 @login_required
 def full_form(request, pk):
-    pub = get_object_or_404(CofkUnionPublication, pk=pk)
+    pub: CofkUnionPublication = get_object_or_404(CofkUnionPublication, pk=pk)
     pub_form = PublicationForm(request.POST or None, instance=pub)
 
     def _render_form():
@@ -91,8 +90,8 @@ def full_form(request, pk):
         if not pub_form.is_valid():
             return _render_form()
 
+        pub.update_current_user_timestamp(request.user.username)
         pub_form.save()
-        return redirect('publication:search')
 
     return _render_form()
 

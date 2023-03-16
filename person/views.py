@@ -16,7 +16,6 @@ from core.export_data import cell_values, download_csv_utils
 from core.forms import CommentForm, PersonRecrefForm
 from core.helper import renderer_utils, view_utils, query_utils, recref_utils, form_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
-from core.helper.date_utils import str_to_std_datetime
 from core.helper.model_utils import ModelLike
 from core.helper.recref_handler import RecrefFormsetHandler, RoleCategoryHandler, ImageRecrefHandler, \
     TargetResourceFormsetHandler, MultiRecrefAdapterHandler, SingleRecrefHandler
@@ -107,7 +106,7 @@ def _get_other_persons_by_type(person: CofkUnionPerson, person_type: str) -> Ite
 class PersonFFH(FullFormHandler):
 
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
-        self.person = get_object_or_404(CofkUnionPerson, iperson_id=pk)
+        self.person: CofkUnionPerson = get_object_or_404(CofkUnionPerson, iperson_id=pk)
 
         self.birth_loc_handler = SingleRecrefHandler(
             form_field_name='birth_place',
@@ -247,6 +246,7 @@ def full_form(request, iperson_id):
         # ------- save
         fhandler.maintain_all_recref_records(request, fhandler.person_form.instance)
 
+        fhandler.person.update_current_user_timestamp(request.user.username)
         fhandler.person_form.save()
         fhandler.save_all_recref_formset(fhandler.person, request)
         fhandler.img_recref_handler.save(fhandler.person_form.instance, request)
@@ -300,7 +300,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
                 'flourished_year_from': lambda _, v: GreaterThanOrEqual(F('flourished_year'), v),
                 'flourished_year_to': lambda _, v: LessThanOrEqual(F('flourished2_year'), v),
                 } | query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                        'change_timestamp', str_to_std_datetime)
+                                                        'change_timestamp')
 
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:

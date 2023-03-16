@@ -146,6 +146,19 @@ class ThreeFieldDateField(forms.Field):
 
         return cleaned_data
 
+class SearchCharField(forms.CharField):
+
+    def __init__(self, required=False, *args, **kwargs):
+        super().__init__(*args, required=required, **kwargs)
+        self.widget.attrs.update({'class': 'searchfield'})
+
+class SearchIntField(forms.IntegerField):
+
+    def __init__(self, required=False, *args, **kwargs):
+        super().__init__(*args, required=required, **kwargs)
+        self.widget.attrs.update({'class': 'searchfield'})
+
+
 
 class IntLookupChoices(TextChoices):
     EQUALS = 'equals', 'equals (=)',
@@ -518,3 +531,12 @@ def create_formset(form_class, post_data=None, prefix=None,
         prefix=prefix,
         initial=initial_list,
     )
+
+class BasicSearchFieldset(forms.Form):
+    change_user = SearchCharField(label='Last edited by',
+                                  help_text='Username of the person who last changed the record.')
+    change_user_lookup = create_lookup_field(StrLookupChoices.choices)
+
+    change_timestamp_from = forms.DateField(required=False, widget=widgets_utils.SearchDateTimeInput())
+    change_timestamp_to = forms.DateField(required=False, widget=widgets_utils.SearchDateTimeInput())
+    change_timestamp_info = datetime_search_info

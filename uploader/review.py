@@ -223,9 +223,12 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
 
         collect_work.upload_status_id = 4  # Accepted and saved into main database
 
+    log_msg = []
+
     # Creating the union entities
     for entity in [union_works, union_manifs, union_resources]:
         bulk_create(entity)
+        log_msg.append(f'{len(entity)} {type(entity[0]).__name__}')
 
     # Creating the relation entities
     for rel_map in rel_maps:
@@ -242,7 +245,7 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
     # Change state of upload and work
     upload.works_accepted += accepted_works
 
-    if upload.total_works == upload.works_accepted:
+    if upload.total_works == upload.works_accepted + upload.works_rejected:
         upload.upload_status_id = 3  # Review complete
     else:
         upload.upload_status_id = 2  # Partly reviewed
@@ -253,6 +256,8 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
         messages.success(request, f'Successfully accepted {accepted_works} works.')
     else:
         messages.success(request, f'Successfully accepted one work.')
+
+    log.info(f'{upload}: created ' + ', '.join(log_msg))
 
 
 def reject_works(request, context: dict, upload: CofkCollectUpload):
@@ -276,8 +281,11 @@ def reject_works(request, context: dict, upload: CofkCollectUpload):
     # Change state of upload and work
     upload.works_rejected += len(collect_works)
 
-    if upload.total_works == upload.works_accepted:
+    if upload.total_works == upload.works_accepted + upload.works_rejected:
         upload.upload_status_id = 3  # Review complete
     else:
         upload.upload_status_id = 2  # Partly reviewed
+
     upload.save()
+
+    log.info(f'{upload}: rejected {len(collect_works)}')

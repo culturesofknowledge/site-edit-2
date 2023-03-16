@@ -10,7 +10,6 @@ from django.shortcuts import render, redirect, get_object_or_404
 from core.export_data import cell_values, download_csv_utils
 from core.helper import renderer_utils, query_utils, view_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
-from core.helper.date_utils import str_to_std_datetime
 from core.helper.model_utils import ModelLike
 from core.helper.recref_handler import ImageRecrefHandler, TargetResourceFormsetHandler
 from core.helper.renderer_utils import CompactSearchResultsRenderer
@@ -40,7 +39,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
     @property
     def search_field_fn_maps(self) -> dict:
         return query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                   'change_timestamp', str_to_std_datetime)
+                                                   'change_timestamp')
 
     @property
     def search_field_label_map(self) -> dict:
@@ -131,7 +130,7 @@ class InstInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
 
 @login_required
 def full_form(request, pk):
-    inst = get_object_or_404(CofkUnionInstitution, pk=pk)
+    inst: CofkUnionInstitution = get_object_or_404(CofkUnionInstitution, pk=pk)
     inst_form = InstitutionForm(request.POST or None, instance=inst)
 
     res_handler = InstResourceFormsetHandler(request_data=request.POST or None,
@@ -161,8 +160,8 @@ def full_form(request, pk):
         res_handler.save(inst, request)
         img_recref_handler.save(inst, request)
 
+        inst.update_current_user_timestamp(request.user.username)
         inst_form.save()
-        return redirect('institution:search')
 
     return _render_form()
 

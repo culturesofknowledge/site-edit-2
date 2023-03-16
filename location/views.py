@@ -14,7 +14,6 @@ from core.export_data import download_csv_utils, cell_values
 from core.forms import CommentForm
 from core.helper import view_utils, renderer_utils, query_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
-from core.helper.date_utils import str_to_std_datetime
 from core.helper.model_utils import ModelLike
 from core.helper.recref_handler import RecrefFormsetHandler, ImageRecrefHandler, TargetResourceFormsetHandler
 from core.helper.renderer_utils import CompactSearchResultsRenderer
@@ -89,7 +88,7 @@ def save_changed_forms(form_formsets: Iterable[FormOrFormSet]):
 class LocationFFH(FullFormHandler):
 
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
-        self.loc = None
+        self.loc: CofkUnionLocation | None = None
         self.location_id = pk or request.POST.get('location_id')
         if self.location_id:
             self.loc = get_object_or_404(CofkUnionLocation, pk=self.location_id)
@@ -132,6 +131,7 @@ def full_form(request, location_id):
             return fhandler.render_form(request)
 
         # save formset
+        fhandler.loc.update_current_user_timestamp(request.user.username)
         fhandler.loc_form.save()
         fhandler.save_all_recref_formset(fhandler.loc_form.instance, request)
 
@@ -182,7 +182,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
     @property
     def search_field_fn_maps(self) -> dict:
         return query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                   'change_timestamp', str_to_std_datetime)
+                                                   'change_timestamp')
 
     @property
     def query_fieldset_list(self) -> Iterable:

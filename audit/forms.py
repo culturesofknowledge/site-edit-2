@@ -1,7 +1,7 @@
 from django import forms
 
-from core.helper import form_utils, widgets_utils
-from core.helper.form_utils import CharSelectField
+from core.helper import form_utils
+from core.helper.form_utils import CharSelectField, BasicSearchFieldset
 
 """
 desc_left_to_right
@@ -257,16 +257,9 @@ table_name_choices = [
 ]
 
 
-class AuditSearchFieldset(forms.Form):
+class AuditSearchFieldset(BasicSearchFieldset):
     title = 'General'
     template_name = 'audit/component/audit_search_fieldset.html'
-
-    change_timestamp_from = forms.CharField(required=False)
-    change_timestamp_to = forms.CharField(required=False)
-    change_timestamp_info = form_utils.datetime_search_info
-
-    change_user = forms.CharField(required=False)
-    change_user_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     table_name = CharSelectField(choices=table_name_choices, )
 

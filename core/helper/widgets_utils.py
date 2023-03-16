@@ -15,6 +15,17 @@ class NewDateInput(widgets.Input):
     input_type = "date"
 
 
+class SearchDateTimeInput(widgets.Input):
+    input_type = "text"
+
+    def __init__(self, attrs=None):
+        if attrs is None:
+            attrs = {'class': 'dateinput'}
+        else:
+            attrs['class'] = 'dateinput'
+        super().__init__(attrs)
+
+
 class Datalist(widgets.ChoiceWidget):
     template_name = 'core/widget/datalist.html'
     option_template_name = "django/forms/widgets/select_option.html"
