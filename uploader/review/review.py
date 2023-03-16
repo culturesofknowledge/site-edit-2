@@ -242,7 +242,7 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
     # Change state of upload and work
     upload.works_accepted += accepted_works
 
-    if upload.total_works == upload.works_accepted:
+    if upload.total_works == upload.works_accepted + upload.works_rejected:
         upload.upload_status_id = 3  # Review complete
     else:
         upload.upload_status_id = 2  # Partly reviewed
@@ -276,7 +276,7 @@ def reject_works(request, context: dict, upload: CofkCollectUpload):
     # Change state of upload and work
     upload.works_rejected += len(collect_works)
 
-    if upload.total_works == upload.works_accepted:
+    if upload.total_works == upload.works_accepted + upload.works_rejected:
         upload.upload_status_id = 3  # Review complete
     else:
         upload.upload_status_id = 2  # Partly reviewed
