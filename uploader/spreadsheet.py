@@ -91,8 +91,6 @@ class CofkUploadExcelFile:
         for sheet in mandatory_sheets.keys():
             self.sheets[sheet] = CofkSheet(self.wb[sheet])
 
-            log.debug(f'{sheet} {self.sheets[sheet].rows}')
-
             # Using same iteration to verify that required columns are present
             if self.sheets[sheet].missing_columns:
                 if len(self.sheets[sheet].missing_columns) > 1:
@@ -109,6 +107,9 @@ class CofkUploadExcelFile:
         # sheets have already been verified to be present so no KeyError raised
         if self.sheets['Work'].rows == 0:
             raise CofkExcelFileError("Spreadsheet contains no works.")
+
+        sheets = ', '.join([f'{sheet}: {self.sheets[sheet].rows}' for sheet in mandatory_sheets.keys()])
+        log.info(f'{self.upload}: all {len(mandatory_sheets)} sheets verified: [{sheets}]')
 
         # It's process the sheets in reverse order, starting with repositories/institutions
         self.sheets['Repositories'].entities = CofkRepositories(upload=self.upload,
@@ -170,5 +171,3 @@ class CofkUploadExcelFile:
                 msg = f'Missing sheets: {", ".join([n.title() for n in difference])}'
             log.error(msg)
             raise CofkExcelFileError(msg)
-
-        log.debug(f'All {len(mandatory_sheets)} sheets verified')

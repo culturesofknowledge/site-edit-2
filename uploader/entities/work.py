@@ -50,7 +50,6 @@ class CofkWork(CofkEntity):
             self.check_data_types(work_dict)
             work_dict['upload_status_id'] = 1
             work_dict['upload'] = upload
-            # log.debug(work_dict)
 
             w = CofkCollectWork(**{k: work_dict[k] for k in work_dict if k in CofkCollectWork.__dict__.keys()})
             self.works.append(w)
@@ -162,11 +161,15 @@ class CofkWork(CofkEntity):
 
     def create_all(self):
         self.bulk_create(self.works)
+        log_msg =  [f'{len(self.works)} {type(self.works[0]).__name__}']
 
         for entities in [self.authors, self.mentioned, self.addressees, self.origins, self.destinations,
                          self.resources, self.languages]:
             if entities:
                 self.bulk_create(entities)
+                log_msg.append(f'{len(entities)} {type(entities[0]).__name__}')
+
+        log.info(f'{self.upload}: created ' + ', '.join(log_msg))
 
     def check_year(self, year_field: str, year: int):
         if isinstance(year, int) and not max_year >= year >= min_year:

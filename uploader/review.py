@@ -223,9 +223,12 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
 
         collect_work.upload_status_id = 4  # Accepted and saved into main database
 
+    log_msg = []
+
     # Creating the union entities
     for entity in [union_works, union_manifs, union_resources]:
         bulk_create(entity)
+        log_msg.append(f'{len(entity)} {type(entity[0]).__name__}')
 
     # Creating the relation entities
     for rel_map in rel_maps:
@@ -254,6 +257,8 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
     else:
         messages.success(request, f'Successfully accepted one work.')
 
+    log.info(f'{upload}: created ' + ', '.join(log_msg))
+
 
 def reject_works(request, context: dict, upload: CofkCollectUpload):
     collect_works = context['works_page'].paginator.object_list
@@ -280,4 +285,7 @@ def reject_works(request, context: dict, upload: CofkCollectUpload):
         upload.upload_status_id = 3  # Review complete
     else:
         upload.upload_status_id = 2  # Partly reviewed
+
     upload.save()
+
+    log.info(f'{upload}: rejected {len(collect_works)}')

@@ -49,8 +49,6 @@ class CofkEntity:
             self.add_error(f'Column {missing} in {self.sheet.name} is missing.')
 
     def check_data_types(self, entity: dict):
-        log.debug(f'Checking data type: {self.sheet.name}, row {self.row}')
-
         if 'strings' in self.fields:
             for str_field in [s for s in self.fields['strings'] if
                               (isinstance(s, str) and s in entity and not isinstance(entity[s], str) or
@@ -74,7 +72,6 @@ class CofkEntity:
         # ids can be ints or strings that are ints separated by a semicolon and no space
         if 'ids' in self.fields:
             for id_field in [t for t in self.fields['ids'] if t in entity]:
-                log.debug(f'----{id_field}')
                 if isinstance(entity[id_field], int) and entity[id_field] < 1:
                     self.add_error(f'Column {id_field} in {self.sheet.name} sheet is not a valid positive integer.')
                     # self.ids.append(entity[id_field])
@@ -130,7 +127,7 @@ class CofkEntity:
             for date_field in [m for m in self.fields['months'] if m in entity]:
                 self.check_date(date_field, entity[date_field])
 
-    def add_error(self, error_msg: str, entity=None, row=None):
+    def add_error(self, error_msg: str | None, entity=None, row=None):
         if not row:
             row = self.row
 

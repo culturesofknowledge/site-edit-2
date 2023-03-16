@@ -15,7 +15,7 @@ from uploader.forms import CofkCollectUploadForm
 from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectAddresseeOfWork, CofkCollectAuthorOfWork, \
     CofkCollectDestinationOfWork, CofkCollectLanguageOfWork, CofkCollectOriginOfWork, CofkCollectPersonMentionedInWork, \
     CofkCollectWorkResource, CofkCollectInstitution, CofkCollectLocation, CofkCollectManifestation, CofkCollectPerson
-from uploader.review.review import accept_works, reject_works, get_work
+from uploader.review import accept_works, reject_works, get_work
 from uploader.spreadsheet import CofkUploadExcelFile
 from uploader.validation import CofkExcelFileError
 
@@ -46,6 +46,8 @@ def handle_upload(request, context):
             context['error'] = 'Indeterminate error.'
             log.error(e)
             return
+
+        log.info(f'User: {request.user.username} uploaded file: "{file}" ({new_upload})')
 
         cuef = None
         context['report'] = {
@@ -85,13 +87,13 @@ def handle_upload(request, context):
         #    log.error(e)
 
         if cuef and cuef.errors:
-            log.error('Deleting new upload')
+            log.error(f'Deleting upload {new_upload}')
             new_upload.delete()
             # TODO delete uploaded file
             context['report']['errors'] = cuef.errors
             context['report']['total_errors'] = cuef.total_errors
         elif 'total_errors' in context['report']:
-            log.error('Deleting new upload')
+            log.error(f'Deleting upload {new_upload}')
             new_upload.delete()
         else:
             new_upload.upload_name = request.FILES['upload_file']._name + ' ' + str(new_upload.upload_timestamp)
