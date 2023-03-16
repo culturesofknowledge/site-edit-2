@@ -3,13 +3,14 @@ from typing import Iterable
 
 from django import forms
 from django.db.models import TextChoices, Model
-from django.forms import ModelForm, CharField, IntegerField
+from django.forms import ModelForm, CharField
 from django.forms.utils import ErrorList
 
 from core import constant
 from core.helper import form_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
-from core.helper.form_utils import TargetPersonMRRForm, LocationRecrefField, BasicSearchFieldset
+from core.helper.form_utils import TargetPersonMRRForm, LocationRecrefField, BasicSearchFieldset, SearchCharField, \
+    SearchIntField
 from person.models import CofkUnionPerson
 from person.recref_adapter import ActivePersonRecrefAdapter
 from core.models import CofkUnionOrgType, CofkUnionRoleCategory
@@ -277,7 +278,7 @@ class GeneralSearchFieldset(BasicSearchFieldset):
     title = 'General'
     template_name = 'person/component/person_search_fieldset.html'
 
-    foaf_name = forms.CharField(required=False, label='Names and titles/roles',
+    foaf_name = SearchCharField(label='Names and titles/roles',
                                 help_text="Primary name normally in 'surname, forename' format, followed by "
                                           "alternative names and titles or roles/professions. Roles and professions "
                                           "may have been entered as free text and/or as a list of standard categories "
@@ -298,51 +299,47 @@ class GeneralSearchFieldset(BasicSearchFieldset):
     flourished_year_to = form_utils.create_year_field()
     flourished_info = 'Can be entered in YYYY format.'
 
-    gender = forms.CharField(required=False, widget=forms.Select(choices=search_gender_choices))
+    gender = SearchCharField(widget=forms.Select(choices=search_gender_choices))
 
-    person_or_group = forms.CharField(required=False, widget=forms.Select(choices=search_person_or_group))
+    person_or_group = SearchCharField(widget=forms.Select(choices=search_person_or_group))
 
-    sent = IntegerField(required=False,
-                        help_text="Number of letters from this author/sender. "
+    sent = SearchIntField(help_text="Number of letters from this author/sender. "
                                   "You can search on these 'number' fields using 'Advanced Search', "
                                   "e.g. you could enter something like 'Sent greater than 100' to "
                                   "identify the more prolific authors.")
     sent_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
-    recd = IntegerField(required=False, label='Received',
-                        help_text='Number of letters sent to this addressee.')
+    recd = SearchIntField(label='Received', help_text='Number of letters sent to this addressee.')
     recd_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
-    all_works = IntegerField(required=False, label='Sent and received',
+    all_works = SearchIntField(label='Sent and received',
                              help_text='Total of letters to and from this person/organisation.')
     all_works_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
-    mentioned = IntegerField(required=False,
-                             help_text='Number of letters in which this person/organisation was mentioned.')
+    mentioned = SearchIntField(help_text='Number of letters in which this person/organisation was mentioned.')
     mentioned_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
-    roles = forms.CharField(required=False, label='Professional roles',
-                                    help_text='Also known as Professional categories.')
+    roles = SearchCharField(label='Professional roles',
+                            help_text='Also known as Professional categories.')
     roles_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    editors_notes = forms.CharField(required=False, label='Editors\' notes',
+    editors_notes = SearchCharField(label='Editors\' notes',
                                     help_text='Notes for internal use, intended to hold temporary queries etc.')
     editors_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    further_reading = forms.CharField(required=False)
+    further_reading = SearchCharField()
     further_reading_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    images = forms.CharField(required=False)
+    images = SearchCharField()
     images_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    other_details = forms.CharField(required=False,
-                                    help_text='Summary of any other information about the person or group, '
+    other_details = SearchCharField(help_text='Summary of any other information about the person or group, '
                                               'including membership of organisations, known geographical '
                                               'locations, researchers\' notes and related resources.')
     other_details_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    iperson_id = forms.IntegerField(required=False, label='Person or Group ID',
-                                    help_text='The unique ID for the record within this database.')
+    iperson_id = SearchIntField(label='Person or Group ID',
+                                help_text='The unique ID for the record within this database.')
     iperson_id_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
 

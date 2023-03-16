@@ -4,7 +4,7 @@ from typing import Iterable, Type
 
 from django import forms
 from django.db.models import TextChoices, Choices, Model
-from django.forms import BoundField, CharField, Form, formset_factory, IntegerField
+from django.forms import BoundField, CharField, Form, formset_factory
 from django.template.loader import render_to_string
 
 from core.helper import widgets_utils, data_utils, recref_utils
@@ -145,6 +145,19 @@ class ThreeFieldDateField(forms.Field):
         ) = date_values
 
         return cleaned_data
+
+class SearchCharField(forms.CharField):
+
+    def __init__(self, required=False, *args, **kwargs):
+        super().__init__(*args, required=required, **kwargs)
+        self.widget.attrs.update({'class': 'searchfield'})
+
+class SearchIntField(forms.IntegerField):
+
+    def __init__(self, required=False, *args, **kwargs):
+        super().__init__(*args, required=required, **kwargs)
+        self.widget.attrs.update({'class': 'searchfield'})
+
 
 
 class IntLookupChoices(TextChoices):
@@ -520,7 +533,7 @@ def create_formset(form_class, post_data=None, prefix=None,
     )
 
 class BasicSearchFieldset(forms.Form):
-    change_user = forms.CharField(required=False, label='Last edited by',
+    change_user = SearchCharField(label='Last edited by',
                                   help_text='Username of the person who last changed the record.')
     change_user_lookup = create_lookup_field(StrLookupChoices.choices)
 
