@@ -10,7 +10,6 @@ from django.shortcuts import render, redirect, get_object_or_404
 from core.export_data import cell_values, download_csv_utils
 from core.helper import renderer_utils, query_utils, view_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
-from core.helper.date_utils import str_to_search_datetime
 from core.helper.model_utils import ModelLike
 from core.helper.recref_handler import ImageRecrefHandler, TargetResourceFormsetHandler
 from core.helper.renderer_utils import CompactSearchResultsRenderer
@@ -40,7 +39,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
     @property
     def search_field_fn_maps(self) -> dict:
         return query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                   'change_timestamp', str_to_search_datetime)
+                                                   'change_timestamp')
 
     @property
     def search_field_label_map(self) -> dict:

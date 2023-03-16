@@ -14,7 +14,6 @@ from core.export_data import download_csv_utils, cell_values
 from core.forms import CommentForm
 from core.helper import view_utils, renderer_utils, query_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
-from core.helper.date_utils import str_to_search_datetime
 from core.helper.model_utils import ModelLike
 from core.helper.recref_handler import RecrefFormsetHandler, ImageRecrefHandler, TargetResourceFormsetHandler
 from core.helper.renderer_utils import CompactSearchResultsRenderer
@@ -183,7 +182,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
     @property
     def search_field_fn_maps(self) -> dict:
         return query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                   'change_timestamp', str_to_search_datetime)
+                                                   'change_timestamp')
 
     @property
     def query_fieldset_list(self) -> Iterable:

@@ -6,6 +6,7 @@ from audit import forms
 from audit.forms import AuditSearchFieldset
 from audit.models import CofkUnionAuditLiteral
 from core.helper import renderer_utils, query_utils
+from core.helper.date_utils import str_to_search_datetime
 from core.helper.view_utils import DefaultSearchView
 
 
@@ -21,7 +22,7 @@ class AuditSearchView(LoginRequiredMixin, DefaultSearchView):
                             'column_name': query_utils.create_eq_query,
                             'change_type': query_utils.create_eq_query,
                         } | query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                                'change_timestamp', )
+                                                                'change_timestamp')
 
         queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
         queries.extend(

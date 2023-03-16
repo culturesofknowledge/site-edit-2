@@ -1,5 +1,5 @@
 from django import forms
-from django.forms import ModelForm, HiddenInput, CharField
+from django.forms import ModelForm, HiddenInput, CharField, IntegerField
 
 from core.helper import form_utils
 from core.helper.form_utils import SearchCharField, SearchIntField
