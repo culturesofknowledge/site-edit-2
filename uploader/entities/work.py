@@ -190,22 +190,6 @@ class CofkWork(CofkEntity):
 
     # TODO check date ranges
 
-    def get_latest_ids(self):
-        self.resource_id = CofkCollectWorkResource.objects.values_list('resource_id', flat=True) \
-            .order_by('-resource_id').first()
-        self.author_id = CofkCollectAuthorOfWork.objects.values_list('author_id', flat=True) \
-            .order_by('-author_id').first()
-        self.addressee_id = CofkCollectAddresseeOfWork.objects.values_list('addressee_id', flat=True) \
-            .order_by('-addressee_id').first()
-        self.mention_id = CofkCollectPersonMentionedInWork.objects.values_list('mention_id', flat=True) \
-            .order_by('-mention_id').first()
-        self.destination_id = CofkCollectDestinationOfWork.objects.values_list('destination_id', flat=True) \
-            .order_by('-destination_id').first()
-        self.origin_id = CofkCollectOriginOfWork.objects.values_list('origin_id', flat=True) \
-            .order_by('-origin_id').first()
-        self.language_of_work_id = CofkCollectLanguageOfWork.objects.values_list('language_of_work_id', flat=True) \
-            .order_by('-language_of_work_id').first()
-
     def get_new_id(self, id_type: str):
         setattr(self, id_type, getattr(self, id_type) + 1)
         return getattr(self, id_type)
