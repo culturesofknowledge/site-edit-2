@@ -269,6 +269,10 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
         return 'location:return_quick_init'
 
     @property
+    def search_page_vname(self) -> str:
+        return 'location:search'
+
+    @property
     def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
         return renderer_utils.create_compact_renderer(item_template_name='location/compact_item.html')
 

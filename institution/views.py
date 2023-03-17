@@ -69,6 +69,11 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
             ('institution_id', 'Repository ID',),
         ]
 
+
+    @property
+    def search_page_vname(self) -> str:
+        return 'institution:search'
+
     @property
     def merge_page_vname(self) -> str:
         return 'institution:merge'

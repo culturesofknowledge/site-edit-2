@@ -453,14 +453,15 @@ def build_search_components(sort_by_choices: list[tuple[str, str]], entity: str)
     class SearchComponents(Form):
         template_name = 'core/form/search_components.html'
         sort_by = forms.CharField(label='Sort by',
-                                  widget=forms.Select(choices=sort_by_choices),
+                                  widget=forms.Select(choices=sort_by_choices,
+                                                      attrs={'class': 'searchcontrol'}),
                                   required=False, )
 
         order = forms.CharField(label='Order',
                                 widget=forms.RadioSelect(choices=[
                                     ('asc', 'Ascending'),
                                     ('desc', 'Descending')
-                                ]),
+                                ], attrs={'class': 'searchcontrol'}),
                                 required=False)
 
         num_record = forms.IntegerField(label=f'{entity} per page',
@@ -469,7 +470,7 @@ def build_search_components(sort_by_choices: list[tuple[str, str]], entity: str)
                                             (25, 25),
                                             (50, 50),
                                             (100, 100),
-                                        ]),
+                                        ], attrs={'class': 'searchcontrol'}),
                                         required=False, )
         page = forms.IntegerField(widget=forms.HiddenInput())
 

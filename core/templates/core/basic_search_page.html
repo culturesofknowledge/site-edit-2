@@ -96,6 +96,7 @@
                                 <div class="align-right">
                                     <input type="radio" id="display-as-grid" value="grid"
                                            name="display-style"
+                                           class="searchcontrol"
                                             {% if is_compact_layout %}
                                            checked
                                             {% endif %}
@@ -108,6 +109,7 @@
 
                                     <input type="radio" id="display-as-list" value="table"
                                            name="display-style"
+                                           class="searchcontrol"
                                             {% if not is_compact_layout %}
                                            checked
                                             {% endif %}
@@ -142,6 +144,7 @@
     <!-- script -->
     <script>
 
+        let entity = "{{ entity }}".split(',')[0];
         let return_quick_init_vname = "{{ return_quick_init_vname }}";
         {%  if return_quick_init_vname %}
             let vname_action_url = "{% url return_quick_init_vname '__entry_id__' %}";

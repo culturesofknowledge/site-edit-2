@@ -540,8 +540,8 @@ class CompactSearchFieldset(BasicSearchFieldset):
                                           label='Day', help_text=day_help_text)
     date_of_work_std_day_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
-    date_of_work_std_from = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
-    date_of_work_std_to = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
+    date_of_work_std_from = forms.DateField(required=False, widget=widgets_utils.SearchDateTimeInput())
+    date_of_work_std_to = forms.DateField(required=False, widget=widgets_utils.SearchDateTimeInput())
     date_of_work_std_info = date_of_work_help_text
 
     creators_searchable = SearchCharField(label='Author/sender')

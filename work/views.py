@@ -1026,6 +1026,10 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         return 'work:return_quick_init'
 
     @property
+    def search_page_vname(self) -> str:
+        return 'work:search'
+
+    @property
     def query_fieldset_list(self) -> Iterable:
         return [CompactSearchFieldset(self.request_data.dict())]
 

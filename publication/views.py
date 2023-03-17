@@ -49,6 +49,10 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
     def return_quick_init_vname(self) -> str:
         return 'publication:return_quick_init'
 
+    @property
+    def search_page_vname(self) -> str:
+        return 'publication:search'
+
     def get_queryset(self):
         # queries for like_fields
         queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)

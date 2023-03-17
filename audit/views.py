@@ -16,6 +16,10 @@ class AuditSearchView(LoginRequiredMixin, DefaultSearchView):
     def entity(self) -> str:
         return 'audit,audits'
 
+    @property
+    def search_page_vname(self) -> str:
+        return 'audit:search'
+
     def get_queryset(self):
         field_fn_maps = {
                             'table_name': query_utils.create_eq_query,

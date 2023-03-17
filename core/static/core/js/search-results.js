@@ -1,14 +1,11 @@
 
 
-var search_controls = ['id_sort_by', 'id_num_record', 'id_order_0', 'id_order_1',
-    'display-as-grid', 'display-as-list'];
-
-if(localStorage.getItem('fieldset-toggle') == 'false')  {
+if(localStorage.getItem('fieldset-toggle') === 'false')  {
    $('#query-fieldset').toggle();
    $('#query-result').toggleClass('col--3of4');
 }
 
-if(localStorage.getItem('advanced-search-toggle') == 'true')  {
+if(localStorage.getItem('advanced-search-toggle') === 'true')  {
     $('.advanced_search').toggle();
     $('.search_input').toggleClass('col--3of4');
     $('.search_input').toggleClass('col--4of4');
@@ -132,20 +129,25 @@ function setup_merge_btn() {
     }
 });
 
-search_controls.forEach((target_id) => {
-    if(document.getElementById(target_id)) {
-            document.getElementById(target_id).addEventListener('change', () => {
-            submit_page();
+$('.searchcontrol').each((i, searchcontrol) => {
+    $(searchcontrol).on('change', (e) => {
+        let element_name = $(e.target).attr('name');
+        localStorage.setItem(`${entity}_${element_name}`, $(e.target).val());
 
-        });
+    });
+
+    if(localStorage.getItem(`${entity}_${searchcontrol.name}`) != null) {
+        let val = localStorage.getItem(`${entity}_${searchcontrol.name}`);
+        $(searchcontrol).val(val);
     }
+
 });
 
 
 function setup_discard_page_on_new_search() {
     document.getElementById('search_form').addEventListener('change', function(e) {
         // No need to mark if search controls change
-        if(search_controls.indexOf(e.srcElement.id) == -1)   {
+        if($(e.srcElement).attr('class') != 'searchcontrol')   {
             e.srcElement.dataset['changed'] =  true;
         }
     });
