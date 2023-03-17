@@ -19,11 +19,15 @@ class RecordTracker:
         if hasattr(self, 'creation_timestamp') and not self.creation_timestamp:
             self.creation_timestamp = now
 
-        if hasattr(self, 'change_timestamp'):
-            self.change_timestamp = now
-
         if hasattr(self, 'creation_user') and not self.creation_user:
             self.creation_user = user
+
+            # it must be a new record, so creation_timestamp must be set
+            if hasattr(self, 'creation_timestamp'):
+                self.creation_timestamp = now
+
+        if hasattr(self, 'change_timestamp'):
+            self.change_timestamp = now
 
         if hasattr(self, 'change_user'):
             self.change_user = user
