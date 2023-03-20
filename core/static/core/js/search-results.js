@@ -230,7 +230,8 @@ function add_hide_buttons_to_columns() {
 }
 
 function radialTransparentIfScrolledDown() {
-    if($('#actionbox-container').prev().prev().height() + $('#actionbox-container').prev().prev().offset().top < $('#actionbox-container').offset().top) {
+    let fieldset = $('#actionbox-container').parent().find('fieldset');
+    if(fieldset.height() + fieldset.offset().top < $('#actionbox-container').offset().top) {
         $('#actionbox-container').css('background', 'radial-gradient(ellipse at center, hsl(30, 1.67%, 52.94%), transparent, transparent 100%')
     } else {
         $('#actionbox-container').css('background', 'linear-gradient(0deg, hsl(30, 1.67%, 52.94%), transparent)')
