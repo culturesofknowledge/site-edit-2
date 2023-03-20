@@ -55,7 +55,16 @@
                     {% endif %}
                 </legend>
 
-                {{ form }}
+                {{ form.image_id }}
+                {% include "core/component/common_field_layout.html" with field=form.image_filename %}
+                {% include "core/component/common_field_layout.html" with field=form.thumbnail %}
+                {% include "core/component/common_field_layout.html" with field=form.credits %}
+                {% include "core/component/common_field_layout.html" with field=form.licence_details %}
+                {% include "core/component/common_field_layout.html" with field=form.licence_url %}
+                {% include "core/component/common_checkbox.html" with field=form.can_be_displayed name='Can be displayed to public:' is_normal_size=True %}
+                {% include "core/component/common_field_layout.html" with field=form.display_order %}
+
+
             </fieldset>
 
 

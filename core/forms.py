@@ -131,7 +131,14 @@ class ImageForm(ModelForm):
     can_be_displayed = form_utils.ZeroOneCheckboxField(required=False,
                                                        label='Can be displayed to public',
                                                        initial='1', )
-    display_order = forms.IntegerField(required=False, label='Order for display in front end')
+    display_order = forms.IntegerField(required=False, label='Order for display in front end', initial=1)
+
+    def clean_display_order(self):
+        display_order = self.cleaned_data.get('display_order')
+        try:
+            int(display_order)
+        except:
+            raise forms.ValidationError('Display order must be an integer')
 
     class Meta:
         model = CofkUnionImage
@@ -160,6 +167,7 @@ class CatalogueForm(ModelForm):
         model = CofkLookupCatalogue
         fields = '__all__'
 
+
 class RoleForm(ModelForm):
     role_category_desc = forms.CharField(label="Description")
 
@@ -167,12 +175,14 @@ class RoleForm(ModelForm):
         model = CofkUnionRoleCategory
         fields = '__all__'
 
+
 class SubjectForm(ModelForm):
     subject_desc = forms.CharField(label="Description")
 
     class Meta:
         model = CofkUnionSubject
         fields = '__all__'
+
 
 class OrgTypeForm(ModelForm):
     org_type_desc = forms.CharField(label="Description")
