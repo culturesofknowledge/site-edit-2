@@ -131,14 +131,28 @@ function setup_merge_btn() {
 
 $('.searchcontrol').each((i, searchcontrol) => {
     $(searchcontrol).on('change', (e) => {
+        // Every time a search control is changed, that change is persisted
         let element_name = $(e.target).attr('name');
         localStorage.setItem(`${entity}_${element_name}`, $(e.target).val());
+        //submit_page();
 
     });
 
     if(localStorage.getItem(`${entity}_${searchcontrol.name}`) != null) {
+        // Set form values to persisted value
         let val = localStorage.getItem(`${entity}_${searchcontrol.name}`);
-        $(searchcontrol).val(val);
+
+        if(searchcontrol.type != 'radio')   {
+            $(searchcontrol).val(val);
+        }
+        else    {
+            if(searchcontrol.value === val)   {
+                searchcontrol.checked = true;
+            }
+            else {
+                searchcontrol.checked = false;
+            }
+        }
     }
 
 });
@@ -215,6 +229,14 @@ function add_hide_buttons_to_columns() {
     }
 }
 
+function radialTransparentIfScrolledDown() {
+    if($('#actionbox-container').prev().prev().height() + $('#actionbox-container').prev().prev().offset().top < $('#actionbox-container').offset().top) {
+        $('#actionbox-container').css('background', 'radial-gradient(ellipse at center, hsl(30, 1.67%, 52.94%), transparent, transparent 100%')
+    } else {
+        $('#actionbox-container').css('background', 'linear-gradient(0deg, hsl(30, 1.67%, 52.94%), transparent)')
+    }
+}
+
 $(function () {
     emlojs.selectable_service.setup_all()
     setup_merge_btn();
@@ -232,4 +254,8 @@ $(function () {
     if(recref_mode == '1')  {
         emlojs.recref_select_service.setup_all()
     }
+    radialTransparentIfScrolledDown();
 })
+
+
+$(window).on('scroll', radialTransparentIfScrolledDown)

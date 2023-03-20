@@ -22,6 +22,8 @@
 
 }
 
-.searchfield:focus {
-    background-color: $faint-grey;
+.searchfield,.dateinput {
+    &:focus {
+        background-color: $faint-grey;
+    }
 }
