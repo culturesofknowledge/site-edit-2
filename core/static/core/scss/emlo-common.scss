@@ -251,8 +251,8 @@ tr.selectable_entry:not(.selected):hover {
   color: red;
 }
 
-.warn-checked:checked + label * {
-  color: red;
+.warn-checked:checked + label {
+  color: red !important;
   font-weight: bold;
 }
 

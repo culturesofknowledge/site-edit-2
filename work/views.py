@@ -44,7 +44,7 @@ from work.forms import WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \
     ManifPersonRecrefAdapter, ScribeRelationChoices, \
     DetailsForm, WorkPersonRecrefAdapter, \
-    CatalogueForm, manif_type_choices, original_calendar_choices, CompactSearchFieldset, ExpandedSearchFieldset, \
+    CommonWorkForm, manif_type_choices, original_calendar_choices, CompactSearchFieldset, ExpandedSearchFieldset, \
     ManifPersonMRRForm, field_label_map
 from work.models import CofkWorkPersonMap, CofkUnionWork, CofkWorkCommentMap, CofkWorkResourceMap, \
     CofkUnionLanguageOfWork, \
@@ -81,13 +81,14 @@ class BasicWorkFFH(FullFormHandler):
 
         self.safe_work = self.work or CofkUnionWork()
 
-        self.catalogue_form = CatalogueForm(request_data, initial={
-            'catalogue': self.safe_work.original_catalogue_id
+        self.common_work_form = CommonWorkForm(request_data, initial={
+            'catalogue': self.safe_work.original_catalogue_id,
+            'work_to_be_deleted': self.safe_work.work_to_be_deleted,
         })
         catalogue_list = [('', None)] + [(c.catalogue_name, c.catalogue_code) for c in
                                          CofkLookupCatalogue.objects.all().order_by('catalogue_name')]
-        self.catalogue_form.fields['catalogue_list'].widget.choices = catalogue_list
-        self.catalogue_form.fields['catalogue'].widget.choices = [(i[1], i[0]) for i in catalogue_list]
+        self.common_work_form.fields['catalogue_list'].widget.choices = catalogue_list
+        self.common_work_form.fields['catalogue'].widget.choices = [(i[1], i[0]) for i in catalogue_list]
 
     def create_context(self):
         context = super().create_context()
@@ -107,12 +108,15 @@ class BasicWorkFFH(FullFormHandler):
             work.work_id = work_utils.create_work_id(work.iwork_id)
 
         # handle catalogue
-        self.catalogue_form.is_valid()
-        cat_code = self.catalogue_form.cleaned_data.get('catalogue')
+        self.common_work_form.is_valid()
+        cat_code = self.common_work_form.cleaned_data.get('catalogue')
         if cat_code and work.original_catalogue_id != cat_code:
             log.info('change original_catalogue_id from [{}] to [{}]'.format(
                 work.original_catalogue_id, cat_code))
             work.original_catalogue_id = cat_code
+
+        # handle work_to_be_deleted
+        work.work_to_be_deleted = self.common_work_form.cleaned_data.get('work_to_be_deleted', 0)
 
         if work.description != (cur_desc := work_utils.get_recref_display_name(work)):
             work.description = cur_desc

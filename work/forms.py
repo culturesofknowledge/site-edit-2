@@ -312,9 +312,13 @@ class ManifForm(forms.ModelForm):
         )
 
 
-class CatalogueForm(forms.Form):
+class CommonWorkForm(forms.Form):
+    """ Common fields for work pages """
+
     catalogue = forms.CharField(required=False, widget=forms.Select())
     catalogue_list = forms.Field(required=False, widget=widgets_utils.Datalist())
+
+    work_to_be_deleted = form_utils.DeleteCheckboxField(is_str=False, initial=0)
 
 
 class AuthorRelationChoices(TextChoices):
