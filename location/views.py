@@ -134,6 +134,7 @@ def full_form(request, location_id):
         fhandler.loc.update_current_user_timestamp(request.user.username)
         fhandler.loc_form.save()
         fhandler.save_all_recref_formset(fhandler.loc_form.instance, request)
+        fhandler.img_recref_handler.save(fhandler.loc_form.instance, request)
 
         log.info(f'location [{location_id}] have been saved')
         fhandler.load_data(location_id, request_data=None)
