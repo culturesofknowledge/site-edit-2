@@ -19,6 +19,6 @@ $(() => {
         target_div.append( $('<button class="btn inline_btn copy_pub"> Copy</button>') )
 
     });
-    $('.create_pub').click(create_fn_open_ref_pub('/publication/quick_init'));
-    $('.copy_pub').click(create_fn_open_ref_pub('/publication/search?recref_mode=1'));
+    $('.create_pub').mousedown(create_fn_open_ref_pub('/publication/quick_init'));
+    $('.copy_pub').mousedown(create_fn_open_ref_pub('/publication/search?recref_mode=1'));
 });
