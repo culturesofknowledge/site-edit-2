@@ -100,10 +100,8 @@ class BasicWorkFFH(FullFormHandler):
     def render_form(self, request):
         return render(request, self.template_name, self.create_context())
 
-    def save_work(self, request, work_form: ModelForm):
+    def save_work(self, request, work: CofkUnionWork):
         # ----- save work
-        work: CofkUnionWork = work_form.instance
-        log.debug(f'changed_data : {work_form.changed_data}')
         if not work.work_id:
             work.work_id = work_utils.create_work_id(work.iwork_id)
 
@@ -182,7 +180,7 @@ class PlacesFFH(BasicWorkFFH):
             log.debug('skip save places when no changed')
             return
 
-        work = self.save_work(request, self.places_form)
+        work = self.save_work(request, self.places_form.instance)
         self.save_all_recref_formset(work, request)
 
         self.origin_loc_handler.upsert_recref_if_field_exist(
@@ -217,7 +215,7 @@ class DatesFFH(BasicWorkFFH):
             log.debug('skip save dates when no changed')
             return
 
-        work = self.save_work(request, self.dates_form)
+        work = self.save_work(request, self.dates_form.instance)
         self.save_all_recref_formset(work, request)
         work_utils.clone_queryable_work(work, reload=True)
 
@@ -286,7 +284,7 @@ class CorrFFH(BasicWorkFFH):
             log.debug('skip save corr when no changed')
             return
 
-        work = self.save_work(request, self.corr_form)
+        work = self.save_work(request, self.corr_form.instance)
 
         # save selected recref
         create_work_person_map_if_field_exist(
@@ -431,10 +429,15 @@ class ManifFFH(BasicWorkFFH):
             log.info(f'del manif -- [{_manif_id}]')
             get_object_or_404(CofkUnionManifestation, pk=_manif_id).delete()
 
+        # handle common_work_form
+        if self.common_work_form.has_changed():
+            self.save_work(request, self.work)
+
         # handle save
         manif: CofkUnionManifestation = self.manif_form.instance
-        if not manif.manifestation_id and not (
-                self.manif_form.has_changed() or request.POST.getlist('lang_name')):
+        if not manif.manifestation_id \
+            and not (self.manif_form.has_changed() or request.POST.getlist('lang_name')):
+
             log.debug('ignore save new manif, if manif_form has no changed')
             return
 
@@ -487,6 +490,8 @@ class ResourcesFFH(BasicWorkFFH):
         if not self.is_any_changed():
             log.debug('skip save resources when no changed')
             return
+
+        self.save_work(request, self.work)
         self.save_all_recref_formset(self.work, request)
         work_utils.clone_queryable_work(self.work, reload=True)
 
@@ -561,7 +566,7 @@ class DetailsFFH(BasicWorkFFH):
         if not self.has_changed(request):
             log.debug('skip save details when no changed')
             return
-        work = self.save_work(request, self.details_form)
+        work = self.save_work(request, self.details_form.instance)
 
         # language
         lang_utils.maintain_lang_records(self.lang_formset,
