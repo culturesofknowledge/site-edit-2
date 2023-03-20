@@ -83,6 +83,9 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
         return 'institution:return_quick_init'
 
     def get_queryset(self):
+        if not self.request_data:
+            return CofkUnionInstitution.objects.none()
+
         return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
 
     def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:

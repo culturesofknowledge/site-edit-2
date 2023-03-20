@@ -54,6 +54,9 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
         return 'publication:search'
 
     def get_queryset(self):
+        if not self.request_data:
+            return CofkUnionPublication.objects.none()
+
         # queries for like_fields
         queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
 

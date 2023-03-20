@@ -21,6 +21,9 @@ class AuditSearchView(LoginRequiredMixin, DefaultSearchView):
         return 'audit:search'
 
     def get_queryset(self):
+        if not self.request_data:
+            return CofkUnionAuditLiteral.objects.none()
+
         field_fn_maps = {
                             'table_name': query_utils.create_eq_query,
                             'column_name': query_utils.create_eq_query,

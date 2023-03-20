@@ -240,6 +240,9 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
         return queryset
 
     def get_queryset(self):
+        if not self.request_data:
+            return CofkUnionLocation.objects.none()
+
         return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
 
     def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:
