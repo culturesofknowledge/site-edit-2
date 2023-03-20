@@ -349,7 +349,7 @@ class TargetResourceFormsetHandler(RecrefFormsetHandler, ABC):
 class MultiRecrefHandler:
     """
     provide common workflow handle multi recref records
-    * create, delete , update record
+    * create, delete , update **recref** record instead of target instance
     * create form and formset
     """
 
