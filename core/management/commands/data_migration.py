@@ -1,3 +1,4 @@
+import functools
 import itertools
 import logging
 import re
@@ -69,6 +70,13 @@ def iter_records(conn, sql, cursor_factory=None, vals=None, batch_size=100_000):
 
     return itertools.chain.from_iterable(_batch_records())
 
+def map_object(exclude: list[str] | None, row: psycopg2.extras.DictRow):
+    row = dict(row)
+    if exclude:
+        for column in exclude:
+            del row[column]
+    return row
+
 
 def clone_rows_by_model_class(conn, model_class: Type[ModelLike],
                               check_duplicate_fn=None,
@@ -77,7 +85,8 @@ def clone_rows_by_model_class(conn, model_class: Type[ModelLike],
                               int_pk_col_name='pk',
                               old_table_name=None,
                               query_size=100_000,
-                              save_size=100_000):
+                              save_size=100_000,
+                              exclude=None):
     """ most simple method to copy rows from old DB to new DB
     * assume all column name are same
     * assume no column have been removed
@@ -92,7 +101,7 @@ def clone_rows_by_model_class(conn, model_class: Type[ModelLike],
     old_table_name = old_table_name or model_class._meta.db_table
     rows = find_rows_by_db_table(conn, old_table_name, batch_size=query_size)
 
-    rows = map(dict, rows)
+    rows = map(functools.partial(map_object, exclude), rows)
     if col_val_handler_fn_list:
         for _fn in col_val_handler_fn_list:
             rows = (_fn(r, conn) for r in rows)
@@ -599,7 +608,8 @@ def data_migration(user, password, database, host, port):
     clone_rows_by_model_class(conn, CofkUnionWork,
                               col_val_handler_fn_list=[_val_handler_work__catalogue],
                               seq_name=work_models.SEQ_NAME_COFKUNIONWORK__IWORK_ID,
-                              int_pk_col_name='iwork_id', )
+                              int_pk_col_name='iwork_id',
+                              exclude=['language_of_work'])
     clone_rows_by_model_class(conn, CofkUnionQueryableWork, seq_name=None)
     clone_rows_by_model_class(conn, CofkUnionLanguageOfWork, col_val_handler_fn_list=[_val_handler_language],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkUnionLanguageOfWork))
