@@ -5,7 +5,7 @@ function create_fn_open_ref_pub(url) {
         window.on_quick_init_completed = function (data) {
             let textbox_id = $(e.target).closest('.ref-publication-row').attr('textbox_id')
             let target_ta = $('#' + textbox_id)
-            target_ta.text(target_ta.text() + ' ' + data.item_name)
+            target_ta.val(target_ta.val() + ' ' + data.item_name)
         }
     }
 }
