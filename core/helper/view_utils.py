@@ -162,10 +162,8 @@ class BasicSearchView(ListView):
         return list of tuple for "django field value" and "Label"
         Example :
         return [
-            ('-change_timestamp', 'Change Timestamp desc',),
-            ('change_timestamp', 'Change Timestamp asc',),
-            ('-location_name', 'Location Name desc',),
-            ('location_name', 'Location Name asc',),
+            ('change_timestamp', 'Change timestamp',),
+            ('location_name', 'Location name',),
         ]
 
         """
@@ -174,6 +172,13 @@ class BasicSearchView(ListView):
     @property
     def default_sort_by_choice(self) -> int:
         return 0
+
+    @property
+    def default_order(self) -> str:
+        """
+        Ascending or descending ('asc' or 'desc')
+        """
+        return 'asc'
 
     @property
     def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
@@ -242,7 +247,7 @@ class BasicSearchView(ListView):
             # Sort not present or invalid
             sort_by = self.sort_by_choices[self.default_sort_by_choice][0]
 
-        if self.request_data.get('order') == 'desc':
+        if self.request_data.get('order', self.default_order) == 'desc':
             return '-' + sort_by
 
         return sort_by
@@ -256,7 +261,7 @@ class BasicSearchView(ListView):
         default_search_components_dict = {
             'num_record': str(self.paginate_by),
             'sort_by': self.get_sort_by(),
-            'order': self.request_data.get('order') or 'asc'
+            'order': self.request_data.get('order') or self.default_order
         }
         is_compact_layout = (self.request_data.get('display-style', core_constant.SEARCH_LAYOUT_TABLE)
                              == core_constant.SEARCH_LAYOUT_GRID)
@@ -393,9 +398,12 @@ class DefaultSearchView(BasicSearchView):
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
-            ('-change_timestamp', 'Change Timestamp desc',),
-            ('change_timestamp', 'Change Timestamp asc',),
+            ('change_timestamp', 'Change timestamp',),
         ]
+
+    @property
+    def default_order(self) -> str:
+        return 'desc'
 
     @property
     def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
