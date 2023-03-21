@@ -346,7 +346,7 @@ tr.selectable_entry:not(.selected):hover {
   .sf-item {
     padding: 0.5em;
 
-    &:hover,&.selected {
+    &:hover, &.selected {
       background-color: cadetblue;
       cursor: pointer;
     }
@@ -359,7 +359,8 @@ tr.selectable_entry:not(.selected):hover {
   padding: $space-xs;
   background-color: black;
   color: white;
-  &:hover{
+
+  &:hover {
     color: white;
   }
 
@@ -370,6 +371,7 @@ tr.selectable_entry:not(.selected):hover {
 // for lang_section
 .lang-item {
   @extend .row-no-margin;
+
   & > .lang-label {
     @extend .col--1of5;
   }
@@ -381,11 +383,16 @@ tr.selectable_entry:not(.selected):hover {
 }
 
 
-
 .search-form-btn {
   @extend .btn;
   @extend .margin-right;
   @extend .inline_btn;
+}
+
+.open-link-btn {
+  @extend .btn;
+  @extend .inline_btn;
+  margin-top: $space-unit;
 }
 
 

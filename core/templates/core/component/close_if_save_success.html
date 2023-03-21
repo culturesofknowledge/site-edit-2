@@ -1,0 +1,8 @@
+{% if is_save_success %}
+    <script>
+        $(function () {
+            window.close();
+            window.opener.on_form_completed()
+        })
+    </script>
+{% endif %}

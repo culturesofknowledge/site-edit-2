@@ -161,6 +161,23 @@
             }
         });
 
+
+        window.on_form_completed = function (data) {
+            location.reload()
+        }
+        $('.open-link-btn').each(function (index, ele) {
+            let btn_jqe = $(ele);
+            btn_jqe.mousedown(function (e){
+                e.preventDefault()
+                let url = btn_jqe.attr('url');
+                if (! url) {
+                    console.log(`url[${url}] not found in element -- ${ele}`)
+                    return ;
+                }
+                window.open(url).focus();
+            });
+        });
+
     </script>
     <script src="{% static 'core/js/search-results.js' %}"></script>
 
