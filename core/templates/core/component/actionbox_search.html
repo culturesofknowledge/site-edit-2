@@ -1,0 +1,22 @@
+{% extends "core/component/actionbox_container.html" %}
+
+{% block content %}
+    <script>
+        function reset_form(form) {
+            for (element of form.elements) {
+                if (element.type == 'reset')
+                    break;
+
+                if (!['hidden', 'fieldset'].includes(element.type)) {
+                    if (element.type == 'select-one' && element.name.indexOf('_lookup') > -1) {
+                        element.selectedIndex = 0;
+                    } else {
+                        element.value = null;
+                    }
+                }
+            }
+        }
+    </script>
+    <button class="sticky-btn inline_btn cancel" type="button" onclick="reset_form(this.form);">Reset</button>
+    <button type="submit" class="sticky-btn inline_btn save"> Search</button>
+{% endblock %}
