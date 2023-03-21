@@ -138,7 +138,12 @@ $('.searchcontrol').each((i, searchcontrol) => {
 
     });
 
-    if(localStorage.getItem(`${entity}_${searchcontrol.name}`) != null) {
+    let searchParams = new URLSearchParams(window.location.search);
+
+    // Do not use persisted search control settings if they are explicitly set as
+    // get parameters
+    if((!searchParams.has(searchcontrol.name) || searchParams.get(searchcontrol.name) === '')
+     && localStorage.getItem(`${entity}_${searchcontrol.name}`) != null) {
         // Set form values to persisted value
         let val = localStorage.getItem(`${entity}_${searchcontrol.name}`);
 
