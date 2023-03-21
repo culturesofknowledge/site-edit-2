@@ -236,10 +236,16 @@ class BasicSearchView(ListView):
         return self.request.GET
 
     def get_sort_by(self):
-        if self.request_data.get('order') == 'desc':
-            return '-' + self.request_data.get('sort_by', self.sort_by_choices[self.default_sort_by_choice][0])
+        sort_by = self.request_data.get('sort_by')
 
-        return self.request_data.get('sort_by', self.sort_by_choices[self.default_sort_by_choice][0])
+        if sort_by is None or (sort_by is not None and sort_by not in [s[0] for s in self.sort_by_choices]):
+            # Sort not present or invalid
+            sort_by = self.sort_by_choices[self.default_sort_by_choice][0]
+
+        if self.request_data.get('order') == 'desc':
+            return '-' + sort_by
+
+        return sort_by
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
