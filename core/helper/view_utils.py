@@ -243,7 +243,7 @@ class BasicSearchView(ListView):
     def get_sort_by(self):
         sort_by = self.request_data.get('sort_by')
 
-        if sort_by is None or (sort_by is not None and sort_by not in [s[0] for s in self.sort_by_choices]):
+        if sort_by is None or sort_by not in [s[0] for s in self.sort_by_choices]:
             # Sort not present or invalid
             sort_by = self.sort_by_choices[self.default_sort_by_choice][0]
 
