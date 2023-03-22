@@ -945,13 +945,15 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def search_fields(self) -> list[str]:
+        # "Drawer" is a special field in queryable work specific to a so-called Selden work
+        # it will not have a form field but can be searched on nonetheless
         return ['description', 'editors_notes', 'date_of_work_as_marked', 'date_of_work_std_year',
                 'creators_searchable', 'sender_or_recipient', 'origin_or_destination', 'date_of_work_std_month',
                 'date_of_work_std_day', 'notes_on_authors', 'origin_as_marked', 'addressees_searchable',
                 'places_from_searchable', 'destination_as_marked', 'flags', 'images', 'manifestations_searchable',
                 'places_to_searchable', 'related_resources', 'language_of_work', 'subjects', 'abstract',
                 'people_mentioned', 'keywords', 'general_notes', 'original_catalogue', 'accession_code',
-                'work_id', 'change_user']
+                'work_id', 'change_user', 'drawer']
 
     @property
     def search_field_label_map(self) -> dict:
