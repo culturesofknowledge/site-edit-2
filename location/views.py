@@ -114,10 +114,8 @@ class LocationFFH(FullFormHandler):
             {
                 'loc_id': self.location_id,
             } | LocationFormDescriptor(self.loc).create_context()
+            | view_utils.create_is_save_success_context(is_save_success)
         )
-        if is_save_success:
-            context['is_save_success'] = True
-
         return context
 
     def render_form(self, request, is_save_success=False):
@@ -142,7 +140,7 @@ def full_form(request, location_id):
 
         log.info(f'location [{location_id}] have been saved')
         fhandler.load_data(location_id, request_data=None)
-        is_save_success = True
+        is_save_success = view_utils.mark_callback_save_success(request)
 
     return fhandler.render_form(request, is_save_success=is_save_success)
 

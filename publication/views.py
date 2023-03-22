@@ -6,7 +6,7 @@ from django.forms import ModelForm
 from django.shortcuts import redirect, get_object_or_404
 from django.shortcuts import render
 
-from core.helper import renderer_utils, query_utils
+from core.helper import renderer_utils, query_utils, view_utils
 from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView
 from publication.forms import PublicationForm, GeneralSearchFieldset, field_label_map
 from publication.models import CofkUnionPublication
@@ -20,7 +20,7 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def search_fields(self) -> list[str]:
-        return ['publication_details', 'abbrev', 'change_user', 'publication_id',]
+        return ['publication_details', 'abbrev', 'change_user', 'publication_id', ]
 
     @property
     def search_field_label_map(self) -> dict:
@@ -82,16 +82,20 @@ def full_form(request, pk):
     pub_form = PublicationForm(request.POST or None, instance=pub)
 
     def _render_form():
-        return render(request, 'publication/init_form.html', {
-            'pub_form': pub_form,
-        })
+        return render(request, 'publication/init_form.html',
+                      {
+                          'pub_form': pub_form,
+                      } | view_utils.create_is_save_success_context(is_save_success)
+                      )
 
+    is_save_success = False
     if request.POST:
         if not pub_form.is_valid():
             return _render_form()
 
         pub.update_current_user_timestamp(request.user.username)
         pub_form.save()
+        is_save_success = view_utils.mark_callback_save_success(request)
 
     return _render_form()
 

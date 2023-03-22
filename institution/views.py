@@ -138,6 +138,7 @@ def full_form(request, pk):
 
     img_recref_handler = InstImageRecrefHandler(request.POST or None, request.FILES, parent=inst)
 
+
     def _render_form():
         return render(request, 'institution/init_form.html',
                       ({
@@ -146,9 +147,10 @@ def full_form(request, pk):
                        | img_recref_handler.create_context()
                        | res_handler.create_context()
                        | InstFormDescriptor(inst).create_context()
-                       )
-                      )
+                       | view_utils.create_is_save_success_context(is_save_success)
+                       ))
 
+    is_save_success = False
     if request.POST:
         if view_utils.any_invalid_with_log([
             inst_form,
@@ -162,6 +164,7 @@ def full_form(request, pk):
 
         inst.update_current_user_timestamp(request.user.username)
         inst_form.save()
+        is_save_success = view_utils.mark_callback_save_success(request)
 
     return _render_form()
 
