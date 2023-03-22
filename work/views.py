@@ -7,8 +7,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models
 from django.db.models import F
 from django.db.models.lookups import Exact
-from django.forms import ModelForm, BaseForm
+from django.forms import BaseForm
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
 from django.views import View
 
 from core import constant
@@ -34,9 +35,9 @@ from core.models import Recref, CofkLookupCatalogue
 from institution import inst_utils
 from location import location_utils
 from location.models import CofkUnionLocation
+from manifestation.manif_utils import create_manif_id
 from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, \
     CofkUnionLanguageOfManifestation, CofkManifImageMap
-from manifestation.manif_utils import create_manif_id
 from person import person_utils
 from person.models import CofkUnionPerson
 from work import work_utils
@@ -90,15 +91,17 @@ class BasicWorkFFH(FullFormHandler):
         self.common_work_form.fields['catalogue_list'].widget.choices = catalogue_list
         self.common_work_form.fields['catalogue'].widget.choices = [(i[1], i[0]) for i in catalogue_list]
 
-    def create_context(self):
+    def create_context(self, is_save_success=False):
         context = super().create_context()
         context.update({
                            'iwork_id': self.request_iwork_id
-                       } | WorkFormDescriptor(self.work).create_context())
+                       } | WorkFormDescriptor(self.work).create_context()
+                       | view_utils.create_is_save_success_context(is_save_success)
+                       )
         return context
 
-    def render_form(self, request):
-        return render(request, self.template_name, self.create_context())
+    def render_form(self, request, is_save_success=False):
+        return render(request, self.template_name, self.create_context(is_save_success))
 
     def save_work(self, request, work: CofkUnionWork):
         # ----- save work
@@ -401,8 +404,8 @@ class ManifFFH(BasicWorkFFH):
         self.img_recref_handler = ManifImageRecrefHandler(request_data, request and request.FILES,
                                                           parent=self.safe_manif)
 
-    def create_context(self):
-        context = super().create_context()
+    def create_context(self, is_save_success=False):
+        context = super().create_context(is_save_success=is_save_success)
         if self.manif:
             context['manif_id'] = self.manif.manifestation_id
 
@@ -436,8 +439,7 @@ class ManifFFH(BasicWorkFFH):
         # handle save
         manif: CofkUnionManifestation = self.manif_form.instance
         if not manif.manifestation_id \
-            and not (self.manif_form.has_changed() or request.POST.getlist('lang_name')):
-
+                and not (self.manif_form.has_changed() or request.POST.getlist('lang_name')):
             log.debug('ignore save new manif, if manif_form has no changed')
             return
 
@@ -552,8 +554,8 @@ class DetailsFFH(BasicWorkFFH):
 
         self.subject_handler = SubjectHandler(WorkSubjectRecrefAdapter(self.safe_work))
 
-    def create_context(self):
-        context: dict = super().create_context()
+    def create_context(self, is_save_success=False):
+        context: dict = super().create_context(is_save_success=is_save_success)
         context.update(self.subject_handler.create_context())
         return context
 
@@ -637,7 +639,8 @@ class BasicWorkFormView(LoginRequiredMixin, View):
         if fhandler.saved_work:
             iwork_id = fhandler.saved_work.iwork_id
 
-        return redirect(self.cur_vname, iwork_id=iwork_id)
+        fhandler.load_data(iwork_id, request_data=None)
+        return fhandler.render_form(request, is_save_success=view_utils.mark_callback_save_success(request))
 
     def post(self, request, iwork_id=None, *args, **kwargs):
         fhandler = self.create_fhandler(request, iwork_id=iwork_id, *args, **kwargs)
@@ -648,7 +651,8 @@ class BasicWorkFormView(LoginRequiredMixin, View):
         return self.resp_after_saved(request, fhandler)
 
     def get(self, request, iwork_id=None, *args, **kwargs):
-        return self.create_fhandler(request, iwork_id, *args, **kwargs).render_form(request)
+        return self.create_fhandler(request, iwork_id, *args, **kwargs).render_form(
+            request, is_save_success=view_utils.mark_callback_save_success(request))
 
 
 class ManifView(BasicWorkFormView):
@@ -666,9 +670,10 @@ class ManifView(BasicWorkFormView):
         if not fhandler.manif_form.instance.manifestation_id:
             return redirect('work:manif_init', fhandler.request_iwork_id)
 
-        return redirect('work:manif_update',
-                        fhandler.manif_form.instance.work.iwork_id,
-                        fhandler.manif_form.instance.manifestation_id)
+        url = reverse('work:manif_update', args=[fhandler.request_iwork_id, fhandler.manif_form.instance.manifestation_id])
+        if view_utils.mark_callback_save_success(request):
+            url += '?callback_if_save_success=1'
+        return redirect(url)
 
 
 class CorrView(BasicWorkFormView):
