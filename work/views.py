@@ -639,8 +639,9 @@ class BasicWorkFormView(LoginRequiredMixin, View):
         if fhandler.saved_work:
             iwork_id = fhandler.saved_work.iwork_id
 
-        fhandler.load_data(iwork_id, request_data=None)
-        return fhandler.render_form(request, is_save_success=view_utils.mark_callback_save_success(request))
+        url = reverse(self.cur_vname, args=[iwork_id])
+        url = view_utils.append_callback_save_success_parameter(request, url)
+        return redirect(url)
 
     def post(self, request, iwork_id=None, *args, **kwargs):
         fhandler = self.create_fhandler(request, iwork_id=iwork_id, *args, **kwargs)
@@ -670,9 +671,9 @@ class ManifView(BasicWorkFormView):
         if not fhandler.manif_form.instance.manifestation_id:
             return redirect('work:manif_init', fhandler.request_iwork_id)
 
-        url = reverse('work:manif_update', args=[fhandler.request_iwork_id, fhandler.manif_form.instance.manifestation_id])
-        if view_utils.mark_callback_save_success(request):
-            url += '?callback_if_save_success=1'
+        url = reverse('work:manif_update',
+                      args=[fhandler.request_iwork_id, fhandler.manif_form.instance.manifestation_id])
+        url = view_utils.append_callback_save_success_parameter(request, url)
         return redirect(url)
 
 

@@ -763,3 +763,9 @@ def create_is_save_success_context(is_save_success) -> dict:
 def mark_callback_save_success(request) -> bool:
     callback_name = 'callback_if_save_success'
     return request.POST.get(callback_name) == '1' or request.GET.get(callback_name) == '1'
+
+
+def append_callback_save_success_parameter(request, url):
+    if mark_callback_save_success(request):
+        url += '?callback_if_save_success=1'
+    return url
