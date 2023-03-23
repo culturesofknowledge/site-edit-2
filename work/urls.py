@@ -1,7 +1,7 @@
 from django.urls import path, re_path
 
 from core.helper import url_utils
-from login.views import example_dashboard
+from core.views import default_view
 from . import views
 
 app_name = 'work'
@@ -20,7 +20,7 @@ urlpatterns.extend(
         init_view=views.CorrView.as_view(),
         # edit_view=views.full_form,
         search_view=views.WorkSearchView.as_view(),
-        merge_view=example_dashboard,
+        merge_view=default_view,
         edit_id_name='iwork_id',
     )
 )

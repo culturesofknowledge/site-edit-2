@@ -1,6 +1,9 @@
 from django.http import FileResponse
 
 from core.services import media_service
+from login.views import dashboard
+
+default_view = dashboard
 
 
 def download_file(request, file_path):
