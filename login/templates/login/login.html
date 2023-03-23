@@ -16,22 +16,10 @@
 
             <form class="flex-col" id="emlo-login" method="post">
 
-                <!--
-              <label for="username">Username</label>
-              <input type="text" id="username" placeholder="username1234"/>
-
-              <label for="password">Password</label>
-              <input type="password" id="password" placeholder="●●●●●●●●●"/>
-              -->
-
-
                 {% csrf_token %}
                 {{ form.as_p }}
 
                 <button class="btn">Login</button>
-
-                <!-- KTODO to be implement forgot password -->
-                <p class="align-center"><small><a href="#">Forgot password?</a></small></p>
             </form>
         </div>
     </div>

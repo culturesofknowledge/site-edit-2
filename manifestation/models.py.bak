@@ -1,7 +1,6 @@
 import uuid as uuid
 from django.db import models
 
-# Create your models here.
 
 
 class CofkUnionManifestation(models.Model):

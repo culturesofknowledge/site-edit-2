@@ -2,10 +2,7 @@ import uuid
 from django.db import models
 
 
-# Create your models here.
 
-# KTODO Researchers' notes for front-end display
-# KTODO Related resources
 
 class CofkCollectLocation(models.Model):
     #class Meta:
@@ -14,15 +11,12 @@ class CofkCollectLocation(models.Model):
     # upload_id = Column(ForeignKey('cofk_collect_upload.upload_id'), primary_key=True, null=False)
     # upload_id = models.ForeignKey("uploader.CofkCollectUpload", primary_key=True, null=False, on_delete=models.DO_NOTHING)
 
-    # KTODO why upload_id in database become upload_id_id, should I change field name to upload instead
-    # KTODO change null=True for draft version
     # upload = models.OneToOneField("uploader.CofkCollectUpload", null=True, on_delete=models.DO_NOTHING)
     upload = models.ForeignKey("uploader.CofkCollectUpload", null=True, on_delete=models.CASCADE)
 
     location_id = models.AutoField(primary_key=True)
     # union_location_id = Column(ForeignKey('cofk_union_location.location_id', ondelete='SET NULL'))
 
-    # KTODO what is usage of UnionLocation
     # union_location_id = models.ForeignKey("location.CofkUnionLocation", on_delete=models.DO_NOTHING)
     location_name = models.CharField(max_length=500, null=False, default='')
     element_1_eg_room = models.CharField(max_length=100, null=False, default='')
@@ -35,17 +29,16 @@ class CofkCollectLocation(models.Model):
     notes_on_place = models.TextField()
     editors_notes = models.TextField()
     upload_name = models.CharField(max_length=254)
-    _id = models.CharField(max_length=32)  # KTODO what is this _id, should be remove??
+    _id = models.CharField(max_length=32)
     location_synonyms = models.TextField()
     latitude = models.CharField(max_length=20)
     longitude = models.CharField(max_length=20)
 
     # union_location = relationship('CofkUnionLocation')
-    # upload = relationship('CofkCollectUpload') # KTODO how to bind upload record
+    # upload = relationship('CofkCollectUpload')
 
 
 class CofkUnionLocation(models.Model):
-    # KTODO who use this models ???
     #class Meta:
     #    db_table = 'cofk_union_location'
 
