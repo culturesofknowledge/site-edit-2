@@ -272,6 +272,7 @@ class CofkUnionLanguageOfWork(models.Model):
 
 class CofkUnionQueryableWork(models.Model):
     iwork_id = models.IntegerField(primary_key=True)
+    # TODO should be delete cascade when work is deleted
     work = models.OneToOneField('CofkUnionWork', models.DO_NOTHING, related_name='queryable')
     description = models.TextField(blank=True, null=True)
     date_of_work_std = models.DateField(blank=True, null=True)

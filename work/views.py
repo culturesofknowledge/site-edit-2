@@ -449,7 +449,7 @@ class ManifFFH(BasicWorkFFH):
             manif.manifestation_id = create_manif_id(self.request_iwork_id)
 
         manif.save()
-        log.info(f'save manif {manif}')  # KTODO fix iwork_id plus more than 1
+        log.info(f'save manif {manif}')
 
         # comments
         self.save_all_recref_formset(manif, request)
@@ -607,7 +607,7 @@ def create_work_person_map_if_field_exist(form: BaseForm, work, username,
         return
 
     work_person_map = CofkWorkPersonMap()
-    work_person_map.person = get_object_or_404(CofkUnionPerson, pk=_id)  # KTODO change to .person_id = ??
+    work_person_map.person = get_object_or_404(CofkUnionPerson, pk=_id)
     work_person_map.work = work
     work_person_map.relationship_type = rel_type
     work_person_map.update_current_user_timestamp(username)
