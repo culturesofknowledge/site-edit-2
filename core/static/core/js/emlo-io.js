@@ -75,7 +75,7 @@ function append_standtext_ele(target_text_ele, standtext_list) {
 
     //  build standtext container
     let standtext_div_jqe = $('<div>')
-    standtext_div_jqe.addClass('flex-row-wrap')
+    standtext_div_jqe.addClass('row-no-margin')
     standtext_div_jqe.append(text_ele_list)
     $(target_text_ele).after(standtext_div_jqe)
 
