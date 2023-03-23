@@ -101,63 +101,18 @@ class DeleteCheckboxField(ZeroOneCheckboxField):
         self.widget.attrs.update({'class': 'warn-checked'})
 
 
-class ThreeFieldDateField(forms.Field):
-    """
-    remember update form (get_initial_for_field, clean) to trigger
-    get_initial_by_initial_dict, clean_other_fields
-    TOBEREMOVE no longer need
-    """
-    warnings.warn('ThreeFieldDateField logic no longer used, to be remove', DeprecationWarning)
-
-    def __init__(self, year_field_name,
-                 month_field_name,
-                 day_field_name,
-                 *args, **kwargs):
-        default_kwargs = dict(
-            widget=widgets_utils.NewDateInput(),
-            # initial='0',
-            required=False,
-        )
-        kwargs = default_kwargs | kwargs
-        super().__init__(*args, **kwargs)
-
-        self.year_field_name = year_field_name
-        self.month_field_name = month_field_name
-        self.day_field_name = day_field_name
-
-    def get_initial_by_initial_dict(self, field_name: str, initial: dict):
-        year = initial.get(self.year_field_name, None)
-        month = initial.get(self.month_field_name, None)
-        day = initial.get(self.day_field_name, None)
-        if year and month and day:
-            return f'{year}-{month:0>2}-{day:0>2}'
-        return ''
-
-    def clean_other_fields(self, cleaned_data: dict, value: str):
-        date_values = value and value.split('-')
-        if len(date_values) != 3:
-            return
-
-        (
-            cleaned_data[self.year_field_name],
-            cleaned_data[self.month_field_name],
-            cleaned_data[self.day_field_name],
-        ) = date_values
-
-        return cleaned_data
-
 class SearchCharField(forms.CharField):
 
     def __init__(self, required=False, *args, **kwargs):
         super().__init__(*args, required=required, **kwargs)
         self.widget.attrs.update({'class': 'searchfield'})
 
+
 class SearchIntField(forms.IntegerField):
 
     def __init__(self, required=False, *args, **kwargs):
         super().__init__(*args, required=required, **kwargs)
         self.widget.attrs.update({'class': 'searchfield'})
-
 
 
 class IntLookupChoices(TextChoices):
@@ -531,6 +486,7 @@ def create_formset(form_class, post_data=None, prefix=None,
         prefix=prefix,
         initial=initial_list,
     )
+
 
 class BasicSearchFieldset(forms.Form):
     change_user = SearchCharField(label='Last edited by',

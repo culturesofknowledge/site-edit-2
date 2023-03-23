@@ -155,20 +155,3 @@ def create_work_excel(queryable_works: Iterable[CofkUnionQueryableWork],
         fill_resource_sheet(workbook.create_sheet(), resource_list)
 
     return _create_excel_by_fill_fn(_fill_fn, file_path=file_path)
-
-
-def create_person_excel(persons: Iterable[CofkUnionPerson],
-                        file_path: str = None):
-    # KTODO to be define format of person excel
-    def _fill_fn(workbook: Workbook):
-        fill_person_sheet(workbook.create_sheet(), persons)
-
-        resource_list = itertools.chain(
-            get_flat_resource_list(persons, lambda obj: obj.cofkpersonresourcemap_set),
-            get_flat_resource_list(queryable_works, lambda obj: obj.work.cofkworkresourcemap_set),
-            get_flat_resource_list(_find_location_list(), lambda obj: obj.cofklocationresourcemap_set),
-            get_flat_resource_list(_find_inst_list(), lambda obj: obj.cofkinstitutionresourcemap_set),
-        )
-        fill_resource_sheet(workbook.create_sheet(), resource_list)
-
-    return _create_excel_by_fill_fn(_fill_fn, file_path=file_path)
