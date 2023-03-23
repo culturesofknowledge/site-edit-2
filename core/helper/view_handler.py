@@ -80,7 +80,6 @@ class FullFormHandler:
         self.recref_formset_handlers.append(recref_formset_handler)
 
     def save_all_recref_formset(self, parent, request):
-        # KTODO fix comment_id has_changed problem
         for c in self.recref_formset_handlers:
             c.save(parent, request)
 
