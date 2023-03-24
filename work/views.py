@@ -5,7 +5,7 @@ from typing import Iterable, Any
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models
-from django.db.models import F
+from django.db.models import F, Q
 from django.db.models.lookups import Exact
 from django.forms import BaseForm
 from django.shortcuts import render, get_object_or_404, redirect
@@ -60,6 +60,16 @@ log = logging.getLogger(__name__)
 
 def get_location_id(model: models.Model):
     return model and model.location_id
+
+
+def create_search_fn_person_recref(rel_types: list) -> Callable:
+    def _fn(f, v):
+        return Q(**{
+            'work__cofkworkpersonmap__person_id': v,
+            'work__cofkworkpersonmap__relationship_type__in': rel_types,
+        })
+
+    return _fn
 
 
 class BasicWorkFFH(FullFormHandler):
@@ -940,9 +950,13 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def search_field_fn_maps(self) -> dict:
-        return {'work_to_be_deleted': lambda f, v: Exact(F(f), '0' if v == 'On' else '1'), } | \
-            query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                'change_timestamp') | \
+        return {'work_to_be_deleted': lambda f, v: Exact(F(f), '0' if v == 'On' else '1'),
+                'person_sent_pk': create_search_fn_person_recref(AuthorRelationChoices.values),
+                'person_rec_pk': create_search_fn_person_recref(AddresseeRelationChoices.values),
+                'person_sent_rec_pk': create_search_fn_person_recref(AuthorRelationChoices.values
+                                                                     + AddresseeRelationChoices.values),
+                } | query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
+                                                        'change_timestamp') | \
             query_utils.create_from_to_datetime('date_of_work_std_from', 'date_of_work_std_to',
                                                 'date_of_work_std')
 

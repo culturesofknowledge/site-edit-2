@@ -236,7 +236,7 @@ class CofkWorkSubjectMap(Recref):
 
 class CofkWorkPersonMap(Recref):
     """
-    possible relationship_type [signed, created, sent]
+    possible relationship_type [signed, created, sent], [recipient, intended recipient]
     """
     work = models.ForeignKey(CofkUnionWork,
                              on_delete=models.CASCADE)
