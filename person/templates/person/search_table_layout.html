@@ -107,7 +107,7 @@
             </td>
             <td>
                 {% if r.mentioned > 0 %}
-                <a href="{% url 'work:search' %}?people_mentioned={{ r.foaf_name }}&people_mentioned_lookup=contains" class="search_link" target="_blank">
+                    <a href="{% url 'work:search' %}?person_mention_pk={{ r.person_id }}" class="search_link" target="_blank">
                     {{ r.mentioned }}
                 </a>
                 {% endif %}

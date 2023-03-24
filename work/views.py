@@ -955,6 +955,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                 'person_rec_pk': create_search_fn_person_recref(AddresseeRelationChoices.values),
                 'person_sent_rec_pk': create_search_fn_person_recref(AuthorRelationChoices.values
                                                                      + AddresseeRelationChoices.values),
+                'person_mention_pk': create_search_fn_person_recref([REL_TYPE_MENTION]),
                 } | query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
                                                         'change_timestamp') | \
             query_utils.create_from_to_datetime('date_of_work_std_from', 'date_of_work_std_to',
