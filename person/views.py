@@ -29,7 +29,7 @@ from person import person_utils
 from person.forms import PersonForm, GeneralSearchFieldset, PersonOtherRecrefForm, field_label_map, \
     search_gender_choices, search_person_or_group
 from person.models import CofkUnionPerson, CofkPersonPersonMap, create_person_id, \
-    CofkPersonCommentMap, CofkPersonResourceMap, CofkPersonImageMap, create_sql_work_count
+    CofkPersonCommentMap, CofkPersonResourceMap, CofkPersonImageMap, create_sql_count_work_by_person
 from person.recref_adapter import PersonCommentRecrefAdapter, PersonResourceRecrefAdapter, PersonRoleRecrefAdapter, \
     ActivePersonRecrefAdapter, PassivePersonRecrefAdapter, PersonImageRecrefAdapter, PersonLocRecrefAdapter
 from person.view_components import PersonFormDescriptor
@@ -372,19 +372,20 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
     def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q],
                                    sort_by=None):
-        queryset = model_class.objects.all()
+        queryset = model_class.objects
 
         annotate = {
-            'sent': create_sql_work_count(AuthorRelationChoices.values),
-            'recd': create_sql_work_count(AddresseeRelationChoices.values),
-            'all_works': create_sql_work_count(AuthorRelationChoices.values + AddresseeRelationChoices.values),
-            'mentioned': create_sql_work_count([REL_TYPE_MENTION]),
+            'sent': create_sql_count_work_by_person(AuthorRelationChoices.values),
+            'recd': create_sql_count_work_by_person(AddresseeRelationChoices.values),
+            'all_works': create_sql_count_work_by_person(
+                AuthorRelationChoices.values + AddresseeRelationChoices.values),
+            'mentioned': create_sql_count_work_by_person([REL_TYPE_MENTION]),
         }
 
         queryset = queryset.annotate(**annotate)
 
         if queries:
-            queryset = queryset.filter(query_utils.all_queries_match(queries))
+            queryset = queryset.filter(query_utils.create_exists_by_mode(model_class, queries))
 
         if sort_by:
             queryset = queryset.order_by(sort_by)

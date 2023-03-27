@@ -71,6 +71,15 @@ def create_search_fn_person_recref(rel_types: list) -> Callable:
 
     return _fn
 
+def create_search_fn_location_recref(rel_types: list) -> Callable:
+    def _fn(f, v):
+        return Q(**{
+            'work__cofkworklocationmap__location_id': v,
+            'work__cofkworklocationmap__relationship_type__in': rel_types,
+        })
+
+    return _fn
+
 
 class BasicWorkFFH(FullFormHandler):
     def __init__(self, pk, template_name, request_data=None, request=None, *args, **kwargs):
@@ -956,6 +965,9 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                 'person_sent_rec_pk': create_search_fn_person_recref(AuthorRelationChoices.values
                                                                      + AddresseeRelationChoices.values),
                 'person_mention_pk': create_search_fn_person_recref([REL_TYPE_MENTION]),
+                'location_sent_pk': create_search_fn_location_recref([REL_TYPE_WAS_SENT_FROM]),
+                'location_rec_pk': create_search_fn_location_recref([REL_TYPE_WAS_SENT_TO]),
+                'location_sent_rec_pk': create_search_fn_location_recref([REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
                 } | query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
                                                         'change_timestamp') | \
             query_utils.create_from_to_datetime('date_of_work_std_from', 'date_of_work_std_to',

@@ -214,7 +214,7 @@ def create_person_id(iperson_id) -> str:
     return f'cofk_union_person-iperson_id:{iperson_id}'
 
 
-def create_sql_work_count(rel_type_list):
+def create_sql_count_work_by_person(rel_type_list):
     return RawSQL("""
     select count(*)
     from cofk_union_work w
