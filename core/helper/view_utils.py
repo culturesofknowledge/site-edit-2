@@ -6,7 +6,6 @@ from datetime import datetime
 from threading import Thread
 from typing import Iterable, Type, Callable, Any, TYPE_CHECKING, List
 from typing import NoReturn
-from urllib.parse import urlencode
 from urllib.parse import urljoin
 
 from django import template
@@ -403,14 +402,6 @@ class BasicSearchView(ListView):
 
         # response for search query
         return super().get(request, *args, **kwargs)
-
-
-@register.simple_tag
-def urlparams(*_, **kwargs):
-    safe_args = {k: v for k, v in kwargs.items() if v is not None}
-    if safe_args:
-        return '?{}'.format(urlencode(safe_args))
-    return ''
 
 
 class DefaultSearchView(BasicSearchView):
