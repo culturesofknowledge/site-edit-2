@@ -4,9 +4,7 @@ from django.shortcuts import render
 
 
 @login_required
-def example_dashboard(request):
-    # TOBEREMOVE this is for debugging
-    # return HttpResponse("It is example dashboard page.")
+def dashboard(request):
     return render(request, 'login/dashboard.html')
 
 

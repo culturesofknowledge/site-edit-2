@@ -214,7 +214,6 @@ function add_hide_buttons_to_columns() {
 }
 
 $(function () {
-    setup_record_delete();
     emlojs.selectable_service.setup_all()
     setup_merge_btn();
     setup_fieldset_toggle();

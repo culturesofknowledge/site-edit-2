@@ -6,7 +6,7 @@ from .views import EmloLoginView
 
 app_name = 'login'
 urlpatterns = [
-    path('dashboard', views.example_dashboard, name='example dashboard'),
+    path('dashboard', views.dashboard, name='example dashboard'),
     path('gate', EmloLoginView.as_view(), name='gate'),
     path('logout', logout_then_login, name='logout'),
 ]

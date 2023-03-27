@@ -21,8 +21,6 @@ if TYPE_CHECKING:
 
 
 class LocationFormTests(EmloSeleniumTestCase):
-    # KTODO test validate fail
-    # KTODO test upload images
 
     def test_create_location(self):
         self.goto_vname('location:init_form')

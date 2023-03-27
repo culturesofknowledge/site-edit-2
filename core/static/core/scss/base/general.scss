@@ -204,7 +204,7 @@ button {
 
 input[type="checkbox"],
 input[type="radio"] {
-  display: none; // KTODO should we remove this general css
+  display: none;
 
   + label {
     line-height: 1;

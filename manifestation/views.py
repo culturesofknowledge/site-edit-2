@@ -9,8 +9,6 @@ from manifestation import manif_utils
 from manifestation.models import CofkUnionManifestation
 
 
-# Create your views here.
-
 class ManifSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
@@ -20,16 +18,11 @@ class ManifSearchView(LoginRequiredMixin, DefaultSearchView):
             ('change_timestamp', 'Change Timestamp asc',),
         ]
 
-    # @property
-    # def merge_page_vname(self) -> str:
-    #     return 'manif:merge'
-
     @property
     def return_quick_init_vname(self) -> str:
         return 'manif:return_quick_init'
 
     def get_queryset(self):
-        # KTODO
         queryset = CofkUnionManifestation.objects.all()
         if sort_by := self.get_sort_by():
             queryset = queryset.order_by(sort_by)
@@ -38,22 +31,6 @@ class ManifSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
         return renderer_utils.create_table_search_results_renderer('manif/search_table_layout.html')
-
-    # @property
-    # def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
-    #     return renderer_utils.create_compact_renderer(item_template_name='person/compact_item.html')
-
-    # @property
-    # def query_fieldset_list(self) -> Iterable:
-    #     default_values = {
-    #         'foaf_name_lookup': 'starts_with',
-    #     }
-    #     request_data = default_values | self.request_data.dict()
-    #
-    #     return [GeneralSearchFieldset(request_data)]
-    # @property
-    # def download_csv_handler(self) -> DownloadCsvHandler:
-    #     return DownloadCsvHandler(PersonCsvHeaderValues())
 
 
 @login_required

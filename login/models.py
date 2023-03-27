@@ -3,10 +3,6 @@ from django.contrib.auth.models import PermissionsMixin, UserManager
 from django.db import models
 
 
-# KTODO copy role and group models
-
-# Create your models here.
-
 class CofkUser(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=30, primary_key=True)
 

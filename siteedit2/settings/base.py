@@ -90,9 +90,6 @@ STATICFILES_FINDERS = [
 ]
 
 SASS_PROCESSOR_INCLUDE_DIRS = [
-    # KTODO update path for @import of scss
-    #  os.path.join(PROJECT_PATH, 'extra-styles/scss'),
-    #  os.path.join(PROJECT_PATH, 'node_modules'),
 ]
 
 SASS_PROCESSOR_ROOT = 'static/'
@@ -220,7 +217,7 @@ AUTH_USER_MODEL = 'login.CofkUser'
 
 # #### Login setting
 LOGIN_URL = '/login/gate'
-LOGIN_REDIRECT_URL = '/login/dashboard'  # KTODO this value to be update
+LOGIN_REDIRECT_URL = '/login/dashboard'
 
 MEDIA_ROOT = '/code/files/'  # TODO this needs to be updated
 

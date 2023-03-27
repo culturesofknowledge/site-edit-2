@@ -161,11 +161,6 @@ tr.selectable_entry:not(.selected):hover {
   }*/
 }
 
-.flex-row-wrap { // TOBEREMOVE that same as .row
-  display: flex;
-  flex-wrap: wrap;
-}
-
 .row-no-margin {
   @extend .row;
   margin: 0;
