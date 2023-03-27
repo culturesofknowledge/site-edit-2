@@ -15,7 +15,6 @@
     <input id="num_records" type="hidden" value="{{ paginator.count }}" />
 
     <form id="search_form" method="get">
-        {% csrf_token %}
 
         <input type="hidden" name="recref_mode" value="{{ recref_mode }}"/>
 
