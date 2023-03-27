@@ -227,8 +227,9 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
 
     # Creating the union entities
     for entity in [union_works, union_manifs, union_resources]:
-        bulk_create(entity)
-        log_msg.append(f'{len(entity)} {type(entity[0]).__name__}')
+        if len(entity) > 0:
+            bulk_create(entity)
+            log_msg.append(f'{len(entity)} {type(entity[0]).__name__}')
 
     # Creating the relation entities
     for rel_map in rel_maps:
