@@ -7,6 +7,7 @@ from django.forms import CharField
 
 from core import constant
 from core.constant import DEFAULT_EMPTY_DATE_STR, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO
+from core.form_label_maps import field_label_map
 from core.helper import form_utils
 from core.helper import widgets_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter, TargetPersonRecrefAdapter
@@ -470,34 +471,6 @@ del_help_text = "Yes or No. If 'Yes', the record is marked for deletion."
 id_help_text = 'The unique ID for the record within the current CofK database.'
 change_help_text = 'Username of the person who last changed the record.'
 
-
-field_label_map = { 'description': 'Description',
-                    'date_of_work_as_marked': 'Date of work as marked',
-                    'date_of_work_std_year': 'Year',
-                    'date_of_work_std_month': 'Month',
-                    'date_of_work_std_day': 'Day',
-                    'sender_or_recipient': 'Sender or recipient',
-                    'origin_or_destination': 'Origin or destination',
-                    'creators_searchable': 'Author/sender',
-                    'notes_on_authors': 'Notes on authors/senders',
-                    'addressees_searchable': 'Addressee',
-                    'places_from_searchable': 'Origin (standardised)',
-                    'editors_notes': "Editors' notes",
-                    'places_to_searchable': 'Destination (standardised)',
-                    'flags': 'Flags',
-                    'images': 'Images',
-                    'manifestations_searchable': 'Manifestations',
-                    'related_resources': 'Related resources',
-                    'change_user': 'Last edited by',
-                    'language_of_work': 'Language of work',
-                    'abstract': 'Abstract',
-                    'general_notes': 'General notes',
-                    'original_catalogue': 'Original catalogue',
-                    'accession_code': 'Source of record',
-                    'people_mentioned': 'People mentioned',
-                    'origin_as_marked': 'Origin as marked',
-                    'work_id': 'Work ID',}
-
 work_to_be_deleted_choices =[(0, 'No'), (1, 'Yes')]
 
 class CompactSearchFieldset(BasicSearchFieldset):
@@ -516,7 +489,7 @@ class CompactSearchFieldset(BasicSearchFieldset):
     description = SearchCharField(help_text=description_help_text)
     description_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    editors_notes = SearchCharField(label="Editors' notes")
+    editors_notes = SearchCharField(label=field_label_map['work']['editors_notes'])
     editors_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     sender_or_recipient = SearchCharField(help_text=sender_recipient_help_text)
@@ -529,34 +502,34 @@ class CompactSearchFieldset(BasicSearchFieldset):
     date_of_work_as_marked_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     date_of_work_std_year = SearchIntField(min_value=1000, max_value=1850,
-                                           label='Year', help_text=year_help_text)
+                                           label=field_label_map['work']['date_of_work_std_year'], help_text=year_help_text)
     date_of_work_std_year_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
     date_of_work_std_month = SearchIntField(min_value=1, max_value=12,
-                                            label='Month', help_text=month_help_text)
+                                            label=field_label_map['work']['date_of_work_std_month'], help_text=month_help_text)
     date_of_work_std_month_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
     date_of_work_std_day = SearchIntField(min_value=1, max_value=31,
-                                          label='Day', help_text=day_help_text)
+                                          label=field_label_map['work']['date_of_work_std_day'], help_text=day_help_text)
     date_of_work_std_day_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
     date_of_work_std_from = forms.DateField(required=False, widget=widgets_utils.SearchDateTimeInput())
     date_of_work_std_to = forms.DateField(required=False, widget=widgets_utils.SearchDateTimeInput())
     date_of_work_std_info = date_of_work_help_text
 
-    creators_searchable = SearchCharField(label='Author/sender')
+    creators_searchable = SearchCharField(label=field_label_map['work']['creators_searchable'])
     creators_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    notes_on_authors = SearchCharField(label='Notes on authors/senders')
+    notes_on_authors = SearchCharField(label=field_label_map['work']['notes_on_authors'])
     notes_on_authors_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    addressees_searchable = SearchCharField(label='Addressee')
+    addressees_searchable = SearchCharField(label=field_label_map['work']['addressees_searchable'])
     addressees_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    places_from_searchable = SearchCharField(label='Origin (standardised)', help_text=places_from_searchable)
+    places_from_searchable = SearchCharField(label=field_label_map['work']['places_from_searchable'], help_text=places_from_searchable)
     places_from_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    places_to_searchable = SearchCharField(label='Destination (standardised)', help_text=places_to_searchable)
+    places_to_searchable = SearchCharField(label=field_label_map['work']['places_to_searchable'], help_text=places_to_searchable)
     places_to_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     flags = SearchCharField(help_text=flags_help_text)
@@ -565,7 +538,7 @@ class CompactSearchFieldset(BasicSearchFieldset):
     images = SearchCharField(help_text=img_help_text)
     images_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    manifestations_searchable = SearchCharField(label='Manifestations', help_text=manif_help_text)
+    manifestations_searchable = SearchCharField(label=field_label_map['work']['manifestations_searchable'], help_text=manif_help_text)
     manifestations_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     related_resources = SearchCharField()
@@ -586,7 +559,7 @@ class CompactSearchFieldset(BasicSearchFieldset):
     original_catalogue = SearchCharField()
     original_catalogue_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    accession_code = SearchCharField(label='Source of record', help_text=acc_help_text)
+    accession_code = SearchCharField(label=field_label_map['work']['accession_code'], help_text=acc_help_text)
     accession_code_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     work_to_be_deleted = form_utils.ZeroOneCheckboxField(required=False)
@@ -599,9 +572,6 @@ class CompactSearchFieldset(BasicSearchFieldset):
 class ExpandedSearchFieldset(CompactSearchFieldset):
     title = 'Expanded Search'
     template_name = 'work/component/work_expanded_search_fieldset.html'
-
-    addressees_searchable = SearchCharField(label='Addressee')
-    addressees_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     destination_as_marked = SearchCharField()
     destination_as_marked_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)

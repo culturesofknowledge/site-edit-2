@@ -8,7 +8,7 @@ from django.shortcuts import render
 
 from core.helper import renderer_utils, query_utils, view_utils
 from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView
-from publication.forms import PublicationForm, GeneralSearchFieldset, field_label_map
+from publication.forms import PublicationForm, GeneralSearchFieldset
 from publication.models import CofkUnionPublication
 
 
@@ -17,14 +17,6 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def query_fieldset_list(self) -> Iterable:
         return [GeneralSearchFieldset(self.request_data)]
-
-    @property
-    def search_fields(self) -> list[str]:
-        return ['publication_details', 'abbrev', 'change_user', 'publication_id', ]
-
-    @property
-    def search_field_label_map(self) -> dict:
-        return field_label_map
 
     @property
     def search_field_fn_maps(self) -> dict:

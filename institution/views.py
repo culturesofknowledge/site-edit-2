@@ -1,6 +1,6 @@
 import logging
 from abc import ABC
-from typing import Callable, Iterable, Type, TYPE_CHECKING
+from typing import Callable, Iterable, Type, TYPE_CHECKING, List
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -32,21 +32,8 @@ log = logging.getLogger(__name__)
 class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
 
     @property
-    def search_fields(self) -> list[str]:
-        return ['institution_name', 'editors_notes', 'institution_city', 'institution_country',
-                'change_user', 'institution_id', 'resources', 'images']
-
-    @property
     def search_field_fn_maps(self) -> dict:
-        return query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                   'change_timestamp')
-
-    @property
-    def search_field_label_map(self) -> dict:
-        """
-        return
-        """
-        return field_label_map
+        return query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to', 'change_timestamp')
 
     @property
     def entity(self) -> str:
@@ -69,6 +56,15 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
             ('institution_id', 'Repository ID',),
         ]
 
+    @property
+    def search_field_combines(self) -> dict[str: List[str]]:
+        return {
+            'institution_name': ['institution_name', 'institution_synonyms'],
+            'institution_city': ['institution_city', 'institution_city_synonyms'],
+            'institution_country': ['institution_country', 'institution_country_synonyms'],
+            'resources': ['resources__resource_name', 'resources__resource_details',
+                          'resources__resource_url'],
+            'images': ['images__image_filename']}
 
     @property
     def search_page_vname(self) -> str:
@@ -82,6 +78,10 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
     def return_quick_init_vname(self) -> str:
         return 'institution:return_quick_init'
 
+    @property
+    def default_order(self) -> str:
+        return 'asc'
+
     def get_queryset(self):
         if not self.request_data:
             return CofkUnionInstitution.objects.none()
@@ -92,16 +92,8 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
         # queries for like_fields
         queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
 
-        search_fields_maps = {
-            'institution_name': ['institution_name', 'institution_synonyms'],
-            'institution_city': ['institution_city', 'institution_city_synonyms'],
-            'institution_country': ['institution_country', 'institution_country_synonyms'],
-            'resources': ['resources__resource_name', 'resources__resource_details',
-                          'resources__resource_url'],
-            'images': ['images__image_filename']}
-
         queries.extend(
-            query_utils.create_queries_by_lookup_field(request_data, self.search_fields, search_fields_maps)
+            query_utils.create_queries_by_lookup_field(request_data, self.search_fields, self.search_field_combines)
         )
         return self.create_queryset_by_queries(CofkUnionInstitution, queries, sort_by=sort_by).distinct()
 

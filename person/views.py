@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Iterable, Type, Any, NoReturn, TYPE_CHECKING
+from typing import Callable, Iterable, Type, Any, NoReturn, TYPE_CHECKING, List
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -285,15 +285,6 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         return 'person,people'
 
     @property
-    def search_fields(self) -> list[str]:
-        return ['foaf_name', 'iperson_id', 'editors_notes', 'sent', 'recd', 'all_works', 'mentioned', 'roles',
-                'further_reading', 'other_details', 'images', 'change_user', 'organisation_type']
-
-    @property
-    def search_field_label_map(self) -> dict:
-        return field_label_map
-
-    @property
     def search_field_fn_maps(self) -> dict:
         return {'gender': lambda f, v: Exact(F(f), '' if v == 'U' else v),
                 'person_or_group': lambda _, v: Exact(F('is_organisation'), 'Y' if v == 'G' else ''),
@@ -309,7 +300,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
-            ('foaf_name', 'Name',),
+            ('names_and_titles', 'Name',),
             ('date_of_birth', 'Born',),
             ('date_of_death', 'Died',),
             ('flourished', 'Flourished',),
@@ -323,13 +314,20 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             ('editors_notes', 'Editors\' notes',),
             ('further_reading', 'Further reading',),
             ('images', 'Images',),
-            # It's not possible to order by a composite field
-            # ('other_details_summary', 'Other details',),
-            # ('other_details_summary_searchable', 'Other details',),
+            ('other_details', 'Other details',),
             ('change_timestamp', 'Change Timestamp',),
             ('change_user', 'Change user',),
             ('iperson_id', 'Person or Group ID',),
         ]
+
+    @property
+    def search_field_combines(self) -> dict[str: List[str]]:
+        return {'names_and_titles': ['foaf_name', 'skos_altlabel', 'skos_hiddenlabel', 'person_aliases',
+                                     'roles__role_category_desc'],  # names and roles search
+                'roles': ['roles__role_category_desc'],
+                'images': ['images__image_filename'],
+                'organisation_type': ['organisation_type__org_type_desc'],
+                'other_details': ['comments__comment', 'resources__resource_name', 'resources__resource_details']}
 
     @property
     def merge_page_vname(self) -> str:
@@ -392,7 +390,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             queryset = queryset.filter(query_utils.create_exists_by_mode(model_class, queries))
 
         if sort_by:
-            queryset = queryset.order_by(sort_by)
+            queryset = queryset.order_by(*sort_by)
 
         return queryset
 
@@ -404,15 +402,9 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
     def get_queryset_by_request_data(self, request_data, sort_by=None):
         queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
-        search_fields_maps = {'foaf_name': ['foaf_name', 'skos_altlabel', 'skos_hiddenlabel', 'person_aliases',
-                                            'roles__role_category_desc'],  # names and roles search
-                              'roles': ['roles__role_category_desc'],
-                              'images': ['images__image_filename'],
-                              'organisation_type': ['organisation_type__org_type_desc'],
-                              'other_details': ['comments__comment', 'resources__resource_name',
-                                                'resources__resource_details']}
+
         queries.extend(
-            query_utils.create_queries_by_lookup_field(request_data, self.search_fields, search_fields_maps)
+            query_utils.create_queries_by_lookup_field(request_data, self.search_fields, self.search_field_combines)
         )
         return self.create_queryset_by_queries(CofkUnionPerson, queries, sort_by=sort_by)
 

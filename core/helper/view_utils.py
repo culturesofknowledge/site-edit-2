@@ -4,7 +4,7 @@ import logging
 from collections import defaultdict
 from datetime import datetime
 from threading import Thread
-from typing import Iterable, Type, Callable, Any, TYPE_CHECKING
+from typing import Iterable, Type, Callable, Any, TYPE_CHECKING, List
 from typing import NoReturn
 from urllib.parse import urlencode
 from urllib.parse import urljoin
@@ -23,6 +23,7 @@ from django.views.generic import ListView
 
 import core.constant as core_constant
 from core import constant
+from core.form_label_maps import field_label_map
 from core.helper import email_utils, query_utils, general_model_utils, recref_utils, model_utils, \
     django_utils, inspect_utils, url_utils, date_utils, str_utils
 from core.helper.form_utils import build_search_components
@@ -73,21 +74,24 @@ class BasicSearchView(ListView):
     template_name = 'core/basic_search_page.html'
     context_object_name = 'records'
 
-    @property
-    def search_fields(self) -> list[str]:
-        """
-        returns a list of all the standard model fields to search on.
-        """
-        raise NotImplementedError()
-
-    @property
     def search_field_label_map(self) -> dict:
         """
         A dictionary mapping between the model field name and the labelling of that field.
 
         Only used by self.simplified_query.
         """
-        raise NotImplementedError()
+        if self.request.resolver_match.app_name in field_label_map:
+            return field_label_map[self.request.resolver_match.app_name]
+
+        return {}
+
+    @property
+    def search_fields(self) -> List[str]:
+        """
+        A list of fields searched directly on. Excludes fields especially handled.
+        """
+        exclude = ['change_timestamp_from', 'change_timestamp_to']
+        return [f for f in self.search_field_label_map.keys() if f not in exclude]
 
     @property
     def search_field_fn_maps(self) -> dict:
@@ -96,6 +100,13 @@ class BasicSearchView(ListView):
         simultaneously, such as with ranges.
 
         Used with query_utils.create_queries_by_field_fn_maps and query_utils.create_from_to_datetime for instance.
+        """
+        raise NotImplementedError()
+
+    @property
+    def search_field_combines(self) -> dict[str: List[str]]:
+        """
+        A dictionary mapping between search multiple fields under one form field.
         """
         raise NotImplementedError()
 
@@ -111,8 +122,10 @@ class BasicSearchView(ListView):
             field_val = self.request_data.get(field_name)
 
             if (field_val is not None and field_val != '') or (
-                    field_name in self.request_data and 'blank' in self.request_data.get(f'{field_name}_lookup')):
-                label_name = self.search_field_label_map.get(field_name, field_name.replace('_', ' ').capitalize())
+                    field_name in self.request_data and f'{field_name}_lookup' in self.request_data and
+                    'blank' in self.request_data.get(f'{field_name}_lookup')):
+                label_name = self.search_field_label_map[field_name] if field_name in self.search_field_label_map \
+                    else field_name.replace('_', ' ').capitalize()
                 lookup_key = self.request_data.get(f'{field_name}_lookup').replace('_', ' ')
 
                 if 'blank' in lookup_key:
@@ -231,7 +244,7 @@ class BasicSearchView(ListView):
             sort_by = self.get_sort_by()
 
         if sort_by:
-            queryset = queryset.order_by(sort_by)
+            queryset = queryset.order_by(*sort_by)
 
         return queryset
 
@@ -240,15 +253,26 @@ class BasicSearchView(ListView):
         """ by default requests data would be GET  """
         return self.request.GET
 
-    def get_sort_by(self):
+    def get_sort_by(self, field_name=False) -> List[str]:
         sort_by = self.request_data.get('sort_by')
 
+        # Sort not present or invalid
         if sort_by is None or sort_by not in [s[0] for s in self.sort_by_choices]:
-            # Sort not present or invalid
             sort_by = self.sort_by_choices[self.default_sort_by_choice][0]
 
+        # If caller only needs the field name
+        if field_name:
+            return sort_by
+
+        # Check if it's a combined field
+        if sort_by in self.search_field_combines:
+            sort_by = self.search_field_combines[sort_by]
+        else:
+            sort_by = [sort_by]
+
+        # Assign correct order
         if self.request_data.get('order', self.default_order) == 'desc':
-            return '-' + sort_by
+            return [f'-{s}' for s in sort_by]
 
         return sort_by
 
@@ -260,7 +284,7 @@ class BasicSearchView(ListView):
 
         default_search_components_dict = {
             'num_record': str(self.paginate_by),
-            'sort_by': self.get_sort_by(),
+            'sort_by': self.get_sort_by(field_name=True),
             'order': self.request_data.get('order') or self.default_order
         }
         is_compact_layout = (self.request_data.get('display-style', core_constant.SEARCH_LAYOUT_TABLE)
@@ -367,13 +391,6 @@ class DefaultSearchView(BasicSearchView):
         return '__title__'
 
     @property
-    def search_fields(self) -> list[str]:
-        """
-        return
-        """
-        return []
-
-    @property
     def search_field_fn_maps(self) -> dict:
         """
         return
@@ -381,11 +398,8 @@ class DefaultSearchView(BasicSearchView):
         return {}
 
     @property
-    def search_field_label_map(self) -> dict:
-        """
-        return
-        """
-        return {}
+    def search_field_combines(self) -> dict[str: List[str]]:
+        return []
 
     @property
     def query_fieldset_list(self) -> Iterable:

@@ -1,3 +1,4 @@
+import collections
 import functools
 import logging
 from typing import Callable, Iterable, Union
@@ -56,7 +57,7 @@ def create_queries_by_field_fn_maps(field_fn_maps: dict, data: dict) -> list[Q]:
 
 
 def create_queries_by_lookup_field(request_data: dict,
-                                   search_field_names: list[str],
+                                   search_field_names: collections.abc.KeysView,
                                    search_fields_maps: dict[str, Iterable[str]] = None
                                    ) -> Iterable[Q]:
     for field_name in search_field_names:

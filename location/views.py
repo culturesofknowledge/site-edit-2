@@ -1,6 +1,6 @@
 import itertools
 import logging
-from typing import Iterable, Union, Type, Callable
+from typing import Iterable, Union, Type, Callable, List
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -181,6 +181,14 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
                 'element_7_eg_empire', 'images', 'change_user']
 
     @property
+    def search_field_combines(self) -> dict[str: List[str]]:
+        return {'location_name': ['location_name', 'location_synonyms'],
+                'resources': ['resources__resource_name', 'resources__resource_details',
+                              'resources__resource_url'],
+                'researchers_notes': ['comments__comment'],
+                'images': ['images__image_filename']}
+
+    @property
     def search_field_label_map(self) -> dict:
         return field_label_map
 
@@ -235,7 +243,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
             )
 
         if sort_by:
-            queryset = queryset.order_by(sort_by)
+            queryset = queryset.order_by(*sort_by)
 
         return queryset
 
