@@ -175,7 +175,6 @@ function setup_discard_page_on_new_search() {
         if(Array.from(e.srcElement.elements).some((a) => a.dataset['changed'] == 'true'))  {
             e.srcElement.elements['page'].value = 1;
         }
-
    });
 
 
@@ -264,4 +263,9 @@ $(function () {
 })
 
 
-$(window).on('scroll', radialTransparentIfScrolledDown)
+$(window).on('scroll', radialTransparentIfScrolledDown);
+$(window).on('submit', function(e) {
+        if(event.submitter.value == 'save_query')  {
+            return confirm('Are you sure you want to save this query?');
+        }
+});

@@ -31,7 +31,7 @@ from core.helper.model_utils import ModelLike, RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
     demo_table_search_results_renderer
 from core.helper.view_components import DownloadCsvHandler
-from core.models import CofkUnionResource, CofkUnionComment
+from core.models import CofkUnionResource, CofkUnionComment, CofkUserSavedQuery, CofkUserSavedQuerySelection
 from core.services import media_service
 from work import work_utils
 from work.models import CofkUnionWork
@@ -162,6 +162,10 @@ class BasicSearchView(ListView):
         return str containing singular and plural for entity separated by a comma
         """
         raise NotImplementedError()
+
+    @property
+    def app_name(self) -> str:
+        return self.request.resolver_match.app_name
 
     def expanded_query_fieldset_list(self) -> Iterable:
         """
@@ -343,6 +347,30 @@ class BasicSearchView(ListView):
         self.to_user_messages = ['The selected data is being processed and will be sent to your email soon.']
         return super().get(request, *args, **kwargs)
 
+    def save_query(self, request, *args, **kwargs):
+
+        saved_query = CofkUserSavedQuery(username=self.request.user,
+                                         query_class=self.request.resolver_match.app_name,
+                                         query_order_by=request.GET['sort_by'],
+                                         query_sort_descending=1 if request.GET['order'] else 0,
+                                         query_entries_per_page=request.GET['num_record'])
+
+        selections = []
+
+        for key in (key for key, value in request.GET.items() if key not in ['csrfmiddlewaretoken', '__form_action', 'recref_mode', 'order', 'sort_by', 'num_record']
+                                                                          and value != '' and '_lookup' not in key):
+            selections.append(CofkUserSavedQuerySelection(query=saved_query,
+                                        column_name=key,
+                                        op_value=request.GET[key + '_lookup'],
+                                        column_value=request.GET[key]))
+
+        saved_query.save()
+        CofkUserSavedQuerySelection.objects.bulk_create(selections)
+
+        # stay as same page
+        self.to_user_messages = ['The current search results have been saved.']
+        return super().get(request, *args, **kwargs)
+
     def resp_download_by_export_setting(self, request, export_setting, *args, **kwargs):
         def file_fn():
             file_name_factory, file_factory = export_setting
@@ -363,6 +391,7 @@ class BasicSearchView(ListView):
         simple_form_action_map = {
             'download_csv': self.resp_download_csv,
             'download_excel': self.resp_download_excel,
+            'save_query': self.save_query
         }
 
         # simple routing with __form_action

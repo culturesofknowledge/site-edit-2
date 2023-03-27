@@ -8,7 +8,10 @@
 import functools
 
 from django.db import models
+from django.urls import reverse
+from django.utils.http import urlencode
 
+from core.form_label_maps import field_label_map
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 
@@ -220,7 +223,9 @@ class Iso639LanguageCode(models.Model):
 
 
 class CofkUnionFavouriteLanguage(models.Model):
-    language_code = models.OneToOneField(Iso639LanguageCode, models.DO_NOTHING, db_column='language_code',
+    language_code = models.OneToOneField(Iso639LanguageCode,
+                                         models.DO_NOTHING,
+                                         db_column='language_code',
                                          primary_key=True)
 
     class Meta:
@@ -243,8 +248,8 @@ class CofkUserSavedQuery(models.Model):
     query_id = models.AutoField(primary_key=True)
     username = models.ForeignKey('login.CofkUser', models.DO_NOTHING, db_column='username')
     query_class = models.CharField(max_length=100)
-    query_method = models.CharField(max_length=100)
-    query_title = models.TextField()
+    query_method = models.CharField(max_length=100) # what does this do?
+    query_title = models.TextField() # this field is not used atm, instead use the dynamic property title
     query_order_by = models.CharField(max_length=100)
     query_sort_descending = models.SmallIntegerField()
     query_entries_per_page = models.SmallIntegerField()
@@ -252,13 +257,73 @@ class CofkUserSavedQuery(models.Model):
     query_menu_item_name = models.TextField(blank=True, null=True)
     creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
 
+    @property
+    def title(self):
+        title = 'Selection: '
+
+        if self.query_class in field_label_map:
+            ref = field_label_map[self.query_class]
+            selections = [f'{ref[s.column_name]} {s.op_value} "{s.column_value}". ' for s in self.selection.all()]
+        else:
+            selections = [f'{s.column_name} {s.op_value} "{s.column_value}". ' for s in self.selection.all()]
+
+        if len(selections) == 0:
+            title += 'all. '
+        else:
+            title += ''.join(selections)
+
+        if self.query_class in field_label_map:
+            ref = field_label_map[self.query_class]
+
+            if self.query_order_by in ref:
+                title += f'Data is sorted by: {ref[self.query_order_by]}'
+        else:
+            title += f'Data is sorted by: {self.query_order_by}'
+
+        if self.query_sort_descending == 1:
+            title += ' (descending order)'
+
+        title += f'. Entries per page: {self.query_entries_per_page}.'
+
+        return title
+
+    @property
+    def url(self):
+        if self.query_class == 'contributor' or self.query_class == 'language':
+            return
+
+        url = ''
+
+        if 'work' in self.query_class:
+            url += reverse('work:search')
+        elif 'repository' == self.query_class:
+            url += reverse('institution:search')
+        elif 'audit_trail' == self.query_class:
+            url += reverse('audit:search')
+        else:
+            url += reverse(f'{self.query_class}:search')
+
+        params = {'sort_by': self.query_order_by,
+                  'num_record': self.query_entries_per_page}
+
+        if self.query_sort_descending:
+            params['order'] = 'desc'
+
+        for selection in self.selection.all():
+            params = params | { f'{selection.column_name}_lookup': selection.op_value,
+                                selection.column_name: selection.column_value}
+
+        return url + '?' + urlencode(params)
+
+
     class Meta:
-        db_table = 'cofk_user_saved_query'
+        db_table = 'cofk_user_saved_queries'
+        ordering = ['-creation_timestamp']
 
 
 class CofkUserSavedQuerySelection(models.Model):
     selection_id = models.AutoField(primary_key=True)
-    query = models.ForeignKey(CofkUserSavedQuery, models.DO_NOTHING)
+    query = models.ForeignKey(CofkUserSavedQuery, models.CASCADE, related_name='selection')
     column_name = models.CharField(max_length=100)
     column_value = models.CharField(max_length=500)
     op_name = models.CharField(max_length=100)

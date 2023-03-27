@@ -1,0 +1,73 @@
+{% extends "core/emlo_logined.html" %}
+{% load cl_filters %}
+{% block content %}
+    <h1>Saved Queries</h1>
+
+    {% include "core/component/messages.html" %}
+
+    {% if not object_list %}
+        <p>You have no saved queries.</p>
+    {% else %}
+
+    <p>Click the 'Run' button beside a query to load that selection back into the search screen.</p>
+    <p>You can change the query title to make it more meaningful if you wish. Click 'Edit' to change the title.</p>
+    <p>Click the 'Delete' button to remove a saved query from the list.</p>
+
+    {% endif %}
+
+    {% if paginator.count > 20 %}
+    <div class="result_count">
+        <h2>{{ page_obj|get_results_on_page }} out of {{ paginator.count | floatformat:'g' }} saved queries</h2>
+    </div>
+    {% endif %}
+
+    <!-- Upper pagination -->
+
+    {% include 'core/component/pagination.html' %}
+
+    <table>
+        <tr>
+            <th>Title</th>
+            <th>Created</th>
+            <th>Entity</th>
+            <th>Action</th>
+        </tr>
+
+    {% for saved_query in object_list %}
+        <!--<fieldset class="lookup_fieldset">
+            <legend>{{ saved_query.query_menu_item_name }}</legend>-->
+        <tr>
+            <td>
+                <form method="post" class="edit_forms">
+                {% csrf_token %}
+
+                <!--<label for="id_query_title_{{ saved_query.pk }}">Title:</label>
+                <input type="text" value="{{ saved_query.query_title }}" name="query_title"
+                 id="id_query_title_{{ c.pk }}">-->
+                <textarea name="query_title" class="no_border"
+                 id="id_query_title_{{ saved_query.pk }}">{{ saved_query.title }}</textarea>
+
+            </td>
+            <td><!--<label>Created: </label>-->
+                <p>{{ saved_query.creation_timestamp }}</p></td>
+            <td> {{ saved_query.query_class }}</td>
+            <td>
+                <input type="hidden" name="query_id" value="{{ saved_query.pk }}">
+
+                <button type="submit" class="btn inline_btn" name="save">Save</button>
+                <button type="button" class="btn inline_btn" onclick="window.open('{{ saved_query.url }}', '_blank').focus();">Run</button>
+                <button type="submit" class="btn inline_btn" name="delete">Delete</button>
+
+            </form>
+            </td>
+        </tr>
+    {% endfor %}
+    </table>
+
+    <!-- Lower pagination -->
+
+    {% include 'core/component/pagination.html' %}
+
+    {% include 'list/confirm_delete.html' %}
+
+{% endblock %}
