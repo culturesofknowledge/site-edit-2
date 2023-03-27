@@ -219,17 +219,18 @@ class PersonFFH(FullFormHandler):
             rel_type=constant.REL_TYPE_WAS_IN_LOCATION,
         )
 
-    def create_context(self):
+    def create_context(self, is_save_success=False):
         context = super().create_context()
         context.update(
             self.role_handler.create_context()
             | PersonFormDescriptor(self.person).create_context()
             | create_context_is_org_form(self.person.is_organisation)
+            | view_utils.create_is_save_success_context(is_save_success)
         )
         return context
 
-    def render_form(self, request):
-        return render(request, 'person/full_form.html', self.create_context())
+    def render_form(self, request, is_save_success=False):
+        return render(request, 'person/full_form.html', self.create_context(is_save_success=is_save_success))
 
 
 @login_required
@@ -237,6 +238,7 @@ def full_form(request, iperson_id):
     fhandler = PersonFFH(iperson_id, request_data=request.POST, request=request)
 
     # handle form submit
+    is_save_success = False
     if request.POST:
 
         # ----- validate
@@ -270,8 +272,9 @@ def full_form(request, iperson_id):
 
         # reload all form data for rendering
         fhandler.load_data(iperson_id, request_data=None)
+        is_save_success = view_utils.mark_callback_save_success(request)
 
-    return fhandler.render_form(request)
+    return fhandler.render_form(request, is_save_success=is_save_success)
 
 
 class PersonSearchView(LoginRequiredMixin, BasicSearchView):

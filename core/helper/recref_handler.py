@@ -81,6 +81,8 @@ class RecrefFormsetHandler:
     Handle form for *target* instance.
     * help for create formset
     * help for save target instance and create recref records
+    * for example, User can create or edit Comment and Resource instance in form
+         instead of relationship (recref)
     """
 
     def __init__(self, prefix, request_data,
@@ -114,7 +116,7 @@ class RecrefFormsetHandler:
     def save(self, parent, request):
         del_forms, saved_forms = iter_utils.split(
             (f for f in self.formset if f.has_changed()),
-            lambda f: f.cleaned_data['is_delete'],
+            lambda f: f.cleaned_data.get('is_delete', False),
         )
 
         # handle del
@@ -347,7 +349,7 @@ class TargetResourceFormsetHandler(RecrefFormsetHandler, ABC):
 class MultiRecrefHandler:
     """
     provide common workflow handle multi recref records
-    * create, delete , update record
+    * create, delete , update **recref** record instead of target instance
     * create form and formset
     """
 

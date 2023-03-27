@@ -30,9 +30,13 @@
                 {% include "core/component/form_descriptor.html" with descriptor=form_descriptor %}
 
                 <label>Original catalogue:</label>
-                <div class="catalogue-div">
-                    {% include "core/component/selectfilter.html" with select_field=catalogue_form.catalogue  datalist_field=catalogue_form.catalogue_list %}
-                </div>
+                {% if common_work_form %}
+                    <div class="catalogue-div">
+                        {% include "core/component/selectfilter.html" with select_field=common_work_form.catalogue  datalist_field=common_work_form.catalogue_list %}
+                    </div>
+
+                    {% include "core/component/common_checkbox.html" with field=common_work_form.work_to_be_deleted name='Work marked for deletion' is_normal_size=True %}
+                {% endif %}
 
                 <div class="row-no-margin">
                     {% include "work/component/tab_link.html" with name='Correspondents' vname='work:corr_form' iwork_id=iwork_id %}
@@ -57,7 +61,8 @@
                 </div>
 
 
-                {% include "core/component/actionbox.html" %}
+                {% include "core/component/actionbox_form.html" %}
+                {% include "core/component/close_if_save_success.html" with is_save_success=is_save_success %}
 
             </form>
 

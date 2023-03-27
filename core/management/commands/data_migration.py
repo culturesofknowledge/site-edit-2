@@ -146,8 +146,7 @@ class Command(BaseCommand):
                        password=options['password'],
                        database=options['database'],
                        host=options['host'],
-                       port=options['port'],
-                       include_audit=options['include_audit'], )
+                       port=options['port'], )
 
 
 def create_common_relation_col_name(table_name):
@@ -519,7 +518,7 @@ def create_check_fn_by_unique_together_model(model: Type[model_utils.ModelLike])
     return _fn
 
 
-def data_migration(user, password, database, host, port, include_audit=False):
+def data_migration(user, password, database, host, port):
     start_migrate = time.time()
     warnings.filterwarnings('ignore',
                             '.*DateTimeField .+ received a naive datetime .+ while time zone support is active.*')
@@ -605,9 +604,9 @@ def data_migration(user, password, database, host, port, include_audit=False):
     clone_rows_by_model_class(conn, CofkUnionLanguageOfWork, col_val_handler_fn_list=[_val_handler_language],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkUnionLanguageOfWork))
     clone_rows_by_model_class(conn, CofkUnionLanguageOfManifestation, col_val_handler_fn_list=[_val_handler_language],
-                              check_duplicate_fn=create_check_fn_by_unique_together_model(CofkUnionLanguageOfManifestation))
+                              check_duplicate_fn=create_check_fn_by_unique_together_model(
+                                  CofkUnionLanguageOfManifestation))
 
-    
     clone_rows_by_model_class(conn, CofkCollectWork,
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectWork),
                               col_val_handler_fn_list=[_val_handler_collect_work],
@@ -642,11 +641,6 @@ def data_migration(user, password, database, host, port, include_audit=False):
     CofkUnionAuditLiteral.objects.filter(audit_id__gt=max_audit_literal_id).delete()
     CofkUnionAuditRelationship.objects.filter(audit_id__gt=max_audit_relationship_id).delete()
     print('[END] remove all audit')
-
-    # clone audit
-    if include_audit:
-        print('[START] clone audit')
-        clone_rows_by_model_class(conn, CofkUnionAuditLiteral, query_size=50_000)
 
     conn.close()
 

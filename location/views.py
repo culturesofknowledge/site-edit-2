@@ -108,23 +108,25 @@ class LocationFFH(FullFormHandler):
         self.img_recref_handler = LocationImageRecrefHandler(request_data, request and request.FILES,
                                                              parent=self.loc)
 
-    def create_context(self):
+    def create_context(self, is_save_success=False):
         context = super().create_context()
         context.update(
             {
                 'loc_id': self.location_id,
             } | LocationFormDescriptor(self.loc).create_context()
+            | view_utils.create_is_save_success_context(is_save_success)
         )
         return context
 
-    def render_form(self, request):
-        return render(request, 'location/full_form.html', self.create_context())
+    def render_form(self, request, is_save_success=False):
+        return render(request, 'location/full_form.html', self.create_context(is_save_success=is_save_success))
 
 
 @login_required
 def full_form(request, location_id):
     fhandler = LocationFFH(location_id, request_data=request.POST, request=request)
 
+    is_save_success = False
     if request.method == 'POST':
 
         if fhandler.is_invalid():
@@ -134,11 +136,13 @@ def full_form(request, location_id):
         fhandler.loc.update_current_user_timestamp(request.user.username)
         fhandler.loc_form.save()
         fhandler.save_all_recref_formset(fhandler.loc_form.instance, request)
+        fhandler.img_recref_handler.save(fhandler.loc_form.instance, request)
 
         log.info(f'location [{location_id}] have been saved')
         fhandler.load_data(location_id, request_data=None)
+        is_save_success = view_utils.mark_callback_save_success(request)
 
-    return fhandler.render_form(request)
+    return fhandler.render_form(request, is_save_success=is_save_success)
 
 
 class LocationMergeChoiceView(LoginRequiredMixin, MergeChoiceViews):

@@ -244,3 +244,8 @@ CSRF_COOKIE_SECURE = False
 # export
 # root url for generate url in export
 EXPORT_ROOT_URL = 'http://localhost:8020'
+
+
+
+# Test
+SELENIUM_CHROME_DRIVER_PATH = ''

@@ -49,21 +49,36 @@ def create_test_user():
 
 
 class EmloSeleniumTestCase(StaticLiveServerTestCase):
+
+    @classmethod
+    def _get_selenium_driver(cls):
+        path_chrome_driver = settings.SELENIUM_CHROME_DRIVER_PATH
+        if path_chrome_driver:
+            # run selenium with your local browser
+            options = webdriver.ChromeOptions()
+            options.add_argument('--start-maximized')  # maximize browser window
+            browser_driver = webdriver.Chrome(path_chrome_driver, options=options)
+        else:
+            # run selenium with docker remote browser
+            options = webdriver.ChromeOptions()
+            options.add_argument("no-sandbox")
+            options.add_argument("--disable-gpu")
+            options.add_argument("--window-size=800,600")
+            options.add_argument("--disable-dev-shm-usage")
+            browser_driver = webdriver.Remote(
+                command_executor=f'http://{settings.SELENIUM_HOST_PORT}/wd/hub',
+                desired_capabilities=DesiredCapabilities.CHROME,
+                options=options,
+            )
+
+        return browser_driver
+
     @classmethod
     def setUpClass(cls):
         cls.host = settings.TEST_WEB_HOST
 
         super().setUpClass()
-        options = webdriver.ChromeOptions()
-        options.add_argument("no-sandbox")
-        options.add_argument("--disable-gpu")
-        options.add_argument("--window-size=800,600")
-        options.add_argument("--disable-dev-shm-usage")
-        cls.selenium = webdriver.Remote(
-            command_executor=f'http://{settings.SELENIUM_HOST_PORT}/wd/hub',
-            desired_capabilities=DesiredCapabilities.CHROME,
-            options=options,
-        )
+        cls.selenium = cls._get_selenium_driver()
         cls.selenium.maximize_window()  # avoid something is not clickable
         cls.selenium.implicitly_wait(10)
 

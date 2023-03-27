@@ -4,5 +4,9 @@
        class="{{ class_name }}"
         {% endif %}
 >
-    <small> {{ name }} </small>
+    {% if is_normal_size %}
+        {{ name }}
+    {% else %}
+        <small> {{ name }} </small>
+    {% endif %}
 </label>

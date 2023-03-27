@@ -28,7 +28,7 @@
                     {{ query_fieldset }}
                 {% endfor %}
 
-                {% include "core/component/actionbox.html" with submit_title='Search' action='reset' %}
+                {% include "core/component/actionbox_search.html" %}
             </aside>
 
             <div id="query-result" class="col col--3of4">
@@ -159,6 +159,23 @@
                 e.preventDefault();
                 return ;
             }
+        });
+
+
+        window.on_form_completed = function (data) {
+            location.reload()
+        }
+        $('.open-link-btn').each(function (index, ele) {
+            let btn_jqe = $(ele);
+            btn_jqe.mousedown(function (e){
+                e.preventDefault()
+                let url = btn_jqe.attr('url');
+                if (! url) {
+                    console.log(`url[${url}] not found in element -- ${ele}`)
+                    return ;
+                }
+                window.open(url).focus();
+            });
         });
 
     </script>

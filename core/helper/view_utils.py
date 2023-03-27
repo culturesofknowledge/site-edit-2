@@ -751,3 +751,21 @@ def load_merge_parameter(request_data, target_model_class):
         raise log_value_error(f'some other_models not found, [{other_models=}] [{merge_pk_list=}]')
 
     return selected_model, other_models
+
+
+def create_is_save_success_context(is_save_success) -> dict:
+    context = {}
+    if is_save_success:
+        context = {'is_save_success': True}
+    return context
+
+
+def mark_callback_save_success(request) -> bool:
+    callback_name = 'callback_if_save_success'
+    return request.POST.get(callback_name) == '1' or request.GET.get(callback_name) == '1'
+
+
+def append_callback_save_success_parameter(request, url):
+    if mark_callback_save_success(request):
+        url += '?callback_if_save_success=1'
+    return url

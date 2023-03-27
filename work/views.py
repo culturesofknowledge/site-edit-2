@@ -7,8 +7,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models
 from django.db.models import F
 from django.db.models.lookups import Exact
-from django.forms import ModelForm, BaseForm
+from django.forms import BaseForm
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
 from django.views import View
 
 from core import constant
@@ -34,9 +35,9 @@ from core.models import Recref, CofkLookupCatalogue
 from institution import inst_utils
 from location import location_utils
 from location.models import CofkUnionLocation
+from manifestation.manif_utils import create_manif_id
 from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, \
     CofkUnionLanguageOfManifestation, CofkManifImageMap
-from manifestation.manif_utils import create_manif_id
 from person import person_utils
 from person.models import CofkUnionPerson
 from work import work_utils
@@ -44,7 +45,7 @@ from work.forms import WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \
     ManifPersonRecrefAdapter, ScribeRelationChoices, \
     DetailsForm, WorkPersonRecrefAdapter, \
-    CatalogueForm, manif_type_choices, original_calendar_choices, CompactSearchFieldset, ExpandedSearchFieldset, \
+    CommonWorkForm, manif_type_choices, original_calendar_choices, CompactSearchFieldset, ExpandedSearchFieldset, \
     ManifPersonMRRForm, field_label_map
 from work.models import CofkWorkPersonMap, CofkUnionWork, CofkWorkCommentMap, CofkWorkResourceMap, \
     CofkUnionLanguageOfWork, \
@@ -81,38 +82,42 @@ class BasicWorkFFH(FullFormHandler):
 
         self.safe_work = self.work or CofkUnionWork()
 
-        self.catalogue_form = CatalogueForm(request_data, initial={
-            'catalogue': self.safe_work.original_catalogue_id
+        self.common_work_form = CommonWorkForm(request_data, initial={
+            'catalogue': self.safe_work.original_catalogue_id,
+            'work_to_be_deleted': self.safe_work.work_to_be_deleted,
         })
         catalogue_list = [('', None)] + [(c.catalogue_name, c.catalogue_code) for c in
                                          CofkLookupCatalogue.objects.all().order_by('catalogue_name')]
-        self.catalogue_form.fields['catalogue_list'].widget.choices = catalogue_list
-        self.catalogue_form.fields['catalogue'].widget.choices = [(i[1], i[0]) for i in catalogue_list]
+        self.common_work_form.fields['catalogue_list'].widget.choices = catalogue_list
+        self.common_work_form.fields['catalogue'].widget.choices = [(i[1], i[0]) for i in catalogue_list]
 
-    def create_context(self):
+    def create_context(self, is_save_success=False):
         context = super().create_context()
         context.update({
                            'iwork_id': self.request_iwork_id
-                       } | WorkFormDescriptor(self.work).create_context())
+                       } | WorkFormDescriptor(self.work).create_context()
+                       | view_utils.create_is_save_success_context(is_save_success)
+                       )
         return context
 
-    def render_form(self, request):
-        return render(request, self.template_name, self.create_context())
+    def render_form(self, request, is_save_success=False):
+        return render(request, self.template_name, self.create_context(is_save_success))
 
-    def save_work(self, request, work_form: ModelForm):
+    def save_work(self, request, work: CofkUnionWork):
         # ----- save work
-        work: CofkUnionWork = work_form.instance
-        log.debug(f'changed_data : {work_form.changed_data}')
         if not work.work_id:
             work.work_id = work_utils.create_work_id(work.iwork_id)
 
         # handle catalogue
-        self.catalogue_form.is_valid()
-        cat_code = self.catalogue_form.cleaned_data.get('catalogue')
+        self.common_work_form.is_valid()
+        cat_code = self.common_work_form.cleaned_data.get('catalogue')
         if cat_code and work.original_catalogue_id != cat_code:
             log.info('change original_catalogue_id from [{}] to [{}]'.format(
                 work.original_catalogue_id, cat_code))
             work.original_catalogue_id = cat_code
+
+        # handle work_to_be_deleted
+        work.work_to_be_deleted = self.common_work_form.cleaned_data.get('work_to_be_deleted', 0)
 
         if work.description != (cur_desc := work_utils.get_recref_display_name(work)):
             work.description = cur_desc
@@ -178,7 +183,7 @@ class PlacesFFH(BasicWorkFFH):
             log.debug('skip save places when no changed')
             return
 
-        work = self.save_work(request, self.places_form)
+        work = self.save_work(request, self.places_form.instance)
         self.save_all_recref_formset(work, request)
 
         self.origin_loc_handler.upsert_recref_if_field_exist(
@@ -213,7 +218,7 @@ class DatesFFH(BasicWorkFFH):
             log.debug('skip save dates when no changed')
             return
 
-        work = self.save_work(request, self.dates_form)
+        work = self.save_work(request, self.dates_form.instance)
         self.save_all_recref_formset(work, request)
         work_utils.clone_queryable_work(work, reload=True)
 
@@ -282,7 +287,7 @@ class CorrFFH(BasicWorkFFH):
             log.debug('skip save corr when no changed')
             return
 
-        work = self.save_work(request, self.corr_form)
+        work = self.save_work(request, self.corr_form.instance)
 
         # save selected recref
         create_work_person_map_if_field_exist(
@@ -399,8 +404,8 @@ class ManifFFH(BasicWorkFFH):
         self.img_recref_handler = ManifImageRecrefHandler(request_data, request and request.FILES,
                                                           parent=self.safe_manif)
 
-    def create_context(self):
-        context = super().create_context()
+    def create_context(self, is_save_success=False):
+        context = super().create_context(is_save_success=is_save_success)
         if self.manif:
             context['manif_id'] = self.manif.manifestation_id
 
@@ -427,10 +432,14 @@ class ManifFFH(BasicWorkFFH):
             log.info(f'del manif -- [{_manif_id}]')
             get_object_or_404(CofkUnionManifestation, pk=_manif_id).delete()
 
+        # handle common_work_form
+        if self.common_work_form.has_changed():
+            self.save_work(request, self.work)
+
         # handle save
         manif: CofkUnionManifestation = self.manif_form.instance
-        if not manif.manifestation_id and not (
-                self.manif_form.has_changed() or request.POST.getlist('lang_name')):
+        if not manif.manifestation_id \
+                and not (self.manif_form.has_changed() or request.POST.getlist('lang_name')):
             log.debug('ignore save new manif, if manif_form has no changed')
             return
 
@@ -483,6 +492,8 @@ class ResourcesFFH(BasicWorkFFH):
         if not self.is_any_changed():
             log.debug('skip save resources when no changed')
             return
+
+        self.save_work(request, self.work)
         self.save_all_recref_formset(self.work, request)
         work_utils.clone_queryable_work(self.work, reload=True)
 
@@ -543,8 +554,8 @@ class DetailsFFH(BasicWorkFFH):
 
         self.subject_handler = SubjectHandler(WorkSubjectRecrefAdapter(self.safe_work))
 
-    def create_context(self):
-        context: dict = super().create_context()
+    def create_context(self, is_save_success=False):
+        context: dict = super().create_context(is_save_success=is_save_success)
         context.update(self.subject_handler.create_context())
         return context
 
@@ -557,7 +568,7 @@ class DetailsFFH(BasicWorkFFH):
         if not self.has_changed(request):
             log.debug('skip save details when no changed')
             return
-        work = self.save_work(request, self.details_form)
+        work = self.save_work(request, self.details_form.instance)
 
         # language
         lang_utils.maintain_lang_records(self.lang_formset,
@@ -628,7 +639,9 @@ class BasicWorkFormView(LoginRequiredMixin, View):
         if fhandler.saved_work:
             iwork_id = fhandler.saved_work.iwork_id
 
-        return redirect(self.cur_vname, iwork_id=iwork_id)
+        url = reverse(self.cur_vname, args=[iwork_id])
+        url = view_utils.append_callback_save_success_parameter(request, url)
+        return redirect(url)
 
     def post(self, request, iwork_id=None, *args, **kwargs):
         fhandler = self.create_fhandler(request, iwork_id=iwork_id, *args, **kwargs)
@@ -639,7 +652,8 @@ class BasicWorkFormView(LoginRequiredMixin, View):
         return self.resp_after_saved(request, fhandler)
 
     def get(self, request, iwork_id=None, *args, **kwargs):
-        return self.create_fhandler(request, iwork_id, *args, **kwargs).render_form(request)
+        return self.create_fhandler(request, iwork_id, *args, **kwargs).render_form(
+            request, is_save_success=view_utils.mark_callback_save_success(request))
 
 
 class ManifView(BasicWorkFormView):
@@ -657,9 +671,10 @@ class ManifView(BasicWorkFormView):
         if not fhandler.manif_form.instance.manifestation_id:
             return redirect('work:manif_init', fhandler.request_iwork_id)
 
-        return redirect('work:manif_update',
-                        fhandler.manif_form.instance.work.iwork_id,
-                        fhandler.manif_form.instance.manifestation_id)
+        url = reverse('work:manif_update',
+                      args=[fhandler.request_iwork_id, fhandler.manif_form.instance.manifestation_id])
+        url = view_utils.append_callback_save_success_parameter(request, url)
+        return redirect(url)
 
 
 class CorrView(BasicWorkFormView):

@@ -1,0 +1,31 @@
+{% extends "core/component/actionbox_container.html" %}
+
+{% block content %}
+    <button class="sticky-btn inline_btn cancel" onclick="location.href='/'; return false;">Cancel</button>
+    <button type="submit" class="sticky-btn inline_btn save"> Save</button>
+    <button id="save_close_btn" type="submit" class="sticky-btn inline_btn save" style="display: none">
+        Save and close
+    </button>
+
+    <script>
+
+        $(() => {
+
+            if (window.opener && window.opener.on_form_completed ){
+                $('#save_close_btn').show()
+            }
+
+            $('#save_close_btn').on('click', function (e) {
+                e.preventDefault();
+                let form_jqe = $(e.target).closest('form')
+                form_jqe.append(
+                    $('<input type="hidden" name="callback_if_save_success" value="1">')
+                )
+                form_jqe.submit()
+            });
+
+        });
+
+    </script>
+
+{% endblock %}

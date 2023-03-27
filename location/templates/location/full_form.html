@@ -20,6 +20,7 @@
 {% endblock %}
 
 {% block content %}
+
     <div class="form-core-div">
         <div class="form-col-left toc-host"></div>
         <div class="form-col-right">
@@ -47,7 +48,8 @@
                 <!-- Images section -->
                 {% include "core/component/image_formset.html" with img_handler=img_handler %}
 
-                {% include "core/component/actionbox.html" %}
+                {% include "core/component/actionbox_form.html" %}
+                {% include "core/component/close_if_save_success.html" with is_save_success=is_save_success %}
 
             </form>
         </div>

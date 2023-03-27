@@ -2,6 +2,7 @@
 {% load static %}
 
 {% block more_section_content %}
+    {% include "core/component/close_if_save_success.html" with is_save_success=is_save_success %}
     <script src="/static/core/js/recref_service.js"></script>
     <fieldset id="header_known_loc">
         <legend id="header_geo_locations" class="toc-item">Known geographical locations</legend>

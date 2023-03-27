@@ -5,7 +5,7 @@ function create_fn_open_ref_pub(url) {
         window.on_quick_init_completed = function (data) {
             let textbox_id = $(e.target).closest('.ref-publication-row').attr('textbox_id')
             let target_ta = $('#' + textbox_id)
-            target_ta.text(target_ta.text() + ' ' + data.item_name)
+            target_ta.val(target_ta.val() + ' ' + data.item_name)
         }
     }
 }
@@ -19,6 +19,6 @@ $(() => {
         target_div.append( $('<button class="btn inline_btn copy_pub"> Copy</button>') )
 
     });
-    $('.create_pub').click(create_fn_open_ref_pub('/publication/quick_init'));
-    $('.copy_pub').click(create_fn_open_ref_pub('/publication/search?recref_mode=1'));
+    $('.create_pub').mousedown(create_fn_open_ref_pub('/publication/quick_init'));
+    $('.copy_pub').mousedown(create_fn_open_ref_pub('/publication/search?recref_mode=1'));
 });
