@@ -1,12 +1,12 @@
 import functools
 
 from django.db import models
+from django.db.models.expressions import RawSQL
 from django.utils.safestring import mark_safe
 
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
 from core.models import Recref
-
 
 SEQ_NAME_COFKUNIONPERSION__IPERSON_ID = 'cofk_union_person_iperson_id_seq'
 
@@ -14,9 +14,9 @@ SEQ_NAME_COFKUNIONPERSION__IPERSON_ID = 'cofk_union_person_iperson_id_seq'
 class CofkUnionPerson(models.Model, RecordTracker):
     person_id = models.CharField(primary_key=True, max_length=100)
     foaf_name = models.CharField(max_length=200)
-    skos_altlabel = models.TextField(blank=True, null=True) # Synonyms
-    skos_hiddenlabel = models.TextField(blank=True, null=True) # 'Other versions of name'
-    person_aliases = models.TextField(blank=True, null=True) # Difference between synonyms and aliases?
+    skos_altlabel = models.TextField(blank=True, null=True)  # Synonyms
+    skos_hiddenlabel = models.TextField(blank=True, null=True)  # 'Other versions of name'
+    person_aliases = models.TextField(blank=True, null=True)  # Difference between synonyms and aliases?
     date_of_birth_year = models.IntegerField(blank=True, null=True)
     date_of_birth_month = models.IntegerField(blank=True, null=True)
     date_of_birth_day = models.IntegerField(blank=True, null=True)
@@ -81,7 +81,8 @@ class CofkUnionPerson(models.Model, RecordTracker):
                                    through='work.CofkWorkPersonMap')
     roles = models.ManyToManyField(to='core.CofkUnionRoleCategory',
                                    through='CofkPersonRoleMap', related_name='person')
-    #related_people = models.ManyToManyField(to='CofkUnionPerson',
+
+    # related_people = models.ManyToManyField(to='CofkUnionPerson',
     #                                        through='CofkPersonPersonMap',
     #                                        through_fields=('person', 'related'))
 
@@ -96,7 +97,7 @@ class CofkUnionPerson(models.Model, RecordTracker):
         if self.person_aliases:
             names_and_roles += f'<p>~ Titles/roles: {self.person_aliases}</p>'
 
-        if (roles :=self.roles.all()).exists():
+        if (roles := self.roles.all()).exists():
             roles = ', '.join([r.role_category_desc for r in roles])
             names_and_roles += f'<p>~ Role types: {roles}</p>'
 
@@ -190,6 +191,7 @@ class CofkPersonRoleMap(Recref):
     class Meta(Recref.Meta):
         db_table = 'cofk_person_role_map'
 
+
 '''
 class CofkUnionPersonSummary(models.Model):
     iperson = models.OneToOneField(CofkUnionPerson, models.CASCADE,
@@ -207,5 +209,20 @@ class CofkUnionPersonSummary(models.Model):
         db_table = 'cofk_union_person_summary'
 '''
 
+
 def create_person_id(iperson_id) -> str:
     return f'cofk_union_person-iperson_id:{iperson_id}'
+
+
+def create_sql_work_count(rel_type_list):
+    return RawSQL("""
+    select count(*)
+    from cofk_union_work w
+    where exists( select 1
+                  from cofk_work_person_map wpm
+                  where wpm.work_id = w.work_id
+                    and wpm.person_id = cofk_union_person.person_id
+                    and wpm.relationship_type in %s
+                    limit 1
+              )
+    """, [tuple(rel_type_list)])

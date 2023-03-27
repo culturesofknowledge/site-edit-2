@@ -4,14 +4,14 @@ from typing import Callable, Iterable, Type, Any, NoReturn, TYPE_CHECKING
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models
-from django.db.models import F, Count, Q
+from django.db.models import F, Q
 from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual, Exact
 from django.forms import BaseForm
 from django.shortcuts import render, redirect, get_object_or_404
 
 from core import constant
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_BORN_IN_LOCATION, REL_TYPE_DIED_AT_LOCATION, \
-    REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_CREATED, REL_TYPE_SENT, REL_TYPE_SIGNED, REL_TYPE_MENTION, TRUE_CHAR
+    REL_TYPE_MENTION, TRUE_CHAR
 from core.export_data import cell_values, download_csv_utils
 from core.forms import CommentForm, PersonRecrefForm
 from core.helper import renderer_utils, view_utils, query_utils, recref_utils, form_utils
@@ -29,10 +29,11 @@ from person import person_utils
 from person.forms import PersonForm, GeneralSearchFieldset, PersonOtherRecrefForm, field_label_map, \
     search_gender_choices, search_person_or_group
 from person.models import CofkUnionPerson, CofkPersonPersonMap, create_person_id, \
-    CofkPersonCommentMap, CofkPersonResourceMap, CofkPersonImageMap
+    CofkPersonCommentMap, CofkPersonResourceMap, CofkPersonImageMap, create_sql_work_count
 from person.recref_adapter import PersonCommentRecrefAdapter, PersonResourceRecrefAdapter, PersonRoleRecrefAdapter, \
     ActivePersonRecrefAdapter, PassivePersonRecrefAdapter, PersonImageRecrefAdapter, PersonLocRecrefAdapter
 from person.view_components import PersonFormDescriptor
+from work.forms import AuthorRelationChoices, AddresseeRelationChoices
 
 if TYPE_CHECKING:
     from core.helper.view_utils import MergeChoiceContext
@@ -373,14 +374,12 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
                                    sort_by=None):
         queryset = model_class.objects.all()
 
-        annotate = {'sent': Count('works',
-                                  filter=Q(cofkworkpersonmap__relationship_type__in=[REL_TYPE_CREATED, REL_TYPE_SENT,
-                                                                                     REL_TYPE_SIGNED])),
-                    'recd': Count('works', filter=Q(cofkworkpersonmap__relationship_type=REL_TYPE_WAS_ADDRESSED_TO)),
-                    'mentioned': Count('works', filter=Q(cofkworkpersonmap__relationship_type=REL_TYPE_MENTION))
-                    }
-
-        annotate['all_works'] = annotate['sent'] + annotate['recd']
+        annotate = {
+            'sent': create_sql_work_count(AuthorRelationChoices.values),
+            'recd': create_sql_work_count(AddresseeRelationChoices.values),
+            'all_works': create_sql_work_count(AuthorRelationChoices.values + AddresseeRelationChoices.values),
+            'mentioned': create_sql_work_count([REL_TYPE_MENTION]),
+        }
 
         queryset = queryset.annotate(**annotate)
 
@@ -407,7 +406,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         queries.extend(
             query_utils.create_queries_by_lookup_field(request_data, self.search_fields, search_fields_maps)
         )
-        return self.create_queryset_by_queries(CofkUnionPerson, queries, sort_by=sort_by).distinct()
+        return self.create_queryset_by_queries(CofkUnionPerson, queries, sort_by=sort_by)
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
