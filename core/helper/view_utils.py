@@ -356,9 +356,10 @@ class BasicSearchView(ListView):
                                          query_entries_per_page=request.GET['num_record'])
 
         selections = []
+        all_search_fields = self.search_fields + list(self.search_field_fn_maps.keys())\
+                            + list(self.search_field_combines.keys())
 
-        for key in (key for key, value in request.GET.items() if key not in ['csrfmiddlewaretoken', '__form_action', 'recref_mode', 'order', 'sort_by', 'num_record']
-                                                                          and value != '' and '_lookup' not in key):
+        for key in (key for key, value in request.GET.items() if key in all_search_fields and value != ''):
             selections.append(CofkUserSavedQuerySelection(query=saved_query,
                                         column_name=key,
                                         op_value=request.GET[key + '_lookup'],
@@ -420,7 +421,7 @@ class DefaultSearchView(BasicSearchView):
 
     @property
     def search_field_combines(self) -> dict[str: List[str]]:
-        return []
+        return {}
 
     @property
     def query_fieldset_list(self) -> Iterable:

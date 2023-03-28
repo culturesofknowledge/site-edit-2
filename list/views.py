@@ -188,13 +188,6 @@ class SavedQueries(ListView):
     def get_queryset(self):
         return self.model.objects.all() # filter(username=self.request.user.username).all()
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        # Form to create new list object
-        context['form'] = self.form
-        return context
-
     def post(self, request, *args, **kwargs):
         pk_name = self.model._meta.pk.name
 
