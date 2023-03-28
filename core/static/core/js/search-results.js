@@ -242,13 +242,20 @@ function radialTransparentIfScrolledDown() {
     }
 }
 
+function reset_form(form) {
+    localStorage.clear();
+    location.href = '/' + entity;
+}
+
 $(function () {
     emlojs.selectable_service.setup_all()
     setup_merge_btn();
     setup_fieldset_toggle();
     setup_advanced_search_toggle();
+
     // If user changes search conditions on page > 1, and does a new search, the page attribute must be set to 1
-    if(document.getElementById('search_form').elements['page'] && document.getElementById('search_form').elements['page'].value != '') {
+    let page = document.getElementById('search_form').elements['page'];
+    if(page && page.value != '') {
         setup_discard_page_on_new_search();
     }
 
