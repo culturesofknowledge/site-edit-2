@@ -10,7 +10,7 @@
     {% else %}
 
     <p>Click the 'Run' button beside a query to load that selection back into the search screen.</p>
-    <p>You can change the query title to make it more meaningful if you wish. Click 'Edit' to change the title.</p>
+    <p>You can change the query title to make it more meaningful if you wish. Click 'Save' to change the title.</p>
     <p>Click the 'Delete' button to remove a saved query from the list.</p>
 
     {% endif %}
@@ -34,21 +34,15 @@
         </tr>
 
     {% for saved_query in object_list %}
-        <!--<fieldset class="lookup_fieldset">
-            <legend>{{ saved_query.query_menu_item_name }}</legend>-->
         <tr>
             <td>
                 <form method="post" class="edit_forms">
                 {% csrf_token %}
-
-                <!--<label for="id_query_title_{{ saved_query.pk }}">Title:</label>
-                <input type="text" value="{{ saved_query.query_title }}" name="query_title"
-                 id="id_query_title_{{ c.pk }}">-->
                 <textarea name="query_title" class="no_border"
                  id="id_query_title_{{ saved_query.pk }}">{{ saved_query.title }}</textarea>
 
             </td>
-            <td><!--<label>Created: </label>-->
+            <td>
                 <p>{{ saved_query.creation_timestamp }}</p></td>
             <td> {{ saved_query.query_class }}</td>
             <td>
