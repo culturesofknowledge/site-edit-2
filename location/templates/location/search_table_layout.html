@@ -26,7 +26,8 @@
     <tbody>
 
     {% for r in search_results %}
-        <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}" entry_id="{{ r.location_id }}">
+        <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}"
+            entry_id="{{ r.location_id }}">
             <td>
                 {{ r.location_name }}
             </td>
@@ -39,19 +40,28 @@
                 {% endif %}
             </td>
             <td>
-                <a href="{% url 'work:search' %}?places_from_searchable={{ r.location_name }}&places_from_searchable_lookup=contains" class="search_link" target="_blank">
-                    {{ r.sent }}
-                </a>
+                {% if r.sent %}
+                    <a href="{% url 'work:search' %}?location_sent_pk={{ r.location_id }}" class="search_link"
+                       target="_blank">
+                        {{ r.sent }}
+                    </a>
+                {% endif %}
             </td>
             <td>
-                <a href="{% url 'work:search' %}?places_to_searchable={{ r.location_name }}&places_to_searchable_lookup=contains" class="search_link" target="_blank">
-                    {{ r.recd }}
-                </a>
+                {% if r.recd %}
+                    <a href="{% url 'work:search' %}?location_rec_pk={{ r.location_id }}" class="search_link"
+                       target="_blank">
+                        {{ r.recd }}
+                    </a>
+                {% endif %}
             </td>
             <td>
-                <a href="{% url 'work:search' %}?origin_or_destination={{ r.location_name }}&origin_or_destination_lookup=contains" class="search_link" target="_blank">
-                    {{ r.all_works }}
-                </a>
+                {% if r.all_works %}
+                    <a href="{% url 'work:search' %}?location_sent_rec_pk={{ r.location_id }}" class="search_link"
+                       target="_blank">
+                        {{ r.all_works }}
+                    </a>
+                {% endif %}
             </td>
             <td>
                 {% include "core/component/search_table_layout/comment_result.html" with comments=r.comments %}

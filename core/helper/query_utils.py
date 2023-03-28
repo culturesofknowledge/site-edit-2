@@ -2,7 +2,7 @@ import functools
 import logging
 from typing import Callable, Iterable, Union
 
-from django.db.models import F
+from django.db.models import F, Exists, OuterRef
 from django.db.models import Q, Lookup, lookups
 from django.db.models.lookups import GreaterThanOrEqual, LessThanOrEqual
 
@@ -56,7 +56,7 @@ def create_queries_by_field_fn_maps(field_fn_maps: dict, data: dict) -> list[Q]:
 
 
 def create_queries_by_lookup_field(request_data: dict,
-                                   search_field_names: Union[list[str]],
+                                   search_field_names: list[str],
                                    search_fields_maps: dict[str, Iterable[str]] = None
                                    ) -> Iterable[Q]:
     for field_name in search_field_names:
@@ -127,3 +127,12 @@ def create_from_to_datetime(from_field_name, to_field_name, db_field_name, conve
         to_field_name: lambda _, v: LessThanOrEqual(
             F(db_field_name), convert_fn(v)),
     }
+
+
+def create_exists_by_mode(model_class, queries):
+    return Exists(
+        model_class.objects.filter(
+            all_queries_match(queries),
+            pk=OuterRef('pk'),
+        )
+    )

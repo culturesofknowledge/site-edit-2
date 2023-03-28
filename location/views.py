@@ -5,7 +5,7 @@ from typing import Iterable, Union, Type, Callable
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models
-from django.db.models import Count, Q
+from django.db.models import Q
 from django.forms import BaseForm, BaseFormSet
 from django.shortcuts import render, get_object_or_404, redirect
 
@@ -28,6 +28,7 @@ from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocat
 from location.recref_adapter import LocationCommentRecrefAdapter, LocationResourceRecrefAdapter, \
     LocationImageRecrefAdapter
 from location.view_components import LocationFormDescriptor
+from location.models import create_sql_count_work_by_location
 
 log = logging.getLogger(__name__)
 FormOrFormSet = Union[BaseForm, BaseFormSet]
@@ -219,16 +220,19 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
 
     def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q],
                                    sort_by=None):
-        queryset = model_class.objects.all()
-        annotate = {'sent': Count('works', filter=Q(cofkworklocationmap__relationship_type=REL_TYPE_WAS_SENT_FROM)),
-                    'recd': Count('works', filter=Q(cofkworklocationmap__relationship_type=REL_TYPE_WAS_SENT_TO)),
-                    }
-        annotate['all_works'] = annotate['sent'] + annotate['recd']
+        queryset = model_class.objects
+        annotate = {
+            'sent': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_FROM]),
+            'recd': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_TO]),
+            'all_works': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
+        }
 
         queryset = queryset.annotate(**annotate)
 
         if queries:
-            queryset = queryset.filter(query_utils.all_queries_match(queries))
+            queryset = queryset.filter(
+                query_utils.create_exists_by_mode(model_class, queries)
+            )
 
         if sort_by:
             queryset = queryset.order_by(sort_by)
@@ -250,7 +254,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
             query_utils.create_queries_by_lookup_field(request_data, self.search_fields, search_fields_maps)
         )
 
-        return self.create_queryset_by_queries(CofkUnionLocation, queries, sort_by=sort_by).distinct()
+        return self.create_queryset_by_queries(CofkUnionLocation, queries, sort_by=sort_by)
 
     @property
     def entity(self) -> str:

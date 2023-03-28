@@ -86,28 +86,28 @@
             </td>
             <td>
                 {% if r.sent > 0 %}
-                <a href="{% url 'work:search' %}?creators_searchable={{ r.foaf_name }}&creators_searchable_lookup=contains" class="search_link" target="_blank">
+                <a href="{% url 'work:search' %}?person_sent_pk={{ r.person_id }}" class="search_link" target="_blank">
                     {{ r.sent }}
                 </a>
                 {% endif %}
             </td>
             <td>
                 {% if r.recd > 0 %}
-                <a href="{% url 'work:search' %}?addressees_searchable={{ r.foaf_name }}&addressees_searchable_lookup=contains" class="search_link" target="_blank">
+                <a href="{% url 'work:search' %}?person_rec_pk={{ r.person_id }}" class="search_link" target="_blank">
                     {{ r.recd }}
                 </a>
                 {% endif %}
             </td>
             <td>
                 {% if r.all_works > 0 %}
-                <a href="{% url 'work:search' %}?sender_or_recipient={{ r.foaf_name }}&sender_or_recipient_lookup=contains" class="search_link" target="_blank">
+                    <a href="{% url 'work:search' %}?person_sent_rec_pk={{ r.person_id }}" class="search_link" target="_blank">
                     {{ r.all_works }}
                 </a>
                 {% endif %}
             </td>
             <td>
                 {% if r.mentioned > 0 %}
-                <a href="{% url 'work:search' %}?people_mentioned={{ r.foaf_name }}&people_mentioned_lookup=contains" class="search_link" target="_blank">
+                    <a href="{% url 'work:search' %}?person_mention_pk={{ r.person_id }}" class="search_link" target="_blank">
                     {{ r.mentioned }}
                 </a>
                 {% endif %}
