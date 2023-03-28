@@ -623,9 +623,6 @@ def data_migration(user, password, database, host, port):
     clone_rows_by_model_class(conn, CofkUnionQueryableWork, seq_name=None)
     clone_rows_by_model_class(conn, CofkUnionLanguageOfWork, col_val_handler_fn_list=[_val_handler_language],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkUnionLanguageOfWork))
-    clone_rows_by_model_class(conn, CofkUnionLanguageOfManifestation, col_val_handler_fn_list=[_val_handler_language],
-                              check_duplicate_fn=create_check_fn_by_unique_together_model(
-                                  CofkUnionLanguageOfManifestation))
 
     clone_rows_by_model_class(conn, CofkCollectWork,
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectWork),
@@ -651,6 +648,9 @@ def data_migration(user, password, database, host, port):
     clone_rows_by_model_class(conn, CofkCollectManifestation,
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectManifestation),
                               col_val_handler_fn_list=[_val_handler_collect_manifestation])
+    clone_rows_by_model_class(conn, CofkUnionLanguageOfManifestation, col_val_handler_fn_list=[_val_handler_language],
+                              check_duplicate_fn=create_check_fn_by_unique_together_model(
+                                  CofkUnionLanguageOfManifestation))
 
     # clone recref records
     bounded_pairs = (b.pair for b in recref_utils.find_all_recref_bounded_data())
