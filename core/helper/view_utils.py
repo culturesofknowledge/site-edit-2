@@ -350,7 +350,7 @@ class BasicSearchView(ListView):
     def save_query(self, request, *args, **kwargs):
 
         saved_query = CofkUserSavedQuery(username=self.request.user,
-                                         query_class=self.request.resolver_match.app_name,
+                                         query_class=self.app_name,
                                          query_order_by=request.GET['sort_by'],
                                          query_sort_descending=1 if request.GET['order'] else 0,
                                          query_entries_per_page=request.GET['num_record'])

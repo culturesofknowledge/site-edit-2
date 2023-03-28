@@ -8,12 +8,13 @@
 import functools
 
 from django.db import models
-from django.urls import reverse
+from django.urls import reverse, resolve
 from django.utils.http import urlencode
 
 from core.form_label_maps import field_label_map
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
+from core.helper.url_utils import VNAME_SEARCH
 
 SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID = 'iso_639_language_codes_id_seq'
 
@@ -243,6 +244,15 @@ class CofkLookupCatalogue(models.Model):
         db_table = 'cofk_lookup_catalogue'
         ordering = ['catalogue_name']
 
+def get_sort_by_label(app_name: str, query_order_by: str, pk) -> str:
+    url = reverse(f'{app_name}:{VNAME_SEARCH}')
+    view = resolve(url).func.view_class()
+    label = [c[1] for c in view.sort_by_choices if c[0] == query_order_by]
+
+    if label:
+        return label[0]
+
+
 
 class CofkUserSavedQuery(models.Model):
     query_id = models.AutoField(primary_key=True)
@@ -272,11 +282,8 @@ class CofkUserSavedQuery(models.Model):
         else:
             title += ''.join(selections)
 
-        if self.query_class in field_label_map:
-            ref = field_label_map[self.query_class]
-
-            if self.query_order_by in ref:
-                title += f'Data is sorted by: {ref[self.query_order_by]}'
+        if query_order_by := get_sort_by_label(self.query_class, self.query_order_by, self.pk):
+            title += f'Data is sorted by: {query_order_by}'
         else:
             title += f'Data is sorted by: {self.query_order_by}'
 
