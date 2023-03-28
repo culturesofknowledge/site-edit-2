@@ -348,12 +348,14 @@ class BasicSearchView(ListView):
         return super().get(request, *args, **kwargs)
 
     def save_query(self, request, *args, **kwargs):
+        sort_descending = 1 if request.GET.get('order', self.default_order) == 'desc' else 0
 
         saved_query = CofkUserSavedQuery(username=self.request.user,
                                          query_class=self.app_name,
-                                         query_order_by=request.GET['sort_by'],
-                                         query_sort_descending=1 if request.GET['order'] else 0,
-                                         query_entries_per_page=request.GET['num_record'])
+                                         query_order_by=request.GET.get('sort_by', self.get_sort_by(True)),
+                                         query_sort_descending=sort_descending,
+                                         query_entries_per_page=request.GET.get('num_record', str(self.paginate_by)),
+                                         )
 
         selections = []
         all_search_fields = self.search_fields + list(self.search_field_fn_maps.keys())\
