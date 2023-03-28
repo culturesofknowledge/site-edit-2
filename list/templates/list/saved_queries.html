@@ -43,8 +43,11 @@
 
             </td>
             <td>
-                <p>{{ saved_query.creation_timestamp }}</p></td>
-            <td> {{ saved_query.query_class }}</td>
+                {{ saved_query.creation_timestamp }}
+            </td>
+            <td>
+                {{ saved_query.query_class|get_entity }}
+            </td>
             <td>
                 <input type="hidden" name="query_id" value="{{ saved_query.pk }}">
 
