@@ -73,6 +73,7 @@ class BasicSearchView(ListView):
     template_name = 'core/basic_search_page.html'
     context_object_name = 'records'
 
+    @property
     def search_field_label_map(self) -> dict:
         """
         A dictionary mapping between the model field name and the labelling of that field.
