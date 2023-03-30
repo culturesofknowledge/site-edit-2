@@ -186,7 +186,7 @@ class SavedQueries(ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        return self.model.objects.all() # filter(username=self.request.user.username).all()
+        return self.model.objects.filter(username=self.request.user.username).all()
 
     def post(self, request, *args, **kwargs):
         pk_name = self.model._meta.pk.name
