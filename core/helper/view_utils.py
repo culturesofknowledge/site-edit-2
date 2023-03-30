@@ -80,8 +80,8 @@ class BasicSearchView(ListView):
 
         Only used by self.simplified_query.
         """
-        if self.request.resolver_match.app_name in field_label_map:
-            return field_label_map[self.request.resolver_match.app_name]
+        if self.app_name in field_label_map:
+            return field_label_map[self.app_name]
 
         return {}
 

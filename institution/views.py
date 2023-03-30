@@ -95,7 +95,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
         queries.extend(
             query_utils.create_queries_by_lookup_field(request_data, self.search_fields, self.search_field_combines)
         )
-        return self.create_queryset_by_queries(CofkUnionInstitution, queries, sort_by=sort_by).distinct()
+        return self.create_queryset_by_queries(CofkUnionInstitution, queries, sort_by=sort_by)
 
     @property
     def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:

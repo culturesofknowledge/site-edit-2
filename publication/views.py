@@ -59,7 +59,7 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
         queries.extend(
             query_utils.create_queries_by_lookup_field(self.request_data, self.search_fields)
         )
-        return self.create_queryset_by_queries(CofkUnionPublication, queries).distinct()
+        return self.create_queryset_by_queries(CofkUnionPublication, queries)
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:

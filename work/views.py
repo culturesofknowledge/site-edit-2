@@ -991,7 +991,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         queries.extend(
             query_utils.create_queries_by_lookup_field(request_data, self.search_fields, search_fields_maps)
         )
-        return self.create_queryset_by_queries(CofkUnionQueryableWork, queries, sort_by=sort_by).distinct()
+        return self.create_queryset_by_queries(CofkUnionQueryableWork, queries, sort_by=sort_by)
 
     @property
     def simplified_query(self) -> list[str]:
