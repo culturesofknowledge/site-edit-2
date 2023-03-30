@@ -28,6 +28,10 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
         return 'publication,publications'
 
     @property
+    def default_order(self) -> str:
+        return 'asc'
+
+    @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
             ('publication_details', 'Publication details',),

@@ -914,8 +914,8 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
-            ('addressees_for_display', 'Addressee',),
-            ('creators_for_display', 'Author/sender',),
+            ('addressees_searchable', 'Addressee',),
+            ('creators_searchable', 'Author/sender',),
             ('date_of_work_std', 'Date for ordering (in original calendar)',),
             ('date_of_work_as_marked', 'Date of work as marked',),
             ('date_of_work_day', 'Day',),
