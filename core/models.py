@@ -244,8 +244,7 @@ class CofkLookupCatalogue(models.Model):
         db_table = 'cofk_lookup_catalogue'
         ordering = ['catalogue_name']
 
-def get_sort_by_label(app_name: str, query_order_by: str, pk) -> str:
-    url = reverse(f'{app_name}:{VNAME_SEARCH}')
+def get_sort_by_label(url: str, query_order_by: str, pk) -> str:
     view = resolve(url).func.view_class()
     label = [c[1] for c in view.sort_by_choices if c[0] == query_order_by]
 
@@ -268,6 +267,21 @@ class CofkUserSavedQuery(models.Model):
     creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
 
     @property
+    def base_url(self) -> str | None:
+        if self.query_class == 'contributor' or self.query_class == 'language':
+            return
+
+        if 'work' in self.query_class:
+            return reverse(f'work:{VNAME_SEARCH}')
+        elif 'repository' == self.query_class:
+            return reverse(f'institution:{VNAME_SEARCH}')
+        elif 'audit_trail' == self.query_class:
+            return reverse(f'audit:{VNAME_SEARCH}')
+
+        return reverse(f'{self.query_class}:{VNAME_SEARCH}')
+
+
+    @property
     def title(self):
         title = 'Selection: '
 
@@ -282,7 +296,7 @@ class CofkUserSavedQuery(models.Model):
         else:
             title += ''.join(selections)
 
-        if query_order_by := get_sort_by_label(self.query_class, self.query_order_by, self.pk):
+        if query_order_by := get_sort_by_label(self.base_url, self.query_order_by, self.pk):
             title += f'Data is sorted by: {query_order_by}'
         else:
             title += f'Data is sorted by: {self.query_order_by}'
@@ -296,20 +310,6 @@ class CofkUserSavedQuery(models.Model):
 
     @property
     def url(self):
-        if self.query_class == 'contributor' or self.query_class == 'language':
-            return
-
-        url = ''
-
-        if 'work' in self.query_class:
-            url += reverse('work:search')
-        elif 'repository' == self.query_class:
-            url += reverse('institution:search')
-        elif 'audit_trail' == self.query_class:
-            url += reverse('audit:search')
-        else:
-            url += reverse(f'{self.query_class}:search')
-
         params = {'sort_by': self.query_order_by,
                   'num_record': self.query_entries_per_page}
 
@@ -320,7 +320,7 @@ class CofkUserSavedQuery(models.Model):
             params = params | { f'{selection.column_name}_lookup': selection.op_value,
                                 selection.column_name: selection.column_value}
 
-        return url + '?' + urlencode(params)
+        return self.base_url + '?' + urlencode(params)
 
 
     class Meta:
