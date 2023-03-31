@@ -944,6 +944,10 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         return 2
 
     @property
+    def default_order(self):
+        return 'asc'
+
+    @property
     def search_fields(self) -> list[str]:
         # "Drawer" is a special field in queryable work specific to a so-called Selden work
         # it will not have a form field but can be searched on nonetheless
