@@ -32,3 +32,19 @@ def get_checked_form_url_by_pk(pk):
 
 def role_name_str(person: CofkUnionPerson, delimiter=', ') -> str:
     return delimiter.join(r.role_category_desc for r in person.roles.all())
+
+
+def get_name_details(person: CofkUnionPerson) -> list[str]:
+    name_details = [person.foaf_name]
+
+    if person.skos_altlabel:
+        name_details.append(f"~ Synonyms: {person.skos_altlabel}")
+
+    if person.person_aliases:
+        name_details.append(f"~ Titles/roles: {person.person_aliases}")
+
+    if (roles := person.roles.all()).exists():
+        roles = ', '.join(r.role_category_desc for r in roles)
+        name_details.append(f"~ Role types: {roles}")
+
+    return name_details

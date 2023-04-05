@@ -74,17 +74,7 @@ def person_roles(obj: CofkUnionPerson) -> str:
 
 
 def person_names_titles_roles(obj: CofkUnionPerson) -> str:
-    join_list = []
-    if obj.foaf_name:
-        join_list.append(obj.foaf_name)
-
-    if obj.person_aliases:
-        join_list.append(obj.person_aliases)
-
-    if role := person_roles(obj):
-        join_list.append(role)
-
-    return ' ~ '.join(join_list)
+    return ''.join(person_utils.get_name_details(obj))
 
 
 def person_other_details(obj: CofkUnionPerson, type_name_cache: dict = None) -> str:
