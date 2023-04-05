@@ -166,14 +166,14 @@ $('.searchcontrol').each((i, searchcontrol) => {
 function setup_discard_page_on_new_search() {
     document.getElementById('search_form').addEventListener('change', function(e) {
         // No need to mark if search controls change
-        if($(e.srcElement).attr('class') != 'searchcontrol')   {
-            e.srcElement.dataset['changed'] =  true;
+        if($(e.target).attr('class') != 'searchcontrol')   {
+            e.target.dataset['changed'] =  true;
         }
     });
 
     document.getElementById('search_form').addEventListener('submit', function(e) {
-        if(Array.from(e.srcElement.elements).some((a) => a.dataset['changed'] == 'true'))  {
-            e.srcElement.elements['page'].value = 1;
+        if(Array.from(e.target.elements).some((a) => a.dataset['changed'] == 'true'))  {
+            e.target.elements['page'].value = 1;
         }
    });
 
