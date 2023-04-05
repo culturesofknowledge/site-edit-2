@@ -272,7 +272,7 @@ $(function () {
 
 $(window).on('scroll', radialTransparentIfScrolledDown);
 $(window).on('submit', function(e) {
-        if(event.submitter.value == 'save_query')  {
+        if(event.submitter && event.submitter.value == 'save_query')  {
             return confirm('Are you sure you want to save this query?');
         }
 });
