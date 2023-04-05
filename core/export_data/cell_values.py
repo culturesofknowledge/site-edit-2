@@ -6,6 +6,7 @@ from collections.abc import Iterable
 
 from django.conf import settings
 
+from core import constant
 from core.helper import general_model_utils
 from core.models import CofkUnionComment, CofkUnionResource
 from person import person_utils
@@ -60,12 +61,9 @@ def simple_datetime(dt) -> str:
 
 
 def year_month_day(year, month, day) -> str:
-    if year and not month and not day:
-        return str(year)
-
-    if not year and not month and not day:
-        return ''
-
+    year = year or constant.DEFAULT_YEAR
+    month = month or constant.DEFAULT_MONTH
+    day = day or constant.DEFAULT_DAY
     return f'{year}-{month}-{day}'
 
 
