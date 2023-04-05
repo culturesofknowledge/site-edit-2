@@ -330,8 +330,8 @@ class LocationCsvHeaderValues(HeaderValues):
             obj.element_6_eg_country,
             obj.element_7_eg_empire,
             download_csv_utils.join_image_lines(obj.images.iterator()),
-            cell_values.simple_datetime(obj.change_timestamp),
             obj.change_user,
+            cell_values.simple_datetime(obj.change_timestamp),
         )
         return values
 
