@@ -13,6 +13,7 @@ from person.models import CofkUnionPerson
 import collections
 
 DEFAULT_DELIMITER = '; '
+DELIMITER_SHACKLE = ' ~ '
 
 
 def common_join_text(text_list: Iterable, delimiter=DEFAULT_DELIMITER) -> str:
@@ -49,10 +50,9 @@ def resource_str(obj: CofkUnionResource) -> str:
     return f'{obj.resource_url} ({obj.resource_name})'
 
 
-def resource_str_by_list(resource_list: Iterable[CofkUnionResource],
-                         delimiter=DEFAULT_DELIMITER) -> str:
+def resource_str_by_list(resource_list: Iterable[CofkUnionResource]) -> str:
     return common_join_text((resource_str(r) for r in resource_list),
-                            delimiter=delimiter)
+                            delimiter=DELIMITER_SHACKLE)
 
 
 def simple_datetime(dt) -> str:
