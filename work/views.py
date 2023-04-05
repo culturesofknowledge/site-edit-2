@@ -1135,7 +1135,7 @@ class WorkCsvHeaderValues(HeaderValues):
             obj.flags,
             obj.images,
             obj.manifestations_for_display,
-            obj.related_resources,
+            cell_values.resource_str_by_list(obj.work.cofkworkresourcemap_set.iterator()),
             obj.language_of_work,
             obj.subjects,
             obj.abstract,
