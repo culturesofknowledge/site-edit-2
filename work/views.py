@@ -1142,7 +1142,7 @@ class WorkCsvHeaderValues(HeaderValues):
             obj.people_mentioned,
             obj.keywords,
             obj.general_notes,
-            obj.original_catalogue,
+            obj.work.original_catalogue and obj.work.original_catalogue.catalogue_name,
             obj.accession_code,
             obj.work_to_be_deleted,
             obj.iwork_id,
