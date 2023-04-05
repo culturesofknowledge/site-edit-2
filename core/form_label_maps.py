@@ -84,5 +84,12 @@ field_label_map = {
         'accession_code': 'Source of record',
         'people_mentioned': 'People mentioned',
         'origin_as_marked': 'Origin as marked',
+        'destination_as_marked': 'Destination as marked',
+        'subjects': 'Subjects',
+        'keywords': 'Keywords',
+        'drawer': 'Drawer',
         'work_id': 'Work ID',}
 }
+
+# "Drawer" under work is a special field in queryable work specific to a so-called Selden work
+# it does have a form field but can be searched on nonetheless
