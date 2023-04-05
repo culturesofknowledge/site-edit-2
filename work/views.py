@@ -1122,7 +1122,7 @@ class WorkCsvHeaderValues(HeaderValues):
             obj.date_of_work_std_year,
             obj.date_of_work_std_month,
             obj.date_of_work_std_day,
-            obj.work.original_calendar,
+            obj.work.date_of_work_std_gregorian,
             obj.creators_for_display,
             obj.notes_on_authors,
             obj.places_from_for_display,
