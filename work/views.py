@@ -1135,7 +1135,7 @@ class WorkCsvHeaderValues(HeaderValues):
             obj.destination_as_marked,
             obj.flags,
             obj.images,
-            ', '.join(' '.join(manif_utils.get_manif_details(m))
+            ' -- '.join(' '.join(manif_utils.get_manif_details(m))
                       for m in obj.work.cofkunionmanifestation_set.iterator()),
             cell_values.resource_str_by_list(wrm.resource for wrm in obj.work.cofkworkresourcemap_set.iterator()),
             obj.language_of_work,

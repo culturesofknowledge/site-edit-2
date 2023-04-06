@@ -35,6 +35,10 @@ def get_manif_details(manif: CofkUnionManifestation) -> list[str]:
     if manif.id_number_or_shelfmark:
         first_line += manif.id_number_or_shelfmark
 
+    if manif.printed_edition_details:
+        first_line += f' {manif.printed_edition_details}'
+
+
     manifestation_summary = [first_line]
     if manif.manifestation_incipit:
         manifestation_summary.append(f' ~ Incipit: {manif.manifestation_incipit}.')
