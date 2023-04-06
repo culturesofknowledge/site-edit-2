@@ -107,10 +107,10 @@ class CofkUnionManifestation(models.Model, RecordTracker):
         return self.cofkmanifinstmap_set.filter(relationship_type=REL_TYPE_STORED_IN).first()
 
     def find_enclosed_in(self):
-        return self.manif_from_set.filter(relationship_type=REL_TYPE_ENCLOSED_IN).all()
+        return (mm.manif_to for mm in self.manif_from_set.filter(relationship_type=REL_TYPE_ENCLOSED_IN).iterator())
 
     def find_encloses(self):
-        return self.manif_to_set.filter(relationship_type=REL_TYPE_ENCLOSED_IN).all()
+        return (mm.manif_from for mm in self.manif_to_set.filter(relationship_type=REL_TYPE_ENCLOSED_IN).iterator())
 
     def to_string(self):
         from manifestation import manif_utils
