@@ -92,7 +92,7 @@ class CofkUnionPerson(models.Model, RecordTracker):
         names_and_roles = ''.join(f'<p>{s}</p>' for s in person_utils.get_name_details(self))
         return mark_safe(names_and_roles)
 
-    def to_string(self, searchable=False) -> str:
+    def to_string(self, is_details=False) -> str:
         """
         Used by work.creators_for_display and work.addressees_for_display
         """
@@ -114,7 +114,7 @@ class CofkUnionPerson(models.Model, RecordTracker):
         else:
             person = str(self.foaf_name)
 
-        if not searchable:
+        if not is_details:
             return person
 
         if self.skos_altlabel:

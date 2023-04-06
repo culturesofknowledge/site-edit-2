@@ -137,9 +137,9 @@ def clone_queryable_work(work: CofkUnionWork, reload=False, _return=False):
     queryable_work.iwork_id = work.iwork_id
     # People
     queryable_work.creators_for_display = work.queryable_people(REL_TYPE_CREATED)
-    queryable_work.creators_searchable = work.queryable_people(REL_TYPE_CREATED, searchable=True)
+    queryable_work.creators_searchable = work.queryable_people(REL_TYPE_CREATED, is_details=True)
     queryable_work.addressees_for_display = work.queryable_people(REL_TYPE_WAS_ADDRESSED_TO)
-    queryable_work.addressees_searchable = work.queryable_people(REL_TYPE_WAS_ADDRESSED_TO, searchable=True)
+    queryable_work.addressees_searchable = work.queryable_people(REL_TYPE_WAS_ADDRESSED_TO, is_details=True)
 
     # Places
     queryable_work.places_from_for_display = work.places_from_for_display
