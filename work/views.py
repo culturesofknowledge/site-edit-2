@@ -35,6 +35,7 @@ from core.models import Recref, CofkLookupCatalogue
 from institution import inst_utils
 from location import location_utils
 from location.models import CofkUnionLocation
+from manifestation import manif_utils
 from manifestation.manif_utils import create_manif_id
 from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, \
     CofkUnionLanguageOfManifestation, CofkManifImageMap
@@ -1134,7 +1135,8 @@ class WorkCsvHeaderValues(HeaderValues):
             obj.destination_as_marked,
             obj.flags,
             obj.images,
-            obj.manifestations_for_display,
+            ', '.join(' '.join(manif_utils.get_manif_details(m))
+                      for m in obj.work.cofkunionmanifestation_set.iterator()),
             cell_values.resource_str_by_list(obj.work.cofkworkresourcemap_set.iterator()),
             obj.language_of_work,
             obj.subjects,

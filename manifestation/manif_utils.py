@@ -1,4 +1,5 @@
 from core.helper import model_utils
+from core.models import CofkLookupDocumentType
 from manifestation.models import CofkUnionManifestation
 
 
@@ -12,3 +13,39 @@ def get_recref_target_id(manif: CofkUnionManifestation):
 
 def create_manif_id(iwork_id) -> str:
     return f'W{iwork_id}-{model_utils.next_seq_safe("cofk_union_manif_manif_id_seq")}'
+
+
+def get_manif_details(manif: CofkUnionManifestation) -> list[str]:
+
+    first_line = ''
+    if doctype := CofkLookupDocumentType.objects.filter(document_type_code=manif.manifestation_type).first():
+        first_line += f'{doctype.document_type_desc}. '
+    else:
+        first_line += f'{manif.manifestation_type}. '
+
+    if manif.postage_marks:
+        first_line += f'Postmark: {manif.postage_marks}. '
+
+    if manif_inst := manif.find_selected_inst():
+        first_line += manif_inst.inst.institution_name
+
+    if manif_inst and manif.id_number_or_shelfmark:
+        first_line += ': '
+
+    if manif.id_number_or_shelfmark:
+        first_line += manif.id_number_or_shelfmark
+
+    manifestation_summary = [first_line]
+    if manif.manifestation_incipit:
+        manifestation_summary.append(f' ~ Incipit: {manif.manifestation_incipit}.')
+
+    if manif.manifestation_excipit:
+        manifestation_summary.append(f' ~ Excipit: {manif.manifestation_excipit}.')
+
+    for enclosed_in in manif.find_enclosed_in():
+        manifestation_summary.append(f' ~ {enclosed_in.id_number_or_shelfmark}')
+
+    for encloses in manif.find_encloses():
+        manifestation_summary.append(f' ~ {encloses.id_number_or_shelfmark}')
+
+    return manifestation_summary
