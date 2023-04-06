@@ -633,6 +633,7 @@ def data_migration(user, password, database, host, port):
                               col_val_handler_fn_list=[_val_handler_collect_manifestation])
 
     # clone recref records
+    # TODO check data of CofkManifManifMap could be incorrect
     bounded_pairs = (b.pair for b in recref_utils.find_all_recref_bounded_data())
     clone_recref_simple_by_field_pairs(conn, bounded_pairs)
 
