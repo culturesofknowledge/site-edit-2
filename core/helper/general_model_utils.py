@@ -6,7 +6,7 @@ from typing import Type, Any
 from django.db.models import Model
 
 from core.helper.model_utils import ModelLike
-from core.models import CofkUnionComment, CofkUnionResource
+from core.models import CofkUnionComment, CofkUnionResource, CofkUnionImage
 from institution import inst_utils
 from institution.models import CofkUnionInstitution
 from location import location_utils
@@ -71,12 +71,13 @@ def get_name_by_model_class(model_or_class: ModelOrClass) -> str:
 
     class_name_map = {
         (CofkUnionLocation, 'Location'),
-        (CofkUnionPerson, 'Person'),
+        (CofkUnionPerson, 'Person or organization'),
         (CofkUnionWork, 'Work'),
         (CofkUnionManifestation, 'Manifestation'),
         (CofkUnionInstitution, 'Institution'),
         (CofkUnionComment, 'Comment'),
         (CofkUnionResource, 'Resource'),
+        (CofkUnionImage, 'Image'),
     }
     for c, name in class_name_map:
         if c == model_class:

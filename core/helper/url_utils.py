@@ -3,6 +3,7 @@ from django.utils.http import urlencode
 
 VNAME_INIT_FORM = 'init_form'
 VNAME_FULL_FORM = 'full_form'
+VNAME_DELETE = 'delete'
 
 VNAME_SEARCH = 'search'
 VNAME_HOME = 'home'
@@ -18,6 +19,7 @@ VNAME_RETURN_QUICK_INIT = 'return_quick_init'
 def create_common_urls_for_section(
         init_view=None,
         edit_view=None,
+        delete_view=None,
         search_view=None,
         merge_view=None,
         merge_action_view=None,
@@ -32,6 +34,8 @@ def create_common_urls_for_section(
         paths.append(path('form', init_view, name=VNAME_INIT_FORM))
     if edit_view is not None:
         paths.append(path(f'form/<int:{edit_id_name}>', edit_view, name=VNAME_FULL_FORM))
+    if delete_view is not None:
+        paths.append(path(f'delete/<int:obj_id>', delete_view, name=VNAME_DELETE))
     if search_view is not None:
         paths.append(path('search', search_view, name=VNAME_SEARCH))
         paths.append(path('', search_view, name=VNAME_HOME))

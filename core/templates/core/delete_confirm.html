@@ -1,0 +1,46 @@
+{% extends "core/emlo_logined.html" %}
+
+{% block content %}
+    <h1>Delete {{ name }}</h1>
+    <form method="post">
+        {% csrf_token %}
+
+        <h4>{{ name | capfirst }} to be deleted:</h4>
+        <div class="margin-bottom">
+            {% for obj_desc in obj_desc_list %}
+                <div>
+                    {{ obj_desc }}
+                </div>
+
+            {% endfor %}
+        </div>
+
+        <div class="del-confirm-div">
+            <h4>To delete, first tick the 'Confirm Deletion' checkbox then click the 'Delete' button. </h4>
+            <input type="checkbox" id="confirm-box">
+            <label id="confirm-label" for="confirm-box" class="control">
+                Tick to confirm deletion of this {{ name }}
+            </label>
+
+            <div class="row-no-margin">
+                <a id="cancel-btn" class="margin-right btn" href="{{ cancel_url }}"> Cancel </a>
+                <button id="del-btn" disabled>Delete</button>
+            </div>
+
+        </div>
+
+    </form>
+
+
+    <script>
+        $(() => {
+            // event for enable del_btn if check confirm-box is checked
+            $('#confirm-box').on('change', function () {
+                $('#del-btn').prop('disabled', !$(this).is(':checked'));
+            });
+        })
+    </script>
+
+
+
+{% endblock %}
