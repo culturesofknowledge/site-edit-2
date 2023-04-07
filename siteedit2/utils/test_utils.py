@@ -101,7 +101,10 @@ class EmloSeleniumTestCase(StaticLiveServerTestCase):
         super().tearDownClass()
 
     def get_url_by_viewname(self, viewname, *args, **kwargs):
-        return self.live_server_url + reverse(viewname, args=args, kwargs=kwargs)
+        return self.get_url_by_path(reverse(viewname, args=args, kwargs=kwargs))
+
+    def get_url_by_path(self, path):
+        return self.live_server_url + path
 
     def fill_form_by_dict(self,
                           model_dict: dict,
@@ -127,6 +130,9 @@ class EmloSeleniumTestCase(StaticLiveServerTestCase):
 
     def goto_vname(self, vname, *args, **kwargs):
         self.selenium.get(self.get_url_by_viewname(vname, *args, **kwargs))
+
+    def goto_path(self, path):
+        self.selenium.get(self.get_url_by_path(path))
 
     def click_submit(self):
         self.selenium.find_element(By.CSS_SELECTOR, 'button[type=submit].sticky-btn').click()
