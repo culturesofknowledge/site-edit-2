@@ -20,7 +20,7 @@ from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate, MergeChoiceViews, MergeChoiceContext, \
-    MergeActionViews, MergeConfirmViews
+    MergeActionViews, MergeConfirmViews, DeleteConfirmView
 from core.models import Recref
 from location import location_utils
 from location.forms import LocationForm, GeneralSearchFieldset, field_label_map
@@ -358,3 +358,19 @@ class LocationImageRecrefHandler(ImageRecrefHandler):
 
     def find_org_recref_fn(self, parent, target) -> Recref | None:
         return CofkLocationImageMap.objects.filter(location=parent, image=target).first()
+
+
+class LocationDeleteConfirmView(DeleteConfirmView):
+    def get_model_class(self) -> Type[ModelLike]:
+        return CofkUnionLocation
+
+    def get_obj_desc_list(self, obj: CofkUnionLocation) -> list[str]:
+        desc_list = [
+            obj.location_name,
+            obj.location_synonyms,
+            obj.latitude,
+            obj.longitude,
+        ]
+        desc_list = filter(None, desc_list)
+        desc_list = list(desc_list)
+        return desc_list
