@@ -21,7 +21,7 @@ class LocationForm(ModelForm):
     element_5_eg_county = CharField(required=False, label='5. E.g. county')
     element_6_eg_country = CharField(required=False, label='6. E.g. country')
     element_7_eg_empire = CharField(required=False, label='7. E.g. empire')
-    location_synonyms = CharField(required=False, label='Alternative names for location')
+    location_synonyms = form_utils.CommonTextareaField(required=False, label='Alternative names for location')
     latitude = CharField(required=False)
     longitude = CharField(required=False)
 
