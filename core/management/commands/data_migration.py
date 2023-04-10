@@ -27,15 +27,15 @@ from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentT
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from login.models import CofkUser
-from manifestation.models import CofkUnionManifestation, CofkUnionLanguageOfManifestation
-from person.models import CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID
+from manifestation.models import CofkUnionManifestation, CofkUnionLanguageOfManifestation, CofkManifManifMap
+from person.models import CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID, CofkPersonPersonMap
 from publication.models import CofkUnionPublication
 from uploader.models import CofkCollectStatus, CofkCollectUpload, CofkCollectInstitution, CofkCollectLocation, \
     CofkCollectLocationResource, CofkCollectPerson, CofkCollectOccupationOfPerson, CofkCollectPersonResource, \
     CofkCollectInstitutionResource, CofkCollectWork, CofkCollectAddresseeOfWork, CofkCollectLanguageOfWork, \
     CofkCollectManifestation
 from work import models as work_models
-from work.models import CofkUnionWork, CofkUnionQueryableWork, CofkUnionLanguageOfWork
+from work.models import CofkUnionWork, CofkUnionQueryableWork, CofkUnionLanguageOfWork, CofkWorkWorkMap
 
 log = logging.getLogger(__name__)
 default_schema = 'public'
@@ -507,12 +507,42 @@ def clone_recref_simple(conn,
     )
 
 
-def clone_recref_simple_by_field_pairs(
-        conn, field_pairs: Iterable[tuple[ForwardManyToOneDescriptor, ForwardManyToOneDescriptor]]
-):
-    for field_a, field_b in field_pairs:
-        clone_recref_simple(conn, field_a, field_b)
-        clone_recref_simple(conn, field_b, field_a)
+def choice_recref_clone_direction(field_a, field_b):
+    """ only handle two fields in same model """
+
+    def _choice_by_left_name(left_name):
+        if field_a.field.name == left_name:
+            return field_a, field_b
+        else:
+            return field_b, field_a
+
+    recref_model = field_a.field.model
+
+    mapping = [
+        (CofkManifManifMap, CofkManifManifMap.manif_from.field.name),
+        (CofkPersonPersonMap, CofkPersonPersonMap.person.field.name),
+        (CofkWorkWorkMap, CofkWorkWorkMap.work_from.field.name),
+    ]
+    for cur_recref_model, left_name in mapping:
+        if issubclass(recref_model, cur_recref_model):
+            return _choice_by_left_name(left_name)
+
+    log.warning(f'unknown left right mapping {field_a.field.model}')
+    return field_a, field_b
+
+
+def clone_recref_simple_by_field_pairs(conn):
+    bounded_pairs = (b.pair for b in recref_utils.find_all_recref_bounded_data())
+    bounded_pairs: Iterable[tuple[ForwardManyToOneDescriptor, ForwardManyToOneDescriptor]]
+
+    for field_a, field_b in bounded_pairs:
+        if field_a.field.related_model == field_b.field.related_model:
+            field_a, field_b = choice_recref_clone_direction(field_a, field_b)
+            clone_recref_simple(conn, field_a, field_b)
+        else:
+            # clone both direction if two fields are in different models
+            clone_recref_simple(conn, field_a, field_b)
+            clone_recref_simple(conn, field_b, field_a)
 
 
 def create_check_fn_by_unique_together_model(model: Type[model_utils.ModelLike]):
@@ -648,9 +678,7 @@ def data_migration(user, password, database, host, port):
                                   CofkUnionLanguageOfManifestation))
 
     # clone recref records
-    # TODO check data of CofkManifManifMap could be incorrect
-    bounded_pairs = (b.pair for b in recref_utils.find_all_recref_bounded_data())
-    clone_recref_simple_by_field_pairs(conn, bounded_pairs)
+    clone_recref_simple_by_field_pairs(conn)
 
     # remove all audit records that created by data_migrations
     print('remove all audit records that created by data_migrations')
