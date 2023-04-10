@@ -608,7 +608,7 @@ def data_migration(user, password, database, host, port):
                               old_table_name='cofk_users', )
     migrate_groups_and_permissions(conn, 'cofk_roles')
 
-    # ### Work
+    ### Work
     clone_rows_by_model_class(conn, CofkUnionWork,
                               col_val_handler_fn_list=[_val_handler_work__catalogue,
                                                        _val_handler_work_drop_language_of_work,
@@ -618,9 +618,6 @@ def data_migration(user, password, database, host, port):
     clone_rows_by_model_class(conn, CofkUnionQueryableWork, seq_name=None)
     clone_rows_by_model_class(conn, CofkUnionLanguageOfWork, col_val_handler_fn_list=[_val_handler_language],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkUnionLanguageOfWork))
-    clone_rows_by_model_class(conn, CofkUnionLanguageOfManifestation, col_val_handler_fn_list=[_val_handler_language],
-                              check_duplicate_fn=create_check_fn_by_unique_together_model(
-                                  CofkUnionLanguageOfManifestation))
 
     clone_rows_by_model_class(conn, CofkCollectWork,
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectWork),
@@ -646,6 +643,9 @@ def data_migration(user, password, database, host, port):
     clone_rows_by_model_class(conn, CofkCollectManifestation,
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectManifestation),
                               col_val_handler_fn_list=[_val_handler_collect_manifestation])
+    clone_rows_by_model_class(conn, CofkUnionLanguageOfManifestation, col_val_handler_fn_list=[_val_handler_language],
+                              check_duplicate_fn=create_check_fn_by_unique_together_model(
+                                  CofkUnionLanguageOfManifestation))
 
     # clone recref records
     # TODO check data of CofkManifManifMap could be incorrect
