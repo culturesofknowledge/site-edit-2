@@ -519,7 +519,7 @@ def choice_recref_clone_direction(field_a, field_b):
     recref_model = field_a.field.model
 
     mapping = [
-        (CofkManifManifMap, CofkManifManifMap.manif_from.field.name),
+        (CofkManifManifMap, CofkManifManifMap.manif_to.field.name),
         (CofkPersonPersonMap, CofkPersonPersonMap.person.field.name),
         (CofkWorkWorkMap, CofkWorkWorkMap.work_from.field.name),
     ]
