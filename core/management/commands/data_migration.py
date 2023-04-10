@@ -82,6 +82,14 @@ def clone_rows_by_model_class(conn, model_class: Type[ModelLike],
     * assume all column name are same
     * assume no column have been removed
     """
+
+    def _update_row_by_col_val_handler_fn_list(_row):
+        if not col_val_handler_fn_list:
+            return _row
+        for _fn in col_val_handler_fn_list:
+            _row = _fn(_row, conn)
+        return _row
+
     start_sec = time.time()
     if check_duplicate_fn is None:
         def check_duplicate_fn(model):
@@ -94,8 +102,7 @@ def clone_rows_by_model_class(conn, model_class: Type[ModelLike],
 
     rows = map(dict, rows)
     if col_val_handler_fn_list:
-        for _fn in col_val_handler_fn_list:
-            rows = (_fn(r, conn) for r in rows)
+        rows = map(_update_row_by_col_val_handler_fn_list, rows)
     rows = (model_class(**r) for r in rows)
     rows = itertools.filterfalse(check_duplicate_fn, rows)
     rows = map(record_counter, rows)
@@ -438,6 +445,12 @@ def _val_handler_work__catalogue(row: dict, conn):
     return row
 
 
+def _val_handler_work_drop_language_of_work(row: dict, conn):
+    if 'language_of_work' in row:
+        del row['language_of_work']
+    return row
+
+
 def _val_handler_collect_person(row: dict, conn):
     if collect_person := CofkCollectPerson.objects.filter(iperson_id=row['iperson_id']).first():
         row['iperson_id'] = collect_person.pk
@@ -597,7 +610,9 @@ def data_migration(user, password, database, host, port):
 
     # ### Work
     clone_rows_by_model_class(conn, CofkUnionWork,
-                              col_val_handler_fn_list=[_val_handler_work__catalogue],
+                              col_val_handler_fn_list=[_val_handler_work__catalogue,
+                                                       _val_handler_work_drop_language_of_work,
+                                                       ],
                               seq_name=work_models.SEQ_NAME_COFKUNIONWORK__IWORK_ID,
                               int_pk_col_name='iwork_id', )
     clone_rows_by_model_class(conn, CofkUnionQueryableWork, seq_name=None)
