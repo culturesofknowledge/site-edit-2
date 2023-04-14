@@ -315,9 +315,6 @@ class BasicSearchView(ListView):
         if self.merge_page_vname:
             context['merge_page_url'] = reverse(self.merge_page_vname)
 
-        if self.search_page_vname:
-            context['search_page_url'] = reverse(self.search_page_vname)
-
         if self.return_quick_init_vname:
             context['return_quick_init_vname'] = self.return_quick_init_vname
 
