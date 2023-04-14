@@ -61,7 +61,7 @@ class TestDownloadCsvHandler(TestCase):
 
     def test_work_csv(self):
         fixture_queryable_work().save()
-        self.assert_with_search_view(WorkSearchView(), WorkCsvHeaderValues(), 2)
+        self.assert_with_search_view(WorkSearchView(request=MockRequest('work')), WorkCsvHeaderValues(), 2)
 
     def test_inst_csv(self):
         inst = CofkUnionInstitution(institution_name='aa')
@@ -71,4 +71,4 @@ class TestDownloadCsvHandler(TestCase):
     def test_location_csv(self):
         location = CofkUnionLocation(location_name='aa')
         location.save()
-        self.assert_with_search_view(LocationSearchView(), LocationCsvHeaderValues(), 2)
+        self.assert_with_search_view(LocationSearchView(request=MockRequest('location')), LocationCsvHeaderValues(), 2)
