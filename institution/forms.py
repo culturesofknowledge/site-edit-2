@@ -1,6 +1,7 @@
 from django import forms
 from django.forms import ModelForm
 
+from core.form_label_maps import field_label_map
 from core.helper import form_utils
 from core.helper.form_utils import SearchCharField, SearchIntField
 from institution.models import CofkUnionInstitution
@@ -25,43 +26,35 @@ class InstitutionForm(ModelForm):
         )
 
 
-field_label_map = { 'institution_name': 'Name',
-                    'institution_city': 'City',
-                    'institution_country': 'Country',
-                    'resources': 'Related resources',
-                    'editors_notes': "Editors' notes",
-                    'institution_id': 'Repository id',
-                    'images': 'Images',
-                    'change_user': 'Last edited by'}
-
 class GeneralSearchFieldset(form_utils.BasicSearchFieldset):
     title = 'General'
     template_name = 'institution/component/institution_search_fieldset.html'
 
-    institution_name = SearchCharField(label=field_label_map['institution_name'],
+    institution_name = SearchCharField(label=field_label_map['institution']['institution_name'],
                                        help_text='This field contains the primary name and'
                                                  ' any alternative names for a repository.')
     institution_name_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    institution_city = SearchCharField(label='City',
+    institution_city = SearchCharField(label=field_label_map['institution']['institution_city'],
                                        help_text='This field contains the primary city name and'
                                                  ' any alternative city names for a repository.')
     institution_city_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    institution_country = SearchCharField(label='Country',
+    institution_country = SearchCharField(label=field_label_map['institution']['institution_country'],
                                           help_text='This field contains the primary country name and'
                                                     ' any alternative country names for a repository.')
     institution_country_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    resources = SearchCharField(label='Related resources', help_text='E.g. links to online catalogues.')
+    resources = SearchCharField(label=field_label_map['institution']['resources'],
+                                help_text='E.g. links to online catalogues.')
     resources_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    editors_notes = SearchCharField(label="Editors' notes")
+    editors_notes = SearchCharField(label=field_label_map['institution']['editors_notes'])
     editors_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     images = SearchCharField()
     images_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    institution_id = SearchIntField(min_value=1, label='Repository id',
+    institution_id = SearchIntField(min_value=1, label=field_label_map['institution']['institution_id'],
                                     help_text='The unique ID for the record within this database.')
     institution_id_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)

@@ -1,4 +1,4 @@
-<div class="flex-col sticky-bottom" id="actionbox-container">
+<div class="flex-col sticky-bottom" id="actionbox-container" {% if action == 'reset' %} style="background: radial-gradient(ellipse at center, hsl(30, 1.67%, 52.94%), transparent, transparent 100%);"{% endif %}>
     <div class="actionbox">
         {% block content %}
         {% endblock %}

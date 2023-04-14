@@ -5,7 +5,8 @@ from django.db.models import Count
 from django.views.generic import ListView
 
 from core.forms import CatalogueForm, RoleForm, SubjectForm, OrgTypeForm
-from core.models import CofkLookupCatalogue, CofkUnionRoleCategory, CofkUnionSubject, CofkUnionOrgType
+from core.models import CofkLookupCatalogue, CofkUnionRoleCategory, CofkUnionSubject, CofkUnionOrgType, \
+    CofkUserSavedQuery
 
 log = logging.getLogger(__name__)
 
@@ -32,7 +33,6 @@ class CofkListView(ListView):
             return self.model.objects.filter(pk=self.request.POST[self.model._meta.pk.name]).first()
 
     def post(self, request, *args, **kwargs):
-        log.info(self.request.POST)
         if 'delete' in self.request.POST:
             list_obj = self.get_obj_by_id()
 
@@ -51,7 +51,7 @@ class CofkListView(ListView):
                 list_obj.save()
 
                 messages.success(request, f'Successfully updated {self.list_type}'
-                                          f' "{getattr(list_obj, self.updated_fields[0])}"({list_obj.pk})')
+                                          f' "{getattr(list_obj, self.updated_fields[0])}" ({list_obj.pk})')
         elif 'add' in self.request.POST:
             list_form = self.form(self.request.POST)
 
@@ -59,7 +59,7 @@ class CofkListView(ListView):
             if list_form.is_valid():
                 list_obj = list_form.save()
                 messages.success(request, f'Successfully created new {self.list_type}'
-                                          f' "{getattr(list_obj, self.updated_fields[0])}"({list_obj.pk})')
+                                          f' "{getattr(list_obj, self.updated_fields[0])}" ({list_obj.pk})')
 
             else:
                 errors = list_form.errors.as_data()
@@ -178,3 +178,37 @@ class OrgTypeListView(CofkListView):
     @property
     def list_type(self):
         return 'organisation type'
+
+
+class SavedQueries(ListView):
+    model = CofkUserSavedQuery
+    template_name = 'list/saved_queries.html'
+    paginate_by = 20
+
+    def get_queryset(self):
+        return self.model.objects.filter(username=self.request.user.username).all()
+
+    def post(self, request, *args, **kwargs):
+        pk_name = self.model._meta.pk.name
+
+        if 'save' in request.POST and pk_name in request.POST:
+            # Update
+            pk = request.POST[pk_name]
+            list_obj = self.model.objects.filter(pk=pk).first()
+
+            if list_obj:
+                list_obj.query_title = request.POST['query_title']
+                list_obj.save()
+
+                messages.success(request, f'Successfully updated saved query ({pk})')
+        elif 'delete' in request.POST and pk_name in request.POST:
+            pk = request.POST[pk_name]
+            list_obj = self.model.objects.filter(pk=pk).first()
+
+            if list_obj:
+                list_obj.delete()
+
+                messages.success(request, f'Successfully deleted saved query ({pk})')
+                log.info(f'{request.user.username} deleted saved query {pk}')
+
+        return super().get(self, request, *args, **kwargs)

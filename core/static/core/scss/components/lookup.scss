@@ -7,3 +7,12 @@ fieldset.lookup_fieldset {
 .lookup_fieldset a:hover {
     text-decoration: underline;
 }
+
+textarea.no_border {
+    border: 1px solid transparent;
+
+    &:hover, &:active, &:focus {
+      background-color: $lighter-grey;
+      border-color: black;
+    }
+}

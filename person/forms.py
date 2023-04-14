@@ -7,6 +7,7 @@ from django.forms import ModelForm, CharField
 from django.forms.utils import ErrorList
 
 from core import constant
+from core.form_label_maps import field_label_map
 from core.helper import form_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.form_utils import TargetPersonMRRForm, LocationRecrefField, BasicSearchFieldset, SearchCharField, \
@@ -238,26 +239,6 @@ class PersonForm(ModelForm):
 
         return super().clean()
 
-
-field_label_map = { 'foaf_name': 'Names and titles/roles',
-                    'sent': 'Sent',
-                    'recd': 'Received',
-                    'all_works': 'Sent and received',
-                    'editors_notes': 'Editors\' notes',
-                    'resources': 'Related resources',
-                    'mentioned': 'Mentioned',
-                    'further_reading': 'Further reading',
-                    'element_1_eg_room': '1. E.g. room',
-                    'element_2_eg_building': '2. E.g. building',
-                    'element_3_eg_parish': '3. E.g. parish',
-                    'element_4_eg_city': '4. E.g. city',
-                    'element_5_eg_county': '5. E.g. county',
-                    'element_6_eg_country': '6. E.g. country',
-                    'element_7_eg_empire': '7. E.g. empire',
-                    'images': 'Images',
-                    'change_user': 'Last edited by',
-                    }
-
 search_gender_choices = [
             (None, 'Any'),
             ('M', 'Male'),
@@ -278,12 +259,12 @@ class GeneralSearchFieldset(BasicSearchFieldset):
     title = 'General'
     template_name = 'person/component/person_search_fieldset.html'
 
-    foaf_name = SearchCharField(label='Names and titles/roles',
+    names_and_titles = SearchCharField(label=field_label_map['person']['names_and_titles'],
                                 help_text="Primary name normally in 'surname, forename' format, followed by "
                                           "alternative names and titles or roles/professions. Roles and professions "
                                           "may have been entered as free text and/or as a list of standard categories "
                                           "(see below):")
-    foaf_name_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    names_and_titles_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     birth_year_from = form_utils.create_year_field()
     birth_year_to = form_utils.create_year_field()
@@ -309,21 +290,21 @@ class GeneralSearchFieldset(BasicSearchFieldset):
                                   "identify the more prolific authors.")
     sent_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
-    recd = SearchIntField(label='Received', help_text='Number of letters sent to this addressee.')
+    recd = SearchIntField(label=field_label_map['person']['recd'], help_text='Number of letters sent to this addressee.')
     recd_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
-    all_works = SearchIntField(label='Sent and received',
+    all_works = SearchIntField(label=field_label_map['person']['all_works'],
                              help_text='Total of letters to and from this person/organisation.')
     all_works_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
     mentioned = SearchIntField(help_text='Number of letters in which this person/organisation was mentioned.')
     mentioned_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
-    roles = SearchCharField(label='Professional roles',
+    roles = SearchCharField(label=field_label_map['person']['roles'],
                             help_text='Also known as Professional categories.')
     roles_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    editors_notes = SearchCharField(label='Editors\' notes',
+    editors_notes = SearchCharField(label=field_label_map['person']['editors_notes'],
                                     help_text='Notes for internal use, intended to hold temporary queries etc.')
     editors_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
@@ -338,7 +319,7 @@ class GeneralSearchFieldset(BasicSearchFieldset):
                                               'locations, researchers\' notes and related resources.')
     other_details_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    iperson_id = SearchIntField(label='Person or Group ID',
+    iperson_id = SearchIntField(label=field_label_map['person']['iperson_id'],
                                 help_text='The unique ID for the record within this database.')
     iperson_id_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 

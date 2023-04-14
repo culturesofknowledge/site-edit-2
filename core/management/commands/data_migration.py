@@ -23,7 +23,7 @@ from core.helper import iter_utils, model_utils, recref_utils
 from core.helper.model_utils import ModelLike
 from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType, CofkUnionRelationshipType, \
     CofkUnionImage, CofkUnionOrgType, CofkUnionRoleCategory, CofkUnionSubject, Iso639LanguageCode, CofkLookupCatalogue, \
-    SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID
+    SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID, CofkUserSavedQuery, CofkUserSavedQuerySelection
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from login.models import CofkUser
@@ -429,12 +429,15 @@ def migrate_groups_and_permissions(conn, target_model: str):
         groups[r[1]].user_set.add(CofkUser.objects.get_by_natural_key(r[0]))
 
 
-def _val_handler_work__catalogue(row: dict, conn):
+def _val_handler_union_work(row: dict, conn):
     v = row.pop('original_catalogue')
     if v or v == '':
         row['original_catalogue_id'] = v
     else:
         row['original_catalogue_id'] = ''
+
+    del row['language_of_work']
+
     return row
 
 
@@ -457,6 +460,12 @@ def _val_handler_collect_work(row: dict, conn):
 
     return row
 
+
+def _val_handler_user(row: dict, conn):
+    if user := CofkUser.objects.filter(username=row['username']).first():
+        row['username'] = user
+
+    return row
 
 def _val_handler_collect_manifestation(row: dict, conn):
     if collect_work := CofkCollectWork.objects.filter(iwork_id=row['iwork_id']).first():
@@ -595,17 +604,19 @@ def data_migration(user, password, database, host, port):
                               old_table_name='cofk_users', )
     migrate_groups_and_permissions(conn, 'cofk_roles')
 
+    # Queries must be run after user
+    clone_rows_by_model_class(conn, CofkUserSavedQuery, seq_name='cofk_user_saved_query_query_id_seq',
+                              col_val_handler_fn_list=[_val_handler_user])
+    clone_rows_by_model_class(conn, CofkUserSavedQuerySelection)
+
     # ### Work
     clone_rows_by_model_class(conn, CofkUnionWork,
-                              col_val_handler_fn_list=[_val_handler_work__catalogue],
+                              col_val_handler_fn_list=[_val_handler_union_work],
                               seq_name=work_models.SEQ_NAME_COFKUNIONWORK__IWORK_ID,
                               int_pk_col_name='iwork_id', )
     clone_rows_by_model_class(conn, CofkUnionQueryableWork, seq_name=None)
     clone_rows_by_model_class(conn, CofkUnionLanguageOfWork, col_val_handler_fn_list=[_val_handler_language],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkUnionLanguageOfWork))
-    clone_rows_by_model_class(conn, CofkUnionLanguageOfManifestation, col_val_handler_fn_list=[_val_handler_language],
-                              check_duplicate_fn=create_check_fn_by_unique_together_model(
-                                  CofkUnionLanguageOfManifestation))
 
     clone_rows_by_model_class(conn, CofkCollectWork,
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectWork),
@@ -631,6 +642,9 @@ def data_migration(user, password, database, host, port):
     clone_rows_by_model_class(conn, CofkCollectManifestation,
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectManifestation),
                               col_val_handler_fn_list=[_val_handler_collect_manifestation])
+    clone_rows_by_model_class(conn, CofkUnionLanguageOfManifestation, col_val_handler_fn_list=[_val_handler_language],
+                              check_duplicate_fn=create_check_fn_by_unique_together_model(
+                                  CofkUnionLanguageOfManifestation))
 
     # clone recref records
     bounded_pairs = (b.pair for b in recref_utils.find_all_recref_bounded_data())

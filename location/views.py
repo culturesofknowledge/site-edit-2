@@ -1,6 +1,6 @@
 import itertools
 import logging
-from typing import Iterable, Union, Type, Callable
+from typing import Iterable, Union, Type, Callable, List
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -23,7 +23,7 @@ from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate, 
     MergeActionViews, MergeConfirmViews
 from core.models import Recref
 from location import location_utils
-from location.forms import LocationForm, GeneralSearchFieldset, field_label_map
+from location.forms import LocationForm, GeneralSearchFieldset
 from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap, CofkLocationImageMap
 from location.recref_adapter import LocationCommentRecrefAdapter, LocationResourceRecrefAdapter, \
     LocationImageRecrefAdapter
@@ -174,15 +174,12 @@ class LocationMergeActionView(LoginRequiredMixin, MergeActionViews):
 class LocationSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
-    def search_fields(self) -> list[str]:
-        return ['location_name', 'editors_notes', 'location_id', 'researchers_notes', 'resources', 'latitude',
-                'sent', 'recd', 'all_works', 'longitude', 'element_1_eg_room', 'element_2_eg_building',
-                'element_3_eg_parish', 'element_4_eg_city', 'element_5_eg_county', 'element_6_eg_country',
-                'element_7_eg_empire', 'images', 'change_user']
-
-    @property
-    def search_field_label_map(self) -> dict:
-        return field_label_map
+    def search_field_combines(self) -> dict[str: List[str]]:
+        return {'location_name': ['location_name', 'location_synonyms'],
+                'resources': ['resources__resource_name', 'resources__resource_details',
+                              'resources__resource_url'],
+                'researchers_notes': ['comments__comment'],
+                'images': ['images__image_filename']}
 
     @property
     def search_field_fn_maps(self) -> dict:
@@ -235,11 +232,14 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
             )
 
         if sort_by:
-            queryset = queryset.order_by(sort_by)
+            queryset = queryset.order_by(*sort_by)
 
         return queryset
 
     def get_queryset(self):
+        if not self.request_data:
+            return CofkUnionLocation.objects.none()
+
         return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
 
     def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:

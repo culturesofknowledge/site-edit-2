@@ -3,7 +3,7 @@
 {% block fields %}
 
     <!-- Name -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.foaf_name field_lookup=form.foaf_name_lookup %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.names_and_titles field_lookup=form.names_and_titles_lookup %}
 
     {% include "core/component/search_fieldset/from_to_year.html" with title='Born year' from_field=form.birth_year_from to_field=form.birth_year_to field_info=form.birth_year_info %}
     {% include "core/component/search_fieldset/from_to_year.html" with title='Died year' from_field=form.death_year_from to_field=form.death_year_to field_info=form.death_year_info %}
