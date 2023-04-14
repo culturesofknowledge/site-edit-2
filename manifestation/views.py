@@ -22,10 +22,6 @@ class ManifSearchView(LoginRequiredMixin, DefaultSearchView):
     def return_quick_init_vname(self) -> str:
         return 'manif:return_quick_init'
 
-    @property
-    def search_page_vname(self) -> str:
-        return 'manif:search'
-
     def get_queryset(self):
         queryset = CofkUnionManifestation.objects.all()
         if sort_by := self.get_sort_by():

@@ -67,10 +67,6 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
             'images': ['images__image_filename']}
 
     @property
-    def search_page_vname(self) -> str:
-        return 'institution:search'
-
-    @property
     def merge_page_vname(self) -> str:
         return 'institution:merge'
 

@@ -338,10 +338,6 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         return 'person:return_quick_init'
 
     @property
-    def search_page_vname(self) -> str:
-        return 'person:search'
-
-    @property
     def simplified_query(self) -> list[str]:
         simplified_query = super().simplified_query
 

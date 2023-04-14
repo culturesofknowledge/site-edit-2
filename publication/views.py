@@ -45,10 +45,6 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
     def return_quick_init_vname(self) -> str:
         return 'publication:return_quick_init'
 
-    @property
-    def search_page_vname(self) -> str:
-        return 'publication:search'
-
     def get_queryset(self):
         if not self.request_data:
             return CofkUnionPublication.objects.none()

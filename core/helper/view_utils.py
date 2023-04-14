@@ -221,10 +221,6 @@ class BasicSearchView(ListView):
         return None
 
     @property
-    def search_page_vname(self) -> str | None:
-        return None
-
-    @property
     def return_quick_init_vname(self) -> str | None:
         """
         view name for "return quick init" j(select for recref)
@@ -354,14 +350,14 @@ class BasicSearchView(ListView):
                                          )
 
         selections = []
-        all_search_fields = self.search_fields + list(self.search_field_fn_maps.keys())\
+        all_search_fields = self.search_fields + list(self.search_field_fn_maps.keys()) \
                             + list(self.search_field_combines.keys())
 
         for key in (key for key, value in request.GET.items() if key in all_search_fields and value != ''):
             selections.append(CofkUserSavedQuerySelection(query=saved_query,
-                                        column_name=key,
-                                        op_value=request.GET[key + '_lookup'],
-                                        column_value=request.GET[key]))
+                                                          column_name=key,
+                                                          op_value=request.GET[key + '_lookup'],
+                                                          column_value=request.GET[key]))
 
         saved_query.save()
         CofkUserSavedQuerySelection.objects.bulk_create(selections)

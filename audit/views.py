@@ -15,10 +15,6 @@ class AuditSearchView(LoginRequiredMixin, DefaultSearchView):
     def entity(self) -> str:
         return 'audit,audits'
 
-    @property
-    def search_page_vname(self) -> str:
-        return 'audit:search'
-
     def get_queryset(self):
         if not self.request_data:
             return CofkUnionAuditLiteral.objects.none()
