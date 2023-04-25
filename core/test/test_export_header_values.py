@@ -44,6 +44,16 @@ class TestWorkExcelHeaderValues(TestCase):
         self.assertGreater(len(values), 0)
 
 
+class MockResolver:
+    def __init__(self, app_name):
+        self.app_name = app_name
+
+class MockRequest:
+    def __init__(self, app_name):
+        self.resolver_match = MockResolver(app_name)
+
+
+
 class TestDownloadCsvHandler(TestCase):
 
     def assert_with_search_view(self, search_view, header_values, expected_len):
@@ -58,19 +68,19 @@ class TestDownloadCsvHandler(TestCase):
     def test_person_csv(self):
         person = CofkUnionPerson(foaf_name='aa')
         person.save()
-        self.assert_with_search_view(PersonSearchView(), PersonCsvHeaderValues(), 2)
+        self.assert_with_search_view(PersonSearchView(request=MockRequest('person')), PersonCsvHeaderValues(), 2)
 
     def test_work_csv(self):
         fixture_queryable_work().save()
         fixture_default_lookup_catalogue()
-        self.assert_with_search_view(WorkSearchView(), WorkCsvHeaderValues(), 2)
+        self.assert_with_search_view(WorkSearchView(request=MockRequest('work')), WorkCsvHeaderValues(), 2)
 
     def test_inst_csv(self):
         inst = CofkUnionInstitution(institution_name='aa')
         inst.save()
-        self.assert_with_search_view(InstSearchView(), InstCsvHeaderValues(), 2)
+        self.assert_with_search_view(InstSearchView(request=MockRequest('repository')), InstCsvHeaderValues(), 2)
 
     def test_location_csv(self):
         location = CofkUnionLocation(location_name='aa')
         location.save()
-        self.assert_with_search_view(LocationSearchView(), LocationCsvHeaderValues(), 2)
+        self.assert_with_search_view(LocationSearchView(request=MockRequest('location')), LocationCsvHeaderValues(), 2)

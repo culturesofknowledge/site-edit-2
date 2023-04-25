@@ -50,7 +50,12 @@
             </li>
             <li class="menu-item">
                 <a href="#!">{{ request.user.username }}</a>
-                <ul class='unstyled-list no-margin menu-subitem'>
+                 <ul class='unstyled-list no-margin menu-subitem' style="left: -100px;">
+                     {% if request.user.has_saved_queries %}
+                    <a href="{% url 'list:savedqueries' %}">
+                        <li>Saved queries</li>
+                    </a>
+                     {% endif %}
                     <a href="{% url 'login:logout' %}">
                         <li>Logout</li>
                     </a>

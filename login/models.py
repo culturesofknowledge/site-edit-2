@@ -2,6 +2,8 @@ from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin, UserManager
 from django.db import models
 
+from core.models import CofkUserSavedQuery
+
 
 class CofkUser(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=30, primary_key=True)
@@ -23,6 +25,10 @@ class CofkUser(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'username'
+
+    @property
+    def has_saved_queries(self):
+        return CofkUserSavedQuery.objects.filter(username=self.username).exists()
 
     class Meta:
         db_table = 'cofk_user'

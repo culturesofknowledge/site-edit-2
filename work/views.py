@@ -47,7 +47,7 @@ from work.forms import WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     ManifPersonRecrefAdapter, ScribeRelationChoices, \
     DetailsForm, WorkPersonRecrefAdapter, \
     CommonWorkForm, manif_type_choices, original_calendar_choices, CompactSearchFieldset, ExpandedSearchFieldset, \
-    ManifPersonMRRForm, field_label_map
+    ManifPersonMRRForm
 from work.models import CofkWorkPersonMap, CofkUnionWork, CofkWorkCommentMap, CofkWorkResourceMap, \
     CofkUnionLanguageOfWork, \
     CofkUnionQueryableWork
@@ -916,8 +916,8 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
-            ('addressees_for_display', 'Addressee',),
-            ('creators_for_display', 'Author/sender',),
+            ('addressees_searchable', 'Addressee',),
+            ('creators_searchable', 'Author/sender',),
             ('date_of_work_std', 'Date for ordering (in original calendar)',),
             ('date_of_work_as_marked', 'Date of work as marked',),
             ('date_of_work_day', 'Day',),
@@ -946,18 +946,8 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         return 2
 
     @property
-    def search_fields(self) -> list[str]:
-        return ['description', 'editors_notes', 'date_of_work_as_marked', 'date_of_work_std_year',
-                'creators_searchable', 'sender_or_recipient', 'origin_or_destination', 'date_of_work_std_month',
-                'date_of_work_std_day', 'notes_on_authors', 'origin_as_marked', 'addressees_searchable',
-                'places_from_searchable', 'destination_as_marked', 'flags', 'images', 'manifestations_searchable',
-                'places_to_searchable', 'related_resources', 'language_of_work', 'subjects', 'abstract',
-                'people_mentioned', 'keywords', 'general_notes', 'original_catalogue', 'accession_code',
-                'work_id', 'change_user']
-
-    @property
-    def search_field_label_map(self) -> dict:
-        return field_label_map
+    def default_order(self):
+        return 'asc'
 
     @property
     def search_field_fn_maps(self) -> dict:
@@ -977,6 +967,9 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                                                 'date_of_work_std')
 
     def get_queryset(self):
+        if not self.request_data:
+            return CofkUnionQueryableWork.objects.none()
+
         return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
 
     def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:

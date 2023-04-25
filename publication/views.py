@@ -9,7 +9,7 @@ from django.shortcuts import render
 from core.helper import renderer_utils, query_utils, view_utils
 from core.helper.model_utils import ModelLike
 from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView, DeleteConfirmView
-from publication.forms import PublicationForm, GeneralSearchFieldset, field_label_map
+from publication.forms import PublicationForm, GeneralSearchFieldset
 from publication.models import CofkUnionPublication
 
 
@@ -20,14 +20,6 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
         return [GeneralSearchFieldset(self.request_data)]
 
     @property
-    def search_fields(self) -> list[str]:
-        return ['publication_details', 'abbrev', 'change_user', 'publication_id', ]
-
-    @property
-    def search_field_label_map(self) -> dict:
-        return field_label_map
-
-    @property
     def search_field_fn_maps(self) -> dict:
         return query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
                                                    'change_timestamp')
@@ -35,6 +27,10 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def entity(self) -> str:
         return 'publication,publications'
+
+    @property
+    def default_order(self) -> str:
+        return 'asc'
 
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
@@ -51,13 +47,16 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
         return 'publication:return_quick_init'
 
     def get_queryset(self):
+        if not self.request_data:
+            return CofkUnionPublication.objects.none()
+
         # queries for like_fields
         queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
 
         queries.extend(
             query_utils.create_queries_by_lookup_field(self.request_data, self.search_fields)
         )
-        return self.create_queryset_by_queries(CofkUnionPublication, queries).distinct()
+        return self.create_queryset_by_queries(CofkUnionPublication, queries)
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:

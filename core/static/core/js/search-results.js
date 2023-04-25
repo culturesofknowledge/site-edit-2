@@ -1,14 +1,11 @@
 
 
-var search_controls = ['id_sort_by', 'id_num_record', 'id_order_0', 'id_order_1',
-    'display-as-grid', 'display-as-list'];
-
-if(localStorage.getItem('fieldset-toggle') == 'false')  {
+if(localStorage.getItem('fieldset-toggle') === 'false')  {
    $('#query-fieldset').toggle();
    $('#query-result').toggleClass('col--3of4');
 }
 
-if(localStorage.getItem('advanced-search-toggle') == 'true')  {
+if(localStorage.getItem('advanced-search-toggle') === 'true')  {
     $('.advanced_search').toggle();
     $('.search_input').toggleClass('col--3of4');
     $('.search_input').toggleClass('col--4of4');
@@ -132,29 +129,52 @@ function setup_merge_btn() {
     }
 });
 
-search_controls.forEach((target_id) => {
-    if(document.getElementById(target_id)) {
-            document.getElementById(target_id).addEventListener('change', () => {
-            submit_page();
+$('.searchcontrol').each((i, searchcontrol) => {
+    $(searchcontrol).on('change', (e) => {
+        // Every time a search control is changed, that change is persisted
+        let element_name = $(e.target).attr('name');
+        localStorage.setItem(`${entity}_${element_name}`, $(e.target).val());
+        //submit_page();
 
-        });
+    });
+
+    let searchParams = new URLSearchParams(window.location.search);
+
+    // Do not use persisted search control settings if they are explicitly set as
+    // get parameters
+    if((!searchParams.has(searchcontrol.name) || searchParams.get(searchcontrol.name) === '')
+     && localStorage.getItem(`${entity}_${searchcontrol.name}`) != null) {
+        // Set form values to persisted value
+        let val = localStorage.getItem(`${entity}_${searchcontrol.name}`);
+
+        if(searchcontrol.type != 'radio')   {
+            $(searchcontrol).val(val);
+        }
+        else    {
+            if(searchcontrol.value === val)   {
+                searchcontrol.checked = true;
+            }
+            else {
+                searchcontrol.checked = false;
+            }
+        }
     }
+
 });
 
 
 function setup_discard_page_on_new_search() {
     document.getElementById('search_form').addEventListener('change', function(e) {
         // No need to mark if search controls change
-        if(search_controls.indexOf(e.srcElement.id) == -1)   {
-            e.srcElement.dataset['changed'] =  true;
+        if($(e.target).attr('class') != 'searchcontrol')   {
+            e.target.dataset['changed'] =  true;
         }
     });
 
     document.getElementById('search_form').addEventListener('submit', function(e) {
-        if(Array.from(e.srcElement.elements).some((a) => a.dataset['changed'] == 'true'))  {
-            e.srcElement.elements['page'].value = 1;
+        if(Array.from(e.target.elements).some((a) => a.dataset['changed'] == 'true'))  {
+            e.target.elements['page'].value = 1;
         }
-
    });
 
 
@@ -213,13 +233,29 @@ function add_hide_buttons_to_columns() {
     }
 }
 
+function radialTransparentIfScrolledDown() {
+    let fieldset = $('#actionbox-container').parent().find('fieldset');
+    if(fieldset.height() + fieldset.offset().top < $('#actionbox-container').offset().top) {
+        $('#actionbox-container').css('background', 'radial-gradient(ellipse at center, hsl(30, 1.67%, 52.94%), transparent, transparent 100%')
+    } else {
+        $('#actionbox-container').css('background', 'linear-gradient(0deg, hsl(30, 1.67%, 52.94%), transparent)')
+    }
+}
+
+function reset_form(form) {
+    localStorage.clear();
+    location.href = '/' + entity;
+}
+
 $(function () {
     emlojs.selectable_service.setup_all()
     setup_merge_btn();
     setup_fieldset_toggle();
     setup_advanced_search_toggle();
+
     // If user changes search conditions on page > 1, and does a new search, the page attribute must be set to 1
-    if(document.getElementById('search_form').elements['page'] && document.getElementById('search_form').elements['page'].value != '') {
+    let page = document.getElementById('search_form').elements['page'];
+    if(page && page.value != '') {
         setup_discard_page_on_new_search();
     }
 
@@ -230,4 +266,13 @@ $(function () {
     if(recref_mode == '1')  {
         emlojs.recref_select_service.setup_all()
     }
+    radialTransparentIfScrolledDown();
 })
+
+
+$(window).on('scroll', radialTransparentIfScrolledDown);
+$(window).on('submit', function(e) {
+        if(event.submitter && event.submitter.value == 'save_query')  {
+            return confirm('Are you sure you want to save this query?');
+        }
+});

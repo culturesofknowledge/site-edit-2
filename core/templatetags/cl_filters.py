@@ -1,6 +1,8 @@
 from django import template
 from django.core.paginator import Page
 
+from core.constant import ENTITIES
+
 register = template.Library()
 
 
@@ -24,6 +26,13 @@ def get_results_on_page(page: Page) -> str:
     start = (1 + (page.number - 1) * page.paginator.per_page)
     end = min(page.paginator.per_page * page.number, page.paginator.count)
     return f'{start:,}–{end:,}'
+
+
+@register.filter
+def get_entity(_class: str) -> str:
+    if _class in ENTITIES:
+        return ENTITIES[_class].title()
+    return _class.title()
 
 
 @register.filter

@@ -23,7 +23,7 @@ from core.helper import iter_utils, model_utils, recref_utils
 from core.helper.model_utils import ModelLike
 from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType, CofkUnionRelationshipType, \
     CofkUnionImage, CofkUnionOrgType, CofkUnionRoleCategory, CofkUnionSubject, Iso639LanguageCode, CofkLookupCatalogue, \
-    SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID
+    SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID, CofkUserSavedQuery, CofkUserSavedQuerySelection
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from login.models import CofkUser
@@ -471,6 +471,12 @@ def _val_handler_collect_work(row: dict, conn):
     return row
 
 
+def _val_handler_user(row: dict, conn):
+    if user := CofkUser.objects.filter(username=row['username']).first():
+        row['username'] = user
+
+    return row
+
 def _val_handler_collect_manifestation(row: dict, conn):
     if collect_work := CofkCollectWork.objects.filter(iwork_id=row['iwork_id']).first():
         row['iwork_id'] = collect_work.pk
@@ -638,7 +644,12 @@ def data_migration(user, password, database, host, port):
                               old_table_name='cofk_users', )
     migrate_groups_and_permissions(conn, 'cofk_roles')
 
-    ### Work
+    # Queries must be run after user
+    clone_rows_by_model_class(conn, CofkUserSavedQuery, seq_name='cofk_user_saved_query_query_id_seq',
+                              col_val_handler_fn_list=[_val_handler_user])
+    clone_rows_by_model_class(conn, CofkUserSavedQuerySelection)
+
+    # ### Work
     clone_rows_by_model_class(conn, CofkUnionWork,
                               col_val_handler_fn_list=[_val_handler_work__catalogue,
                                                        _val_handler_work_drop_language_of_work,

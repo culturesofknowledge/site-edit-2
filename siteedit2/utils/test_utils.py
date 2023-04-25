@@ -292,6 +292,8 @@ class CommonSearchTests:
 
         self.goto_search_page()
 
+        self.find_search_btn().click()
+
         self.assert_search_page(num_row_show=min(len(records), BasicSearchView.paginate_by),
                                 num_total=len(records))
 
