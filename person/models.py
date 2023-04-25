@@ -88,22 +88,11 @@ class CofkUnionPerson(models.Model, RecordTracker):
 
     @property
     def names_and_roles(self) -> str:
-        # Adapted from public.cofk_union_person_view
-        names_and_roles = f'<p>{self.foaf_name}</p>'
-
-        if self.skos_altlabel:
-            names_and_roles += f'<p>~ Synonyms: {self.skos_altlabel}</p>'
-
-        if self.person_aliases:
-            names_and_roles += f'<p>~ Titles/roles: {self.person_aliases}</p>'
-
-        if (roles := self.roles.all()).exists():
-            roles = ', '.join([r.role_category_desc for r in roles])
-            names_and_roles += f'<p>~ Role types: {roles}</p>'
-
+        from person import person_utils
+        names_and_roles = ''.join(f'<p>{s}</p>' for s in person_utils.get_name_details(self))
         return mark_safe(names_and_roles)
 
-    def to_string(self, searchable=False) -> str:
+    def to_string(self, is_details=False) -> str:
         """
         Used by work.creators_for_display and work.addressees_for_display
         """
@@ -125,7 +114,7 @@ class CofkUnionPerson(models.Model, RecordTracker):
         else:
             person = str(self.foaf_name)
 
-        if not searchable:
+        if not is_details:
             return person
 
         if self.skos_altlabel:

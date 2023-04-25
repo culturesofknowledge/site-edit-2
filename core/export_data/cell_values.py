@@ -6,6 +6,7 @@ from collections.abc import Iterable
 
 from django.conf import settings
 
+from core import constant
 from core.helper import general_model_utils
 from core.models import CofkUnionComment, CofkUnionResource
 from person import person_utils
@@ -13,6 +14,7 @@ from person.models import CofkUnionPerson
 import collections
 
 DEFAULT_DELIMITER = '; '
+DELIMITER_SHACKLE = ' ~ '
 
 
 def common_join_text(text_list: Iterable, delimiter=DEFAULT_DELIMITER) -> str:
@@ -49,10 +51,9 @@ def resource_str(obj: CofkUnionResource) -> str:
     return f'{obj.resource_url} ({obj.resource_name})'
 
 
-def resource_str_by_list(resource_list: Iterable[CofkUnionResource],
-                         delimiter=DEFAULT_DELIMITER) -> str:
+def resource_str_by_list(resource_list: Iterable[CofkUnionResource]) -> str:
     return common_join_text((resource_str(r) for r in resource_list),
-                            delimiter=delimiter)
+                            delimiter=DELIMITER_SHACKLE)
 
 
 def simple_datetime(dt) -> str:
@@ -60,12 +61,9 @@ def simple_datetime(dt) -> str:
 
 
 def year_month_day(year, month, day) -> str:
-    if year and not month and not day:
-        return str(year)
-
-    if not year and not month and not day:
-        return ''
-
+    year = year or constant.DEFAULT_YEAR
+    month = month or constant.DEFAULT_MONTH
+    day = day or constant.DEFAULT_DAY
     return f'{year}-{month}-{day}'
 
 
@@ -74,17 +72,7 @@ def person_roles(obj: CofkUnionPerson) -> str:
 
 
 def person_names_titles_roles(obj: CofkUnionPerson) -> str:
-    join_list = []
-    if obj.foaf_name:
-        join_list.append(obj.foaf_name)
-
-    if obj.person_aliases:
-        join_list.append(obj.person_aliases)
-
-    if role := person_roles(obj):
-        join_list.append(role)
-
-    return ' ~ '.join(join_list)
+    return ''.join(person_utils.get_name_details(obj))
 
 
 def person_other_details(obj: CofkUnionPerson, type_name_cache: dict = None) -> str:

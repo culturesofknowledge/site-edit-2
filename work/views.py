@@ -18,7 +18,7 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_ROUTE, REL_TYPE_FORMERLY_OWNED, \
     REL_TYPE_ENCLOSED_IN, REL_TYPE_COMMENT_RECEIPT_DATE, REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_STORED_IN, \
     REL_TYPE_PEOPLE_MENTIONED_IN_WORK, REL_TYPE_MENTION, REL_TYPE_MENTION_PLACE, \
-    REL_TYPE_MENTION_WORK
+    REL_TYPE_MENTION_WORK, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO
 from core.export_data import excel_maker, cell_values
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, LocRecrefForm
 from core.helper import view_utils, lang_utils, model_utils, query_utils, renderer_utils
@@ -35,6 +35,7 @@ from core.models import Recref, CofkLookupCatalogue
 from institution import inst_utils
 from location import location_utils
 from location.models import CofkUnionLocation
+from manifestation import manif_utils
 from manifestation.manif_utils import create_manif_id
 from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, \
     CofkUnionLanguageOfManifestation, CofkManifImageMap
@@ -70,6 +71,7 @@ def create_search_fn_person_recref(rel_types: list) -> Callable:
         })
 
     return _fn
+
 
 def create_search_fn_location_recref(rel_types: list) -> Callable:
     def _fn(f, v):
@@ -957,7 +959,8 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                 'person_mention_pk': create_search_fn_person_recref([REL_TYPE_MENTION]),
                 'location_sent_pk': create_search_fn_location_recref([REL_TYPE_WAS_SENT_FROM]),
                 'location_rec_pk': create_search_fn_location_recref([REL_TYPE_WAS_SENT_TO]),
-                'location_sent_rec_pk': create_search_fn_location_recref([REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
+                'location_sent_rec_pk': create_search_fn_location_recref(
+                    [REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
                 } | query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
                                                         'change_timestamp') | \
             query_utils.create_from_to_datetime('date_of_work_std_from', 'date_of_work_std_to',
@@ -1115,25 +1118,26 @@ class WorkCsvHeaderValues(HeaderValues):
             obj.date_of_work_std_year,
             obj.date_of_work_std_month,
             obj.date_of_work_std_day,
-            obj.work.original_calendar,
-            obj.creators_for_display,
+            obj.work.date_of_work_std_gregorian,
+            obj.work.queryable_people(REL_TYPE_CREATED, is_details=True),
             obj.notes_on_authors,
             obj.places_from_for_display,
             obj.origin_as_marked,
-            obj.addressees_for_display,
+            obj.work.queryable_people(REL_TYPE_WAS_ADDRESSED_TO, is_details=True),
             obj.places_to_for_display,
             obj.destination_as_marked,
             obj.flags,
             obj.images,
-            obj.manifestations_for_display,
-            obj.related_resources,
+            ' -- '.join(' '.join(manif_utils.get_manif_details(m))
+                      for m in obj.work.cofkunionmanifestation_set.iterator()),
+            cell_values.resource_str_by_list(wrm.resource for wrm in obj.work.cofkworkresourcemap_set.iterator()),
             obj.language_of_work,
             obj.subjects,
             obj.abstract,
             obj.people_mentioned,
             obj.keywords,
             obj.general_notes,
-            obj.original_catalogue,
+            obj.work.original_catalogue and obj.work.original_catalogue.catalogue_name,
             obj.accession_code,
             obj.work_to_be_deleted,
             obj.iwork_id,

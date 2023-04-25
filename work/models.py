@@ -115,9 +115,9 @@ class CofkUnionWork(models.Model, RecordTracker):
     def destination_location(self) -> 'CofkUnionLocation':
         return next(self.find_locations_by_rel_type(REL_TYPE_WAS_SENT_TO), None)
 
-    def queryable_people(self, rel_type: str, searchable: bool = False) -> str:
+    def queryable_people(self, rel_type: str, is_details: bool = False) -> str:
         # Derived value for CofkUnionQueryable
-        return ", ".join([p.to_string(searchable=searchable) for p in self.find_persons_by_rel_type(rel_type)])
+        return ", ".join([p.to_string(is_details=is_details) for p in self.find_persons_by_rel_type(rel_type)])
 
     @property
     def places_from_for_display(self) -> str:

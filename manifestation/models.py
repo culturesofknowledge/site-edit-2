@@ -107,44 +107,14 @@ class CofkUnionManifestation(models.Model, RecordTracker):
         return self.cofkmanifinstmap_set.filter(relationship_type=REL_TYPE_STORED_IN).first()
 
     def find_enclosed_in(self):
-        return self.manif_from_set.filter(relationship_type=REL_TYPE_ENCLOSED_IN).all()
+        return (mm.manif_to for mm in self.manif_from_set.filter(relationship_type=REL_TYPE_ENCLOSED_IN).iterator())
 
     def find_encloses(self):
-        return self.manif_to_set.filter(relationship_type=REL_TYPE_ENCLOSED_IN).all()
+        return (mm.manif_from for mm in self.manif_to_set.filter(relationship_type=REL_TYPE_ENCLOSED_IN).iterator())
 
     def to_string(self):
-        manifestation_summary = ''
-
-        if doctype := CofkLookupDocumentType.objects.filter(document_type_code=self.manifestation_type).first():
-            manifestation_summary += f'{doctype.document_type_desc}. '
-        else:
-            manifestation_summary += f'{self.manifestation_type}. '
-
-        if self.postage_marks:
-            manifestation_summary += f'Postmark: {self.postage_marks}. '
-
-        if manif_inst := self.find_selected_inst():
-            manifestation_summary += manif_inst.inst.institution_name
-
-        if manif_inst and self.id_number_or_shelfmark:
-            manifestation_summary += ': '
-
-        if self.id_number_or_shelfmark:
-            manifestation_summary += self.id_number_or_shelfmark
-
-        if self.manifestation_incipit:
-            manifestation_summary += f'\n ~ Incipit: {self.manifestation_incipit}. '
-
-        if self.manifestation_excipit:
-            manifestation_summary += f'\n ~ Excipit: {self.manifestation_excipit}. '
-
-        for enclosed_in in self.find_enclosed_in():
-            manifestation_summary += f'\n ~ {enclosed_in.id_number_or_shelfmark}'
-
-        for encloses in self.find_encloses():
-            manifestation_summary += f'\n ~ {encloses.id_number_or_shelfmark}'
-
-        return manifestation_summary
+        from manifestation import manif_utils
+        return '\n'.join(manif_utils.get_manif_details(self))
 
 
 class CofkUnionLanguageOfManifestation(models.Model):
