@@ -31,6 +31,10 @@
                         <small>(optional, max. 50 characters)</small>
                     </div>
                 </fieldset>
+                {% if pub_form.instance and pub_form.instance.pk  %}
+                    {% url 'publication:delete' pub_form.instance.pk as del_url %}
+                    {% include "core/component/del_confirm_fieldset.html" with del_url=del_url name='Publication' %}
+                {% endif %}
 
 
                 {% include "core/component/actionbox_form.html" %}

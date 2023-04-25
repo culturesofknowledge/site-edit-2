@@ -88,6 +88,9 @@
 
     {% include "core/component/image_formset.html" with img_handler=img_handler %}
 
+    {% url 'person:delete' person_form.instance.iperson_id as del_url %}
+    {% include "core/component/del_confirm_fieldset.html" with del_url=del_url name='person or organisation' %}
+
 
     <script>
 

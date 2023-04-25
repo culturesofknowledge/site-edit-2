@@ -5,6 +5,7 @@ from django.test import TestCase
 from core.export_data.excel_header_values import WorkExcelHeaderValues
 from core.helper import file_utils
 from core.helper.view_components import DownloadCsvHandler
+from core.models import CofkLookupCatalogue
 from institution.models import CofkUnionInstitution
 from institution.views import InstSearchView, InstCsvHeaderValues
 from location.models import CofkUnionLocation
@@ -22,6 +23,16 @@ def fixture_queryable_work() -> CofkUnionQueryableWork:
 
     q_work = work_utils.clone_queryable_work(work, _return=True)
     return q_work
+
+def fixture_default_lookup_catalogue():
+    c = CofkLookupCatalogue()
+    c.catalogue_name = 'test'
+    c.catalogue_code = ''
+    c.is_in_union = 1
+    c.publish_status = 1
+    c.save()
+    return c
+
 
 
 class TestWorkExcelHeaderValues(TestCase):
@@ -61,6 +72,7 @@ class TestDownloadCsvHandler(TestCase):
 
     def test_work_csv(self):
         fixture_queryable_work().save()
+        fixture_default_lookup_catalogue()
         self.assert_with_search_view(WorkSearchView(request=MockRequest('work')), WorkCsvHeaderValues(), 2)
 
     def test_inst_csv(self):

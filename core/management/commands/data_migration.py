@@ -27,15 +27,15 @@ from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentT
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from login.models import CofkUser
-from manifestation.models import CofkUnionManifestation, CofkUnionLanguageOfManifestation
-from person.models import CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID
+from manifestation.models import CofkUnionManifestation, CofkUnionLanguageOfManifestation, CofkManifManifMap
+from person.models import CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID, CofkPersonPersonMap
 from publication.models import CofkUnionPublication
 from uploader.models import CofkCollectStatus, CofkCollectUpload, CofkCollectInstitution, CofkCollectLocation, \
     CofkCollectLocationResource, CofkCollectPerson, CofkCollectOccupationOfPerson, CofkCollectPersonResource, \
     CofkCollectInstitutionResource, CofkCollectWork, CofkCollectAddresseeOfWork, CofkCollectLanguageOfWork, \
     CofkCollectManifestation
 from work import models as work_models
-from work.models import CofkUnionWork, CofkUnionQueryableWork, CofkUnionLanguageOfWork
+from work.models import CofkUnionWork, CofkUnionQueryableWork, CofkUnionLanguageOfWork, CofkWorkWorkMap
 
 log = logging.getLogger(__name__)
 default_schema = 'public'
@@ -82,6 +82,14 @@ def clone_rows_by_model_class(conn, model_class: Type[ModelLike],
     * assume all column name are same
     * assume no column have been removed
     """
+
+    def _update_row_by_col_val_handler_fn_list(_row):
+        if not col_val_handler_fn_list:
+            return _row
+        for _fn in col_val_handler_fn_list:
+            _row = _fn(_row, conn)
+        return _row
+
     start_sec = time.time()
     if check_duplicate_fn is None:
         def check_duplicate_fn(model):
@@ -94,8 +102,7 @@ def clone_rows_by_model_class(conn, model_class: Type[ModelLike],
 
     rows = map(dict, rows)
     if col_val_handler_fn_list:
-        for _fn in col_val_handler_fn_list:
-            rows = (_fn(r, conn) for r in rows)
+        rows = map(_update_row_by_col_val_handler_fn_list, rows)
     rows = (model_class(**r) for r in rows)
     rows = itertools.filterfalse(check_duplicate_fn, rows)
     rows = map(record_counter, rows)
@@ -429,15 +436,18 @@ def migrate_groups_and_permissions(conn, target_model: str):
         groups[r[1]].user_set.add(CofkUser.objects.get_by_natural_key(r[0]))
 
 
-def _val_handler_union_work(row: dict, conn):
+def _val_handler_work__catalogue(row: dict, conn):
     v = row.pop('original_catalogue')
     if v or v == '':
         row['original_catalogue_id'] = v
     else:
         row['original_catalogue_id'] = ''
+    return row
 
-    del row['language_of_work']
 
+def _val_handler_work_drop_language_of_work(row: dict, conn):
+    if 'language_of_work' in row:
+        del row['language_of_work']
     return row
 
 
@@ -503,12 +513,42 @@ def clone_recref_simple(conn,
     )
 
 
-def clone_recref_simple_by_field_pairs(
-        conn, field_pairs: Iterable[tuple[ForwardManyToOneDescriptor, ForwardManyToOneDescriptor]]
-):
-    for field_a, field_b in field_pairs:
-        clone_recref_simple(conn, field_a, field_b)
-        clone_recref_simple(conn, field_b, field_a)
+def choice_recref_clone_direction(field_a, field_b):
+    """ only handle two fields in same model """
+
+    def _choice_by_left_name(left_name):
+        if field_a.field.name == left_name:
+            return field_a, field_b
+        else:
+            return field_b, field_a
+
+    recref_model = field_a.field.model
+
+    mapping = [
+        (CofkManifManifMap, CofkManifManifMap.manif_to.field.name),
+        (CofkPersonPersonMap, CofkPersonPersonMap.person.field.name),
+        (CofkWorkWorkMap, CofkWorkWorkMap.work_from.field.name),
+    ]
+    for cur_recref_model, left_name in mapping:
+        if issubclass(recref_model, cur_recref_model):
+            return _choice_by_left_name(left_name)
+
+    log.warning(f'unknown left right mapping {field_a.field.model}')
+    return field_a, field_b
+
+
+def clone_recref_simple_by_field_pairs(conn):
+    bounded_pairs = (b.pair for b in recref_utils.find_all_recref_bounded_data())
+    bounded_pairs: Iterable[tuple[ForwardManyToOneDescriptor, ForwardManyToOneDescriptor]]
+
+    for field_a, field_b in bounded_pairs:
+        if field_a.field.related_model == field_b.field.related_model:
+            field_a, field_b = choice_recref_clone_direction(field_a, field_b)
+            clone_recref_simple(conn, field_a, field_b)
+        else:
+            # clone both direction if two fields are in different models
+            clone_recref_simple(conn, field_a, field_b)
+            clone_recref_simple(conn, field_b, field_a)
 
 
 def create_check_fn_by_unique_together_model(model: Type[model_utils.ModelLike]):
@@ -611,7 +651,9 @@ def data_migration(user, password, database, host, port):
 
     # ### Work
     clone_rows_by_model_class(conn, CofkUnionWork,
-                              col_val_handler_fn_list=[_val_handler_union_work],
+                              col_val_handler_fn_list=[_val_handler_work__catalogue,
+                                                       _val_handler_work_drop_language_of_work,
+                                                       ],
                               seq_name=work_models.SEQ_NAME_COFKUNIONWORK__IWORK_ID,
                               int_pk_col_name='iwork_id', )
     clone_rows_by_model_class(conn, CofkUnionQueryableWork, seq_name=None)
@@ -647,9 +689,7 @@ def data_migration(user, password, database, host, port):
                                   CofkUnionLanguageOfManifestation))
 
     # clone recref records
-    # TODO check data of CofkManifManifMap could be incorrect
-    bounded_pairs = (b.pair for b in recref_utils.find_all_recref_bounded_data())
-    clone_recref_simple_by_field_pairs(conn, bounded_pairs)
+    clone_recref_simple_by_field_pairs(conn)
 
     # remove all audit records that created by data_migrations
     print('remove all audit records that created by data_migrations')

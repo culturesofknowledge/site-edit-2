@@ -389,7 +389,38 @@ tr.selectable_entry:not(.selected):hover {
 }
 
 
+$del-red: #800000;
 
+.del-confirm-div {
+  background-color: #f2f2f2;
+  color: $del-red;
+
+  #confirm-label {
+    color: $del-red !important;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    cursor: pointer;
+  }
+
+  #cancel-btn {
+    @extend .margin-right ;
+    @extend .btn;
+    height: 37px;
+    text-transform: uppercase;
+    letter-spacing: 0.045em;
+    font-size: 15px;
+  }
+
+  #del-btn:disabled {
+    background-color: silver;
+    cursor: not-allowed;
+  }
+
+  #del-btn {
+    background-color: $del-red;
+  }
+
+}
 
 
 

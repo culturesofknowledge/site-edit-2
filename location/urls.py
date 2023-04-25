@@ -7,6 +7,7 @@ urlpatterns.extend(
     url_utils.create_common_urls_for_section(
         init_view=views.LocationInitView.as_view(),
         edit_view=views.full_form,
+        delete_view=views.LocationDeleteConfirmView.as_view(),
         search_view=views.LocationSearchView.as_view(),
         merge_view=views.LocationMergeChoiceView.as_view(),
         merge_action_view=views.LocationMergeActionView.as_view(),

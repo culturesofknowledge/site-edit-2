@@ -23,7 +23,7 @@ from core.helper.renderer_utils import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_utils import CommonInitFormViewTemplate, BasicSearchView, MergeChoiceViews, MergeActionViews, \
-    MergeConfirmViews
+    MergeConfirmViews, DeleteConfirmView
 from core.models import Recref, CofkUnionRelationshipType
 from person import person_utils
 from person.forms import PersonForm, GeneralSearchFieldset, PersonOtherRecrefForm, field_label_map, \
@@ -527,3 +527,22 @@ class PersonMergeActionView(LoginRequiredMixin, MergeActionViews):
     @property
     def target_model_class(self) -> Type[ModelLike]:
         return CofkUnionPerson
+
+
+class PersonDeleteConfirmView(LoginRequiredMixin, DeleteConfirmView):
+
+    def get_model_class(self) -> Type[ModelLike]:
+        return CofkUnionPerson
+
+    def find_obj_by_obj_id(self, input_id) -> ModelLike | None:
+        return self.get_model_class().objects.filter(iperson_id=input_id).first()
+
+    def get_obj_desc_list(self, obj: CofkUnionPerson) -> list[str]:
+        desc_list = [
+            obj.foaf_name,
+            obj.skos_altlabel,
+            (obj.person_aliases or '').replace('\n', '; ')
+        ]
+        desc_list = filter(None, desc_list)
+        desc_list = list(desc_list)
+        return desc_list

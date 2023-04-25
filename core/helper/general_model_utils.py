@@ -6,7 +6,7 @@ from typing import Type, Any
 from django.db.models import Model
 
 from core.helper.model_utils import ModelLike
-from core.models import CofkUnionComment, CofkUnionResource
+from core.models import CofkUnionComment, CofkUnionResource, CofkUnionImage
 from institution import inst_utils
 from institution.models import CofkUnionInstitution
 from location import location_utils
@@ -15,6 +15,7 @@ from manifestation import manif_utils
 from manifestation.models import CofkUnionManifestation
 from person import person_utils
 from person.models import CofkUnionPerson
+from publication.models import CofkUnionPublication
 from work import work_utils
 from work.models import CofkUnionWork
 
@@ -54,6 +55,7 @@ def get_display_name(model: ModelLike) -> str:
         (CofkUnionInstitution, inst_utils.get_recref_display_name),
         (CofkUnionComment, lambda c: c and c.comment),
         (CofkUnionResource, lambda c: c and c.resource_name),
+        (CofkUnionPublication, lambda c: c and (c.publication_details or c.abbrev or c.pk)),
     ]
     try:
         return _call_obj_fn_map(model, name_fn_map)
@@ -71,12 +73,14 @@ def get_name_by_model_class(model_or_class: ModelOrClass) -> str:
 
     class_name_map = {
         (CofkUnionLocation, 'Location'),
-        (CofkUnionPerson, 'Person'),
+        (CofkUnionPerson, 'Person or organization'),
         (CofkUnionWork, 'Work'),
         (CofkUnionManifestation, 'Manifestation'),
         (CofkUnionInstitution, 'Institution'),
         (CofkUnionComment, 'Comment'),
         (CofkUnionResource, 'Resource'),
+        (CofkUnionImage, 'Image'),
+        (CofkUnionPublication, 'Publication'),
     }
     for c, name in class_name_map:
         if c == model_class:

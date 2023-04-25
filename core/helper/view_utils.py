@@ -1,6 +1,7 @@
 import dataclasses
 import itertools
 import logging
+import urllib
 from collections import defaultdict
 from datetime import datetime
 from threading import Thread
@@ -29,6 +30,7 @@ from core.helper.form_utils import build_search_components
 from core.helper.model_utils import ModelLike, RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
     demo_table_search_results_renderer
+from core.helper.url_utils import VNAME_FULL_FORM, VNAME_SEARCH
 from core.helper.view_components import DownloadCsvHandler
 from core.models import CofkUnionResource, CofkUnionComment, CofkUserSavedQuery, CofkUserSavedQuerySelection
 from core.services import media_service
@@ -336,7 +338,7 @@ class BasicSearchView(ListView):
         Thread(target=_fn).start()
 
         # stay as same page
-        self.to_user_messages = ['The selected data is being processed and will be sent to your email soon.']
+        self.add_to_user_messages('The selected data is being processed and will be sent to your email soon.')
         return super().get(request, *args, **kwargs)
 
     def save_query(self, request, *args, **kwargs):
@@ -383,6 +385,9 @@ class BasicSearchView(ListView):
         return self.resp_download_by_export_setting(request, self.excel_export_setting, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
+        if to_user_messages := request.GET.get('to_user_messages'):
+            self.add_to_user_messages(to_user_messages)
+
         simple_form_action_map = {
             'download_csv': self.resp_download_csv,
             'download_excel': self.resp_download_excel,
@@ -398,6 +403,11 @@ class BasicSearchView(ListView):
 
         # response for search query
         return super().get(request, *args, **kwargs)
+
+    def add_to_user_messages(self, message):
+        if not hasattr(self, 'to_user_messages'):
+            self.to_user_messages = []
+        self.to_user_messages.append(message)
 
 
 class DefaultSearchView(BasicSearchView):
@@ -821,3 +831,45 @@ def append_callback_save_success_parameter(request, url):
     if mark_callback_save_success(request):
         url += '?callback_if_save_success=1'
     return url
+
+
+class DeleteConfirmView(View):
+    """
+    sample delete confirm view
+    for user to delete one records (Person, Location, Inst, etc)
+
+    some title, contain can be override by subclass
+    """
+
+    def get_model_class(self) -> Type[ModelLike]:
+        raise NotImplementedError()
+
+    def get_name(self):
+        """ name for display in label or title """
+        return general_model_utils.get_name_by_model_class(self.get_model_class())
+
+    def find_obj_by_obj_id(self, input_id) -> ModelLike | None:
+        return self.get_model_class().objects.filter(pk=input_id).first()
+
+    def get_obj_desc_list(self, obj) -> list[str]:
+        """ description for display about the object to be deleted """
+        return [(obj and obj.pk) or 'unknown']
+
+    def get(self, request, obj_id, *args, **kwargs):
+        obj = self.find_obj_by_obj_id(obj_id)
+        return render(request, 'core/delete_confirm.html', {
+            'name': self.get_name(),
+            'obj_desc_list': self.get_obj_desc_list(obj),
+            'cancel_url': reverse(f'{request.resolver_match.app_name}:{VNAME_FULL_FORM}', args=[obj_id]),
+        })
+
+    def post(self, request, obj_id, *args, **kwargs):
+        obj = self.find_obj_by_obj_id(obj_id)
+        obj_name = general_model_utils.get_display_name(obj)
+        if not obj:
+            return HttpResponseNotFound()
+        obj.delete()
+        url = reverse(f'{request.resolver_match.app_name}:{VNAME_SEARCH}')
+        msg = f'"{obj_name}" deleted successfully'
+        msg = urllib.parse.quote(msg)
+        return redirect(f'{url}?to_user_messages={msg}')

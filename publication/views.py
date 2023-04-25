@@ -1,4 +1,4 @@
-from typing import Callable, Iterable
+from typing import Callable, Iterable, Type
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -7,7 +7,8 @@ from django.shortcuts import redirect, get_object_or_404
 from django.shortcuts import render
 
 from core.helper import renderer_utils, query_utils, view_utils
-from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView
+from core.helper.model_utils import ModelLike
+from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView, DeleteConfirmView
 from publication.forms import PublicationForm, GeneralSearchFieldset
 from publication.models import CofkUnionPublication
 
@@ -110,3 +111,17 @@ def return_quick_init(request, pk):
     return render(request, 'publication/return_quick_init_pub.html', {
         'pub': pub,
     })
+
+
+class PubDeleteConfirmView(DeleteConfirmView):
+    def get_model_class(self) -> Type[ModelLike]:
+        return CofkUnionPublication
+
+    def get_obj_desc_list(self, obj: CofkUnionPublication) -> list[str]:
+        desc_list = [
+            obj.publication_details,
+            obj.abbrev,
+        ]
+        desc_list = filter(None, desc_list)
+        desc_list = list(desc_list)
+        return desc_list
