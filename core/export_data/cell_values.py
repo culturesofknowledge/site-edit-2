@@ -7,19 +7,19 @@ from collections.abc import Iterable
 from django.conf import settings
 
 from core import constant
-from core.helper import general_model_utils
+from core.helper import general_model_utils, str_utils
 from core.models import CofkUnionComment, CofkUnionResource
 from person import person_utils
 from person.models import CofkUnionPerson
 import collections
 
-DEFAULT_DELIMITER = '; '
 DELIMITER_SHACKLE = ' ~ '
+DELIMITER_SEMICOLON = '; '
+DEFAULT_DELIMITER = DELIMITER_SEMICOLON
 
 
 def common_join_text(text_list: Iterable, delimiter=DEFAULT_DELIMITER) -> str:
-    text_list = map(str, text_list)
-    return delimiter.join(text_list)
+    return str_utils.join_str_list(text_list, drop_empty=False, delimiter=delimiter)
 
 
 def notes(note_list: Iterable[CofkUnionComment]) -> str:
@@ -68,7 +68,12 @@ def year_month_day(year, month, day) -> str:
 
 
 def person_roles(obj: CofkUnionPerson) -> str:
-    return person_utils.role_name_str(obj)
+    delimiter = '; '
+    str_list = [
+        person_utils.role_name_str(obj, delimiter=delimiter),
+        obj.person_aliases,
+    ]
+    return str_utils.join_str_list(str_list, delimiter=delimiter)
 
 
 def person_names_titles_roles(obj: CofkUnionPerson) -> str:
