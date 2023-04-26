@@ -228,7 +228,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
 
         if queries:
             queryset = queryset.filter(
-                query_utils.create_exists_by_mode(model_class, queries)
+                query_utils.create_exists_by_mode(model_class, queries, annotate=annotate)
             )
 
         if sort_by:

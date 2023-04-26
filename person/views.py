@@ -383,7 +383,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         queryset = queryset.annotate(**annotate)
 
         if queries:
-            queryset = queryset.filter(query_utils.create_exists_by_mode(model_class, queries))
+            queryset = queryset.filter(query_utils.create_exists_by_mode(model_class, queries, annotate=annotate))
 
         if sort_by:
             queryset = queryset.order_by(*sort_by)

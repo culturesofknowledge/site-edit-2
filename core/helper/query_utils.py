@@ -130,9 +130,13 @@ def create_from_to_datetime(from_field_name, to_field_name, db_field_name, conve
     }
 
 
-def create_exists_by_mode(model_class, queries):
+def create_exists_by_mode(model_class, queries, annotate:dict=None):
+    queryset = model_class.objects
+    if annotate:
+        queryset = queryset.annotate(**annotate)
+
     return Exists(
-        model_class.objects.filter(
+        queryset.filter(
             all_queries_match(queries),
             pk=OuterRef('pk'),
         )
