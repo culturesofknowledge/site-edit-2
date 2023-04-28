@@ -19,8 +19,10 @@ from django.db.models.fields.related_descriptors import ForwardManyToOneDescript
 from psycopg2.extras import DictCursor
 
 from audit.models import CofkUnionAuditLiteral, CofkUnionAuditRelationship
+from core import constant
 from core.helper import iter_utils, model_utils, recref_utils
 from core.helper.model_utils import ModelLike
+from core.helper.role_utils import PermissionData
 from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType, CofkUnionRelationshipType, \
     CofkUnionImage, CofkUnionOrgType, CofkUnionRoleCategory, CofkUnionSubject, Iso639LanguageCode, CofkLookupCatalogue, \
     SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID, CofkUserSavedQuery, CofkUserSavedQuerySelection
@@ -406,34 +408,50 @@ def _val_handler_person__organisation_type(row: dict, conn):
     return row
 
 
-def migrate_groups_and_permissions(conn, target_model: str):
-    rows = find_rows_by_db_table(conn, target_model)
-    # All the entity types to which permissions are given
-    content_types = [CofkUnionWork, CofkUnionPerson, CofkUnionLocation, CofkUnionComment,
-                     CofkUnionResource, CofkUnionInstitution, CofkUnionManifestation, CofkUnionPublication]
+def migrate_groups_and_permissions(conn):
+    start_sec = time.time()
 
-    groups = {}
+    group_permissions_dict = {
+        # 'cofkviewer': [],
+        # 'reviewer': [],
+        'cofkeditor': [
+            constant.PM_CHANGE_WORK,
+            constant.PM_CHANGE_PERSON,
+            constant.PM_CHANGE_PUBLICATION,
+            constant.PM_CHANGE_LOCATION,
+            constant.PM_CHANGE_INST,
+            constant.PM_CHANGE_ROLECAT,
+            constant.PM_CHANGE_LOOKUPCAT,
+            constant.PM_CHANGE_SUBJECT,
+            constant.PM_CHANGE_ORGTYPE,
+        ],
+    }
+    group_permissions_dict['super'] = group_permissions_dict['cofkeditor'] + [
+        constant.PM_CHANGE_USER,
+        constant.PM_CHANGE_COMMENT,
+        constant.PM_VIEW_AUDIT,
+    ]
 
-    for r in [dict(r) for r in rows]:
-        g = Group.objects.get_or_create(name=r['role_code'])[0]
-        groups[r['role_id']] = g
+    # fill group records
+    old_id_groups = {}
+    for r in find_rows_by_db_table(conn, 'cofk_roles'):
+        old_id_groups[r['role_id']] = Group.objects.get_or_create(name=r['role_code'])[0]
 
-        for ct in content_types:
-            content_type = ContentType.objects.get_for_model(ct)
-            permissions = Permission.objects.filter(content_type=content_type)
+    # add permissions to groups
+    for group_name, permission_codes in group_permissions_dict.items():
+        permission_codes = [PermissionData.from_full_name(c) for c in permission_codes]
+        group = Group.objects.get(name=group_name)
 
-            for p in permissions:
-                if (g.name == 'reviewer' or g.name == 'cofkviewer') and p.codename.startswith('view_'):
-                    g.permissions.add(p)
-                elif g.name == 'cofkeditor' and (p.codename.startswith('view_') or p.codename.startswith('change_')):
-                    g.permissions.add(p)
-                elif g.name == 'super':
-                    g.permissions.add(p)
+        for permission_code in permission_codes:
+            permission = Permission.objects.get(codename=permission_code.codename,
+                                                content_type__app_label=permission_code.app_label)
+            group.permissions.add(permission)
 
-    rows = find_rows_by_db_table(conn, 'cofk_user_roles')
+    # add users to groups
+    for r in find_rows_by_db_table(conn, 'cofk_user_roles'):
+        old_id_groups[r['role_id']].user_set.add(CofkUser.objects.get_by_natural_key(r['username']))
 
-    for r in rows:
-        groups[r[1]].user_set.add(CofkUser.objects.get_by_natural_key(r[0]))
+    log_save_records('group & permission', -1, time.time() - start_sec)
 
 
 def _val_handler_work__catalogue(row: dict, conn):
@@ -476,6 +494,7 @@ def _val_handler_user(row: dict, conn):
         row['username'] = user
 
     return row
+
 
 def _val_handler_collect_manifestation(row: dict, conn):
     if collect_work := CofkCollectWork.objects.filter(iwork_id=row['iwork_id']).first():
