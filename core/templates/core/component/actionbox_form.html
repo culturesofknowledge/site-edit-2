@@ -1,8 +1,10 @@
 {% extends "core/component/actionbox_container.html" %}
 
+{% load cl_filters %}
+
 {% block content %}
     <button class="sticky-btn inline_btn cancel" onclick="location.href='/'; return false;">Cancel</button>
-    {% if save_permission is None or save_permission in perms %}
+    {% if save_perm|can_show_for_perm:perms %}
         <button type="submit" class="sticky-btn inline_btn save"> Save</button>
         <button id="save_close_btn" type="submit" class="sticky-btn inline_btn save" style="display: none">
             Save and close

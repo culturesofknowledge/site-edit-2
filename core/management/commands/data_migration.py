@@ -424,6 +424,7 @@ def migrate_groups_and_permissions(conn):
             constant.PM_CHANGE_LOOKUPCAT,
             constant.PM_CHANGE_SUBJECT,
             constant.PM_CHANGE_ORGTYPE,
+            constant.PM_CHANGE_COLLECTWORK,
         ],
     }
     group_permissions_dict['super'] = group_permissions_dict['cofkeditor'] + [

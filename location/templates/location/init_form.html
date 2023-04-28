@@ -28,7 +28,7 @@
                     {{ loc_form }}
                 </fieldset>
 
-                {% include "core/component/actionbox_form.html" %}
+                {% include "core/component/actionbox_form.html" with save_perm=constant.PM_CHANGE_LOCATION %}
 
             </form>
 

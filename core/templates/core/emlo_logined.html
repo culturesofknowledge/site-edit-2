@@ -1,5 +1,6 @@
 {% extends "core/emlo_base.html" %}
 {% load static %}
+{% load cl_filters %}
 
 {% block header %}
     <nav class="flex-space-between">
@@ -9,11 +10,11 @@
                 <a href="/"><img src="{% static 'core/img/cofk_logo_inverted.png' %}" id="logo"></a>
             </li>
 
-            {% include "core/component/common_section_menu_item.html" with search_vname='work:search' init_vname='work:init_form' section_name='Work' singular='work' %}
-            {% include "core/component/common_section_menu_item.html" with search_vname='person:search' init_vname='person:init_form' section_name='People' singular='person'  %}
-            {% include "core/component/common_section_menu_item.html" with search_vname='location:search' init_vname='location:init_form' section_name='Locations' singular='location' %}
-            {% include "core/component/common_section_menu_item.html" with search_vname='institution:search' init_vname='institution:init_form' section_name='Repositories' singular='repository'  %}
-            {% include "core/component/common_section_menu_item.html" with search_vname='publication:search' init_vname='publication:init_form' section_name='Publications' singular='publication' %}
+            {% include "core/component/common_section_menu_item.html" with search_vname='work:search' init_vname='work:init_form' section_name='Work' singular='work' save_perm=constant.PM_CHANGE_WORK %}
+            {% include "core/component/common_section_menu_item.html" with search_vname='person:search' init_vname='person:init_form' section_name='People' singular='person' save_perm=constant.PM_CHANGE_PERSON %}
+            {% include "core/component/common_section_menu_item.html" with search_vname='location:search' init_vname='location:init_form' section_name='Locations' singular='location' save_perm=constant.PM_CHANGE_LOCATION %}
+            {% include "core/component/common_section_menu_item.html" with search_vname='institution:search' init_vname='institution:init_form' section_name='Repositories' singular='repository' save_perm=constant.PM_CHANGE_INST %}
+            {% include "core/component/common_section_menu_item.html" with search_vname='publication:search' init_vname='publication:init_form' section_name='Publications' singular='publication' save_perm=constant.PM_CHANGE_PUBLICATION %}
 
             <li class="menu-item">
                 <a href="">Lists</a>
@@ -34,28 +35,24 @@
             </li>
         </ul>
         <ul class="no-margin">
-            <li class="menu-item">
-                <a href="{% url 'uploader:upload_form' %}">Uploads</a>
-                <!--<ul class='unstyled-list no-margin menu-subitem'>
-                    <a href=''>
-                        <li> Search</li>
-                    </a>
-                    <a href='{% url 'uploader:upload_form' %}'>
-                        <li>Add a new upload</li>
-                    </a>
-                </ul>-->
-            </li>
-            <li class="menu-item">
-                <a href="{% url 'audit:search' %}">Audit</a>
-            </li>
+            {% if constant.PM_CHANGE_COLLECTWORK|can_show_for_perm:perms %}
+                <li class="menu-item">
+                    <a href="{% url 'uploader:upload_form' %}">Uploads</a>
+                </li>
+            {% endif %}
+            {% if constant.PM_VIEW_AUDIT|can_show_for_perm:perms %}
+                <li class="menu-item">
+                    <a href="{% url 'audit:search' %}">Audit</a>
+                </li>
+            {% endif %}
             <li class="menu-item">
                 <a href="#!">{{ request.user.username }}</a>
-                 <ul class='unstyled-list no-margin menu-subitem' style="left: -100px;">
-                     {% if request.user.has_saved_queries %}
-                    <a href="{% url 'list:savedqueries' %}">
-                        <li>Saved queries</li>
-                    </a>
-                     {% endif %}
+                <ul class='unstyled-list no-margin menu-subitem' style="left: -100px;">
+                    {% if request.user.has_saved_queries %}
+                        <a href="{% url 'list:savedqueries' %}">
+                            <li>Saved queries</li>
+                        </a>
+                    {% endif %}
                     <a href="{% url 'login:logout' %}">
                         <li>Logout</li>
                     </a>

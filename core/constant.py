@@ -96,6 +96,7 @@ PM_CHANGE_ROLECAT = 'core.change_cofkunionrolecategory'
 PM_CHANGE_LOOKUPCAT = 'core.change_cofklookupcatalogue'
 PM_CHANGE_SUBJECT = 'core.change_cofkunionsubject'
 PM_CHANGE_ORGTYPE = 'core.change_cofkunionorgtype'
+PM_CHANGE_COLLECTWORK = 'uploader.change_cofkcollectwork'
 
 PM_CHANGE_USER = 'login.change_cofkuser'
 PM_CHANGE_COMMENT = 'core.change_cofkunioncomment'

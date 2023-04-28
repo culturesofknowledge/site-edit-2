@@ -21,7 +21,6 @@ class CofkListView(ListView):
 
         # Form to create new list object
         context['form'] = self.form
-        context['save_perm'] = self.save_perm
         return context
 
     def get_queryset(self):

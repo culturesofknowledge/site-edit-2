@@ -4,12 +4,13 @@ import time
 from zipfile import BadZipFile
 
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.core.files.storage import default_storage
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
 from django.utils import timezone
 
+from core import constant
 from core.models import CofkLookupCatalogue
 from uploader.forms import CofkCollectUploadForm
 from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectAddresseeOfWork, CofkCollectAuthorOfWork, \
@@ -107,6 +108,7 @@ def handle_upload(request, context):
 
 
 @login_required
+@permission_required(constant.PM_CHANGE_COLLECTWORK, raise_exception=True)
 def upload_view(request, **kwargs):
     template_url = 'uploader/form.html'
     form = CofkCollectUploadForm
@@ -125,6 +127,7 @@ def upload_view(request, **kwargs):
 
 
 @login_required
+@permission_required(constant.PM_CHANGE_COLLECTWORK, raise_exception=True)
 def upload_review(request, upload_id, **kwargs):
     template_url = 'uploader/review.html'
     upload = CofkCollectUpload.objects.filter(upload_id=upload_id).first()

@@ -1,6 +1,7 @@
 {% extends "core/emlo_common_form.html" %}
 {% load static %}
 
+{% load cl_filters %}
 
 {% block content %}
 
@@ -31,13 +32,13 @@
                         <small>(optional, max. 50 characters)</small>
                     </div>
                 </fieldset>
-                {% if pub_form.instance and pub_form.instance.pk  %}
+                {% if pub_form.instance and pub_form.instance.pk and  constant.PM_CHANGE_PUBLICATION|can_show_for_perm:perms  %}
                     {% url 'publication:delete' pub_form.instance.pk as del_url %}
                     {% include "core/component/del_confirm_fieldset.html" with del_url=del_url name='Publication' %}
                 {% endif %}
 
 
-                {% include "core/component/actionbox_form.html" %}
+                {% include "core/component/actionbox_form.html" with save_perm=constant.PM_CHANGE_PUBLICATION %}
                 {% include "core/component/close_if_save_success.html" with is_save_success=is_save_success %}
 
             </form>
