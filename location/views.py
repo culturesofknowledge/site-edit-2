@@ -3,16 +3,17 @@ import logging
 from typing import Iterable, Union, Type, Callable, List
 
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db import models
 from django.db.models import Q
 from django.forms import BaseForm, BaseFormSet
 from django.shortcuts import render, get_object_or_404, redirect
 
+from core import constant
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM
 from core.export_data import download_csv_utils, cell_values
 from core.forms import CommentForm
-from core.helper import view_utils, renderer_utils, query_utils
+from core.helper import view_utils, renderer_utils, query_utils, role_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.model_utils import ModelLike
 from core.helper.recref_handler import RecrefFormsetHandler, ImageRecrefHandler, TargetResourceFormsetHandler
@@ -34,7 +35,8 @@ log = logging.getLogger(__name__)
 FormOrFormSet = Union[BaseForm, BaseFormSet]
 
 
-class LocationInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
+class LocationInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitFormViewTemplate):
+    permission_required = constant.PM_CHANGE_LOCATION
 
     def resp_form_page(self, request, form):
         return render(request, 'location/init_form.html', {'loc_form': form})
@@ -129,6 +131,7 @@ def full_form(request, location_id):
 
     is_save_success = False
     if request.method == 'POST':
+        role_utils.validate_permission_denied(request.user, constant.PM_CHANGE_LOCATION)
 
         if fhandler.is_invalid():
             return fhandler.render_form(request)

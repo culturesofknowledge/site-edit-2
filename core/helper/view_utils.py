@@ -4,7 +4,6 @@ import logging
 import urllib
 from collections import defaultdict
 from datetime import datetime
-from functools import wraps
 from threading import Thread
 from typing import Iterable, Type, Callable, Any, TYPE_CHECKING, List
 from typing import NoReturn
@@ -12,7 +11,6 @@ from urllib.parse import urljoin
 
 from django import template
 from django.conf import settings
-from django.core.exceptions import PermissionDenied
 from django.db import models
 from django.db.models import Q, ForeignKey, QuerySet
 from django.db.models.query_utils import DeferredAttribute
@@ -36,7 +34,6 @@ from core.helper.url_utils import VNAME_FULL_FORM, VNAME_SEARCH
 from core.helper.view_components import DownloadCsvHandler
 from core.models import CofkUnionResource, CofkUnionComment, CofkUserSavedQuery, CofkUserSavedQuerySelection
 from core.services import media_service
-from login.models import CofkUser
 from work import work_utils
 from work.models import CofkUnionWork
 
@@ -878,23 +875,3 @@ class DeleteConfirmView(View):
         return redirect(f'{url}?to_user_messages={msg}')
 
 
-def class_permission_required(perms: str | list[str]):
-    """
-    permission checking for post / get method of class based view
-    """
-    if isinstance(perms, str):
-        perms = [perms]
-
-    def decorator(view_func):
-        @wraps(view_func)
-        def _wrapped_view(*args, **kwargs):
-            for arg in args:
-                user = getattr(arg, 'user', None)
-                if user is not None and isinstance(user, CofkUser) and user.has_perms(perms):
-                    return view_func(*args, **kwargs)
-
-            raise PermissionDenied()
-
-        return _wrapped_view
-
-    return decorator

@@ -1,12 +1,13 @@
 from typing import Callable, Iterable, Type
 
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.forms import ModelForm
 from django.shortcuts import redirect, get_object_or_404
 from django.shortcuts import render
 
-from core.helper import renderer_utils, query_utils, view_utils
+from core import constant
+from core.helper import renderer_utils, query_utils, view_utils, role_utils
 from core.helper.model_utils import ModelLike
 from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView, DeleteConfirmView
 from publication.forms import PublicationForm, GeneralSearchFieldset
@@ -63,7 +64,8 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
         return renderer_utils.create_table_search_results_renderer('publication/search_table_layout.html')
 
 
-class PubInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
+class PubInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitFormViewTemplate):
+    permission_required = constant.PM_CHANGE_PUBLICATION
 
     def resp_form_page(self, request, form):
         return render(request, 'publication/init_form.html', {'pub_form': form})
@@ -90,6 +92,7 @@ def full_form(request, pk):
 
     is_save_success = False
     if request.POST:
+        role_utils.validate_permission_denied(request.user, constant.PM_CHANGE_PUBLICATION)
         if not pub_form.is_valid():
             return _render_form()
 
@@ -113,7 +116,9 @@ def return_quick_init(request, pk):
     })
 
 
-class PubDeleteConfirmView(DeleteConfirmView):
+class PubDeleteConfirmView(PermissionRequiredMixin, DeleteConfirmView):
+    permission_required = constant.PM_CHANGE_PUBLICATION
+
     def get_model_class(self) -> Type[ModelLike]:
         return CofkUnionPublication
 

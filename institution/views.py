@@ -3,12 +3,13 @@ from abc import ABC
 from typing import Callable, Iterable, Type, TYPE_CHECKING, List
 
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.forms import ModelForm
 from django.shortcuts import render, redirect, get_object_or_404
 
+from core import constant
 from core.export_data import cell_values, download_csv_utils
-from core.helper import renderer_utils, query_utils, view_utils
+from core.helper import renderer_utils, query_utils, view_utils, role_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.model_utils import ModelLike
 from core.helper.recref_handler import ImageRecrefHandler, TargetResourceFormsetHandler
@@ -111,7 +112,8 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
                 lambda: DownloadCsvHandler(InstCsvHeaderValues()).create_csv_file)
 
 
-class InstInitView(LoginRequiredMixin, CommonInitFormViewTemplate):
+class InstInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitFormViewTemplate):
+    permission_required = constant.PM_CHANGE_INST
 
     def resp_form_page(self, request, form):
         return render(request, 'institution/init_form.html', {'inst_form': form})
@@ -134,7 +136,6 @@ def full_form(request, pk):
 
     img_recref_handler = InstImageRecrefHandler(request.POST or None, request.FILES, parent=inst)
 
-
     def _render_form():
         return render(request, 'institution/init_form.html',
                       ({
@@ -148,6 +149,8 @@ def full_form(request, pk):
 
     is_save_success = False
     if request.POST:
+        role_utils.validate_permission_denied(request.user, constant.PM_CHANGE_INST)
+
         if view_utils.any_invalid_with_log([
             inst_form,
             res_handler.formset,
