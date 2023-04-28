@@ -30,7 +30,7 @@ from core.helper.recref_handler import SingleRecrefHandler, RecrefFormsetHandler
 from core.helper.recref_utils import create_recref_if_field_exist
 from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
-from core.helper.view_utils import DefaultSearchView
+from core.helper.view_utils import DefaultSearchView, class_permission_required
 from core.models import Recref, CofkLookupCatalogue
 from institution import inst_utils
 from location import location_utils
@@ -664,6 +664,7 @@ class BasicWorkFormView(LoginRequiredMixin, View):
         url = view_utils.append_callback_save_success_parameter(request, url)
         return redirect(url)
 
+    @class_permission_required(constant.PM_CHANGE_WORK)
     def post(self, request, iwork_id=None, *args, **kwargs):
         fhandler = self.create_fhandler(request, iwork_id=iwork_id, *args, **kwargs)
         if fhandler.is_invalid():
@@ -1129,7 +1130,7 @@ class WorkCsvHeaderValues(HeaderValues):
             obj.flags,
             obj.images,
             ' -- '.join(' '.join(manif_utils.get_manif_details(m))
-                      for m in obj.work.cofkunionmanifestation_set.iterator()),
+                        for m in obj.work.cofkunionmanifestation_set.iterator()),
             cell_values.resource_str_by_list(wrm.resource for wrm in obj.work.cofkworkresourcemap_set.iterator()),
             obj.language_of_work,
             obj.subjects,
