@@ -44,6 +44,7 @@ def create_test_user():
     login_user.username = 'test_user_a'
     login_user.raw_password = 'pass'
     login_user.set_password(login_user.raw_password)
+    login_user.is_superuser = True
     login_user.save()
     return login_user
 

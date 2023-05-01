@@ -1,3 +1,5 @@
+from core.models import CofkLookupCatalogue
+
 res_dict_a = {
     'resource_name': 'resource_name a',
     'resource_url': 'resource_url a',
@@ -19,3 +21,13 @@ lang_dict_ara = {
     'code_639_1': 'ar',
     'language_name': 'Arabic',
 }
+
+
+def fixture_default_lookup_catalogue():
+    c = CofkLookupCatalogue()
+    c.catalogue_name = 'test'
+    c.catalogue_code = ''
+    c.is_in_union = 1
+    c.publish_status = 1
+    c.save()
+    return c
