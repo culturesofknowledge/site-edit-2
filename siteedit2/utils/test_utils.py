@@ -26,7 +26,7 @@ from core.helper.model_utils import ModelLike
 from core.helper.view_utils import BasicSearchView
 from core.models import CofkLookupCatalogue, CofkUnionComment, CofkUnionResource
 from location.models import CofkUnionLocation
-from login.models import CofkUser
+from login.fixtures import create_test_user__a
 from person.models import CofkUnionPerson
 from work.fixtures import work_dict_a
 from work.models import CofkUnionWork
@@ -37,16 +37,6 @@ if TYPE_CHECKING:
     from django.views import View
 
 log = logging.getLogger(__name__)
-
-
-def create_test_user():
-    login_user = CofkUser()
-    login_user.username = 'test_user_a'
-    login_user.raw_password = 'pass'
-    login_user.set_password(login_user.raw_password)
-    login_user.is_superuser = True
-    login_user.save()
-    return login_user
 
 
 class EmloSeleniumTestCase(StaticLiveServerTestCase):
@@ -83,7 +73,7 @@ class EmloSeleniumTestCase(StaticLiveServerTestCase):
         cls.selenium.maximize_window()  # avoid something is not clickable
         cls.selenium.implicitly_wait(10)
 
-        cls.login_user = create_test_user()
+        cls.login_user = create_test_user__a()
 
     def setUp(self) -> None:
         """ Developer can change login_user by overwrite setUpClass
@@ -462,7 +452,7 @@ class LoginTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.login_user = create_test_user()
+        cls.login_user = create_test_user__a()
 
     def setUp(self) -> None:
         super().setUp()

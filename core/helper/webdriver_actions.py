@@ -65,3 +65,7 @@ class SwitchToNewWindow:
         if not new_win_set:
             raise RuntimeError(f'No new windows found [{self.driver.window_handles}] ')
         self.driver.switch_to.window(list(new_win_set)[0])
+
+
+def is_403(driver):
+    return '403 Forbidden' in driver.page_source

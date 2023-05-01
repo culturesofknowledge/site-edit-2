@@ -20,7 +20,7 @@ from psycopg2.extras import DictCursor
 
 from audit.models import CofkUnionAuditLiteral, CofkUnionAuditRelationship
 from core import constant
-from core.helper import iter_utils, model_utils, recref_utils
+from core.helper import iter_utils, model_utils, recref_utils, perm_utils
 from core.helper.model_utils import ModelLike
 from core.helper.perm_utils import PermissionData
 from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType, CofkUnionRelationshipType, \
@@ -444,9 +444,11 @@ def migrate_groups_and_permissions(conn):
         group = Group.objects.get(name=group_name)
 
         for permission_code in permission_codes:
-            permission = Permission.objects.get(codename=permission_code.codename,
-                                                content_type__app_label=permission_code.app_label)
-            group.permissions.add(permission)
+            permission = perm_utils.get_perm_by_full_name(permission_code.full_name)
+            if permission:
+                group.permissions.add(permission)
+            else:
+                print(f'permission not found: {permission_code.full_name}')
 
     # add users to groups
     for r in find_rows_by_db_table(conn, 'cofk_user_roles'):

@@ -1,6 +1,7 @@
 import dataclasses
 from functools import wraps
 
+from django.contrib.auth.models import Permission
 from django.core.exceptions import PermissionDenied
 
 from login.models import CofkUser
@@ -46,3 +47,10 @@ def class_permission_required(perms: str | list[str]):
 def validate_permission_denied(user: CofkUser, perms: str | list[str]):
     if perms is not None and not user.has_perms(perms):
         raise PermissionDenied()
+
+
+def get_perm_by_full_name(full_name: str) -> PermissionData | None:
+    perm_data = PermissionData.from_full_name(full_name)
+    permission = Permission.objects.filter(codename=perm_data.codename,
+                                           content_type__app_label=perm_data.app_label).first()
+    return permission
