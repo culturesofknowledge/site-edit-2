@@ -22,7 +22,7 @@ from audit.models import CofkUnionAuditLiteral, CofkUnionAuditRelationship
 from core import constant
 from core.helper import iter_utils, model_utils, recref_utils
 from core.helper.model_utils import ModelLike
-from core.helper.role_utils import PermissionData
+from core.helper.perm_utils import PermissionData
 from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType, CofkUnionRelationshipType, \
     CofkUnionImage, CofkUnionOrgType, CofkUnionRoleCategory, CofkUnionSubject, Iso639LanguageCode, CofkLookupCatalogue, \
     SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID, CofkUserSavedQuery, CofkUserSavedQuerySelection
@@ -451,6 +451,9 @@ def migrate_groups_and_permissions(conn):
     # add users to groups
     for r in find_rows_by_db_table(conn, 'cofk_user_roles'):
         old_id_groups[r['role_id']].user_set.add(CofkUser.objects.get_by_natural_key(r['username']))
+
+    # is_staff
+    CofkUser.objects.with_perm(constant.PM_CHANGE_USER).update(is_staff=True)
 
     log_save_records('group & permission', -1, time.time() - start_sec)
 

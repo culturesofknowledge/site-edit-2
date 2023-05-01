@@ -7,7 +7,7 @@ from django.shortcuts import redirect, get_object_or_404
 from django.shortcuts import render
 
 from core import constant
-from core.helper import renderer_utils, query_utils, view_utils, role_utils
+from core.helper import renderer_utils, query_utils, view_utils, perm_utils
 from core.helper.model_utils import ModelLike
 from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView, DeleteConfirmView
 from publication.forms import PublicationForm, GeneralSearchFieldset
@@ -92,7 +92,7 @@ def full_form(request, pk):
 
     is_save_success = False
     if request.POST:
-        role_utils.validate_permission_denied(request.user, constant.PM_CHANGE_PUBLICATION)
+        perm_utils.validate_permission_denied(request.user, constant.PM_CHANGE_PUBLICATION)
         if not pub_form.is_valid():
             return _render_form()
 

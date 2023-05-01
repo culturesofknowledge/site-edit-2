@@ -20,7 +20,7 @@ class CofkUser(AbstractBaseUser, PermissionsMixin):
     # Can be changed to email field
     email = models.EmailField(null=True)
 
-    is_staff = models.BooleanField(default=False)  # KTODO required by django, can be remove?
+    is_staff = models.BooleanField(default=False, help_text='Identifies whether the user can log into the admin site')
 
     objects = UserManager()
     EMAIL_FIELD = 'email'

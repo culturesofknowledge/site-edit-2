@@ -6,7 +6,7 @@ from django.views.generic import ListView
 
 from core import constant
 from core.forms import CatalogueForm, RoleForm, SubjectForm, OrgTypeForm
-from core.helper import role_utils
+from core.helper import perm_utils
 from core.models import CofkLookupCatalogue, CofkUnionRoleCategory, CofkUnionSubject, CofkUnionOrgType, \
     CofkUserSavedQuery
 
@@ -35,7 +35,7 @@ class CofkListView(ListView):
             return self.model.objects.filter(pk=self.request.POST[self.model._meta.pk.name]).first()
 
     def post(self, request, *args, **kwargs):
-        role_utils.validate_permission_denied(self.request.user, self.save_perm)
+        perm_utils.validate_permission_denied(self.request.user, self.save_perm)
         if 'delete' in self.request.POST:
             list_obj = self.get_obj_by_id()
 

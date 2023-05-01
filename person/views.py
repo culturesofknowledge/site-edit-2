@@ -14,7 +14,7 @@ from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_BORN_IN_LOCAT
     REL_TYPE_MENTION, TRUE_CHAR
 from core.export_data import cell_values, download_csv_utils
 from core.forms import CommentForm, PersonRecrefForm
-from core.helper import renderer_utils, view_utils, query_utils, recref_utils, form_utils, role_utils
+from core.helper import renderer_utils, view_utils, query_utils, recref_utils, form_utils, perm_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.model_utils import ModelLike
 from core.helper.recref_handler import RecrefFormsetHandler, RoleCategoryHandler, ImageRecrefHandler, \
@@ -242,7 +242,7 @@ def full_form(request, iperson_id):
     # handle form submit
     is_save_success = False
     if request.POST:
-        role_utils.validate_permission_denied(request.user, constant.PM_CHANGE_PERSON)
+        perm_utils.validate_permission_denied(request.user, constant.PM_CHANGE_PERSON)
 
         # ----- validate
         if fhandler.is_invalid():

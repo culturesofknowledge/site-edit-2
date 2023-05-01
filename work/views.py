@@ -31,7 +31,7 @@ from core.helper.recref_utils import create_recref_if_field_exist
 from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_utils import DefaultSearchView
-from core.helper.role_utils import class_permission_required
+from core.helper.perm_utils import class_permission_required
 from core.models import Recref, CofkLookupCatalogue
 from institution import inst_utils
 from location import location_utils
