@@ -101,17 +101,17 @@ def render_queryable_resources(values: str):
     if len(resources) > 1:
         html = '<ul>'
         for link in resources:
-            html += f'<li><a href="{link[2]}">{link[4]}</a></li>'
+            html += f'<li><a href="{link[2]}" target="_blank">{link[4]}</a></li>'
         html += '</ul>'
     elif len(resources) == 1:
-        html = f'<a href="{resources[0][2]}">{resources[0][4]}</a>'
+        html = f'<a href="{resources[0][2]}" target="_blank">{resources[0][4]}</a>'
 
     return mark_safe(html)
 
 
 @register.filter
 def render_queryable_manif(values: str):
-    return mark_safe(re.sub(link_pattern, r'<a href="\3">\5</a>', values))
+    return mark_safe(re.sub(link_pattern, r'<a href="\3" target="_blank">\5</a>', values))
 
 
 @register.filter
