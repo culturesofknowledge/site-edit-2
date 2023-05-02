@@ -711,7 +711,7 @@ def data_migration(user, password, database, host, port):
                               col_val_handler_fn_list=[_val_handler_users],
                               seq_name=None,
                               old_table_name='cofk_users', )
-    migrate_groups_and_permissions(conn, 'cofk_roles')
+    migrate_groups_and_permissions(conn)
 
     # Queries must be run after user
     clone_rows_by_model_class(conn, CofkUserSavedQuery, seq_name='cofk_user_saved_query_query_id_seq',
