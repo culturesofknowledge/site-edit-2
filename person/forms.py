@@ -254,7 +254,9 @@ search_person_or_group = [
 
 class GeneralSearchFieldset(BasicSearchFieldset):
     role_category_names = CofkUnionRoleCategory.objects \
-        .order_by('role_category_desc').values_list('role_category_desc', flat=True).distinct()
+        .order_by('role_category_desc').values_list('role_category_desc', flat=True)
+    org_types = CofkUnionOrgType.objects \
+        .order_by('org_type_desc').values_list('org_type_desc', flat=True)
 
     title = 'General'
     template_name = 'person/component/person_search_fieldset.html'
@@ -282,7 +284,12 @@ class GeneralSearchFieldset(BasicSearchFieldset):
 
     gender = SearchCharField(widget=forms.Select(choices=search_gender_choices))
 
-    person_or_group = SearchCharField(widget=forms.Select(choices=search_person_or_group))
+    person_or_group = SearchCharField(widget=forms.Select(choices=search_person_or_group),
+                                      help_text="Person for individual people; "
+                                                "Group if correspondent is an organisation or group.")
+
+    organisation_type = SearchCharField()
+    organisation_type_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     sent = SearchIntField(help_text="Number of letters from this author/sender. "
                                   "You can search on these 'number' fields using 'Advanced Search', "
