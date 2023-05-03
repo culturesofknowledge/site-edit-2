@@ -60,7 +60,12 @@ def create_queries_by_lookup_field(request_data: dict,
                                    search_field_names: list[str],
                                    search_fields_maps: dict[str, Iterable[str]] = None
                                    ) -> Iterable[Q]:
-    for field_name in search_field_names:
+    search_fields = search_field_names
+
+    if search_fields_maps:
+        search_fields.extend(list(search_fields_maps.keys()))
+
+    for field_name in search_fields:
         field_val = request_data.get(field_name)
         lookup_key = request_data.get(f'{field_name}_lookup')
 
