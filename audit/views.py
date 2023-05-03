@@ -1,15 +1,17 @@
 from typing import Callable, Iterable
 
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 
 from audit import forms
 from audit.forms import AuditSearchFieldset
 from audit.models import CofkUnionAuditLiteral
+from core import constant
 from core.helper import renderer_utils, query_utils
 from core.helper.view_utils import DefaultSearchView
 
 
-class AuditSearchView(LoginRequiredMixin, DefaultSearchView):
+class AuditSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearchView):
+    permission_required = constant.PM_VIEW_AUDIT
 
     @property
     def entity(self) -> str:

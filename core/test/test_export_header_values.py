@@ -3,41 +3,23 @@ from pathlib import Path
 from django.test import TestCase
 
 from core.export_data.excel_header_values import WorkExcelHeaderValues
+from core.fixtures import fixture_default_lookup_catalogue
 from core.helper import file_utils
 from core.helper.view_components import DownloadCsvHandler
-from core.models import CofkLookupCatalogue
 from institution.models import CofkUnionInstitution
 from institution.views import InstSearchView, InstCsvHeaderValues
 from location.models import CofkUnionLocation
 from location.views import LocationCsvHeaderValues, LocationSearchView
 from person.models import CofkUnionPerson
 from person.views import PersonSearchView, PersonCsvHeaderValues
-from work import work_utils
-from work.models import CofkUnionWork, CofkUnionQueryableWork
+from work.fixtures import fixture_queryable_work
 from work.views import WorkSearchView, WorkCsvHeaderValues
-
-
-def fixture_queryable_work() -> CofkUnionQueryableWork:
-    work = CofkUnionWork(description='test')
-    work.save()
-
-    q_work = work_utils.clone_queryable_work(work, _return=True)
-    return q_work
-
-def fixture_default_lookup_catalogue():
-    c = CofkLookupCatalogue()
-    c.catalogue_name = 'test'
-    c.catalogue_code = ''
-    c.is_in_union = 1
-    c.publish_status = 1
-    c.save()
-    return c
-
 
 
 class TestWorkExcelHeaderValues(TestCase):
 
     def test_obj_to_values(self):
+        fixture_default_lookup_catalogue()
         hv = WorkExcelHeaderValues()
         values = hv.obj_to_values(fixture_queryable_work())
 
@@ -48,10 +30,10 @@ class MockResolver:
     def __init__(self, app_name):
         self.app_name = app_name
 
+
 class MockRequest:
     def __init__(self, app_name):
         self.resolver_match = MockResolver(app_name)
-
 
 
 class TestDownloadCsvHandler(TestCase):

@@ -20,13 +20,13 @@ import core.fixtures
 import location.fixtures
 import person.fixtures
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_IS_RELATED_TO
-from core.helper import model_utils, recref_utils, url_utils
+from core.helper import model_utils, recref_utils, url_utils, webdriver_actions
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.model_utils import ModelLike
 from core.helper.view_utils import BasicSearchView
 from core.models import CofkLookupCatalogue, CofkUnionComment, CofkUnionResource
 from location.models import CofkUnionLocation
-from login.models import CofkUser
+from login.fixtures import create_test_user__a
 from person.models import CofkUnionPerson
 from work.fixtures import work_dict_a
 from work.models import CofkUnionWork
@@ -37,15 +37,6 @@ if TYPE_CHECKING:
     from django.views import View
 
 log = logging.getLogger(__name__)
-
-
-def create_test_user():
-    login_user = CofkUser()
-    login_user.username = 'test_user_a'
-    login_user.raw_password = 'pass'
-    login_user.set_password(login_user.raw_password)
-    login_user.save()
-    return login_user
 
 
 class EmloSeleniumTestCase(StaticLiveServerTestCase):
@@ -82,7 +73,7 @@ class EmloSeleniumTestCase(StaticLiveServerTestCase):
         cls.selenium.maximize_window()  # avoid something is not clickable
         cls.selenium.implicitly_wait(10)
 
-        cls.login_user = create_test_user()
+        cls.login_user = create_test_user__a()
 
     def setUp(self) -> None:
         """ Developer can change login_user by overwrite setUpClass
@@ -91,9 +82,7 @@ class EmloSeleniumTestCase(StaticLiveServerTestCase):
         if self.login_user is not None:
             self.login_user.save()
             self.goto_vname('login:gate')
-            self.find_element_by_css('input[name=username]').send_keys(self.login_user.username)
-            self.find_element_by_css('input[name=password]').send_keys(self.login_user.raw_password)
-            self.find_element_by_css('button').click()
+            webdriver_actions.login(self.selenium, self.login_user.username, self.login_user.raw_password)
 
     @classmethod
     def tearDownClass(cls):
@@ -109,24 +98,19 @@ class EmloSeleniumTestCase(StaticLiveServerTestCase):
     def fill_form_by_dict(self,
                           model_dict: dict,
                           exclude_fields: Iterable[str] = None):
-        if exclude_fields is not None and (exclude_fields := set(exclude_fields)):
-            model_dict = ((k, v) for k, v in model_dict if k not in exclude_fields)
-        self.fill_val_by_selector_list((f'#id_{k}', v) for k, v in model_dict)
+        webdriver_actions.fill_form_by_dict(self.selenium, model_dict, exclude_fields)
 
     def fill_val_by_selector_list(self, selector_list: Iterable[tuple]):
-        for selector, val in selector_list:
-            ele = self.selenium.find_element(by=By.CSS_SELECTOR, value=selector)
-            ele.send_keys(val)
+        webdriver_actions.fill_val_by_selector_list(self.selenium, selector_list)
 
     def fill_formset_by_dict(self, data: dict, formset_prefix, form_idx=0):
-        self.fill_val_by_selector_list((f'#id_{formset_prefix}-{form_idx}-{k}', v)
-                                       for k, v in data.items())
+        webdriver_actions.fill_formset_by_dict(self.selenium, data, formset_prefix, form_idx)
 
     def find_elements_by_css(self, css_selector):
-        return self.selenium.find_elements(by=By.CSS_SELECTOR, value=css_selector)
+        return webdriver_actions.find_elements_by_css(self.selenium, css_selector)
 
     def find_element_by_css(self, css_selector):
-        return self.selenium.find_element(by=By.CSS_SELECTOR, value=css_selector)
+        return webdriver_actions.find_element_by_css(self.selenium, css_selector)
 
     def goto_vname(self, vname, *args, **kwargs):
         self.selenium.get(self.get_url_by_viewname(vname, *args, **kwargs))
@@ -135,14 +119,13 @@ class EmloSeleniumTestCase(StaticLiveServerTestCase):
         self.selenium.get(self.get_url_by_path(path))
 
     def click_submit(self):
-        self.selenium.find_element(By.CSS_SELECTOR, 'button[type=submit].sticky-btn').click()
+        webdriver_actions.click_submit(self.selenium)
 
     def js_click(self, selector):
-        script = f"document.querySelector('{selector}').click(); "
-        self.selenium.execute_script(script)
+        webdriver_actions.js_click(self.selenium, selector)
 
     def switch_to_new_window_on_completed(self):
-        return SwitchToNewWindow(self.selenium)
+        return webdriver_actions.switch_to_new_window(self.selenium)
 
 
 def get_selected_radio_val(elements):
@@ -389,21 +372,6 @@ def create_model_instance(model_class: Type[model_utils.ModelLike],
     return obj
 
 
-class SwitchToNewWindow:
-    def __init__(self, driver):
-        self.driver = driver
-        self.window_handlers = set()
-
-    def __enter__(self):
-        self.window_handlers = set(self.driver.window_handles)
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        new_win_set = set(self.driver.window_handles) - self.window_handlers
-        if not new_win_set:
-            raise RuntimeError(f'No new windows found [{self.driver.window_handles}] ')
-        self.driver.switch_to.window(list(new_win_set)[0])
-
-
 def run_recref_test(test_case: EmloSeleniumTestCase, recref_form_name,
                     target_obj, related_manager, expected_rel_type, form_url):
     n_org_recref = related_manager.count()
@@ -484,7 +452,7 @@ class LoginTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.login_user = create_test_user()
+        cls.login_user = create_test_user__a()
 
     def setUp(self) -> None:
         super().setUp()

@@ -4,7 +4,9 @@ from django.contrib import messages
 from django.db.models import Count
 from django.views.generic import ListView
 
+from core import constant
 from core.forms import CatalogueForm, RoleForm, SubjectForm, OrgTypeForm
+from core.helper import perm_utils
 from core.models import CofkLookupCatalogue, CofkUnionRoleCategory, CofkUnionSubject, CofkUnionOrgType, \
     CofkUserSavedQuery
 
@@ -25,7 +27,7 @@ class CofkListView(ListView):
         # When a group by is used, as with annotate, the default ordering is ignored.
         # see https://docs.djangoproject.com/en/dev/releases/2.2/#features-deprecated-in-2-2
         # The ordering will be done by the first of the fields to be updated.
-        return self.model.objects\
+        return self.model.objects \
             .annotate(**{f'{self.count}_count': Count(self.count)}).order_by(self.updated_fields[0]).all()
 
     def get_obj_by_id(self):
@@ -33,6 +35,7 @@ class CofkListView(ListView):
             return self.model.objects.filter(pk=self.request.POST[self.model._meta.pk.name]).first()
 
     def post(self, request, *args, **kwargs):
+        perm_utils.validate_permission_denied(self.request.user, self.save_perm)
         if 'delete' in self.request.POST:
             list_obj = self.get_obj_by_id()
 
@@ -80,6 +83,15 @@ class CofkListView(ListView):
         return super().get(self, request, *args, **kwargs)
 
     @property
+    def save_perm(self):
+        """
+        return the permission required to create / save / delete object
+        permission format should 'app_name.permission_codename'
+        no permission checking if permission is None
+        """
+        return None
+
+    @property
     def form(self):
         raise NotImplementedError
 
@@ -116,6 +128,10 @@ class RoleListView(CofkListView):
     def list_type(self):
         return 'role'
 
+    @property
+    def save_perm(self):
+        return constant.PM_CHANGE_ROLECAT
+
 
 class CatalogueListView(CofkListView):
     model = CofkLookupCatalogue
@@ -136,6 +152,10 @@ class CatalogueListView(CofkListView):
     @property
     def list_type(self):
         return 'catalogue'
+
+    @property
+    def save_perm(self):
+        return constant.PM_CHANGE_LOOKUPCAT
 
 
 class SubjectListView(CofkListView):
@@ -158,6 +178,10 @@ class SubjectListView(CofkListView):
     def list_type(self):
         return 'subject'
 
+    @property
+    def save_perm(self):
+        return constant.PM_CHANGE_SUBJECT
+
 
 class OrgTypeListView(CofkListView):
     model = CofkUnionOrgType
@@ -178,6 +202,10 @@ class OrgTypeListView(CofkListView):
     @property
     def list_type(self):
         return 'organisation type'
+
+    @property
+    def save_perm(self):
+        return constant.PM_CHANGE_ORGTYPE
 
 
 class SavedQueries(ListView):

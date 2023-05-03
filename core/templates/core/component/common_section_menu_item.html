@@ -1,11 +1,15 @@
+{% load cl_filters %}
+
 <li class="menu-item">
     <a href="{% url search_vname %}">{{ section_name }}</a>
     <ul class='unstyled-list no-margin menu-subitem'>
         <a href='{% url search_vname %}'>
             <li> Search</li>
         </a>
-        <a href='{% url init_vname %}'>
-            <li>Add a new {{ singular }}</li>
-        </a>
+        {% if save_perm|can_show_for_perm:perms %}
+            <a href='{% url init_vname %}'>
+                <li>Add a new {{ singular }}</li>
+            </a>
+        {% endif %}
     </ul>
 </li>

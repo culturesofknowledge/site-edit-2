@@ -873,3 +873,5 @@ class DeleteConfirmView(View):
         msg = f'"{obj_name}" deleted successfully'
         msg = urllib.parse.quote(msg)
         return redirect(f'{url}?to_user_messages={msg}')
+
+

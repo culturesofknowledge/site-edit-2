@@ -124,6 +124,9 @@ class LocationExcelHeaderValues(HeaderValues):
         ]
 
     def obj_to_values(self, obj: CofkUnionLocation) -> Iterable:
+        location_synonyms = obj.location_synonyms or ''
+        location_synonyms = cell_values.common_join_text(location_synonyms.splitlines(),
+                                                         delimiter=cell_values.DELIMITER_SEMICOLON)
         return [
             obj.location_id,
             general_model_utils.get_display_name(obj),
@@ -134,7 +137,7 @@ class LocationExcelHeaderValues(HeaderValues):
             obj.element_5_eg_county,
             obj.element_6_eg_country,
             obj.element_7_eg_empire,
-            obj.location_synonyms,
+            location_synonyms,
             obj.latitude,
             obj.longitude,
             cell_values.resources_id(obj.cofklocationresourcemap_set.all()),
@@ -273,6 +276,8 @@ class WorkExcelHeaderValues(HeaderValues):
         match_work_name, match_work_id = cell_values.name_id(
             obj.work.find_work_to_list_by_rel_type(constant.REL_TYPE_WORK_MATCHES))
 
+        original_catalogue = obj.work.original_catalogue
+        original_catalogue = original_catalogue and original_catalogue.catalogue_name
         return (
             obj.iwork_id,
             obj.work.date_of_work_std_year,
@@ -321,7 +326,7 @@ class WorkExcelHeaderValues(HeaderValues):
             person_mentioned_name,
             person_mentioned_id,
             cell_values.notes(obj.work.find_comments_by_rel_type(constant.REL_TYPE_PEOPLE_MENTIONED_IN_WORK)),
-            obj.original_catalogue,
+            original_catalogue,
             obj.accession_code,
             match_work_name,
             match_work_id,

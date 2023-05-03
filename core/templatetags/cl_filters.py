@@ -67,3 +67,8 @@ def url_replace(request, field, value):
     d = request.GET.copy()
     d[field] = value
     return d.urlencode()
+
+
+@register.filter
+def can_show_for_perm(perm, perms):
+    return perm is None or perm in perms

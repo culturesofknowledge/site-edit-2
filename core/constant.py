@@ -85,3 +85,20 @@ SEARCH_DATETIME_FORMAT = '%d/%m/%Y %H:%M'
 DEFAULT_CHANGE_USER = '__unknown_user'
 
 TRUE_CHAR = 'Y'
+
+# permissions
+PM_CHANGE_WORK = 'work.change_cofkunionwork'
+PM_CHANGE_PERSON = 'person.change_cofkunionperson'
+PM_CHANGE_PUBLICATION = 'publication.change_cofkunionpublication'
+PM_CHANGE_LOCATION = 'location.change_cofkunionlocation'
+PM_CHANGE_INST = 'institution.change_cofkunioninstitution'
+PM_CHANGE_ROLECAT = 'core.change_cofkunionrolecategory'
+PM_CHANGE_LOOKUPCAT = 'core.change_cofklookupcatalogue'
+PM_CHANGE_SUBJECT = 'core.change_cofkunionsubject'
+PM_CHANGE_ORGTYPE = 'core.change_cofkunionorgtype'
+PM_CHANGE_COLLECTWORK = 'uploader.change_cofkcollectwork'
+
+PM_CHANGE_USER = 'login.change_cofkuser'
+PM_CHANGE_COMMENT = 'core.change_cofkunioncomment'
+
+PM_VIEW_AUDIT = 'audit.view_cofkunionauditliteral'
