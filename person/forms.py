@@ -268,18 +268,18 @@ class GeneralSearchFieldset(BasicSearchFieldset):
                                           "(see below):")
     names_and_titles_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    birth_year_from = form_utils.create_year_field()
-    birth_year_to = form_utils.create_year_field()
+    birth_year_from = form_utils.create_year_field(_class='searchfield')
+    birth_year_to = form_utils.create_year_field(_class='searchfield')
     birth_year_info = 'Can be entered in YYYY format. (In the case of organisations, ' \
                       'this field may hold the date of formation.)'
 
-    death_year_from = form_utils.create_year_field()
-    death_year_to = form_utils.create_year_field()
+    death_year_from = form_utils.create_year_field(_class='searchfield')
+    death_year_to = form_utils.create_year_field(_class='searchfield')
     death_year_info = 'Can be entered in YYYY format. (In the case of organisations, ' \
                       'this field may hold the date of dissolution.)'
 
-    flourished_year_from = form_utils.create_year_field()
-    flourished_year_to = form_utils.create_year_field()
+    flourished_year_from = form_utils.create_year_field(_class='searchfield')
+    flourished_year_to = form_utils.create_year_field(_class='searchfield')
     flourished_info = 'Can be entered in YYYY format.'
 
     gender = SearchCharField(widget=forms.Select(choices=search_gender_choices))

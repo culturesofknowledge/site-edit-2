@@ -21,8 +21,8 @@ class SearchDateTimeInput(widgets.Input):
     def __init__(self, attrs=None):
         if attrs is None:
             attrs = {'class': 'dateinput'}
-        else:
-            attrs['class'] = 'dateinput'
+        elif 'class' in attrs:
+            attrs['class'] += ' dateinput'
         super().__init__(attrs)
 
 
