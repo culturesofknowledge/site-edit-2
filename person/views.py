@@ -346,7 +346,6 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         if self.search_field_fn_maps:
             gender = self.request_data['gender'] if 'gender' in self.request_data else None
             person_or_group = self.request_data['person_or_group'] if 'person_or_group' in self.request_data else None
-            org_type = self.request_data['organisation_type'] if 'organisation_type' in self.request_data else None
 
             if gender:
                 gender = [g[1].lower() for g in search_gender_choices if g[0] == gender][0]
@@ -355,17 +354,6 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             if person_or_group:
                 person_or_group = [pog[1].lower() for pog in search_person_or_group if pog[0] == person_or_group][0]
                 simplified_query.append(f'Is a {person_or_group}.')
-
-            if org_type:
-                lookup_key = self.request_data.get('organisation_type_lookup').replace('_', ' ')
-
-                if 'blank' in lookup_key:
-                    simplified_query.append(f'Organisation type {lookup_key}.')
-                else:
-                    if lookup_key.startswith('not'):
-                        lookup_key = 'does ' + lookup_key
-
-                    simplified_query.append(f'Organisation type {lookup_key} "{org_type}".')
 
             for _range in [('birth_year_from', 'birth_year_to', 'Born'),
                            ('death_year_from', 'death_year_to', 'Died'),

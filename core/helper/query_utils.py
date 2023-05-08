@@ -1,7 +1,6 @@
-import collections
 import functools
 import logging
-from typing import Callable, Iterable, Union
+from typing import Callable, Iterable
 
 from django.db.models import F, Exists, OuterRef
 from django.db.models import Q, Lookup, lookups
@@ -60,12 +59,8 @@ def create_queries_by_lookup_field(request_data: dict,
                                    search_field_names: list[str],
                                    search_fields_maps: dict[str, Iterable[str]] = None
                                    ) -> Iterable[Q]:
-    search_fields = search_field_names
 
-    if search_fields_maps:
-        search_fields.extend(list(search_fields_maps.keys()))
-
-    for field_name in search_fields:
+    for field_name in search_field_names:
         field_val = request_data.get(field_name)
         lookup_key = request_data.get(f'{field_name}_lookup')
 
@@ -123,7 +118,8 @@ nullable_lookup_keys = [
 ]
 
 
-def create_from_to_datetime(from_field_name, to_field_name, db_field_name, convert_fn=None):
+def create_from_to_datetime(from_field_name: str, to_field_name: str,
+                            db_field_name: str, convert_fn: Callable = None) -> dict:
     if convert_fn is None:
         convert_fn = date_utils.str_to_search_datetime
 
@@ -135,7 +131,7 @@ def create_from_to_datetime(from_field_name, to_field_name, db_field_name, conve
     }
 
 
-def create_exists_by_mode(model_class, queries, annotate:dict=None):
+def create_exists_by_mode(model_class, queries, annotate: dict = None) -> Exists:
     queryset = model_class.objects
     if annotate:
         queryset = queryset.annotate(**annotate)
