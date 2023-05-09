@@ -6,7 +6,7 @@ from login.models import CofkUser
 
 
 class Command(BaseCommand):
-    help = 'Copy / move data from selected DB to project db '
+    help = 'Create a test account'
 
     def add_arguments(self, parser: ArgumentParser):
         parser.add_argument('-u', '--user')
