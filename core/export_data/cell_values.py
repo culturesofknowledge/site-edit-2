@@ -69,11 +69,9 @@ def year_month_day(year, month, day) -> str:
 
 def person_roles(obj: CofkUnionPerson) -> str:
     delimiter = '; '
-    str_list = [
-        person_utils.role_name_str(obj, delimiter=delimiter),
-        obj.person_aliases,
-    ]
-    return str_utils.join_str_list(str_list, delimiter=delimiter)
+    roles = obj.person_aliases or ''
+    roles = roles.strip().replace('\n', delimiter)
+    return roles
 
 
 def person_names_titles_roles(obj: CofkUnionPerson) -> str:

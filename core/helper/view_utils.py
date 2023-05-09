@@ -336,11 +336,15 @@ class BasicSearchView(ListView):
                 log.error('send email fail....')
                 log.exception(e)
 
-        # create file and send email in other thread
-        Thread(target=_fn).start()
+        if not request.user or not request.user.email:
+            msg = f'Your account[{request.user}] have no email, please contact admin.'
+        else:
+            # create file and send email in other thread
+            Thread(target=_fn).start()
+            msg = 'The selected data is being processed and will be sent to your email soon.'
+        self.add_to_user_messages(msg)
 
         # stay as same page
-        self.add_to_user_messages('The selected data is being processed and will be sent to your email soon.')
         return super().get(request, *args, **kwargs)
 
     def save_query(self, request, *args, **kwargs):
