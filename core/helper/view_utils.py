@@ -90,7 +90,9 @@ class BasicSearchView(ListView):
     @property
     def search_fields(self) -> List[str]:
         """
-        A list of fields searched directly on. Excludes fields especially handled.
+        A list of fields searched directly on.
+
+        'Change_timestamp' is excluded because it is a range.
         """
         exclude = ['change_timestamp_from', 'change_timestamp_to']
         return [f for f in self.search_field_label_map.keys() if f not in exclude]

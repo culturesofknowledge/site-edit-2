@@ -172,7 +172,7 @@ def create_month_field(required=False):
                                                   ))
 
 
-def create_year_field(required=False):
+def create_year_field(required=False, _class=''):
     return forms.IntegerField(required=required, min_value=1, max_value=9999,
                               widget=forms.TextInput(
                                   attrs={
@@ -180,7 +180,7 @@ def create_year_field(required=False):
                                       'type': 'number',
                                       'min': 1,
                                       'max': 9999,
-                                      'class': 'ad-year',
+                                      'class': f'ad-year {_class}',
                                   }
                               ))
 
@@ -494,6 +494,8 @@ class BasicSearchFieldset(forms.Form):
                                   help_text='Username of the person who last changed the record.')
     change_user_lookup = create_lookup_field(StrLookupChoices.choices)
 
-    change_timestamp_from = forms.DateField(required=False, widget=widgets_utils.SearchDateTimeInput())
-    change_timestamp_to = forms.DateField(required=False, widget=widgets_utils.SearchDateTimeInput())
+    change_timestamp_from = forms.DateField(required=False,
+                                            widget=widgets_utils.SearchDateTimeInput(attrs={'class': 'searchfield'}))
+    change_timestamp_to = forms.DateField(required=False,
+                                          widget=widgets_utils.SearchDateTimeInput(attrs={'class': 'searchfield'}))
     change_timestamp_info = datetime_search_info

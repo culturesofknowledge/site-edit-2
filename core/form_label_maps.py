@@ -40,6 +40,7 @@ field_label_map = {
         'sent': 'Sent',
         'recd': 'Received',
         'all_works': 'Sent and received',
+        'organisation_type': 'Organisation type',
         'editors_notes': 'Editors\' notes',
         'resources': 'Related resources',
         'mentioned': 'Mentioned',

@@ -272,7 +272,20 @@ $(function () {
 
 $(window).on('scroll', radialTransparentIfScrolledDown);
 $(window).on('submit', function(e) {
-        if(event.submitter && event.submitter.value == 'save_query')  {
-            return confirm('Are you sure you want to save this query?');
+    // Iterate through form elements and disable empty fields so as not
+    // to clutter the resulting URL unnecessarily
+     Array.from(e.target.elements).forEach(function(l)    {
+        if(l.className.indexOf('searchfield') > -1 && l.value === '')  {
+            l.disabled = true;
+
+            if(e.target.elements[l.name + '_lookup'])   {
+                e.target.elements[l.name + '_lookup'].disabled = true;
+            }
         }
+    });
+
+    // Confirm user wants to save query if "Save query" button was pressed
+    if(event.submitter && event.submitter.value == 'save_query')  {
+        return confirm('Are you sure you want to save this query?');
+    }
 });
