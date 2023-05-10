@@ -392,20 +392,8 @@ def _val_handler_empty_str_null(row: dict, conn) -> dict:
     return row
 
 
-def _val_handler_upload__upload_status(row: dict, conn) -> dict:
-    if row['upload_status']:
-        row['upload_status'] = CofkCollectStatus.objects.get(pk=row['upload_status'])
-    else:
-        row['upload_status'] = None
-    return row
-
-
 def _val_handler_person__organisation_type(row: dict, conn) -> dict:
-    if row['organisation_type']:
-        row['organisation_type'] = CofkUnionOrgType.objects.get(pk=row['organisation_type'])
-    else:
-        row['organisation_type'] = None
-
+    row['organisation_type_id'] = row.pop('organisation_type')
     return row
 
 
@@ -479,43 +467,48 @@ def _val_handler_work_drop_language_of_work(row: dict, conn) -> dict:
 def _correct_work(row: dict, upload_id) -> dict:
     iwork_id = row['iwork_id']
 
-    works = CofkCollectWork.objects.filter(iwork_id=iwork_id, upload_id=upload_id).all()
-
-    if len(works) == 1:
-        row['iwork_id'] = works[0].pk
-    else:
-        log.warning(f'Collect work not found for upload: {upload_id}, iwork_id: {iwork_id} - {len(works)}')
-        print(f'Collect work not found for upload: {upload_id}, iwork_id: {iwork_id} - {len(works)}')
+    fill_cofk_collect_ref_pk(row, CofkCollectWork, 'iwork_id')
 
     return row
+
+
+def get_first_pk(query):
+    return query.values_list('pk', flat=True).first()
+
+
+def fill_cofk_collect_ref_pk(row, collect_class, ref_col_name):
+    filter_kwargs = {
+        ref_col_name: row[ref_col_name],
+        'upload_id': row['upload_id']
+    }
+
+    if pk := get_first_pk(collect_class.objects.filter(**filter_kwargs)):
+        row[ref_col_name] = pk
+    else:
+        log.warning('{} not found for upload: {}, {}: {}'.format(
+            collect_class.__name__, row['upload_id'], ref_col_name, row[ref_col_name]
+        ))
+
 
 def _val_handler_collect_person(row: dict, conn) -> dict:
     iperson_id = row['iperson_id']
     upload_id = row['upload_id']
 
     row = _correct_work(row, upload_id)
-
-    if collect_person := CofkCollectPerson.objects.filter(iperson_id=iperson_id,
-                                                          upload_id=upload_id).first():
-        row['iperson_id'] = collect_person.pk
-    else:
-        log.warning(f'Collect Person not found for upload: {upload_id}, iperson_id: {iperson_id}')
+    fill_cofk_collect_ref_pk(row, CofkCollectPerson, 'iperson_id')
 
     return row
+
 
 def _val_handler_collect_location(row: dict, conn) -> dict:
     location_id = row['location_id']
     upload_id = row['upload_id']
 
     row = _correct_work(row, upload_id)
-
-    if collect_location := CofkCollectLocation.objects.filter(location_id=location_id,
-                                                              upload_id=upload_id).first():
-        row['location_id'] = collect_location.pk
-    else:
-        log.warning(f'Collect Location not found for upload: {upload_id}, location_id: {location_id}')
+    fill_cofk_collect_ref_pk(row, CofkCollectLocation, 'location_id')
 
     return row
+
 
 def _val_handler_collect_work(row: dict, conn) -> dict:
     upload_id = row['upload_id']
@@ -525,33 +518,28 @@ def _val_handler_collect_work(row: dict, conn) -> dict:
 
 
 def _val_handler_language(row: dict, conn):
-    if language := Iso639LanguageCode.objects.filter(code_639_3=row['language_code']).first():
-        row['language_code'] = language
-
+    row['language_code_id'] = row.pop('language_code')
     return row
 
 
 def _val_handler_collect_upload(row: dict, conn) -> dict:
     row['upload_status_id'] = row.pop('upload_status')
-
     return row
 
 
 def _val_handler_user(row: dict, conn) -> dict:
-    if user := CofkUser.objects.filter(username=row['username']).first():
-        row['username'] = user
-
+    row['username_id'] = row.pop('username')
     return row
 
 
 def _val_handler_collect_manifestation(row: dict, conn) -> dict:
     upload_id = row['upload_id']
-    
+
     row = _correct_work(row, upload_id)
 
-    if collect_institution := CofkCollectInstitution.objects.filter(institution_id=row['repository_id'],
-                                                                    upload_id=upload_id).first():
-        row['repository_id'] = collect_institution.pk
+    if pk := get_first_pk(CofkCollectInstitution.objects.filter(institution_id=row['repository_id'],
+                                                                upload_id=upload_id)):
+        row['repository_id'] = pk
 
     return row
 
@@ -641,6 +629,7 @@ def data_migration(user, password, database, host, port):
     warnings.filterwarnings('ignore',
                             '.*DateTimeField .+ received a naive datetime .+ while time zone support is active.*')
 
+    # old db connection
     conn = psycopg2.connect(database=database, password=password,
                             user=user, host=host, port=port)
     print(conn)
@@ -664,7 +653,7 @@ def data_migration(user, password, database, host, port):
 
     # ### Uploads
     clone_rows_by_model_class(conn, CofkCollectUpload,
-                              col_val_handler_fn_list=[_val_handler_upload__upload_status])
+                              col_val_handler_fn_list=[_val_handler_collect_upload])
 
     # ### Publication
     clone_rows_by_model_class(conn, CofkUnionPublication)
@@ -733,26 +722,32 @@ def data_migration(user, password, database, host, port):
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectWork),
                               col_val_handler_fn_list=[_val_handler_collect_upload],
                               )
+
     clone_rows_by_model_class(conn, CofkCollectAddresseeOfWork,
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectAddresseeOfWork),
                               col_val_handler_fn_list=[_val_handler_collect_person])
 
     clone_rows_by_model_class(conn, CofkCollectAuthorOfWork, col_val_handler_fn_list=[_val_handler_collect_person],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectAuthorOfWork))
-    clone_rows_by_model_class(conn, CofkCollectDestinationOfWork, col_val_handler_fn_list=[_val_handler_collect_location],
+    clone_rows_by_model_class(conn, CofkCollectDestinationOfWork,
+                              col_val_handler_fn_list=[_val_handler_collect_location],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectDestinationOfWork))
     clone_rows_by_model_class(conn, CofkCollectLanguageOfWork, col_val_handler_fn_list=[_val_handler_language],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectLanguageOfWork))
     clone_rows_by_model_class(conn, CofkCollectOriginOfWork, col_val_handler_fn_list=[_val_handler_collect_location],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectOriginOfWork))
-    clone_rows_by_model_class(conn, CofkCollectPersonMentionedInWork, col_val_handler_fn_list=[_val_handler_collect_person],
-                              check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectPersonMentionedInWork))
+    clone_rows_by_model_class(conn, CofkCollectPersonMentionedInWork,
+                              col_val_handler_fn_list=[_val_handler_collect_person],
+                              check_duplicate_fn=create_check_fn_by_unique_together_model(
+                                  CofkCollectPersonMentionedInWork))
     clone_rows_by_model_class(conn, CofkCollectSubjectOfWork, col_val_handler_fn_list=[_val_handler_collect_work],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectSubjectOfWork))
     clone_rows_by_model_class(conn, CofkCollectWorkResource, col_val_handler_fn_list=[_val_handler_collect_work],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectWorkResource))
-    clone_rows_by_model_class(conn, CofkCollectPlaceMentionedInWork, col_val_handler_fn_list=[_val_handler_collect_location],
-                              check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectPlaceMentionedInWork))
+    clone_rows_by_model_class(conn, CofkCollectPlaceMentionedInWork,
+                              col_val_handler_fn_list=[_val_handler_collect_location],
+                              check_duplicate_fn=create_check_fn_by_unique_together_model(
+                                  CofkCollectPlaceMentionedInWork))
 
     # ### manif
     clone_rows_by_model_class(conn, CofkUnionManifestation,
