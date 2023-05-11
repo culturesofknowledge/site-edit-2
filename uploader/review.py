@@ -176,8 +176,7 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
         union_maps = []
 
         for manif in context['manifestations'].filter(iwork_id=work_id).all():
-            union_manif_dict = {'manifestation_creation_date_is_range': 0,
-                                'manifestation_id': manif_utils.create_manif_id(union_work.iwork_id),
+            union_manif_dict = {'manifestation_id': manif_utils.create_manif_id(union_work.iwork_id),
                                 'work': union_work}
             for field in [f for f in manif._meta.get_fields() if f.name != 'manifestation_id']:
                 try:
