@@ -970,21 +970,23 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     def get_queryset(self):
         if not self.request_data:
-            return CofkUnionQueryableWork.objects.none()
+            return CofkUnionWork.objects.none()
 
         return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
 
     def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:
         queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
 
-        search_fields_maps = {'sender_or_recipient': ['creators_searchable', 'addressees_searchable'],
-                              'origin_or_destination': ['places_to_searchable', 'places_from_searchable'],
-                              'original_catalogue': ['work__original_catalogue__catalogue_name']}
+        # KTODO
+        # search_fields_maps = {'sender_or_recipient': ['creators_searchable', 'addressees_searchable'],
+        #                       'origin_or_destination': ['places_to_searchable', 'places_from_searchable'],
+        #                       'original_catalogue': ['work__original_catalogue__catalogue_name']}
+        search_fields_maps = {}
 
         queries.extend(
             query_utils.create_queries_by_lookup_field(request_data, self.search_fields, search_fields_maps)
         )
-        return self.create_queryset_by_queries(CofkUnionQueryableWork, queries, sort_by=sort_by).distinct()
+        return self.create_queryset_by_queries(CofkUnionWork, queries, sort_by=sort_by).distinct()
 
     @property
     def simplified_query(self) -> list[str]:

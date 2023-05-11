@@ -61,6 +61,7 @@ field_label_map = {
         'abbrev': 'Abbreviation',
         'publication_id': 'Publication id'},
     'work': common_fields  | {
+        # KTODO update for CofkUnionWork
         'description': 'Description',
         'date_of_work_as_marked': 'Date of work as marked',
         'date_of_work_std_year': 'Year',
@@ -78,7 +79,7 @@ field_label_map = {
         'images': 'Images',
         'manifestations_searchable': 'Manifestations',
         'related_resources': 'Related resources',
-        'language_of_work': 'Language of work',
+        # 'language_of_work': 'Language of work',
         'abstract': 'Abstract',
         'general_notes': 'General notes',
         'original_catalogue': 'Original catalogue',

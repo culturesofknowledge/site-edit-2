@@ -22,7 +22,7 @@
     <tbody>
 
     {% for r in search_results %}
-        <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}" entry_id="{{ r.publication_id }}">
+        <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}" entry_id="{{ r.iwork_id }}">
 
             <td>
                 {% include 'work/component/moreinfo.html' with work=r %}

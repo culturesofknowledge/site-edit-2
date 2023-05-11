@@ -3,7 +3,7 @@ import re
 from django import template
 from django.utils.safestring import mark_safe
 
-from work.models import CofkUnionQueryableWork
+from work.models import CofkUnionQueryableWork, CofkUnionWork
 
 register = template.Library()
 
@@ -12,7 +12,7 @@ img_pattern = re.compile(r'(xxxCofkImageIDStartxxx)(.*?)(xxxCofkImageIDEndxxx)')
 
 
 @register.filter
-def exclamation(work: CofkUnionQueryableWork):
+def exclamation(work: CofkUnionWork):
     tooltip = []
 
     if work.date_of_work_inferred or work.date_of_work_uncertain:
@@ -69,7 +69,8 @@ def exclamation(work: CofkUnionQueryableWork):
 
 
 @register.filter
-def more_info(work: CofkUnionQueryableWork):
+def more_info(work: CofkUnionWork):
+    # KTODO convert to CofkUnionWork
     tooltip = []
 
     if work.notes_on_authors:
@@ -124,28 +125,29 @@ def render_queryable_images(values: str):
 
 
 @register.filter
-def other_details(work: CofkUnionQueryableWork):
+def other_details(work: CofkUnionWork):
+    # KTODO convert to CofkUnionWork
     _other_details = []
 
     if work.abstract:
         _other_details.append(f'<strong>Abstract</strong>: {work.abstract}')
 
-    if work.language_of_work:
-        if len(work.language_of_work.split(',')) > 1:
-            _other_details.append(f'<strong>Languages</strong>: {work.language_of_work}')
-        else:
-            _other_details.append(f'<strong>Language</strong>: {work.language_of_work}')
-
-    if work.general_notes:
-        _other_details.append(f'<strong>Notes</strong>: {work.general_notes}')
-
-    if work.people_mentioned:
-        _other_details.append(f'<strong>People mentioned</strong>: {work.people_mentioned}')
+    # if work.language_of_work:
+    #     if len(work.language_of_work.split(',')) > 1:
+    #         _other_details.append(f'<strong>Languages</strong>: {work.language_of_work}')
+    #     else:
+    #         _other_details.append(f'<strong>Language</strong>: {work.language_of_work}')
+    #
+    # if work.general_notes:
+    #     _other_details.append(f'<strong>Notes</strong>: {work.general_notes}')
+    #
+    # if work.people_mentioned:
+    #     _other_details.append(f'<strong>People mentioned</strong>: {work.people_mentioned}')
 
     return mark_safe('<br/><br/>'.join(_other_details))
 
 @register.filter
-def date_for_ordering(work: CofkUnionQueryableWork):
+def date_for_ordering(work: CofkUnionWork):
     date = []
 
     if work.date_of_work_std_year:
