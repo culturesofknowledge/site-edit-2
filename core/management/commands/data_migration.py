@@ -10,8 +10,7 @@ from typing import Type, Callable, Iterable, Any
 import django.db.utils
 import psycopg2
 import psycopg2.errors
-from django.contrib.auth.models import Group, Permission
-from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import Group
 from django.core.management import BaseCommand
 from django.db import connection as cur_conn
 from django.db.models import Model, fields
@@ -150,13 +149,15 @@ class Command(BaseCommand):
         parser.add_argument('-o', '--host')
         parser.add_argument('-t', '--port')
         parser.add_argument('-a', '--include-audit', action='store_true', default=False)
+        parser.add_argument('-m', '--model')
 
     def handle(self, *args, **options):
         data_migration(user=options['user'],
                        password=options['password'],
                        database=options['database'],
                        host=options['host'],
-                       port=options['port'], )
+                       port=options['port'],
+                       model=options['model'],)
 
 
 def create_common_relation_col_name(table_name):
@@ -624,7 +625,7 @@ def create_check_fn_by_unique_together_model(model: Type[model_utils.ModelLike])
     return _fn
 
 
-def data_migration(user, password, database, host, port):
+def data_migration(user, password, database, host, port, model):
     start_migrate = time.time()
     warnings.filterwarnings('ignore',
                             '.*DateTimeField .+ received a naive datetime .+ while time zone support is active.*')
@@ -635,6 +636,10 @@ def data_migration(user, password, database, host, port):
     print(conn)
     max_audit_literal_id = model_utils.find_max_id(CofkUnionAuditLiteral, 'audit_id') or 0
     max_audit_relationship_id = model_utils.find_max_id(CofkUnionAuditRelationship, 'audit_id') or 0
+
+    if model:
+        clone_rows_by_model_class(conn, model)
+        return
 
     clone_rows_by_model_class(conn, CofkLookupCatalogue)
     clone_rows_by_model_class(conn, CofkLookupDocumentType)
