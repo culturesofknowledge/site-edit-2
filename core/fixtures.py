@@ -6,6 +6,12 @@ res_dict_a = {
     'resource_details': 'resource_details a',
 }
 
+res_dict_b = {
+    'resource_name': 'resource_name b',
+    'resource_url': 'resource_url b',
+    'resource_details': 'resource_details b',
+}
+
 comment_dict_a = {
     'comment': 'yooooooooooooooooooo',
 }

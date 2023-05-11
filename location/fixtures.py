@@ -30,5 +30,9 @@ location_dict_b = dict(
 )
 
 
-def create_location_a():
-    return CofkUnionLocation(**location_dict_a)
+def create_location_a() -> CofkUnionLocation:
+    return create_location_obj_by_dict(location_dict_a)
+
+
+def create_location_obj_by_dict(location_dict: dict) -> CofkUnionLocation:
+    return CofkUnionLocation(**location_dict)

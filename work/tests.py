@@ -1,17 +1,33 @@
 import re
+from dataclasses import dataclass
+import time
+from collections import namedtuple
+from person import fixtures as person_fixtures
+from location import fixtures as location_fixtures
+from manifestation import fixtures as manif_fixtures
 
 from selenium.webdriver import Keys
+from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webelement import WebElement
 
 from core import fixtures, constant
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_COMMENT_DATE, \
     REL_TYPE_COMMENT_DESTINATION, REL_TYPE_COMMENT_ROUTE, REL_TYPE_COMMENT_ORIGIN, REL_TYPE_COMMENT_REFERS_TO, \
-    REL_TYPE_PEOPLE_MENTIONED_IN_WORK
-from core.models import Iso639LanguageCode
+    REL_TYPE_PEOPLE_MENTIONED_IN_WORK, REL_TYPE_CREATED, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_ADDRESSED_TO, \
+    REL_TYPE_WAS_SENT_TO, REL_TYPE_IS_RELATED_TO
+from core.fixtures import fixture_default_lookup_catalogue, res_dict_a, res_dict_b
+from core.helper import recref_utils
+from core.helper.view_utils import BasicSearchView
+from core.models import Iso639LanguageCode, CofkUnionResource, CofkUnionSubject, CofkUnionComment
 from manifestation.models import CofkUnionManifestation
 from siteedit2.utils import test_utils
-from siteedit2.utils.test_utils import EmloSeleniumTestCase, FieldValTester
+from siteedit2.utils.test_utils import EmloSeleniumTestCase, FieldValTester, CommonSearchTests
 from work import work_utils
-from work.models import CofkUnionWork
+from work.forms import WorkPersonRecrefAdapter
+from work.models import CofkUnionWork, CofkUnionLanguageOfWork
+
+from work import fixtures as work_fixtures
+from work.recref_adapter import WorkLocRecrefAdapter, WorkResourceRecrefAdapter, WorkCommentRecrefAdapter
 
 
 def wait_jquery_ready(selenium):
@@ -216,7 +232,6 @@ class WorkFormTests(EmloSeleniumTestCase):
             """
             self.selenium.execute_script(js)
 
-
     def test_details__create(self):
         self.prepare_language_data()
 
@@ -302,3 +317,202 @@ class WorkFormTests(EmloSeleniumTestCase):
         self.assertEqual(manif.manifestation_incipit, '')
         self.assertEqual(manif.non_letter_enclosures, '')
         self.assertEqual(manif.manifestation_creation_date_inferred, 0)
+
+
+def create_related_obj_by_obj_dict(work, obj, rel_type: str, recref_adapter):
+    obj.save()
+    recref_adapter(work).upsert_recref(
+        rel_type, work, obj
+    ).save()
+
+
+def prepare_works_for_search(core_constant=None):
+    fixture_default_lookup_catalogue()
+    works = []
+    for w in [
+        work_fixtures.work_dict_a,
+        work_fixtures.work_dict_b,
+    ]:
+        works.append(work_fixtures.fixture_work_by_dict(w))
+
+    target_work = works[0]
+    # recref_utils.upsert_recref()
+
+    #  person relationship
+    create_related_obj_by_obj_dict(target_work,
+                                   person_fixtures.create_person_obj_by_dict(person_fixtures.person_dict_a),
+                                   REL_TYPE_CREATED, WorkPersonRecrefAdapter)
+    create_related_obj_by_obj_dict(target_work,
+                                   person_fixtures.create_person_obj_by_dict(person_fixtures.person_dict_b),
+                                   REL_TYPE_WAS_ADDRESSED_TO, WorkPersonRecrefAdapter)
+
+    # location relationship
+    create_related_obj_by_obj_dict(target_work,
+                                   location_fixtures.create_location_obj_by_dict(location_fixtures.location_dict_a),
+                                   REL_TYPE_WAS_SENT_FROM, WorkLocRecrefAdapter)
+    create_related_obj_by_obj_dict(target_work,
+                                   location_fixtures.create_location_obj_by_dict(location_fixtures.location_dict_b),
+                                   REL_TYPE_WAS_SENT_TO, WorkLocRecrefAdapter)
+
+    manif_a = manif_fixtures.create_manif_obj_by_dict(manif_fixtures.manif_dict_a)
+    manif_a.work = target_work
+    manif_a.save()
+
+    # resource relationship
+    for res_dict in [res_dict_a, res_dict_b]:
+        create_related_obj_by_obj_dict(target_work,
+                                       CofkUnionResource(**res_dict),
+                                       REL_TYPE_IS_RELATED_TO, WorkResourceRecrefAdapter)
+
+    # subject relationship
+    subject = CofkUnionSubject(subject_id=19191,
+                               subject_desc='Astronomy')
+    subject.save()
+    target_work.subjects.add(subject)
+    target_work.save()
+
+    # comment relationship
+    for comment in ['comment a', 'comment b']:
+        create_related_obj_by_obj_dict(target_work,
+                                       CofkUnionComment(comment=comment),
+                                       REL_TYPE_COMMENT_REFERS_TO, WorkCommentRecrefAdapter)
+
+    # language relationship
+    lang_en = Iso639LanguageCode(code_639_3='eng',
+                                 code_639_1='en',
+                                 language_name='English', )
+    lang_en.save()
+    lang_jp = Iso639LanguageCode(code_639_3='jpn',
+                                 code_639_1='jp',
+                                 language_name='Japanese', )
+    lang_jp.save()
+
+    CofkUnionLanguageOfWork(work=target_work,
+                            language_code=lang_en,
+                            notes='notes a').save()
+    CofkUnionLanguageOfWork(work=target_work,
+                            language_code=lang_jp,
+                            notes='notes b').save()
+
+    # update queryable work
+    work_utils.clone_queryable_work(target_work, reload=True)
+
+    return works
+
+
+@dataclass
+class ExpandedRow:
+    editors_notes: str
+    date_for_ordering: str
+    author_sender: str
+    origin: str
+    addressee: str
+    destination: str
+    uncertainties: str
+    images: str
+    manifestations: str
+    related_resources: str
+    subjects: str
+    other_details: str
+    id: str
+    last_edit: str
+
+
+def assert_table_row(test_case, table_row, expected_data: dict):
+    for k, v in expected_data.items():
+        test_case.assertEqual(getattr(table_row, k), v)
+
+
+class WorkSearchTests(EmloSeleniumTestCase, CommonSearchTests):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setup_common_search_test(self, 'work:search', prepare_works_for_search)
+
+    def test_display_fields_in_list_view(self):
+        table_type_id, data_type = 'display-as-list', ExpandedRow
+        works = prepare_works_for_search()
+        self.goto_search_page()
+        self.find_search_btn().click()
+        self.find_element_by_css(f'label[for={table_type_id}]').click()
+        self.find_search_btn().click()
+
+        for e in self.find_elements_by_css('#hidden_columns > span'):
+            e.click()
+
+        table_row_data_dict = dict()
+
+        for row in self.find_elements_by_css('#results_table tr[entry_id]'):
+            values = []
+            for td in row.find_elements(By.CSS_SELECTOR, 'td'):
+                values.append(td.text.strip())
+
+            # row.get_dom_attribute()
+            row: WebElement
+            obj = data_type(*values)
+            obj.id = int(row.get_attribute('entry_id'))
+            table_row_data_dict[obj.id] = obj
+
+        target_work = works[0]
+
+        expected_data = dict(
+            editors_notes=target_work.editors_notes,
+            date_for_ordering='1122-11-22\nAs marked: work_dict_a.date_of_work_as_marked',
+            author_sender='person aaaa b. 1921',
+            origin='location_name value',
+            addressee='person bbbb d. 1922',
+            destination='location_name value 2',
+            uncertainties='',
+            images='',
+            manifestations='ABC. Postmark: postage_marks a. id_number_or_shelfmark a printed_edition_details a',
+            related_resources='resource_name a\nresource_name b',
+            subjects='',
+            other_details='Abstract: abstract value\n\nLanguages: English (notes a), Japanese (notes b)',
+            id=target_work.iwork_id,
+        )
+        assert_table_row(self, table_row_data_dict[target_work.iwork_id], expected_data)
+
+    def test_search_fields(self):
+        """ should have no exception  """
+
+        search_field_values = {
+            'description': 'a',
+            'date_of_work_as_marked': '1911',
+            'date_of_work_std_year': '1911',
+            'date_of_work_std_month': '1',
+            'date_of_work_std_day': '2',
+            'sender_or_recipient': 'a',
+            'origin_or_destination': 'a',
+            'creators_searchable': 'a',
+            'notes_on_authors': 'a',
+            'addressees_searchable': 'a',
+            'places_from_searchable': 'a',
+            'editors_notes': 'a',
+            'places_to_searchable': 'a',
+            'flags': 'a',
+            'images': 'a',
+            'manifestations_searchable': 'a',
+            'related_resources': 'a',
+            'language_of_work': 'a',
+            'abstract': 'a',
+            'general_notes': 'a',
+            'original_catalogue': 'a',
+            'accession_code': 'a',
+            'people_mentioned': 'a',
+            # 'origin_as_marked': 'a',
+            'destination_as_marked': 'a',
+            'subjects': 'a',
+            'keywords': 'a',
+            # 'drawer': 'a',
+            'work_id': 'a',
+        }
+
+        table_type_id = 'display-as-list'
+        works = prepare_works_for_search()
+        self.goto_search_page()
+        self.find_search_btn().click()
+        self.find_element_by_css(f'label[for={table_type_id}]').click()
+
+        for k, v in search_field_values.items():
+            self.find_element_by_css('.actionbox button[type=button]').click()
+            self.find_element_by_css(f'input[name={k}]').send_keys(v)
+            self.find_search_btn().click()
