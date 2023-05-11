@@ -16,6 +16,21 @@ def str_to_search_datetime(datetime_str):
     except ValueError:
         pass
 
+
+def search_datestr_to_db_datestr(date_str):
+    if not date_str:
+        return date_str
+    dates = date_str.split('/')
+    day = month = '01'
+    if len(dates) == 1:
+        year = dates[0]
+    elif len(dates) == 2:
+        month, year = dates
+    else:
+        day, month, year = dates[:3]
+    return f'{year}-{month}-{day}'
+
+
 def str_to_std_datetime(datetime_str):
     return datetime.datetime.strptime(datetime_str, constant.STD_DATE_FORMAT)
 

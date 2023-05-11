@@ -21,7 +21,7 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_MENTION_WORK, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO
 from core.export_data import excel_maker, cell_values
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, LocRecrefForm
-from core.helper import view_utils, lang_utils, model_utils, query_utils, renderer_utils
+from core.helper import view_utils, lang_utils, model_utils, query_utils, renderer_utils, date_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.form_utils import save_multi_rel_recref_formset
 from core.helper.lang_utils import LangModelAdapter, NewLangForm
@@ -953,20 +953,22 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def search_field_fn_maps(self) -> dict:
-        return {'work_to_be_deleted': lambda f, v: Exact(F(f), '0' if v == 'On' else '1'),
-                'person_sent_pk': create_search_fn_person_recref(AuthorRelationChoices.values),
-                'person_rec_pk': create_search_fn_person_recref(AddresseeRelationChoices.values),
-                'person_sent_rec_pk': create_search_fn_person_recref(AuthorRelationChoices.values
-                                                                     + AddresseeRelationChoices.values),
-                'person_mention_pk': create_search_fn_person_recref([REL_TYPE_MENTION]),
-                'location_sent_pk': create_search_fn_location_recref([REL_TYPE_WAS_SENT_FROM]),
-                'location_rec_pk': create_search_fn_location_recref([REL_TYPE_WAS_SENT_TO]),
-                'location_sent_rec_pk': create_search_fn_location_recref(
-                    [REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
-                } | query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                        'change_timestamp') | \
-            query_utils.create_from_to_datetime('date_of_work_std_from', 'date_of_work_std_to',
-                                                'date_of_work_std')
+        return {
+            'work_to_be_deleted': lambda f, v: Exact(F(f), '0' if v == 'On' else '1'),
+            'person_sent_pk': create_search_fn_person_recref(AuthorRelationChoices.values),
+            'person_rec_pk': create_search_fn_person_recref(AddresseeRelationChoices.values),
+            'person_sent_rec_pk': create_search_fn_person_recref(AuthorRelationChoices.values
+                                                                 + AddresseeRelationChoices.values),
+            'person_mention_pk': create_search_fn_person_recref([REL_TYPE_MENTION]),
+            'location_sent_pk': create_search_fn_location_recref([REL_TYPE_WAS_SENT_FROM]),
+            'location_rec_pk': create_search_fn_location_recref([REL_TYPE_WAS_SENT_TO]),
+            'location_sent_rec_pk': create_search_fn_location_recref(
+                [REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
+        } | query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
+                                                'change_timestamp') \
+            | query_utils.create_from_to_datetime('date_of_work_std_from', 'date_of_work_std_to',
+                                                  'date_of_work_std',
+                                                  convert_fn=date_utils.search_datestr_to_db_datestr, )
 
     def get_queryset(self):
         if not self.request_data:
