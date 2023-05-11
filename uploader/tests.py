@@ -1,3 +1,5 @@
+import os
+
 from django.core.management import call_command
 from django.test import TestCase
 from django.utils import timezone
@@ -8,8 +10,10 @@ from uploader.models import CofkCollectUpload, CofkCollectStatus
 class TestUpload(TestCase):
 
     def setUp(self) -> None:
-        call_command('data_migration', **{'user': 'postgres', 'password': 'postgres',
-                                          'host': 'db', 'database': 'ouls', 'model': CofkCollectStatus})
+        call_command('data_migration', **{'user': os.getenv('POSTGRES_USER'),
+                                          'password': os.getenv('POSTGRES_PASSWORD'),
+                                          'host': os.getenv('POSTGRES_HOST'),
+                                          'database': 'ouls', 'model': CofkCollectStatus})
 
     def test_create_upload(self):
         new_upload = CofkCollectUpload()
