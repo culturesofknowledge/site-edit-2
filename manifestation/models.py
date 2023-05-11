@@ -59,7 +59,7 @@ class CofkUnionManifestation(models.Model, RecordTracker):
     manifestation_creation_date2_year = models.IntegerField(blank=True, null=True)
     manifestation_creation_date2_month = models.IntegerField(blank=True, null=True)
     manifestation_creation_date2_day = models.IntegerField(blank=True, null=True)
-    manifestation_creation_date_is_range = models.SmallIntegerField()
+    manifestation_creation_date_is_range = models.SmallIntegerField(default=0)
     manifestation_creation_date_as_marked = models.CharField(max_length=250, blank=True, null=True)
     opened = models.CharField(max_length=3, default='o')
     uuid = models.UUIDField(blank=True, null=True)
