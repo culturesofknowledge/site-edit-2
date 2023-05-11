@@ -25,13 +25,13 @@ from core.helper import view_utils, lang_utils, model_utils, query_utils, render
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.form_utils import save_multi_rel_recref_formset
 from core.helper.lang_utils import LangModelAdapter, NewLangForm
+from core.helper.perm_utils import class_permission_required
 from core.helper.recref_handler import SingleRecrefHandler, RecrefFormsetHandler, SubjectHandler, ImageRecrefHandler, \
     TargetResourceFormsetHandler, MultiRecrefAdapterHandler
 from core.helper.recref_utils import create_recref_if_field_exist
 from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_utils import DefaultSearchView
-from core.helper.perm_utils import class_permission_required
 from core.models import Recref, CofkLookupCatalogue
 from institution import inst_utils
 from location import location_utils
@@ -67,9 +67,28 @@ def get_location_id(model: models.Model):
 def create_search_fn_person_recref(rel_types: list) -> Callable:
     def _fn(f, v):
         return Q(**{
-            'work__cofkworkpersonmap__person_id': v,
-            'work__cofkworkpersonmap__relationship_type__in': rel_types,
+            'cofkworkpersonmap__person_id': v,
+            'cofkworkpersonmap__relationship_type__in': rel_types,
         })
+
+    return _fn
+
+
+def create_lookup_fn_by_person_recref_cond(rel_types: list) -> Callable:
+    def _fn(lookup_fn, f, v):
+        query = Q(**{
+            'cofkworkpersonmap__relationship_type__in': rel_types,
+        })
+        cond_query = Q()
+        for n in ['date_of_birth_year',
+                  'date_of_death_year',
+                  'date_of_death_is_range',
+                  'date_of_birth_is_range',
+                  'foaf_name',
+                  'skos_altlabel',
+                  'person_aliases', ]:
+            cond_query.add(query_utils.run_lookup_fn(lookup_fn, f'cofkworkpersonmap__person__{n}', v), Q.OR)
+        return query & cond_query
 
     return _fn
 
@@ -77,8 +96,8 @@ def create_search_fn_person_recref(rel_types: list) -> Callable:
 def create_search_fn_location_recref(rel_types: list) -> Callable:
     def _fn(f, v):
         return Q(**{
-            'work__cofkworklocationmap__location_id': v,
-            'work__cofkworklocationmap__relationship_type__in': rel_types,
+            'cofkworklocationmap__location_id': v,
+            'cofkworklocationmap__relationship_type__in': rel_types,
         })
 
     return _fn
@@ -979,14 +998,19 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:
         queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
 
-        # KTODO
+        # KTODO fix search_fields_maps
         # search_fields_maps = {'sender_or_recipient': ['creators_searchable', 'addressees_searchable'],
         #                       'origin_or_destination': ['places_to_searchable', 'places_from_searchable'],
-        #                       'original_catalogue': ['work__original_catalogue__catalogue_name']}
+        #                       'original_catalogue': ['original_catalogue__catalogue_name']}
         search_fields_maps = {}
 
         queries.extend(
-            query_utils.create_queries_by_lookup_field(request_data, self.search_fields, search_fields_maps)
+            query_utils.create_queries_by_lookup_field(
+                request_data, self.search_fields,
+                search_fields_fn_maps={
+                    'creators_searchable': create_lookup_fn_by_person_recref_cond(
+                        [REL_TYPE_CREATED])
+                })
         )
         return self.create_queryset_by_queries(CofkUnionWork, queries, sort_by=sort_by).distinct()
 

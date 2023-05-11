@@ -390,6 +390,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         if sort_by:
             queryset = queryset.order_by(*sort_by)
 
+        log.debug(f'search sql\n: {str(queryset.query)}')
         return queryset
 
     def get_queryset(self):
