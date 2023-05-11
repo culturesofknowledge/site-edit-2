@@ -480,6 +480,8 @@ class WorkSearchTests(EmloSeleniumTestCase, CommonSearchTests):
             'date_of_work_std_year': '1911',
             'date_of_work_std_month': '1',
             'date_of_work_std_day': '2',
+            'date_of_work_std_from': '1111',
+            'date_of_work_std_to': '1112',
             'sender_or_recipient': 'a',
             'origin_or_destination': 'a',
             'creators_searchable': 'a',
@@ -504,6 +506,8 @@ class WorkSearchTests(EmloSeleniumTestCase, CommonSearchTests):
             'keywords': 'a',
             # 'drawer': 'a',
             'work_id': 'a',
+            'change_timestamp_from': '1111',
+            'change_timestamp_to': '1112',
         }
 
         table_type_id = 'display-as-list'
