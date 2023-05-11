@@ -1,3 +1,5 @@
+import warnings
+
 from core.models import CofkLookupCatalogue
 from work import work_utils
 from work.models import CofkUnionQueryableWork, CofkUnionWork
@@ -25,6 +27,7 @@ work_dict_b = dict(
 
 
 def fixture_queryable_work() -> CofkUnionQueryableWork:
+    warnings.warn('queryable_work is deprecated', DeprecationWarning)
     work = CofkUnionWork(description='test')
     work.save()
 

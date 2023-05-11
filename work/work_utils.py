@@ -1,5 +1,6 @@
 import datetime
 import logging
+import warnings
 from datetime import date
 
 from django.urls import reverse
@@ -110,6 +111,7 @@ def _get_clone_value(work: CofkUnionWork, field_name):
 
 
 def clone_queryable_work(work: CofkUnionWork, reload=False, _return=False):
+    warnings.warn('queryable_work is deprecated', DeprecationWarning)
     if work is None:
         log.debug('skip clone_queryable_work work is None')
         return

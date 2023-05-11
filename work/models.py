@@ -1,4 +1,5 @@
 import functools
+import warnings
 from typing import Iterable
 
 from django.db import models
@@ -271,6 +272,7 @@ class CofkUnionLanguageOfWork(models.Model):
 
 
 class CofkUnionQueryableWork(models.Model):
+    warnings.warn('queryable_work is deprecated', DeprecationWarning)
     iwork_id = models.IntegerField(primary_key=True)
     # TODO should be delete cascade when work is deleted
     work = models.OneToOneField('CofkUnionWork', models.DO_NOTHING, related_name='queryable')
