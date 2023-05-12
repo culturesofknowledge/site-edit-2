@@ -1,7 +1,7 @@
-import unittest
 from pathlib import Path
 from typing import TYPE_CHECKING, Type
 
+from django.test import TestCase
 from selenium.webdriver.common.by import By
 
 import location.fixtures
@@ -105,7 +105,7 @@ class LocationMergeTests(MergeTests):
         return location.fixtures.create_location_a
 
 
-class LocationDownloadCsvHandlerTests(unittest.TestCase):
+class LocationDownloadCsvHandlerTests(TestCase):
     def test_create_csv_file(self):
         queryset = CofkUnionLocation.objects.all()[:10]
         record_size = queryset.count()
