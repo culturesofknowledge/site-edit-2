@@ -87,7 +87,7 @@ class CofkUnionManifestation(models.Model, RecordTracker):
     accompaniments = models.TextField(blank=True, null=True)
 
     # relation
-    work = models.ForeignKey('work.CofkUnionWork', models.CASCADE, null=True)
+    work = models.ForeignKey('work.CofkUnionWork', models.CASCADE, null=True, related_name='manif_set')
     images = models.ManyToManyField(to='core.CofkUnionImage', through='CofkManifImageMap')
     comments = models.ManyToManyField(to='core.CofkUnionComment', through='CofkManifCommentMap')
 
@@ -143,9 +143,10 @@ class CofkManifManifMap(Recref):
 
 class CofkManifInstMap(Recref):
     manif = models.ForeignKey(CofkUnionManifestation,
-                              on_delete=models.CASCADE)
+                              on_delete=models.CASCADE,
+                              related_name='cofkmanifinstmap_set',)
     inst = models.ForeignKey("institution.CofkUnionInstitution",
-                             on_delete=models.CASCADE)
+                             on_delete=models.CASCADE, )
 
     class Meta(Recref.Meta):
         db_table = 'cofk_manif_inst_map'

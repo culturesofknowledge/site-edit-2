@@ -79,7 +79,7 @@ field_label_map = {
         'images': 'Images',
         'manifestations_searchable': 'Manifestations',
         'related_resources': 'Related resources',
-        # 'language_of_work': 'Language of work',
+        'language_of_work': 'Language of work',
         'abstract': 'Abstract',
         'general_notes': 'General notes',
         'original_catalogue': 'Original catalogue',

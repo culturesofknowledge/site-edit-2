@@ -112,7 +112,7 @@ def _create_excel_by_fill_fn(fill_fn: Callable[[Workbook], NoReturn],
 def create_work_excel(queryable_works: Iterable[CofkUnionQueryableWork],
                       file_path: str = None) -> 'openpyxl.Workbook':
     def _find_manif_list():
-        manif_list = itertools.chain.from_iterable(w.work.cofkunionmanifestation_set.all()
+        manif_list = itertools.chain.from_iterable(w.work.manif_set.all()
                                                    for w in queryable_works)
         return model_utils.UniqueModelPkFilter(manif_list)
 

@@ -394,8 +394,8 @@ def prepare_works_for_search(core_constant=None):
                             language_code=lang_jp,
                             notes='notes b').save()
 
-    # update queryable work
-    work_utils.clone_queryable_work(target_work, reload=True)
+    # update queryable work TOBEREMOVE
+    # work_utils.clone_queryable_work(target_work, reload=True)
 
     return works
 
