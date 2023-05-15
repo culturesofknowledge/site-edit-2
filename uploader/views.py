@@ -82,10 +82,10 @@ def handle_upload(request, context):
         #    context['report']['total_errors'] = 1
         #    context['report']['errors'] = {'file': {'total': 1, 'error': [ve]}}
         #    log.error(ve)
-        # except Exception as e:
-        #    context['report']['total_errors'] = 1
-        #    context['error'] = 'Indeterminate error.'
-        #    log.error(e)
+        except Exception as e:
+            context['report']['total_errors'] = 1
+            context['error'] = 'Indeterminate error.'
+            log.error(e)
 
         if cuef and cuef.errors:
             log.error(f'Deleting upload {new_upload}')

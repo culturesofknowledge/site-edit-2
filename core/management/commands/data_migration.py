@@ -149,15 +149,13 @@ class Command(BaseCommand):
         parser.add_argument('-o', '--host')
         parser.add_argument('-t', '--port')
         parser.add_argument('-a', '--include-audit', action='store_true', default=False)
-        parser.add_argument('-m', '--model')
 
     def handle(self, *args, **options):
         data_migration(user=options['user'],
                        password=options['password'],
                        database=options['database'],
                        host=options['host'],
-                       port=options['port'],
-                       model=options['model'],)
+                       port=options['port'],)
 
 
 def create_common_relation_col_name(table_name):
@@ -625,7 +623,7 @@ def create_check_fn_by_unique_together_model(model: Type[model_utils.ModelLike])
     return _fn
 
 
-def data_migration(user, password, database, host, port, model):
+def data_migration(user, password, database, host, port, model=None, params=None):
     start_migrate = time.time()
     warnings.filterwarnings('ignore',
                             '.*DateTimeField .+ received a naive datetime .+ while time zone support is active.*')
@@ -638,7 +636,8 @@ def data_migration(user, password, database, host, port, model):
     max_audit_relationship_id = model_utils.find_max_id(CofkUnionAuditRelationship, 'audit_id') or 0
 
     if model:
-        clone_rows_by_model_class(conn, model)
+        params = {} if params is None else params
+        clone_rows_by_model_class(conn, model, **params)
         return
 
     clone_rows_by_model_class(conn, CofkLookupCatalogue)

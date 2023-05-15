@@ -94,6 +94,8 @@ class CofkWork(CofkEntity):
         if person := [p for p in self.people if
                       p.union_iperson is not None and p.union_iperson.iperson_id == int(person_id)]:
             return person[0]
+        elif person := [p for p in self.people if p.iperson_id == int(person_id)]:
+            return person[0]
 
     def get_location(self, location_id: str) -> CofkCollectLocation:
         if location := [l for l in self.locations if
@@ -104,16 +106,19 @@ class CofkWork(CofkEntity):
                        work_dict: dict, ids: str, names: str, id_type: str):
         id_list, name_list = self.clean_lists(work_dict, ids, names)
 
-        if not self.errors:
-            for _id, name in zip(id_list, name_list):
-                if person := self.get_person(_id):
+        for _id, name in zip(id_list, name_list):
+            if person := self.get_person(_id):
+                if person.union_iperson:
                     related_person = people_model(upload=self.upload, iwork=work, iperson=person)
                     setattr(related_person, id_type, self.get_new_id(id_type))
                     people_list.append(related_person)
                 else:
-                    # Person not present in people sheet
-                    self.add_error(f'Person with the id {_id} was listed in the {self.sheet.name} sheet but is'
-                                   f' not present in the People sheet. ')
+                    self.add_error(f'Person with the id {_id} is not in the Union catalogue.')
+
+            else:
+                # Person not present in people sheet
+                self.add_error(f'Person with the id {_id} was listed in the {self.sheet.name} sheet but is'
+                               f' not present in the People sheet.')
 
     def process_locations(self, work: CofkCollectWork, location_list: List[Any], location_model: Type[models.Model],
                           work_dict: dict, ids: str, names: str, id_type: str):

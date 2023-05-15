@@ -71,7 +71,7 @@ class CofkUploadExcelFile:
         self.filename = filename
         self.total_errors = 0
         self.sheets: dict[str: CofkSheet] = {}
-        self.missing_columns: List[str] = []
+        self.missing: List[str] = []
 
         try:
             # read_only mode
@@ -89,19 +89,24 @@ class CofkUploadExcelFile:
         self.check_sheets()
 
         for sheet in mandatory_sheets.keys():
-            self.sheets[sheet] = CofkSheet(self.wb[sheet])
+            try:
+                self.sheets[sheet] = CofkSheet(self.wb[sheet])
+            except StopIteration:
+                self.missing.append(f'{sheet} is missing its header rows.')
+                #raise CofkExcelFileError(f'{sheet} is missing its header rows.')
 
             # Using same iteration to verify that required columns are present
-            if self.sheets[sheet].missing_columns:
+            if sheet in self.sheets and self.sheets[sheet].missing_columns:
                 if len(self.sheets[sheet].missing_columns) > 1:
                     ms = 'columns ' + ', '.join(self.sheets[sheet].missing_columns)
 
                 else:
                     ms = f'column "{self.sheets[sheet].missing_columns.pop()}"'
-                self.missing_columns.append(f'Missing {ms} from the sheet {sheet}.')
+                self.missing.append(f'Missing {ms} from the sheet {sheet}.')
 
-        if self.missing_columns:
-            raise CofkExcelFileError('</br> '.join(self.missing_columns))
+        if self.missing:
+            raise CofkExcelFileError('</br> '.join(self.missing))
+
 
         # Quick check that works are present in upload, no need to go further if not
         # sheets have already been verified to be present so no KeyError raised
@@ -168,6 +173,6 @@ class CofkUploadExcelFile:
             if len(difference) == 1:
                 msg = f'Missing sheet: {difference[0].title()}'
             else:
-                msg = f'Missing sheets: {", ".join([n.title() for n in difference])}'
+                msg = f'Missing sheets: {", ".join(sorted([n.title() for n in difference]))}'
             log.error(msg)
             raise CofkExcelFileError(msg)
