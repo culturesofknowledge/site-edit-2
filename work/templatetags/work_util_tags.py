@@ -4,7 +4,7 @@ from django import template
 from django.utils.safestring import mark_safe
 
 from work import work_utils
-from work.models import CofkUnionQueryableWork, CofkUnionWork
+from work.models import CofkUnionWork
 
 register = template.Library()
 

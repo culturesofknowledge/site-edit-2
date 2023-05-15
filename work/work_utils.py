@@ -14,7 +14,7 @@ from core.models import CofkLookupCatalogue
 from location import location_utils
 from person import person_utils
 from siteedit2.utils.log_utils import log_no_url
-from work.models import CofkUnionWork, CofkUnionQueryableWork
+from work.models import CofkUnionWork
 
 log = logging.getLogger(__name__)
 
@@ -112,64 +112,11 @@ def _get_clone_value(work: CofkUnionWork, field_name):
     return val_fn(work, field_name)
 
 
-def clone_queryable_work(work: CofkUnionWork, reload=False, _return=False):
-    warnings.warn('queryable_work is deprecated', DeprecationWarning)
-    if work is None:
-        log.debug('skip clone_queryable_work work is None')
-        return
-
-    if reload:
-        work = reload_work(work)
-
-    exclude_fields = ['iwork_id', 'subjects']
-    queryable_work = model_utils.get_safe(
-        CofkUnionQueryableWork, iwork_id=work.iwork_id
-    ) or CofkUnionQueryableWork()
-
-    queryable_field_names = {field for field in dir(CofkUnionQueryableWork) if field not in exclude_fields}
-    work_field_names = (field.name for field in work._meta.get_fields()
-                        if hasattr(field, 'column'))
-    common_field_names = (name for name in work_field_names
-                          if name in queryable_field_names)
-    field_val_list = ((name, _get_clone_value(work, name)) for name in common_field_names)
-    updated_field_val_list = ((name, val) for name, val in field_val_list
-                              if getattr(queryable_work, name) != val)
-    updated_field_dict = dict(updated_field_val_list)
-    for name, val in updated_field_dict.items():
-        setattr(queryable_work, name, val)
-
-    queryable_work.iwork_id = work.iwork_id
-    # People
-    queryable_work.creators_for_display = work.queryable_people(REL_TYPE_CREATED)
-    queryable_work.creators_searchable = work.queryable_people(REL_TYPE_CREATED, is_details=True)
-    queryable_work.addressees_for_display = work.queryable_people(REL_TYPE_WAS_ADDRESSED_TO)
-    queryable_work.addressees_searchable = work.queryable_people(REL_TYPE_WAS_ADDRESSED_TO, is_details=True)
-
-    # Places
-    queryable_work.places_from_for_display = work.places_from_for_display
-    queryable_work.places_from_searchable = queryable_work.places_from_for_display
-    queryable_work.places_to_for_display = work.places_to_for_display
-    queryable_work.places_to_searchable = queryable_work.places_to_for_display
-
-    queryable_work.manifestations_for_display = work.manifestations_for_display
-    queryable_work.subjects = work.queryable_subjects
-    queryable_work.language_of_work = work.languages
-    queryable_work.related_resources = work.resources
-    queryable_work.images = work.images
-    # queryable_work.flags = exclamation(queryable_work)
-
-    if _return:
-        return queryable_work
-
-    queryable_work.save()
-    log.info(f'queryable_work saved. [{work.iwork_id}][{list(updated_field_dict.keys())}]  ')
-
-
 def reload_work(work: CofkUnionWork) -> CofkUnionWork | None:
     return CofkUnionWork.objects.filter(pk=work.pk).first()
 
 
-def get_display_id(work: CofkUnionWork | CofkUnionQueryableWork):
+def get_display_id(work: CofkUnionWork):
     return work and work.iwork_id
 
 

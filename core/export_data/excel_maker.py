@@ -16,14 +16,13 @@ from core.export_data import excel_header_values, excel_utils
 from core.helper import data_utils, model_utils
 from core.helper.view_components import HeaderValues
 from core.models import CofkUnionResource
-from person.models import CofkUnionPerson
-from work.models import CofkUnionQueryableWork
+from work.models import CofkUnionWork
 
 log = logging.getLogger(__name__)
 
 
 def fill_sheet(sheet: 'Worksheet',
-               rows: Iterable[CofkUnionQueryableWork],
+               rows: Iterable[CofkUnionWork],
                header_values: HeaderValues,
                sheet_name) -> NoReturn:
     sheet.title = sheet_name
@@ -109,7 +108,7 @@ def _create_excel_by_fill_fn(fill_fn: Callable[[Workbook], NoReturn],
     return wb
 
 
-def create_work_excel(queryable_works: Iterable[CofkUnionQueryableWork],
+def create_work_excel(queryable_works: Iterable[CofkUnionWork],
                       file_path: str = None) -> 'openpyxl.Workbook':
     def _find_manif_list():
         manif_list = itertools.chain.from_iterable(w.work.manif_set.all()

@@ -23,7 +23,7 @@ work_dict_b = dict(
 
 
 def fixture_work_simple_a() -> CofkUnionWork:
-    return fixture_work_by_dict(**{'description': 'test'})
+    return fixture_work_by_dict({'description': 'test'})
 
 
 def fixture_work_by_dict(work_dict: dict) -> CofkUnionWork:
