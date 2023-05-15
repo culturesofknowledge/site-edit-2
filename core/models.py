@@ -103,6 +103,7 @@ class CofkUnionSpeedEntryText(models.Model):
 
 
 class CopyCofkUnionQueryableWork(models.Model):
+    # TOBEREMOVE
     iwork_id = models.IntegerField(blank=True, null=True)
     work_id = models.CharField(max_length=100, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
@@ -244,6 +245,7 @@ class CofkLookupCatalogue(models.Model):
         db_table = 'cofk_lookup_catalogue'
         ordering = ['catalogue_name']
 
+
 def get_sort_by_label(url: str, query_order_by: str, pk) -> str:
     view = resolve(url).func.view_class()
     label = [c[1] for c in view.sort_by_choices if c[0] == query_order_by]
@@ -252,13 +254,12 @@ def get_sort_by_label(url: str, query_order_by: str, pk) -> str:
         return label[0]
 
 
-
 class CofkUserSavedQuery(models.Model):
     query_id = models.AutoField(primary_key=True)
     username = models.ForeignKey('login.CofkUser', models.DO_NOTHING, db_column='username')
     query_class = models.CharField(max_length=100)
-    query_method = models.CharField(max_length=100) # what does this do?
-    query_title = models.TextField() # this field is not used atm, instead use the dynamic property title
+    query_method = models.CharField(max_length=100)  # what does this do?
+    query_title = models.TextField()  # this field is not used atm, instead use the dynamic property title
     query_order_by = models.CharField(max_length=100)
     query_sort_descending = models.SmallIntegerField()
     query_entries_per_page = models.SmallIntegerField()
@@ -279,7 +280,6 @@ class CofkUserSavedQuery(models.Model):
             return reverse(f'audit:{VNAME_SEARCH}')
 
         return reverse(f'{self.query_class}:{VNAME_SEARCH}')
-
 
     @property
     def title(self):
@@ -317,11 +317,10 @@ class CofkUserSavedQuery(models.Model):
             params['order'] = 'desc'
 
         for selection in self.selection.all():
-            params = params | { f'{selection.column_name}_lookup': selection.op_value,
-                                selection.column_name: selection.column_value}
+            params = params | {f'{selection.column_name}_lookup': selection.op_value,
+                               selection.column_name: selection.column_value}
 
         return self.base_url + '?' + urlencode(params)
-
 
     class Meta:
         db_table = 'cofk_user_saved_queries'

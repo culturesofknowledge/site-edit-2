@@ -1108,7 +1108,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q],
                                    sort_by=None):
-        queryset = model_class.objects
+        queryset = model_class.objects.filter()
 
         # KTODO extract common for duplicated sort and 'query_utils.create_exists_by_mode'
         if queries:
@@ -1148,12 +1148,12 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
-        return renderer_utils.create_table_search_results_renderer('work/expanded_search_table_layout.html')
+        return create_table_search_results_renderer_for_work('work/expanded_search_table_layout.html')
 
     @property
     def compact_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
         # Compact search results for works are also table formatted
-        return renderer_utils.create_table_search_results_renderer('work/compact_search_table_layout.html')
+        return create_table_search_results_renderer_for_work('work/compact_search_table_layout.html')
 
     @property
     def return_quick_init_vname(self) -> str:
@@ -1248,7 +1248,7 @@ class WorkCsvHeaderValues(HeaderValues):
         ]
 
     def obj_to_values(self, obj) -> Iterable[str]:
-        obj: CofkUnionQueryableWork
+        obj = work_utils.DisplayableWork(obj)
         values = (
             obj.description,
             obj.editors_notes,
@@ -1256,26 +1256,26 @@ class WorkCsvHeaderValues(HeaderValues):
             obj.date_of_work_std_year,
             obj.date_of_work_std_month,
             obj.date_of_work_std_day,
-            obj.work.date_of_work_std_gregorian,
-            obj.work.queryable_people(REL_TYPE_CREATED, is_details=True),
+            obj.date_of_work_std_gregorian,
+            obj.queryable_people(REL_TYPE_CREATED, is_details=True),
             obj.notes_on_authors,
             obj.places_from_for_display,
             obj.origin_as_marked,
-            obj.work.queryable_people(REL_TYPE_WAS_ADDRESSED_TO, is_details=True),
+            obj.queryable_people(REL_TYPE_WAS_ADDRESSED_TO, is_details=True),
             obj.places_to_for_display,
             obj.destination_as_marked,
             obj.flags,
             obj.images,
             ' -- '.join(' '.join(manif_utils.get_manif_details(m))
-                        for m in obj.work.manif_set.iterator()),
-            cell_values.resource_str_by_list(wrm.resource for wrm in obj.work.cofkworkresourcemap_set.iterator()),
+                        for m in obj.manif_set.iterator()),
+            cell_values.resource_str_by_list(wrm.resource for wrm in obj.cofkworkresourcemap_set.iterator()),
             obj.language_of_work,
             obj.subjects,
             obj.abstract,
             obj.people_mentioned,
             obj.keywords,
             obj.general_notes,
-            obj.work.original_catalogue and obj.work.original_catalogue.catalogue_name,
+            obj.original_catalogue and obj.original_catalogue.catalogue_name,
             obj.accession_code,
             obj.work_to_be_deleted,
             obj.iwork_id,
@@ -1283,3 +1283,15 @@ class WorkCsvHeaderValues(HeaderValues):
             obj.change_user,
         )
         return values
+
+
+def create_table_search_results_renderer_for_work(template_path, records_name='search_results', ):
+    def _renderer_by_record(records):
+        def _render():
+            context = {
+                records_name: (work_utils.DisplayableWork(r) for r in records)
+            }
+            return renderer_utils.render_to_string(template_path, context)
+
+        return _render
+    return _renderer_by_record

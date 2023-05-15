@@ -36,7 +36,7 @@
                 {% endif %}
             </td>
             <td>
-                {{ r|date_for_ordering }}
+                {{ r.date_for_ordering }}
 
                 {% if r.date_of_work_as_marked %}
                     <p>As marked: {{ r.date_of_work_as_marked }}</p>
@@ -90,7 +90,7 @@
                 {% endif %}
             </td>
             <td>
-                {{ r|other_details }}
+                {{ r.other_details }}
             </td>
             <td>
                 {% include 'core/component/search_table_layout/link_record.html' with id=r.iwork_id view='work:full_form' %}

@@ -4,9 +4,11 @@ import warnings
 from datetime import date
 
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 
 from core import constant
-from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO
+from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, \
+    REL_TYPE_MENTION
 from core.helper import model_utils
 from core.models import CofkLookupCatalogue
 from location import location_utils
@@ -169,3 +171,147 @@ def reload_work(work: CofkUnionWork) -> CofkUnionWork | None:
 
 def get_display_id(work: CofkUnionWork | CofkUnionQueryableWork):
     return work and work.iwork_id
+
+
+class DisplayableWork:
+    """
+    Wrapper for display work
+    """
+
+    def __init__(self, work):
+        self.work = work
+
+    def __getattr__(self, item):
+        return getattr(self.work, item)
+
+    @property
+    def date_for_ordering(self):
+        date_list = []
+        if self.date_of_work_std_year:
+            date_list.append(str(self.date_of_work_std_year))
+
+        if self.date_of_work_std_month:
+            date_list.append(str(self.date_of_work_std_month))
+
+        if self.date_of_work_std_day:
+            date_list.append(str(self.date_of_work_std_day))
+
+        return '-'.join(date_list)
+
+    @property
+    def creators_for_display(self):
+        return self.queryable_people(REL_TYPE_CREATED)
+
+    @property
+    def addressees_for_display(self):
+        return self.queryable_people(REL_TYPE_WAS_ADDRESSED_TO)
+
+    @property
+    def places_from_for_display(self) -> str:
+        # Derived value for CofkUnionQueryable
+        if self.origin_location:
+            return str(self.origin_location)
+        return ''
+
+    @property
+    def places_to_for_display(self) -> str:
+        # Derived value for CofkUnionQueryable
+        if self.destination_location:
+            return str(self.destination_location)
+        return ''
+
+    @property
+    def manifestations_for_display(self):
+        # Derived value for CofkUnionQueryable
+        # Example:
+        # Letter.Bodleian Library, University of Oxford: MS.Locke c. 19, f. 48 - - Printed copy. ‘The Clarendon Edition of the Works of John Locke: The Correspondence of John Locke’, ed.E.S.de Beer, 8 vols(Oxford: OUP, 1978), vol. 4, letter 1282.
+        # see https://github.com/culturesofknowledge/site-edit/blob/9a74580d2567755ab068a2d8761df8f81718910e/docker-postgres/cofk-empty.postgres.schema.sql#L6541
+        manifestations = self.manif_set.all()
+        if len(manifestations) > 0:
+            return ", ".join([str(m.to_string()) for m in manifestations])
+        else:
+            return ''
+
+    @property
+    def images(self):
+        start = 'xxxCofkImageIDStartxxx'
+        end = 'xxxCofkImageIDEndxxx'
+
+        manifestations = self.manif_set.all()
+        images = []
+        if len(manifestations) > 0:
+            for m in manifestations:
+                images.extend(list(m.images.all()))
+
+        return ", ".join(f'{start}{i.image_filename}{end}' for i in images)
+
+    def queryable_people(self, rel_type: str, is_details: bool = False) -> str:
+        # Derived value for CofkUnionQueryable
+        return ", ".join([p.to_string(is_details=is_details) for p in self.find_persons_by_rel_type(rel_type)])
+
+    @property
+    def people_mentioned(self):
+        return self.queryable_people(REL_TYPE_MENTION)
+
+    @property
+    def related_resources(self):
+        '''
+        This field combines related resources and related works.
+        '''
+        start = 'xxxCofkLinkStartxxx'
+        end = 'xxxCofkLinkEndxxx'
+        start_href = 'xxxCofkHrefStartxxx'
+        end_href = 'xxxCofkHrefEndxxx'
+        resources = ''
+
+        if to_works := self.work_to_set.all():
+            resources += ", ".join([
+                f'{start}{start_href}{reverse("work:overview_form", args=[t.work_from.iwork_id])}{end_href}{t.work_from.description}{end}'
+                for t in to_works])
+
+        if linked_resources := self.cofkworkresourcemap_set.all():
+            resources += ", ".join(
+                [f'{start}{start_href}{r.resource.resource_url}{end_href}{r.resource.resource_name}{end}' for r in
+                 linked_resources])
+
+        return resources
+
+    @property
+    def other_details(self):
+        _other_details = []
+
+        if self.abstract:
+            _other_details.append(f'<strong>Abstract</strong>: {self.abstract}')
+
+        language_of_work = self.language_of_work
+        if language_of_work:
+            label = 'Languages' if len(language_of_work.split(',')) else 'Language'
+            _other_details.append(f'<strong>{label}</strong>: {language_of_work}')
+
+        if general_notes := self.general_notes:
+            _other_details.append(f'<strong>Notes</strong>: {general_notes}')
+
+        if people_mentioned := self.people_mentioned:
+            _other_details.append(f'<strong>People mentioned</strong>: {people_mentioned}')
+
+        return mark_safe('<br/><br/>'.join(_other_details))
+
+    @property
+    def language_of_work(self):
+        return ", ".join([format_language(l) for l in self.language_set.iterator()])
+
+    @property
+    def general_notes(self):
+        return ', '.join([c.comment for c in self.general_comments])
+
+    @property
+    def catalogue(self) -> str:
+        if original_catalogue := self.original_catalogue:
+            return original_catalogue.catalogue_name
+        return ''
+
+
+def format_language(lang: 'CofkUnionLanguageOfWork') -> str:
+    if lang.notes:
+        return f'{lang.language_code.language_name} ({lang.notes})'
+    return lang.language_code.language_name
