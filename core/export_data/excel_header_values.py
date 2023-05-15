@@ -12,7 +12,8 @@ from location.models import CofkUnionLocation
 from manifestation.models import CofkUnionManifestation
 from person import person_utils
 from person.models import CofkUnionPerson
-from work.models import CofkUnionQueryableWork
+from work.models import CofkUnionWork
+from work.work_utils import DisplayableWork
 
 
 class ResourceExcelHeaderValues(HeaderValues):
@@ -252,15 +253,16 @@ class WorkExcelHeaderValues(HeaderValues):
             "EMLO URL",
         ]
 
-    def obj_to_values(self, obj: CofkUnionQueryableWork) -> Iterable:
+    def obj_to_values(self, obj: CofkUnionWork) -> Iterable:
+        obj: DisplayableWork = DisplayableWork(obj)
         author_name, author_id = cell_values.name_id(
-            obj.work.find_persons_by_rel_type([
+            obj.find_persons_by_rel_type([
                 constant.REL_TYPE_CREATED,
                 constant.REL_TYPE_SENT,
                 constant.REL_TYPE_SIGNED,
             ]))
         recipient_name, recipient_id = cell_values.name_id(
-            obj.work.find_persons_by_rel_type([
+            obj.find_persons_by_rel_type([
                 constant.REL_TYPE_WAS_ADDRESSED_TO,
                 constant.REL_TYPE_INTENDED_FOR,
             ]))
@@ -271,7 +273,7 @@ class WorkExcelHeaderValues(HeaderValues):
             obj.work.find_locations_by_rel_type(constant.REL_TYPE_WAS_SENT_TO))
 
         person_mentioned_name, person_mentioned_id = cell_values.name_id(
-            obj.work.find_persons_by_rel_type(constant.REL_TYPE_PEOPLE_MENTIONED_IN_WORK))
+            obj.work.find_persons_by_rel_type(constant.REL_TYPE_MENTION))
 
         match_work_name, match_work_id = cell_values.name_id(
             obj.work.find_work_to_list_by_rel_type(constant.REL_TYPE_WORK_MATCHES))
@@ -280,59 +282,59 @@ class WorkExcelHeaderValues(HeaderValues):
         original_catalogue = original_catalogue and original_catalogue.catalogue_name
         return (
             obj.iwork_id,
-            obj.work.date_of_work_std_year,
-            obj.work.date_of_work_std_month,
-            obj.work.date_of_work_std_day,
-            obj.work.date_of_work_std_gregorian,
-            obj.work.date_of_work_std_is_range,
-            obj.work.date_of_work2_std_year,
-            obj.work.date_of_work2_std_month,
-            obj.work.date_of_work2_std_day,
-            obj.work.original_calendar,
+            obj.date_of_work_std_year,
+            obj.date_of_work_std_month,
+            obj.date_of_work_std_day,
+            obj.date_of_work_std_gregorian,
+            obj.date_of_work_std_is_range,
+            obj.date_of_work2_std_year,
+            obj.date_of_work2_std_month,
+            obj.date_of_work2_std_day,
+            obj.original_calendar,
             obj.date_of_work_as_marked,
             obj.date_of_work_uncertain,
             obj.date_of_work_approx,
             obj.date_of_work_inferred,
-            cell_values.notes(obj.work.date_comments),
+            cell_values.notes(obj.date_comments),
             author_name,
             author_id,
             obj.authors_as_marked,
             obj.authors_inferred,
             obj.authors_uncertain,
-            cell_values.notes(obj.work.find_comments_by_rel_type(constant.REL_TYPE_COMMENT_AUTHOR)),
+            cell_values.notes(obj.author_comments),
             recipient_name,
             recipient_id,
             obj.addressees_as_marked,
             obj.addressees_inferred,
             obj.addressees_uncertain,
-            cell_values.notes(obj.work.addressee_comments),
+            cell_values.notes(obj.addressee_comments),
             origin_name,
             origin_id,
             obj.origin_as_marked,
             obj.origin_inferred,
             obj.origin_uncertain,
-            cell_values.notes(obj.work.find_comments_by_rel_type(constant.REL_TYPE_COMMENT_ORIGIN)),
+            cell_values.notes(obj.origin_comments),
             dest_name,
             dest_id,
             obj.destination_as_marked,
             obj.destination_inferred,
             obj.destination_uncertain,
-            cell_values.notes(obj.work.find_comments_by_rel_type(constant.REL_TYPE_COMMENT_DESTINATION)),
+            cell_values.notes(obj.destination_comments),
             obj.abstract,
             obj.keywords,
             obj.language_of_work,
-            obj.work.incipit,
-            obj.work.explicit,
+            obj.incipit,
+            obj.explicit,
             person_mentioned_name,
             person_mentioned_id,
-            cell_values.notes(obj.work.find_comments_by_rel_type(constant.REL_TYPE_PEOPLE_MENTIONED_IN_WORK)),
+            cell_values.notes(obj.people_comments),
             original_catalogue,
             obj.accession_code,
             match_work_name,
             match_work_id,
-            cell_values.resources_id(obj.work.cofkworkresourcemap_set.all()),
-            cell_values.notes(obj.work.find_comments_by_rel_type(constant.REL_TYPE_COMMENT_REFERS_TO)),
+            cell_values.resources_id(obj.cofkworkresourcemap_set.all()),
+            cell_values.notes(obj.general_comments),
             obj.editors_notes,
-            obj.work.uuid,
+            obj.uuid,
             cell_values.editor_url(reverse('work:corr_form', args=[obj.iwork_id])),
         )

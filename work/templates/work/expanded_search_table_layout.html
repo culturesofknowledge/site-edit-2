@@ -28,7 +28,8 @@
     <tbody>
 
     {% for r in search_results %}
-        <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}" entry_id="{{ r.iwork_id }}">
+        <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}"
+            entry_id="{{ r.iwork_id }}">
 
             <td>
                 {% if r.editors_notes %}
@@ -42,22 +43,22 @@
                     <p>As marked: {{ r.date_of_work_as_marked }}</p>
                 {% endif %}
             </td>
-             <td>
+            <td>
                 {% if r.creators_for_display %}
                     {{ r.creators_for_display|safe }}
                 {% endif %}
             </td>
-             <td>
+            <td>
                 {% if r.places_from_for_display %}
                     {{ r.places_from_for_display|safe }}
                 {% endif %}
             </td>
-             <td>
+            <td>
                 {% if r.addressees_for_display %}
                     {{ r.addressees_for_display|safe }}
                 {% endif %}
             </td>
-             <td>
+            <td>
                 {% if r.places_to_for_display %}
                     {{ r.places_to_for_display|safe }}
                 {% endif %}
@@ -85,8 +86,8 @@
                 {% endif %}
             </td>
             <td>
-                {% if r.subjects.all %}
-                    {{ r.subjects }}
+                {% if r.subjects_for_display %}
+                    {{ r.subjects_for_display }}
                 {% endif %}
             </td>
             <td>
@@ -98,7 +99,7 @@
             <td>
                 {{ r.change_timestamp }} by {{ r.change_user }}<br/>
                 Source: {{ r.accession_code }}<br/>
-                [{{ r.catalogue}}]
+                [{{ r.catalogue }}]
             </td>
         </tr>
     {% endfor %}

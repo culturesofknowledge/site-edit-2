@@ -225,7 +225,7 @@ class BasicWorkFFH(FullFormHandler):
             work.description = cur_desc
 
         work.update_current_user_timestamp(request.user.username)
-        work.save(clone_queryable=False)
+        work.save()
         log.info(f'save work {work}')
         self.saved_work = work
 
@@ -294,7 +294,6 @@ class PlacesFFH(BasicWorkFFH):
         self.destination_loc_handler.upsert_recref_if_field_exist(
             self.places_form, work, request.user.username
         )
-        work_utils.clone_queryable_work(work, reload=True)
 
 
 class DatesFFH(BasicWorkFFH):
@@ -322,7 +321,6 @@ class DatesFFH(BasicWorkFFH):
 
         work = self.save_work(request, self.dates_form.instance)
         self.save_all_recref_formset(work, request)
-        work_utils.clone_queryable_work(work, reload=True)
 
 
 class CorrFFH(BasicWorkFFH):
@@ -412,7 +410,6 @@ class CorrFFH(BasicWorkFFH):
 
         # handle recref_handler
         self.maintain_all_recref_records(request, work)
-        work_utils.clone_queryable_work(work, reload=True)
 
 
 class ManifFFH(BasicWorkFFH):
@@ -576,8 +573,6 @@ class ManifFFH(BasicWorkFFH):
         self.inst_handler.upsert_recref_if_field_exist(
             self.manif_form, manif, request.user.username)
 
-        work_utils.clone_queryable_work(work_utils.reload_work(manif.work), reload=True)
-
 
 class ResourcesFFH(BasicWorkFFH):
     def __init__(self, pk, request_data=None, request=None, *args, **kwargs):
@@ -597,7 +592,6 @@ class ResourcesFFH(BasicWorkFFH):
 
         self.save_work(request, self.work)
         self.save_all_recref_formset(self.work, request)
-        work_utils.clone_queryable_work(self.work, reload=True)
 
 
 class DetailsFFH(BasicWorkFFH):
@@ -684,7 +678,6 @@ class DetailsFFH(BasicWorkFFH):
         self.save_all_recref_formset(work, request)
         self.maintain_all_recref_records(request, work)
         self.subject_handler.save(request, work)
-        work_utils.clone_queryable_work(work, reload=True)
 
 
 class ManifLangModelAdapter(LangModelAdapter):
@@ -1258,13 +1251,13 @@ class WorkCsvHeaderValues(HeaderValues):
             obj.date_of_work_std_day,
             obj.date_of_work_std_gregorian,
             obj.queryable_people(REL_TYPE_CREATED, is_details=True),
-            obj.notes_on_authors,
+            cell_values.notes(obj.author_comments),
             obj.places_from_for_display,
             obj.origin_as_marked,
             obj.queryable_people(REL_TYPE_WAS_ADDRESSED_TO, is_details=True),
             obj.places_to_for_display,
             obj.destination_as_marked,
-            obj.flags,
+            work_utils.flags(obj),
             obj.images,
             ' -- '.join(' '.join(manif_utils.get_manif_details(m))
                         for m in obj.manif_set.iterator()),
@@ -1294,4 +1287,5 @@ def create_table_search_results_renderer_for_work(template_path, records_name='s
             return renderer_utils.render_to_string(template_path, context)
 
         return _render
+
     return _renderer_by_record

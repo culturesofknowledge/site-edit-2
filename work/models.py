@@ -1,12 +1,12 @@
 import functools
 import warnings
-from typing import Iterable
+from typing import Iterable, Union
 
 from django.db import models
-from django.urls import reverse
 
+from core import constant
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_COMMENT_DATE, \
-    REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_REFERS_TO
+    REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO
 from core.helper import model_utils, recref_utils
 from core.helper.model_utils import RecordTracker
 from core.models import Recref, CofkLookupCatalogue
@@ -103,29 +103,33 @@ class CofkUnionWork(models.Model, RecordTracker):
         return self.find_comments_by_rel_type(REL_TYPE_COMMENT_DATE)
 
     @property
-    def general_comments(self) -> Iterable['CofkUnionComment']:
-        return self.find_comments_by_rel_type(REL_TYPE_COMMENT_REFERS_TO)
+    def origin_comments(self) -> Iterable['CofkUnionComment']:
+        return self.find_comments_by_rel_type(constant.REL_TYPE_COMMENT_ORIGIN)
 
     @property
-    def origin_location(self) -> 'CofkUnionLocation':
+    def destination_comments(self) -> Iterable['CofkUnionComment']:
+        return self.find_comments_by_rel_type(constant.REL_TYPE_COMMENT_DESTINATION)
+
+    @property
+    def route_comments(self) -> Iterable['CofkUnionComment']:
+        return self.find_comments_by_rel_type(constant.REL_TYPE_COMMENT_ROUTE)
+
+    @property
+    def people_comments(self) -> Iterable['CofkUnionComment']:
+        # KTODO rename to person
+        return self.find_comments_by_rel_type(constant.REL_TYPE_PEOPLE_MENTIONED_IN_WORK)
+
+    @property
+    def general_comments(self) -> Iterable['CofkUnionComment']:
+        return self.find_comments_by_rel_type(constant.REL_TYPE_COMMENT_REFERS_TO)
+
+    @property
+    def origin_location(self) -> Union['CofkUnionLocation', None]:
         return next(self.find_locations_by_rel_type(REL_TYPE_WAS_SENT_FROM), None)
 
     @property
-    def destination_location(self) -> 'CofkUnionLocation':
+    def destination_location(self) -> Union['CofkUnionLocation', None]:
         return next(self.find_locations_by_rel_type(REL_TYPE_WAS_SENT_TO), None)
-
-    @property
-    def queryable_subjects(self):
-        # Derived value for CofkUnionQueryable
-        if self.subjects:
-            return ", ".join([s.subject_desc for s in self.subjects.all()])
-
-    def save(self, clone_queryable=True, force_insert=False, force_update=False,
-             using=None, update_fields=None, **kwargs):
-        super().save(force_insert, force_update, using, update_fields, **kwargs)
-        if clone_queryable:
-            from work import work_utils
-            work_utils.clone_queryable_work(self)
 
 
 class CofkWorkCommentMap(Recref):

@@ -3,6 +3,7 @@ import re
 from django import template
 from django.utils.safestring import mark_safe
 
+from work import work_utils
 from work.models import CofkUnionQueryableWork, CofkUnionWork
 
 register = template.Library()
@@ -13,59 +14,7 @@ img_pattern = re.compile(r'(xxxCofkImageIDStartxxx)(.*?)(xxxCofkImageIDEndxxx)')
 
 @register.filter
 def exclamation(work: CofkUnionWork):
-    tooltip = []
-
-    if work.date_of_work_inferred or work.date_of_work_uncertain:
-        if work.date_of_work_inferred:
-            tooltip.append('Date of work INFERRED')
-
-        if work.date_of_work_uncertain:
-            tooltip.append('Date of work UNCERTAIN')
-
-        if work.date_of_work_as_marked:
-            tooltip.append(f'(Date of work as marked: {work.date_of_work_as_marked})')
-
-    if work.origin_inferred or work.origin_uncertain:
-        if work.origin_inferred:
-            tooltip.append('Origin INFERRED')
-
-        if work.origin_uncertain:
-            tooltip.append('Origin UNCERTAIN')
-
-        if work.origin_as_marked:
-            tooltip.append(f'(Origin as marked: {work.origin_as_marked})')
-
-    if work.authors_inferred or work.authors_uncertain:
-        if work.authors_inferred:
-            tooltip.append('Author INFERRED')
-
-        if work.authors_uncertain:
-            tooltip.append('Author UNCERTAIN')
-
-        if work.authors_as_marked:
-            tooltip.append(f'(Author as marked: {work.authors_as_marked})')
-
-    if work.addressees_inferred or work.addressees_uncertain:
-        if work.addressees_inferred:
-            tooltip.append('Addressee INFERRED')
-
-        if work.addressees_uncertain:
-            tooltip.append('Addressee UNCERTAIN')
-
-        if work.addressees_as_marked:
-            tooltip.append(f'(Addressee as marked: {work.addressees_as_marked})')
-
-    if work.destination_inferred or work.destination_uncertain:
-        if work.destination_inferred:
-            tooltip.append('Destination INFERRED')
-
-        if work.destination_uncertain:
-            tooltip.append('Destination UNCERTAIN')
-
-        if work.destination_as_marked:
-            tooltip.append(f'(Destination as marked: {work.destination_as_marked})')
-
-    return ', '.join(tooltip)
+    return work_utils.flags(work)
 
 
 @register.filter
@@ -122,5 +71,3 @@ def render_queryable_images(values: str):
         html += f'<a href="{img[1]}" target="_blank"><img src="{img[1]}" class="search_result_img"></a>'
 
     return mark_safe(html)
-
-

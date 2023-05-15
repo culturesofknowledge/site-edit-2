@@ -123,7 +123,7 @@ def create_work_excel(queryable_works: Iterable[CofkUnionQueryableWork],
             constant.REL_TYPE_SIGNED,
             constant.REL_TYPE_WAS_ADDRESSED_TO,
             constant.REL_TYPE_INTENDED_FOR,
-            constant.REL_TYPE_PEOPLE_MENTIONED_IN_WORK,
+            constant.REL_TYPE_MENTION,
         ]) for w in queryable_works)
         return model_utils.UniqueModelPkFilter(person_list)
 

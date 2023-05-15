@@ -1,32 +1,26 @@
 import re
 from dataclasses import dataclass
-import time
-from collections import namedtuple
-from person import fixtures as person_fixtures
-from location import fixtures as location_fixtures
-from manifestation import fixtures as manif_fixtures
 
-from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 
 from core import fixtures, constant
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_COMMENT_DATE, \
     REL_TYPE_COMMENT_DESTINATION, REL_TYPE_COMMENT_ROUTE, REL_TYPE_COMMENT_ORIGIN, REL_TYPE_COMMENT_REFERS_TO, \
-    REL_TYPE_PEOPLE_MENTIONED_IN_WORK, REL_TYPE_CREATED, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_ADDRESSED_TO, \
+    REL_TYPE_CREATED, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_ADDRESSED_TO, \
     REL_TYPE_WAS_SENT_TO, REL_TYPE_IS_RELATED_TO
 from core.fixtures import fixture_default_lookup_catalogue, res_dict_a, res_dict_b
-from core.helper import recref_utils
-from core.helper.view_utils import BasicSearchView
 from core.models import Iso639LanguageCode, CofkUnionResource, CofkUnionSubject, CofkUnionComment
+from location import fixtures as location_fixtures
+from manifestation import fixtures as manif_fixtures
 from manifestation.models import CofkUnionManifestation
+from person import fixtures as person_fixtures
 from siteedit2.utils import test_utils
 from siteedit2.utils.test_utils import EmloSeleniumTestCase, FieldValTester, CommonSearchTests
+from work import fixtures as work_fixtures
 from work import work_utils
 from work.forms import WorkPersonRecrefAdapter
 from work.models import CofkUnionWork, CofkUnionLanguageOfWork
-
-from work import fixtures as work_fixtures
 from work.recref_adapter import WorkLocRecrefAdapter, WorkResourceRecrefAdapter, WorkCommentRecrefAdapter
 
 
@@ -254,11 +248,10 @@ class WorkFormTests(EmloSeleniumTestCase):
 
         # assert work object
         iwork_id = self.get_id_by_url_pattern(r'/work/form/details/(\d+)')
-        work = CofkUnionWork.objects.filter(iwork_id=iwork_id).first()
+        work: CofkUnionWork = CofkUnionWork.objects.filter(iwork_id=iwork_id).first()
         self.assertIsNotNone(work)
         field_val_tester.assert_all(work)
-        self.assertEqual(work.cofkworkcommentmap_set.filter(relationship_type=REL_TYPE_PEOPLE_MENTIONED_IN_WORK)
-                         .count(), 1)
+        self.assertIsNotNone(next(work.people_comments, None))
         self.assertEqual(work.language_set.count(), 2)
         self.assertSetEqual(
             {l.language_code.language_name for l in work.language_set.iterator()},
@@ -268,8 +261,7 @@ class WorkFormTests(EmloSeleniumTestCase):
         # unchanged field
         self.assertEqual(work.accession_code, '')
         self.assertEqual(work.explicit, '')
-        self.assertEqual(work.cofkworkcommentmap_set.filter(relationship_type=REL_TYPE_COMMENT_REFERS_TO)
-                         .count(), 0)
+        self.assertIsNone(next(work.general_comments, None))
 
     def test_manif__create(self):
         self.prepare_language_data()
@@ -465,8 +457,8 @@ class WorkSearchTests(EmloSeleniumTestCase, CommonSearchTests):
             images='',
             manifestations='ABC. Postmark: postage_marks a. id_number_or_shelfmark a printed_edition_details a',
             related_resources='resource_name a\nresource_name b',
-            subjects='',
-            other_details='Abstract: abstract value\n\nLanguages: English (notes a), Japanese (notes b)',
+            subjects='Astronomy',
+            other_details='Abstract: abstract value\n\nLanguages: English (notes a), Japanese (notes b)\n\nNotes: comment a, comment b',
             id=target_work.iwork_id,
         )
         assert_table_row(self, table_row_data_dict[target_work.iwork_id], expected_data)

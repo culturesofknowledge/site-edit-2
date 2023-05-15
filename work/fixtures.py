@@ -1,8 +1,4 @@
-import warnings
-
-from core.models import CofkLookupCatalogue
-from work import work_utils
-from work.models import CofkUnionQueryableWork, CofkUnionWork
+from work.models import CofkUnionWork
 
 work_dict_a = dict(
     work_id='fixture_work_id_a',
@@ -26,18 +22,11 @@ work_dict_b = dict(
 )
 
 
-def fixture_queryable_work() -> CofkUnionQueryableWork:
-    warnings.warn('queryable_work is deprecated', DeprecationWarning)
-    work = CofkUnionWork(description='test')
-    work.save()
-
-    q_work = work_utils.clone_queryable_work(work, _return=True)
-    return q_work
+def fixture_work_simple_a() -> CofkUnionWork:
+    return fixture_work_by_dict(**{'description': 'test'})
 
 
 def fixture_work_by_dict(work_dict: dict) -> CofkUnionWork:
     work = CofkUnionWork(**work_dict)
     work.save()
-
-    q_work = work_utils.clone_queryable_work(work, _return=True)
     return work

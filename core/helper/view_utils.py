@@ -735,10 +735,6 @@ class MergeActionViews(View):
                 recref.update_current_user_timestamp(username)
             recref.save()
 
-        # update query work if needed
-        for work in find_work_by_recref_list(recref_list):
-            work_utils.clone_queryable_work(work)
-
         # change ForeignKey value to master's id in cofk_collect
         for model_class, foreign_field in find_related_collect_field(selected_model.__class__):
             new_id = foreign_field.target_field.value_from_object(selected_model)
@@ -880,5 +876,3 @@ class DeleteConfirmView(View):
         msg = f'"{obj_name}" deleted successfully'
         msg = urllib.parse.quote(msg)
         return redirect(f'{url}?to_user_messages={msg}')
-
-

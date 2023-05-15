@@ -20,10 +20,11 @@ REL_TYPE_COMMENT_DESTINATION = 'refers_to_destination'
 REL_TYPE_COMMENT_ROUTE = 'route'
 REL_TYPE_COMMENT_RECEIPT_DATE = 'refers_to_recept_date'
 REL_TYPE_PEOPLE_MENTIONED_IN_WORK = 'refers_to_people_mentioned_in_work'
+# KTODO rename to REL_TYPE_COMMENT_
 
 REL_TYPE_MENTION_WORK = 'mentions_work'
 REL_TYPE_MENTION_PLACE = 'mentions_place'
-REL_TYPE_MENTION = 'mentions'
+REL_TYPE_MENTION = 'mentions'  # for work -- person
 
 REL_TYPE_WORK_IS_REPLY_TO = 'is_reply_to'
 REL_TYPE_WORK_MATCHES = 'matches'

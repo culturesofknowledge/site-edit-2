@@ -8,7 +8,8 @@ from django.db import IntegrityError, models
 from django.db.models import QuerySet
 
 from core.constant import REL_TYPE_STORED_IN, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, \
-    REL_TYPE_PEOPLE_MENTIONED_IN_WORK, REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_IS_RELATED_TO
+    REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_IS_RELATED_TO, \
+    REL_TYPE_MENTION
 from core.models import CofkUnionResource, CofkLookupCatalogue
 from institution.models import CofkUnionInstitution
 from manifestation import manif_utils
@@ -16,7 +17,6 @@ from manifestation.models import CofkUnionManifestation, CofkManifInstMap
 from uploader.models import CofkCollectUpload, CofkCollectWork
 from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, CofkWorkResourceMap, \
     CofkUnionLanguageOfWork
-from work.work_utils import clone_queryable_work
 
 log = logging.getLogger(__name__)
 
@@ -115,7 +115,7 @@ def get_work(works, work_id) -> list[CofkCollectWork] | None:
         return
 
     try:
-        return [w for w in works  if w.id == work_id]
+        return [w for w in works if w.id == work_id]
     except IndexError:
         pass
 
@@ -138,10 +138,10 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
     union_resources = []
     rel_maps = []
 
-    union_work_dict = { 'accession_code': request.POST['accession_code'] if 'accession_code' in request.POST else None }
+    union_work_dict = {'accession_code': request.POST['accession_code'] if 'accession_code' in request.POST else None}
 
     if 'catalogue_code' in request.POST and request.POST['catalogue_code'] != '':
-        union_work_dict['original_catalogue'] = CofkLookupCatalogue.objects\
+        union_work_dict['original_catalogue'] = CofkLookupCatalogue.objects \
             .filter(catalogue_code=request.POST['catalogue_code']).first()
 
     for collect_work in collect_works:
@@ -157,7 +157,7 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
         people_maps += link_person_to_work(entities=context['addressees'], relationship_type=REL_TYPE_WAS_ADDRESSED_TO,
                                            union_work=union_work, work_id=work_id, request=request)
         people_maps += link_person_to_work(entities=context['mentioned'],
-                                           relationship_type=REL_TYPE_PEOPLE_MENTIONED_IN_WORK,
+                                           relationship_type=REL_TYPE_MENTION,
                                            union_work=union_work, work_id=work_id, request=request)
         rel_maps.append(people_maps)
 
@@ -201,7 +201,6 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
                 cmim.update_current_user_timestamp(request.user.username)
                 union_maps.append(cmim)
 
-
         rel_maps.append(union_maps)
 
         res_maps = []
@@ -234,9 +233,6 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
     # Creating the relation entities
     for rel_map in rel_maps:
         bulk_create(rel_map)
-
-    # Creating derived queryable works
-    bulk_create([clone_queryable_work(work=w, _return=True) for w in union_works])
 
     # Update upload status of collect works
     CofkCollectWork.objects.bulk_update(collect_works, ['upload_status'])

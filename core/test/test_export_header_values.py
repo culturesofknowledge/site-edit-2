@@ -12,7 +12,7 @@ from location.models import CofkUnionLocation
 from location.views import LocationCsvHeaderValues, LocationSearchView
 from person.models import CofkUnionPerson
 from person.views import PersonSearchView, PersonCsvHeaderValues
-from work.fixtures import fixture_queryable_work
+from work.fixtures import fixture_work_simple_a
 from work.views import WorkSearchView, WorkCsvHeaderValues
 
 
@@ -21,7 +21,7 @@ class TestWorkExcelHeaderValues(TestCase):
     def test_obj_to_values(self):
         fixture_default_lookup_catalogue()
         hv = WorkExcelHeaderValues()
-        values = hv.obj_to_values(fixture_queryable_work())
+        values = hv.obj_to_values(fixture_work_simple_a())
 
         self.assertGreater(len(values), 0)
 
@@ -53,7 +53,7 @@ class TestDownloadCsvHandler(TestCase):
         self.assert_with_search_view(PersonSearchView(request=MockRequest('person')), PersonCsvHeaderValues(), 2)
 
     def test_work_csv(self):
-        fixture_queryable_work().save()
+        fixture_work_simple_a()
         fixture_default_lookup_catalogue()
         self.assert_with_search_view(WorkSearchView(request=MockRequest('work')), WorkCsvHeaderValues(), 2)
 
