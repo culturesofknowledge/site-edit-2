@@ -327,7 +327,7 @@ class WorkExcelHeaderValues(HeaderValues):
             obj.explicit,
             person_mentioned_name,
             person_mentioned_id,
-            cell_values.notes(obj.people_comments),
+            cell_values.notes(obj.person_comments),
             original_catalogue,
             obj.accession_code,
             match_work_name,

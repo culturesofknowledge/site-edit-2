@@ -251,7 +251,7 @@ class WorkFormTests(EmloSeleniumTestCase):
         work: CofkUnionWork = CofkUnionWork.objects.filter(iwork_id=iwork_id).first()
         self.assertIsNotNone(work)
         field_val_tester.assert_all(work)
-        self.assertIsNotNone(next(work.people_comments, None))
+        self.assertIsNotNone(next(work.person_comments, None))
         self.assertEqual(work.language_set.count(), 2)
         self.assertSetEqual(
             {l.language_code.language_name for l in work.language_set.iterator()},
