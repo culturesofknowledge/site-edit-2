@@ -1101,17 +1101,9 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q],
                                    sort_by=None):
         queryset = model_class.objects.filter()
+        queryset = query_utils.update_queryset(queryset, model_class, queries,
+                                               sort_by=sort_by)
 
-        # KTODO extract common for duplicated sort and 'query_utils.create_exists_by_mode'
-        if queries:
-            queryset = queryset.filter(
-                query_utils.create_exists_by_mode(model_class, queries)
-            )
-
-        if sort_by:
-            queryset = queryset.order_by(*sort_by)
-
-        log.debug(f'search sql\n: {str(queryset.query)}')
         return queryset
 
     @property

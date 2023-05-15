@@ -382,15 +382,9 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             'mentioned': create_sql_count_work_by_person([REL_TYPE_MENTION]),
         }
 
-        queryset = queryset.annotate(**annotate)
+        queryset = query_utils.update_queryset(queryset, model_class, queries,
+                                               annotate=annotate, sort_by=sort_by)
 
-        if queries:
-            queryset = queryset.filter(query_utils.create_exists_by_mode(model_class, queries, annotate=annotate))
-
-        if sort_by:
-            queryset = queryset.order_by(*sort_by)
-
-        log.debug(f'search sql\n: {str(queryset.query)}')
         return queryset
 
     def get_queryset(self):

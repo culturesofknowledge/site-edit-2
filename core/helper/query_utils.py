@@ -61,8 +61,6 @@ def create_queries_by_lookup_field(request_data: dict,
                                    search_fields_fn_maps: dict[str, Callable] = None,
                                    ) -> Iterable[Q]:
 
-    # KTODO merge search_fields_maps and search_fields_fn_maps into a single dict
-
     for field_name in search_field_names:
         field_val = request_data.get(field_name)
         lookup_key = request_data.get(f'{field_name}_lookup')
@@ -151,3 +149,28 @@ def create_exists_by_mode(model_class, queries, annotate: dict = None) -> Exists
             pk=OuterRef('pk'),
         )
     )
+
+
+def update_queryset(queryset,
+                    model_class, queries,
+                    annotate: dict = None,
+                    sort_by=None, ):
+    """
+    help you to update queryset
+
+    it's new method compare to view_utils.create_queryset_by_queries
+    """
+
+    if annotate:
+        queryset = queryset.annotate(**annotate)
+
+    if queries:
+        queryset = queryset.filter(
+            create_exists_by_mode(model_class, queries, annotate=annotate)
+        )
+
+    if sort_by:
+        queryset = queryset.order_by(*sort_by)
+
+    log.debug(f'queryset sql\n: {str(queryset.query)}')
+    return queryset
