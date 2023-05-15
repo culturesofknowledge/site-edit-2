@@ -18,7 +18,7 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_WORK_MATCHES, REL_TYPE_COMMENT_DATE, REL_TYPE_WAS_SENT_FROM, REL_TYPE_COMMENT_ORIGIN, \
     REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_ROUTE, REL_TYPE_FORMERLY_OWNED, \
     REL_TYPE_ENCLOSED_IN, REL_TYPE_COMMENT_RECEIPT_DATE, REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_STORED_IN, \
-    REL_TYPE_PEOPLE_MENTIONED_IN_WORK, REL_TYPE_MENTION, REL_TYPE_MENTION_PLACE, \
+    REL_TYPE_COMMENT_PERSON_MENTIONED, REL_TYPE_MENTION, REL_TYPE_MENTION_PLACE, \
     REL_TYPE_MENTION_WORK, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_IMAGE_OF, REL_TYPE_IS_RELATED_TO
 from core.export_data import excel_maker, cell_values
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, LocRecrefForm
@@ -607,7 +607,7 @@ class DetailsFFH(BasicWorkFFH):
             prefix='people_comment',
             request_data=request_data,
             form=CommentForm,
-            rel_type=REL_TYPE_PEOPLE_MENTIONED_IN_WORK,
+            rel_type=REL_TYPE_COMMENT_PERSON_MENTIONED,
             parent=self.safe_work,
         ))
         self.add_recref_formset_handler(WorkCommentFormsetHandler(
@@ -928,7 +928,7 @@ def overview_view(request, iwork_id):
         notes_work=work_utils.find_related_comment_names(work, REL_TYPE_COMMENT_DATE),
         notes_author=work_utils.find_related_comment_names(work, REL_TYPE_COMMENT_AUTHOR),
         notes_addressee=work_utils.find_related_comment_names(work, REL_TYPE_COMMENT_ADDRESSEE),
-        notes_people=work_utils.find_related_comment_names(work, REL_TYPE_PEOPLE_MENTIONED_IN_WORK),
+        notes_people=work_utils.find_related_comment_names(work, REL_TYPE_COMMENT_PERSON_MENTIONED),
         notes_general=work_utils.find_related_comment_names(work, REL_TYPE_COMMENT_REFERS_TO),
 
         author_link_list=to_person_link_list(work, constant.REL_TYPE_CREATED),

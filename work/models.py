@@ -117,7 +117,7 @@ class CofkUnionWork(models.Model, RecordTracker):
     @property
     def people_comments(self) -> Iterable['CofkUnionComment']:
         # KTODO rename to person
-        return self.find_comments_by_rel_type(constant.REL_TYPE_PEOPLE_MENTIONED_IN_WORK)
+        return self.find_comments_by_rel_type(constant.REL_TYPE_COMMENT_PERSON_MENTIONED)
 
     @property
     def general_comments(self) -> Iterable['CofkUnionComment']:
