@@ -135,6 +135,9 @@ class CofkPersonLocationMap(Recref):
 
     class Meta(Recref.Meta):
         db_table = 'cofk_person_location_map'
+        indexes = [
+            models.Index(fields=['person', 'relationship_type']),
+        ]
 
 
 class CofkPersonPersonMap(Recref):
@@ -147,6 +150,10 @@ class CofkPersonPersonMap(Recref):
 
     class Meta(Recref.Meta):
         db_table = 'cofk_person_person_map'
+        indexes = [
+            models.Index(fields=['person', 'relationship_type']),
+            models.Index(fields=['related', 'relationship_type']),
+        ]
 
 
 class CofkPersonCommentMap(Recref):
@@ -155,6 +162,9 @@ class CofkPersonCommentMap(Recref):
 
     class Meta(Recref.Meta):
         db_table = 'cofk_person_comment_map'
+        indexes = [
+            models.Index(fields=['person', 'relationship_type']),
+        ]
 
 
 class CofkPersonResourceMap(Recref):
@@ -163,6 +173,9 @@ class CofkPersonResourceMap(Recref):
 
     class Meta(Recref.Meta):
         db_table = 'cofk_person_resource_map'
+        indexes = [
+            models.Index(fields=['person', 'relationship_type']),
+        ]
 
 
 class CofkPersonImageMap(Recref):
@@ -171,6 +184,9 @@ class CofkPersonImageMap(Recref):
 
     class Meta(Recref.Meta):
         db_table = 'cofk_person_image_map'
+        indexes = [
+            models.Index(fields=['person', 'relationship_type']),
+        ]
 
 
 class CofkPersonRoleMap(Recref):
@@ -179,24 +195,9 @@ class CofkPersonRoleMap(Recref):
 
     class Meta(Recref.Meta):
         db_table = 'cofk_person_role_map'
-
-
-'''
-class CofkUnionPersonSummary(models.Model):
-    iperson = models.OneToOneField(CofkUnionPerson, models.CASCADE,
-                                   primary_key=True, related_name='summary', to_field='iperson_id')
-    other_details_summary = models.TextField(blank=True, null=True)
-    other_details_summary_searchable = models.TextField(blank=True, null=True)
-    sent = models.IntegerField()
-    recd = models.IntegerField()
-    all_works = models.IntegerField()
-    mentioned = models.IntegerField()
-    role_categories = models.TextField(blank=True, null=True)
-    images = models.TextField(blank=True, null=True)
-
-    class Meta:
-        db_table = 'cofk_union_person_summary'
-'''
+        indexes = [
+            models.Index(fields=['person', 'relationship_type']),
+        ]
 
 
 def create_person_id(iperson_id) -> str:

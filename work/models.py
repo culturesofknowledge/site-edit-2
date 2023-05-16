@@ -75,20 +75,16 @@ class CofkUnionWork(models.Model, RecordTracker):
         db_table = 'cofk_union_work'
 
     def find_comments_by_rel_type(self, rel_type) -> Iterable['CofkUnionComment']:
-        filter_kwargs = recref_utils.create_rel_type_filter_kwargs(rel_type)
-        return (r.comment for r in self.cofkworkcommentmap_set.filter(**filter_kwargs))
+        return (r.comment for r in recref_utils.prefetch_filter_rel_type(self.cofkworkcommentmap_set, rel_type))
 
     def find_persons_by_rel_type(self, rel_type: str | Iterable) -> Iterable['CofkUnionPerson']:
-        filter_kwargs = recref_utils.create_rel_type_filter_kwargs(rel_type)
-        return (r.person for r in self.cofkworkpersonmap_set.filter(**filter_kwargs))
+        return (r.person for r in recref_utils.prefetch_filter_rel_type(self.cofkworkpersonmap_set, rel_type))
 
     def find_locations_by_rel_type(self, rel_type) -> Iterable['CofkUnionLocation']:
-        filter_kwargs = recref_utils.create_rel_type_filter_kwargs(rel_type)
-        return (r.location for r in self.cofkworklocationmap_set.filter(**filter_kwargs))
+        return (r.location for r in recref_utils.prefetch_filter_rel_type(self.cofkworklocationmap_set, rel_type))
 
     def find_work_to_list_by_rel_type(self, rel_type) -> Iterable['CofkUnionWork']:
-        filter_kwargs = recref_utils.create_rel_type_filter_kwargs(rel_type)
-        return (r.work_to for r in self.work_from_set.filter(**filter_kwargs))
+        return (r.work_to for r in recref_utils.prefetch_filter_rel_type(self.work_from_set, rel_type))
 
     @property
     def author_comments(self) -> Iterable['CofkUnionComment']:
@@ -137,6 +133,9 @@ class CofkWorkCommentMap(Recref):
 
     class Meta(Recref.Meta):
         db_table = 'cofk_work_comment_map'
+        indexes = [
+            models.Index(fields=['work', 'relationship_type']),
+        ]
 
 
 class CofkWorkResourceMap(Recref):
@@ -145,6 +144,9 @@ class CofkWorkResourceMap(Recref):
 
     class Meta(Recref.Meta):
         db_table = 'cofk_work_resource_map'
+        indexes = [
+            models.Index(fields=['work', 'relationship_type']),
+        ]
 
 
 class CofkWorkWorkMap(Recref):
@@ -155,6 +157,10 @@ class CofkWorkWorkMap(Recref):
 
     class Meta(Recref.Meta):
         db_table = 'cofk_work_work_map'
+        indexes = [
+            models.Index(fields=['work_from', 'relationship_type']),
+            models.Index(fields=['work_to', 'relationship_type']),
+        ]
 
 
 class CofkWorkSubjectMap(Recref):
@@ -163,6 +169,9 @@ class CofkWorkSubjectMap(Recref):
 
     class Meta(Recref.Meta):
         db_table = 'cofk_work_subject_map'
+        indexes = [
+            models.Index(fields=['work', 'relationship_type']),
+        ]
 
 
 class CofkWorkPersonMap(Recref):
@@ -176,6 +185,9 @@ class CofkWorkPersonMap(Recref):
 
     class Meta(Recref.Meta):
         db_table = 'cofk_work_person_map'
+        indexes = [
+            models.Index(fields=['work', 'relationship_type']),
+        ]
 
 
 class CofkWorkLocationMap(Recref):
@@ -186,6 +198,9 @@ class CofkWorkLocationMap(Recref):
 
     class Meta(Recref.Meta):
         db_table = 'cofk_work_location_map'
+        indexes = [
+            models.Index(fields=['work', 'relationship_type']),
+        ]
 
 
 class CofkUnionLanguageOfWork(models.Model):

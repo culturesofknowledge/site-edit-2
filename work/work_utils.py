@@ -125,7 +125,7 @@ class DisplayableWork:
     Wrapper for display work
     """
 
-    def __init__(self, work):
+    def __init__(self, work: CofkUnionWork):
         self.work = work
 
     def __getattr__(self, item):
@@ -245,7 +245,7 @@ class DisplayableWork:
 
     @property
     def language_of_work(self):
-        return ", ".join([format_language(l) for l in self.language_set.iterator()])
+        return ", ".join([format_language(l) for l in self.language_set.all()])
 
     @property
     def general_notes(self):
@@ -260,7 +260,7 @@ class DisplayableWork:
     @property
     def subjects_for_display(self):
         # Derived value for CofkUnionQueryable
-        return ", ".join([s.subject_desc for s in self.subjects.iterator()])
+        return ", ".join([s.subject_desc for s in self.subjects.all()])
 
 
 def format_language(lang: 'CofkUnionLanguageOfWork') -> str:

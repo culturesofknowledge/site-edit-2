@@ -3,7 +3,7 @@ from typing import Iterable, Optional
 from django.db import models
 
 from core.constant import REL_TYPE_STORED_IN, REL_TYPE_ENCLOSED_IN
-from core.helper import model_utils
+from core.helper import model_utils, recref_utils
 from core.helper.model_utils import RecordTracker
 from core.models import Recref, CofkLookupDocumentType
 
@@ -14,6 +14,9 @@ class CofkManifCommentMap(Recref):
 
     class Meta(Recref.Meta):
         db_table = 'cofk_manif_comment_map'
+        indexes = [
+            models.Index(fields=['manifestation', 'relationship_type']),
+        ]
 
 
 class CofkManifPersonMap(Recref):
@@ -22,6 +25,9 @@ class CofkManifPersonMap(Recref):
 
     class Meta(Recref.Meta):
         db_table = 'cofk_manif_person_map'
+        indexes = [
+            models.Index(fields=['manifestation', 'relationship_type']),
+        ]
 
 
 class CofkUnionManifestation(models.Model, RecordTracker):
@@ -101,16 +107,16 @@ class CofkUnionManifestation(models.Model, RecordTracker):
         db_table = 'cofk_union_manifestation'
 
     def find_comments_by_rel_type(self, rel_type) -> Iterable['CofkUnionComment']:
-        return (r.comment for r in self.cofkmanifcommentmap_set.filter(relationship_type=rel_type))
+        return (r.comment for r in recref_utils.prefetch_filter_rel_type(self.cofkmanifcommentmap_set, rel_type))
 
     def find_selected_inst(self) -> Optional['CofkManifInstMap']:
-        return self.cofkmanifinstmap_set.filter(relationship_type=REL_TYPE_STORED_IN).first()
+        return next(recref_utils.prefetch_filter_rel_type(self.cofkmanifinstmap_set, REL_TYPE_STORED_IN), None)
 
     def find_enclosed_in(self):
-        return (mm.manif_to for mm in self.manif_from_set.filter(relationship_type=REL_TYPE_ENCLOSED_IN).iterator())
+        return (mm.manif_to for mm in recref_utils.prefetch_filter_rel_type(self.manif_from_set, REL_TYPE_ENCLOSED_IN))
 
     def find_encloses(self):
-        return (mm.manif_from for mm in self.manif_to_set.filter(relationship_type=REL_TYPE_ENCLOSED_IN).iterator())
+        return (mm.manif_from for mm in recref_utils.prefetch_filter_rel_type(self.manif_to_set, REL_TYPE_ENCLOSED_IN))
 
     def to_string(self):
         from manifestation import manif_utils
@@ -139,17 +145,24 @@ class CofkManifManifMap(Recref):
 
     class Meta(Recref.Meta):
         db_table = 'cofk_manif_manif_map'
+        indexes = [
+            models.Index(fields=['manif_from', 'relationship_type']),
+            models.Index(fields=['manif_to', 'relationship_type']),
+        ]
 
 
 class CofkManifInstMap(Recref):
     manif = models.ForeignKey(CofkUnionManifestation,
                               on_delete=models.CASCADE,
-                              related_name='cofkmanifinstmap_set',)
+                              related_name='cofkmanifinstmap_set', )
     inst = models.ForeignKey("institution.CofkUnionInstitution",
                              on_delete=models.CASCADE, )
 
     class Meta(Recref.Meta):
         db_table = 'cofk_manif_inst_map'
+        indexes = [
+            models.Index(fields=['manif', 'relationship_type']),
+        ]
 
 
 class CofkManifImageMap(Recref):
@@ -158,3 +171,6 @@ class CofkManifImageMap(Recref):
 
     class Meta(Recref.Meta):
         db_table = 'cofk_manif_image_map'
+        indexes = [
+            models.Index(fields=['manif', 'relationship_type']),
+        ]

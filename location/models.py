@@ -43,6 +43,9 @@ class CofkLocationCommentMap(Recref):
 
     class Meta(Recref.Meta):
         db_table = 'cofk_location_comment_map'
+        indexes = [
+            models.Index(fields=['location', 'relationship_type']),
+        ]
 
 
 class CofkLocationResourceMap(Recref):
@@ -51,6 +54,9 @@ class CofkLocationResourceMap(Recref):
 
     class Meta(Recref.Meta):
         db_table = 'cofk_location_resource_map'
+        indexes = [
+            models.Index(fields=['location', 'relationship_type']),
+        ]
 
 
 class CofkLocationImageMap(Recref):
@@ -59,6 +65,9 @@ class CofkLocationImageMap(Recref):
 
     class Meta(Recref.Meta):
         db_table = 'cofk_location_image_map'
+        indexes = [
+            models.Index(fields=['location', 'relationship_type']),
+        ]
 
 
 def create_sql_count_work_by_location(rel_type_list):

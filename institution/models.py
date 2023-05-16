@@ -35,6 +35,9 @@ class CofkInstitutionResourceMap(Recref):
 
     class Meta(Recref.Meta):
         db_table = 'cofk_institution_resource_map'
+        indexes = [
+            models.Index(fields=['institution', 'relationship_type']),
+        ]
 
 
 class CofkInstitutionImageMap(Recref):
@@ -43,3 +46,6 @@ class CofkInstitutionImageMap(Recref):
 
     class Meta(Recref.Meta):
         db_table = 'cofk_institution_image_map'
+        indexes = [
+            models.Index(fields=['institution', 'relationship_type']),
+        ]
