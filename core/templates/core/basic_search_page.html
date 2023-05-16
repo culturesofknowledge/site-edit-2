@@ -32,6 +32,9 @@
 
             <div id="query-result" class="col col--3of4">
                 {% if paginator.count == 0 %}
+                    <button id="fieldset-toggle-btn" class="search-form-btn" type="button">
+                        Toggle <span data-feather="search" aria-hidden="true"></span>
+                    </button>
                     <h2>No results</h2>
                 {% else %}
 
