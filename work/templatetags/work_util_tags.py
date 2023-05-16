@@ -5,6 +5,7 @@ from django.utils.safestring import mark_safe
 
 from work import work_utils
 from work.models import CofkUnionWork
+from work.work_utils import DisplayableWork
 
 register = template.Library()
 
@@ -18,8 +19,7 @@ def exclamation(work: CofkUnionWork):
 
 
 @register.filter
-def more_info(work: CofkUnionWork):
-    # KTODO convert to CofkUnionWork
+def more_info(work: DisplayableWork):
     tooltip = []
 
     if work.notes_on_authors:
@@ -31,8 +31,8 @@ def more_info(work: CofkUnionWork):
     if work.addressees_searchable.find('alias:') > -1:
         tooltip.append(f'Further details of addressee: {work.addressees_searchable}')
 
-    if work.subjects:
-        tooltip.append(f'Subject(s): {work.subjects}\n')
+    if work.subjects_for_display:
+        tooltip.append(f'Subject(s): {work.subjects_for_display}\n')
 
     if work.abstract:
         tooltip.append(f'{work.abstract}\n')

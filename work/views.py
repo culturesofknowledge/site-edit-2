@@ -1265,10 +1265,10 @@ class WorkCsvHeaderValues(HeaderValues):
             work_utils.flags(obj),
             obj.images,
             ' -- '.join(' '.join(manif_utils.get_manif_details(m))
-                        for m in obj.manif_set.iterator()),
-            cell_values.resource_str_by_list(wrm.resource for wrm in obj.cofkworkresourcemap_set.iterator()),
+                        for m in obj.manif_set.all()),
+            cell_values.resource_str_by_list(wrm.resource for wrm in obj.cofkworkresourcemap_set.all()),
             obj.language_of_work,
-            obj.subjects,
+            obj.subjects_for_display,
             obj.abstract,
             obj.people_mentioned,
             obj.keywords,
