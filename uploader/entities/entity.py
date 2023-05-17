@@ -62,11 +62,11 @@ class CofkEntity:
                         for value in entity[str_field[0]].split(SEPARATOR):
                             if len(value) > str_field[1]:
                                 self.add_error(f'A value in the field {str_field[0]} is longer than the limit of'
-                                               f' {str_field[1]} characters for that field.')
+                                               f' {str_field[1]} characters.')
                     else:
                         if len(entity[str_field[0]]) > str_field[1]:
                             self.add_error(f'A value in the field {str_field[0]} is longer than the limit of'
-                                           f' {str_field[1]} characters for that field.')
+                                           f' {str_field[1]} characters.')
                 else:
                     entity[str_field] = str(entity[str_field]).strip()
 
@@ -123,7 +123,7 @@ class CofkEntity:
                 self.check_month(month_field, entity[month_field])
 
         if 'dates' in self.fields:
-            for date_field in [m for m in self.fields['months'] if m in entity]:
+            for date_field in [m for m in self.fields['dates'] if m in entity]:
                 self.check_date(date_field, entity[date_field])
 
         if 'ranges' in self.fields and 'date_of_work_std_is_range' in entity and\

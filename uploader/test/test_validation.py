@@ -70,7 +70,14 @@ class TestValidation(TestCase):
         work = CofkEntity(self.new_upload, MockEntity('People'))
         work.check_data_types({'primary_name': '1' * 201})
 
-        msg = 'A value in the field primary_name is longer than the limit of 200 characters for that field.'
+        msg = 'A value in the field primary_name is longer than the limit of 200 characters.'
+        self.assertEqual(work.errors[1][0].message, msg)
+
+    def test_date_field(self):
+        work = CofkEntity(self.new_upload, MockEntity('Work'))
+        work.check_data_types({'date_of_work2_std_day': 41,})
+
+        msg = 'date_of_work2_std_day: is 41 but can not be greater than 31'
         self.assertEqual(work.errors[1][0].message, msg)
 
     def test_date_range(self):
