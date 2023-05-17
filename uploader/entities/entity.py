@@ -6,7 +6,7 @@ from django.db import models, IntegrityError
 from openpyxl.cell import Cell
 from openpyxl.cell.read_only import EmptyCell
 
-from uploader.constants import mandatory_sheets
+from uploader.constants import MANDATORY_SHEETS, MAX_YEAR, MIN_YEAR, SEPARATOR
 from uploader.models import CofkCollectUpload
 
 log = logging.getLogger(__name__)
@@ -19,6 +19,7 @@ class CofkEntity:
     def __init__(self, upload: CofkCollectUpload, sheet):
         self.upload: CofkCollectUpload = upload
         self.sheet = sheet
+        self.log_summary: list[str] = []
         self.ids: List[int] = []
         self.errors: dict[int, List[ValidationError]] = {}
         self.other_errors: dict[int, List[dict]] = {}
@@ -26,7 +27,7 @@ class CofkEntity:
 
     @property
     def fields(self) -> dict:
-        return mandatory_sheets[self.sheet.name]
+        return MANDATORY_SHEETS[self.sheet.name]
 
     def get_column_name_by_index(self, index: int) -> str:
         # openpyxl starts column count at 1
@@ -54,11 +55,11 @@ class CofkEntity:
                               (isinstance(s, str) and s in entity and not isinstance(entity[s], str) or
                               isinstance(s, tuple) and s[0] in entity)]:
                 if isinstance(str_field, tuple):
-                    entity[str_field[0]] = str(entity[str_field[0]])
+                    entity[str_field[0]] = str(entity[str_field[0]]).strip()
 
-                    # People names can be multiple names separated by a semi-colon
+                    # People names can be multiple names separated by a semicolon
                     if 'primary_name' == str_field[0]:
-                        for value in entity[str_field[0]].split(';'):
+                        for value in entity[str_field[0]].split(SEPARATOR):
                             if len(value) > str_field[1]:
                                 self.add_error(f'A value in the field {str_field[0]} is longer than the limit of'
                                                f' {str_field[1]} characters for that field.')
@@ -67,7 +68,7 @@ class CofkEntity:
                             self.add_error(f'A value in the field {str_field[0]} is longer than the limit of'
                                            f' {str_field[1]} characters for that field.')
                 else:
-                    entity[str_field] = str(entity[str_field])
+                    entity[str_field] = str(entity[str_field]).strip()
 
         # ids can be ints or strings that are ints separated by a semicolon and no space
         if 'ids' in self.fields:
@@ -76,20 +77,20 @@ class CofkEntity:
                     self.add_error(f'Column {id_field} in {self.sheet.name} sheet is not a valid positive integer.')
                     # self.ids.append(entity[id_field])
                 elif isinstance(entity[id_field], str):
-                    for int_value in entity[id_field].split(';'):
+                    for int_value in entity[id_field].split(SEPARATOR):
                         try:
                             if int(int_value) < 0:
                                 self.add_error(f'Column {id_field} in {self.sheet.name}'
-                                               f' sheet is not a valid positive integer.')
+                                               f' sheet contains a non-valid value.')
                             # self.ids.append(int(int_value))
                         except ValueError as ve:
                             self.add_error(f'Column {id_field} in {self.sheet.name}'
-                                           f' sheet is not a valid positive integer.')
+                                           f' sheet contains a non-valid value.')
 
         if 'ints' in self.fields:
             for int_value in [t for t in self.fields['ints'] if t in entity and not isinstance(t, int)]:
                 try:
-                    int(entity[int_value])
+                    entity[int_value] = int(entity[int_value])
                 except ValueError as ve:
                     self.add_error(f'Column {int_value} in {self.sheet.name} sheet is not a valid integer.')
 
@@ -104,16 +105,14 @@ class CofkEntity:
                     self.add_error(f'Column {bool_value} in {self.sheet.name}'
                                    f' sheet is not a boolean value of either 0 or 1.')
 
-        '''if 'combos' in self.fields:
+        if 'combos' in self.fields:
             for combo in self.fields['combos']:
-                log.debug(f'---- {combo}')
-                if combo[0] in entity and isinstance(entity[combo[0]], str) and ';' in entity[combo[0]]\
-                        or (combo[1] in entity and ';' in entity[combo[1]]):
-                    if len(entity[combo[0]].split(';')) < len(entity[combo[1]].split(';')):
+                if combo[0] in entity and combo[1] in entity and isinstance(entity[combo[0]], str) and\
+                        SEPARATOR in entity[combo[0]] or (combo[1] in entity and SEPARATOR in entity[combo[1]]):
+                    if len(entity[combo[0]].split(SEPARATOR)) < len(entity[combo[1]].split(SEPARATOR)):
                         self.add_error(f'Column {combo[0]} has fewer ids than there are names in {combo[1]}.')
-                    elif len(entity[combo[1]].split(';')) < len(entity[combo[0]].split(';')):
+                    elif len(entity[combo[1]].split(SEPARATOR)) < len(entity[combo[0]].split(SEPARATOR)):
                         self.add_error(f'Column {combo[1]} has fewer names than there are ids in {combo[0]}.')
-                        '''
 
         if 'years' in self.fields:
             for year_field in [y for y in self.fields['years'] if y in entity]:
@@ -174,13 +173,13 @@ class CofkEntity:
         """
         if isinstance(entity_dict[ids_key], str):
             try:
-                id_list = [int(i) for i in entity_dict[ids_key].split(';')]
+                id_list = [int(i) for i in entity_dict[ids_key].split(SEPARATOR)]
             except ValueError:
                 return [], []
         else:
             id_list = [entity_dict[ids_key]]
 
-        name_list = entity_dict[names_key].split(';')
+        name_list = entity_dict[names_key].split(SEPARATOR)
 
         '''if len(id_list) < len(name_list):
             self.add_error(f'Fewer ids in {ids_key} than names in {names_key}.')
@@ -202,10 +201,23 @@ class CofkEntity:
             self.add_error(f'Could not create {type(objects[0])} objects in database.')
 
     def check_year(self, year_field: str, year: int):
-        raise NotImplementedError()
+        if isinstance(year, int) and not MAX_YEAR >= year >= MIN_YEAR:
+            self.add_error(f'{year_field}: is {year} but must be between {MIN_YEAR} and {MAX_YEAR}')
 
     def check_month(self, month_field: str, month: int):
-        raise NotImplementedError()
+        if isinstance(month, int) and not 1 <= month <= 12:
+            self.add_error(f'{month_field}: is {month} but must be between 1 and 12')
 
     def check_date(self, date_field: str, date: int):
-        raise NotImplementedError()
+        if date > 31:
+            self.add_error(f'{date_field}: is {date} but can not be greater than 31')
+
+        # If month is April, June, September or November then day must be not more than 30
+        '''elif month in [4, 6, 9, 11] and field > 30:
+            self.add_error('%(field)s: can not be more than 30 for April, June, September or November',
+                           {'field': field_name})
+        # For February not more than 29
+        elif month == 2 and field > 29:
+            self.add_error('%(field)s: can not be more than 29 for February', {'field': field_name})'''
+
+    # TODO check date ranges

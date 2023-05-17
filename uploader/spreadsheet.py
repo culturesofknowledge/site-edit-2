@@ -6,7 +6,7 @@ from openpyxl.reader.excel import load_workbook
 from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
-from uploader.constants import mandatory_sheets
+from uploader.constants import MANDATORY_SHEETS
 from uploader.entities.entity import CofkEntity
 from uploader.entities.locations import CofkLocations
 from uploader.entities.manifestations import CofkManifestations
@@ -55,7 +55,7 @@ class CofkSheet:
 
     @property
     def missing_columns(self) -> Set[str]:
-        return set(mandatory_sheets[self.name]['columns']).difference(set(self.header))
+        return set(MANDATORY_SHEETS[self.name]['columns']).difference(set(self.header))
 
 
 class CofkUploadExcelFile:
@@ -88,7 +88,7 @@ class CofkUploadExcelFile:
         # Make sure all sheets are present
         self.check_sheets()
 
-        for sheet in mandatory_sheets.keys():
+        for sheet in MANDATORY_SHEETS.keys():
             try:
                 self.sheets[sheet] = CofkSheet(self.wb[sheet])
             except StopIteration:
@@ -107,14 +107,13 @@ class CofkUploadExcelFile:
         if self.missing:
             raise CofkExcelFileError('</br> '.join(self.missing))
 
-
         # Quick check that works are present in upload, no need to go further if not
         # sheets have already been verified to be present so no KeyError raised
         if self.sheets['Work'].rows == 0:
             raise CofkExcelFileError("Spreadsheet contains no works.")
 
-        sheets = ', '.join([f'{sheet}: {self.sheets[sheet].rows}' for sheet in mandatory_sheets.keys()])
-        log.info(f'{self.upload}: all {len(mandatory_sheets)} sheets verified: [{sheets}]')
+        sheets = ', '.join([f'{sheet}: {self.sheets[sheet].rows}' for sheet in MANDATORY_SHEETS.keys()])
+        log.info(f'{self.upload}: all {len(MANDATORY_SHEETS)} sheets verified: [{sheets}]')
 
         # It's process the sheets in reverse order, starting with repositories/institutions
         self.sheets['Repositories'].entities = CofkRepositories(upload=self.upload,
@@ -165,9 +164,18 @@ class CofkUploadExcelFile:
             self.errors['manifestations'] = self.sheets['Manifestation'].entities.format_errors_for_template()
             self.total_errors += self.errors['manifestations']['total']
 
+        # Create all collect objects if there are no errors
+        if self.total_errors == 0:
+            self.sheets['Work'].entities.create_all()
+            self.sheets['Manifestation'].entities.bulk_create( self.sheets['Manifestation'].entities.manifestations)
+
+            log_msg = self.sheets['Work'].entities.log_summary + self.sheets['Manifestation'].entities.log_summary\
+                      + self.sheets['Repositories'].entities.log_summary
+            log.info(f'{self.upload}: created ' + ', '.join(log_msg))
+
     def check_sheets(self):
         # Verify all required sheets are present
-        difference = list(set(mandatory_sheets.keys()) - set([n for n in self.wb.sheetnames]))
+        difference = list(set(MANDATORY_SHEETS.keys()) - set([n for n in self.wb.sheetnames]))
 
         if difference:
             if len(difference) == 1:
