@@ -126,6 +126,19 @@ class CofkEntity:
             for date_field in [m for m in self.fields['months'] if m in entity]:
                 self.check_date(date_field, entity[date_field])
 
+        if 'ranges' in self.fields and 'date_of_work_std_is_range' in entity and\
+                entity['date_of_work_std_is_range'] == 1:
+
+            for range_columns in self.fields['ranges'][0]['date_of_work_std_is_range']:
+                if range_columns[0] not in entity:
+                    self.add_error(f'Column {range_columns[0]} not present but needed when date of work is a range.')
+                elif range_columns[1] not in entity:
+                    self.add_error(f'Column {range_columns[1]} not present but needed when date of work is a range.')
+                elif isinstance(entity[range_columns[0]], int) and isinstance(entity[range_columns[1]], int)\
+                        and entity[range_columns[0]] > entity[range_columns[1]]:
+                    self.add_error(f'Column {range_columns[0]} can not be greater than {range_columns[1]}.')
+
+
     def add_error(self, error_msg: str | None, entity=None, row=None):
         if not row:
             row = self.row

@@ -77,7 +77,8 @@ MANDATORY_SHEETS = {
                    ('emlo_mention_id', 'mention_id')],
         'years': ['date_of_work_std_year', 'date_of_work2_std_year'],
         'months': ['date_of_work_std_month', 'date_of_work2_std_month'],
-        'dates': ['date_of_work_std_day', 'date_of_work2_std_day']
+        'dates': ['date_of_work_std_day', 'date_of_work2_std_day'],
+        'ranges': [{'date_of_work_std_is_range': [('date_of_work_std_year', 'date_of_work2_std_year')]}]
     },
     'Manifestation': {
         'columns': ['manifestation_id', 'iwork_id', 'manifestation_type', 'repository_id', 'repository_name',

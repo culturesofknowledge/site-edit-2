@@ -48,7 +48,8 @@ class TestValidation(TestCase):
         work = CofkEntity(self.new_upload, MockEntity('Work'))
         work.check_data_types({'date_of_work_std_is_range': 1})
 
-        self.assertEqual(work.errors, {})
+        msg = 'Column date_of_work_std_year not present but needed when date of work is a range.'
+        self.assertEqual(work.errors[1][0].message, msg)
 
     def test_ids(self):
         work = CofkEntity(self.new_upload, MockEntity('Work'))
@@ -70,4 +71,13 @@ class TestValidation(TestCase):
         work.check_data_types({'primary_name': '1' * 201})
 
         msg = 'A value in the field primary_name is longer than the limit of 200 characters for that field.'
+        self.assertEqual(work.errors[1][0].message, msg)
+
+    def test_date_range(self):
+        work = CofkEntity(self.new_upload, MockEntity('Work'))
+        work.check_data_types({'date_of_work_std_year' : 1601, 'date_of_work_std_month': 4, 'date_of_work_std_day': 1,
+                               'date_of_work2_std_year': 1600, 'date_of_work2_std_month': 4, 'date_of_work2_std_day': 1,
+                               'date_of_work_std_is_range': 1,})
+
+        msg = 'Column date_of_work_std_year can not be greater than date_of_work2_std_year.'
         self.assertEqual(work.errors[1][0].message, msg)
