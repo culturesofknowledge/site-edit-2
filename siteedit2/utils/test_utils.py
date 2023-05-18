@@ -14,6 +14,7 @@ from selenium import webdriver
 from selenium.common import NoSuchElementException
 from selenium.webdriver import DesiredCapabilities
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.select import Select
 
 import core.fixtures
@@ -106,10 +107,10 @@ class EmloSeleniumTestCase(StaticLiveServerTestCase):
     def fill_formset_by_dict(self, data: dict, formset_prefix, form_idx=0):
         webdriver_actions.fill_formset_by_dict(self.selenium, data, formset_prefix, form_idx)
 
-    def find_elements_by_css(self, css_selector):
+    def find_elements_by_css(self, css_selector) -> Iterable[WebElement]:
         return webdriver_actions.find_elements_by_css(self.selenium, css_selector)
 
-    def find_element_by_css(self, css_selector):
+    def find_element_by_css(self, css_selector) -> WebElement:
         return webdriver_actions.find_element_by_css(self.selenium, css_selector)
 
     def goto_vname(self, vname, *args, **kwargs):
@@ -238,6 +239,10 @@ class MultiM2MTester:
             tester.assert_after_update()
 
 
+def find_search_btn(selenium):
+    return selenium.find_element(By.CSS_SELECTOR, 'button.save[type=submit]')
+
+
 class CommonSearchTests:
     LAYOUT_VAL_TABLE = 'display-as-list'
     LAYOUT_VAL_COMPACT = 'display-as-grid'
@@ -257,7 +262,7 @@ class CommonSearchTests:
         self.test_case.goto_vname(self.search_vname)
 
     def find_search_btn(self):
-        return self.test_case.selenium.find_element(By.CSS_SELECTOR, 'button.save[type=submit]')
+        return find_search_btn(self.test_case.selenium)
 
     def find_table_rows(self):
         return self.test_case.selenium.find_elements(By.CSS_SELECTOR, 'tbody tr.selectable_entry')

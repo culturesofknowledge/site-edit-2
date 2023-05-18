@@ -227,16 +227,8 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
             'all_works': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
         }
 
-        queryset = queryset.annotate(**annotate)
-
-        if queries:
-            queryset = queryset.filter(
-                query_utils.create_exists_by_mode(model_class, queries, annotate=annotate)
-            )
-
-        if sort_by:
-            queryset = queryset.order_by(*sort_by)
-
+        queryset = query_utils.update_queryset(queryset, model_class, queries, annotate=annotate,
+                                               sort_by=sort_by)
         return queryset
 
     def get_queryset(self):

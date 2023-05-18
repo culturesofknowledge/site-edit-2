@@ -22,14 +22,14 @@
     <tbody>
 
     {% for r in search_results %}
-        <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}" entry_id="{{ r.publication_id }}">
+        <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}" entry_id="{{ r.iwork_id }}">
 
             <td>
                 {% include 'work/component/moreinfo.html' with work=r %}
                 {{ r.description }}
             </td>
             <td>
-                {{ r|date_for_ordering }}
+                {{ r.date_for_ordering }}
 
                 {% if r.date_of_work_as_marked %}
                     <p>As marked: {{ r.date_of_work_as_marked }}</p>

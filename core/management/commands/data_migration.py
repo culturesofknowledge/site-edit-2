@@ -38,7 +38,7 @@ from uploader.models import CofkCollectStatus, CofkCollectUpload, CofkCollectIns
     CofkCollectManifestation, CofkCollectAuthorOfWork, CofkCollectDestinationOfWork, CofkCollectOriginOfWork, \
     CofkCollectPersonMentionedInWork, CofkCollectSubjectOfWork, CofkCollectWorkResource, CofkCollectPlaceMentionedInWork
 from work import models as work_models
-from work.models import CofkUnionWork, CofkUnionQueryableWork, CofkUnionLanguageOfWork, CofkWorkWorkMap
+from work.models import CofkUnionWork, CofkUnionLanguageOfWork, CofkWorkWorkMap
 
 log = logging.getLogger(__name__)
 default_schema = 'public'
@@ -714,7 +714,6 @@ def data_migration(user, password, database, host, port):
                                                        ],
                               seq_name=work_models.SEQ_NAME_COFKUNIONWORK__IWORK_ID,
                               int_pk_col_name='iwork_id', )
-    clone_rows_by_model_class(conn, CofkUnionQueryableWork, seq_name=None)
     clone_rows_by_model_class(conn, CofkUnionLanguageOfWork, col_val_handler_fn_list=[_val_handler_language],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkUnionLanguageOfWork))
 

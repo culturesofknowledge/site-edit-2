@@ -16,14 +16,13 @@ from core.export_data import excel_header_values, excel_utils
 from core.helper import data_utils, model_utils
 from core.helper.view_components import HeaderValues
 from core.models import CofkUnionResource
-from person.models import CofkUnionPerson
-from work.models import CofkUnionQueryableWork
+from work.models import CofkUnionWork
 
 log = logging.getLogger(__name__)
 
 
 def fill_sheet(sheet: 'Worksheet',
-               rows: Iterable[CofkUnionQueryableWork],
+               rows: Iterable[CofkUnionWork],
                header_values: HeaderValues,
                sheet_name) -> NoReturn:
     sheet.title = sheet_name
@@ -109,26 +108,26 @@ def _create_excel_by_fill_fn(fill_fn: Callable[[Workbook], NoReturn],
     return wb
 
 
-def create_work_excel(queryable_works: Iterable[CofkUnionQueryableWork],
+def create_work_excel(queryable_works: Iterable[CofkUnionWork],
                       file_path: str = None) -> 'openpyxl.Workbook':
     def _find_manif_list():
-        manif_list = itertools.chain.from_iterable(w.work.cofkunionmanifestation_set.all()
+        manif_list = itertools.chain.from_iterable(w.manif_set.all()
                                                    for w in queryable_works)
         return model_utils.UniqueModelPkFilter(manif_list)
 
     def _find_person_list():
-        person_list = itertools.chain.from_iterable(w.work.find_persons_by_rel_type([
+        person_list = itertools.chain.from_iterable(w.find_persons_by_rel_type([
             constant.REL_TYPE_CREATED,
             constant.REL_TYPE_SENT,
             constant.REL_TYPE_SIGNED,
             constant.REL_TYPE_WAS_ADDRESSED_TO,
             constant.REL_TYPE_INTENDED_FOR,
-            constant.REL_TYPE_PEOPLE_MENTIONED_IN_WORK,
+            constant.REL_TYPE_MENTION,
         ]) for w in queryable_works)
         return model_utils.UniqueModelPkFilter(person_list)
 
     def _find_location_list():
-        location_list = itertools.chain.from_iterable(w.work.find_locations_by_rel_type([
+        location_list = itertools.chain.from_iterable(w.find_locations_by_rel_type([
             constant.REL_TYPE_WAS_SENT_FROM,
             constant.REL_TYPE_WAS_SENT_TO,
         ]) for w in queryable_works)
@@ -147,7 +146,7 @@ def create_work_excel(queryable_works: Iterable[CofkUnionQueryableWork],
         fill_inst_sheet(workbook.create_sheet(), _find_inst_list())
 
         resource_list = itertools.chain(
-            get_flat_resource_list(queryable_works, lambda obj: obj.work.cofkworkresourcemap_set),
+            get_flat_resource_list(queryable_works, lambda obj: obj.cofkworkresourcemap_set),
             get_flat_resource_list(_find_person_list(), lambda obj: obj.cofkpersonresourcemap_set),
             get_flat_resource_list(_find_location_list(), lambda obj: obj.cofklocationresourcemap_set),
             get_flat_resource_list(_find_inst_list(), lambda obj: obj.cofkinstitutionresourcemap_set),

@@ -178,3 +178,14 @@ def create_rel_type_filter_kwargs(rel_type: str | Iterable) -> dict:
     else:
         filter_kwargs['relationship_type__in'] = rel_type
     return filter_kwargs
+
+
+def prefetch_filter_rel_type(recref_set, rel_types: str | Iterable[str]) -> Iterable:
+    if isinstance(rel_types, str):
+        rel_types = [rel_types]
+    else:
+        rel_types = set(rel_types)
+
+    for recref in recref_set.all():
+        if recref.relationship_type in rel_types:
+            yield recref

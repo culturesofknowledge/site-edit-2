@@ -57,7 +57,8 @@ def create_queries_by_field_fn_maps(field_fn_maps: dict, data: dict) -> list[Q]:
 
 def create_queries_by_lookup_field(request_data: dict,
                                    search_field_names: list[str],
-                                   search_fields_maps: dict[str, Iterable[str]] = None
+                                   search_fields_maps: dict[str, Iterable[str]] = None,
+                                   search_fields_fn_maps: dict[str, Callable] = None,
                                    ) -> Iterable[Q]:
 
     for field_name in search_field_names:
@@ -74,9 +75,15 @@ def create_queries_by_lookup_field(request_data: dict,
         if search_fields_maps and field_name in search_fields_maps:
             q = Q()
             for search_field in search_fields_maps[field_name]:
+                log.debug(f'query cond: field_name[{field_name}] search_field[{search_field}] '
+                          f'field_val[{field_val}] lookup_key[{lookup_key}]')
                 q.add(run_lookup_fn(lookup_fn, search_field, field_val), Q.OR)
             yield q
+        elif search_fields_fn_maps and field_name in search_fields_fn_maps:
+            log.debug(f'query cond: field_name[{field_name}] field_val[{field_val}] lookup_key[{lookup_key}]')
+            yield search_fields_fn_maps[field_name](lookup_fn, field_name, field_val)
         else:
+            log.debug(f'query cond: field_name[{field_name}] field_val[{field_val}] lookup_key[{lookup_key}]')
             yield run_lookup_fn(lookup_fn, field_name, field_val)
 
 
@@ -142,3 +149,28 @@ def create_exists_by_mode(model_class, queries, annotate: dict = None) -> Exists
             pk=OuterRef('pk'),
         )
     )
+
+
+def update_queryset(queryset,
+                    model_class, queries,
+                    annotate: dict = None,
+                    sort_by=None, ):
+    """
+    help you to update queryset
+
+    it's new method compare to view_utils.create_queryset_by_queries
+    """
+
+    if annotate:
+        queryset = queryset.annotate(**annotate)
+
+    if queries:
+        queryset = queryset.filter(
+            create_exists_by_mode(model_class, queries, annotate=annotate)
+        )
+
+    if sort_by:
+        queryset = queryset.order_by(*sort_by)
+
+    log.debug(f'queryset sql\n: {str(queryset.query)}')
+    return queryset

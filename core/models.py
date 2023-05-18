@@ -102,67 +102,6 @@ class CofkUnionSpeedEntryText(models.Model):
         db_table = 'cofk_union_speed_entry_text'
 
 
-class CopyCofkUnionQueryableWork(models.Model):
-    iwork_id = models.IntegerField(blank=True, null=True)
-    work_id = models.CharField(max_length=100, blank=True, null=True)
-    description = models.TextField(blank=True, null=True)
-    date_of_work_std = models.DateField(blank=True, null=True)
-    date_of_work_std_year = models.IntegerField(blank=True, null=True)
-    date_of_work_std_month = models.IntegerField(blank=True, null=True)
-    date_of_work_std_day = models.IntegerField(blank=True, null=True)
-    date_of_work_as_marked = models.CharField(max_length=250, blank=True, null=True)
-    date_of_work_inferred = models.SmallIntegerField(blank=True, null=True)
-    date_of_work_uncertain = models.SmallIntegerField(blank=True, null=True)
-    date_of_work_approx = models.SmallIntegerField(blank=True, null=True)
-    creators_searchable = models.TextField(blank=True, null=True)
-    creators_for_display = models.TextField(blank=True, null=True)
-    authors_as_marked = models.TextField(blank=True, null=True)
-    notes_on_authors = models.TextField(blank=True, null=True)
-    authors_inferred = models.SmallIntegerField(blank=True, null=True)
-    authors_uncertain = models.SmallIntegerField(blank=True, null=True)
-    addressees_searchable = models.TextField(blank=True, null=True)
-    addressees_for_display = models.TextField(blank=True, null=True)
-    addressees_as_marked = models.TextField(blank=True, null=True)
-    addressees_inferred = models.SmallIntegerField(blank=True, null=True)
-    addressees_uncertain = models.SmallIntegerField(blank=True, null=True)
-    places_from_searchable = models.TextField(blank=True, null=True)
-    places_from_for_display = models.TextField(blank=True, null=True)
-    origin_as_marked = models.TextField(blank=True, null=True)
-    origin_inferred = models.SmallIntegerField(blank=True, null=True)
-    origin_uncertain = models.SmallIntegerField(blank=True, null=True)
-    places_to_searchable = models.TextField(blank=True, null=True)
-    places_to_for_display = models.TextField(blank=True, null=True)
-    destination_as_marked = models.TextField(blank=True, null=True)
-    destination_inferred = models.SmallIntegerField(blank=True, null=True)
-    destination_uncertain = models.SmallIntegerField(blank=True, null=True)
-    manifestations_searchable = models.TextField(blank=True, null=True)
-    manifestations_for_display = models.TextField(blank=True, null=True)
-    abstract = models.TextField(blank=True, null=True)
-    keywords = models.TextField(blank=True, null=True)
-    people_mentioned = models.TextField(blank=True, null=True)
-    images = models.TextField(blank=True, null=True)
-    related_resources = models.TextField(blank=True, null=True)
-    language_of_work = models.CharField(max_length=255, blank=True, null=True)
-    work_is_translation = models.SmallIntegerField(blank=True, null=True)
-    flags = models.TextField(blank=True, null=True)
-    edit_status = models.CharField(max_length=3, blank=True, null=True)
-    general_notes = models.TextField(blank=True, null=True)
-    original_catalogue = models.CharField(max_length=100, blank=True, null=True)
-    accession_code = models.CharField(max_length=1000, blank=True, null=True)
-    work_to_be_deleted = models.SmallIntegerField(blank=True, null=True)
-    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
-    change_user = models.CharField(max_length=50, blank=True, null=True)
-    drawer = models.CharField(max_length=50, blank=True, null=True)
-    editors_notes = models.TextField(blank=True, null=True)
-    manifestation_type = models.CharField(max_length=50, blank=True, null=True)
-    original_notes = models.TextField(blank=True, null=True)
-    relevant_to_cofk = models.CharField(max_length=1, blank=True, null=True)
-    subjects = models.TextField(blank=True, null=True)
-
-    class Meta:
-        db_table = 'copy_cofk_union_queryable_work'
-
-
 class CofkUnionImage(models.Model, RecordTracker):
     image_id = models.AutoField(primary_key=True)
     image_filename = models.TextField(blank=True, null=True)
@@ -244,6 +183,7 @@ class CofkLookupCatalogue(models.Model):
         db_table = 'cofk_lookup_catalogue'
         ordering = ['catalogue_name']
 
+
 def get_sort_by_label(url: str, query_order_by: str, pk) -> str:
     view = resolve(url).func.view_class()
     label = [c[1] for c in view.sort_by_choices if c[0] == query_order_by]
@@ -252,13 +192,12 @@ def get_sort_by_label(url: str, query_order_by: str, pk) -> str:
         return label[0]
 
 
-
 class CofkUserSavedQuery(models.Model):
     query_id = models.AutoField(primary_key=True)
     username = models.ForeignKey('login.CofkUser', models.DO_NOTHING, db_column='username')
     query_class = models.CharField(max_length=100)
-    query_method = models.CharField(max_length=100) # what does this do?
-    query_title = models.TextField() # this field is not used atm, instead use the dynamic property title
+    query_method = models.CharField(max_length=100)  # what does this do?
+    query_title = models.TextField()  # this field is not used atm, instead use the dynamic property title
     query_order_by = models.CharField(max_length=100)
     query_sort_descending = models.SmallIntegerField()
     query_entries_per_page = models.SmallIntegerField()
@@ -279,7 +218,6 @@ class CofkUserSavedQuery(models.Model):
             return reverse(f'audit:{VNAME_SEARCH}')
 
         return reverse(f'{self.query_class}:{VNAME_SEARCH}')
-
 
     @property
     def title(self):
@@ -317,11 +255,10 @@ class CofkUserSavedQuery(models.Model):
             params['order'] = 'desc'
 
         for selection in self.selection.all():
-            params = params | { f'{selection.column_name}_lookup': selection.op_value,
-                                selection.column_name: selection.column_value}
+            params = params | {f'{selection.column_name}_lookup': selection.op_value,
+                               selection.column_name: selection.column_value}
 
         return self.base_url + '?' + urlencode(params)
-
 
     class Meta:
         db_table = 'cofk_user_saved_queries'

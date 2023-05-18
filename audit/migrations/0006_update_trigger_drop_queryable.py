@@ -1,0 +1,1 @@
+../manual_migrations/0006_update_trigger_drop_queryable.py

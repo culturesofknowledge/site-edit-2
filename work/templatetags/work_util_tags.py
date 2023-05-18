@@ -3,7 +3,9 @@ import re
 from django import template
 from django.utils.safestring import mark_safe
 
-from work.models import CofkUnionQueryableWork
+from work import work_utils
+from work.models import CofkUnionWork
+from work.work_utils import DisplayableWork
 
 register = template.Library()
 
@@ -12,64 +14,12 @@ img_pattern = re.compile(r'(xxxCofkImageIDStartxxx)(.*?)(xxxCofkImageIDEndxxx)')
 
 
 @register.filter
-def exclamation(work: CofkUnionQueryableWork):
-    tooltip = []
-
-    if work.date_of_work_inferred or work.date_of_work_uncertain:
-        if work.date_of_work_inferred:
-            tooltip.append('Date of work INFERRED')
-
-        if work.date_of_work_uncertain:
-            tooltip.append('Date of work UNCERTAIN')
-
-        if work.date_of_work_as_marked:
-            tooltip.append(f'(Date of work as marked: {work.date_of_work_as_marked})')
-
-    if work.origin_inferred or work.origin_uncertain:
-        if work.origin_inferred:
-            tooltip.append('Origin INFERRED')
-
-        if work.origin_uncertain:
-            tooltip.append('Origin UNCERTAIN')
-
-        if work.origin_as_marked:
-            tooltip.append(f'(Origin as marked: {work.origin_as_marked})')
-
-    if work.authors_inferred or work.authors_uncertain:
-        if work.authors_inferred:
-            tooltip.append('Author INFERRED')
-
-        if work.authors_uncertain:
-            tooltip.append('Author UNCERTAIN')
-
-        if work.authors_as_marked:
-            tooltip.append(f'(Author as marked: {work.authors_as_marked})')
-
-    if work.addressees_inferred or work.addressees_uncertain:
-        if work.addressees_inferred:
-            tooltip.append('Addressee INFERRED')
-
-        if work.addressees_uncertain:
-            tooltip.append('Addressee UNCERTAIN')
-
-        if work.addressees_as_marked:
-            tooltip.append(f'(Addressee as marked: {work.addressees_as_marked})')
-
-    if work.destination_inferred or work.destination_uncertain:
-        if work.destination_inferred:
-            tooltip.append('Destination INFERRED')
-
-        if work.destination_uncertain:
-            tooltip.append('Destination UNCERTAIN')
-
-        if work.destination_as_marked:
-            tooltip.append(f'(Destination as marked: {work.destination_as_marked})')
-
-    return ', '.join(tooltip)
+def exclamation(work: CofkUnionWork):
+    return work_utils.flags(work)
 
 
 @register.filter
-def more_info(work: CofkUnionQueryableWork):
+def more_info(work: DisplayableWork):
     tooltip = []
 
     if work.notes_on_authors:
@@ -81,8 +31,8 @@ def more_info(work: CofkUnionQueryableWork):
     if work.addressees_searchable.find('alias:') > -1:
         tooltip.append(f'Further details of addressee: {work.addressees_searchable}')
 
-    if work.subjects:
-        tooltip.append(f'Subject(s): {work.subjects}\n')
+    if work.subjects_for_display:
+        tooltip.append(f'Subject(s): {work.subjects_for_display}\n')
 
     if work.abstract:
         tooltip.append(f'{work.abstract}\n')
@@ -121,40 +71,3 @@ def render_queryable_images(values: str):
         html += f'<a href="{img[1]}" target="_blank"><img src="{img[1]}" class="search_result_img"></a>'
 
     return mark_safe(html)
-
-
-@register.filter
-def other_details(work: CofkUnionQueryableWork):
-    _other_details = []
-
-    if work.abstract:
-        _other_details.append(f'<strong>Abstract</strong>: {work.abstract}')
-
-    if work.language_of_work:
-        if len(work.language_of_work.split(',')) > 1:
-            _other_details.append(f'<strong>Languages</strong>: {work.language_of_work}')
-        else:
-            _other_details.append(f'<strong>Language</strong>: {work.language_of_work}')
-
-    if work.general_notes:
-        _other_details.append(f'<strong>Notes</strong>: {work.general_notes}')
-
-    if work.people_mentioned:
-        _other_details.append(f'<strong>People mentioned</strong>: {work.people_mentioned}')
-
-    return mark_safe('<br/><br/>'.join(_other_details))
-
-@register.filter
-def date_for_ordering(work: CofkUnionQueryableWork):
-    date = []
-
-    if work.date_of_work_std_year:
-        date.append(str(work.date_of_work_std_year))
-
-    if work.date_of_work_std_month:
-        date.append(str(work.date_of_work_std_month))
-
-    if work.date_of_work_std_day:
-        date.append(str(work.date_of_work_std_day))
-
-    return '-'.join(date)

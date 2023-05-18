@@ -1,6 +1,7 @@
 import logging
+import re
 from collections.abc import Callable
-from typing import Iterable, Any
+from typing import Iterable, Any, Type
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -17,21 +18,21 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_WORK_MATCHES, REL_TYPE_COMMENT_DATE, REL_TYPE_WAS_SENT_FROM, REL_TYPE_COMMENT_ORIGIN, \
     REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_ROUTE, REL_TYPE_FORMERLY_OWNED, \
     REL_TYPE_ENCLOSED_IN, REL_TYPE_COMMENT_RECEIPT_DATE, REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_STORED_IN, \
-    REL_TYPE_PEOPLE_MENTIONED_IN_WORK, REL_TYPE_MENTION, REL_TYPE_MENTION_PLACE, \
-    REL_TYPE_MENTION_WORK, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO
+    REL_TYPE_COMMENT_PERSON_MENTIONED, REL_TYPE_MENTION, REL_TYPE_MENTION_PLACE, \
+    REL_TYPE_MENTION_WORK, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_IMAGE_OF, REL_TYPE_IS_RELATED_TO
 from core.export_data import excel_maker, cell_values
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, LocRecrefForm
-from core.helper import view_utils, lang_utils, model_utils, query_utils, renderer_utils
+from core.helper import view_utils, lang_utils, model_utils, query_utils, renderer_utils, date_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.form_utils import save_multi_rel_recref_formset
 from core.helper.lang_utils import LangModelAdapter, NewLangForm
+from core.helper.perm_utils import class_permission_required
 from core.helper.recref_handler import SingleRecrefHandler, RecrefFormsetHandler, SubjectHandler, ImageRecrefHandler, \
     TargetResourceFormsetHandler, MultiRecrefAdapterHandler
 from core.helper.recref_utils import create_recref_if_field_exist
 from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_utils import DefaultSearchView
-from core.helper.perm_utils import class_permission_required
 from core.models import Recref, CofkLookupCatalogue
 from institution import inst_utils
 from location import location_utils
@@ -50,8 +51,7 @@ from work.forms import WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     CommonWorkForm, manif_type_choices, original_calendar_choices, CompactSearchFieldset, ExpandedSearchFieldset, \
     ManifPersonMRRForm
 from work.models import CofkWorkPersonMap, CofkUnionWork, CofkWorkCommentMap, CofkWorkResourceMap, \
-    CofkUnionLanguageOfWork, \
-    CofkUnionQueryableWork
+    CofkUnionLanguageOfWork
 from work.recref_adapter import WorkLocRecrefAdapter, ManifInstRecrefAdapter, WorkSubjectRecrefAdapter, \
     EarlierLetterRecrefAdapter, LaterLetterRecrefAdapter, EnclosureManifRecrefAdapter, EnclosedManifRecrefAdapter, \
     WorkCommentRecrefAdapter, ManifCommentRecrefAdapter, WorkResourceRecrefAdapter, ManifImageRecrefAdapter
@@ -67,9 +67,88 @@ def get_location_id(model: models.Model):
 def create_search_fn_person_recref(rel_types: list) -> Callable:
     def _fn(f, v):
         return Q(**{
-            'work__cofkworkpersonmap__person_id': v,
-            'work__cofkworkpersonmap__relationship_type__in': rel_types,
+            'cofkworkpersonmap__person_id': v,
+            'cofkworkpersonmap__relationship_type__in': rel_types,
         })
+
+    return _fn
+
+
+def create_lookup_fn_by_person(rel_types: list) -> Callable:
+    return _create_recref_lookup_fn(rel_types, 'cofkworkpersonmap__person',
+                                    [
+                                        'date_of_birth_year',
+                                        'date_of_death_year',
+                                        'date_of_death_is_range',
+                                        'date_of_birth_is_range',
+                                        'foaf_name',
+                                        'skos_altlabel',
+                                        'person_aliases',
+                                    ])
+
+
+def create_lookup_fn_by_comment(rel_types: list) -> Callable:
+    return _create_recref_lookup_fn(rel_types, 'cofkworkcommentmap__comment',
+                                    [
+                                        'comment',
+                                    ])
+
+
+def create_lookup_fn_by_location(rel_types: list) -> Callable:
+    return _create_recref_lookup_fn(rel_types, 'cofkworklocationmap__location',
+                                    [
+                                        'location_name',
+                                    ])
+
+
+def create_lookup_fn_by_image(rel_types: list) -> Callable:
+    return _create_recref_lookup_fn(rel_types, 'manif_set__image',
+                                    [
+                                        'image_filename',
+                                    ])
+
+
+def create_lookup_fn_by_resource(rel_types: list) -> Callable:
+    return _create_recref_lookup_fn(rel_types, 'cofkworkresourcemap__resource',
+                                    [
+                                        'resource_name',
+                                        'resource_details',
+                                        'resource_url',
+                                    ])
+
+
+def lookup_fn_flags(lookup_fn, field_name, value):
+    cond_map = [
+        (r'Date\s+of\s+work\s+INFERRED', lambda: Q(date_of_work_inferred=1)),
+        (r'Date\s+of\s+work\s+UNCERTAIN', lambda: Q(date_of_work_uncertain=1)),
+        (r'Author\s*/\s*sender\s+INFERRED', lambda: Q(authors_inferred=1)),
+        (r'Author\s*/\s*sender\s+UNCERTAIN', lambda: Q(authors_uncertain=1)),
+        (r'Addressee\s+INFERRED', lambda: Q(addressees_inferred=1)),
+        (r'Addressee\s+UNCERTAIN', lambda: Q(addressees_uncertain=1)),
+        (r'Origin\s+INFERRED', lambda: Q(origin_inferred=1)),
+        (r'Origin\s+UNCERTAIN', lambda: Q(origin_uncertain=1)),
+        (r'Destination\s+INFERRED', lambda: Q(destination_inferred=1)),
+        (r'Destination\s+UNCERTAIN', lambda: Q(destination_uncertain=1)),
+    ]
+
+    query = Q()
+    for pattern, q in cond_map:
+        if re.search(pattern, value, re.IGNORECASE):
+            query |= q()
+    return query
+
+
+def _create_recref_lookup_fn(rel_types: list, recref_field_name: str, cond_fields: list[str]):
+    recref_name = '__'.join(recref_field_name.split('__')[:-1])
+
+    def _fn(lookup_fn, f, v):
+        query = Q(**{
+            f'{recref_name}__relationship_type__in': rel_types,
+        })
+        cond_query = Q()
+        for n in cond_fields:
+            cond_query.add(query_utils.run_lookup_fn(lookup_fn, f'{recref_field_name}__{n}', v), Q.OR)
+        return query & cond_query
 
     return _fn
 
@@ -77,8 +156,8 @@ def create_search_fn_person_recref(rel_types: list) -> Callable:
 def create_search_fn_location_recref(rel_types: list) -> Callable:
     def _fn(f, v):
         return Q(**{
-            'work__cofkworklocationmap__location_id': v,
-            'work__cofkworklocationmap__relationship_type__in': rel_types,
+            'cofkworklocationmap__location_id': v,
+            'cofkworklocationmap__relationship_type__in': rel_types,
         })
 
     return _fn
@@ -145,7 +224,7 @@ class BasicWorkFFH(FullFormHandler):
             work.description = cur_desc
 
         work.update_current_user_timestamp(request.user.username)
-        work.save(clone_queryable=False)
+        work.save()
         log.info(f'save work {work}')
         self.saved_work = work
 
@@ -214,7 +293,6 @@ class PlacesFFH(BasicWorkFFH):
         self.destination_loc_handler.upsert_recref_if_field_exist(
             self.places_form, work, request.user.username
         )
-        work_utils.clone_queryable_work(work, reload=True)
 
 
 class DatesFFH(BasicWorkFFH):
@@ -242,7 +320,6 @@ class DatesFFH(BasicWorkFFH):
 
         work = self.save_work(request, self.dates_form.instance)
         self.save_all_recref_formset(work, request)
-        work_utils.clone_queryable_work(work, reload=True)
 
 
 class CorrFFH(BasicWorkFFH):
@@ -332,7 +409,6 @@ class CorrFFH(BasicWorkFFH):
 
         # handle recref_handler
         self.maintain_all_recref_records(request, work)
-        work_utils.clone_queryable_work(work, reload=True)
 
 
 class ManifFFH(BasicWorkFFH):
@@ -433,7 +509,7 @@ class ManifFFH(BasicWorkFFH):
 
         if work := model_utils.get_safe(CofkUnionWork, iwork_id=self.request_iwork_id):
             manif_set = []
-            for _manif in work.cofkunionmanifestation_set.iterator():
+            for _manif in work.manif_set.iterator():
                 _manif: CofkUnionManifestation
                 inst = _manif.find_selected_inst()
                 inst = inst and inst.inst
@@ -496,8 +572,6 @@ class ManifFFH(BasicWorkFFH):
         self.inst_handler.upsert_recref_if_field_exist(
             self.manif_form, manif, request.user.username)
 
-        work_utils.clone_queryable_work(work_utils.reload_work(manif.work), reload=True)
-
 
 class ResourcesFFH(BasicWorkFFH):
     def __init__(self, pk, request_data=None, request=None, *args, **kwargs):
@@ -517,7 +591,6 @@ class ResourcesFFH(BasicWorkFFH):
 
         self.save_work(request, self.work)
         self.save_all_recref_formset(self.work, request)
-        work_utils.clone_queryable_work(self.work, reload=True)
 
 
 class DetailsFFH(BasicWorkFFH):
@@ -534,7 +607,7 @@ class DetailsFFH(BasicWorkFFH):
             prefix='people_comment',
             request_data=request_data,
             form=CommentForm,
-            rel_type=REL_TYPE_PEOPLE_MENTIONED_IN_WORK,
+            rel_type=REL_TYPE_COMMENT_PERSON_MENTIONED,
             parent=self.safe_work,
         ))
         self.add_recref_formset_handler(WorkCommentFormsetHandler(
@@ -604,7 +677,6 @@ class DetailsFFH(BasicWorkFFH):
         self.save_all_recref_formset(work, request)
         self.maintain_all_recref_records(request, work)
         self.subject_handler.save(request, work)
-        work_utils.clone_queryable_work(work, reload=True)
 
 
 class ManifLangModelAdapter(LangModelAdapter):
@@ -856,7 +928,7 @@ def overview_view(request, iwork_id):
         notes_work=work_utils.find_related_comment_names(work, REL_TYPE_COMMENT_DATE),
         notes_author=work_utils.find_related_comment_names(work, REL_TYPE_COMMENT_AUTHOR),
         notes_addressee=work_utils.find_related_comment_names(work, REL_TYPE_COMMENT_ADDRESSEE),
-        notes_people=work_utils.find_related_comment_names(work, REL_TYPE_PEOPLE_MENTIONED_IN_WORK),
+        notes_people=work_utils.find_related_comment_names(work, REL_TYPE_COMMENT_PERSON_MENTIONED),
         notes_general=work_utils.find_related_comment_names(work, REL_TYPE_COMMENT_REFERS_TO),
 
         author_link_list=to_person_link_list(work, constant.REL_TYPE_CREATED),
@@ -885,7 +957,7 @@ def overview_view(request, iwork_id):
                                 work.work_from_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
         work_be_mention_link_list=(WorkLinkData(r.work_from) for r in
                                    work.work_to_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
-        manif_set=list(map(to_overview_manif, work.cofkunionmanifestation_set.iterator())),
+        manif_set=list(map(to_overview_manif, work.manif_set.iterator())),
         original_calendar_display=to_calendar_display(work.original_calendar),
     )
 
@@ -953,38 +1025,100 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def search_field_fn_maps(self) -> dict:
-        return {'work_to_be_deleted': lambda f, v: Exact(F(f), '0' if v == 'On' else '1'),
-                'person_sent_pk': create_search_fn_person_recref(AuthorRelationChoices.values),
-                'person_rec_pk': create_search_fn_person_recref(AddresseeRelationChoices.values),
-                'person_sent_rec_pk': create_search_fn_person_recref(AuthorRelationChoices.values
-                                                                     + AddresseeRelationChoices.values),
-                'person_mention_pk': create_search_fn_person_recref([REL_TYPE_MENTION]),
-                'location_sent_pk': create_search_fn_location_recref([REL_TYPE_WAS_SENT_FROM]),
-                'location_rec_pk': create_search_fn_location_recref([REL_TYPE_WAS_SENT_TO]),
-                'location_sent_rec_pk': create_search_fn_location_recref(
-                    [REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
-                } | query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                        'change_timestamp') | \
-            query_utils.create_from_to_datetime('date_of_work_std_from', 'date_of_work_std_to',
-                                                'date_of_work_std')
+        return {
+            'work_to_be_deleted': lambda f, v: Exact(F(f), '0' if v == 'On' else '1'),
+            'person_sent_pk': create_search_fn_person_recref(AuthorRelationChoices.values),
+            'person_rec_pk': create_search_fn_person_recref(AddresseeRelationChoices.values),
+            'person_sent_rec_pk': create_search_fn_person_recref(AuthorRelationChoices.values
+                                                                 + AddresseeRelationChoices.values),
+            'person_mention_pk': create_search_fn_person_recref([REL_TYPE_MENTION]),
+            'location_sent_pk': create_search_fn_location_recref([REL_TYPE_WAS_SENT_FROM]),
+            'location_rec_pk': create_search_fn_location_recref([REL_TYPE_WAS_SENT_TO]),
+            'location_sent_rec_pk': create_search_fn_location_recref(
+                [REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
+        } | query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
+                                                'change_timestamp') \
+            | query_utils.create_from_to_datetime('date_of_work_std_from', 'date_of_work_std_to',
+                                                  'date_of_work_std',
+                                                  convert_fn=date_utils.search_datestr_to_db_datestr, )
 
     def get_queryset(self):
         if not self.request_data:
-            return CofkUnionQueryableWork.objects.none()
+            return CofkUnionWork.objects.none()
 
         return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
 
     def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:
         queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
 
-        search_fields_maps = {'sender_or_recipient': ['creators_searchable', 'addressees_searchable'],
-                              'origin_or_destination': ['places_to_searchable', 'places_from_searchable'],
-                              'original_catalogue': ['work__original_catalogue__catalogue_name']}
+        search_fields_maps = {
+            'manifestations_searchable': [
+                'manif_set__manifestation_type',
+                'manif_set__postage_marks',
+                'manif_set__id_number_or_shelfmark',
+                'manif_set__printed_edition_details',
+                'manif_set__manifestation_incipit',
+                'manif_set__manifestation_excipit',
+                'manif_set__cofkmanifinstmap_set__inst__institution_name',
+                'manif_set__manif_from_set__manif_to__id_number_or_shelfmark',
+                'manif_set__manif_to_set__manif_from__id_number_or_shelfmark',
+            ],
+            'language_of_work': [
+                'language_set__language_code__code_639_3',
+                'language_set__language_code__code_639_1',
+                'language_set__language_code__language_name',
+            ],
+            'original_catalogue': [
+                'original_catalogue__catalogue_code',
+                'original_catalogue__catalogue_name',
+            ],
+            'images': [
+                'manif_set__images__image_filename',
+            ],
+        }
 
         queries.extend(
-            query_utils.create_queries_by_lookup_field(request_data, self.search_fields, search_fields_maps)
+            query_utils.create_queries_by_lookup_field(
+                request_data, self.search_fields,
+                search_fields_maps=search_fields_maps,
+                search_fields_fn_maps={
+                    'creators_searchable': create_lookup_fn_by_person([REL_TYPE_CREATED]),
+                    'notes_on_authors': create_lookup_fn_by_comment([REL_TYPE_COMMENT_AUTHOR]),
+                    'places_from_searchable': create_lookup_fn_by_location([REL_TYPE_WAS_SENT_FROM]),
+                    'addressees_searchable': create_lookup_fn_by_person([REL_TYPE_WAS_ADDRESSED_TO]),
+                    'places_to_searchable': create_lookup_fn_by_location([REL_TYPE_WAS_SENT_TO]),
+                    'sender_or_recipient': create_lookup_fn_by_person([REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO]),
+                    'origin_or_destination': create_lookup_fn_by_location(
+                        [REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
+                    'related_resources': create_lookup_fn_by_resource([REL_TYPE_IS_RELATED_TO]),
+                    'general_notes': create_lookup_fn_by_comment([REL_TYPE_COMMENT_REFERS_TO]),
+                    'people_mentioned': create_lookup_fn_by_person([REL_TYPE_MENTION]),
+                    'flags': lookup_fn_flags,
+                })
         )
-        return self.create_queryset_by_queries(CofkUnionQueryableWork, queries, sort_by=sort_by).distinct()
+        return self.create_queryset_by_queries(CofkUnionWork, queries, sort_by=sort_by)
+
+    def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q],
+                                   sort_by=None):
+        queryset = model_class.objects.filter()
+        queryset = query_utils.update_queryset(queryset, model_class, queries,
+                                               sort_by=sort_by)
+        queryset = queryset.prefetch_related('cofkworkpersonmap_set__person',
+                                             'cofkworklocationmap_set__location',
+                                             'cofkworkresourcemap_set__resource',
+                                             'cofkworkcommentmap_set__comment',
+                                             'work_to_set__work_from',
+                                             'work_from_set__work_to',
+                                             'language_set__language_code',
+                                             'subjects',
+                                             'manif_set',
+                                             'manif_set__images',
+                                             'manif_set__cofkmanifinstmap_set__inst',
+                                             'manif_set__manif_from_set__manif_to',
+                                             'manif_set__manif_to_set__manif_from',
+                                             ).select_related('original_catalogue')
+
+        return queryset
 
     @property
     def simplified_query(self) -> list[str]:
@@ -1012,12 +1146,12 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
-        return renderer_utils.create_table_search_results_renderer('work/expanded_search_table_layout.html')
+        return create_table_search_results_renderer_for_work('work/expanded_search_table_layout.html')
 
     @property
     def compact_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
         # Compact search results for works are also table formatted
-        return renderer_utils.create_table_search_results_renderer('work/compact_search_table_layout.html')
+        return create_table_search_results_renderer_for_work('work/compact_search_table_layout.html')
 
     @property
     def return_quick_init_vname(self) -> str:
@@ -1112,7 +1246,7 @@ class WorkCsvHeaderValues(HeaderValues):
         ]
 
     def obj_to_values(self, obj) -> Iterable[str]:
-        obj: CofkUnionQueryableWork
+        obj = work_utils.DisplayableWork(obj)
         values = (
             obj.description,
             obj.editors_notes,
@@ -1120,26 +1254,26 @@ class WorkCsvHeaderValues(HeaderValues):
             obj.date_of_work_std_year,
             obj.date_of_work_std_month,
             obj.date_of_work_std_day,
-            obj.work.date_of_work_std_gregorian,
-            obj.work.queryable_people(REL_TYPE_CREATED, is_details=True),
-            obj.notes_on_authors,
+            obj.date_of_work_std_gregorian,
+            obj.queryable_people(REL_TYPE_CREATED, is_details=True),
+            cell_values.notes(obj.author_comments),
             obj.places_from_for_display,
             obj.origin_as_marked,
-            obj.work.queryable_people(REL_TYPE_WAS_ADDRESSED_TO, is_details=True),
+            obj.queryable_people(REL_TYPE_WAS_ADDRESSED_TO, is_details=True),
             obj.places_to_for_display,
             obj.destination_as_marked,
-            obj.flags,
+            work_utils.flags(obj),
             obj.images,
             ' -- '.join(' '.join(manif_utils.get_manif_details(m))
-                        for m in obj.work.cofkunionmanifestation_set.iterator()),
-            cell_values.resource_str_by_list(wrm.resource for wrm in obj.work.cofkworkresourcemap_set.iterator()),
+                        for m in obj.manif_set.all()),
+            cell_values.resource_str_by_list(wrm.resource for wrm in obj.cofkworkresourcemap_set.all()),
             obj.language_of_work,
-            obj.subjects,
+            obj.subjects_for_display,
             obj.abstract,
             obj.people_mentioned,
             obj.keywords,
             obj.general_notes,
-            obj.work.original_catalogue and obj.work.original_catalogue.catalogue_name,
+            obj.original_catalogue and obj.original_catalogue.catalogue_name,
             obj.accession_code,
             obj.work_to_be_deleted,
             obj.iwork_id,
@@ -1147,3 +1281,16 @@ class WorkCsvHeaderValues(HeaderValues):
             obj.change_user,
         )
         return values
+
+
+def create_table_search_results_renderer_for_work(template_path, records_name='search_results', ):
+    def _renderer_by_record(records):
+        def _render():
+            context = {
+                records_name: (work_utils.DisplayableWork(r) for r in records)
+            }
+            return renderer_utils.render_to_string(template_path, context)
+
+        return _render
+
+    return _renderer_by_record
