@@ -12,7 +12,9 @@ log = logging.getLogger(__name__)
 
 
 class CofkLocations(CofkEntity, ABC):
-
+    """
+    This class processes the Places spreadsheet
+    """
     def __init__(self, upload: CofkCollectUpload, sheet, work_data: Generator[Tuple[Cell], None, None]):
         super().__init__(upload, sheet)
         self.work_data = work_data
@@ -23,21 +25,15 @@ class CofkLocations(CofkEntity, ABC):
             self.check_required(loc_dict)
             self.check_data_types(loc_dict)
 
-            if not self.errors:
-                if 'location_id' in loc_dict:
-                    loc_id = loc_dict['location_id']
+            if 'location_id' in loc_dict:
+                loc_id = loc_dict['location_id']
 
-                    if loc_id not in self.ids:
-                        loc_dict['union_location'] = CofkUnionLocation.objects\
-                            .filter(location_id=loc_id).first()
+                if loc_id not in self.ids:
+                    loc_dict['union_location'] = CofkUnionLocation.objects\
+                        .filter(location_id=loc_id).first()
 
-                        loc_dict['upload'] = upload
-                        self.locations.append(CofkCollectLocation(**loc_dict))
-                        self.ids.append(loc_id)
-                    else:
-                        log.warning(f'{loc_id} duplicated in {self.sheet.name} sheet.')
-                #else:
-                #    log.warning(f'New location {loc_dict} to be created?')
-
-        if self.locations:
-            self.bulk_create(self.locations)
+                    loc_dict['upload'] = upload
+                    self.locations.append(CofkCollectLocation(**loc_dict))
+                    self.ids.append(loc_id)
+                else:
+                    log.warning(f'{loc_id} duplicated in {self.sheet.name} sheet.')

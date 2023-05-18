@@ -207,11 +207,12 @@ class CofkEntity:
         return id_list, name_list
 
     def bulk_create(self, objects: List[models.Model]):
-        try:
-            type(objects[0]).objects.bulk_create(objects, batch_size=500)
-        except IntegrityError as ie:
-            log.error(ie)
-            self.add_error(f'Could not create {type(objects[0])} objects in database.')
+        if len(objects):
+            try:
+                type(objects[0]).objects.bulk_create(objects, batch_size=500)
+            except IntegrityError as ie:
+                log.error(ie)
+                self.add_error(f'Could not create {type(objects[0])} objects in database.')
 
     def check_year(self, year_field: str, year: int):
         if isinstance(year, int) and not MAX_YEAR >= year >= MIN_YEAR:

@@ -10,7 +10,9 @@ log = logging.getLogger(__name__)
 
 
 class CofkRepositories(CofkEntity, ABC):
-
+    """
+    This class processes the Manifestation spreadsheet
+    """
     def __init__(self, upload: CofkCollectUpload, sheet):
         super().__init__(upload, sheet)
         self.institutions: List[CofkCollectInstitution] = []
@@ -31,7 +33,3 @@ class CofkRepositories(CofkEntity, ABC):
                     self.ids.append(inst_id)
                 else:
                     log.warning(f'{inst_id} duplicated in {self.sheet.name} sheet.')
-
-        if self.institutions:
-            self.bulk_create(self.institutions)
-            self.log_summary.append(f'{len(self.institutions)} CofkCollectInstitution')

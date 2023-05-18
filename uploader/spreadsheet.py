@@ -18,15 +18,6 @@ from uploader.validation import CofkExcelFileError
 
 log = logging.getLogger(__name__)
 
-# not used currently
-''''
-class CofkColumn:
-    def __init__(self, name):
-        self.name = name
-        self.required: bool = False
-        self.validation: Union[Callable, None] = None
-'''
-
 
 class CofkSheet:
     def __init__(self, sheet: Worksheet):
@@ -73,17 +64,7 @@ class CofkUploadExcelFile:
         self.sheets: dict[str: CofkSheet] = {}
         self.missing: List[str] = []
 
-        try:
-            # read_only mode
-            self.wb = load_workbook(filename=filename, data_only=True, read_only=True)
-            # pd.read_excel(filename, sheet_name=None, usecols=lambda c: not c.startswith('Unnamed:'))
-        except ValueError:
-            pass
-            # from OpenpyxlReaderWOFormatting import load_workbook as l2
-            # ExcelFile._engines['openpyxl_wo_formatting'] = OpenpyxlReaderWOFormatting
-            # self.wb = pd.read_excel(filename, sheet_name=None,
-            #                        usecols=lambda c: not c.startswith('Unnamed:'),
-            #                        engine='openpyxl_wo_formatting')
+        self.wb = load_workbook(filename=filename, data_only=True, read_only=True)
 
         # Make sure all sheets are present
         self.check_sheets()
@@ -166,8 +147,23 @@ class CofkUploadExcelFile:
 
         # Create all collect objects if there are no errors
         if self.total_errors == 0:
+            people = self.sheets['People'].entities.people
+            self.sheets['People'].entities.bulk_create(people)
+            self.sheets['People'].entities.log_summary.append(f'{len(people)} CofkCollectPerson')
+
+            locations = self.sheets['Places'].entities.locations
+            self.sheets['Places'].entities.bulk_create(locations)
+            self.sheets['Places'].entities.log_summary.append(f'{len(locations)} CofkCollectLocation')
+
             self.sheets['Work'].entities.create_all()
-            self.sheets['Manifestation'].entities.bulk_create( self.sheets['Manifestation'].entities.manifestations)
+
+            inst = self.sheets['Repositories'].entities.institutions
+            self.sheets['Repositories'].entities.bulk_create(inst)
+            self.sheets['Repositories'].entities.log_summary.append(f'{len(inst)} CofkCollectInstitution')
+
+            manifs = self.sheets['Manifestation'].entities.manifestations
+            self.sheets['Manifestation'].entities.bulk_create(manifs)
+            self.sheets['Manifestation'].entities.log_summary.append(f'{len(manifs)} CofkCollectManifestation')
 
             log_msg = self.sheets['Work'].entities.log_summary + self.sheets['Manifestation'].entities.log_summary\
                       + self.sheets['Repositories'].entities.log_summary
