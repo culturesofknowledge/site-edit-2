@@ -233,5 +233,3 @@ class CofkEntity:
         # For February not more than 29
         elif month == 2 and field > 29:
             self.add_error('%(field)s: can not be more than 29 for February', {'field': field_name})'''
-
-    # TODO check date ranges
