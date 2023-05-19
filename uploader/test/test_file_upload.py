@@ -20,25 +20,27 @@ from uploader.validation import CofkExcelFileError
 log = logging.getLogger(__name__)
 
 
-def create_excel_file(data: Dict[str, List[List]]=None) -> str:
-    wb = Workbook()
-    tf = tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False)
-
-    for sheet_name in MANDATORY_SHEETS.keys():
-        ws = wb.create_sheet(sheet_name)
-        column_count = len(MANDATORY_SHEETS[sheet_name]['columns'])
-        ws.append(MANDATORY_SHEETS[sheet_name]['columns'])
-        ws.append(['-'] * column_count)
-
-        if data and sheet_name in data:
-            for row in data[sheet_name]:
-                ws.append(row)
-
-    wb.save(tf.name)
-
-    return tf.name
-
 class TestFileUpload(TestCase):
+
+    def create_excel_file(self, data: Dict[str, List[List]] = None) -> str:
+        wb = Workbook()
+        tf = tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False)
+
+        for sheet_name in MANDATORY_SHEETS.keys():
+            ws = wb.create_sheet(sheet_name)
+            column_count = len(MANDATORY_SHEETS[sheet_name]['columns'])
+            ws.append(MANDATORY_SHEETS[sheet_name]['columns'])
+            ws.append(['-'] * column_count)
+
+            if data and sheet_name in data:
+                for row in data[sheet_name]:
+                    ws.append(row)
+
+        wb.save(tf.name)
+
+        self.tmp_files.append(tf.name)
+
+        return tf.name
 
     def setUp(self) -> None:
         CofkCollectStatus.objects.create(status_id=1,
@@ -65,12 +67,12 @@ class TestFileUpload(TestCase):
         self.new_upload.uploader_email = 'test@user.com'
         self.new_upload.upload_timestamp = timezone.now()
         self.new_upload.save()
+        self.tmp_files = []
 
     def tearDown(self) -> None:
-        # Delete all files in /tmp
-        for root, dirs, files in os.walk('/tmp'):
-            for f in files:
-                os.unlink(os.path.join(root, f))
+        # Delete all tmp files
+        for f in self.tmp_files:
+            os.unlink(f)
         
     def test_create_upload(self):
         self.assertEqual(self.new_upload.upload_status.status_desc, 'Awaiting review')
@@ -108,7 +110,7 @@ class TestFileUpload(TestCase):
                                self.new_upload, tf.name)
 
     def test_no_data(self):
-        filename = create_excel_file()
+        filename = self.create_excel_file()
 
         msg = 'Spreadsheet contains no works.'
         self.assertRaisesRegex(CofkExcelFileError, msg, CofkUploadExcelFile,
@@ -119,7 +121,7 @@ class TestFileUpload(TestCase):
                            22859,"test",1,1,"test","Burford",400285,"test",1,1,"Carisbrooke",782,"test",1,1,"test",
                            "test","fra;eng",'','','','','','',"test","test","test","Baskerville",885,"test",
                            "test","EMLO","http://emlo.bodleian.ox.ac.uk/","Early Modern Letters Online test"]]
-        filename = create_excel_file({'Work': work_data})
+        filename = self.create_excel_file({'Work': work_data})
 
         msg = 'Person with the id 15257 was listed in the Work sheet but is not present in the People sheet.'
         msg_2 = 'Location with the id 400285 was listed in the Work sheet but is not present in the Places sheet.'
@@ -147,7 +149,7 @@ class TestFileUpload(TestCase):
                 'Manifestation': [[1, 1, "ALS", 1, "Bodleian", "test", "test",'','','','',''],
                                   [2, 1,'','','','','', "P", "test", "test",'','']],
                 'Repositories': [['Bodleian', 1]]}
-        filename = create_excel_file(data)
+        filename = self.create_excel_file(data)
 
         cuef = CofkUploadExcelFile(self.new_upload, filename)
 
@@ -170,7 +172,7 @@ class TestFileUpload(TestCase):
                 'Repositories': [['Bodleian', 2]]
                 }
 
-        filename = create_excel_file(data)
+        filename = self.create_excel_file(data)
 
         msg = 'The value in column "language_id", "aaj" is not a valid ISO639 language.'
         msg_2 = 'Column date_of_work2_std_year in Work sheet is not a valid integer.'
