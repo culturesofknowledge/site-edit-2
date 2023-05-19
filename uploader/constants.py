@@ -41,11 +41,13 @@ class DBMapping:
            }
 '''
 
+SEPARATOR = ';'
+
 # These are the sheets expected to be in every uploaded Excel file
 # Sheet names are case-sensitive !!!!!!
 # The first sheet must be Work
 # combos must have the id column first!!!
-mandatory_sheets = {
+MANDATORY_SHEETS = {
     'Work': {
         'columns': ['iwork_id', 'date_of_work_as_marked', 'original_calendar', 'date_of_work_std_year',
                     'date_of_work_std_month', 'date_of_work_std_day', 'date_of_work2_std_year',
@@ -75,7 +77,8 @@ mandatory_sheets = {
                    ('emlo_mention_id', 'mention_id')],
         'years': ['date_of_work_std_year', 'date_of_work2_std_year'],
         'months': ['date_of_work_std_month', 'date_of_work2_std_month'],
-        'dates': ['date_of_work_std_day', 'date_of_work2_std_day']
+        'dates': ['date_of_work_std_day', 'date_of_work2_std_day'],
+        'ranges': [{'date_of_work_std_is_range': [('date_of_work_std_year', 'date_of_work2_std_year')]}]
     },
     'Manifestation': {
         'columns': ['manifestation_id', 'iwork_id', 'manifestation_type', 'repository_id', 'repository_name',
@@ -108,5 +111,5 @@ mandatory_sheets = {
     }
 }
 
-max_year = 1900
-min_year = 1500
+MAX_YEAR = 1900
+MIN_YEAR = 1500

@@ -10,8 +10,7 @@ from typing import Type, Callable, Iterable, Any
 import django.db.utils
 import psycopg2
 import psycopg2.errors
-from django.contrib.auth.models import Group, Permission
-from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import Group
 from django.core.management import BaseCommand
 from django.db import connection as cur_conn
 from django.db.models import Model, fields
@@ -156,7 +155,7 @@ class Command(BaseCommand):
                        password=options['password'],
                        database=options['database'],
                        host=options['host'],
-                       port=options['port'], )
+                       port=options['port'],)
 
 
 def create_common_relation_col_name(table_name):

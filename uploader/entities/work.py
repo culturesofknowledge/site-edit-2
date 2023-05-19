@@ -4,7 +4,6 @@ from typing import List, Type, Any
 from django.db import models
 
 from core.models import Iso639LanguageCode
-from uploader.constants import max_year, min_year
 from uploader.entities.entity import CofkEntity
 from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectAddresseeOfWork, \
     CofkCollectAuthorOfWork, CofkCollectDestinationOfWork, CofkCollectLanguageOfWork, CofkCollectOriginOfWork, \
@@ -88,47 +87,53 @@ class CofkWork(CofkEntity):
         upload.total_works = len(self.works)
         upload.save()
 
-        self.create_all()
-
     def get_person(self, person_id: str) -> CofkCollectPerson:
         if person := [p for p in self.people if
                       p.union_iperson is not None and p.union_iperson.iperson_id == int(person_id)]:
+            return person[0]
+        elif person := [p for p in self.people if p.iperson_id == int(person_id)]:
             return person[0]
 
     def get_location(self, location_id: str) -> CofkCollectLocation:
         if location := [l for l in self.locations if
                         l.union_location is not None and l.union_location.location_id == int(location_id)]:
             return location[0]
+        elif location := [l for l in self.locations if l.location_id == int(location_id)]:
+            return location[0]
 
     def process_people(self, work: CofkCollectWork, people_list: List[Any], people_model: Type[models.Model],
                        work_dict: dict, ids: str, names: str, id_type: str):
         id_list, name_list = self.clean_lists(work_dict, ids, names)
 
-        if not self.errors:
-            for _id, name in zip(id_list, name_list):
-                if person := self.get_person(_id):
+        for _id, name in zip(id_list, name_list):
+            if person := self.get_person(_id):
+                if person.union_iperson:
                     related_person = people_model(upload=self.upload, iwork=work, iperson=person)
                     setattr(related_person, id_type, self.get_new_id(id_type))
                     people_list.append(related_person)
                 else:
-                    # Person not present in people sheet
-                    self.add_error(f'Person with the id {_id} was listed in the {self.sheet.name} sheet but is'
-                                   f' not present in the People sheet. ')
+                    self.add_error(f'There is no person with the id {_id} in the Union catalogue.')
+
+            else:
+                # Person not present in people sheet
+                self.add_error(f'Person with the id {_id} was listed in the {self.sheet.name} sheet but is'
+                               f' not present in the People sheet.')
 
     def process_locations(self, work: CofkCollectWork, location_list: List[Any], location_model: Type[models.Model],
                           work_dict: dict, ids: str, names: str, id_type: str):
         id_list, name_list = self.clean_lists(work_dict, ids, names)
 
-        if not self.errors:
-            for _id, name in zip(id_list, name_list):
-                if location := self.get_location(_id):
+        for _id, name in zip(id_list, name_list):
+            if location := self.get_location(_id):
+                if location.union_location:
                     related_location = location_model(upload=self.upload, iwork=work, location=location)
                     setattr(related_location, id_type, self.get_new_id(id_type))
                     location_list.append(related_location)
                 else:
-                    # Location not present in places sheet
-                    self.add_error(f'Location with the id {_id} was listed in the {self.sheet.name} sheet but is'
-                                   f' not present in the Places sheet. ')
+                    self.add_error(f'There is no location with the id {_id} in the Union catalogue.')
+            else:
+                self.add_error(f'Location with the id {_id} was listed in the {self.sheet.name} sheet but is'
+                               f' not present in the Places sheet.')
 
     def process_languages(self, work_dict: dict, work: CofkCollectWork):
         work_languages = work_dict['language_id'].split(';')
@@ -161,37 +166,13 @@ class CofkWork(CofkEntity):
 
     def create_all(self):
         self.bulk_create(self.works)
-        log_msg =  [f'{len(self.works)} {type(self.works[0]).__name__}']
+        self.log_summary =  [f'{len(self.works)} {type(self.works[0]).__name__}']
 
         for entities in [self.authors, self.mentioned, self.addressees, self.origins, self.destinations,
                          self.resources, self.languages]:
             if entities:
                 self.bulk_create(entities)
-                log_msg.append(f'{len(entities)} {type(entities[0]).__name__}')
-
-        log.info(f'{self.upload}: created ' + ', '.join(log_msg))
-
-    def check_year(self, year_field: str, year: int):
-        if isinstance(year, int) and not max_year >= year >= min_year:
-            self.add_error(f'{year_field}: is {year} but must be between {min_year} and {max_year}')
-
-    def check_month(self, month_field: str, month: int):
-        if isinstance(month, int) and not 1 <= month <= 12:
-            self.add_error(f'{month_field}: is {month} but must be between 1 and 12')
-
-    def check_date(self, date_field: str, date: int):
-        if date > 31:
-            self.add_error(f'{date_field}: is {date} but can not be greater than 31')
-
-        # If month is April, June, September or November then day must be not more than 30
-        '''elif month in [4, 6, 9, 11] and field > 30:
-            self.add_error('%(field)s: can not be more than 30 for April, June, September or November',
-                           {'field': field_name})
-        # For February not more than 29
-        elif month == 2 and field > 29:
-            self.add_error('%(field)s: can not be more than 29 for February', {'field': field_name})'''
-
-    # TODO check date ranges
+                self.log_summary.append(f'{len(entities)} {type(entities[0]).__name__}')
 
     def get_new_id(self, id_type: str):
         setattr(self, id_type, getattr(self, id_type) + 1)

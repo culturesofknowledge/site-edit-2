@@ -1,7 +1,6 @@
 import datetime
 
 
-
 class CofkValueException(Exception):
     def __init__(self, msg, col):
         self.col = col

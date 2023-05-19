@@ -22,27 +22,18 @@ class CofkPeople(CofkEntity, ABC):
             self.check_required(per_dict)
             self.check_data_types(per_dict)
 
-            if not self.errors:
-                if 'iperson_id' in per_dict and 'primary_name' in per_dict:
-                    ids, names = self.clean_lists(per_dict, 'iperson_id', 'primary_name')
-                    for _id, name in zip(ids, names):
-                        if _id not in self.ids:
-                            person = {'iperson_id': _id,
-                                      'primary_name': name,
-                                      'union_iperson': CofkUnionPerson.objects.filter(iperson_id=_id).first(),
-                                      'upload': upload,
-                                      'editors_notes': per_dict[
-                                          'editors_notes'] if 'editors_notes' in per_dict else None}
-                            self.people.append(CofkCollectPerson(**person))
-                            self.ids.append(_id)
-                        else:
-                            log.warning(f'{_id} duplicated in People sheet.')
-                #else:
-                #    new_person = CofkCollectPerson()
-                #    new_person.upload = upload
-                #    new_person.primary_name = per_dict['primary_name']
-                #    self.people.append(new_person)
-                #    log.debug(f'Added new person "{new_person.primary_name}" for upload {upload.upload_id}.')
+            if 'iperson_id' in per_dict and 'primary_name' in per_dict:
+                ids, names = self.clean_lists(per_dict, 'iperson_id', 'primary_name')
+                for _id, name in zip(ids, names):
+                    if _id not in self.ids:
+                        person = {'iperson_id': _id,
+                                  'primary_name': name,
+                                  'union_iperson': CofkUnionPerson.objects.filter(iperson_id=_id).first(),
+                                  'upload': upload,
+                                  'editors_notes': per_dict[
+                                      'editors_notes'] if 'editors_notes' in per_dict else None}
+                        self.people.append(CofkCollectPerson(**person))
+                        self.ids.append(_id)
+                    else:
+                        log.warning(f'{_id} duplicated in People sheet.')
 
-        if self.people:
-            self.bulk_create(self.people)
