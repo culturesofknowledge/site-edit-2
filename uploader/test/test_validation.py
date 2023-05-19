@@ -11,11 +11,9 @@ class MockEntity:
 
 class TestValidation(TestCase):
 
-    @classmethod
-    def setUpTestData(cls):
-        CofkCollectStatus().save()
-
     def setUp(self) -> None:
+        CofkCollectStatus(status_id=1).save()
+
         self.new_upload = CofkCollectUpload()
         self.new_upload.upload_status_id = 1
         self.new_upload.uploader_email = 'test@user.com'

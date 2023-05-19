@@ -39,15 +39,18 @@ def create_excel_file(data: Dict[str, List[List]]=None) -> str:
     return tf.name
 
 class TestFileUpload(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        CofkCollectStatus(status_desc='Awaiting review').save()
+
+    def setUp(self) -> None:
+        CofkCollectStatus.objects.create(status_id=1,
+                                         status_desc='Awaiting review')
+
         CofkUnionLocation(pk=782).save()
 
         for lang in ['eng', 'fra']:
             Iso639LanguageCode(code_639_3=lang).save()
 
-        CofkUnionInstitution(institution_name='Bodleian',
+        CofkUnionInstitution(institution_id=1,
+                             institution_name='Bodleian',
                              institution_city='Oxford').save()
 
         for person in [{'person_id': 'a', 'iperson_id': 15257, 'foaf_name': 'Newton'},
@@ -57,7 +60,6 @@ class TestFileUpload(TestCase):
 
         CofkUnionLocation(location_id=400285).save()
 
-    def setUp(self) -> None:
         self.new_upload = CofkCollectUpload()
         self.new_upload.upload_status_id = 1
         self.new_upload.uploader_email = 'test@user.com'
