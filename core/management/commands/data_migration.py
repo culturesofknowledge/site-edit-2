@@ -623,7 +623,7 @@ def create_check_fn_by_unique_together_model(model: Type[model_utils.ModelLike])
     return _fn
 
 
-def data_migration(user, password, database, host, port, model=None, params=None):
+def data_migration(user, password, database, host, port):
     start_migrate = time.time()
     warnings.filterwarnings('ignore',
                             '.*DateTimeField .+ received a naive datetime .+ while time zone support is active.*')
@@ -634,11 +634,6 @@ def data_migration(user, password, database, host, port, model=None, params=None
     print(conn)
     max_audit_literal_id = model_utils.find_max_id(CofkUnionAuditLiteral, 'audit_id') or 0
     max_audit_relationship_id = model_utils.find_max_id(CofkUnionAuditRelationship, 'audit_id') or 0
-
-    if model:
-        params = {} if params is None else params
-        clone_rows_by_model_class(conn, model, **params)
-        return
 
     clone_rows_by_model_class(conn, CofkLookupCatalogue)
     clone_rows_by_model_class(conn, CofkLookupDocumentType)
