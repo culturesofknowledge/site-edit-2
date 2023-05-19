@@ -3,7 +3,6 @@ from django.utils import timezone
 
 from uploader.entities.entity import CofkEntity
 from uploader.models import CofkCollectUpload, CofkCollectStatus
-from uploader.test.test_file_upload import migrate
 
 
 class MockEntity:
@@ -14,7 +13,7 @@ class TestValidation(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        migrate(CofkCollectStatus)
+        CofkCollectStatus().save()
 
     def setUp(self) -> None:
         self.new_upload = CofkCollectUpload()

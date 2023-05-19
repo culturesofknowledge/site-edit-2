@@ -8,12 +8,10 @@ from django.test import TestCase
 from django.utils import timezone
 from openpyxl.workbook import Workbook
 
-from core.management.commands.data_migration import data_migration, _val_handler_person__organisation_type, \
-    _val_handler_empty_str_null
-from core.models import Iso639LanguageCode, SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID, CofkUnionOrgType
+from core.models import Iso639LanguageCode
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
-from person.models import SEQ_NAME_COFKUNIONPERSION__IPERSON_ID, CofkUnionPerson
+from person.models import  CofkUnionPerson
 from uploader.constants import MANDATORY_SHEETS
 from uploader.models import CofkCollectUpload, CofkCollectStatus
 from uploader.spreadsheet import CofkUploadExcelFile
@@ -40,29 +38,24 @@ def create_excel_file(data: Dict[str, List[List]]=None) -> str:
 
     return tf.name
 
-def migrate(model, params=None):
-    data_migration(**{'user': os.getenv('POSTGRES_USER'),
-                      'password': os.getenv('POSTGRES_PASSWORD'),
-                      'host': os.getenv('POSTGRES_HOST'), 'port': 5432,
-                      'database': 'ouls', 'model': model,
-                      'params': params})
-
 class TestFileUpload(TestCase):
     @classmethod
     def setUpTestData(cls):
-        migrate(CofkCollectStatus)
-        migrate(CofkUnionOrgType)
-        migrate(Iso639LanguageCode, {'seq_name': SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID,
-                                     'int_pk_col_name': 'language_id'})
-        migrate(
-            CofkUnionPerson, {
-            'col_val_handler_fn_list': [_val_handler_person__organisation_type, ],
-            'seq_name': SEQ_NAME_COFKUNIONPERSION__IPERSON_ID,
-            'int_pk_col_name': 'iperson_id',}
-        )
-        migrate(CofkUnionLocation)
-        migrate(CofkUnionInstitution,
-                {'col_val_handler_fn_list': [_val_handler_empty_str_null]})
+        CofkCollectStatus(status_desc='Awaiting review').save()
+        CofkUnionLocation(pk=782).save()
+
+        for lang in ['eng', 'fra']:
+            Iso639LanguageCode(code_639_3=lang).save()
+
+        CofkUnionInstitution(institution_name='Bodleian',
+                             institution_city='Oxford').save()
+
+        for person in [{'person_id': 'a', 'iperson_id': 15257, 'foaf_name': 'Newton'},
+                       {'person_id': 'b', 'iperson_id': 885, 'foaf_name': 'Baskerville'},
+                       {'person_id': 'c', 'iperson_id': 22859, 'foaf_name': 'Wren'}]:
+            CofkUnionPerson(**person).save()
+
+        CofkUnionLocation(location_id=400285).save()
 
     def setUp(self) -> None:
         self.new_upload = CofkCollectUpload()
@@ -154,9 +147,6 @@ class TestFileUpload(TestCase):
                 'Repositories': [['Bodleian', 1]]}
         filename = create_excel_file(data)
 
-        msg = 'There is no person with the id 15257 in the Union catalogue.'
-        msg_2 = 'There is no location with the id 400285 in the Union catalogue.'
-        msg_3 = 'There is no repository with the id 1 in the Union catalogue.'
         cuef = CofkUploadExcelFile(self.new_upload, filename)
 
         # This is a valid upload and should be without errors
