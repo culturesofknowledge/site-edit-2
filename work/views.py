@@ -19,7 +19,7 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_ROUTE, REL_TYPE_FORMERLY_OWNED, \
     REL_TYPE_ENCLOSED_IN, REL_TYPE_COMMENT_RECEIPT_DATE, REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_STORED_IN, \
     REL_TYPE_COMMENT_PERSON_MENTIONED, REL_TYPE_MENTION, REL_TYPE_MENTION_PLACE, \
-    REL_TYPE_MENTION_WORK, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_IMAGE_OF, REL_TYPE_IS_RELATED_TO
+    REL_TYPE_MENTION_WORK, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_IS_RELATED_TO
 from core.export_data import excel_maker, cell_values
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, LocRecrefForm
 from core.helper import view_utils, lang_utils, model_utils, query_utils, renderer_utils, date_utils
@@ -27,6 +27,7 @@ from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.form_utils import save_multi_rel_recref_formset
 from core.helper.lang_utils import LangModelAdapter, NewLangForm
 from core.helper.perm_utils import class_permission_required
+from core.helper.query_utils import create_recref_lookup_fn
 from core.helper.recref_handler import SingleRecrefHandler, RecrefFormsetHandler, SubjectHandler, ImageRecrefHandler, \
     TargetResourceFormsetHandler, MultiRecrefAdapterHandler
 from core.helper.recref_utils import create_recref_if_field_exist
@@ -75,46 +76,28 @@ def create_search_fn_person_recref(rel_types: list) -> Callable:
 
 
 def create_lookup_fn_by_person(rel_types: list) -> Callable:
-    return _create_recref_lookup_fn(rel_types, 'cofkworkpersonmap__person',
-                                    [
-                                        'date_of_birth_year',
-                                        'date_of_death_year',
-                                        'date_of_death_is_range',
-                                        'date_of_birth_is_range',
-                                        'foaf_name',
-                                        'skos_altlabel',
-                                        'person_aliases',
-                                    ])
+    return create_recref_lookup_fn(rel_types, 'cofkworkpersonmap__person',
+                                   query_utils.person_detail_fields)
 
 
 def create_lookup_fn_by_comment(rel_types: list) -> Callable:
-    return _create_recref_lookup_fn(rel_types, 'cofkworkcommentmap__comment',
-                                    [
-                                        'comment',
-                                    ])
+    return create_recref_lookup_fn(rel_types, 'cofkworkcommentmap__comment',
+                                   query_utils.comment_detail_fields)
 
 
 def create_lookup_fn_by_location(rel_types: list) -> Callable:
-    return _create_recref_lookup_fn(rel_types, 'cofkworklocationmap__location',
-                                    [
-                                        'location_name',
-                                    ])
+    return create_recref_lookup_fn(rel_types, 'cofkworklocationmap__location',
+                                   query_utils.location_detail_fields)
 
 
 def create_lookup_fn_by_image(rel_types: list) -> Callable:
-    return _create_recref_lookup_fn(rel_types, 'manif_set__image',
-                                    [
-                                        'image_filename',
-                                    ])
+    return create_recref_lookup_fn(rel_types, 'manif_set__image',
+                                   query_utils.image_detail_fields)
 
 
 def create_lookup_fn_by_resource(rel_types: list) -> Callable:
-    return _create_recref_lookup_fn(rel_types, 'cofkworkresourcemap__resource',
-                                    [
-                                        'resource_name',
-                                        'resource_details',
-                                        'resource_url',
-                                    ])
+    return create_recref_lookup_fn(rel_types, 'cofkworkresourcemap__resource',
+                                   query_utils.resource_detail_fields)
 
 
 def lookup_fn_flags(lookup_fn, field_name, value):
@@ -136,21 +119,6 @@ def lookup_fn_flags(lookup_fn, field_name, value):
         if re.search(pattern, value, re.IGNORECASE):
             query |= q()
     return query
-
-
-def _create_recref_lookup_fn(rel_types: list, recref_field_name: str, cond_fields: list[str]):
-    recref_name = '__'.join(recref_field_name.split('__')[:-1])
-
-    def _fn(lookup_fn, f, v):
-        query = Q(**{
-            f'{recref_name}__relationship_type__in': rel_types,
-        })
-        cond_query = Q()
-        for n in cond_fields:
-            cond_query.add(query_utils.run_lookup_fn(lookup_fn, f'{recref_field_name}__{n}', v), Q.OR)
-        return query & cond_query
-
-    return _fn
 
 
 def create_search_fn_location_recref(rel_types: list) -> Callable:
