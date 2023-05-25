@@ -1,3 +1,4 @@
+import itertools
 import logging
 from typing import Callable, Iterable, Type, Any, NoReturn, TYPE_CHECKING, List
 
@@ -30,6 +31,7 @@ from person.forms import PersonForm, GeneralSearchFieldset, PersonOtherRecrefFor
     search_person_or_group
 from person.models import CofkUnionPerson, CofkPersonPersonMap, create_person_id, \
     CofkPersonCommentMap, CofkPersonResourceMap, CofkPersonImageMap, create_sql_count_work_by_person
+from person.person_utils import DisplayablePerson
 from person.recref_adapter import PersonCommentRecrefAdapter, PersonResourceRecrefAdapter, PersonRoleRecrefAdapter, \
     ActivePersonRecrefAdapter, PassivePersonRecrefAdapter, PersonImageRecrefAdapter, PersonLocRecrefAdapter
 from person.view_components import PersonFormDescriptor
@@ -329,7 +331,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
                 'roles': ['roles__role_category_desc'],
                 'images': ['images__image_filename'],
                 'organisation_type': ['organisation_type__org_type_desc'],
-                'other_details': ['comments__comment', 'resources__resource_name', 'resources__resource_details']}
+                }
 
     @property
     def merge_page_vname(self) -> str:
@@ -396,10 +398,19 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
     def get_queryset_by_request_data(self, request_data, sort_by=None):
         queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
 
+        search_field_fn_maps = {
+            'other_details': lookup_other_details,
+        }
+
         queries.extend(
-            query_utils.create_queries_by_lookup_field(request_data, self.search_fields, self.search_field_combines)
+            query_utils.create_queries_by_lookup_field(
+                request_data,
+                search_field_names=self.search_fields,
+                search_fields_maps=self.search_field_combines,
+                search_fields_fn_maps=search_field_fn_maps,
+            )
         )
-        return self.create_queryset_by_queries(CofkUnionPerson, queries, sort_by=sort_by)
+        return self.create_queryset_by_queries(DisplayablePerson, queries, sort_by=sort_by)
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
@@ -426,8 +437,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
 class PersonCsvHeaderValues(HeaderValues):
     def __init__(self):
-        self.type_name_caches = {r.relationship_code: r.desc_left_to_right
-                                 for r in CofkUnionRelationshipType.objects.all()}
+        self.rel_type_code_name = recref_utils.get_rel_type_code_name_map()
 
     def get_header_list(self) -> list[str]:
         return [
@@ -452,7 +462,7 @@ class PersonCsvHeaderValues(HeaderValues):
         ]
 
     def obj_to_values(self, obj) -> Iterable[Any]:
-        obj: CofkUnionPerson
+        obj: DisplayablePerson
         values = [
             cell_values.person_names_titles_roles(obj),
             cell_values.year_month_day(obj.date_of_birth_year, obj.date_of_birth_month, obj.date_of_birth_day),
@@ -469,7 +479,7 @@ class PersonCsvHeaderValues(HeaderValues):
             obj.editors_notes,
             obj.further_reading,
             download_csv_utils.join_image_lines(obj.images.iterator()),
-            cell_values.person_other_details(obj, type_name_cache=self.type_name_caches),
+            obj.other_details_for_display(),
             cell_values.simple_datetime(obj.change_timestamp),
             obj.change_user,
         ]
@@ -543,3 +553,25 @@ class PersonDeleteConfirmView(LoginRequiredMixin, DeleteConfirmView):
         desc_list = filter(None, desc_list)
         desc_list = list(desc_list)
         return desc_list
+
+
+def lookup_other_details(lookup_fn, f, v):
+    q = query_utils.create_q_by_field_names(
+        lookup_fn,
+
+        itertools.chain(
+            query_utils.join_fields('cofkpersonlocationmap__location',
+                                    query_utils.location_detail_fields),
+            query_utils.join_fields('active_relationships__related',
+                                    query_utils.person_detail_fields),
+            query_utils.join_fields('passive_relationships__person',
+                                    query_utils.person_detail_fields),
+            query_utils.join_fields('cofkpersoncommentmap__comment',
+                                    query_utils.comment_detail_fields),
+            query_utils.join_fields('cofkpersonresourcemap__resource',
+                                    query_utils.resource_detail_fields),
+            query_utils.join_fields('cofkpersonimagemap__image',
+                                    query_utils.image_detail_fields),
+        ), v)
+
+    return q

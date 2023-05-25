@@ -10,6 +10,30 @@ from core.helper import date_utils
 
 log = logging.getLogger(__name__)
 
+person_detail_fields = [
+    'date_of_birth_year',
+    'date_of_death_year',
+    'date_of_death_is_range',
+    'date_of_birth_is_range',
+    'foaf_name',
+    'skos_altlabel',
+    'person_aliases',
+]
+comment_detail_fields = [
+    'comment',
+]
+location_detail_fields = [
+    'location_name',
+]
+image_detail_fields = [
+    'image_filename',
+]
+resource_detail_fields = [
+    'resource_name',
+    'resource_details',
+    'resource_url',
+]
+
 
 def create_lookup_query(field, lookup, value) -> Q:
     return Q(**{f'{field}__{lookup}': value})
@@ -60,7 +84,6 @@ def create_queries_by_lookup_field(request_data: dict,
                                    search_fields_maps: dict[str, Iterable[str]] = None,
                                    search_fields_fn_maps: dict[str, Callable] = None,
                                    ) -> Iterable[Q]:
-
     for field_name in search_field_names:
         field_val = request_data.get(field_name)
         lookup_key = request_data.get(f'{field_name}_lookup')
@@ -174,3 +197,34 @@ def update_queryset(queryset,
 
     log.debug(f'queryset sql\n: {str(queryset.query)}')
     return queryset
+
+
+def create_recref_lookup_fn(rel_types: list, recref_field_name: str, cond_fields: list[str]):
+    recref_name = '__'.join(recref_field_name.split('__')[:-1])
+
+    def _fn(lookup_fn, f, v):
+        query = Q(**{
+            f'{recref_name}__relationship_type__in': rel_types,
+        })
+        cond_query = create_q_by_field_names(
+            lookup_fn,
+            join_fields(recref_field_name, cond_fields),
+            v
+        )
+        return query & cond_query
+
+    return _fn
+
+
+def create_q_by_field_names(lookup_fn: Callable, field_names: Iterable[str], field_val: str,
+                            conn_type=Q.OR) -> Q:
+    q = Q()
+    for n in field_names:
+        q.add(run_lookup_fn(lookup_fn, n, field_val), conn_type)
+    return q
+
+
+def join_fields(parent_field: str, child_fields: Iterable[str]) -> Iterable[str]:
+    return (
+        f'{parent_field}__{n}' for n in child_fields
+    )
