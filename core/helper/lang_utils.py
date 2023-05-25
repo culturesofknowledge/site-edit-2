@@ -8,13 +8,10 @@ from core.models import CofkUnionFavouriteLanguage
 
 log = logging.getLogger(__name__)
 
-language_choices = list(CofkUnionFavouriteLanguage.objects.
-                        values_list('language_code__language_name', 'language_code__code_639_3').
-                        order_by('language_code__language_name'))
-
-name_code_dict = dict(language_choices)
-
-code_name_dict = {code: name for name, code in name_code_dict.items()}
+def get_language_choices():
+    return list(CofkUnionFavouriteLanguage.objects.
+                values_list('language_code__language_name', 'language_code__code_639_3').
+                order_by('language_code__language_name'))
 
 
 class LangModelAdapter:
@@ -27,6 +24,7 @@ def create_lang_formset(lang_models: Iterable, lang_rec_id_name: str,
                         request_data=None, prefix='lang', extra=0):
     initial_list = model_utils.models_to_dict_list(lang_models)
     initial_list = list(initial_list)
+    code_name_dict = {code: name for name, code in dict(get_language_choices()).items()}
     for initial in initial_list:
         initial['lang_name'] = code_name_dict.get(initial['language_code_id'],
                                                   'Unknown Language')
@@ -53,7 +51,7 @@ class NewLangForm(forms.Form):
         'list': 'id_language_list',
     }))
 
-    language_list = forms.Field(required=False, widget=widgets_utils.Datalist(choices=language_choices))
+    language_list = forms.Field(required=False, widget=widgets_utils.Datalist(choices=get_language_choices()))
 
     def remove_selected_lang_choices(self, selected_langs: Iterable):
         choices = self.fields['language_list'].widget.choices
@@ -65,7 +63,7 @@ class NewLangForm(forms.Form):
 
 def add_new_lang_record(note_list: Iterable[str], lang_name_list: Iterable[str],
                         owner_id, lang_model_adapter: "LangModelAdapter"):
-    lang_code_map = name_code_dict
+    lang_code_map = dict(get_language_choices())
     lang_name_list = list(lang_name_list)
     for _name in lang_name_list:
         if _name not in lang_code_map:
