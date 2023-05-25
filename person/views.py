@@ -31,6 +31,7 @@ from person.forms import PersonForm, GeneralSearchFieldset, PersonOtherRecrefFor
     search_person_or_group
 from person.models import CofkUnionPerson, CofkPersonPersonMap, create_person_id, \
     CofkPersonCommentMap, CofkPersonResourceMap, CofkPersonImageMap, create_sql_count_work_by_person
+from person.person_utils import DisplayablePerson
 from person.recref_adapter import PersonCommentRecrefAdapter, PersonResourceRecrefAdapter, PersonRoleRecrefAdapter, \
     ActivePersonRecrefAdapter, PassivePersonRecrefAdapter, PersonImageRecrefAdapter, PersonLocRecrefAdapter
 from person.view_components import PersonFormDescriptor
@@ -409,7 +410,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
                 search_fields_fn_maps=search_field_fn_maps,
             )
         )
-        return self.create_queryset_by_queries(CofkUnionPerson, queries, sort_by=sort_by)
+        return self.create_queryset_by_queries(DisplayablePerson, queries, sort_by=sort_by)
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
@@ -436,8 +437,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
 class PersonCsvHeaderValues(HeaderValues):
     def __init__(self):
-        self.type_name_caches = {r.relationship_code: r.desc_left_to_right
-                                 for r in CofkUnionRelationshipType.objects.all()}
+        self.rel_type_code_name = recref_utils.get_rel_type_code_name_map()
 
     def get_header_list(self) -> list[str]:
         return [
@@ -462,7 +462,7 @@ class PersonCsvHeaderValues(HeaderValues):
         ]
 
     def obj_to_values(self, obj) -> Iterable[Any]:
-        obj: CofkUnionPerson
+        obj: DisplayablePerson
         values = [
             cell_values.person_names_titles_roles(obj),
             cell_values.year_month_day(obj.date_of_birth_year, obj.date_of_birth_month, obj.date_of_birth_day),
@@ -479,7 +479,7 @@ class PersonCsvHeaderValues(HeaderValues):
             obj.editors_notes,
             obj.further_reading,
             download_csv_utils.join_image_lines(obj.images.iterator()),
-            cell_values.person_other_details(obj, type_name_cache=self.type_name_caches),
+            obj.other_details_for_display(),
             cell_values.simple_datetime(obj.change_timestamp),
             obj.change_user,
         ]

@@ -1,5 +1,8 @@
+import collections
+
 from django.urls import reverse
 
+from core.helper import recref_utils
 from person.models import CofkUnionPerson
 from siteedit2.utils.log_utils import log_no_url
 
@@ -48,3 +51,48 @@ def get_name_details(person: CofkUnionPerson) -> list[str]:
         name_details.append(f"~ Role types: {roles}")
 
     return name_details
+
+
+def get_display_dict_other_details(person: CofkUnionPerson,
+                                   rel_type_code_name: dict = None,
+                                   new_line='\n') -> str:
+    if rel_type_code_name is None:
+        rel_type_code_name = recref_utils.get_rel_type_code_name_map()
+
+    # add person's relationships
+    result_map = collections.defaultdict(list)
+    for person_map in person.active_relationships.all():
+        result_map[person_map.relationship_type].append(
+            get_recref_display_name(person_map.related)
+        )
+
+    # add comments
+    for comment_map in person.cofkpersoncommentmap_set.all():
+        result_map[comment_map.relationship_type].append(comment_map.comment)
+
+    # rename rel type code to name
+    if rel_type_code_name:
+        keys = [k for k in result_map.keys() if k in rel_type_code_name]
+        for k in keys:
+            result_map[rel_type_code_name[k]] = result_map[k]
+            del result_map[k]
+
+    # add resources
+    if _resources := [f'{r.resource_url} ({r.resource_name})' for r in person.resources.all()]:
+        result_map['Related resources'] = _resources
+
+    title_value_list = []
+    for title, values in result_map.items():
+        values = (f'~{v}' for v in values)
+        title = title[0].upper() + title[1:]
+        title_value_list.append(f'* {title}{new_line}' + f'{new_line}'.join(values))
+
+    return f'{new_line + new_line}'.join(title_value_list)
+
+
+class DisplayablePerson(CofkUnionPerson):
+    class Meta:
+        proxy = True
+
+    def other_details_for_display(self, new_line='\n'):
+        return get_display_dict_other_details(self, new_line=new_line)
