@@ -1,6 +1,5 @@
 import datetime
 import logging
-import warnings
 from datetime import date
 
 from django.urls import reverse
@@ -9,7 +8,6 @@ from django.utils.safestring import mark_safe
 from core import constant
 from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, \
     REL_TYPE_MENTION
-from core.helper import model_utils
 from core.models import CofkLookupCatalogue
 from location import location_utils
 from person import person_utils
@@ -120,16 +118,13 @@ def get_display_id(work: CofkUnionWork):
     return work and work.iwork_id
 
 
-class DisplayableWork:
+class DisplayableWork(CofkUnionWork):
     """
     Wrapper for display work
     """
 
-    def __init__(self, work: CofkUnionWork):
-        self.work = work
-
-    def __getattr__(self, item):
-        return getattr(self.work, item)
+    class Meta:
+        proxy = True
 
     @property
     def date_for_ordering(self):

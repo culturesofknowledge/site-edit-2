@@ -253,8 +253,7 @@ class WorkExcelHeaderValues(HeaderValues):
             "EMLO URL",
         ]
 
-    def obj_to_values(self, obj: CofkUnionWork) -> Iterable:
-        obj: DisplayableWork = DisplayableWork(obj)
+    def obj_to_values(self, obj: DisplayableWork) -> Iterable:
         author_name, author_id = cell_values.name_id(
             obj.find_persons_by_rel_type([
                 constant.REL_TYPE_CREATED,
@@ -268,17 +267,17 @@ class WorkExcelHeaderValues(HeaderValues):
             ]))
 
         origin_name, origin_id = cell_values.name_id(
-            obj.work.find_locations_by_rel_type(constant.REL_TYPE_WAS_SENT_FROM))
+            obj.find_locations_by_rel_type(constant.REL_TYPE_WAS_SENT_FROM))
         dest_name, dest_id = cell_values.name_id(
-            obj.work.find_locations_by_rel_type(constant.REL_TYPE_WAS_SENT_TO))
+            obj.find_locations_by_rel_type(constant.REL_TYPE_WAS_SENT_TO))
 
         person_mentioned_name, person_mentioned_id = cell_values.name_id(
-            obj.work.find_persons_by_rel_type(constant.REL_TYPE_MENTION))
+            obj.find_persons_by_rel_type(constant.REL_TYPE_MENTION))
 
         match_work_name, match_work_id = cell_values.name_id(
-            obj.work.find_work_to_list_by_rel_type(constant.REL_TYPE_WORK_MATCHES))
+            obj.find_work_to_list_by_rel_type(constant.REL_TYPE_WORK_MATCHES))
 
-        original_catalogue = obj.work.original_catalogue
+        original_catalogue = obj.original_catalogue
         original_catalogue = original_catalogue and original_catalogue.catalogue_name
         return (
             obj.iwork_id,

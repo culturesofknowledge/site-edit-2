@@ -57,6 +57,7 @@ from work.recref_adapter import WorkLocRecrefAdapter, ManifInstRecrefAdapter, Wo
     EarlierLetterRecrefAdapter, LaterLetterRecrefAdapter, EnclosureManifRecrefAdapter, EnclosedManifRecrefAdapter, \
     WorkCommentRecrefAdapter, ManifCommentRecrefAdapter, WorkResourceRecrefAdapter, ManifImageRecrefAdapter
 from work.view_components import WorkFormDescriptor
+from work.work_utils import DisplayableWork
 
 log = logging.getLogger(__name__)
 
@@ -1064,7 +1065,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                     'flags': lookup_fn_flags,
                 })
         )
-        return self.create_queryset_by_queries(CofkUnionWork, queries, sort_by=sort_by)
+        return self.create_queryset_by_queries(DisplayableWork, queries, sort_by=sort_by)
 
     def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q],
                                    sort_by=None):
@@ -1114,12 +1115,12 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
-        return create_table_search_results_renderer_for_work('work/expanded_search_table_layout.html')
+        return renderer_utils.create_table_search_results_renderer('work/expanded_search_table_layout.html')
 
     @property
     def compact_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
         # Compact search results for works are also table formatted
-        return create_table_search_results_renderer_for_work('work/compact_search_table_layout.html')
+        return renderer_utils.create_table_search_results_renderer('work/compact_search_table_layout.html')
 
     @property
     def return_quick_init_vname(self) -> str:
@@ -1214,7 +1215,7 @@ class WorkCsvHeaderValues(HeaderValues):
         ]
 
     def obj_to_values(self, obj) -> Iterable[str]:
-        obj = work_utils.DisplayableWork(obj)
+        obj: DisplayableWork
         values = (
             obj.description,
             obj.editors_notes,
@@ -1249,16 +1250,3 @@ class WorkCsvHeaderValues(HeaderValues):
             obj.change_user,
         )
         return values
-
-
-def create_table_search_results_renderer_for_work(template_path, records_name='search_results', ):
-    def _renderer_by_record(records):
-        def _render():
-            context = {
-                records_name: (work_utils.DisplayableWork(r) for r in records)
-            }
-            return renderer_utils.render_to_string(template_path, context)
-
-        return _render
-
-    return _renderer_by_record
