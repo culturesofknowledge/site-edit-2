@@ -24,7 +24,7 @@ from core.helper.model_utils import ModelLike
 from core.helper.perm_utils import PermissionData
 from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType, CofkUnionRelationshipType, \
     CofkUnionImage, CofkUnionOrgType, CofkUnionRoleCategory, CofkUnionSubject, Iso639LanguageCode, CofkLookupCatalogue, \
-    SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID, CofkUserSavedQuery, CofkUserSavedQuerySelection
+    SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID, CofkUserSavedQuery, CofkUserSavedQuerySelection, CofkUnionFavouriteLanguage
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from login.models import CofkUser
@@ -641,6 +641,9 @@ def data_migration(user, password, database, host, port):
                               seq_name=SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID,
                               int_pk_col_name='language_id',
                               )
+    clone_rows_by_model_class(conn, CofkUnionFavouriteLanguage,
+                              seq_name=None,
+                              col_val_handler_fn_list=[_val_handler_language])
     clone_rows_by_model_class(conn, CofkCollectStatus)  # Static lookup table
     clone_rows_by_model_class(conn, CofkUnionOrgType)  # Static lookup table
     clone_rows_by_model_class(conn, CofkUnionResource)
