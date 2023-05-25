@@ -4,51 +4,13 @@ from typing import Iterable
 from django import forms
 
 from core.helper import model_utils, form_utils, widgets_utils
+from core.models import CofkUnionFavouriteLanguage
 
 log = logging.getLogger(__name__)
 
-language_choices = [
-    ('Ancient Greek', 'grc'),
-    ('Ancient Hebrew', 'hbo'),
-    ('Arabic', 'ara'),
-    ('Armenian', 'hye'),
-    ('Assyrian Neo-Aramaic', 'aii'),
-    ('Basque', 'eus'),
-    ('Catalan', 'cat'),
-    ('Church Slavic', 'chu'),
-    ('Classical Syriac', 'syc'),
-    ('Coptic', 'cop'),
-    ('Cornish', 'cor'),
-    ('Croatian', 'hrv'),
-    ('Czech', 'ces'),
-    ('Danish', 'dan'),
-    ('Dutch', 'nld'),
-    ('Eastern Frisian', 'frs'),
-    ('English', 'eng'),
-    ('French', 'fra'),
-    ('German', 'deu'),
-    ('Hebrew', 'heb'),
-    ('Hungarian', 'hun'),
-    ('Irish', 'gle'),
-    ('Italian', 'ita'),
-    ('Latin', 'lat'),
-    ('Low German', 'nds'),
-    ('Official Aramaic (700-300 BCE)', 'arc'),
-    ('Old French', 'fro'),
-    ('Old Turkish', 'otk'),
-    ('Persian', 'fas'),
-    ('Polish', 'pol'),
-    ('Portuguese', 'por'),
-    ('Russian', 'rus'),
-    ('Scots', 'sco'),
-    ('Scottish Gaelic', 'gla'),
-    ('Spanish', 'spa'),
-    ('Swedish', 'swe'),
-    ('Syriac', 'syr'),
-    ('Tamil', 'tam'),
-    ('Turkish', 'tur'),
-    ('Welsh', 'cym'),
-]
+language_choices = list(CofkUnionFavouriteLanguage.objects.
+                        values_list('language_code__language_name', 'language_code__code_639_3').
+                        order_by('language_code__language_name'))
 
 name_code_dict = dict(language_choices)
 
