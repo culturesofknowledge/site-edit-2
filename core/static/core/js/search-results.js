@@ -245,7 +245,7 @@ function radialTransparentIfScrolledDown() {
 
 function reset_form(form) {
     localStorage.clear();
-    location.href = '/' + entity;
+    location.href = window.location.pathname;
 }
 
 $(function () {
