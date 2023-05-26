@@ -53,6 +53,9 @@
                             <li>Saved queries</li>
                         </a>
                     {% endif %}
+                    <a href="{% url 'login:change-password' %}">
+                        <li>Change password</li>
+                    </a>
                     <a href="{% url 'login:logout' %}">
                         <li>Logout</li>
                     </a>
