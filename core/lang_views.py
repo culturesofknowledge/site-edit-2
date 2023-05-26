@@ -2,10 +2,11 @@ from typing import Callable, Iterable
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 
 from core.helper import renderer_utils
 from core.helper.view_utils import DefaultSearchView
-from core.models import Iso639LanguageCode
+from core.models import Iso639LanguageCode, CofkUnionFavouriteLanguage
 
 
 class LanguageSearchView(LoginRequiredMixin, DefaultSearchView):
@@ -26,11 +27,12 @@ class LanguageSearchView(LoginRequiredMixin, DefaultSearchView):
 
 def fav_remove(request):
     data = request.POST
-
+    CofkUnionFavouriteLanguage.objects.filter(language_code=data['code_639_3']).delete()
     return JsonResponse({})
 
 
 def fav_add(request):
     data = request.POST
-
+    lang = get_object_or_404(Iso639LanguageCode, code_639_3=data['code_639_3'])
+    CofkUnionFavouriteLanguage(language_code=lang).save()
     return JsonResponse({})

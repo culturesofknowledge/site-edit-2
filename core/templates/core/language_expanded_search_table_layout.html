@@ -27,13 +27,13 @@
                 {{ r.language_name }}
             </td>
             <td>
-                <div class="fav_lang {{ r.cofkunionlanguageofmanifestation_set.count|yesno:',hiding' }}">
+                <div class="fav_lang {{ r.cofkunionfavouritelanguage|yesno:',hiding' }}">
                     <b>Yes</b>
                     <br/>
                     Remove from favourites
                     <input class="fav_remove" type="submit" value="Remove"/>
                 </div>
-                <div class="non_fav_lang  {{ r.cofkunionlanguageofmanifestation_set.count|yesno:'hiding,' }}">
+                <div class="non_fav_lang  {{ r.cofkunionfavouritelanguage|yesno:'hiding,' }}">
                     Add to favourites
                     <input class="fav_add" type="submit" value="Add"/>
                 </div>
@@ -61,7 +61,7 @@
             url: action,
             type: 'POST',
             data: {
-                'lang_id': lang_id,
+                'code_639_3': lang_id,
             },
             headers: {
                 'X-CSRFToken': getCookie('csrftoken'),
