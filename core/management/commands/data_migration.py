@@ -24,7 +24,7 @@ from core.helper.model_utils import ModelLike
 from core.helper.perm_utils import PermissionData
 from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType, CofkUnionRelationshipType, \
     CofkUnionImage, CofkUnionOrgType, CofkUnionRoleCategory, CofkUnionSubject, Iso639LanguageCode, CofkLookupCatalogue, \
-    SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID, CofkUserSavedQuery, CofkUserSavedQuerySelection
+    SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID, CofkUserSavedQuery, CofkUserSavedQuerySelection, CofkUnionFavouriteLanguage
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from login.models import CofkUser
@@ -155,7 +155,7 @@ class Command(BaseCommand):
                        password=options['password'],
                        database=options['database'],
                        host=options['host'],
-                       port=options['port'],)
+                       port=options['port'], )
 
 
 def create_common_relation_col_name(table_name):
@@ -499,6 +499,11 @@ def _val_handler_collect_person(row: dict, conn) -> dict:
     return row
 
 
+def _val_handler_favourite_language(row: dict, conn) -> dict:
+    row['language_code_id'] = row.pop('language_code')
+    return row
+
+
 def _val_handler_collect_location(row: dict, conn) -> dict:
     location_id = row['location_id']
     upload_id = row['upload_id']
@@ -649,6 +654,8 @@ def data_migration(user, password, database, host, port):
     clone_rows_by_model_class(conn, CofkUnionSubject)
     clone_rows_by_model_class(conn, CofkUnionRoleCategory)
     clone_rows_by_model_class(conn, CofkUnionRelationshipType, seq_name=None)
+    clone_rows_by_model_class(conn, CofkUnionFavouriteLanguage, seq_name=None,
+                              col_val_handler_fn_list=[_val_handler_favourite_language])
 
     # ### Uploads
     clone_rows_by_model_class(conn, CofkCollectUpload,
