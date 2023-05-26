@@ -8,7 +8,7 @@ from django.db.models.fields.related_descriptors import ForwardManyToOneDescript
 from django.forms import BaseForm
 
 from core.helper import inspect_utils, django_utils, model_utils
-from core.models import Recref
+from core.models import Recref, CofkUnionRelationshipType
 
 if TYPE_CHECKING:
     from core.helper.model_utils import ModelLike
@@ -189,3 +189,8 @@ def prefetch_filter_rel_type(recref_set, rel_types: str | Iterable[str]) -> Iter
     for recref in recref_set.all():
         if recref.relationship_type in rel_types:
             yield recref
+
+
+def get_rel_type_code_name_map() -> dict:
+    return {r.relationship_code: r.desc_left_to_right
+            for r in CofkUnionRelationshipType.objects.all()}

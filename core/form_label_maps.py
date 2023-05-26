@@ -1,11 +1,10 @@
-common_fields = { 'change_user': 'Last edited by',
-                  'change_timestamp_from': 'Change timestamp from',
-                  'change_timestamp_to': 'Change timestamp to' }
-
+common_fields = {'change_user': 'Last edited by',
+                 'change_timestamp_from': 'Change timestamp from',
+                 'change_timestamp_to': 'Change timestamp to'}
 
 field_label_map = {
     'audit': common_fields | {},
-    'institution': common_fields  | {
+    'institution': common_fields | {
         'institution_name': 'Name',
         'institution_city': 'City',
         'institution_country': 'Country',
@@ -13,8 +12,8 @@ field_label_map = {
         'editors_notes': "Editors' notes",
         'institution_id': 'Repository id',
         'images': 'Images',
-        },
-    'location': common_fields  | {
+    },
+    'location': common_fields | {
         'location_name': 'Name',
         'location_id': 'Location id',
         'editors_notes': 'Editors\' notes',
@@ -34,8 +33,8 @@ field_label_map = {
         'element_6_eg_country': '6. E.g. country',
         'element_7_eg_empire': '7. E.g. empire',
         'images': 'Images',
-        },
-    'person': common_fields  | {
+    },
+    'person': common_fields | {
         'names_and_titles': 'Names and titles/roles',
         'sent': 'Sent',
         'recd': 'Received',
@@ -54,13 +53,14 @@ field_label_map = {
         'element_6_eg_country': '6. E.g. country',
         'element_7_eg_empire': '7. E.g. empire',
         'images': 'Images',
-        'iperson_id': 'Person or Group ID'
-        },
-    'publication': common_fields  | {
+        'iperson_id': 'Person or Group ID',
+        'other_details': 'Other details',
+    },
+    'publication': common_fields | {
         'publication_details': 'Publication details',
         'abbrev': 'Abbreviation',
         'publication_id': 'Publication id'},
-    'work': common_fields  | {
+    'work': common_fields | {
         # KTODO update for CofkUnionWork
         'description': 'Description',
         'date_of_work_as_marked': 'Date of work as marked',
@@ -90,7 +90,14 @@ field_label_map = {
         'subjects': 'Subjects',
         'keywords': 'Keywords',
         'drawer': 'Drawer',
-        'work_id': 'Work ID',}
+        'work_id': 'Work ID', },
+    'lang': {
+        'code_639_3': '3-letter language code',
+        'code_639_1': 'Alternative 2-letter code',
+        'language_name': 'Language name',
+        'is_favourite': 'Favourite?',
+    },
+
 }
 
 # "Drawer" under work is a special field in queryable work specific to a so-called Selden work

@@ -10,7 +10,8 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_CREATED, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_ADDRESSED_TO, \
     REL_TYPE_WAS_SENT_TO, REL_TYPE_IS_RELATED_TO
 from core.fixtures import fixture_default_lookup_catalogue, res_dict_a, res_dict_b
-from core.models import Iso639LanguageCode, CofkUnionResource, CofkUnionSubject, CofkUnionComment
+from core.models import Iso639LanguageCode, CofkUnionResource, CofkUnionSubject, CofkUnionComment, \
+    CofkUnionFavouriteLanguage
 from location import fixtures as location_fixtures
 from manifestation import fixtures as manif_fixtures
 from manifestation.models import CofkUnionManifestation
@@ -213,6 +214,8 @@ class WorkFormTests(EmloSeleniumTestCase):
                      for lang_dict in [fixtures.lang_dict_eng, fixtures.lang_dict_ara]]
         for lang in lang_list:
             lang.save()
+            CofkUnionFavouriteLanguage(language_code=lang).save()
+
         return lang_list
 
     def select_languages(self, input_lang_list):

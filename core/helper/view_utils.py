@@ -420,10 +420,6 @@ class BasicSearchView(ListView):
 class DefaultSearchView(BasicSearchView):
 
     @property
-    def title(self) -> str:
-        return '__title__'
-
-    @property
     def search_field_fn_maps(self) -> dict:
         """
         return

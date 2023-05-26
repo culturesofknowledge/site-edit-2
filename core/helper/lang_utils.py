@@ -4,55 +4,9 @@ from typing import Iterable
 from django import forms
 
 from core.helper import model_utils, form_utils, widgets_utils
+from core.models import Iso639LanguageCode
 
 log = logging.getLogger(__name__)
-
-language_choices = [
-    ('Ancient Greek', 'grc'),
-    ('Ancient Hebrew', 'hbo'),
-    ('Arabic', 'ara'),
-    ('Armenian', 'hye'),
-    ('Assyrian Neo-Aramaic', 'aii'),
-    ('Basque', 'eus'),
-    ('Catalan', 'cat'),
-    ('Church Slavic', 'chu'),
-    ('Classical Syriac', 'syc'),
-    ('Coptic', 'cop'),
-    ('Cornish', 'cor'),
-    ('Croatian', 'hrv'),
-    ('Czech', 'ces'),
-    ('Danish', 'dan'),
-    ('Dutch', 'nld'),
-    ('Eastern Frisian', 'frs'),
-    ('English', 'eng'),
-    ('French', 'fra'),
-    ('German', 'deu'),
-    ('Hebrew', 'heb'),
-    ('Hungarian', 'hun'),
-    ('Irish', 'gle'),
-    ('Italian', 'ita'),
-    ('Latin', 'lat'),
-    ('Low German', 'nds'),
-    ('Official Aramaic (700-300 BCE)', 'arc'),
-    ('Old French', 'fro'),
-    ('Old Turkish', 'otk'),
-    ('Persian', 'fas'),
-    ('Polish', 'pol'),
-    ('Portuguese', 'por'),
-    ('Russian', 'rus'),
-    ('Scots', 'sco'),
-    ('Scottish Gaelic', 'gla'),
-    ('Spanish', 'spa'),
-    ('Swedish', 'swe'),
-    ('Syriac', 'syr'),
-    ('Tamil', 'tam'),
-    ('Turkish', 'tur'),
-    ('Welsh', 'cym'),
-]
-
-name_code_dict = dict(language_choices)
-
-code_name_dict = {code: name for name, code in name_code_dict.items()}
 
 
 class LangModelAdapter:
@@ -66,8 +20,10 @@ def create_lang_formset(lang_models: Iterable, lang_rec_id_name: str,
     initial_list = model_utils.models_to_dict_list(lang_models)
     initial_list = list(initial_list)
     for initial in initial_list:
-        initial['lang_name'] = code_name_dict.get(initial['language_code_id'],
-                                                  'Unknown Language')
+        initial['lang_name'] = (Iso639LanguageCode.objects
+                                .filter(code_639_3=initial['language_code_id'])
+                                .values_list('language_name', flat=True)
+                                .first() or f'Unknown Language [{initial["language_code_id"]}]')
         initial['lang_rec_id'] = initial[lang_rec_id_name]
 
     return form_utils.create_formset(
@@ -91,7 +47,7 @@ class NewLangForm(forms.Form):
         'list': 'id_language_list',
     }))
 
-    language_list = forms.Field(required=False, widget=widgets_utils.Datalist(choices=language_choices))
+    language_list = forms.Field(required=False, widget=widgets_utils.Datalist(choices=[]))
 
     def remove_selected_lang_choices(self, selected_langs: Iterable):
         choices = self.fields['language_list'].widget.choices
@@ -100,11 +56,21 @@ class NewLangForm(forms.Form):
         new_choices = sorted(new_choices)
         self.fields['language_list'].widget.choices = new_choices
 
+    @classmethod
+    def create_new_lang_form(cls, selected_langs: Iterable = None):
+        form = cls()
+        language_choices = convert_lang_queryset_to_dict(
+            Iso639LanguageCode.objects.filter(cofkunionfavouritelanguage__isnull=False))
+        form.fields['language_list'].widget.choices = sorted(language_choices.items())
+        if selected_langs is not None:
+            form.remove_selected_lang_choices(selected_langs)
+        return form
+
 
 def add_new_lang_record(note_list: Iterable[str], lang_name_list: Iterable[str],
                         owner_id, lang_model_adapter: "LangModelAdapter"):
-    lang_code_map = name_code_dict
     lang_name_list = list(lang_name_list)
+    lang_code_map = convert_lang_queryset_to_dict(Iso639LanguageCode.objects.filter(language_name__in=lang_name_list))
     for _name in lang_name_list:
         if _name not in lang_code_map:
             raise ValueError(f'unexpected language name [{_name}]')
@@ -115,6 +81,10 @@ def add_new_lang_record(note_list: Iterable[str], lang_name_list: Iterable[str],
         lang.language_code_id = code
         lang.notes = note
         lang.save()
+
+
+def convert_lang_queryset_to_dict(queryset) -> dict[str, str]:
+    return dict(queryset.values_list('language_name', 'code_639_3').all())
 
 
 def maintain_lang_records(lang_forms: Iterable[LangForm], find_lang_fn):

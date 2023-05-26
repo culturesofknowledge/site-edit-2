@@ -14,6 +14,7 @@ from person.models import CofkUnionPerson
 from person.views import PersonSearchView, PersonCsvHeaderValues
 from work.fixtures import fixture_work_simple_a
 from work.views import WorkSearchView, WorkCsvHeaderValues
+from work.work_utils import DisplayableWork
 
 
 class TestWorkExcelHeaderValues(TestCase):
@@ -21,7 +22,7 @@ class TestWorkExcelHeaderValues(TestCase):
     def test_obj_to_values(self):
         fixture_default_lookup_catalogue()
         hv = WorkExcelHeaderValues()
-        values = hv.obj_to_values(fixture_work_simple_a())
+        values = hv.obj_to_values(DisplayableWork(fixture_work_simple_a()))
 
         self.assertGreater(len(values), 0)
 

@@ -132,8 +132,7 @@
             </td>
 
             <td>
-                {% include "core/component/search_table_layout/comment_result.html" with comments=r.comments %}
-                {% include "core/component/search_table_layout/res_result.html" with resources=r.resources %}
+                {{ r.other_details_for_display|linebreaksbr }}
             </td>
             <td>
                 {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r %}

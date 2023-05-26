@@ -1,0 +1,11 @@
+{% extends "core/component/search_fieldset/fieldset.html" %}
+
+{% block fields %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.code_639_3 field_lookup=form.code_639_3_lookup %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.code_639_1 field_lookup=form.code_639_1_lookup %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.language_name field_lookup=form.language_name_lookup %}
+
+    {% include "core/component/common_field_layout.html" with field=form.is_favorite %}
+
+{% endblock %}
