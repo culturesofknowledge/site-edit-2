@@ -499,11 +499,6 @@ def _val_handler_collect_person(row: dict, conn) -> dict:
     return row
 
 
-def _val_handler_favourite_language(row: dict, conn) -> dict:
-    row['language_code_id'] = row.pop('language_code')
-    return row
-
-
 def _val_handler_collect_location(row: dict, conn) -> dict:
     location_id = row['location_id']
     upload_id = row['upload_id']
@@ -655,7 +650,7 @@ def data_migration(user, password, database, host, port):
     clone_rows_by_model_class(conn, CofkUnionRoleCategory)
     clone_rows_by_model_class(conn, CofkUnionRelationshipType, seq_name=None)
     clone_rows_by_model_class(conn, CofkUnionFavouriteLanguage, seq_name=None,
-                              col_val_handler_fn_list=[_val_handler_favourite_language])
+                              col_val_handler_fn_list=[_val_handler_language])
 
     # ### Uploads
     clone_rows_by_model_class(conn, CofkCollectUpload,
