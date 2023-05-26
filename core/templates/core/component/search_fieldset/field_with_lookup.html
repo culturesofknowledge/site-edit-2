@@ -4,11 +4,7 @@
 {{ field.label_tag }}
 {% endif %}
 
-{% if field.help_text %}
-<div class="search-fieldset-tippy-container" data-tippy-content="{{ field.help_text }}">
-    <span data-feather="info" aria-hidden="true"></span>
-</div>
-{% endif %}
+{% include "core/component/help_text_icon.html" with field=field %}
 
 <div class="row-no-margin">
     <div class="col--1of4 advanced_search">
