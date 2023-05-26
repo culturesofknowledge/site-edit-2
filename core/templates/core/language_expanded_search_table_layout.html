@@ -1,0 +1,92 @@
+{% load cl_filters work_util_tags %}
+
+<table id="results_table">
+    <thead>
+    <tr></tr>
+    <tr>
+        <th>3-letter language code</th>
+        <th>Alternative 2-letter code</th>
+        <th>Language name</th>
+        <th>Favourite?</th>
+    </tr>
+    </thead>
+    <tbody>
+
+
+    {% for r in search_results %}
+        <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}"
+            entry_id="{{ r.pk }}">
+
+            <td>
+                {{ r.code_639_3 }}
+            </td>
+            <td>
+                {{ r.code_639_1 }}
+            </td>
+            <td class="language_name">
+                {{ r.language_name }}
+            </td>
+            <td>
+                <div class="fav_lang {{ r.cofkunionlanguageofmanifestation_set.count|yesno:',hiding' }}">
+                    <b>Yes</b>
+                    <br/>
+                    Remove from favourites
+                    <input class="fav_remove" type="submit" value="Remove"/>
+                </div>
+                <div class="non_fav_lang  {{ r.cofkunionlanguageofmanifestation_set.count|yesno:'hiding,' }}">
+                    Add to favourites
+                    <input class="fav_add" type="submit" value="Add"/>
+                </div>
+
+
+                {% if r.cofkunionlanguageofmanifestation_set.first %}
+                {% else %}
+                {% endif %}
+
+            </td>
+
+        </tr>
+    {% endfor %}
+    </tbody>
+
+</table>
+
+
+<script>
+
+    function submit_fav_form(action, target) {
+        let tr_jqe = $(target).closest('tr')
+        let lang_id = tr_jqe.attr('entry_id')
+        $.ajax({
+            url: action,
+            type: 'POST',
+            data: {
+                'lang_id': lang_id,
+            },
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            dataType: 'json',
+            success: (data) => {
+                let action_name = action === 'fav_remove' ? 'removed from' : 'added to';
+                let display_name = tr_jqe.find('.language_name').html().trim();
+                $('#user_messages').html($('<h1>').text(`${display_name} ${action_name} favourites`))
+                $(tr_jqe).find('.fav_lang, .non_fav_lang').toggleClass('hiding');
+            }
+        })
+    }
+
+
+    $(() => {
+        $('.fav_remove').click((e) => {
+            e.preventDefault()
+            submit_fav_form('fav_remove', e.target,)
+        });
+        $('.fav_add').click((e) => {
+            e.preventDefault()
+            submit_fav_form('fav_add', e.target,)
+        });
+
+    });
+
+</script>
