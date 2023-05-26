@@ -410,8 +410,7 @@ class ManifFFH(BasicWorkFFH):
             )
         self.manif_form = ManifForm(request_data or None,
                                     instance=self.manif, initial=manif_form_initial)
-        self.new_lang_form = NewLangForm()
-        self.new_lang_form.remove_selected_lang_choices(self.safe_manif.language_set.iterator())
+        self.new_lang_form = NewLangForm.create_new_lang_form(self.safe_manif.language_set.iterator())
 
         self.former_recref_handler = MultiRecrefAdapterHandler(
             request_data, name='former',
@@ -613,8 +612,7 @@ class DetailsFFH(BasicWorkFFH):
             lang_rec_id_name='lang_work_id',
             request_data=request_data,
             prefix='lang')
-        self.new_lang_form = NewLangForm()
-        self.new_lang_form.remove_selected_lang_choices(self.safe_work.language_set.iterator())
+        self.new_lang_form = NewLangForm.create_new_lang_form(self.safe_work.language_set.iterator())
 
         self.subject_handler = SubjectHandler(WorkSubjectRecrefAdapter(self.safe_work))
 
