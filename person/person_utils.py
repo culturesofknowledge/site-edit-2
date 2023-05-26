@@ -68,7 +68,7 @@ def get_display_dict_other_details(person: CofkUnionPerson,
 
     # add comments
     for comment_map in person.cofkpersoncommentmap_set.all():
-        result_map[comment_map.relationship_type].append(comment_map.comment)
+        result_map[comment_map.relationship_type].append(comment_map.comment and comment_map.comment.comment)
 
     # rename rel type code to name
     if rel_type_code_name:
