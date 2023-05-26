@@ -1,15 +1,13 @@
-
-
-if(localStorage.getItem('fieldset-toggle') === 'false')  {
-   $('#query-fieldset').toggle();
-   $('#query-result').toggleClass('col--3of4');
+if (localStorage.getItem('fieldset-toggle') === 'false') {
+    $('#query-fieldset').toggle();
+    $('#query-result').toggleClass('col--3of4');
 }
 
-if(localStorage.getItem('advanced-search-toggle') === 'true')  {
+if (localStorage.getItem('advanced-search-toggle') === 'true') {
     $('.advanced_search').toggle();
     $('.search_input').toggleClass('col--3of4');
     $('.search_input').toggleClass('col--4of4');
-    $( "#advanced_search" ).prop( "checked", true);
+    $("#advanced_search").prop("checked", true);
 }
 
 
@@ -55,7 +53,7 @@ emlojs.recref_select_service = {
 
     setup_all: function () {
 
-        if(return_quick_init_vname) {
+        if (return_quick_init_vname) {
 
             $('.selectable_entry').on('click', (e) => {
                 let entry_id = emlojs.selectable_service.get_entry_id(
@@ -142,19 +140,17 @@ $('.searchcontrol').each((i, searchcontrol) => {
 
     // Do not use persisted search control settings if they are explicitly set as
     // get parameters
-    if((!searchParams.has(searchcontrol.name) || searchParams.get(searchcontrol.name) === '')
-     && localStorage.getItem(`${entity}_${searchcontrol.name}`) != null) {
+    if ((!searchParams.has(searchcontrol.name) || searchParams.get(searchcontrol.name) === '')
+        && localStorage.getItem(`${entity}_${searchcontrol.name}`) != null) {
         // Set form values to persisted value
         let val = localStorage.getItem(`${entity}_${searchcontrol.name}`);
 
-        if(searchcontrol.type != 'radio')   {
+        if (searchcontrol.type != 'radio') {
             $(searchcontrol).val(val);
-        }
-        else    {
-            if(searchcontrol.value === val)   {
+        } else {
+            if (searchcontrol.value === val) {
                 searchcontrol.checked = true;
-            }
-            else {
+            } else {
                 searchcontrol.checked = false;
             }
         }
@@ -164,18 +160,18 @@ $('.searchcontrol').each((i, searchcontrol) => {
 
 
 function setup_discard_page_on_new_search() {
-    document.getElementById('search_form').addEventListener('change', function(e) {
+    document.getElementById('search_form').addEventListener('change', function (e) {
         // No need to mark if search controls change
-        if($(e.target).attr('class') != 'searchcontrol')   {
-            e.target.dataset['changed'] =  true;
+        if ($(e.target).attr('class') != 'searchcontrol') {
+            e.target.dataset['changed'] = true;
         }
     });
 
-    document.getElementById('search_form').addEventListener('submit', function(e) {
-        if(Array.from(e.target.elements).some((a) => a.dataset['changed'] == 'true'))  {
+    document.getElementById('search_form').addEventListener('submit', function (e) {
+        if (Array.from(e.target.elements).some((a) => a.dataset['changed'] == 'true')) {
             e.target.elements['page'].value = 1;
         }
-   });
+    });
 
 
 }
@@ -205,16 +201,16 @@ function show_column(show_tag, column_index) {
 
 function hide_column(column_index, column_name) {
     $('#results_table tr > *:nth-child(' + column_index + ')').hide();
-    $('#hidden_columns').append('<span onclick="show_column(this, ' + column_index + ');">'+ feather.icons['eye'].toSvg() + '&nbsp;' + column_name + '</span>');
+    $('#hidden_columns').append('<span onclick="show_column(this, ' + column_index + ');">' + feather.icons['eye'].toSvg() + '&nbsp;' + column_name + '</span>');
 }
 
 function isEmpty(column) {
-    for(var i = 0; i < column.length; i++) {
-        if($(column[i]).text().trim() != '' || $(column[i]).children().length > 0)
-                return false;
+    for (var i = 0; i < column.length; i++) {
+        if ($(column[i]).text().trim() != '' || $(column[i]).children().length > 0)
+            return false;
 
     }
- return true;
+    return true;
 }
 
 function add_hide_buttons_to_columns() {
@@ -222,12 +218,12 @@ function add_hide_buttons_to_columns() {
     for (var i = 0; i < columns.length; i++) {
         var header = columns[i].innerText;
 
-        if(header == '')
+        if (header == '')
             header = '[Uncertainties]';
 
         columns[i].innerHTML += '&nbsp;<a href="#" onclick="hide_column(' + (i + 1) + ', \'' + header.replace("'", "\\'") + '\');">' + feather.icons['eye-off'].toSvg() + '</span></a>';
 
-        if(isEmpty($('#results_table tr > *:nth-child(' + (i + 1) + ')').filter('td')))    {
+        if (isEmpty($('#results_table tr > *:nth-child(' + (i + 1) + ')').filter('td'))) {
             hide_column(i + 1, header);
         }
     }
@@ -235,7 +231,12 @@ function add_hide_buttons_to_columns() {
 
 function radialTransparentIfScrolledDown() {
     let fieldset = $('#actionbox-container').parent().find('fieldset');
-    if(fieldset.height() + fieldset.offset().top < $('#actionbox-container').offset().top) {
+    let fieldset_offset = fieldset.offset();
+    if (fieldset_offset === undefined){
+        return
+    }
+
+    if (fieldset.height() + fieldset_offset.top < $('#actionbox-container').offset().top) {
         $('#actionbox-container').css('background', 'radial-gradient(ellipse at center, hsl(30, 1.67%, 52.94%), transparent, transparent 100%')
     } else {
         $('#actionbox-container').css('background', 'linear-gradient(0deg, hsl(30, 1.67%, 52.94%), transparent)')
@@ -255,15 +256,15 @@ $(function () {
 
     // If user changes search conditions on page > 1, and does a new search, the page attribute must be set to 1
     let page = document.getElementById('search_form').elements['page'];
-    if(page && page.value != '') {
+    if (page && page.value != '') {
         setup_discard_page_on_new_search();
     }
 
-    if($('#results_table thead').length)   {
+    if ($('#results_table thead').length) {
         add_hide_buttons_to_columns();
     }
 
-    if(recref_mode == '1')  {
+    if (recref_mode == '1') {
         emlojs.recref_select_service.setup_all()
     }
     radialTransparentIfScrolledDown();
@@ -271,21 +272,21 @@ $(function () {
 
 
 $(window).on('scroll', radialTransparentIfScrolledDown);
-$(window).on('submit', function(e) {
+$(window).on('submit', function (e) {
     // Iterate through form elements and disable empty fields so as not
     // to clutter the resulting URL unnecessarily
-     Array.from(e.target.elements).forEach(function(l)    {
-        if(l.className.indexOf('searchfield') > -1 && l.value === '')  {
+    Array.from(e.target.elements).forEach(function (l) {
+        if (l.className.indexOf('searchfield') > -1 && l.value === '') {
             l.disabled = true;
 
-            if(e.target.elements[l.name + '_lookup'])   {
+            if (e.target.elements[l.name + '_lookup']) {
                 e.target.elements[l.name + '_lookup'].disabled = true;
             }
         }
     });
 
     // Confirm user wants to save query if "Save query" button was pressed
-    if(event.submitter && event.submitter.value == 'save_query')  {
+    if (event.submitter && event.submitter.value == 'save_query') {
         return confirm('Are you sure you want to save this query?');
     }
 });
