@@ -15,8 +15,6 @@ services:
     build:
       context: ../../
       dockerfile: docker/site-edit-2/Dockerfile
-    #command: python manage.py runserver 0.0.0.0:8000
-    entrypoint: /code/docker/site-edit-2/docker-entrypoint.sh
     volumes:
       - ../../:/code
       - emlo_home:${EMLO_APP_HOME}
