@@ -1,44 +1,13 @@
 import logging
-from django.utils import timezone
 
-from core.models import Iso639LanguageCode
-from institution.models import CofkUnionInstitution
-from location.models import CofkUnionLocation
-from person.models import  CofkUnionPerson
-from uploader.models import CofkCollectUpload, CofkCollectStatus, CofkCollectAuthorOfWork
+from uploader.models import CofkCollectAuthorOfWork
 from uploader.spreadsheet import CofkUploadExcelFile
-from uploader.test.test_utils import UploaderTestCase
+from uploader.test.test_utils import UploadIncludedTestCase
 
 log = logging.getLogger(__name__)
 
-class TestPeople(UploaderTestCase):
+class TestPeople(UploadIncludedTestCase):
 
-    def setUp(self) -> None:
-        super().setUp()
-        CofkCollectStatus.objects.create(status_id=1,
-                                         status_desc='Awaiting review')
-
-        CofkUnionLocation(pk=782).save()
-
-        for lang in ['eng', 'fra']:
-            Iso639LanguageCode(code_639_3=lang).save()
-
-        CofkUnionInstitution(institution_id=1,
-                             institution_name='Bodleian',
-                             institution_city='Oxford').save()
-
-        for person in [{'person_id': 'a', 'iperson_id': 15257, 'foaf_name': 'Newton'},
-                       {'person_id': 'b', 'iperson_id': 885, 'foaf_name': 'Baskerville'},
-                       {'person_id': 'c', 'iperson_id': 22859, 'foaf_name': 'Wren'}]:
-            CofkUnionPerson(**person).save()
-
-        CofkUnionLocation(location_id=400285).save()
-
-        self.new_upload = CofkCollectUpload()
-        self.new_upload.upload_status_id = 1
-        self.new_upload.uploader_email = 'test@user.com'
-        self.new_upload.upload_timestamp = timezone.now()
-        self.new_upload.save()
 
     def test_extra_person_no_union(self):
         """

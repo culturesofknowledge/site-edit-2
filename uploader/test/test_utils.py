@@ -3,9 +3,15 @@ import tempfile
 from typing import Dict, List
 
 from django.test import TestCase
+from django.utils import timezone
 from openpyxl.workbook import Workbook
 
+from core.models import Iso639LanguageCode
+from institution.models import CofkUnionInstitution
+from location.models import CofkUnionLocation
+from person.models import CofkUnionPerson
 from uploader.constants import MANDATORY_SHEETS
+from uploader.models import CofkCollectStatus, CofkCollectUpload
 
 
 class UploaderTestCase(TestCase):
@@ -36,3 +42,31 @@ class UploaderTestCase(TestCase):
         # Delete all tmp files
         for f in self.tmp_files:
             os.unlink(f)
+
+
+class UploadIncludedTestCase(UploaderTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        CofkCollectStatus.objects.create(status_id=1,
+                                         status_desc='Awaiting review')
+
+        for loc in [782, 400285]:
+            CofkUnionLocation(pk=loc).save()
+
+        for lang in ['eng', 'fra']:
+            Iso639LanguageCode(code_639_3=lang).save()
+
+        CofkUnionInstitution(institution_id=1,
+                             institution_name='Bodleian',
+                             institution_city='Oxford').save()
+
+        for person in [{'person_id': 'a', 'iperson_id': 15257, 'foaf_name': 'Newton'},
+                       {'person_id': 'b', 'iperson_id': 885, 'foaf_name': 'Baskerville'},
+                       {'person_id': 'c', 'iperson_id': 22859, 'foaf_name': 'Wren'}]:
+            CofkUnionPerson(**person).save()
+
+        self.new_upload = CofkCollectUpload()
+        self.new_upload.upload_status_id = 1
+        self.new_upload.uploader_email = 'test@user.com'
+        self.new_upload.upload_timestamp = timezone.now()
+        self.new_upload.save()
