@@ -87,8 +87,15 @@ class CofkWork(CofkEntity):
         upload.total_works = len(self.works)
         upload.save()
 
-    def get_person(self, person_id: str) -> CofkCollectPerson:
-        if person := [p for p in self.people if
+    def get_person(self, person_id: str, person_name: str=None) -> CofkCollectPerson:
+        if person_id == '':
+            people = [p for p in self.people if p.primary_name == person_name and p.iperson_id is None]
+
+            if len(people) == 1:
+                return people[0]
+            elif len(people) > 1:
+                self.add_error('Ambiguity in submitted people.')
+        elif person := [p for p in self.people if
                       p.union_iperson is not None and p.union_iperson.iperson_id == int(person_id)]:
             return person[0]
         elif person := [p for p in self.people if p.iperson_id == int(person_id)]:
@@ -106,12 +113,12 @@ class CofkWork(CofkEntity):
         id_list, name_list = self.clean_lists(work_dict, ids, names)
 
         for _id, name in zip(id_list, name_list):
-            if person := self.get_person(_id):
-                if person.union_iperson:
-                    related_person = people_model(upload=self.upload, iwork=work, iperson=person)
-                    setattr(related_person, id_type, self.get_new_id(id_type))
-                    people_list.append(related_person)
-                else:
+            if person := self.get_person(_id, name):
+                related_person = people_model(upload=self.upload, iwork=work, iperson=person)
+                setattr(related_person, id_type, self.get_new_id(id_type))
+                people_list.append(related_person)
+
+                if person.iperson_id and not person.union_iperson:
                     self.add_error(f'There is no person with the id {_id} in the Union catalogue.')
 
             else:
