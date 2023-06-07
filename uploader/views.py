@@ -9,6 +9,7 @@ from django.core.files.storage import default_storage
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 
 from core import constant
@@ -108,7 +109,9 @@ def handle_upload(request) -> dict:
     return report
 
 
-
+@method_decorator([login_required,
+                   permission_required(constant.PM_CHANGE_COLLECTWORK, raise_exception=True)],
+                  name='dispatch')
 class UploadView(ListView):
     model = CofkCollectUpload
     ordering = '-upload_timestamp'
@@ -132,8 +135,6 @@ class UploadView(ListView):
 
         return self.get(self, request, *args, **kwargs)
 
-    @login_required
-    @permission_required(constant.PM_CHANGE_COLLECTWORK, raise_exception=True)
     def get(self, request, *args, **kwargs):
         response = super().get(self, request, *args, **kwargs)
 
