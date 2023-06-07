@@ -13,7 +13,8 @@ from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from person.models import  CofkUnionPerson
 from uploader.constants import MANDATORY_SHEETS
-from uploader.models import CofkCollectUpload, CofkCollectStatus
+from uploader.models import CofkCollectUpload, CofkCollectStatus, CofkCollectWork, CofkCollectAuthorOfWork, \
+    CofkCollectAddresseeOfWork, CofkCollectOriginOfWork, CofkCollectDestinationOfWork, CofkCollectManifestation
 from uploader.spreadsheet import CofkUploadExcelFile
 from uploader.validation import CofkExcelFileError
 
@@ -155,6 +156,13 @@ class TestFileUpload(TestCase):
 
         # This is a valid upload and should be without errors
         self.assertEqual(cuef.errors, {})
+        self.assertEqual(CofkCollectWork.objects.count(), 1)
+        self.assertEqual(CofkCollectAuthorOfWork.objects.count(), 1)
+        self.assertEqual(CofkCollectAddresseeOfWork.objects.count(), 1)
+        self.assertEqual(CofkCollectOriginOfWork.objects.count(), 1)
+        self.assertEqual(CofkCollectDestinationOfWork.objects.count(), 1)
+        self.assertEqual(CofkCollectManifestation.objects.count(), 2)
+
 
     def test_nonsense(self):
         """
