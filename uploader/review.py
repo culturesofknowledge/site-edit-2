@@ -21,6 +21,12 @@ from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, C
 log = logging.getLogger(__name__)
 
 
+def create_union_person():
+    pass
+
+def create_union_location():
+    pass
+
 def create_union_work(union_work_dict: dict, collect_work: CofkCollectWork):
     # work_id is primary key in CofkUnionWork
     # note that work_utils.create_work_id uses a different less detailed format

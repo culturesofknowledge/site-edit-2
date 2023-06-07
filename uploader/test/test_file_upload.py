@@ -1,10 +1,7 @@
 import logging
-import os
 import tempfile
 import zipfile
-from typing import Dict, List
 
-from django.test import TestCase
 from django.utils import timezone
 from openpyxl.workbook import Workbook
 
@@ -16,34 +13,15 @@ from uploader.constants import MANDATORY_SHEETS
 from uploader.models import CofkCollectUpload, CofkCollectStatus, CofkCollectWork, CofkCollectAuthorOfWork, \
     CofkCollectAddresseeOfWork, CofkCollectOriginOfWork, CofkCollectDestinationOfWork, CofkCollectManifestation
 from uploader.spreadsheet import CofkUploadExcelFile
+from uploader.test.test_utils import UploaderTestCase
 from uploader.validation import CofkExcelFileError
 
 log = logging.getLogger(__name__)
 
 
-class TestFileUpload(TestCase):
-
-    def create_excel_file(self, data: Dict[str, List[List]] = None) -> str:
-        wb = Workbook()
-        tf = tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False)
-
-        for sheet_name in MANDATORY_SHEETS.keys():
-            ws = wb.create_sheet(sheet_name)
-            column_count = len(MANDATORY_SHEETS[sheet_name]['columns'])
-            ws.append(MANDATORY_SHEETS[sheet_name]['columns'])
-            ws.append(['-'] * column_count)
-
-            if data and sheet_name in data:
-                for row in data[sheet_name]:
-                    ws.append(row)
-
-        wb.save(tf.name)
-
-        self.tmp_files.append(tf.name)
-
-        return tf.name
-
+class TestFileUpload(UploaderTestCase):
     def setUp(self) -> None:
+        super().setUp()
         CofkCollectStatus.objects.create(status_id=1,
                                          status_desc='Awaiting review')
 
@@ -68,12 +46,6 @@ class TestFileUpload(TestCase):
         self.new_upload.uploader_email = 'test@user.com'
         self.new_upload.upload_timestamp = timezone.now()
         self.new_upload.save()
-        self.tmp_files = []
-
-    def tearDown(self) -> None:
-        # Delete all tmp files
-        for f in self.tmp_files:
-            os.unlink(f)
         
     def test_create_upload(self):
         self.assertEqual(self.new_upload.upload_status.status_desc, 'Awaiting review')
@@ -162,115 +134,6 @@ class TestFileUpload(TestCase):
         self.assertEqual(CofkCollectOriginOfWork.objects.count(), 1)
         self.assertEqual(CofkCollectDestinationOfWork.objects.count(), 1)
         self.assertEqual(CofkCollectManifestation.objects.count(), 2)
-
-
-    def test_extra_person_no_union(self):
-        """
-        This test provides two a person, Baskerville with an id that does not exist in the union
-        database.
-        """
-        data = {'Work': [
-            [1, "test", "J", 1660, 1, 1, 1660, 1, 2, 1, 1, 1, 1, "test", "newton", "15257", "test", 1, 1,
-             "test", "Wren", 22859, "test", 1, 1, "test", "Burford", 400285, "test", 1, 1, "Carisbrooke", 782,
-             "test", 1, 1, "test", "test", "fra;eng", '', '', '', '', '', '', "test", "test", "test", "Baskerville",
-             85, "test", "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/", "Early Modern Letters Online test"]],
-                'People': [["Baskerville", 85],
-                           ["newton", 15257],
-                           ["Wren", 22859],],
-                'Places': [['Burford', 400285],
-                           ['Carisbrooke', 782]],
-                'Manifestation': [[1, 1, "ALS", 1, "Bodleian", "test", "test", '', '', '', '', ''],
-                                  [2, 1, '', '', '', '', '', "P", "test", "test", '', '']],
-                'Repositories': [['Bodleian', 1]]}
-        filename = self.create_excel_file(data)
-
-        cuef = CofkUploadExcelFile(self.new_upload, filename)
-
-        self.assertIn('There is no person with the id 85 in the Union catalogue.',
-                      cuef.errors['work']['errors'][0]['errors'])
-
-
-    def test_extra_person_omit_author_id_semicolon(self):
-        """
-        This test provides two author names listed, newton;Someone but only one id, 15257, and no
-        semi-colon for the id. This should raise an error.
-        """
-        data = {'Work': [
-            [1, "test", "J", 1660, 1, 1, 1660, 1, 2, 1, 1, 1, 1, "test", "newton;Someone", "15257", "test", 1, 1,
-             "test", "Wren", 22859, "test", 1, 1, "test", "Burford", 400285, "test", 1, 1, "Carisbrooke", 782,
-             "test", 1, 1, "test", "test", "fra;eng", '', '', '', '', '', '', "test", "test", "test", "Baskerville",
-             885, "test", "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/", "Early Modern Letters Online test"]],
-                'People': [["Baskerville", 885],
-                           ["newton", 15257],
-                           ["Wren", 22859],
-                           ["Someone"]],
-                'Places': [['Burford', 400285],
-                           ['Carisbrooke', 782]],
-                'Manifestation': [[1, 1, "ALS", 1, "Bodleian", "test", "test", '', '', '', '', ''],
-                                  [2, 1, '', '', '', '', '', "P", "test", "test", '', '']],
-                'Repositories': [['Bodleian', 1]]}
-        filename = self.create_excel_file(data)
-
-        cuef = CofkUploadExcelFile(self.new_upload, filename)
-
-        self.assertIn('Column author_ids has fewer ids than there are names in author_names.',
-                      cuef.errors['work']['errors'][0]['errors'])
-
-    def test_extra_person_non_valid_id(self):
-        """
-        This test provides two author names listed, newton;Someone and two ids, 15257 and 'x'.
-        This should raise an error.
-        """
-        data = {'Work': [
-            [1, "test", "J", 1660, 1, 1, 1660, 1, 2, 1, 1, 1, 1, "test", "newton;Someone", "15257;x", "test", 1, 1,
-             "test", "Wren", 22859, "test", 1, 1, "test", "Burford", 400285, "test", 1, 1, "Carisbrooke", 782,
-             "test", 1, 1, "test", "test", "fra;eng", '', '', '', '', '', '', "test", "test", "test", "Baskerville",
-             885, "test", "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/", "Early Modern Letters Online test"]],
-            'People': [["Baskerville", 885],
-                       ["newton", 15257],
-                       ["Wren", 22859],
-                       ["Someone"]],
-            'Places': [['Burford', 400285],
-                       ['Carisbrooke', 782]],
-            'Manifestation': [[1, 1, "ALS", 1, "Bodleian", "test", "test", '', '', '', '', ''],
-                              [2, 1, '', '', '', '', '', "P", "test", "test", '', '']],
-            'Repositories': [['Bodleian', 1]]}
-        filename = self.create_excel_file(data)
-
-        cuef = CofkUploadExcelFile(self.new_upload, filename)
-
-        self.assertIn('Column author_ids in Work sheet contains a non-valid value.',
-                      cuef.errors['work']['errors'][0]['errors'])
-
-    def test_extra_person(self):
-        """
-        This test provides two author names listed, newton;Someone and one id, 15257 but containing a semi-colon for
-        the ids to indicate a new person should be created.
-        This should not raise an error.
-        """
-        data = {'Work': [
-            [1, "test", "J", 1660, 1, 1, 1660, 1, 2, 1, 1, 1, 1, "test", "newton;Someone", "15257;", "test", 1, 1,
-             "test", "Wren", 22859, "test", 1, 1, "test", "Burford", 400285, "test", 1, 1, "Carisbrooke", 782,
-             "test", 1, 1, "test", "test", "fra;eng", '', '', '', '', '', '', "test", "test", "test", "Baskerville",
-             885, "test", "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/", "Early Modern Letters Online test"]],
-            'People': [["Baskerville", 885],
-                       ["newton", 15257],
-                       ["Wren", 22859],
-                       ["Someone"]],
-            'Places': [['Burford', 400285],
-                       ['Carisbrooke', 782]],
-            'Manifestation': [[1, 1, "ALS", 1, "Bodleian", "test", "test", '', '', '', '', ''],
-                              [2, 1, '', '', '', '', '', "P", "test", "test", '', '']],
-            'Repositories': [['Bodleian', 1]]}
-        filename = self.create_excel_file(data)
-
-        cuef = CofkUploadExcelFile(self.new_upload, filename)
-
-        # This is a valid upload and should be without errors
-        self.assertEqual(cuef.errors, {})
-        authors = CofkCollectAuthorOfWork.objects.all()
-        self.assertEqual(len(authors), 2)
-        self.assertEqual(authors[1].iperson.primary_name, 'Someone')
 
 
     def test_nonsense(self):
