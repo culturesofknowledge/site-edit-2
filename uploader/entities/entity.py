@@ -194,11 +194,6 @@ class CofkEntity:
 
         name_list = entity_dict[names_key].split(SEPARATOR)
 
-        '''if len(id_list) < len(name_list):
-            self.add_error(f'Fewer ids in {ids_key} than names in {names_key}.')
-        elif len(id_list) > len(name_list):
-            self.add_error(f'Fewer names in {names_key} than ids in {ids_key}')'''
-
         if '' in id_list:
             self.add_error(f'Empty string in ids in {ids_key}')
         if '' in name_list:
