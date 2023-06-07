@@ -190,6 +190,32 @@ class TestFileUpload(TestCase):
         self.assertIn('Column author_ids has fewer ids than there are names in author_names.',
                       cuef.errors['work']['errors'][0]['errors'])
 
+    def test_extra_person_non_valid_id(self):
+        """
+        This test provides two author names listed, newton;Someone and two ids, 15257 and 'x'.
+        This should raise an error.
+        """
+        data = {'Work': [
+            [1, "test", "J", 1660, 1, 1, 1660, 1, 2, 1, 1, 1, 1, "test", "newton;Someone", "15257;x", "test", 1, 1,
+             "test", "Wren", 22859, "test", 1, 1, "test", "Burford", 400285, "test", 1, 1, "Carisbrooke", 782,
+             "test", 1, 1, "test", "test", "fra;eng", '', '', '', '', '', '', "test", "test", "test", "Baskerville",
+             885, "test", "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/", "Early Modern Letters Online test"]],
+            'People': [["Baskerville", 885],
+                       ["newton", 15257],
+                       ["Wren", 22859],
+                       ["Someone"]],
+            'Places': [['Burford', 400285],
+                       ['Carisbrooke', 782]],
+            'Manifestation': [[1, 1, "ALS", 1, "Bodleian", "test", "test", '', '', '', '', ''],
+                              [2, 1, '', '', '', '', '', "P", "test", "test", '', '']],
+            'Repositories': [['Bodleian', 1]]}
+        filename = self.create_excel_file(data)
+
+        cuef = CofkUploadExcelFile(self.new_upload, filename)
+
+        self.assertIn('Column author_ids in Work sheet contains a non-valid value.',
+                      cuef.errors['work']['errors'][0]['errors'])
+
 
     def test_nonsense(self):
         """
