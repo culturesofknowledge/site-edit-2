@@ -37,16 +37,16 @@
 {% else %}
     {% include "uploader/component/works.html" %}
 {% endif %}
+
+{% if people %}
+    {% include "uploader/component/people.html" %}
+{% endif %}
+
+{% if places %}
+    {% include "uploader/component/places.html" %}
+{% endif %}
+
 <!--
-{% include "uploader/component/people.html" %}
-
-{% for location in places %}
-
-    <p>{{ location }}</p>
-
-{% endfor %}
-
-
 {% for institution in institutions %}
 
     <p>{{ institution }}</p>
