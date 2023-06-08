@@ -163,7 +163,7 @@ def upload_review(request, upload_id, **kwargs):
                # Authors, addressees and mentioned link to People, here we're only
                # passing new people for review purposes
                'people': CofkCollectPerson.objects.filter(upload=upload, iperson_id__isnull=True),
-               'places': CofkCollectLocation.objects.filter(upload=upload, location_id__isnull=True),
+               'places': CofkCollectLocation.objects.filter(upload=upload, union_location__isnull=True),
                'destinations': CofkCollectDestinationOfWork.objects.filter(upload=upload),
                'origins': CofkCollectOriginOfWork.objects.filter(upload=upload),
                'institutions': CofkCollectInstitution.objects.filter(upload=upload),

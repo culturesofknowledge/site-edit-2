@@ -53,22 +53,22 @@ class CofkWork(CofkEntity):
             w = CofkCollectWork(**{k: work_dict[k] for k in work_dict if k in CofkCollectWork.__dict__.keys()})
             self.works.append(w)
 
-            if 'author_ids' in work_dict and 'author_names' in work_dict:
+            if 'author_names' in work_dict:
                 self.process_people(w, self.authors, CofkCollectAuthorOfWork, work_dict, 'author_ids', 'author_names',
                                     'author_id')
 
-            if 'emlo_mention_id' in work_dict and 'mention_id' in work_dict:
+            if 'mention_id' in work_dict:
                 self.process_people(w, self.mentioned, CofkCollectPersonMentionedInWork, work_dict, 'emlo_mention_id',
                                     'mention_id', 'mention_id')
-            if 'addressee_ids' in work_dict and 'addressee_names' in work_dict:
+            if 'addressee_names' in work_dict:
                 self.process_people(w, self.addressees, CofkCollectAddresseeOfWork, work_dict, 'addressee_ids',
                                     'addressee_names', 'addressee_id')
 
-            if 'origin_id' in work_dict and 'origin_name' in work_dict:
+            if 'origin_name' in work_dict:
                 self.process_locations(w, self.origins, CofkCollectOriginOfWork, work_dict, 'origin_id',
                                        'origin_name', 'origin_id')
 
-            if 'destination_id' in work_dict and 'destination_name' in work_dict:
+            if 'destination_name' in work_dict:
                 self.process_locations(w, self.destinations, CofkCollectDestinationOfWork, work_dict, 'destination_id',
                                        'destination_name', 'destination_id')
 
@@ -101,8 +101,16 @@ class CofkWork(CofkEntity):
         elif person := [p for p in self.people if p.iperson_id == int(person_id)]:
             return person[0]
 
-    def get_location(self, location_id: str) -> CofkCollectLocation:
-        if location := [l for l in self.locations if
+    def get_location(self, location_id: str, location_name: str=None) -> CofkCollectLocation:
+        if location_id == '':
+            locations = [l for l in self.locations if l.location_name == location_name and l.union_location is None]
+            log.info(locations)
+
+            if len(locations) == 1:
+                return locations[0]
+            elif len(locations) > 1:
+                self.add_error('Ambiguity in submitted locations.')
+        elif location := [l for l in self.locations if
                         l.union_location is not None and l.union_location.location_id == int(location_id)]:
             return location[0]
         elif location := [l for l in self.locations if l.location_id == int(location_id)]:
@@ -129,15 +137,19 @@ class CofkWork(CofkEntity):
     def process_locations(self, work: CofkCollectWork, location_list: List[Any], location_model: Type[models.Model],
                           work_dict: dict, ids: str, names: str, id_type: str):
         id_list, name_list = self.clean_lists(work_dict, ids, names)
+        log.info((id_list, name_list))
 
         for _id, name in zip(id_list, name_list):
-            if location := self.get_location(_id):
-                if location.union_location:
-                    related_location = location_model(upload=self.upload, iwork=work, location=location)
-                    setattr(related_location, id_type, self.get_new_id(id_type))
-                    location_list.append(related_location)
-                else:
-                    self.add_error(f'There is no location with the id {_id} in the Union catalogue.')
+            log.info((_id, name))
+            if location := self.get_location(_id, name):
+                related_location = location_model(upload=self.upload, iwork=work, location=location)
+                setattr(related_location, id_type, self.get_new_id(id_type))
+                location_list.append(related_location)
+
+                # There is now reliable indicator of whether a collect location is new or with and id
+                # not in union
+                #if not location.union_location:
+                #    self.add_error(f'There is no location with the id {_id} in the Union catalogue.')
             else:
                 self.add_error(f'Location with the id {_id} was listed in the {self.sheet.name} sheet but is'
                                f' not present in the Places sheet.')

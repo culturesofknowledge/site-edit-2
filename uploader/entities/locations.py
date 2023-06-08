@@ -19,6 +19,7 @@ class CofkLocations(CofkEntity, ABC):
         super().__init__(upload, sheet)
         self.work_data = work_data
         self.locations: List[CofkCollectLocation] = []
+        latest_location_id = list(CofkCollectLocation.objects.values_list('location_id').order_by('-location_id')[:1])[0][0]
 
         for index, row in enumerate(self.iter_rows(), start=1 + self.sheet.header_length):
             loc_dict = self.get_row(row, index)
@@ -37,3 +38,13 @@ class CofkLocations(CofkEntity, ABC):
                     self.ids.append(loc_id)
                 else:
                     log.warning(f'{loc_id} duplicated in {self.sheet.name} sheet.')
+            elif 'location_name' in loc_dict and not self.location_exists_by_name(loc_dict['location_name']):
+                latest_location_id += 1
+                location = {'location_name': loc_dict['location_name'],
+                            'upload': upload,
+                            'location_id': latest_location_id,
+                            'editors_notes': loc_dict['editors_notes'] if 'editors_notes' in loc_dict else None}
+                self.locations.append(CofkCollectLocation(**location))
+
+    def location_exists_by_name(self, name: str) -> bool:
+        return len([p for p in self.locations if p.location_name == name and p.location_id is None]) > 0

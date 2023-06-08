@@ -75,7 +75,7 @@ def link_location_to_work(entities: QuerySet, relationship_type: str, union_work
         if origin_or_dest.location.union_location is None:
             union_location = CofkUnionLocation(location_name=origin_or_dest.location.location_name)
             union_location.save()
-            origin_or_dest.location.union_location,= union_location
+            origin_or_dest.location.union_location = union_location
             log.info(f'Created new union location {union_location}')
 
         cwlm = CofkWorkLocationMap(relationship_type=relationship_type,

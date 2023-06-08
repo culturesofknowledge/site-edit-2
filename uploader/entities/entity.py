@@ -195,12 +195,14 @@ class CofkEntity:
         """
         Validates lists of either people or locations and returns a tuple of lists.
         """
-        if isinstance(entity_dict[ids_key], str):
+        name_list = entity_dict[names_key].split(SEPARATOR)
+
+        if ids_key not in entity_dict:
+            id_list = ['' * len(name_list)]
+        elif isinstance(entity_dict[ids_key], str):
             id_list = [i for i in entity_dict[ids_key].split(SEPARATOR) if int_or_empty_string(i)]
         else:
-            id_list = [entity_dict[ids_key]]
-
-        name_list = entity_dict[names_key].split(SEPARATOR)
+            id_list = [str(entity_dict[ids_key])]
 
         return id_list, name_list
 
