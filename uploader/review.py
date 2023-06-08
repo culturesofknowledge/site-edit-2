@@ -15,7 +15,7 @@ from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from manifestation import manif_utils
 from manifestation.models import CofkUnionManifestation, CofkManifInstMap
-from person.models import CofkUnionPerson
+from person.models import CofkUnionPerson, create_person_id
 from uploader.models import CofkCollectUpload, CofkCollectWork
 from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, CofkWorkResourceMap, \
     CofkUnionLanguageOfWork
@@ -54,8 +54,9 @@ def link_person_to_work(entities: QuerySet, relationship_type: str, union_work: 
     for person in entities.filter(iwork_id=work_id).all():
         if person.iperson.union_iperson is None:
             union_iperson = CofkUnionPerson(foaf_name=person.iperson.primary_name)
+            union_iperson.person_id = create_person_id(union_iperson.iperson_id)
             union_iperson.save()
-            person.iperson.union_iperson  = union_iperson
+            person.iperson.union_iperson = union_iperson
             log.info(f'Created new union person {union_iperson}')
 
         cwpm = CofkWorkPersonMap(relationship_type=relationship_type,
@@ -244,7 +245,7 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
     log_msg = []
 
     # Creating the union entities
-    '''for entity in [union_works, union_manifs, union_resources]:
+    for entity in [union_works, union_manifs, union_resources]:
         if len(entity) > 0:
             bulk_create(entity)
             log_msg.append(f'{len(entity)} {type(entity[0]).__name__}')
@@ -273,7 +274,7 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
     else:
         messages.success(request, f'Successfully accepted one work.')
 
-    log.info(f'{upload}: created ' + ', '.join(log_msg))'''
+    log.info(f'{upload}: created ' + ', '.join(log_msg))
 
 
 def reject_works(request, context: dict, upload: CofkCollectUpload):
