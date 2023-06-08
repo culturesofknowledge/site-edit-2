@@ -19,7 +19,8 @@ class CofkLocations(CofkEntity, ABC):
         super().__init__(upload, sheet)
         self.work_data = work_data
         self.locations: List[CofkCollectLocation] = []
-        latest_location_id = list(CofkCollectLocation.objects.values_list('location_id').order_by('-location_id')[:1])[0][0]
+        location_ids = list(CofkCollectLocation.objects.values_list('location_id').order_by('-location_id')[:1])
+        latest_location_id = location_ids[0][0] if len(location_ids) == 1 else 0
 
         for index, row in enumerate(self.iter_rows(), start=1 + self.sheet.header_length):
             loc_dict = self.get_row(row, index)
