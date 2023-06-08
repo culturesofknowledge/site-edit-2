@@ -104,7 +104,6 @@ class CofkWork(CofkEntity):
     def get_location(self, location_id: str, location_name: str=None) -> CofkCollectLocation:
         if location_id == '':
             locations = [l for l in self.locations if l.location_name == location_name and l.union_location is None]
-            log.info(locations)
 
             if len(locations) == 1:
                 return locations[0]
@@ -137,10 +136,8 @@ class CofkWork(CofkEntity):
     def process_locations(self, work: CofkCollectWork, location_list: List[Any], location_model: Type[models.Model],
                           work_dict: dict, ids: str, names: str, id_type: str):
         id_list, name_list = self.clean_lists(work_dict, ids, names)
-        log.info((id_list, name_list))
 
         for _id, name in zip(id_list, name_list):
-            log.info((_id, name))
             if location := self.get_location(_id, name):
                 related_location = location_model(upload=self.upload, iwork=work, location=location)
                 setattr(related_location, id_type, self.get_new_id(id_type))
