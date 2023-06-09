@@ -138,7 +138,7 @@ class CofkCollectImageOfManif(models.Model):
 
 class CofkCollectPerson(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
-    iperson_id = models.IntegerField(blank=True, null=True)
+    iperson_id = models.IntegerField()
     union_iperson = models.ForeignKey('person.CofkUnionPerson', models.SET_NULL, blank=True, null=True,
                                       to_field='iperson_id', related_name='union_collect_persons')
     person_id = models.CharField(max_length=100, null=True)

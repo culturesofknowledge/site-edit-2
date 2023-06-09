@@ -89,7 +89,7 @@ class CofkWork(CofkEntity):
 
     def get_person(self, person_id: str, person_name: str=None) -> CofkCollectPerson:
         if person_id == '':
-            people = [p for p in self.people if p.primary_name == person_name and p.iperson_id is None]
+            people = [p for p in self.people if p.primary_name == person_name]
 
             if len(people) == 1:
                 return people[0]
@@ -103,7 +103,7 @@ class CofkWork(CofkEntity):
 
     def get_location(self, location_id: str, location_name: str=None) -> CofkCollectLocation:
         if location_id == '':
-            locations = [l for l in self.locations if l.location_name == location_name and l.union_location is None]
+            locations = [l for l in self.locations if l.location_name == location_name]
 
             if len(locations) == 1:
                 return locations[0]
@@ -125,9 +125,6 @@ class CofkWork(CofkEntity):
                 setattr(related_person, id_type, self.get_new_id(id_type))
                 people_list.append(related_person)
 
-                if person.iperson_id and not person.union_iperson:
-                    self.add_error(f'There is no person with the id {_id} in the Union catalogue.')
-
             else:
                 # Person not present in people sheet
                 self.add_error(f'Person with the id {_id} was listed in the {self.sheet.name} sheet but is'
@@ -142,11 +139,6 @@ class CofkWork(CofkEntity):
                 related_location = location_model(upload=self.upload, iwork=work, location=location)
                 setattr(related_location, id_type, self.get_new_id(id_type))
                 location_list.append(related_location)
-
-                # There is now reliable indicator of whether a collect location is new or with and id
-                # not in union
-                #if not location.union_location:
-                #    self.add_error(f'There is no location with the id {_id} in the Union catalogue.')
             else:
                 self.add_error(f'Location with the id {_id} was listed in the {self.sheet.name} sheet but is'
                                f' not present in the Places sheet.')

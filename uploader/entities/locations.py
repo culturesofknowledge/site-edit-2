@@ -34,6 +34,9 @@ class CofkLocations(CofkEntity, ABC):
                     loc_dict['union_location'] = CofkUnionLocation.objects\
                         .filter(location_id=loc_id).first()
 
+                    if loc_dict['union_location'] is None:
+                        self.add_error(f'There is no location with the id {loc_id} in the Union catalogue.')
+
                     loc_dict['upload'] = upload
                     self.locations.append(CofkCollectLocation(**loc_dict))
                     self.ids.append(loc_id)

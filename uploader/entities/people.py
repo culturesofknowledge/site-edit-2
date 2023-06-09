@@ -21,6 +21,8 @@ class CofkPeople(CofkEntity, ABC):
             per_dict = self.get_row(row, index)
             self.check_required(per_dict)
             self.check_data_types(per_dict)
+            iperson_ids = list(CofkCollectPerson.objects.values_list('iperson_id').order_by('-iperson_id')[:1])
+            latest_iperson_id = iperson_ids[0][0] if len(iperson_ids) == 1 else 0
 
             if 'iperson_id' in per_dict and 'primary_name' in per_dict:
                 ids, names = self.clean_lists(per_dict, 'iperson_id', 'primary_name')
@@ -36,10 +38,16 @@ class CofkPeople(CofkEntity, ABC):
                                   'upload': upload,
                                   'editors_notes': per_dict[
                                       'editors_notes'] if 'editors_notes' in per_dict else None}
+
+                        if person['union_iperson'] is None:
+                            self.add_error(f'There is no person with the id {_id} in the Union catalogue.')
+
                         self.people.append(CofkCollectPerson(**person))
                         self.ids.append(_id)
                     elif name and not self.person_exists_by_name(name):
-                        person = {'primary_name': name,
+                        latest_iperson_id += 1
+                        person = {'iperson_id': latest_iperson_id,
+                                  'primary_name': name,
                                   'upload': upload,
                                   'editors_notes': per_dict[
                                       'editors_notes'] if 'editors_notes' in per_dict else None}
@@ -47,7 +55,9 @@ class CofkPeople(CofkEntity, ABC):
                     else:
                         log.warning(f'{_id} duplicated in People sheet.')
             elif 'primary_name' in per_dict and not self.person_exists_by_name(per_dict['primary_name']):
-                person = {'primary_name': per_dict['primary_name'],
+                latest_iperson_id += 1
+                person = {'iperson_id': latest_iperson_id,
+                          'primary_name': per_dict['primary_name'],
                           'upload': upload,
                           'editors_notes': per_dict[
                               'editors_notes'] if 'editors_notes' in per_dict else None}
