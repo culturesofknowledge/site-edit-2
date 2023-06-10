@@ -34,8 +34,7 @@ class TestLocations(UploadIncludedTestCase):
 
     def test_extra_location(self):
         """
-        This test provides two author names listed, newton;Someone and one id, 15257 but containing a semi-colon for
-        the ids to indicate a new person should be created.
+        This test provides two locations Burford and a new location, Cape town.
         This should not raise an error.
         """
         data = {'Work': [

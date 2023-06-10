@@ -2,13 +2,14 @@ import os
 import tempfile
 from typing import Dict, List
 
-from django.test import TestCase
+from django.test import TestCase, RequestFactory
 from django.utils import timezone
 from openpyxl.workbook import Workbook
 
 from core.models import Iso639LanguageCode
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
+from login.models import CofkUser
 from person.models import CofkUnionPerson
 from uploader.constants import MANDATORY_SHEETS
 from uploader.models import CofkCollectStatus, CofkCollectUpload
@@ -70,3 +71,10 @@ class UploadIncludedTestCase(UploaderTestCase):
         self.new_upload.uploader_email = 'test@user.com'
         self.new_upload.upload_timestamp = timezone.now()
         self.new_upload.save()
+
+
+class UploadIncludedFactoryTestCase(UploadIncludedTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.factory = RequestFactory()
+        self.user = CofkUser.objects.create(username='test')
