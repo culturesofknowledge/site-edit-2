@@ -131,5 +131,5 @@ class TestFileUpload(UploadIncludedTestCase):
         self.assertEqual(cuef.errors['work']['total'], 6)
         self.assertIn(msg, cuef.errors['work']['errors'][0]['errors'])
         self.assertIn(msg_2, cuef.errors['work']['errors'][0]['errors'])
-        #self.assertIn(msg_3, cuef.errors['work']['errors'][0]['errors'])
+        self.assertIn(msg_3, cuef.errors['locations']['errors'][0]['errors'])
         self.assertIn(msg_4, cuef.errors['manifestations']['errors'][0]['errors'])
