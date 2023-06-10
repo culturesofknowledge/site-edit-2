@@ -18,8 +18,8 @@ class TestPeople(UploadIncludedTestCase):
             [1, "test", "J", 1660, 1, 1, 1660, 1, 2, 1, 1, 1, 1, "test", "newton", "15257", "test", 1, 1,
              "test", "Wren", 22859, "test", 1, 1, "test", "Burford", 400285, "test", 1, 1, "Carisbrooke", 782,
              "test", 1, 1, "test", "test", "fra;eng", '', '', '', '', '', '', "test", "test", "test", "Baskerville",
-             85, "test", "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/", "Early Modern Letters Online test"]],
-            'People': [["Baskerville", 85],
+             2, "test", "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/", "Early Modern Letters Online test"]],
+            'People': [["Baskerville", 2],
                        ["newton", 15257],
                        ["Wren", 22859] ,],
             'Places': [['Burford', 400285],
@@ -31,8 +31,8 @@ class TestPeople(UploadIncludedTestCase):
 
         cuef = CofkUploadExcelFile(self.new_upload, filename)
 
-        #self.assertIn('There is no person with the id 85 in the Union catalogue.',
-        #              cuef.errors['work']['errors'][0]['errors'])
+        self.assertIn('There is no person with the id 2 in the Union catalogue.',
+                     cuef.errors['people']['errors'][0]['errors'])
 
 
     def test_extra_person_omit_author_id_semicolon(self):

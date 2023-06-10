@@ -162,7 +162,7 @@ def upload_review(request, upload_id, **kwargs):
                'languages': CofkCollectLanguageOfWork.objects.filter(upload=upload),
                # Authors, addressees and mentioned link to People, here we're only
                # passing new people for review purposes
-               'people': CofkCollectPerson.objects.filter(upload=upload, iperson_id__isnull=True),
+               'people': CofkCollectPerson.objects.filter(upload=upload, union_iperson__isnull=True),
                'places': CofkCollectLocation.objects.filter(upload=upload, union_location__isnull=True),
                'destinations': CofkCollectDestinationOfWork.objects.filter(upload=upload),
                'origins': CofkCollectOriginOfWork.objects.filter(upload=upload),
