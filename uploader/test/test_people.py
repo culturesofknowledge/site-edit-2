@@ -8,10 +8,9 @@ log = logging.getLogger(__name__)
 
 class TestPeople(UploadIncludedTestCase):
 
-
     def test_extra_person_no_union(self):
         """
-        This test provides two a person, Baskerville with an id that does not exist in the union
+        This test provides two people, Baskerville with an id that does not exist in the union
         database.
         """
         data = {'Work': [
