@@ -127,8 +127,12 @@ class CofkWork(CofkEntity):
 
             else:
                 # Person not present in people sheet
-                self.add_error(f'Person with the id {_id} was listed in the {self.sheet.name} sheet but is'
-                               f' not present in the People sheet.')
+                if _id != '':
+                    self.add_error(f'Person with the id {_id} was listed in the {self.sheet.name} sheet but is'
+                                   f' not present in the People sheet.')
+                else:
+                    self.add_error(f'A new person with the name "{name}" was listed in the {self.sheet.name} sheet'
+                                   f' but is not present in the People sheet.')
 
     def process_locations(self, work: CofkCollectWork, location_list: List[Any], location_model: Type[models.Model],
                           work_dict: dict, ids: str, names: str, id_type: str):
@@ -140,8 +144,13 @@ class CofkWork(CofkEntity):
                 setattr(related_location, id_type, self.get_new_id(id_type))
                 location_list.append(related_location)
             else:
-                self.add_error(f'Location with the id {_id} was listed in the {self.sheet.name} sheet but is'
-                               f' not present in the Places sheet.')
+                # Location not present in places sheet
+                if _id != '':
+                    self.add_error(f'Location with the id {_id} was listed in the {self.sheet.name} sheet but is'
+                                   f' not present in the Places sheet.')
+                else:
+                    self.add_error(f'A new location with the name "{name}" was listed in the {self.sheet.name} sheet'
+                                   f' but is not present in the Places sheet.')
 
     def process_languages(self, work_dict: dict, work: CofkCollectWork):
         work_languages = work_dict['language_id'].split(';')

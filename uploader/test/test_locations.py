@@ -1,5 +1,6 @@
 import logging
 
+from uploader.models import CofkCollectDestinationOfWork
 from uploader.spreadsheet import CofkUploadExcelFile
 from uploader.test.test_utils import UploadIncludedTestCase
 
@@ -30,3 +31,32 @@ class TestLocations(UploadIncludedTestCase):
 
         self.assertIn('There is no location with the id 5 in the Union catalogue.',
                      cuef.errors['locations']['errors'][0]['errors'])
+
+    def test_extra_location(self):
+        """
+        This test provides two author names listed, newton;Someone and one id, 15257 but containing a semi-colon for
+        the ids to indicate a new person should be created.
+        This should not raise an error.
+        """
+        data = {'Work': [
+            [1, "test", "J", 1660, 1, 1, 1660, 1, 2, 1, 1, 1, 1, "test", "newton", "15257", "test", 1, 1,
+             "test", "Wren", 22859, "test", 1, 1, "test", "Burford", 400285, "test", 1, 1, "Cape Town", '',
+             "test", 1, 1, "test", "test", "fra;eng", '', '', '', '', '', '', "test", "test", "test", "Baskerville",
+             885, "test", "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/", "Early Modern Letters Online test"]],
+            'People': [["Baskerville", 885],
+                       ["newton", 15257],
+                       ["Wren", 22859],],
+            'Places': [['Burford', 400285],
+                       ['Cape Town']],
+            'Manifestation': [[1, 1, "ALS", 1, "Bodleian", "test", "test", '', '', '', '', ''],
+                              [2, 1, '', '', '', '', '', "P", "test", "test", '', '']],
+            'Repositories': [['Bodleian', 1]]}
+        filename = self.create_excel_file(data)
+
+        cuef = CofkUploadExcelFile(self.new_upload, filename)
+
+        # This is a valid upload and should be without errors
+        self.assertEqual(cuef.errors, {})
+        destinations = CofkCollectDestinationOfWork.objects.all()
+        self.assertEqual(len(destinations), 1)
+        self.assertEqual(destinations[0].location.location_name, 'Cape Town')
