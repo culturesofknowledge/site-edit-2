@@ -73,7 +73,7 @@ class TestPeople(UploadIncludedTestCase):
             'People': [["Baskerville", 885],
                        ["newton", 15257],
                        ["Wren", 22859],
-                       ["Someone"]],
+                       ["Someone", "x"]],
             'Places': [['Burford', 400285],
                        ['Carisbrooke', 782]],
             'Manifestation': [[1, 1, "ALS", 1, "Bodleian", "test", "test", '', '', '', '', ''],
@@ -85,6 +85,8 @@ class TestPeople(UploadIncludedTestCase):
 
         self.assertIn('Column author_ids in Work sheet contains a non-valid value.',
                       cuef.errors['work']['errors'][0]['errors'])
+        self.assertIn('Column iperson_id in People sheet contains a non-valid value.',
+                      cuef.errors['people']['errors'][0]['errors'])
 
     def test_extra_person(self):
         """
