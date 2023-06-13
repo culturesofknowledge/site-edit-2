@@ -56,30 +56,33 @@ def get_name_details(person: CofkUnionPerson) -> list[str]:
 
 def get_display_dict_other_details(person: CofkUnionPerson, new_line='\n') -> str:
     query_name_map = [
+        # person's active relationships
+        (lambda: person.active_relationships.all(),
+         lambda mm: get_recref_display_name(mm.related),
+         lambda mm: mm.person,),
+
+        # person's passive relationships
+        (lambda: person.passive_relationships.all(),
+         lambda mm: get_recref_display_name(mm.person),
+         lambda mm: mm.related,),
+
         # locations
         (lambda: person.cofkpersonlocationmap_set.all(),
-         lambda model_map: location_utils.get_recref_display_name(model_map.location),),
+         lambda mm: location_utils.get_recref_display_name(mm.location),
+         lambda mm: CofkUnionPerson,),
 
         # comments
         (lambda: person.cofkpersoncommentmap_set.all(),
-         lambda model_map: model_map.comment.comment,),
+         lambda mm: mm.comment.comment,
+         lambda mm: CofkUnionPerson,),
     ]
 
     result_map = collections.defaultdict(list)
-
-    # persons
-    for mmap in person.active_relationships.all():
-        display_name = recref_utils.get_recref_rel_desc(mmap, mmap.person, default_raw_value=True)
-        result_map[display_name].append(
-            get_recref_display_name(mmap.related)
-        )
-
-    for query_fn, name_fn in query_name_map:
+    for query_fn, name_fn, left_obj_fn in query_name_map:
         for mmap in query_fn():
-            display_name = recref_utils.get_recref_rel_desc(mmap, CofkUnionPerson, default_raw_value=True)
-            result_map[display_name].append(
-                name_fn(mmap)
-            )
+            display_name = recref_utils.get_recref_rel_desc(mmap, left_obj_fn(mmap),
+                                                            default_raw_value=True)
+            result_map[display_name].append(name_fn(mmap))
 
     # add resources
     if _resources := [f'{r.resource_url} ({r.resource_name})' for r in person.resources.all()]:
