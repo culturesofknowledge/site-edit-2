@@ -419,6 +419,10 @@ def migrate_groups_and_permissions(conn):
         constant.PM_CHANGE_USER,
         constant.PM_CHANGE_COMMENT,
         constant.PM_VIEW_AUDIT,
+        constant.PM_EXPORT_FILE_WORK,
+        constant.PM_EXPORT_FILE_PERSON,
+        constant.PM_EXPORT_FILE_LOCATION,
+        constant.PM_EXPORT_FILE_INST,
     ]
 
     # fill group records
@@ -428,15 +432,14 @@ def migrate_groups_and_permissions(conn):
 
     # add permissions to groups
     for group_name, permission_codes in group_permissions_dict.items():
-        permission_codes = [PermissionData.from_full_name(c) for c in permission_codes]
         group = Group.objects.get(name=group_name)
 
         for permission_code in permission_codes:
-            permission = perm_utils.get_perm_by_full_name(permission_code.full_name)
+            permission = perm_utils.get_perm_by_full_name(permission_code)
             if permission:
                 group.permissions.add(permission)
             else:
-                print(f'permission not found: {permission_code.full_name}')
+                print(f'permission not found: {permission_code}')
 
     # add users to groups
     for r in find_rows_by_db_table(conn, 'cofk_user_roles'):

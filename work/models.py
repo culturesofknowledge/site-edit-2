@@ -73,6 +73,9 @@ class CofkUnionWork(models.Model, RecordTracker):
 
     class Meta:
         db_table = 'cofk_union_work'
+        permissions = [
+            ('export_file', 'Export csv/excel from search results'),
+        ]
 
     def find_comments_by_rel_type(self, rel_type) -> Iterable['CofkUnionComment']:
         return (r.comment for r in recref_utils.prefetch_filter_rel_type(self.cofkworkcommentmap_set, rel_type))

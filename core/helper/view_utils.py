@@ -25,7 +25,7 @@ import core.constant as core_constant
 from core import constant
 from core.form_label_maps import field_label_map
 from core.helper import email_utils, query_utils, general_model_utils, recref_utils, model_utils, \
-    django_utils, inspect_utils, url_utils, date_utils, str_utils
+    django_utils, inspect_utils, url_utils, date_utils, str_utils, perm_utils
 from core.helper.form_utils import build_search_components
 from core.helper.model_utils import ModelLike, RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
@@ -212,7 +212,15 @@ class BasicSearchView(ListView):
 
     @property
     def csv_export_setting(self) -> tuple[Callable[[], str], Callable[[], DownloadCsvHandler]] | None:
-        """ overrider this to enable download csv """
+        """
+        overrider this to enable download csv
+        :return:
+        - fn of csv file name
+        - fn of DownloadCsvHandler
+        - permission list
+        or
+        - None if this entity (e.g. audit) not support csv export
+        """
         return None
 
     @property
@@ -376,8 +384,11 @@ class BasicSearchView(ListView):
         return super().get(request, *args, **kwargs)
 
     def resp_download_by_export_setting(self, request, export_setting, *args, **kwargs):
+        file_name_factory, file_factory, perms = export_setting
+        if perms and (user := request.user):
+            perm_utils.validate_permission_denied(user, perms)
+
         def file_fn():
-            file_name_factory, file_factory = export_setting
             file_name = file_name_factory()
             tmp_path = media_service.FILE_DOWNLOAD_PATH.joinpath(file_name)
             file_factory()(self.get_queryset(), tmp_path)
@@ -415,6 +426,9 @@ class BasicSearchView(ListView):
         if not hasattr(self, 'to_user_messages'):
             self.to_user_messages = []
         self.to_user_messages.append(message)
+
+    def has_perms(self, perms: list[str]):
+        return hasattr(self.request, 'user') and self.request.user.has_perms(perms)
 
 
 class DefaultSearchView(BasicSearchView):

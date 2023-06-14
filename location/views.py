@@ -26,10 +26,10 @@ from core.models import Recref
 from location import location_utils
 from location.forms import LocationForm, GeneralSearchFieldset
 from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap, CofkLocationImageMap
+from location.models import create_sql_count_work_by_location
 from location.recref_adapter import LocationCommentRecrefAdapter, LocationResourceRecrefAdapter, \
     LocationImageRecrefAdapter
 from location.view_components import LocationFormDescriptor
-from location.models import create_sql_count_work_by_location
 
 log = logging.getLogger(__name__)
 FormOrFormSet = Union[BaseForm, BaseFormSet]
@@ -275,8 +275,11 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
     def csv_export_setting(self):
+        if not self.has_perms(constant.PM_EXPORT_FILE_LOCATION):
+            return None
         return (lambda: view_utils.create_export_file_name('location', 'csv'),
-                lambda: DownloadCsvHandler(LocationCsvHeaderValues()).create_csv_file)
+                lambda: DownloadCsvHandler(LocationCsvHeaderValues()).create_csv_file,
+                constant.PM_EXPORT_FILE_LOCATION,)
 
 
 class LocationCsvHeaderValues(HeaderValues):

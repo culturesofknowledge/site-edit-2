@@ -102,3 +102,8 @@ PM_CHANGE_USER = 'login.change_cofkuser'
 PM_CHANGE_COMMENT = 'core.change_cofkunioncomment'
 
 PM_VIEW_AUDIT = 'audit.view_cofkunionauditliteral'
+
+PM_EXPORT_FILE_WORK = 'work.export_file'
+PM_EXPORT_FILE_PERSON = 'person.export_file'
+PM_EXPORT_FILE_LOCATION = 'location.export_file'
+PM_EXPORT_FILE_INST = 'institution.export_file'
