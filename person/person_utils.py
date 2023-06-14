@@ -3,6 +3,7 @@ import collections
 from django.urls import reverse
 
 from core.helper import recref_utils
+from location import location_utils
 from person.models import CofkUnionPerson
 from siteedit2.utils.log_utils import log_no_url
 
@@ -53,29 +54,35 @@ def get_name_details(person: CofkUnionPerson) -> list[str]:
     return name_details
 
 
-def get_display_dict_other_details(person: CofkUnionPerson,
-                                   rel_type_code_name: dict = None,
-                                   new_line='\n') -> str:
-    if rel_type_code_name is None:
-        rel_type_code_name = recref_utils.get_rel_type_code_name_map()
+def get_display_dict_other_details(person: CofkUnionPerson, new_line='\n') -> str:
+    query_name_map = [
+        # person's active relationships
+        (lambda: person.active_relationships.all(),
+         lambda mm: get_recref_display_name(mm.related),
+         lambda mm: mm.person,),
 
-    # add person's relationships
+        # person's passive relationships
+        (lambda: person.passive_relationships.all(),
+         lambda mm: get_recref_display_name(mm.person),
+         lambda mm: mm.related,),
+
+        # locations
+        (lambda: person.cofkpersonlocationmap_set.all(),
+         lambda mm: location_utils.get_recref_display_name(mm.location),
+         lambda mm: CofkUnionPerson,),
+
+        # comments
+        (lambda: person.cofkpersoncommentmap_set.all(),
+         lambda mm: mm.comment.comment,
+         lambda mm: CofkUnionPerson,),
+    ]
+
     result_map = collections.defaultdict(list)
-    for person_map in person.active_relationships.all():
-        result_map[person_map.relationship_type].append(
-            get_recref_display_name(person_map.related)
-        )
-
-    # add comments
-    for comment_map in person.cofkpersoncommentmap_set.all():
-        result_map[comment_map.relationship_type].append(comment_map.comment and comment_map.comment.comment)
-
-    # rename rel type code to name
-    if rel_type_code_name:
-        keys = [k for k in result_map.keys() if k in rel_type_code_name]
-        for k in keys:
-            result_map[rel_type_code_name[k]] = result_map[k]
-            del result_map[k]
+    for query_fn, name_fn, left_obj_fn in query_name_map:
+        for mmap in query_fn():
+            display_name = recref_utils.get_recref_rel_desc(mmap, left_obj_fn(mmap),
+                                                            default_raw_value=True)
+            result_map[display_name].append(name_fn(mmap))
 
     # add resources
     if _resources := [f'{r.resource_url} ({r.resource_name})' for r in person.resources.all()]:

@@ -1,4 +1,3 @@
-import inspect
 import logging
 
 from django.db import models
@@ -8,10 +7,10 @@ from audit import audit_recref_adapter
 from audit.audit_recref_adapter import AuditRecrefAdapter
 from audit.models import CofkUnionAuditLiteral
 from core import constant
-from core.helper import model_utils, recref_utils
+from core.helper import model_utils
+from core.helper.recref_utils import get_left_right_rel_obj
 from core.models import CofkUnionComment, CofkUnionRelationshipType, CofkUnionResource, Recref, \
     CofkUnionNationality, CofkUnionImage, CofkUnionRoleCategory, CofkUnionSubject
-from core.recref_settings import recref_left_right_list
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from manifestation.models import CofkUnionManifestation
@@ -163,31 +162,6 @@ def handle_create_recref_date(sender: ModelBase, instance: models.Model):
         return
 
     save_audit_records(instance)
-
-
-def get_left_right_rel_obj(recref: Recref):
-    bounded_members = set(recref_utils.get_bounded_members(recref.__class__)[:2])
-    bounded_member_classes = {f.field.related_model for f in bounded_members}
-    _left_right_class = ((l, r) for rel_type, l, r in recref_left_right_list
-                         if recref.relationship_type == rel_type)
-    _left_right_class = (_ for _ in _left_right_class if set(_) == bounded_member_classes)
-    _left_right_class = next(_left_right_class, None)
-
-    # define left_col, right_col
-    if _left_right_class is None:
-        log.warning(f'left, right column not found, {recref}')
-        left_col, right_col = bounded_members
-    else:
-        col_a, col_b = bounded_members
-        left_class, right_class = _left_right_class
-        if col_a.field.related_model == left_class:
-            left_col, right_col = col_a, col_b
-        else:
-            left_col, right_col = col_b, col_a
-
-    left_rel_obj = left_col.get_object(recref)
-    right_rel_obj = right_col.get_object(recref)
-    return left_rel_obj, right_rel_obj
 
 
 def add_relation_audit_to_literal(sender: ModelBase, instance: models.Model):

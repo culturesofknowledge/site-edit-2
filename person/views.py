@@ -436,8 +436,6 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
 
 class PersonCsvHeaderValues(HeaderValues):
-    def __init__(self):
-        self.rel_type_code_name = recref_utils.get_rel_type_code_name_map()
 
     def get_header_list(self) -> list[str]:
         return [

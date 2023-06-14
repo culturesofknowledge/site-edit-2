@@ -1,5 +1,8 @@
+import re
+
 from django import template
 from django.core.paginator import Page
+from django.utils.safestring import mark_safe
 
 from core.constant import ENTITIES
 
@@ -72,3 +75,9 @@ def url_replace(request, field, value):
 @register.filter
 def can_show_for_perm(perm, perms):
     return perm is None or perm in perms
+
+
+@register.filter
+def resource_url_to_link(value):
+    value = re.sub(r'(https?://\S+)\s+\((.+?)\)', r'<a href="\1">\2</a>', value)
+    return mark_safe(value)

@@ -1,3 +1,5 @@
+{% load cl_filters %}
+
 <table id="results_table">
     <colgroup>
         <col style="min-width: 100px">
@@ -44,7 +46,8 @@
     <tbody>
 
     {% for r in search_results %}
-        <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}" entry_id="{{ r.iperson_id }}" target="_blank">
+        <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}"
+            entry_id="{{ r.iperson_id }}" target="_blank">
             <td>
                 <a href="{% url 'person:full_form' r.iperson_id %}">
                     {{ r.names_and_roles }}
@@ -86,30 +89,34 @@
             </td>
             <td>
                 {% if r.sent > 0 %}
-                <a href="{% url 'work:search' %}?person_sent_pk={{ r.person_id }}" class="search_link" target="_blank">
-                    {{ r.sent }}
-                </a>
+                    <a href="{% url 'work:search' %}?person_sent_pk={{ r.person_id }}" class="search_link"
+                       target="_blank">
+                        {{ r.sent }}
+                    </a>
                 {% endif %}
             </td>
             <td>
                 {% if r.recd > 0 %}
-                <a href="{% url 'work:search' %}?person_rec_pk={{ r.person_id }}" class="search_link" target="_blank">
-                    {{ r.recd }}
-                </a>
+                    <a href="{% url 'work:search' %}?person_rec_pk={{ r.person_id }}" class="search_link"
+                       target="_blank">
+                        {{ r.recd }}
+                    </a>
                 {% endif %}
             </td>
             <td>
                 {% if r.all_works > 0 %}
-                    <a href="{% url 'work:search' %}?person_sent_rec_pk={{ r.person_id }}" class="search_link" target="_blank">
-                    {{ r.all_works }}
-                </a>
+                    <a href="{% url 'work:search' %}?person_sent_rec_pk={{ r.person_id }}" class="search_link"
+                       target="_blank">
+                        {{ r.all_works }}
+                    </a>
                 {% endif %}
             </td>
             <td>
                 {% if r.mentioned > 0 %}
-                    <a href="{% url 'work:search' %}?person_mention_pk={{ r.person_id }}" class="search_link" target="_blank">
-                    {{ r.mentioned }}
-                </a>
+                    <a href="{% url 'work:search' %}?person_mention_pk={{ r.person_id }}" class="search_link"
+                       target="_blank">
+                        {{ r.mentioned }}
+                    </a>
                 {% endif %}
             </td>
             <td>
@@ -118,13 +125,13 @@
 
             <td>
                 {% if r.editors_notes %}
-                {{ r.editors_notes }}
+                    {{ r.editors_notes }}
                 {% endif %}
             </td>
 
             <td>
                 {% if r.further_reading %}
-                {{ r.further_reading }}
+                    {{ r.further_reading }}
                 {% endif %}
             </td>
             <td>
@@ -132,7 +139,7 @@
             </td>
 
             <td>
-                {{ r.other_details_for_display|linebreaksbr }}
+                {{ r.other_details_for_display|linebreaksbr|resource_url_to_link }}
             </td>
             <td>
                 {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r %}

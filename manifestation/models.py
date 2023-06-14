@@ -5,7 +5,7 @@ from django.db import models
 from core.constant import REL_TYPE_STORED_IN, REL_TYPE_ENCLOSED_IN
 from core.helper import model_utils, recref_utils
 from core.helper.model_utils import RecordTracker
-from core.models import Recref, CofkLookupDocumentType
+from core.models import Recref
 
 
 class CofkManifCommentMap(Recref):
