@@ -164,7 +164,7 @@ class Iso639LanguageCode(models.Model):
 
 class CofkUnionFavouriteLanguage(models.Model):
     language_code = models.OneToOneField(Iso639LanguageCode,
-                                         models.DO_NOTHING,
+                                         models.CASCADE,
                                          db_column='language_code',
                                          primary_key=True)
 
