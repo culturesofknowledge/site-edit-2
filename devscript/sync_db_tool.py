@@ -3,7 +3,15 @@ import collections
 from typing import Iterable
 import re
 
-from siteedit2.utils.log_utils import ColorCodes
+
+class ColorCodes:
+    grey = '\u001b[38;5;250m'
+    black = '\u001b[38;5;232m'
+    bg_blue = '\u001b[44m'
+    bg_yellow = '\u001b[43m'
+    bg_red = '\u001b[41m'
+    bg_purple = '\u001b[45m'
+    reset = "\u001b[0m"
 
 
 def find_statements(sql) -> Iterable[str]:
@@ -38,7 +46,7 @@ class to_color:
 
 
 def main():
-    path = 'sync_db.221220.sql'
+    path = 'sync_db.230615.sql'
     sql = Path(path).read_text()
 
     comments = re.findall(r'\s*--.+', sql)
@@ -107,6 +115,7 @@ def main():
     with to_color('\u001b[46;30m'):
         for k in info_keys:
             values = sql_maps.pop(k)
+            values = sorted(values)
             print_key_values(k, values)
 
     for k, values in sql_maps.items():

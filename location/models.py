@@ -35,6 +35,9 @@ class CofkUnionLocation(models.Model, RecordTracker):
 
     class Meta:
         db_table = 'cofk_union_location'
+        permissions = [
+            ('export_file', 'Export csv/excel from search results'),
+        ]
 
 
 class CofkLocationCommentMap(Recref):

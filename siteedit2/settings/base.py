@@ -181,7 +181,7 @@ LOGGING = {
     },
     'loggers': {
         # # uncomment to log all sql
-        # 'django': {
+        # 'django.db.backends': {
         #     'level': 'DEBUG',
         #     'propagate': True,
         # },

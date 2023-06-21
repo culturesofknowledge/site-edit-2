@@ -127,6 +127,9 @@ class CofkUnionPerson(models.Model, RecordTracker):
 
     class Meta:
         db_table = 'cofk_union_person'
+        permissions = [
+            ('export_file', 'Export csv/excel from search results'),
+        ]
 
 
 class CofkPersonLocationMap(Recref):

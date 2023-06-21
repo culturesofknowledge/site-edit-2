@@ -125,9 +125,9 @@ class CofkUnionManifestation(models.Model, RecordTracker):
 
 class CofkUnionLanguageOfManifestation(models.Model):
     lang_manif_id = models.AutoField(primary_key=True)
-    manifestation = models.ForeignKey(CofkUnionManifestation, models.DO_NOTHING,
+    manifestation = models.ForeignKey(CofkUnionManifestation, models.CASCADE,
                                       related_name='language_set')
-    language_code = models.ForeignKey('core.Iso639LanguageCode', models.DO_NOTHING,
+    language_code = models.ForeignKey('core.Iso639LanguageCode', models.CASCADE,
                                       db_column='language_code',
                                       to_field='code_639_3')
     notes = models.CharField(max_length=100, blank=True, null=True)

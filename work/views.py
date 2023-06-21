@@ -1134,14 +1134,25 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def csv_export_setting(self):
+        if not self.has_perms(constant.PM_EXPORT_FILE_WORK):
+            return None
+
         return (lambda: view_utils.create_export_file_name('work', 'csv'),
-                lambda: DownloadCsvHandler(WorkCsvHeaderValues()).create_csv_file)
+                lambda: DownloadCsvHandler(WorkCsvHeaderValues()).create_csv_file,
+                constant.PM_EXPORT_FILE_WORK,
+                )
 
     @property
-    def excel_export_setting(self) -> tuple[Callable[[], str], Callable[[Iterable, str], Any]] | None:
+    def excel_export_setting(self) -> tuple[Callable[[], str], Callable[[Iterable, str], Any], str] | None:
         """ overrider this to enable download csv """
+
+        if not self.has_perms(constant.PM_EXPORT_FILE_WORK):
+            return None
+
         return (lambda: view_utils.create_export_file_name('work', 'xlsx'),
-                lambda: excel_maker.create_work_excel)
+                lambda: excel_maker.create_work_excel,
+                constant.PM_EXPORT_FILE_WORK,
+                )
 
 
 class WorkCommentFormsetHandler(RecrefFormsetHandler):

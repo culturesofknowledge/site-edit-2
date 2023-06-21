@@ -25,7 +25,7 @@ from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_utils import CommonInitFormViewTemplate, BasicSearchView, MergeChoiceViews, MergeActionViews, \
     MergeConfirmViews, DeleteConfirmView
-from core.models import Recref, CofkUnionRelationshipType
+from core.models import Recref
 from person import person_utils
 from person.forms import PersonForm, GeneralSearchFieldset, PersonOtherRecrefForm, search_gender_choices, \
     search_person_or_group
@@ -431,8 +431,11 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
     def csv_export_setting(self):
+        if not self.has_perms(constant.PM_EXPORT_FILE_PERSON):
+            return None
         return (lambda: view_utils.create_export_file_name('person', 'csv'),
-                lambda: DownloadCsvHandler(PersonCsvHeaderValues()).create_csv_file)
+                lambda: DownloadCsvHandler(PersonCsvHeaderValues()).create_csv_file,
+                constant.PM_EXPORT_FILE_PERSON,)
 
 
 class PersonCsvHeaderValues(HeaderValues):

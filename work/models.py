@@ -73,6 +73,9 @@ class CofkUnionWork(models.Model, RecordTracker):
 
     class Meta:
         db_table = 'cofk_union_work'
+        permissions = [
+            ('export_file', 'Export csv/excel from search results'),
+        ]
 
     def find_comments_by_rel_type(self, rel_type) -> Iterable['CofkUnionComment']:
         return (r.comment for r in recref_utils.prefetch_filter_rel_type(self.cofkworkcommentmap_set, rel_type))
@@ -205,8 +208,8 @@ class CofkWorkLocationMap(Recref):
 
 class CofkUnionLanguageOfWork(models.Model):
     lang_work_id = models.AutoField(primary_key=True)
-    work = models.ForeignKey(CofkUnionWork, models.DO_NOTHING, related_name='language_set')
-    language_code = models.ForeignKey('core.Iso639LanguageCode', models.DO_NOTHING,
+    work = models.ForeignKey(CofkUnionWork, models.CASCADE, related_name='language_set')
+    language_code = models.ForeignKey('core.Iso639LanguageCode', models.CASCADE,
                                       db_column='language_code',
                                       to_field='code_639_3', )
     notes = models.CharField(max_length=100, blank=True, null=True)
