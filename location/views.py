@@ -25,8 +25,8 @@ from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate, 
 from core.models import Recref
 from location import location_utils
 from location.forms import LocationForm, GeneralSearchFieldset
-from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap, CofkLocationImageMap
-from location.models import create_sql_count_work_by_location
+from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap, CofkLocationImageMap, \
+    create_sql_count_work_by_location
 from location.recref_adapter import LocationCommentRecrefAdapter, LocationResourceRecrefAdapter, \
     LocationImageRecrefAdapter
 from location.view_components import LocationFormDescriptor

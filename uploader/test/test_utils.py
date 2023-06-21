@@ -51,8 +51,11 @@ class UploaderTestCase(TestCase):
 class UploadIncludedTestCase(UploaderTestCase):
     def setUp(self) -> None:
         super().setUp()
-        CofkCollectStatus.objects.create(status_id=1,
-                                         status_desc='Awaiting review')
+
+        for i, s in enumerate(['Awaiting review', 'Partly reviewed', 'Review complete',
+                               'Accepted and saved into main database', 'Rejected']):
+            CofkCollectStatus.objects.create(status_id=i + 1, status_desc=s)
+
 
         for loc in [782, 400285]:
             CofkUnionLocation(pk=loc).save()
