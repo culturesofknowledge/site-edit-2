@@ -2,10 +2,13 @@ import os
 import tempfile
 from typing import Dict, List
 
+from django.contrib.auth.models import Group
 from django.test import TestCase, RequestFactory
 from django.utils import timezone
 from openpyxl.workbook import Workbook
 
+from core import constant
+from core.helper import perm_utils
 from core.models import Iso639LanguageCode
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
@@ -78,3 +81,8 @@ class UploadIncludedFactoryTestCase(UploadIncludedTestCase):
         super().setUp()
         self.factory = RequestFactory()
         self.user = CofkUser.objects.create(username='test')
+        self.admin = CofkUser.objects.create(username='admin', is_staff=True)
+
+        super_group = Group.objects.create(name='super')
+        super_group.permissions.add(perm_utils.get_perm_by_full_name(constant.PM_CHANGE_COLLECTWORK))
+        super_group.user_set.add(self.admin)
