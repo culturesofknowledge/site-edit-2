@@ -21,7 +21,6 @@ from audit.models import CofkUnionAuditLiteral, CofkUnionAuditRelationship
 from core import constant
 from core.helper import iter_utils, model_utils, recref_utils, perm_utils
 from core.helper.model_utils import ModelLike
-from core.helper.perm_utils import PermissionData
 from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType, CofkUnionRelationshipType, \
     CofkUnionImage, CofkUnionOrgType, CofkUnionRoleCategory, CofkUnionSubject, Iso639LanguageCode, CofkLookupCatalogue, \
     SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID, CofkUserSavedQuery, CofkUserSavedQuerySelection, CofkUnionFavouriteLanguage
@@ -35,7 +34,8 @@ from uploader.models import CofkCollectStatus, CofkCollectUpload, CofkCollectIns
     CofkCollectLocationResource, CofkCollectPerson, CofkCollectOccupationOfPerson, CofkCollectPersonResource, \
     CofkCollectInstitutionResource, CofkCollectWork, CofkCollectAddresseeOfWork, CofkCollectLanguageOfWork, \
     CofkCollectManifestation, CofkCollectAuthorOfWork, CofkCollectDestinationOfWork, CofkCollectOriginOfWork, \
-    CofkCollectPersonMentionedInWork, CofkCollectSubjectOfWork, CofkCollectWorkResource, CofkCollectPlaceMentionedInWork
+    CofkCollectPersonMentionedInWork, CofkCollectSubjectOfWork, CofkCollectWorkResource, \
+    CofkCollectPlaceMentionedInWork, CofkCollectImageOfManif
 from work import models as work_models
 from work.models import CofkUnionWork, CofkUnionLanguageOfWork, CofkWorkWorkMap
 
@@ -762,6 +762,7 @@ def data_migration(user, password, database, host, port):
     clone_rows_by_model_class(conn, CofkUnionLanguageOfManifestation, col_val_handler_fn_list=[_val_handler_language],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(
                                   CofkUnionLanguageOfManifestation))
+    clone_rows_by_model_class(conn, CofkCollectImageOfManif)
 
     # clone recref records
     clone_recref_simple_by_field_pairs(conn)
