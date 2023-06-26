@@ -93,7 +93,7 @@ class CofkCollectLocation(models.Model):
 class CofkCollectLocationResource(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     resource_id = models.IntegerField()
-    location_id = models.IntegerField()
+    location = models.ForeignKey('uploader.CofkCollectLocation', models.CASCADE)
     resource_name = models.TextField()
     resource_details = models.TextField()
     resource_url = models.TextField()
@@ -191,7 +191,7 @@ class CofkCollectPerson(models.Model):
 class CofkCollectOccupationOfPerson(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     occupation_of_person_id = models.IntegerField()
-    iperson_id = models.IntegerField()
+    iperson = models.ForeignKey('uploader.CofkCollectPerson', models.CASCADE)
     occupation = models.ForeignKey('core.CofkUnionRoleCategory', models.CASCADE)
 
     class Meta:
@@ -202,7 +202,7 @@ class CofkCollectOccupationOfPerson(models.Model):
 class CofkCollectPersonResource(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     resource_id = models.IntegerField()
-    iperson_id = models.IntegerField()
+    iperson = models.ForeignKey('uploader.CofkCollectPerson', models.CASCADE)
     resource_name = models.TextField()
     resource_details = models.TextField()
     resource_url = models.TextField()
@@ -286,7 +286,7 @@ class CofkCollectInstitution(models.Model):
 class CofkCollectInstitutionResource(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     resource_id = models.IntegerField()
-    institution_id = models.IntegerField()
+    institution = models.ForeignKey('uploader.CofkCollectInstitution', models.CASCADE)
     resource_name = models.TextField()
     resource_details = models.TextField()
     resource_url = models.TextField()

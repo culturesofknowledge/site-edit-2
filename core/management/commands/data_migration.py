@@ -493,20 +493,21 @@ def fill_cofk_collect_ref_pk(row, collect_class, ref_col_name):
 
 
 def _val_handler_collect_person(row: dict, conn) -> dict:
-    iperson_id = row['iperson_id']
     upload_id = row['upload_id']
 
-    row = _correct_work(row, upload_id)
+    if 'iwork_id' in row:
+        row = _correct_work(row, upload_id)
     fill_cofk_collect_ref_pk(row, CofkCollectPerson, 'iperson_id')
 
     return row
 
 
 def _val_handler_collect_location(row: dict, conn) -> dict:
-    location_id = row['location_id']
     upload_id = row['upload_id']
 
-    row = _correct_work(row, upload_id)
+    if 'iwork_id' in row:
+        row = _correct_work(row, upload_id)
+
     fill_cofk_collect_ref_pk(row, CofkCollectLocation, 'location_id')
 
     return row
@@ -533,6 +534,13 @@ def _val_handler_user(row: dict, conn) -> dict:
     row['username_id'] = row.pop('username')
     return row
 
+
+def _val_handler_collect_institution(row: dict, conn) -> dict:
+    upload_id = row['upload_id']
+    if pk := get_first_pk(CofkCollectInstitution.objects.filter(institution_id=row['institution_id'],
+                                                                upload_id=upload_id)):
+        row['institution_id'] = pk
+    return row
 
 def _val_handler_collect_manifestation(row: dict, conn) -> dict:
     upload_id = row['upload_id']
@@ -668,6 +676,7 @@ def data_migration(user, password, database, host, port):
     clone_rows_by_model_class(conn, CofkCollectLocation,
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectLocation))
     clone_rows_by_model_class(conn, CofkCollectLocationResource,
+                              col_val_handler_fn_list=[_val_handler_collect_location],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectLocationResource))
 
     # ### Person
@@ -683,9 +692,11 @@ def data_migration(user, password, database, host, port):
     clone_rows_by_model_class(conn, CofkCollectPerson,
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectPerson))
     clone_rows_by_model_class(conn, CofkCollectOccupationOfPerson,
+                              col_val_handler_fn_list=[_val_handler_collect_person],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(
                                   CofkCollectOccupationOfPerson))  # What uses this table?
     clone_rows_by_model_class(conn, CofkCollectPersonResource,
+                              col_val_handler_fn_list=[_val_handler_collect_person],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectPersonResource))
 
     # ### Repositories/institutions
@@ -695,6 +706,7 @@ def data_migration(user, password, database, host, port):
     clone_rows_by_model_class(conn, CofkCollectInstitution,
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectInstitution))
     clone_rows_by_model_class(conn, CofkCollectInstitutionResource,
+                              col_val_handler_fn_list=[_val_handler_collect_institution],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(
                                   CofkCollectInstitutionResource))
 
