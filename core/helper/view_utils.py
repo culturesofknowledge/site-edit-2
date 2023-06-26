@@ -391,7 +391,7 @@ class BasicSearchView(ListView):
         def file_fn():
             file_name = file_name_factory()
             tmp_path = media_service.FILE_DOWNLOAD_PATH.joinpath(file_name)
-            file_factory()(self.get_queryset(), tmp_path)
+            file_factory()(self.get_queryset().iterator(), tmp_path)
             return file_name
 
         return self.resp_file_download(request, file_fn, *args, **kwargs)
