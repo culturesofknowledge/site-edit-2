@@ -1,4 +1,5 @@
 {% extends "core/emlo_logined.html" %}
+{% load cl_filters %}
 
 {% block content %}
 
@@ -75,6 +76,13 @@
 </ol>
 {% endif %}
 
+<div style="text-align: right;">
+    <h2>{{ page_obj|get_results_on_page }} out
+        of {{ paginator.count | floatformat:'g' }} uploads</h2>
+</div>
+
+{% include 'core/component/pagination.html' %}
+
 <table>
     <tr>
         <th>ID</th>
@@ -88,7 +96,7 @@
         <td></td>
         <!--<td></td>-->
     </tr>
-{% for upload in uploads %}
+{% for upload in object_list %}
     <tr>
 
         <td>{{ upload.upload_id }}</td>
@@ -105,5 +113,7 @@
     </tr>
 {% endfor %}
 </table>
+
+{% include 'core/component/pagination.html' %}
 
 {% endblock %}

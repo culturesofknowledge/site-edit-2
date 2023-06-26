@@ -9,6 +9,8 @@ from django.core.files.storage import default_storage
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views.generic import ListView
 
 from core import constant
 from core.models import CofkLookupCatalogue
@@ -23,11 +25,11 @@ from uploader.validation import CofkExcelFileError
 log = logging.getLogger(__name__)
 
 
-def handle_upload(request, context):
+def handle_upload(request) -> dict:
     form = CofkCollectUploadForm(request.POST, request.FILES)
+    report = {}
 
     if form.is_valid():
-
         start = time.time()
         new_upload = form.save(commit=False)
         new_upload.upload_status_id = 1
@@ -38,20 +40,20 @@ def handle_upload(request, context):
         try:
             file = default_storage.open(new_upload.upload_file.name, 'rb')
         except OSError as oe:
-            context['report']['total_errors'] = 1
-            context['report']['errors'] = {'file': {'total': 1, 'error': [oe]}}
-            log.error(context['report']['errors'])
-            return
+            report['total_errors'] = 1
+            report['errors'] = {'file': {'total': 1, 'error': [oe]}}
+            log.error(report['errors'])
+            return report
         except Exception as e:
-            context['report']['total_errors'] = 1
-            context['error'] = 'Indeterminate error.'
+            report['total_errors'] = 1
+            report['errors'] = 'Indeterminate error.'
             log.error(e)
-            return
+            return report
 
         log.info(f'User: {request.user.username} uploaded file: "{file}" ({new_upload})')
 
         cuef = None
-        context['report'] = {
+        report = {
             'file': request.FILES['upload_file']._name,
             'time': new_upload.upload_timestamp,
             'size': os.path.getsize(settings.MEDIA_ROOT + new_upload.upload_file.name) >> 10,
@@ -67,33 +69,33 @@ def handle_upload(request, context):
             else:
                 elapsed = f'{elapsed + 1} seconds'
 
-            context['report']['elapsed'] = elapsed
+            report['elapsed'] = elapsed
 
         except CofkExcelFileError as cmce:
             errors = [str(cmce)]
-            context['report']['total_errors'] = len(errors)
-            context['report']['errors'] = {'file': {'total': len(errors), 'error': errors}}
+            report['total_errors'] = len(errors)
+            report['errors'] = {'file': {'total': len(errors), 'error': errors}}
             log.error(cmce.msg)
         except (FileNotFoundError, BadZipFile, OSError) as e:
-            context['report']['total_errors'] = 1
-            context['report']['errors'] = {'file': {'total': 1, 'error': ['Could not read the file.']}}
+            report['total_errors'] = 1
+            report['errors'] = {'file': {'total': 1, 'error': ['Could not read the file.']}}
             log.error(e)
         except ValueError as ve:
-            context['report']['total_errors'] = 1
-            context['report']['errors'] = {'file': {'total': 1, 'error': [ve]}}
+            report['total_errors'] = 1
+            report['errors'] = {'file': {'total': 1, 'error': [ve]}}
             log.error(ve)
         except Exception as e:
-            context['report']['total_errors'] = 1
-            context['error'] = 'Indeterminate error.'
+            report['total_errors'] = 1
+            report['errors'] = 'Indeterminate error.'
             log.error(e)
 
         if cuef and cuef.errors:
             log.error(f'Deleting upload {new_upload}')
             new_upload.delete()
             # TODO delete uploaded file
-            context['report']['errors'] = cuef.errors
-            context['report']['total_errors'] = cuef.total_errors
-        elif 'total_errors' in context['report']:
+            report['errors'] = cuef.errors
+            report['total_errors'] = cuef.total_errors
+        elif 'total_errors' in report:
             log.error(f'Deleting upload {new_upload}')
             new_upload.delete()
         else:
@@ -102,29 +104,44 @@ def handle_upload(request, context):
             new_upload.upload_username = f'{request.user.forename} {request.user.surname}'
             new_upload.save()
     else:
-        context['report'] = {'errors': 'Form invalid'}
+        report['errors'] = 'Form invalid'
 
-    return context
+    return report
 
 
-@login_required
-@permission_required(constant.PM_CHANGE_COLLECTWORK, raise_exception=True)
-def upload_view(request, **kwargs):
-    template_url = 'uploader/form.html'
+@method_decorator([login_required,
+                   permission_required(constant.PM_CHANGE_COLLECTWORK, raise_exception=True)],
+                  name='dispatch')
+class UploadView(ListView):
+    model = CofkCollectUpload
+    ordering = '-upload_timestamp'
+    template_name = 'uploader/form.html'
     form = CofkCollectUploadForm
-    context = {'form': form, }
+    paginate_by = 250
 
-    if request.method == 'POST':
-        context = handle_upload(request, context)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
 
-        # If workbook upload is successful we redirect to review view
-        if 'report' in context and 'total_errors' not in context['report']:
-            return redirect(f'/upload/{context["report"]["upload_id"]}')
+        # Form to create new upload
+        context['form'] = self.form
+        return context
 
-    context['uploads'] = CofkCollectUpload.objects.order_by('-upload_timestamp').all()
+    def post(self, request, *args, **kwargs):
+        report = kwargs['report'] = handle_upload(request)
 
-    return render(request, template_url, context)
+        # If workbook upload is successful redirect to review view
+        if 'total_errors' not in report:
+            return redirect(f'/upload/{report["upload_id"]}')
 
+        return self.get(self, request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        response = super().get(self, request, *args, **kwargs)
+
+        if kwargs:
+            response.context_data |= kwargs
+
+        return response
 
 @login_required
 @permission_required(constant.PM_CHANGE_COLLECTWORK, raise_exception=True)
@@ -145,8 +162,8 @@ def upload_review(request, upload_id, **kwargs):
                'languages': CofkCollectLanguageOfWork.objects.filter(upload=upload),
                # Authors, addressees and mentioned link to People, here we're only
                # passing new people for review purposes
-               'people': CofkCollectPerson.objects.filter(upload=upload, iperson_id__isnull=True),
-               'places': CofkCollectLocation.objects.filter(upload=upload),
+               'people': CofkCollectPerson.objects.filter(upload=upload, union_iperson__isnull=True),
+               'places': CofkCollectLocation.objects.filter(upload=upload, union_location__isnull=True),
                'destinations': CofkCollectDestinationOfWork.objects.filter(upload=upload),
                'origins': CofkCollectOriginOfWork.objects.filter(upload=upload),
                'institutions': CofkCollectInstitution.objects.filter(upload=upload),

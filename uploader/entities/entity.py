@@ -12,6 +12,17 @@ from uploader.models import CofkCollectUpload
 log = logging.getLogger(__name__)
 
 
+def int_or_empty_string(value) -> bool:
+    try:
+        int(value)
+        return True
+    except ValueError:
+        if value == '':
+            return True
+
+    return False
+
+
 class CofkEntity:
     errors: dict[int, List[ValidationError]]
     other_errors: dict[int, List[dict]]
@@ -77,7 +88,7 @@ class CofkEntity:
                     self.add_error(f'Column {id_field} in {self.sheet.name} sheet is not a valid positive integer.')
                     # self.ids.append(entity[id_field])
                 elif isinstance(entity[id_field], str):
-                    for int_value in entity[id_field].split(SEPARATOR):
+                    for int_value in [i for i in entity[id_field].split(SEPARATOR) if i != '']:
                         try:
                             if int(int_value) < 0:
                                 self.add_error(f'Column {id_field} in {self.sheet.name}'
@@ -184,25 +195,14 @@ class CofkEntity:
         """
         Validates lists of either people or locations and returns a tuple of lists.
         """
-        if isinstance(entity_dict[ids_key], str):
-            try:
-                id_list = [int(i) for i in entity_dict[ids_key].split(SEPARATOR)]
-            except ValueError:
-                return [], []
-        else:
-            id_list = [entity_dict[ids_key]]
-
         name_list = entity_dict[names_key].split(SEPARATOR)
 
-        '''if len(id_list) < len(name_list):
-            self.add_error(f'Fewer ids in {ids_key} than names in {names_key}.')
-        elif len(id_list) > len(name_list):
-            self.add_error(f'Fewer names in {names_key} than ids in {ids_key}')'''
-
-        if '' in id_list:
-            self.add_error(f'Empty string in ids in {ids_key}')
-        if '' in name_list:
-            self.add_error(f'Empty string in names in {names_key}')
+        if ids_key not in entity_dict:
+            id_list = ['' * len(name_list)]
+        elif isinstance(entity_dict[ids_key], str):
+            id_list = [i for i in entity_dict[ids_key].split(SEPARATOR) if int_or_empty_string(i)]
+        else:
+            id_list = [str(entity_dict[ids_key])]
 
         return id_list, name_list
 

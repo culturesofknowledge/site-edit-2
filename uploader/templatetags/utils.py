@@ -1,5 +1,3 @@
-import logging
-
 from django import template
 from django.db.models import QuerySet
 
@@ -7,9 +5,6 @@ from core.models import CofkLookupDocumentType
 from uploader.models import CofkCollectWork
 
 register = template.Library()
-
-log = logging.getLogger(__name__)
-
 
 @register.filter
 def filter_by_work(queryset: QuerySet, work: CofkCollectWork):
@@ -24,11 +19,18 @@ def document_type(doc_type: str):
         values_list('document_type_desc', flat=True).filter(document_type_code=doc_type).first()
 
 
+def get_location(queryset, loc_id: int):
+    loc = [loc for loc in queryset if loc.location.location_id == loc_id][0]
+
+    if loc.location.union_location:
+        return loc.location.union_location
+
+    return loc.location
+
 @register.simple_tag(takes_context=True)
-def get_location(context, loc_id: int):
-    loc = [loc for loc in context['places'] if loc.location_id == loc_id][0]
+def get_origin(context, loc_id: int):
+    return get_location(context['origins'], loc_id)
 
-    if loc.union_location:
-        return loc.union_location
-
-    return loc
+@register.simple_tag(takes_context=True)
+def get_destination(context, loc_id: int):
+    return get_location(context['destinations'], loc_id)

@@ -1,79 +1,20 @@
 import logging
-import os
 import tempfile
 import zipfile
-from typing import Dict, List
 
-from django.test import TestCase
-from django.utils import timezone
 from openpyxl.workbook import Workbook
 
-from core.models import Iso639LanguageCode
-from institution.models import CofkUnionInstitution
-from location.models import CofkUnionLocation
-from person.models import  CofkUnionPerson
 from uploader.constants import MANDATORY_SHEETS
-from uploader.models import CofkCollectUpload, CofkCollectStatus
+from uploader.models import CofkCollectWork, CofkCollectAuthorOfWork, \
+    CofkCollectAddresseeOfWork, CofkCollectOriginOfWork, CofkCollectDestinationOfWork, CofkCollectManifestation
 from uploader.spreadsheet import CofkUploadExcelFile
+from uploader.test.test_utils import UploadIncludedTestCase, spreadsheet_data
 from uploader.validation import CofkExcelFileError
 
 log = logging.getLogger(__name__)
 
 
-class TestFileUpload(TestCase):
-
-    def create_excel_file(self, data: Dict[str, List[List]] = None) -> str:
-        wb = Workbook()
-        tf = tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False)
-
-        for sheet_name in MANDATORY_SHEETS.keys():
-            ws = wb.create_sheet(sheet_name)
-            column_count = len(MANDATORY_SHEETS[sheet_name]['columns'])
-            ws.append(MANDATORY_SHEETS[sheet_name]['columns'])
-            ws.append(['-'] * column_count)
-
-            if data and sheet_name in data:
-                for row in data[sheet_name]:
-                    ws.append(row)
-
-        wb.save(tf.name)
-
-        self.tmp_files.append(tf.name)
-
-        return tf.name
-
-    def setUp(self) -> None:
-        CofkCollectStatus.objects.create(status_id=1,
-                                         status_desc='Awaiting review')
-
-        CofkUnionLocation(pk=782).save()
-
-        for lang in ['eng', 'fra']:
-            Iso639LanguageCode(code_639_3=lang).save()
-
-        CofkUnionInstitution(institution_id=1,
-                             institution_name='Bodleian',
-                             institution_city='Oxford').save()
-
-        for person in [{'person_id': 'a', 'iperson_id': 15257, 'foaf_name': 'Newton'},
-                       {'person_id': 'b', 'iperson_id': 885, 'foaf_name': 'Baskerville'},
-                       {'person_id': 'c', 'iperson_id': 22859, 'foaf_name': 'Wren'}]:
-            CofkUnionPerson(**person).save()
-
-        CofkUnionLocation(location_id=400285).save()
-
-        self.new_upload = CofkCollectUpload()
-        self.new_upload.upload_status_id = 1
-        self.new_upload.uploader_email = 'test@user.com'
-        self.new_upload.upload_timestamp = timezone.now()
-        self.new_upload.save()
-        self.tmp_files = []
-
-    def tearDown(self) -> None:
-        # Delete all tmp files
-        for f in self.tmp_files:
-            os.unlink(f)
-        
+class TestFileUpload(UploadIncludedTestCase):
     def test_create_upload(self):
         self.assertEqual(self.new_upload.upload_status.status_desc, 'Awaiting review')
         self.assertEqual(self.new_upload.total_works, 0)
@@ -137,24 +78,19 @@ class TestFileUpload(TestCase):
         """
         This test should run successfully as all required data is present and valid.
         """
-        data = {'Work': [[1,"test","J",1660,1,1,1660,1,2,1,1,1,1,"test","newton",15257,"test",1,1,"test","Wren",
-                           22859,"test",1,1,"test","Burford",400285,"test",1,1,"Carisbrooke",782,"test",1,1,"test",
-                           "test","fra;eng",'','','','','','',"test","test","test","Baskerville",885,"test",
-                           "test","EMLO","http://emlo.bodleian.ox.ac.uk/","Early Modern Letters Online test"]],
-                'People': [["Baskerville", 885],
-                           ["newton", 15257],
-                           ["Wren", 22859]],
-                'Places': [['Burford', 400285],
-                           ['Carisbrooke', 782]],
-                'Manifestation': [[1, 1, "ALS", 1, "Bodleian", "test", "test",'','','','',''],
-                                  [2, 1,'','','','','', "P", "test", "test",'','']],
-                'Repositories': [['Bodleian', 1]]}
-        filename = self.create_excel_file(data)
+        filename = self.create_excel_file(spreadsheet_data)
 
         cuef = CofkUploadExcelFile(self.new_upload, filename)
 
         # This is a valid upload and should be without errors
         self.assertEqual(cuef.errors, {})
+        self.assertEqual(CofkCollectWork.objects.count(), 1)
+        self.assertEqual(CofkCollectAuthorOfWork.objects.count(), 1)
+        self.assertEqual(CofkCollectAddresseeOfWork.objects.count(), 1)
+        self.assertEqual(CofkCollectOriginOfWork.objects.count(), 1)
+        self.assertEqual(CofkCollectDestinationOfWork.objects.count(), 1)
+        self.assertEqual(CofkCollectManifestation.objects.count(), 2)
+
 
     def test_nonsense(self):
         """
@@ -180,8 +116,8 @@ class TestFileUpload(TestCase):
         msg_4 = 'There is no repository with the id 2 in the Union catalogue.'
         cuef = CofkUploadExcelFile(self.new_upload, filename)
 
-        self.assertEqual(cuef.errors['work']['total'], 7)
+        self.assertEqual(cuef.errors['work']['total'], 6)
         self.assertIn(msg, cuef.errors['work']['errors'][0]['errors'])
         self.assertIn(msg_2, cuef.errors['work']['errors'][0]['errors'])
-        self.assertIn(msg_3, cuef.errors['work']['errors'][0]['errors'])
+        self.assertIn(msg_3, cuef.errors['locations']['errors'][0]['errors'])
         self.assertIn(msg_4, cuef.errors['manifestations']['errors'][0]['errors'])

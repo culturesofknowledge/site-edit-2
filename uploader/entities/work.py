@@ -53,22 +53,22 @@ class CofkWork(CofkEntity):
             w = CofkCollectWork(**{k: work_dict[k] for k in work_dict if k in CofkCollectWork.__dict__.keys()})
             self.works.append(w)
 
-            if 'author_ids' in work_dict and 'author_names' in work_dict:
+            if 'author_names' in work_dict:
                 self.process_people(w, self.authors, CofkCollectAuthorOfWork, work_dict, 'author_ids', 'author_names',
                                     'author_id')
 
-            if 'emlo_mention_id' in work_dict and 'mention_id' in work_dict:
+            if 'mention_id' in work_dict:
                 self.process_people(w, self.mentioned, CofkCollectPersonMentionedInWork, work_dict, 'emlo_mention_id',
                                     'mention_id', 'mention_id')
-            if 'addressee_ids' in work_dict and 'addressee_names' in work_dict:
+            if 'addressee_names' in work_dict:
                 self.process_people(w, self.addressees, CofkCollectAddresseeOfWork, work_dict, 'addressee_ids',
                                     'addressee_names', 'addressee_id')
 
-            if 'origin_id' in work_dict and 'origin_name' in work_dict:
+            if 'origin_name' in work_dict:
                 self.process_locations(w, self.origins, CofkCollectOriginOfWork, work_dict, 'origin_id',
                                        'origin_name', 'origin_id')
 
-            if 'destination_id' in work_dict and 'destination_name' in work_dict:
+            if 'destination_name' in work_dict:
                 self.process_locations(w, self.destinations, CofkCollectDestinationOfWork, work_dict, 'destination_id',
                                        'destination_name', 'destination_id')
 
@@ -87,15 +87,29 @@ class CofkWork(CofkEntity):
         upload.total_works = len(self.works)
         upload.save()
 
-    def get_person(self, person_id: str) -> CofkCollectPerson:
-        if person := [p for p in self.people if
-                      p.union_iperson is not None and p.union_iperson.iperson_id == int(person_id)]:
+    def get_person(self, person_id: str, person_name: str=None) -> CofkCollectPerson:
+        if person_id == '':
+            people = [p for p in self.people if p.primary_name == person_name]
+
+            if len(people) == 1:
+                return people[0]
+            elif len(people) > 1:
+                self.add_error('Ambiguity in submitted people.')
+        elif person := [p for p in self.people if
+                      p.union_iperson is not None and p.union_iperson.iperson_id == person_id]:
             return person[0]
-        elif person := [p for p in self.people if p.iperson_id == int(person_id)]:
+        elif person := [p for p in self.people if p.iperson_id == person_id]:
             return person[0]
 
-    def get_location(self, location_id: str) -> CofkCollectLocation:
-        if location := [l for l in self.locations if
+    def get_location(self, location_id: str, location_name: str=None) -> CofkCollectLocation:
+        if location_id == '':
+            locations = [l for l in self.locations if l.location_name == location_name]
+
+            if len(locations) == 1:
+                return locations[0]
+            elif len(locations) > 1:
+                self.add_error('Ambiguity in submitted locations.')
+        elif location := [l for l in self.locations if
                         l.union_location is not None and l.union_location.location_id == int(location_id)]:
             return location[0]
         elif location := [l for l in self.locations if l.location_id == int(location_id)]:
@@ -106,34 +120,37 @@ class CofkWork(CofkEntity):
         id_list, name_list = self.clean_lists(work_dict, ids, names)
 
         for _id, name in zip(id_list, name_list):
-            if person := self.get_person(_id):
-                if person.union_iperson:
-                    related_person = people_model(upload=self.upload, iwork=work, iperson=person)
-                    setattr(related_person, id_type, self.get_new_id(id_type))
-                    people_list.append(related_person)
-                else:
-                    self.add_error(f'There is no person with the id {_id} in the Union catalogue.')
+            if person := self.get_person(_id, name):
+                related_person = people_model(upload=self.upload, iwork=work, iperson=person)
+                setattr(related_person, id_type, self.get_new_id(id_type))
+                people_list.append(related_person)
 
             else:
                 # Person not present in people sheet
-                self.add_error(f'Person with the id {_id} was listed in the {self.sheet.name} sheet but is'
-                               f' not present in the People sheet.')
+                if _id != '':
+                    self.add_error(f'Person with the id {_id} was listed in the {self.sheet.name} sheet but is'
+                                   f' not present in the People sheet.')
+                else:
+                    self.add_error(f'A new person with the name "{name}" was listed in the {self.sheet.name} sheet'
+                                   f' but is not present in the People sheet.')
 
     def process_locations(self, work: CofkCollectWork, location_list: List[Any], location_model: Type[models.Model],
                           work_dict: dict, ids: str, names: str, id_type: str):
         id_list, name_list = self.clean_lists(work_dict, ids, names)
 
         for _id, name in zip(id_list, name_list):
-            if location := self.get_location(_id):
-                if location.union_location:
-                    related_location = location_model(upload=self.upload, iwork=work, location=location)
-                    setattr(related_location, id_type, self.get_new_id(id_type))
-                    location_list.append(related_location)
-                else:
-                    self.add_error(f'There is no location with the id {_id} in the Union catalogue.')
+            if location := self.get_location(_id, name):
+                related_location = location_model(upload=self.upload, iwork=work, location=location)
+                setattr(related_location, id_type, self.get_new_id(id_type))
+                location_list.append(related_location)
             else:
-                self.add_error(f'Location with the id {_id} was listed in the {self.sheet.name} sheet but is'
-                               f' not present in the Places sheet.')
+                # Location not present in places sheet
+                if _id != '':
+                    self.add_error(f'Location with the id {_id} was listed in the {self.sheet.name} sheet but is'
+                                   f' not present in the Places sheet.')
+                else:
+                    self.add_error(f'A new location with the name "{name}" was listed in the {self.sheet.name} sheet'
+                                   f' but is not present in the Places sheet.')
 
     def process_languages(self, work_dict: dict, work: CofkCollectWork):
         work_languages = work_dict['language_id'].split(';')
