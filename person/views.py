@@ -372,23 +372,6 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
         return simplified_query
 
-    def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q],
-                                   sort_by=None):
-        queryset = model_class.objects
-
-        annotate = {
-            'sent': create_sql_count_work_by_person(AuthorRelationChoices.values),
-            'recd': create_sql_count_work_by_person(AddresseeRelationChoices.values),
-            'all_works': create_sql_count_work_by_person(
-                AuthorRelationChoices.values + AddresseeRelationChoices.values),
-            'mentioned': create_sql_count_work_by_person([REL_TYPE_MENTION]),
-        }
-
-        queryset = query_utils.update_queryset(queryset, model_class, queries,
-                                               annotate=annotate, sort_by=sort_by)
-
-        return queryset
-
     def get_queryset(self):
         if not self.request_data:
             return CofkUnionPerson.objects.none()
@@ -410,7 +393,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
                 search_fields_fn_maps=search_field_fn_maps,
             )
         )
-        return self.create_queryset_by_queries(DisplayablePerson, queries, sort_by=sort_by)
+        return create_queryset_by_queries(DisplayablePerson, queries, sort_by=sort_by)
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
@@ -576,3 +559,20 @@ def lookup_other_details(lookup_fn, f, v):
         ), v)
 
     return q
+
+
+def create_queryset_by_queries(model_class: Type[models.Model], queries: Iterable[Q] = None, sort_by=None):
+    queryset = model_class.objects
+
+    annotate = {
+        'sent': create_sql_count_work_by_person(AuthorRelationChoices.values),
+        'recd': create_sql_count_work_by_person(AddresseeRelationChoices.values),
+        'all_works': create_sql_count_work_by_person(
+            AuthorRelationChoices.values + AddresseeRelationChoices.values),
+        'mentioned': create_sql_count_work_by_person([REL_TYPE_MENTION]),
+    }
+
+    queryset = query_utils.update_queryset(queryset, model_class, queries,
+                                           annotate=annotate, sort_by=sort_by)
+
+    return queryset

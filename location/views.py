@@ -35,6 +35,20 @@ log = logging.getLogger(__name__)
 FormOrFormSet = Union[BaseForm, BaseFormSet]
 
 
+def create_queryset_by_queries(model_class: Type[models.Model], queries: Iterable[Q],
+                               sort_by=None):
+    queryset = model_class.objects
+    annotate = {
+        'sent': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_FROM]),
+        'recd': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_TO]),
+        'all_works': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
+    }
+
+    queryset = query_utils.update_queryset(queryset, model_class, queries, annotate=annotate,
+                                           sort_by=sort_by)
+    return queryset
+
+
 class LocationInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitFormViewTemplate):
     permission_required = constant.PM_CHANGE_LOCATION
 
@@ -218,19 +232,6 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
             ('change_timestamp', 'Last edit',),
         ]
 
-    def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q],
-                                   sort_by=None):
-        queryset = model_class.objects
-        annotate = {
-            'sent': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_FROM]),
-            'recd': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_TO]),
-            'all_works': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
-        }
-
-        queryset = query_utils.update_queryset(queryset, model_class, queries, annotate=annotate,
-                                               sort_by=sort_by)
-        return queryset
-
     def get_queryset(self):
         if not self.request_data:
             return CofkUnionLocation.objects.none()
@@ -249,7 +250,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
             query_utils.create_queries_by_lookup_field(request_data, self.search_fields, search_fields_maps)
         )
 
-        return self.create_queryset_by_queries(CofkUnionLocation, queries, sort_by=sort_by)
+        return create_queryset_by_queries(CofkUnionLocation, queries, sort_by=sort_by)
 
     @property
     def entity(self) -> str:

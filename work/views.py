@@ -1063,29 +1063,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                     'flags': lookup_fn_flags,
                 })
         )
-        return self.create_queryset_by_queries(DisplayableWork, queries, sort_by=sort_by)
-
-    def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q],
-                                   sort_by=None):
-        queryset = model_class.objects.filter()
-        queryset = query_utils.update_queryset(queryset, model_class, queries,
-                                               sort_by=sort_by)
-        queryset = queryset.prefetch_related('cofkworkpersonmap_set__person',
-                                             'cofkworklocationmap_set__location',
-                                             'cofkworkresourcemap_set__resource',
-                                             'cofkworkcommentmap_set__comment',
-                                             'work_to_set__work_from',
-                                             'work_from_set__work_to',
-                                             'language_set__language_code',
-                                             'subjects',
-                                             'manif_set',
-                                             'manif_set__images',
-                                             'manif_set__cofkmanifinstmap_set__inst',
-                                             'manif_set__manif_from_set__manif_to',
-                                             'manif_set__manif_to_set__manif_from',
-                                             ).select_related('original_catalogue')
-
-        return queryset
+        return create_queryset_by_queries(DisplayableWork, queries, sort_by=sort_by)
 
     @property
     def simplified_query(self) -> list[str]:
@@ -1259,3 +1237,26 @@ class WorkCsvHeaderValues(HeaderValues):
             obj.change_user,
         )
         return values
+
+
+def create_queryset_by_queries(model_class: Type[models.Model], queries: Iterable[Q] = None,
+                               sort_by=None):
+    queryset = model_class.objects.filter()
+    queryset = query_utils.update_queryset(queryset, model_class, queries,
+                                           sort_by=sort_by)
+    queryset = queryset.prefetch_related('cofkworkpersonmap_set__person',
+                                         'cofkworklocationmap_set__location',
+                                         'cofkworkresourcemap_set__resource',
+                                         'cofkworkcommentmap_set__comment',
+                                         'work_to_set__work_from',
+                                         'work_from_set__work_to',
+                                         'language_set__language_code',
+                                         'subjects',
+                                         'manif_set',
+                                         'manif_set__images',
+                                         'manif_set__cofkmanifinstmap_set__inst',
+                                         'manif_set__manif_from_set__manif_to',
+                                         'manif_set__manif_to_set__manif_from',
+                                         ).select_related('original_catalogue')
+
+    return queryset

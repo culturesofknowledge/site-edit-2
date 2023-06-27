@@ -2,6 +2,7 @@ import datetime
 import logging
 from datetime import date
 
+from django.db.models import Q
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
@@ -318,3 +319,19 @@ def flags(work: CofkUnionWork):
             tooltip.append(f'(Destination as marked: {work.destination_as_marked})')
 
     return ', '.join(tooltip)
+
+
+def q_visible_works(prefix=None):
+    """
+    ( w.work_to_be_deleted = 1 "
+     . " or w.original_catalogue not in (SELECT catalogue_code FROM cofk_lookup_catalogue WHERE publish_status = 1)"
+     . " or w.date_of_work_std = '1900-01-01' ))
+    """
+    if prefix:
+        prefix = prefix + '__'
+    else:
+        prefix = ''
+
+    return (Q(**{prefix + 'work_to_be_deleted': 1})
+            | Q(**{prefix + 'original_catalogue__publish_status': 0})
+            | Q(**{prefix + 'date_of_work_std': '1900-01-01'}))
