@@ -119,6 +119,11 @@ class UploadView(ListView):
     form = CofkCollectUploadForm
     paginate_by = 250
 
+    def get_queryset(self, **kwargs):
+        qs = super().get_queryset(**kwargs)
+        # Filter so only uploads Awaiting review or Partly reviewed are displayed
+        return qs.filter(upload_status_id__in=[1, 2])
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
