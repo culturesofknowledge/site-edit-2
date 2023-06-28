@@ -16,6 +16,7 @@ from siteedit2.utils.log_utils import log_no_url
 from work.models import CofkUnionWork
 
 log = logging.getLogger(__name__)
+HIDDEN_DATE_STD = '1900-01-01'
 
 
 def get_recref_display_name(work: CofkUnionWork):
@@ -321,7 +322,7 @@ def flags(work: CofkUnionWork):
     return ', '.join(tooltip)
 
 
-def q_visible_works(prefix=None):
+def q_hidden_works(prefix=None):
     """
     ( w.work_to_be_deleted = 1 "
      . " or w.original_catalogue not in (SELECT catalogue_code FROM cofk_lookup_catalogue WHERE publish_status = 1)"
@@ -334,4 +335,13 @@ def q_visible_works(prefix=None):
 
     return (Q(**{prefix + 'work_to_be_deleted': 1})
             | Q(**{prefix + 'original_catalogue__publish_status': 0})
-            | Q(**{prefix + 'date_of_work_std': '1900-01-01'}))
+            | Q(**{prefix + 'date_of_work_std': HIDDEN_DATE_STD}))
+
+
+def is_hidden_work(work: CofkUnionWork):
+    if work is None:
+        return True
+    return not (work.work_to_be_deleted or
+                work.original_catalogue is None or
+                not work.original_catalogue.publish_status or
+                work.date_of_work_std == HIDDEN_DATE_STD)

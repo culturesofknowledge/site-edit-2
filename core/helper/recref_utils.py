@@ -5,7 +5,7 @@ from typing import Callable, Any, Optional
 from typing import Type, Iterable, TYPE_CHECKING
 
 from django.core.cache import cache
-from django.db.models import Model
+from django.db.models import Model, Q
 from django.db.models.fields.related_descriptors import ForwardManyToOneDescriptor
 from django.forms import BaseForm
 
@@ -174,13 +174,17 @@ def find_recref_list_by_bounded_data(bounded_data, parent_model) -> Iterable['Re
     return find_recref_list(bounded_data.recref_class, parent_model, parent_field=parent_field)
 
 
-def create_rel_type_filter_kwargs(rel_type: str | Iterable) -> dict:
-    filter_kwargs = {}
+def create_q_rel_type(rel_type: str | Iterable, prefix=None) -> Q:
     if isinstance(rel_type, str):
-        filter_kwargs['relationship_type'] = rel_type
+        name = f'relationship_type'
     else:
-        filter_kwargs['relationship_type__in'] = rel_type
-    return filter_kwargs
+        name = f'relationship_type__in'
+        rel_type = set(rel_type)
+
+    if prefix:
+        name = f'{prefix}__{name}'
+
+    return Q(**{name: rel_type})
 
 
 def prefetch_filter_rel_type(recref_set, rel_types: str | Iterable[str]) -> Iterable:

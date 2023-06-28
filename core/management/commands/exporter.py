@@ -15,7 +15,7 @@ import location.views
 import person.views
 from core import constant
 from core.constant import REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE_MENTION
-from core.helper import query_utils
+from core.helper import query_utils, recref_utils
 from core.helper.view_components import HeaderValues, DownloadCsvHandler
 from core.models import CofkUnionRelationshipType, CofkUnionResource, CofkUnionComment, CofkUnionImage
 from institution.models import CofkUnionInstitution
@@ -44,6 +44,10 @@ def obj_to_values_by_convert_map(obj, header_list, convert_map: dict) -> Iterabl
     for name in header_list:
         val_fn = convert_map.get(name, lambda o: getattr(o, name))
         yield val_fn(obj)
+
+
+def always_published(*args, **kwargs):
+    return 1
 
 
 class ColNamedHeaderValues(HeaderValues):
@@ -104,8 +108,8 @@ class InstFrontendCsv(ColNamedHeaderValues):
         self.inst_document_count = self.count_inst_work()
 
     def count_inst_work(self):
-        q = work_utils.q_visible_works(prefix='cofkmanifinstmap__manif__work')
-        q &= Q(cofkmanifinstmap__relationship_type=constant.REL_TYPE_STORED_IN)
+        q = work_utils.q_hidden_works(prefix='cofkmanifinstmap__manif__work')
+        q &= recref_utils.create_q_rel_type(constant.REL_TYPE_STORED_IN, prefix='cofkmanifinstmap')
         queryset = (CofkUnionInstitution.objects.filter(q)
                     .values('institution_id', 'cofkmanifinstmap__manif__work_id')
                     .annotate(Count('cofkmanifinstmap__manif__work_id')))
@@ -137,7 +141,7 @@ class InstFrontendCsv(ColNamedHeaderValues):
     def obj_to_values(self, obj) -> Iterable:
         convert_map = {
             'document_count': lambda o: self.inst_document_count.get(o.institution_id, 0),
-            'published': lambda o: 1  # KTODO tobe implement
+            'published': always_published,
         }
         return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
 
@@ -171,7 +175,7 @@ class LocationFrontendCsv(ColNamedHeaderValues):
 
     def obj_to_values(self, obj) -> Iterable:
         convert_map = {
-            'published': lambda o: 1  # KTODO tobe implement
+            'published': always_published,
         }
         return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
 
@@ -245,7 +249,7 @@ class ManifFrontendCsv(ColNamedHeaderValues):
 
     def obj_to_values(self, obj) -> Iterable:
         convert_map = {
-            'published': lambda o: 1  # KTODO tobe implement
+            'published': lambda o: not work_utils.is_hidden_work(o.work),
         }
         return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
 
@@ -314,7 +318,7 @@ class PersonFrontendCsv(HeaderValues):
             'sent_count': lambda o: getattr(o, 'sent'),
             'recd_count': lambda o: getattr(o, 'recd'),
             'mentioned_count': lambda o: getattr(o, 'mentioned'),
-            'published': lambda o: 1  # KTODO what is published and how to define published?
+            'published': always_published
         }
         return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
 
@@ -334,7 +338,7 @@ class RelTypeFrontendCsv(ColNamedHeaderValues):
 
     def obj_to_values(self, obj) -> Iterable:
         convert_map = {
-            'published': lambda o: 1  # KTODO tobe implement
+            'published': always_published,
         }
         return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
 
@@ -417,7 +421,7 @@ class WorkFrontendCsv(ColNamedHeaderValues):
 
     def obj_to_values(self, obj) -> Iterable:
         convert_map = {
-            'published': lambda o: 1  # KTODO tobe implement
+            'published': lambda o: not work_utils.is_hidden_work(o),
         }
         return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
 
@@ -437,12 +441,6 @@ class WorkFrontendCsv(ColNamedHeaderValues):
 """
 
 
-def query_inst():
-    q = work_utils.q_visible_works(prefix='cofkmanifinstmap__manif__work')
-    q &= Q(cofkmanifinstmap__relationship_type=constant.REL_TYPE_STORED_IN)
-    CofkUnionInstitution.objects.filter(q).all()
-
-
 def create_location_queryset():
     queryset = CofkUnionLocation.objects
     annotate = {
@@ -458,12 +456,6 @@ def export_all(output_dir: str = '.'):
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # ii = CofkUnionInstitution()
-    # ii.cofkmanifinstmap_set.filter()
-    #
-    # w = CofkUnionWork()
-    # w.language_set
-
     settings = [
         # (lambda: CofkUnionComment.objects.iterator(),
         #  CommentFrontendCsv, CofkUnionComment),
@@ -473,8 +465,8 @@ def export_all(output_dir: str = '.'):
         #  InstFrontendCsv, CofkUnionInstitution),
         # (lambda: create_location_queryset().iterator(),
         #  LocationFrontendCsv, CofkUnionLocation),
-        # (lambda: CofkUnionManifestation.objects.iterator(),
-        #  ManifFrontendCsv, CofkUnionManifestation),
+        (lambda: CofkUnionManifestation.objects.iterator(),
+         ManifFrontendCsv, CofkUnionManifestation),
         # (lambda: person.views.create_queryset_by_queries(CofkUnionPerson, ).iterator(),
         #  PersonFrontendCsv, CofkUnionPerson),
         # (lambda: CofkUnionRelationshipType.objects.iterator(),
@@ -482,14 +474,14 @@ def export_all(output_dir: str = '.'):
         # (lambda: CofkUnionResource.objects.iterator(),
         #  ResourceFrontendCsv, CofkUnionResource),
         # (lambda: work.views.create_queryset_by_queries(DisplayableWork, ).all(),
-         (lambda: DisplayableWork.objects.iterator(),
-          WorkFrontendCsv, CofkUnionWork),
+        # (lambda: DisplayableWork.objects.iterator(),
+        #  WorkFrontendCsv, CofkUnionWork),
     ]
     for objects_factory, target_csv_type_factory, model_class in settings:
         csv_path = output_dir / f'{model_class._meta.db_table}.csv'
         print(f'exporting to {csv_path}')
         # d = itertools.islice(objects_factory(), 10)
-        d=objects_factory()
+        d = objects_factory()
         DownloadCsvHandler(target_csv_type_factory()).create_csv_file(
             d,
             csv_path)
