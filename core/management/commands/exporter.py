@@ -50,6 +50,10 @@ def always_published(*args, **kwargs):
     return 1
 
 
+def is_published_work(w) -> int:
+    return int(not work_utils.is_hidden_work(w))
+
+
 class ColNamedHeaderValues(HeaderValues):
     def obj_to_values(self, obj) -> Iterable:
         return get_values_by_names(obj, self.get_header_list())
@@ -249,7 +253,7 @@ class ManifFrontendCsv(ColNamedHeaderValues):
 
     def obj_to_values(self, obj) -> Iterable:
         convert_map = {
-            'published': lambda o: not work_utils.is_hidden_work(o.work),
+            'published': lambda o: is_published_work(o.work),
         }
         return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
 
@@ -421,7 +425,7 @@ class WorkFrontendCsv(ColNamedHeaderValues):
 
     def obj_to_values(self, obj) -> Iterable:
         convert_map = {
-            'published': lambda o: not work_utils.is_hidden_work(o),
+            'published': is_published_work,
         }
         return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
 

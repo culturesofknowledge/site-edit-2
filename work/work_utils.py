@@ -341,7 +341,7 @@ def q_hidden_works(prefix=None):
 def is_hidden_work(work: CofkUnionWork):
     if work is None:
         return True
-    return not (work.work_to_be_deleted or
-                work.original_catalogue is None or
-                not work.original_catalogue.publish_status or
-                work.date_of_work_std == HIDDEN_DATE_STD)
+    return (work.work_to_be_deleted or
+            work.original_catalogue is None or
+            not work.original_catalogue.publish_status or
+            work.date_of_work_std == HIDDEN_DATE_STD)
