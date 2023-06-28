@@ -6,6 +6,13 @@ from manifestation.models import CofkUnionManifestation
 
 
 class CofkCollectStatus(models.Model):
+    '''
+    1    Awaiting review
+    2    Partly reviewed
+    3    Review complete
+    4    Accepted and saved into main database
+    5    Rejected
+    ''' 
     status_id = models.AutoField(primary_key=True)
     status_desc = models.CharField(max_length=100)
     editable = models.IntegerField(null=False, default=1)  # TODO schema changed for current system
