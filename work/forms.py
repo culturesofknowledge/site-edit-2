@@ -8,7 +8,7 @@ from django.forms import CharField
 from core import constant
 from core.constant import DEFAULT_EMPTY_DATE_STR, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO
 from core.form_label_maps import field_label_map
-from core.helper import form_utils
+from core.helper import form_utils, date_utils
 from core.helper import widgets_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter, TargetPersonRecrefAdapter
 from core.helper.form_utils import TargetPersonMRRForm, LocationRecrefField, InstRecrefField, BasicSearchFieldset, \
@@ -20,13 +20,6 @@ from work.models import CofkUnionWork, CofkWorkPersonMap
 
 log = logging.getLogger(__name__)
 
-original_calendar_choices = [
-    ('', 'Unknown'),
-    ('G', 'Gregorian'),
-    ('JM', 'Julian (year starting 25th Mar)'),
-    ('JJ', 'Julian (year starting 1st Jan)'),
-    ('O', 'Other'),
-]
 manif_type_choices = [
     ('ALS', 'Letter'),
     ('D', 'Draft'),
@@ -93,7 +86,7 @@ class DatesForm(forms.ModelForm):
     date_of_work_std = create_auto_date_field()
     date_of_work_std_gregorian = create_auto_date_field()
     original_calendar = CharField(required=False,
-                                  widget=forms.RadioSelect(choices=original_calendar_choices))
+                                  widget=forms.RadioSelect(choices=date_utils.calendar_choices))
 
     class Meta:
         model = CofkUnionWork
@@ -184,7 +177,7 @@ class ManifForm(forms.ModelForm):
     manifestation_creation_date_gregorian = create_auto_date_field()
 
     manifestation_creation_calendar = CharField(required=False,
-                                                widget=forms.RadioSelect(choices=original_calendar_choices))
+                                                widget=forms.RadioSelect(choices=date_utils.calendar_choices))
 
     date_of_receipt_as_marked = forms.CharField(required=False)
     manifestation_receipt_date_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
@@ -202,27 +195,10 @@ class ManifForm(forms.ModelForm):
     manifestation_receipt_date_gregorian = create_auto_date_field()
 
     manifestation_receipt_calendar = CharField(required=False,
-                                               widget=forms.RadioSelect(choices=original_calendar_choices))
+                                               widget=forms.RadioSelect(choices=date_utils.calendar_choices))
 
     non_letter_enclosures = form_utils.CommonTextareaField()
     accompaniments = form_utils.CommonTextareaField()
-
-    # lang_note = forms.MultipleChoiceField(required=False)
-    # lang_name = forms.MultipleChoiceField(required=False)
-
-    # date_of_work_as_marked = forms.CharField(required=False)
-    # date_of_work_std_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    # date_of_work_std_year = form_utils.create_year_field()
-    # date_of_work_std_month = form_utils.create_month_field()
-    # date_of_work_std_day = form_utils.create_day_field()
-    # date_of_work_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    # date_of_work_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    # date_of_work_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    #
-    # date_of_work_std = create_auto_date_field()
-    # date_of_work_std_gregorian = create_auto_date_field()
-    # original_calendar = CharField(required=False,
-    #                               widget=forms.RadioSelect(choices=original_calendar_choices))
 
     opened = form_utils.CharSelectField(choices=manif_letter_opened_choices)
     paper_size = forms.CharField(required=False)
@@ -471,19 +447,19 @@ del_help_text = "Yes or No. If 'Yes', the record is marked for deletion."
 id_help_text = 'The unique ID for the record within the current CofK database.'
 change_help_text = 'Username of the person who last changed the record.'
 
-work_to_be_deleted_choices =[(0, 'No'), (1, 'Yes')]
+work_to_be_deleted_choices = [(0, 'No'), (1, 'Yes')]
+
 
 class CompactSearchFieldset(BasicSearchFieldset):
     title = 'Compact Search'
     template_name = 'work/component/work_compact_search_fieldset.html'
 
-    institution_names = CofkUnionInstitution.objects\
+    institution_names = CofkUnionInstitution.objects \
         .order_by('institution_name').values_list('institution_name', flat=True).distinct()
     manif_type = [t[1] for t in manif_type_choices]
     subject_names = CofkUnionSubject.objects.order_by('subject_desc').values_list('subject_desc', flat=True).distinct()
-    catalog_names = CofkLookupCatalogue.objects\
+    catalog_names = CofkLookupCatalogue.objects \
         .order_by('catalogue_name').values_list('catalogue_name', flat=True).distinct()
-
 
     # Fields shared with both search forms
     description = SearchCharField(help_text=description_help_text)
@@ -502,15 +478,18 @@ class CompactSearchFieldset(BasicSearchFieldset):
     date_of_work_as_marked_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     date_of_work_std_year = SearchIntField(min_value=1000, max_value=1850,
-                                           label=field_label_map['work']['date_of_work_std_year'], help_text=year_help_text)
+                                           label=field_label_map['work']['date_of_work_std_year'],
+                                           help_text=year_help_text)
     date_of_work_std_year_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
     date_of_work_std_month = SearchIntField(min_value=1, max_value=12,
-                                            label=field_label_map['work']['date_of_work_std_month'], help_text=month_help_text)
+                                            label=field_label_map['work']['date_of_work_std_month'],
+                                            help_text=month_help_text)
     date_of_work_std_month_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
     date_of_work_std_day = SearchIntField(min_value=1, max_value=31,
-                                          label=field_label_map['work']['date_of_work_std_day'], help_text=day_help_text)
+                                          label=field_label_map['work']['date_of_work_std_day'],
+                                          help_text=day_help_text)
     date_of_work_std_day_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
     date_of_work_std_from = forms.DateField(required=False,
@@ -528,10 +507,12 @@ class CompactSearchFieldset(BasicSearchFieldset):
     addressees_searchable = SearchCharField(label=field_label_map['work']['addressees_searchable'])
     addressees_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    places_from_searchable = SearchCharField(label=field_label_map['work']['places_from_searchable'], help_text=places_from_searchable)
+    places_from_searchable = SearchCharField(label=field_label_map['work']['places_from_searchable'],
+                                             help_text=places_from_searchable)
     places_from_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    places_to_searchable = SearchCharField(label=field_label_map['work']['places_to_searchable'], help_text=places_to_searchable)
+    places_to_searchable = SearchCharField(label=field_label_map['work']['places_to_searchable'],
+                                           help_text=places_to_searchable)
     places_to_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     flags = SearchCharField(help_text=flags_help_text)
@@ -540,7 +521,8 @@ class CompactSearchFieldset(BasicSearchFieldset):
     images = SearchCharField(help_text=img_help_text)
     images_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
-    manifestations_searchable = SearchCharField(label=field_label_map['work']['manifestations_searchable'], help_text=manif_help_text)
+    manifestations_searchable = SearchCharField(label=field_label_map['work']['manifestations_searchable'],
+                                                help_text=manif_help_text)
     manifestations_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     related_resources = SearchCharField()

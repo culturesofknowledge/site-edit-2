@@ -8,23 +8,15 @@ from django.forms.utils import ErrorList
 
 from core import constant
 from core.form_label_maps import field_label_map
-from core.helper import form_utils
+from core.helper import form_utils, date_utils
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.form_utils import TargetPersonMRRForm, LocationRecrefField, BasicSearchFieldset, SearchCharField, \
     SearchIntField
+from core.models import CofkUnionOrgType, CofkUnionRoleCategory
 from person.models import CofkUnionPerson
 from person.recref_adapter import ActivePersonRecrefAdapter
-from core.models import CofkUnionOrgType, CofkUnionRoleCategory
 
 log = logging.getLogger(__name__)
-
-calendar_date_choices = [
-    ("", 'Unknown'),
-    ("G", 'Gregorian'),
-    ("JM", 'Julian (year starting 25th Mar)'),
-    ("JJ", 'Julian (year starting 1st Jan)'),
-    ("O", 'Other'),
-]
 
 person_gender_choices = [
     ('M', 'Male'),
@@ -123,7 +115,7 @@ class PersonForm(ModelForm):
     date_of_birth_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_birth_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_birth_calendar = forms.CharField(required=False,
-                                             widget=forms.RadioSelect(choices=calendar_date_choices, ))
+                                             widget=forms.RadioSelect(choices=date_utils.calendar_choices, ))
 
     date_of_death_year = form_utils.create_year_field()
     date_of_death_month = form_utils.create_month_field()
@@ -136,7 +128,7 @@ class PersonForm(ModelForm):
     date_of_death_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_death_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_death_calendar = forms.CharField(required=False,
-                                             widget=forms.RadioSelect(choices=calendar_date_choices, ))
+                                             widget=forms.RadioSelect(choices=date_utils.calendar_choices, ))
 
     flourished_year = form_utils.create_year_field()
     flourished_month = form_utils.create_month_field()
@@ -149,7 +141,7 @@ class PersonForm(ModelForm):
     flourished_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     flourished_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
     flourished_calendar = forms.CharField(required=False,
-                                          widget=forms.RadioSelect(choices=calendar_date_choices, ))
+                                          widget=forms.RadioSelect(choices=date_utils.calendar_choices, ))
 
     organisation_type = OrgTypeField(required=False)
 
@@ -239,18 +231,20 @@ class PersonForm(ModelForm):
 
         return super().clean()
 
+
 search_gender_choices = [
-            (None, 'Any'),
-            ('M', 'Male'),
-            ('F', 'Female'),
-            ('U', 'Unknown or not applicable'),
-        ]
+    (None, 'Any'),
+    ('M', 'Male'),
+    ('F', 'Female'),
+    ('U', 'Unknown or not applicable'),
+]
 
 search_person_or_group = [
-        (None, 'Either'),
-        ('P', 'Person'),
-        ('G', 'Group'),
-    ]
+    (None, 'Either'),
+    ('P', 'Person'),
+    ('G', 'Group'),
+]
+
 
 class GeneralSearchFieldset(BasicSearchFieldset):
     role_category_names = CofkUnionRoleCategory.objects \
@@ -262,10 +256,10 @@ class GeneralSearchFieldset(BasicSearchFieldset):
     template_name = 'person/component/person_search_fieldset.html'
 
     names_and_titles = SearchCharField(label=field_label_map['person']['names_and_titles'],
-                                help_text="Primary name normally in 'surname, forename' format, followed by "
-                                          "alternative names and titles or roles/professions. Roles and professions "
-                                          "may have been entered as free text and/or as a list of standard categories "
-                                          "(see below):")
+                                       help_text="Primary name normally in 'surname, forename' format, followed by "
+                                                 "alternative names and titles or roles/professions. Roles and professions "
+                                                 "may have been entered as free text and/or as a list of standard categories "
+                                                 "(see below):")
     names_and_titles_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     birth_year_from = form_utils.create_year_field(_class='searchfield')
@@ -292,16 +286,17 @@ class GeneralSearchFieldset(BasicSearchFieldset):
     organisation_type_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
 
     sent = SearchIntField(help_text="Number of letters from this author/sender. "
-                                  "You can search on these 'number' fields using 'Advanced Search', "
-                                  "e.g. you could enter something like 'Sent greater than 100' to "
-                                  "identify the more prolific authors.")
+                                    "You can search on these 'number' fields using 'Advanced Search', "
+                                    "e.g. you could enter something like 'Sent greater than 100' to "
+                                    "identify the more prolific authors.")
     sent_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
-    recd = SearchIntField(label=field_label_map['person']['recd'], help_text='Number of letters sent to this addressee.')
+    recd = SearchIntField(label=field_label_map['person']['recd'],
+                          help_text='Number of letters sent to this addressee.')
     recd_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
     all_works = SearchIntField(label=field_label_map['person']['all_works'],
-                             help_text='Total of letters to and from this person/organisation.')
+                               help_text='Total of letters to and from this person/organisation.')
     all_works_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
 
     mentioned = SearchIntField(help_text='Number of letters in which this person/organisation was mentioned.')
