@@ -15,14 +15,16 @@ def create_manif_id(iwork_id) -> str:
     return f'W{iwork_id}-{model_utils.next_seq_safe("cofk_union_manif_manif_id_seq")}'
 
 
-def get_manif_details(manif: CofkUnionManifestation) -> list[str]:
-
-    first_line = ''
+def get_doctype_desc(manif: CofkUnionManifestation) -> str:
     if doctype := CofkLookupDocumentType.objects.filter(document_type_code=manif.manifestation_type).first():
-        first_line += f'{doctype.document_type_desc}. '
+        return doctype.document_type_desc
     else:
-        first_line += f'{manif.manifestation_type}. '
+        return manif.manifestation_type
 
+
+def get_manif_details(manif: CofkUnionManifestation) -> list[str]:
+    first_line = ''
+    first_line += get_doctype_desc(manif) + '. '
     if manif.postage_marks:
         first_line += f'Postmark: {manif.postage_marks}. '
 
@@ -37,7 +39,6 @@ def get_manif_details(manif: CofkUnionManifestation) -> list[str]:
 
     if manif.printed_edition_details:
         first_line += f' {manif.printed_edition_details}'
-
 
     manifestation_summary = [first_line]
     if manif.manifestation_incipit:
