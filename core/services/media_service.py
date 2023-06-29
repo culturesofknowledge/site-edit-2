@@ -9,10 +9,23 @@ IMG_PATH.mkdir(parents=True, exist_ok=True)
 
 FILE_DOWNLOAD_PATH = Path(settings.MEDIA_ROOT).joinpath('file_download')
 FILE_DOWNLOAD_PATH.mkdir(parents=True, exist_ok=True)
+IMG_URL = settings.MEDIA_URL + 'img/'
 
 
 def get_img_url_by_file_path(file_path: str) -> str:
-    return settings.MEDIA_URL + 'img/' + file_path
+    return IMG_URL + file_path
+
+
+def is_img_exists_by_url(img_url: str) -> bool:
+    if not img_url:
+        return False
+
+    idx = img_url.rfind(IMG_URL)
+    if idx == -1:
+        return False
+
+    file_path = img_url[idx + len(IMG_URL):]
+    return IMG_PATH.joinpath(file_path).is_file()
 
 
 def save_uploaded_img(file: InMemoryUploadedFile) -> str:

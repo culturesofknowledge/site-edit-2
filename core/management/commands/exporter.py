@@ -17,6 +17,7 @@ from core.constant import REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE
 from core.helper import query_utils, recref_utils, thread_utils
 from core.helper.view_components import HeaderValues, DownloadCsvHandler
 from core.models import CofkUnionImage
+from core.services import media_service
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation, create_sql_count_work_by_location
 from work import work_utils
@@ -125,7 +126,7 @@ class ImageFrontendCsv(HeaderValues):
     def _is_published(self, obj):
         check_list = [
             lambda: is_published_by_filter_work(obj, 'cofkmanifimagemap__manif__work'),
-            lambda: is_url_alive(obj.image_filename, self.cache_urls_alive),
+            lambda: is_url_for_published(obj.image_filename, self.cache_urls_alive),
         ]
         for fn in check_list:
             if not fn():
@@ -387,10 +388,12 @@ def load_cache_urls_alive(urls: Iterable[str]) -> dict[str, bool]:
     return cache_urls_alive
 
 
-def is_url_alive(url: str, cache_urls: dict[str, bool]) -> int:
+def is_url_for_published(url: str, cache_urls: dict[str, bool]) -> int:
+    if not url:
+        return 1
     if is_http_url(url):
         return int(cache_urls.get(url, False))
-    return 1
+    return media_service.is_img_exists_by_url(url)
 
 
 class ResourceFrontendCsv(HeaderValues):
@@ -425,7 +428,7 @@ class ResourceFrontendCsv(HeaderValues):
         return name
 
     def _get_published(self, obj):
-        return is_url_alive(obj.resource_url, self.cache_urls_alive)
+        return is_url_for_published(obj.resource_url, self.cache_urls_alive)
 
 
 class WorkFrontendCsv(HeaderValues):
