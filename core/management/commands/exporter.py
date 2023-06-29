@@ -10,7 +10,7 @@ from typing import Iterable
 
 import requests
 from django.core.management import BaseCommand
-from django.db.models import Count
+from django.db.models import Count, Q
 
 from core import constant
 from core.constant import REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE_MENTION
@@ -72,7 +72,7 @@ def is_published_work(w) -> int:
 
 
 def is_published_by_filter_work(obj, work_prefix) -> int:
-    return obj.__class__.objects.filter(work_utils.q_hidden_works(prefix=work_prefix)).count() == 0
+    return obj.__class__.objects.filter(work_utils.q_hidden_works(prefix=work_prefix) & Q(pk=obj.pk)).count() == 0
 
 
 class CommentFrontendCsv(HeaderValues):
@@ -125,11 +125,12 @@ class ImageFrontendCsv(HeaderValues):
 
     def _is_published(self, obj):
         check_list = [
-            lambda: is_published_by_filter_work(obj, 'cofkmanifimagemap__manif__work'),
-            lambda: is_url_for_published(obj.image_filename, self.cache_urls_alive),
+            ('work', lambda: is_published_by_filter_work(obj, 'cofkmanifimagemap__manif__work')),
+            ('url', lambda: is_url_for_published(obj.image_filename, self.cache_urls_alive)),
         ]
-        for fn in check_list:
+        for name, fn in check_list:
             if not fn():
+                log.debug(f'not published reason[{name}] {obj}')
                 return 0
 
         return 1
