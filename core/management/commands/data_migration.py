@@ -747,7 +747,8 @@ def data_migration(user, password, database, host, port):
     clone_rows_by_model_class(conn, CofkCollectDestinationOfWork,
                               col_val_handler_fn_list=[_val_handler_collect_location],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectDestinationOfWork))
-    clone_rows_by_model_class(conn, CofkCollectLanguageOfWork, col_val_handler_fn_list=[_val_handler_language],
+    clone_rows_by_model_class(conn, CofkCollectLanguageOfWork,
+                              col_val_handler_fn_list=[_val_handler_language, _val_handler_collect_work],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectLanguageOfWork))
     clone_rows_by_model_class(conn, CofkCollectOriginOfWork, col_val_handler_fn_list=[_val_handler_collect_location],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectOriginOfWork))
