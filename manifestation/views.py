@@ -12,10 +12,13 @@ from manifestation.models import CofkUnionManifestation
 class ManifSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
+    def entity(self) -> str:
+        return 'manifestation,manifestations'
+
+    @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
-            ('-change_timestamp', 'Change Timestamp desc',),
-            ('change_timestamp', 'Change Timestamp asc',),
+            ('change_timestamp', 'Change Timestamp',),
         ]
 
     @property
@@ -23,10 +26,9 @@ class ManifSearchView(LoginRequiredMixin, DefaultSearchView):
         return 'manif:return_quick_init'
 
     def get_queryset(self):
-        queryset = CofkUnionManifestation.objects.all()
-        if sort_by := self.get_sort_by():
-            queryset = queryset.order_by(sort_by)
-        return queryset
+        if not self.request_data:
+            return CofkUnionManifestation.objects.none()
+        return CofkUnionManifestation.objects.all().order_by(*self.get_sort_by())
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
