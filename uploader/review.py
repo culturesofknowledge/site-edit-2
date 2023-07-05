@@ -27,8 +27,9 @@ def create_union_work(union_work_dict: dict, collect_work: CofkCollectWork):
     # work_id is primary key in CofkUnionWork
     # note that work_utils.create_work_id uses a different less detailed format
     union_work_dict['work_id'] = f'work_{datetime.now().strftime("%Y%m%d%H%M%S%f")}_{collect_work.iwork_id}'
+    exclude = ['iwork_id', 'subjects']
 
-    for field in [f for f in collect_work._meta.get_fields() if f.name != 'iwork_id']:
+    for field in [f for f in collect_work._meta.get_fields() if f.name not in exclude]:
         try:
             CofkUnionWork._meta.get_field(field.name)
 
