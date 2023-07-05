@@ -2,8 +2,6 @@ from datetime import datetime
 
 from django.db import models
 
-from manifestation.models import CofkUnionManifestation
-
 
 class CofkCollectStatus(models.Model):
     '''
@@ -113,8 +111,9 @@ class CofkCollectLocationResource(models.Model):
 class CofkCollectManifestation(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     manifestation_id = models.IntegerField()
-    iwork = models.ForeignKey('uploader.CofkCollectWork', models.CASCADE)
-    union_manifestation = models.ForeignKey(CofkUnionManifestation, models.SET_NULL, blank=True, null=True)
+    iwork = models.ForeignKey('uploader.CofkCollectWork', models.CASCADE, related_name='manifestations')
+    union_manifestation = models.ForeignKey('manifestation.CofkUnionManifestation',
+                                            models.SET_NULL, blank=True, null=True)
     manifestation_type = models.CharField(max_length=3)
     repository = models.ForeignKey('uploader.CofkCollectInstitution', models.CASCADE, blank=True, null=True)
     id_number_or_shelfmark = models.CharField(max_length=500, blank=True, null=True)
@@ -304,7 +303,11 @@ class CofkCollectInstitutionResource(models.Model):
 
 
 class CofkCollectWork(models.Model):
-    upload = models.ForeignKey(CofkCollectUpload, models.CASCADE)
+    '''
+    The columns destination_id and origin_id are redundant as, even though they link to CofkCollectOriginOfWork and
+     CofkCollectDestinationOfWork, Django ORM already provides a link to them via related name.
+    '''
+    upload = models.ForeignKey('CofkCollectUpload', models.CASCADE, related_name='upload')
     iwork_id = models.IntegerField()
     union_iwork = models.ForeignKey('work.CofkUnionWork', models.SET_NULL, blank=True, null=True,
                                     to_field='iwork_id', related_name='union_collect_works')
@@ -368,8 +371,6 @@ class CofkCollectWork(models.Model):
     place_mentioned_uncertain = models.SmallIntegerField(default=0)
     upload_name = models.CharField(max_length=254, blank=True, null=True)
     explicit = models.TextField(blank=True, null=True)
-
-    errors = []
 
     class Meta:
         db_table = 'cofk_collect_work'
@@ -497,7 +498,7 @@ class CofkCollectAddresseeOfWork(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     addressee_id = models.IntegerField()
     iperson = models.ForeignKey('uploader.CofkCollectPerson', models.CASCADE)
-    iwork = models.ForeignKey('uploader.CofkCollectWork', models.CASCADE)
+    iwork = models.ForeignKey('uploader.CofkCollectWork', models.CASCADE, related_name='addressees')
     notes_on_addressee = models.TextField(blank=True, null=True)
     _id = models.CharField(max_length=32, blank=True, null=True)
 
@@ -510,23 +511,10 @@ class CofkCollectAddresseeOfWork(models.Model):
 
 
 class CofkCollectAuthorOfWork(models.Model):
-    """
-    This table is required only for collect purposes, as best I understand, and is not used
-    in other regards. Only exception is Tweaker, see:
-    https://github.com/culturesofknowledge/site-edit/blob/9a74580d2567755ab068a2d8761df8f81718910e/emlo-edit-php-helper/tweaker/tweaker/uploader.py#L739-L770
-    This table, like other ***OfWork tables is used as a link between CofkCollectWork and the
-    respective main entity table. This table links CofkCollectWork with CofkCollectPerson using
-    iperson_id as a unique key in CofkCollectPerson and iwork_id as a unique key in CofkCollectWork.
-    Author_id is then the unique key in this table, however, in the original schema the primary key
-    is set as a composite key of the three, upload_id, iwork_id and author_id and iperson_id is set
-    as a composite key of upload_id and iperson_id in CofkCollectPerson.
-    However, as Django does not support composite keys in database models, a workaround is to
-    designate iperson_id and iwork_id as many-to-many-relationship fields.
-    """
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     author_id = models.IntegerField()
-    iperson = models.ForeignKey('uploader.CofkCollectPerson', models.CASCADE)
-    iwork = models.ForeignKey('uploader.CofkCollectWork', models.CASCADE)
+    iperson = models.ForeignKey('uploader.CofkCollectPerson', models.CASCADE, related_name='author_of')
+    iwork = models.ForeignKey('uploader.CofkCollectWork', models.CASCADE, related_name='authors')
     notes_on_author = models.TextField(blank=True, null=True)
     _id = models.CharField(max_length=32, blank=True, null=True)
 
@@ -542,7 +530,7 @@ class CofkCollectDestinationOfWork(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     destination_id = models.IntegerField()
     location = models.ForeignKey('uploader.CofkCollectLocation', models.CASCADE)
-    iwork = models.ForeignKey('uploader.CofkCollectWork', models.CASCADE)
+    iwork = models.ForeignKey('uploader.CofkCollectWork', models.CASCADE, related_name='destination')
     notes_on_destination = models.TextField(blank=True, null=True)
     _id = models.CharField(max_length=32, blank=True, null=True)
 
@@ -557,7 +545,7 @@ class CofkCollectDestinationOfWork(models.Model):
 class CofkCollectLanguageOfWork(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     language_of_work_id = models.IntegerField()
-    iwork = models.ForeignKey('uploader.CofkCollectWork', models.CASCADE)
+    iwork = models.ForeignKey('uploader.CofkCollectWork', models.CASCADE, related_name='languages')
     language_code = models.ForeignKey('core.Iso639LanguageCode', models.CASCADE, db_column='language_code', )
     _id = models.CharField(max_length=32, blank=True, null=True)
 
@@ -572,7 +560,7 @@ class CofkCollectLanguageOfWork(models.Model):
 class CofkCollectOriginOfWork(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     origin_id = models.IntegerField()
-    location = models.ForeignKey('uploader.CofkCollectLocation', models.CASCADE)
+    location = models.ForeignKey('uploader.CofkCollectLocation', models.CASCADE, related_name='origin')
     iwork = models.ForeignKey('uploader.CofkCollectWork', models.CASCADE)
     notes_on_origin = models.TextField(blank=True, null=True)
     _id = models.CharField(max_length=32, blank=True, null=True)
@@ -589,7 +577,7 @@ class CofkCollectPersonMentionedInWork(models.Model):
     upload = models.ForeignKey("uploader.CofkCollectUpload", null=False, on_delete=models.CASCADE)
     mention_id = models.IntegerField()
     iperson = models.ForeignKey('uploader.CofkCollectPerson', models.CASCADE)
-    iwork = models.ForeignKey('uploader.CofkCollectWork', models.CASCADE)
+    iwork = models.ForeignKey('uploader.CofkCollectWork', models.CASCADE, related_name='people_mentioned')
     notes_on_person_mentioned = models.TextField(blank=True, null=True)
     _id = models.CharField(max_length=32, blank=True, null=True)
 
@@ -605,7 +593,7 @@ class CofkCollectPlaceMentionedInWork(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     mention_id = models.IntegerField()
     location = models.ForeignKey('uploader.CofkCollectLocation', models.CASCADE)
-    iwork = models.ForeignKey('uploader.CofkCollectWork', models.CASCADE)
+    iwork = models.ForeignKey('uploader.CofkCollectWork', models.CASCADE, related_name='places_mentioned')
     notes_on_place_mentioned = models.TextField(blank=True, null=True)
     _id = models.CharField(max_length=32, blank=True, null=True)
 
@@ -617,7 +605,7 @@ class CofkCollectPlaceMentionedInWork(models.Model):
 class CofkCollectSubjectOfWork(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     subject_of_work_id = models.IntegerField()
-    iwork = models.ForeignKey('uploader.CofkCollectWork', models.CASCADE)
+    iwork = models.ForeignKey('uploader.CofkCollectWork', models.CASCADE, related_name='subjects')
     subject = models.ForeignKey('core.CofkUnionSubject', models.CASCADE)
 
     class Meta:
@@ -628,7 +616,7 @@ class CofkCollectSubjectOfWork(models.Model):
 class CofkCollectWorkResource(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     resource_id = models.IntegerField()
-    iwork = models.ForeignKey('uploader.CofkCollectWork', models.CASCADE)
+    iwork = models.ForeignKey('uploader.CofkCollectWork', models.CASCADE, related_name='resources')
     resource_name = models.TextField()
     resource_details = models.TextField()
     resource_url = models.TextField()

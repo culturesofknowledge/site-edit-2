@@ -17,7 +17,8 @@ from core.models import CofkLookupCatalogue
 from uploader.forms import CofkCollectUploadForm
 from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectAddresseeOfWork, CofkCollectAuthorOfWork, \
     CofkCollectDestinationOfWork, CofkCollectLanguageOfWork, CofkCollectOriginOfWork, CofkCollectPersonMentionedInWork, \
-    CofkCollectWorkResource, CofkCollectInstitution, CofkCollectLocation, CofkCollectManifestation, CofkCollectPerson
+    CofkCollectWorkResource, CofkCollectInstitution, CofkCollectLocation, CofkCollectManifestation, CofkCollectPerson, \
+    CofkCollectSubjectOfWork
 from uploader.review import accept_works, reject_works, get_work
 from uploader.spreadsheet import CofkUploadExcelFile
 from uploader.validation import CofkExcelFileError
@@ -165,6 +166,7 @@ def upload_review(request, upload_id, **kwargs):
                'addressees': CofkCollectAddresseeOfWork.objects.filter(upload=upload),
                'mentioned': CofkCollectPersonMentionedInWork.objects.filter(upload=upload),
                'languages': CofkCollectLanguageOfWork.objects.filter(upload=upload),
+               'subjects': CofkCollectSubjectOfWork.objects.filter(upload=upload),
                # Authors, addressees and mentioned link to People, here we're only
                # passing new people for review purposes
                'people': CofkCollectPerson.objects.filter(upload=upload, union_iperson__isnull=True),

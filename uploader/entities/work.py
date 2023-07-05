@@ -3,11 +3,12 @@ from typing import List, Type, Any
 
 from django.db import models
 
-from core.models import Iso639LanguageCode
+from core.models import Iso639LanguageCode, CofkUnionSubject
 from uploader.entities.entity import CofkEntity
 from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectAddresseeOfWork, \
     CofkCollectAuthorOfWork, CofkCollectDestinationOfWork, CofkCollectLanguageOfWork, CofkCollectOriginOfWork, \
-    CofkCollectPersonMentionedInWork, CofkCollectWorkResource, CofkCollectLocation, CofkCollectPerson
+    CofkCollectPersonMentionedInWork, CofkCollectWorkResource, CofkCollectLocation, CofkCollectPerson, \
+    CofkCollectSubjectOfWork
 
 log = logging.getLogger(__name__)
 
@@ -33,6 +34,7 @@ class CofkWork(CofkEntity):
         self.destinations: List[CofkCollectDestinationOfWork] = []
         self.resources: List[CofkCollectWorkResource] = []
         self.languages: List[CofkCollectLanguageOfWork] = []
+        self.subjects: List[CofkCollectSubjectOfWork] = []
 
         self.resource_id: int = 0
         self.author_id: int = 0
@@ -41,6 +43,7 @@ class CofkWork(CofkEntity):
         self.origin_id: int = 0
         self.destination_id: int = 0
         self.language_of_work_id: int = 0
+        self.subject_of_work_id: int = 0
 
         for index, row in enumerate(self.iter_rows(), start=1 + self.sheet.header_length):
             work_dict = self.get_row(row, index)
@@ -83,6 +86,9 @@ class CofkWork(CofkEntity):
 
             if 'language_id' in work_dict:
                 self.process_languages(work_dict, w)
+
+            if 'keywords' in work_dict:
+                self.process_subjects(work_dict, w)
 
         upload.total_works = len(self.works)
         upload.save()
@@ -176,17 +182,31 @@ class CofkWork(CofkEntity):
                 lan = lan[0]
 
             if lan is not None:
+                language_of_work_id = self.get_new_id('language_of_work_id')
                 self.languages.append(CofkCollectLanguageOfWork(upload=self.upload, iwork=work, language_code=lan,
-                                                                language_of_work_id=self.get_new_id('language_of_work_id')))
+                                                                language_of_work_id=language_of_work_id))
             else:
                 self.add_error(f'The value in column "language_id", "{language}" is not a valid ISO639 language.')
+
+    def process_subjects(self, work_dict: dict, work: CofkCollectWork):
+        work_subjects = work_dict['keywords'].split(',')
+
+        for subject in [s.strip() for s in work_subjects]:
+            union_subject = CofkUnionSubject.objects.filter(subject_desc__iexact=subject).first()
+
+            if union_subject:
+                self.subjects.append(CofkCollectSubjectOfWork(upload=self.upload, iwork=work,
+                                                              subject_of_work_id=self.get_new_id('subject_of_work_id'),
+                                                              subject=union_subject))
+            else:
+                self.add_error(f'The value in column "keywords", "{subject}" is not a valid subject.')
 
     def create_all(self):
         self.bulk_create(self.works)
         self.log_summary =  [f'{len(self.works)} {type(self.works[0]).__name__}']
 
         for entities in [self.authors, self.mentioned, self.addressees, self.origins, self.destinations,
-                         self.resources, self.languages]:
+                         self.resources, self.languages, self.subjects]:
             if entities:
                 self.bulk_create(entities)
                 self.log_summary.append(f'{len(entities)} {type(entities[0]).__name__}')

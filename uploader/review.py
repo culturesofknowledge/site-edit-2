@@ -9,7 +9,7 @@ from django.db.models import QuerySet
 
 from core.constant import REL_TYPE_STORED_IN, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, \
     REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_IS_RELATED_TO, \
-    REL_TYPE_MENTION
+    REL_TYPE_MENTION, REL_TYPE_DEALS_WITH
 from core.models import CofkUnionResource, CofkLookupCatalogue
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
@@ -18,7 +18,7 @@ from manifestation.models import CofkUnionManifestation, CofkManifInstMap
 from person.models import CofkUnionPerson, create_person_id
 from uploader.models import CofkCollectUpload, CofkCollectWork
 from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, CofkWorkResourceMap, \
-    CofkUnionLanguageOfWork
+    CofkUnionLanguageOfWork, CofkWorkSubjectMap
 
 log = logging.getLogger(__name__)
 
@@ -58,7 +58,6 @@ def link_person_to_work(entities: QuerySet, relationship_type: str, union_work: 
                                  work=union_work, person=person.iperson.union_iperson,
                                  person_id=person.iperson.union_iperson.person_id)
         cwpm.update_current_user_timestamp(request.user.username)
-        # cwpm.save()
         person_maps.append(cwpm)
 
     return person_maps
@@ -78,7 +77,6 @@ def link_location_to_work(entities: QuerySet, relationship_type: str, union_work
                                    work=union_work, location=origin_or_dest.location.union_location,
                                    location_id=origin_or_dest.location.union_location.location_id)
         cwlm.update_current_user_timestamp(request.user.username)
-        # cwlm.save()
         location_maps.append(cwlm)
 
     return location_maps
@@ -109,7 +107,6 @@ def create_union_manifestations(work_id: int, union_work: CofkUnionWork, request
                                     manif=union_manif, inst=union_inst, inst_id=union_inst.institution_id)
             cmim.update_current_user_timestamp(request.user.username)
             union_maps.append(cmim)
-            # cmim.save()
 
     return union_maps
 
@@ -177,10 +174,15 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
                                            union_work=union_work, work_id=work_id, request=request)
         rel_maps.append(people_maps)
 
+        # Link languages
         lang_maps = [CofkUnionLanguageOfWork(work=union_work, language_code=lang.language_code) for
                      lang in context['languages'].filter(iwork_id=work_id).all()]
-        # Link languages
+
         rel_maps.append(lang_maps)
+
+        # Link subjects
+        rel_maps.append([CofkWorkSubjectMap(work=union_work, subject=s.subject, relationship_type=REL_TYPE_DEALS_WITH)
+                         for s in context['subjects'].filter(iwork_id=work_id).all()])
 
         # Link locations
         loc_maps = link_location_to_work(entities=context['destinations'], relationship_type=REL_TYPE_WAS_SENT_TO,
@@ -204,7 +206,6 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
                     pass
 
             union_manif = CofkUnionManifestation(**union_manif_dict)
-            # union_manif.save()
             union_manifs.append(union_manif)
 
             if manif.repository_id is not None:

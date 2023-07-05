@@ -34,7 +34,6 @@ from core.helper.url_utils import VNAME_FULL_FORM, VNAME_SEARCH
 from core.helper.view_components import DownloadCsvHandler
 from core.models import CofkUnionResource, CofkUnionComment, CofkUserSavedQuery, CofkUserSavedQuerySelection
 from core.services import media_service
-from work import work_utils
 from work.models import CofkUnionWork
 
 if TYPE_CHECKING:
@@ -79,8 +78,6 @@ class BasicSearchView(ListView):
     def search_field_label_map(self) -> dict:
         """
         A dictionary mapping between the model field name and the labelling of that field.
-
-        Only used by self.simplified_query.
         """
         if self.app_name in field_label_map:
             return field_label_map[self.app_name]
