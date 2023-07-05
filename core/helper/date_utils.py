@@ -48,8 +48,8 @@ calendar_choices = [
 ]
 
 
-def decode_calendar(calendar_code):
+def decode_calendar(calendar_code, default='Unknown'):
     for code, name in calendar_choices:
         if code == calendar_code:
             return name
-    return 'Unknown'
+    return default

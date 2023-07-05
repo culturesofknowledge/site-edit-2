@@ -49,7 +49,7 @@ from work.forms import WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \
     ManifPersonRecrefAdapter, ScribeRelationChoices, \
     DetailsForm, WorkPersonRecrefAdapter, \
-    CommonWorkForm, manif_type_choices, original_calendar_choices, CompactSearchFieldset, ExpandedSearchFieldset, \
+    CommonWorkForm, manif_type_choices, CompactSearchFieldset, ExpandedSearchFieldset, \
     ManifPersonMRRForm
 from work.models import CofkWorkPersonMap, CofkUnionWork, CofkWorkCommentMap, CofkWorkResourceMap, \
     CofkUnionLanguageOfWork
@@ -866,16 +866,12 @@ def to_location_link_list(work, rel_type):
             work.cofkworklocationmap_set.filter(relationship_type=rel_type))
 
 
-def to_calendar_display(calendar: str):
-    return dict(original_calendar_choices).get(calendar, 'Unknown')
-
-
 def to_overview_manif(manif: CofkUnionManifestation):
     if repo := manif.cofkmanifinstmap_set.first():
         manif.repo_name = repo.inst.institution_name
 
     manif.type_display_name = dict(manif_type_choices).get(manif.manifestation_type, '')
-    manif.manifestation_receipt_calendar_display = to_calendar_display(manif.manifestation_receipt_calendar)
+    manif.manifestation_receipt_calendar_display = date_utils.decode_calendar(manif.manifestation_receipt_calendar)
 
     return manif
 
@@ -925,7 +921,7 @@ def overview_view(request, iwork_id):
         work_be_mention_link_list=(WorkLinkData(r.work_from) for r in
                                    work.work_to_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
         manif_set=list(map(to_overview_manif, work.manif_set.iterator())),
-        original_calendar_display=to_calendar_display(work.original_calendar),
+        original_calendar_display=date_utils.decode_calendar(work.original_calendar),
     )
 
     context.update(WorkFormDescriptor(work).create_context())

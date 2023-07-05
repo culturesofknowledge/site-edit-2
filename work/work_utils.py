@@ -1,6 +1,7 @@
 import datetime
 import logging
 from datetime import date
+from typing import Any
 
 from django.db.models import Q
 from django.urls import reverse
@@ -338,10 +339,15 @@ def q_hidden_works(prefix=None):
             | Q(**{prefix + 'date_of_work_std': HIDDEN_DATE_STD}))
 
 
-def is_hidden_work(work: CofkUnionWork):
+def is_hidden_work(work: CofkUnionWork, cached_catalogue_status: dict[Any, int] = None):
     if work is None:
         return True
+
+    if cached_catalogue_status:
+        is_catalogue_published = cached_catalogue_status.get(work.original_catalogue_id, False)
+    else:
+        is_catalogue_published = work.original_catalogue is not None and work.original_catalogue.publish_status
+
     return (work.work_to_be_deleted or
-            work.original_catalogue is None or
-            not work.original_catalogue.publish_status or
+            not is_catalogue_published or
             work.date_of_work_std == HIDDEN_DATE_STD)

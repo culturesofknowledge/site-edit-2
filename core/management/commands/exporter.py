@@ -3,6 +3,7 @@ export data to csv for Emlo-frontend
 """
 import itertools
 import logging
+import re
 from argparse import ArgumentParser
 from collections import Counter
 from pathlib import Path
@@ -12,17 +13,26 @@ import requests
 from django.core.management import BaseCommand
 from django.db.models import Count, Q
 
+import person.views
 from core import constant
 from core.constant import REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE_MENTION
-from core.helper import query_utils, recref_utils, thread_utils
+from core.helper import query_utils, recref_utils, thread_utils, date_utils, query_cache_utils
 from core.helper.view_components import HeaderValues, DownloadCsvHandler
-from core.models import CofkUnionImage
+from core.models import CofkUnionImage, CofkUnionComment, CofkUnionRelationshipType, \
+    CofkUnionResource
 from core.services import media_service
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation, create_sql_count_work_by_location
+from manifestation.models import CofkUnionManifestation
+from person import person_utils
+from person.models import CofkUnionPerson
 from work import work_utils
+from work.models import CofkUnionWork
+from work.work_utils import DisplayableWork
 
 log = logging.getLogger(__name__)
+cache_username_map = {}
+cached_catalogue_status = {}
 
 
 def _send_request(url, timeout=120):
@@ -68,7 +78,7 @@ def always_published(*args, **kwargs):
 
 
 def is_published_work(w) -> int:
-    return int(not work_utils.is_hidden_work(w))
+    return int(not work_utils.is_hidden_work(w, cached_catalogue_status=cached_catalogue_status))
 
 
 def is_published_by_filter_work(obj, work_prefix) -> int:
@@ -91,8 +101,8 @@ class CommentFrontendCsv(HeaderValues):
 
     def obj_to_values(self, obj) -> Iterable:
         convert_map = {
-            'published': lambda o: is_published_by_filter_work(o, 'cofkmanifcommentmap__manif__work'),
-        }
+                          'published': lambda o: is_published_by_filter_work(o, 'cofkworkcommentmap__work'),
+                      } | creation_change_user_settings()
         return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
 
 
@@ -119,9 +129,17 @@ class ImageFrontendCsv(HeaderValues):
 
     def obj_to_values(self, obj) -> Iterable:
         convert_map = {
-            'published': self._is_published,
-        }
+                          'published': self._is_published,
+                          'image_filename': lambda o: self._cut_img_url(o.image_filename),
+                          'thumbnail': lambda o: self._cut_img_url(o.thumbnail),
+                          'display_order': lambda o: f'{o.display_order:04d} {o.image_filename}',
+                      } | creation_change_user_settings()
         return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
+
+    def _cut_img_url(self, v):
+        if not isinstance(v, str):
+            return v
+        return re.sub(r'^' + media_service.IMG_URL, '/', v)
 
     def _is_published(self, obj):
         check_list = [
@@ -174,9 +192,9 @@ class InstFrontendCsv(HeaderValues):
 
     def obj_to_values(self, obj) -> Iterable:
         convert_map = {
-            'document_count': lambda o: self.inst_document_count.get(o.institution_id, 0),
-            'published': always_published,
-        }
+                          'document_count': lambda o: self.inst_document_count.get(o.institution_id, 0),
+                          'published': always_published,
+                      } | creation_change_user_settings()
         return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
 
 
@@ -209,12 +227,14 @@ class LocationFrontendCsv(HeaderValues):
 
     def obj_to_values(self, obj) -> Iterable:
         convert_map = {
-            'published': always_published,
-        }
+                          'published': always_published,
+                      } | creation_change_user_settings()
         return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
 
 
 class ManifFrontendCsv(HeaderValues):
+    def __init__(self):
+        self.lookup_doc_desc_map = query_cache_utils.create_lookup_doc_desc_map()
 
     def get_header_list(self) -> list[str]:
         return [
@@ -283,8 +303,12 @@ class ManifFrontendCsv(HeaderValues):
 
     def obj_to_values(self, obj) -> Iterable:
         convert_map = {
-            'published': lambda o: is_published_work(o.work),
-        }
+                          'manifestation_type': lambda o: self.lookup_doc_desc_map.get(
+                              o.manifestation_type, o.manifestation_type),
+                          'published': lambda o: is_published_work(o.work),
+                          'manifestation_creation_calendar': lambda o: date_utils.decode_calendar(
+                              o.manifestation_creation_calendar),
+                      } | creation_change_user_settings()
         return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
 
 
@@ -349,12 +373,21 @@ class PersonFrontendCsv(HeaderValues):
 
     def obj_to_values(self, obj) -> Iterable:
         convert_map = {
-            'sent_count': lambda o: getattr(o, 'sent'),
-            'recd_count': lambda o: getattr(o, 'recd'),
-            'mentioned_count': lambda o: getattr(o, 'mentioned'),
-            'published': always_published
-        }
+                          'foaf_name': lambda o: person_utils.get_name_details(o),
+                          'sent_count': lambda o: o.sent,
+                          'recd_count': lambda o: o.recd,
+                          'mentioned_count': lambda o: o.mentioned,
+                          'published': always_published
+                      } | creation_change_user_settings()
         return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
+
+
+def creation_change_user_settings() -> dict:
+    default_user = 'Unknown User'
+    return {
+        'creation_user': lambda o: cache_username_map.get(o.creation_user, default_user),
+        'change_user': lambda o: cache_username_map.get(o.change_user, default_user),
+    }
 
 
 class RelTypeFrontendCsv(HeaderValues):
@@ -372,8 +405,8 @@ class RelTypeFrontendCsv(HeaderValues):
 
     def obj_to_values(self, obj) -> Iterable:
         convert_map = {
-            'published': always_published,
-        }
+                          'published': always_published,
+                      } | creation_change_user_settings()
         return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
 
 
@@ -417,9 +450,9 @@ class ResourceFrontendCsv(HeaderValues):
 
     def obj_to_values(self, obj) -> Iterable:
         convert_map = {
-            'published': self._get_published,
-            'resource_name': self._get_resource_name,
-        }
+                          'published': self._get_published,
+                          'resource_name': self._get_resource_name,
+                      } | creation_change_user_settings()
         return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
 
     def _get_resource_name(self, obj):
@@ -433,6 +466,9 @@ class ResourceFrontendCsv(HeaderValues):
 
 
 class WorkFrontendCsv(HeaderValues):
+    def __init__(self):
+        self.catalogue_map = query_cache_utils.create_catalogue_name_map()
+
     def get_header_list(self) -> list[str]:
         return [
             'work_id',
@@ -487,9 +523,14 @@ class WorkFrontendCsv(HeaderValues):
 
     def obj_to_values(self, obj) -> Iterable:
         convert_map = {
-            'published': is_published_work,
-            'accession_code': self._get_accession_code,
-        }
+                          'published': is_published_work,
+                          'accession_code': self._get_accession_code,
+                          'original_calendar': lambda o: date_utils.decode_calendar(o.original_calendar),
+                          'date_of_work_std_gregorian': lambda o: re.sub(r'^10000-', '9999-',
+                                                                         o.date_of_work_std_gregorian),
+                          'original_catalogue': lambda o: self.catalogue_map.get(o.original_catalogue_id,
+                                                                                 'No catalogue specified'),
+                      } | creation_change_user_settings()
         return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
 
     def _get_accession_code(self, obj):
@@ -537,30 +578,32 @@ def export_all(output_dir: str = '.'):
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    global cache_username_map
+    cache_username_map = query_cache_utils.create_username_map()
+    global cached_catalogue_status
+    cached_catalogue_status = query_cache_utils.create_catalogue_status_map()
+
     settings = [
-        # (lambda: CofkUnionComment.objects.iterator(),
-        #  CommentFrontendCsv, CofkUnionComment),
+        (lambda: CofkUnionComment.objects.iterator(),
+         CommentFrontendCsv, CofkUnionComment),
         preloaded_csv_settings(
-            lambda: itertools.islice(CofkUnionImage.objects.iterator(), 10000),
-            # CofkUnionImage.objects.iterator(),
+            lambda: CofkUnionImage.objects.iterator(),
             ImageFrontendCsv, CofkUnionImage),
-        # (lambda: CofkUnionInstitution.objects.iterator(),
-        #  InstFrontendCsv, CofkUnionInstitution),
-        # (lambda: create_location_queryset().iterator(),
-        #  LocationFrontendCsv, CofkUnionLocation),
-        # (lambda: CofkUnionManifestation.objects.iterator(),
-        #  ManifFrontendCsv, CofkUnionManifestation),
-        # (lambda: person.views.create_queryset_by_queries(CofkUnionPerson, ).iterator(),
-        #  PersonFrontendCsv, CofkUnionPerson),
-        # (lambda: CofkUnionRelationshipType.objects.iterator(),
-        #  RelTypeFrontendCsv, CofkUnionRelationshipType),
-        # preloaded_csv_settings(
-        #     lambda: itertools.islice(CofkUnionResource.objects.iterator(), 10000),
-        #     #CofkUnionResource.objects.iterator(),
-        #     ResourceFrontendCsv, CofkUnionResource),
-        # (lambda: work.views.create_queryset_by_queries(DisplayableWork, ).all(),
-        # (lambda: DisplayableWork.objects.iterator(),
-        #  WorkFrontendCsv, CofkUnionWork),
+        (lambda: CofkUnionInstitution.objects.iterator(),
+         InstFrontendCsv, CofkUnionInstitution),
+        (lambda: create_location_queryset().iterator(),
+         LocationFrontendCsv, CofkUnionLocation),
+        (lambda: CofkUnionManifestation.objects.iterator(),
+         ManifFrontendCsv, CofkUnionManifestation),
+        (lambda: person.views.create_queryset_by_queries(CofkUnionPerson, ).iterator(),
+         PersonFrontendCsv, CofkUnionPerson),
+        (lambda: CofkUnionRelationshipType.objects.iterator(),
+         RelTypeFrontendCsv, CofkUnionRelationshipType),
+        preloaded_csv_settings(
+            lambda: CofkUnionResource.objects.iterator(),
+            ResourceFrontendCsv, CofkUnionResource),
+        (lambda: DisplayableWork.objects.iterator(),
+         WorkFrontendCsv, CofkUnionWork),
     ]
     for objects_factory, target_csv_type_factory, model_class in settings:
         csv_path = output_dir / f'{model_class._meta.db_table}.csv'
