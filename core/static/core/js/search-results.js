@@ -243,6 +243,18 @@ function radialTransparentIfScrolledDown() {
     }
 }
 
+function scrolling()    {
+    radialTransparentIfScrolledDown();
+    let scroll_position = document.documentElement.scrollTop || document.body.scrollTop;
+
+    if(scroll_position > 0 && !$('#scroll-to-top').is(":visible"))   {
+        $('#scroll-to-top').fadeIn();
+    }
+    else if(scroll_position == 0 && $('#scroll-to-top').is(":visible")) {
+        $('#scroll-to-top').fadeOut();
+    }
+}
+
 function reset_form(form) {
     localStorage.clear();
     location.href = window.location.pathname;
@@ -267,11 +279,16 @@ $(function () {
     if (recref_mode == '1') {
         emlojs.recref_select_service.setup_all()
     }
-    radialTransparentIfScrolledDown();
+
+    $('#scroll-to-top a').on('click', function(event)   {
+        event.preventDefault(); $('html, body').animate({scrollTop: '0px'}, 300);
+    });
+
+    scrolling();
 })
 
 
-$(window).on('scroll', radialTransparentIfScrolledDown);
+$(window).on('scroll', scrolling);
 $(window).on('submit', function (e) {
     // Iterate through form elements and disable empty fields so as not
     // to clutter the resulting URL unnecessarily

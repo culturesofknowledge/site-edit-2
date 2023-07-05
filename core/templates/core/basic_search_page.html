@@ -144,6 +144,10 @@
 
     </form>
 
+    {% if paginator.count > 0 %}
+        {% include 'core/component/scroll_to_top.html' %}
+    {% endif %}
+
     {% if merge_page_url %}
         <form id="merge_form" action="{{ merge_page_url }}"></form>
     {% endif %}
