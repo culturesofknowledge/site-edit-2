@@ -12,6 +12,9 @@ from django.db.models import Model, Max, ForeignKey
 ModelLike = typing.TypeVar('ModelLike', bound=models.Model)
 
 
+def get_table_name(model) -> str:
+    return model._meta.db_table
+
 class RecordTracker:
 
     def update_current_user_timestamp(self, user):

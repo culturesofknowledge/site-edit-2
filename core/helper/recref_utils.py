@@ -113,6 +113,13 @@ def get_bounded_members(recref_class: Type[RecrefLike]) -> list[ForwardManyToOne
     return bounded_members
 
 
+def find_all_recref_class() -> Iterable[Type[RecrefLike]]:
+    models = django_utils.all_model_classes()
+    recref_class_list = (m for m in models
+                         if inspect_utils.issubclass_safe(m, Recref) and m != Recref)
+    return recref_class_list
+
+
 def find_all_recref_bounded_data(models: Iterable[Type['ModelLike']] = None) -> Iterable[RecrefBoundedData]:
     models = models or django_utils.all_model_classes()
     recref_class_list = (m for m in models

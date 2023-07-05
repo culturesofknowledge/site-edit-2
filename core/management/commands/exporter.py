@@ -16,7 +16,7 @@ from django.db.models import Count, Q
 import person.views
 from core import constant
 from core.constant import REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE_MENTION
-from core.helper import query_utils, recref_utils, thread_utils, date_utils, query_cache_utils
+from core.helper import query_utils, recref_utils, thread_utils, date_utils, query_cache_utils, model_utils
 from core.helper.view_components import HeaderValues, DownloadCsvHandler
 from core.models import CofkUnionImage, CofkUnionComment, CofkUnionRelationshipType, \
     CofkUnionResource
@@ -415,6 +415,7 @@ def is_http_url(url: str) -> bool:
 
 
 def load_cache_urls_alive(urls: Iterable[str]) -> dict[str, bool]:
+    log.info('Loading cache_urls_alive...')
     urls = filter(None, urls)
     urls = (u for u in urls if is_http_url(u))
     urls = set(urls)
@@ -555,6 +556,43 @@ class WorkFrontendCsv(HeaderValues):
 """
 
 
+def to_datetime_str(dt) -> str:
+    if not dt:
+        return ''
+    return dt.strftime('%Y-%m-%d %H:%M:%S')
+
+
+class RelationshipFrontendCsv(HeaderValues):
+
+    def get_header_list(self) -> list[str]:
+        return [
+            'relationship_id',
+            'left_table_name',
+            'left_id_value',
+            'relationship_type',
+            'right_table_name',
+            'right_id_value',
+            'relationship_valid_from',
+            'relationship_valid_till',
+            'published',
+        ]
+
+    def obj_to_values(self, obj) -> Iterable:
+        left_obj, right_obj = recref_utils.get_left_right_rel_obj(obj)
+        convert_map = {
+            'relationship_id': lambda o: f'{o.__class__.__name__}__{o.pk}',
+            'left_table_name': lambda o: model_utils.get_table_name(left_obj),
+            'left_id_value': lambda o: f'{model_utils.get_table_name(left_obj)}-{left_obj.pk}',
+            'relationship_type': lambda o: f'cofk_union_relationship_type-{o.relationship_type}',
+            'right_table_name': lambda o: model_utils.get_table_name(right_obj),
+            'right_id_value': lambda o: f'{model_utils.get_table_name(right_obj)}-{right_obj.pk}',
+            'relationship_valid_from': lambda o: to_datetime_str(o.from_date),
+            'relationship_valid_till': lambda o: to_datetime_str(o.to_date),
+            'published': always_published,
+        }
+        return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
+
+
 def create_location_queryset():
     queryset = CofkUnionLocation.objects
     annotate = {
@@ -572,6 +610,11 @@ def preloaded_csv_settings(objects_factory, target_csv_type_factory, model_class
         lambda: target_csv_type_factory(objects_factory),
         model_class,
     )
+
+
+def find_all_recrefs():
+    for recref_class in recref_utils.find_all_recref_class():
+        yield from recref_class.objects.iterator()
 
 
 def export_all(output_dir: str = '.'):
@@ -604,11 +647,12 @@ def export_all(output_dir: str = '.'):
             ResourceFrontendCsv, CofkUnionResource),
         (lambda: DisplayableWork.objects.iterator(),
          WorkFrontendCsv, CofkUnionWork),
+        (find_all_recrefs, RelationshipFrontendCsv, 'cofk_union_relationship')
     ]
-    for objects_factory, target_csv_type_factory, model_class in settings:
-        csv_path = output_dir / f'{model_class._meta.db_table}.csv'
-        print(f'exporting to {csv_path}')
-        # d = itertools.islice(objects_factory(), 10)
+    for objects_factory, target_csv_type_factory, name_item in settings:
+        filename = name_item if isinstance(name_item, str) else name_item._meta.db_table
+        csv_path = output_dir / f'{filename}.csv'
+        log.info(f'exporting to {csv_path}')
         d = objects_factory()
         DownloadCsvHandler(target_csv_type_factory()).create_csv_file(
             d,
