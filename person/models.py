@@ -206,15 +206,3 @@ def create_person_id(iperson_id) -> str:
     return f'cofk_union_person-iperson_id:{iperson_id}'
 
 
-def create_sql_count_work_by_person(rel_type_list):
-    return RawSQL("""
-    select count(*)
-    from cofk_union_work w
-    where exists( select 1
-                  from cofk_work_person_map wpm
-                  where wpm.work_id = w.work_id
-                    and wpm.person_id = cofk_union_person.person_id
-                    and wpm.relationship_type in %s
-                    limit 1
-              )
-    """, [tuple(rel_type_list)])
