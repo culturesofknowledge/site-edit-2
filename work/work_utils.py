@@ -323,7 +323,7 @@ def flags(work: CofkUnionWork):
     return ', '.join(tooltip)
 
 
-def q_hidden_works(prefix=None):
+def q_hidden_works(prefix=None, check_hidden_date=True):
     """
     ( w.work_to_be_deleted = 1 "
      . " or w.original_catalogue not in (SELECT catalogue_code FROM cofk_lookup_catalogue WHERE publish_status = 1)"
@@ -334,9 +334,28 @@ def q_hidden_works(prefix=None):
     else:
         prefix = ''
 
-    return (Q(**{prefix + 'work_to_be_deleted': 1})
+    q = (
+            Q(**{prefix + 'work_to_be_deleted': 1})
             | Q(**{prefix + 'original_catalogue__publish_status': 0})
-            | Q(**{prefix + 'date_of_work_std': HIDDEN_DATE_STD}))
+    )
+    if check_hidden_date:
+        q |= Q(**{prefix + 'date_of_work_std': HIDDEN_DATE_STD})
+    return q
+
+
+def q_visible_works(prefix=None, check_hidden_date=True):
+    if prefix:
+        prefix = prefix + '__'
+    else:
+        prefix = ''
+    q = Q(**{prefix + 'work_to_be_deleted': 0})
+    q &= (
+            Q(**{prefix + 'original_catalogue__isnull': True})
+            | Q(**{prefix + 'original_catalogue__publish_status': 1})
+    )
+    if check_hidden_date:
+        q &= ~Q(**{prefix + 'date_of_work_std': HIDDEN_DATE_STD})
+    return q
 
 
 def is_hidden_work(work: CofkUnionWork, cached_catalogue_status: dict[Any, int] = None):

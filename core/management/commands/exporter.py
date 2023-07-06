@@ -1,17 +1,17 @@
 """
 export data to csv for Emlo-frontend
 """
-import itertools
 import logging
 import re
+import time
 from argparse import ArgumentParser
-from collections import Counter
 from pathlib import Path
 from typing import Iterable
 
 import requests
 from django.core.management import BaseCommand
 from django.db.models import Count, Q
+from django.utils.html import strip_tags
 
 import person.views
 from core import constant
@@ -33,6 +33,18 @@ from work.work_utils import DisplayableWork
 log = logging.getLogger(__name__)
 cache_username_map = {}
 cached_catalogue_status = {}
+
+
+def to_datetime_str(dt) -> str:
+    if not dt:
+        return ''
+    return dt.strftime('%Y-%m-%d %H:%M:%S')
+
+
+def to_datetime_ms_str(dt) -> str:
+    if not dt:
+        return ''
+    return dt.strftime('%Y-%m-%d %H:%M:%S.%f')
 
 
 def _send_request(url, timeout=120):
@@ -82,7 +94,12 @@ def is_published_work(w) -> int:
 
 
 def is_published_by_filter_work(obj, work_prefix) -> int:
-    return obj.__class__.objects.filter(work_utils.q_hidden_works(prefix=work_prefix) & Q(pk=obj.pk)).count() == 0
+    return int(obj.__class__.objects.filter(work_utils.q_hidden_works(prefix=work_prefix) &
+                                            Q(pk=obj.pk)).count() == 0)
+
+
+def to_csv_pk(obj):
+    return f'{model_utils.get_table_name(obj)}-{obj.pk}'
 
 
 class CommentFrontendCsv(HeaderValues):
@@ -101,6 +118,7 @@ class CommentFrontendCsv(HeaderValues):
 
     def obj_to_values(self, obj) -> Iterable:
         convert_map = {
+                          'comment_id': to_csv_pk,
                           'published': lambda o: is_published_by_filter_work(o, 'cofkworkcommentmap__work'),
                       } | creation_change_user_settings()
         return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
@@ -129,6 +147,7 @@ class ImageFrontendCsv(HeaderValues):
 
     def obj_to_values(self, obj) -> Iterable:
         convert_map = {
+                          'image_id': to_csv_pk,
                           'published': self._is_published,
                           'image_filename': lambda o: self._cut_img_url(o.image_filename),
                           'thumbnail': lambda o: self._cut_img_url(o.thumbnail),
@@ -160,14 +179,15 @@ class InstFrontendCsv(HeaderValues):
         self.inst_document_count = self.count_inst_work()
 
     def count_inst_work(self):
-        q = work_utils.q_hidden_works(prefix='cofkmanifinstmap__manif__work')
+        q = work_utils.q_visible_works(prefix='cofkmanifinstmap__manif__work', check_hidden_date=False)
         q &= recref_utils.create_q_rel_type(constant.REL_TYPE_STORED_IN, prefix='cofkmanifinstmap')
-        queryset = (CofkUnionInstitution.objects.filter(q)
-                    .values('institution_id', 'cofkmanifinstmap__manif__work_id')
-                    .annotate(Count('cofkmanifinstmap__manif__work_id')))
-
-        c = Counter(row['institution_id'] for row in queryset)
-        return c
+        queryset = (CofkUnionInstitution.objects
+                    .values('institution_id')
+                    .annotate(count=Count('institution_id'))
+                    .values_list('institution_id', 'count')
+                    .filter(q)
+                    )
+        return dict(queryset)
 
     def get_header_list(self) -> list[str]:
         return [
@@ -192,6 +212,7 @@ class InstFrontendCsv(HeaderValues):
 
     def obj_to_values(self, obj) -> Iterable:
         convert_map = {
+                          'institution_id': to_csv_pk,
                           'document_count': lambda o: self.inst_document_count.get(o.institution_id, 0),
                           'published': always_published,
                       } | creation_change_user_settings()
@@ -227,6 +248,7 @@ class LocationFrontendCsv(HeaderValues):
 
     def obj_to_values(self, obj) -> Iterable:
         convert_map = {
+                          'location_id': to_csv_pk,
                           'published': always_published,
                       } | creation_change_user_settings()
         return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
@@ -303,6 +325,7 @@ class ManifFrontendCsv(HeaderValues):
 
     def obj_to_values(self, obj) -> Iterable:
         convert_map = {
+                          'manifestation_id': to_csv_pk,
                           'manifestation_type': lambda o: self.lookup_doc_desc_map.get(
                               o.manifestation_type, o.manifestation_type),
                           'published': lambda o: is_published_work(o.work),
@@ -373,7 +396,8 @@ class PersonFrontendCsv(HeaderValues):
 
     def obj_to_values(self, obj) -> Iterable:
         convert_map = {
-                          'foaf_name': lambda o: person_utils.get_name_details(o),
+                          'person_id': to_csv_pk,
+                          'foaf_name': lambda o: person_utils.decode_person(o),
                           'sent_count': lambda o: o.sent,
                           'recd_count': lambda o: o.recd,
                           'mentioned_count': lambda o: o.mentioned,
@@ -387,6 +411,8 @@ def creation_change_user_settings() -> dict:
     return {
         'creation_user': lambda o: cache_username_map.get(o.creation_user, default_user),
         'change_user': lambda o: cache_username_map.get(o.change_user, default_user),
+        'creation_timestamp': lambda o: to_datetime_ms_str(o.creation_timestamp),
+        'change_timestamp': lambda o: to_datetime_ms_str(o.change_timestamp),
     }
 
 
@@ -451,6 +477,7 @@ class ResourceFrontendCsv(HeaderValues):
 
     def obj_to_values(self, obj) -> Iterable:
         convert_map = {
+                          'resource_id': to_csv_pk,
                           'published': self._get_published,
                           'resource_name': self._get_resource_name,
                       } | creation_change_user_settings()
@@ -524,6 +551,7 @@ class WorkFrontendCsv(HeaderValues):
 
     def obj_to_values(self, obj) -> Iterable:
         convert_map = {
+                          'work_id': to_csv_pk,
                           'published': is_published_work,
                           'accession_code': self._get_accession_code,
                           'original_calendar': lambda o: date_utils.decode_calendar(o.original_calendar),
@@ -531,6 +559,7 @@ class WorkFrontendCsv(HeaderValues):
                                                                          o.date_of_work_std_gregorian),
                           'original_catalogue': lambda o: self.catalogue_map.get(o.original_catalogue_id,
                                                                                  'No catalogue specified'),
+                          'abstract': lambda o: strip_tags(o.abstract),
                       } | creation_change_user_settings()
         return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
 
@@ -539,27 +568,6 @@ class WorkFrontendCsv(HeaderValues):
         if isinstance(accession_code, str) and accession_code.startswith('Selden End EAD import'):
             return accession_code.replace('Selden End EAD import', 'Bodleian card catalogue bulk import')
         return accession_code
-
-
-"""
-
-==> cofk_union_relationship.csv <==
-'relationship_id',
-'left_table_name',
-'left_id_value',
-'relationship_type',
-'right_table_name',
-'right_id_value',
-'relationship_valid_from',
-'relationship_valid_till',
-'published',
-"""
-
-
-def to_datetime_str(dt) -> str:
-    if not dt:
-        return ''
-    return dt.strftime('%Y-%m-%d %H:%M:%S')
 
 
 class RelationshipFrontendCsv(HeaderValues):
@@ -578,14 +586,17 @@ class RelationshipFrontendCsv(HeaderValues):
         ]
 
     def obj_to_values(self, obj) -> Iterable:
+        if isinstance(obj, dict):
+            return [obj.get(k) for k in self.get_header_list()]
+
         left_obj, right_obj = recref_utils.get_left_right_rel_obj(obj)
         convert_map = {
-            'relationship_id': lambda o: f'{o.__class__.__name__}__{o.pk}',
+            'relationship_id': to_csv_pk,
             'left_table_name': lambda o: model_utils.get_table_name(left_obj),
-            'left_id_value': lambda o: f'{model_utils.get_table_name(left_obj)}-{left_obj.pk}',
+            'left_id_value': lambda o: to_csv_pk(left_obj),
             'relationship_type': lambda o: f'cofk_union_relationship_type-{o.relationship_type}',
             'right_table_name': lambda o: model_utils.get_table_name(right_obj),
-            'right_id_value': lambda o: f'{model_utils.get_table_name(right_obj)}-{right_obj.pk}',
+            'right_id_value': lambda o: to_csv_pk(right_obj),
             'relationship_valid_from': lambda o: to_datetime_str(o.from_date),
             'relationship_valid_till': lambda o: to_datetime_str(o.to_date),
             'published': always_published,
@@ -614,10 +625,26 @@ def preloaded_csv_settings(objects_factory, target_csv_type_factory, model_class
 
 def find_all_recrefs():
     for recref_class in recref_utils.find_all_recref_class():
-        yield from recref_class.objects.iterator()
+        for r in recref_class.objects.iterator():
+            yield r
+
+    for manif in CofkUnionManifestation.objects.iterator():
+        manif: CofkUnionManifestation
+        yield {
+            'relationship_id': f'{manif.pk}-{manif.work.pk}',
+            'left_table_name': model_utils.get_table_name(manif),
+            'left_id_value': to_csv_pk(manif),
+            'relationship_type': constant.REL_TYPE_IS_MANIF_OF,
+            'right_table_name': model_utils.get_table_name(manif.work),
+            'right_id_value': to_csv_pk(manif.work),
+            'relationship_valid_from': '',
+            'relationship_valid_till': '',
+            'published': 1,
+        }
 
 
 def export_all(output_dir: str = '.'):
+    start_time = time.time()
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -627,11 +654,11 @@ def export_all(output_dir: str = '.'):
     cached_catalogue_status = query_cache_utils.create_catalogue_status_map()
 
     settings = [
+        preloaded_csv_settings(
+            lambda: CofkUnionResource.objects.iterator(),
+            ResourceFrontendCsv, CofkUnionResource),
         (lambda: CofkUnionComment.objects.iterator(),
          CommentFrontendCsv, CofkUnionComment),
-        preloaded_csv_settings(
-            lambda: CofkUnionImage.objects.iterator(),
-            ImageFrontendCsv, CofkUnionImage),
         (lambda: CofkUnionInstitution.objects.iterator(),
          InstFrontendCsv, CofkUnionInstitution),
         (lambda: create_location_queryset().iterator(),
@@ -642,18 +669,19 @@ def export_all(output_dir: str = '.'):
          PersonFrontendCsv, CofkUnionPerson),
         (lambda: CofkUnionRelationshipType.objects.iterator(),
          RelTypeFrontendCsv, CofkUnionRelationshipType),
-        preloaded_csv_settings(
-            lambda: CofkUnionResource.objects.iterator(),
-            ResourceFrontendCsv, CofkUnionResource),
         (lambda: DisplayableWork.objects.iterator(),
          WorkFrontendCsv, CofkUnionWork),
-        (find_all_recrefs, RelationshipFrontendCsv, 'cofk_union_relationship')
+        (find_all_recrefs, RelationshipFrontendCsv, 'cofk_union_relationship'),
+        preloaded_csv_settings(
+            lambda: CofkUnionImage.objects.iterator(),
+            ImageFrontendCsv, CofkUnionImage),
     ]
     for objects_factory, target_csv_type_factory, name_item in settings:
         filename = name_item if isinstance(name_item, str) else name_item._meta.db_table
         csv_path = output_dir / f'{filename}.csv'
         log.info(f'exporting to {csv_path}')
-        d = objects_factory()
         DownloadCsvHandler(target_csv_type_factory()).create_csv_file(
-            d,
+            objects_factory(),
             csv_path)
+
+    log.info(f'exported all in {(time.time() - start_time) / 60:.2f} minutes')

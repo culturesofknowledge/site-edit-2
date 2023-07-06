@@ -3,14 +3,15 @@ from login.models import CofkUser
 
 
 def create_username_map():
-    user_map = {}
+    user_map = {'Initial import': 'Initial import'}
     for val in ['cofksuper', 'postgres']:
         user_map[val] = 'SysAdmin'
 
     for user in CofkUser.objects.iterator():
         forename = user.forename or ''
         surname = user.surname or ''
-        user_map[user.username] = f'{forename.strip()} {surname.strip()}'
+        user_map[user.username] = (f'{forename.strip()} {surname.strip()}'
+                                   if forename or surname else user.username)
 
     return user_map
 
