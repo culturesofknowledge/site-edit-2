@@ -22,7 +22,8 @@ from core.models import CofkUnionImage, CofkUnionComment, CofkUnionRelationshipT
     CofkUnionResource
 from core.services import media_service
 from institution.models import CofkUnionInstitution
-from location.models import CofkUnionLocation, create_sql_count_work_by_location
+from location.models import CofkUnionLocation
+from location.queries import create_sql_count_work_by_location
 from manifestation.models import CofkUnionManifestation
 from person import person_utils
 from person.models import CofkUnionPerson

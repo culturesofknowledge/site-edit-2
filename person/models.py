@@ -1,7 +1,6 @@
 import functools
 
 from django.db import models
-from django.db.models.expressions import RawSQL
 from django.utils.safestring import mark_safe
 
 from core.helper import model_utils

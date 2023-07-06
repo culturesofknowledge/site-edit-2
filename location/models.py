@@ -1,5 +1,4 @@
 from django.db import models
-from django.db.models.expressions import RawSQL
 
 from core.helper import model_utils
 from core.helper.model_utils import RecordTracker
@@ -73,15 +72,3 @@ class CofkLocationImageMap(Recref):
         ]
 
 
-def create_sql_count_work_by_location(rel_type_list):
-    return RawSQL("""
-    select count(*)
-    from cofk_union_work w
-    where exists( select 1
-                  from cofk_work_location_map wlm
-                  where wlm.work_id = w.work_id
-                    and wlm.location_id = cofk_union_location.location_id
-                    and wlm.relationship_type in %s
-                    limit 1
-              )
-    """, [tuple(rel_type_list)])

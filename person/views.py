@@ -30,7 +30,8 @@ from person import person_utils
 from person.forms import PersonForm, GeneralSearchFieldset, PersonOtherRecrefForm, search_gender_choices, \
     search_person_or_group
 from person.models import CofkUnionPerson, CofkPersonPersonMap, create_person_id, \
-    CofkPersonCommentMap, CofkPersonResourceMap, CofkPersonImageMap, create_sql_count_work_by_person
+    CofkPersonCommentMap, CofkPersonResourceMap, CofkPersonImageMap
+from person.queries import create_sql_count_work_by_person
 from person.person_utils import DisplayablePerson
 from person.recref_adapter import PersonCommentRecrefAdapter, PersonResourceRecrefAdapter, PersonRoleRecrefAdapter, \
     ActivePersonRecrefAdapter, PassivePersonRecrefAdapter, PersonImageRecrefAdapter, PersonLocRecrefAdapter
