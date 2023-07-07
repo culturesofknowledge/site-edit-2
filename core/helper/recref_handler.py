@@ -20,11 +20,11 @@ from django.template.loader import render_to_string
 
 from core import constant as core_constant
 from core.forms import ImageForm, UploadImageForm, ResourceForm, RecrefForm
-from core.helper import recref_utils, model_utils, media_service
-from sharedlib import iter_utils
+from core.helper import recref_serv, model_serv, media_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
-from core.helper.form_utils import create_formset
+from core.helper.form_serv import create_formset
 from core.models import Recref, CofkUnionImage, CofkUnionRoleCategory, CofkUnionSubject
+from sharedlib import iter_utils
 
 log = logging.getLogger(__name__)
 
@@ -63,7 +63,7 @@ class SingleRecrefHandler:
 
         recref_adapter = self.create_recref_adapter(parent)
         recref_adapter.target_id_name()
-        recref = recref_utils.upsert_recref_by_target_id(
+        recref = recref_serv.upsert_recref_by_target_id(
             target_id, recref_adapter.find_target_instance,
             rel_type=self.rel_type,
             parent_instance=parent,
@@ -97,7 +97,7 @@ class RecrefFormsetHandler:
         self.formset = create_formset(
             form, post_data=request_data,
             prefix=prefix,
-            initial_list=model_utils.models_to_dict_list(
+            initial_list=model_serv.models_to_dict_list(
                 recref_adapter.find_all_targets_by_rel_type(rel_type)
             )
         )
@@ -321,8 +321,8 @@ class ImageRecrefHandler(RecrefFormsetHandler, ABC):
         # save if user uploaded an image
         self.upload_img_form.is_valid()
         if uploaded_img_file := self.upload_img_form.cleaned_data.get('selected_image'):
-            file_path = media_service.save_uploaded_img(uploaded_img_file)
-            file_url = media_service.get_img_url_by_file_path(file_path)
+            file_path = media_serv.save_uploaded_img(uploaded_img_file)
+            file_url = media_serv.get_img_url_by_file_path(file_path)
             img_obj = CofkUnionImage(image_filename=file_url, display_order=0,
                                      licence_details='', credits='',
                                      licence_url=settings.DEFAULT_IMG_LICENCE_URL)
@@ -388,7 +388,7 @@ class MultiRecrefHandler:
         self.new_form.is_valid()
         if target_id := self.new_form.cleaned_data.get('target_id'):
             if recref := self.create_recref_by_new_form(target_id, parent_instance):
-                recref = recref_utils.fill_common_recref_field(recref, self.new_form.cleaned_data,
+                recref = recref_serv.fill_common_recref_field(recref, self.new_form.cleaned_data,
                                                                request.user.username)
                 recref.save()
                 log.info(f'create new recref [{recref}]')
@@ -405,7 +405,7 @@ class MultiRecrefHandler:
             else:
                 log.info(f'update recref [{recref_id=}]')
                 ps_loc = self.recref_class.objects.get(pk=recref_id)
-                ps_loc = recref_utils.fill_common_recref_field(ps_loc, f.cleaned_data, request.user.username)
+                ps_loc = recref_serv.fill_common_recref_field(ps_loc, f.cleaned_data, request.user.username)
                 ps_loc.save()
 
 
@@ -418,7 +418,7 @@ class MultiRecrefAdapterHandler(MultiRecrefHandler):
         self.recref_adapter = recref_adapter
         self.rel_type = rel_type
         initial_list = (m.__dict__ for m in self.recref_adapter.find_recref_records(self.rel_type))
-        initial_list = (recref_utils.convert_to_recref_form_dict(r, self.recref_adapter.target_id_name(),
+        initial_list = (recref_serv.convert_to_recref_form_dict(r, self.recref_adapter.target_id_name(),
                                                                  self.recref_adapter.find_target_display_name_by_id)
                         for r in initial_list)
         super().__init__(request_data, name=name, initial_list=initial_list,
@@ -429,7 +429,7 @@ class MultiRecrefAdapterHandler(MultiRecrefHandler):
         return self.recref_adapter.recref_class()
 
     def create_recref_by_new_form(self, target_id, parent_instance) -> Optional[Recref]:
-        return recref_utils.upsert_recref_by_target_id(
+        return recref_serv.upsert_recref_by_target_id(
             target_id, self.recref_adapter.find_target_instance,
             rel_type=self.rel_type,
             parent_instance=parent_instance,

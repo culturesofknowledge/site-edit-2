@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import Type
 
-from core.helper import model_utils
+from core.helper import model_serv
 from core.helper.common_recref_adapter import TargetCommentRecrefAdapter, TargetResourceRecrefAdapter, \
     RecrefFormAdapter, TargetPersonRecrefAdapter, TargetImageRecrefAdapter, TargetLocationRecrefAdapter
 from core.models import Recref, CofkUnionRoleCategory
@@ -85,7 +85,7 @@ class PersonRoleRecrefAdapter(RecrefFormAdapter):
         return CofkPersonRoleMap
 
     def find_target_instance(self, target_id):
-        return model_utils.get_safe(CofkUnionRoleCategory, pk=target_id)
+        return model_serv.get_safe(CofkUnionRoleCategory, pk=target_id)
 
     def set_parent_target_instance(self, recref, parent, target):
         recref: CofkPersonRoleMap

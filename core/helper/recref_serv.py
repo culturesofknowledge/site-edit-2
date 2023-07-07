@@ -2,21 +2,19 @@ import dataclasses
 import logging
 import typing
 from typing import Callable, Any, Optional
-from typing import Type, Iterable, TYPE_CHECKING
+from typing import Type, Iterable
 
 from django.core.cache import cache
 from django.db.models import Model, Q
 from django.db.models.fields.related_descriptors import ForwardManyToOneDescriptor
 from django.forms import BaseForm
 
-from core.helper import model_utils
-from sharedlib import inspect_utils
-from sharedlib.djangolib import django_utils
+from core.helper import model_serv
+from core.helper.model_serv import ModelLike
 from core.models import Recref, CofkUnionRelationshipType
 from core.recref_settings import recref_left_right_list
-
-if TYPE_CHECKING:
-    from core.helper.model_utils import ModelLike
+from sharedlib import inspect_utils
+from sharedlib.djangolib import django_utils
 
 log = logging.getLogger(__name__)
 
@@ -167,7 +165,7 @@ def get_parent_related_field_by_bounded_data(bounded_data, parent_model):
 
 def find_recref_list(recref_class, parent_model, parent_field=None) -> Iterable['Recref']:
     if parent_field is None:
-        parent_field = model_utils.get_related_field(recref_class, parent_model.__class__)
+        parent_field = model_serv.get_related_field(recref_class, parent_model.__class__)
 
     if isinstance(parent_field, ForwardManyToOneDescriptor):
         field_name = parent_field.field.name

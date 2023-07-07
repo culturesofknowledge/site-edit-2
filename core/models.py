@@ -12,9 +12,9 @@ from django.urls import reverse, resolve
 from django.utils.http import urlencode
 
 from core.form_label_maps import field_label_map
-from core.helper import model_utils
-from core.helper.model_utils import RecordTracker
-from core.helper.url_utils import VNAME_SEARCH
+from core.helper import model_serv
+from core.helper.model_serv import RecordTracker
+from core.helper.url_serv import VNAME_SEARCH
 
 SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID = 'iso_639_language_codes_id_seq'
 
@@ -26,9 +26,9 @@ class Recref(models.Model, RecordTracker):
 
     relationship_type = models.CharField(max_length=100)
 
-    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
-    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     change_user = models.CharField(max_length=50)
 
     class Meta:
@@ -47,9 +47,9 @@ class CofkLookupDocumentType(models.Model):
 class CofkUnionComment(models.Model, RecordTracker):
     comment_id = models.AutoField(primary_key=True)
     comment = models.TextField(blank=True, null=True)
-    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
-    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     change_user = models.CharField(max_length=50)
     uuid = models.UUIDField(blank=True, null=True)
 
@@ -69,9 +69,9 @@ class CofkUnionRelationshipType(models.Model, RecordTracker):
     relationship_code = models.CharField(primary_key=True, max_length=50)
     desc_left_to_right = models.CharField(max_length=200)
     desc_right_to_left = models.CharField(max_length=200)
-    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
-    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     change_user = models.CharField(max_length=50)
 
     class Meta:
@@ -83,9 +83,9 @@ class CofkUnionResource(models.Model, RecordTracker):
     resource_name = models.TextField()
     resource_details = models.TextField()
     resource_url = models.TextField()
-    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
-    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     change_user = models.CharField(max_length=50)
     uuid = models.UUIDField(blank=True, null=True)
 
@@ -105,9 +105,9 @@ class CofkUnionSpeedEntryText(models.Model):
 class CofkUnionImage(models.Model, RecordTracker):
     image_id = models.AutoField(primary_key=True)
     image_filename = models.TextField(blank=True, null=True)
-    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
-    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     change_user = models.CharField(max_length=50)
     thumbnail = models.TextField(blank=True, null=True)
     can_be_displayed = models.CharField(max_length=1)
@@ -151,7 +151,7 @@ class Iso639LanguageCode(models.Model):
     code_639_1 = models.CharField(max_length=2)
     language_name = models.CharField(max_length=100)
     language_id = models.IntegerField(
-        default=functools.partial(model_utils.next_seq_safe, SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID),
+        default=functools.partial(model_serv.next_seq_safe, SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID),
         unique=True,
     )
 
@@ -203,7 +203,7 @@ class CofkUserSavedQuery(models.Model):
     query_entries_per_page = models.SmallIntegerField()
     query_record_layout = models.CharField(max_length=12)
     query_menu_item_name = models.TextField(blank=True, null=True)
-    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
 
     @property
     def base_url(self) -> str | None:

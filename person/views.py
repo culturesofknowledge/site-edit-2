@@ -15,15 +15,15 @@ from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_BORN_IN_LOCAT
     REL_TYPE_MENTION, TRUE_CHAR
 from core.export_data import cell_values, download_csv_utils
 from core.forms import CommentForm, PersonRecrefForm
-from core.helper import renderer_utils, view_utils, query_utils, recref_utils, form_utils, perm_utils
+from core.helper import renderer_serv, view_serv, query_serv, recref_serv, form_serv, perm_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
-from core.helper.model_utils import ModelLike
+from core.helper.model_serv import ModelLike
 from core.helper.recref_handler import RecrefFormsetHandler, RoleCategoryHandler, ImageRecrefHandler, \
     TargetResourceFormsetHandler, MultiRecrefAdapterHandler, SingleRecrefHandler
-from core.helper.renderer_utils import CompactSearchResultsRenderer
+from core.helper.renderer_serv import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
-from core.helper.view_utils import CommonInitFormViewTemplate, BasicSearchView, MergeChoiceViews, MergeActionViews, \
+from core.helper.view_serv import CommonInitFormViewTemplate, BasicSearchView, MergeChoiceViews, MergeActionViews, \
     MergeConfirmViews, DeleteConfirmView
 from core.models import Recref
 from person import person_utils
@@ -31,15 +31,15 @@ from person.forms import PersonForm, GeneralSearchFieldset, PersonOtherRecrefFor
     search_person_or_group
 from person.models import CofkUnionPerson, CofkPersonPersonMap, create_person_id, \
     CofkPersonCommentMap, CofkPersonResourceMap, CofkPersonImageMap
-from person.queries import create_sql_count_work_by_person
 from person.person_utils import DisplayablePerson
+from person.queries import create_sql_count_work_by_person
 from person.recref_adapter import PersonCommentRecrefAdapter, PersonResourceRecrefAdapter, PersonRoleRecrefAdapter, \
     ActivePersonRecrefAdapter, PassivePersonRecrefAdapter, PersonImageRecrefAdapter, PersonLocRecrefAdapter
 from person.view_components import PersonFormDescriptor
 from work.forms import AuthorRelationChoices, AddresseeRelationChoices
 
 if TYPE_CHECKING:
-    from core.helper.view_utils import MergeChoiceContext
+    from core.helper.view_serv import MergeChoiceContext
 
 log = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ class PersonQuickInitView(PersonInitView):
 @login_required
 def return_quick_init(request, pk):
     person = CofkUnionPerson.objects.get(iperson_id=pk)
-    return view_utils.render_return_quick_init(
+    return view_serv.render_return_quick_init(
         request, 'Person',
         person_utils.get_recref_display_name(person),
         person_utils.get_recref_target_id(person),
@@ -230,7 +230,7 @@ class PersonFFH(FullFormHandler):
             self.role_handler.create_context()
             | PersonFormDescriptor(self.person).create_context()
             | create_context_is_org_form(self.person.is_organisation)
-            | view_utils.create_is_save_success_context(is_save_success)
+            | view_serv.create_is_save_success_context(is_save_success)
         )
         return context
 
@@ -245,7 +245,7 @@ def full_form(request, iperson_id):
     # handle form submit
     is_save_success = False
     if request.POST:
-        perm_utils.validate_permission_denied(request.user, constant.PM_CHANGE_PERSON)
+        perm_serv.validate_permission_denied(request.user, constant.PM_CHANGE_PERSON)
 
         # ----- validate
         if fhandler.is_invalid():
@@ -258,8 +258,8 @@ def full_form(request, iperson_id):
         fhandler.person_form.save()
         fhandler.save_all_recref_formset(fhandler.person, request)
         fhandler.img_recref_handler.save(fhandler.person_form.instance, request)
-        form_utils.save_multi_rel_recref_formset(fhandler.person_other_formset, fhandler.person_form.instance, request)
-        recref_utils.create_recref_if_field_exist(fhandler.person_form,
+        form_serv.save_multi_rel_recref_formset(fhandler.person_other_formset, fhandler.person_form.instance, request)
+        recref_serv.create_recref_if_field_exist(fhandler.person_form,
                                                   fhandler.person_form.instance,
                                                   request.user.username,
                                                   selected_id_field_name='selected_other_id',
@@ -278,7 +278,7 @@ def full_form(request, iperson_id):
 
         # reload all form data for rendering
         fhandler.load_data(iperson_id, request_data=None)
-        is_save_success = view_utils.mark_callback_save_success(request)
+        is_save_success = view_serv.mark_callback_save_success(request)
 
     return fhandler.render_form(request, is_save_success=is_save_success)
 
@@ -299,7 +299,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
                 'death_year_to': lambda _, v: LessThanOrEqual(F('date_of_death_year'), v),
                 'flourished_year_from': lambda _, v: GreaterThanOrEqual(F('flourished_year'), v),
                 'flourished_year_to': lambda _, v: LessThanOrEqual(F('flourished2_year'), v),
-                } | query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
+                } | query_serv.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
                                                         'change_timestamp')
 
     @property
@@ -380,14 +380,14 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
 
     def get_queryset_by_request_data(self, request_data, sort_by=None):
-        queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
+        queries = query_serv.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
 
         search_field_fn_maps = {
             'other_details': lookup_other_details,
         }
 
         queries.extend(
-            query_utils.create_queries_by_lookup_field(
+            query_serv.create_queries_by_lookup_field(
                 request_data,
                 search_field_names=self.search_fields,
                 search_fields_maps=self.search_field_combines,
@@ -398,11 +398,11 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
-        return renderer_utils.create_table_search_results_renderer('person/search_table_layout.html')
+        return renderer_serv.create_table_search_results_renderer('person/search_table_layout.html')
 
     @property
     def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
-        return renderer_utils.create_compact_renderer(item_template_name='person/compact_item.html')
+        return renderer_serv.create_compact_renderer(item_template_name='person/compact_item.html')
 
     @property
     def query_fieldset_list(self) -> Iterable:
@@ -417,7 +417,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
     def csv_export_setting(self):
         if not self.has_perms(constant.PM_EXPORT_FILE_PERSON):
             return None
-        return (lambda: view_utils.create_export_file_name('person', 'csv'),
+        return (lambda: view_serv.create_export_file_name('person', 'csv'),
                 lambda: DownloadCsvHandler(PersonCsvHeaderValues()).create_csv_file,
                 constant.PM_EXPORT_FILE_PERSON,)
 
@@ -541,22 +541,22 @@ class PersonDeleteConfirmView(LoginRequiredMixin, DeleteConfirmView):
 
 
 def lookup_other_details(lookup_fn, f, v):
-    q = query_utils.create_q_by_field_names(
+    q = query_serv.create_q_by_field_names(
         lookup_fn,
 
         itertools.chain(
-            query_utils.join_fields('cofkpersonlocationmap__location',
-                                    query_utils.location_detail_fields),
-            query_utils.join_fields('active_relationships__related',
-                                    query_utils.person_detail_fields),
-            query_utils.join_fields('passive_relationships__person',
-                                    query_utils.person_detail_fields),
-            query_utils.join_fields('cofkpersoncommentmap__comment',
-                                    query_utils.comment_detail_fields),
-            query_utils.join_fields('cofkpersonresourcemap__resource',
-                                    query_utils.resource_detail_fields),
-            query_utils.join_fields('cofkpersonimagemap__image',
-                                    query_utils.image_detail_fields),
+            query_serv.join_fields('cofkpersonlocationmap__location',
+                                    query_serv.location_detail_fields),
+            query_serv.join_fields('active_relationships__related',
+                                    query_serv.person_detail_fields),
+            query_serv.join_fields('passive_relationships__person',
+                                    query_serv.person_detail_fields),
+            query_serv.join_fields('cofkpersoncommentmap__comment',
+                                    query_serv.comment_detail_fields),
+            query_serv.join_fields('cofkpersonresourcemap__resource',
+                                    query_serv.resource_detail_fields),
+            query_serv.join_fields('cofkpersonimagemap__image',
+                                    query_serv.image_detail_fields),
         ), v)
 
     return q
@@ -573,7 +573,7 @@ def create_queryset_by_queries(model_class: Type[models.Model], queries: Iterabl
         'mentioned': create_sql_count_work_by_person([REL_TYPE_MENTION]),
     }
 
-    queryset = query_utils.update_queryset(queryset, model_class, queries,
+    queryset = query_serv.update_queryset(queryset, model_class, queries,
                                            annotate=annotate, sort_by=sort_by)
 
     return queryset

@@ -331,7 +331,7 @@ def prepare_works_for_search(core_constant=None):
         works.append(work_fixtures.fixture_work_by_dict(w))
 
     target_work = works[0]
-    # recref_utils.upsert_recref()
+    # recref_serv.upsert_recref()
 
     #  person relationship
     create_related_obj_by_obj_dict(target_work,

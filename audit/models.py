@@ -1,11 +1,11 @@
 from django.db import models
 
-from core.helper import model_utils
+from core.helper import model_serv
 
 
 class CofkUnionAuditLiteral(models.Model):
     audit_id = models.AutoField(primary_key=True)
-    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     change_user = models.CharField(max_length=50, null=False)
     change_type = models.CharField(max_length=3, null=False)
     table_name = models.CharField(max_length=100, null=False)
@@ -22,7 +22,7 @@ class CofkUnionAuditLiteral(models.Model):
 
 class CofkUnionAuditRelationship(models.Model):
     audit_id = models.AutoField(primary_key=True)
-    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     change_user = models.CharField(max_length=50)
     change_type = models.CharField(max_length=3)
     left_table_name = models.CharField(max_length=100)

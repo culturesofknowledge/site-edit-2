@@ -1,7 +1,7 @@
 from django import forms
 
-from core.helper import form_utils
-from core.helper.form_utils import CharSelectField, BasicSearchFieldset
+from core.helper import form_serv
+from core.helper.form_serv import CharSelectField, BasicSearchFieldset
 
 """
 desc_left_to_right
@@ -264,17 +264,17 @@ class AuditSearchFieldset(BasicSearchFieldset):
     table_name = CharSelectField(choices=table_name_choices, )
 
     key_value_text = forms.CharField(required=False, label='Record ID')
-    key_value_text_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    key_value_text_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     key_decode = forms.CharField(required=False, label='Record Desc')
-    key_decode_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    key_decode_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     column_name = CharSelectField(choices=changed_field_choices, )
 
     change_type = CharSelectField(choices=change_type_choices, )
 
     change_made = forms.CharField(required=False)
-    change_made_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    change_made_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     audit_id = forms.IntegerField(required=False)
-    audit_id_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
+    audit_id_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)

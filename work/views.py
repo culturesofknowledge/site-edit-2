@@ -22,18 +22,18 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_MENTION_WORK, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_IS_RELATED_TO
 from core.export_data import excel_maker, cell_values
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, LocRecrefForm
-from core.helper import view_utils, lang_utils, model_utils, query_utils, renderer_utils, date_utils
+from core.helper import view_serv, lang_serv, model_serv, query_serv, renderer_serv, date_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
-from core.helper.form_utils import save_multi_rel_recref_formset
-from core.helper.lang_utils import LangModelAdapter, NewLangForm
-from core.helper.perm_utils import class_permission_required
-from core.helper.query_utils import create_recref_lookup_fn
+from core.helper.form_serv import save_multi_rel_recref_formset
+from core.helper.lang_serv import LangModelAdapter, NewLangForm
+from core.helper.perm_serv import class_permission_required
+from core.helper.query_serv import create_recref_lookup_fn
 from core.helper.recref_handler import SingleRecrefHandler, RecrefFormsetHandler, SubjectHandler, ImageRecrefHandler, \
     TargetResourceFormsetHandler, MultiRecrefAdapterHandler
-from core.helper.recref_utils import create_recref_if_field_exist
+from core.helper.recref_serv import create_recref_if_field_exist
 from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
-from core.helper.view_utils import DefaultSearchView
+from core.helper.view_serv import DefaultSearchView
 from core.models import Recref, CofkLookupCatalogue
 from institution import inst_utils
 from location import location_utils
@@ -78,27 +78,27 @@ def create_search_fn_person_recref(rel_types: list) -> Callable:
 
 def create_lookup_fn_by_person(rel_types: list) -> Callable:
     return create_recref_lookup_fn(rel_types, 'cofkworkpersonmap__person',
-                                   query_utils.person_detail_fields)
+                                   query_serv.person_detail_fields)
 
 
 def create_lookup_fn_by_comment(rel_types: list) -> Callable:
     return create_recref_lookup_fn(rel_types, 'cofkworkcommentmap__comment',
-                                   query_utils.comment_detail_fields)
+                                   query_serv.comment_detail_fields)
 
 
 def create_lookup_fn_by_location(rel_types: list) -> Callable:
     return create_recref_lookup_fn(rel_types, 'cofkworklocationmap__location',
-                                   query_utils.location_detail_fields)
+                                   query_serv.location_detail_fields)
 
 
 def create_lookup_fn_by_image(rel_types: list) -> Callable:
     return create_recref_lookup_fn(rel_types, 'manif_set__image',
-                                   query_utils.image_detail_fields)
+                                   query_serv.image_detail_fields)
 
 
 def create_lookup_fn_by_resource(rel_types: list) -> Callable:
     return create_recref_lookup_fn(rel_types, 'cofkworkresourcemap__resource',
-                                   query_utils.resource_detail_fields)
+                                   query_serv.resource_detail_fields)
 
 
 def lookup_fn_flags(lookup_fn, field_name, value):
@@ -166,7 +166,7 @@ class BasicWorkFFH(FullFormHandler):
         context.update({
                            'iwork_id': self.request_iwork_id
                        } | WorkFormDescriptor(self.work).create_context()
-                       | view_utils.create_is_save_success_context(is_save_success)
+                       | view_serv.create_is_save_success_context(is_save_success)
                        )
         return context
 
@@ -424,7 +424,7 @@ class ManifFFH(BasicWorkFFH):
             prefix='scribe'
         )
 
-        self.edit_lang_formset = lang_utils.create_lang_formset(
+        self.edit_lang_formset = lang_serv.create_lang_formset(
             self.safe_manif.language_set.iterator(),
             lang_rec_id_name='lang_manif_id',
             request_data=request_data,
@@ -475,7 +475,7 @@ class ManifFFH(BasicWorkFFH):
         if self.manif:
             context['manif_id'] = self.manif.manifestation_id
 
-        if work := model_utils.get_safe(CofkUnionWork, iwork_id=self.request_iwork_id):
+        if work := model_serv.get_safe(CofkUnionWork, iwork_id=self.request_iwork_id):
             manif_set = []
             for _manif in work.manif_set.iterator():
                 _manif: CofkUnionManifestation
@@ -522,10 +522,10 @@ class ManifFFH(BasicWorkFFH):
         self.maintain_all_recref_records(request, manif)
 
         # language
-        lang_utils.maintain_lang_records(self.edit_lang_formset,
+        lang_serv.maintain_lang_records(self.edit_lang_formset,
                                          lambda pk: CofkUnionLanguageOfManifestation.objects.get(pk=pk))
 
-        lang_utils.add_new_lang_record(request.POST.getlist('lang_note'),
+        lang_serv.add_new_lang_record(request.POST.getlist('lang_note'),
                                        request.POST.getlist('lang_name'),
                                        manif.manifestation_id,
                                        ManifLangModelAdapter(), )
@@ -607,7 +607,7 @@ class DetailsFFH(BasicWorkFFH):
         )
 
         # language
-        self.lang_formset = lang_utils.create_lang_formset(
+        self.lang_formset = lang_serv.create_lang_formset(
             self.safe_work.language_set.iterator(),
             lang_rec_id_name='lang_work_id',
             request_data=request_data,
@@ -633,10 +633,10 @@ class DetailsFFH(BasicWorkFFH):
         work = self.save_work(request, self.details_form.instance)
 
         # language
-        lang_utils.maintain_lang_records(self.lang_formset,
+        lang_serv.maintain_lang_records(self.lang_formset,
                                          lambda pk: CofkUnionLanguageOfWork.objects.get(pk=pk))
 
-        lang_utils.add_new_lang_record(request.POST.getlist('lang_note'),
+        lang_serv.add_new_lang_record(request.POST.getlist('lang_note'),
                                        request.POST.getlist('lang_name'),
                                        work.work_id,
                                        WorkLangModelAdapter(), )
@@ -701,7 +701,7 @@ class BasicWorkFormView(LoginRequiredMixin, View):
             iwork_id = fhandler.saved_work.iwork_id
 
         url = reverse(self.cur_vname, args=[iwork_id])
-        url = view_utils.append_callback_save_success_parameter(request, url)
+        url = view_serv.append_callback_save_success_parameter(request, url)
         return redirect(url)
 
     @class_permission_required(constant.PM_CHANGE_WORK)
@@ -715,7 +715,7 @@ class BasicWorkFormView(LoginRequiredMixin, View):
 
     def get(self, request, iwork_id=None, *args, **kwargs):
         return self.create_fhandler(request, iwork_id, *args, **kwargs).render_form(
-            request, is_save_success=view_utils.mark_callback_save_success(request))
+            request, is_save_success=view_serv.mark_callback_save_success(request))
 
 
 class ManifView(BasicWorkFormView):
@@ -735,7 +735,7 @@ class ManifView(BasicWorkFormView):
 
         url = reverse('work:manif_update',
                       args=[fhandler.request_iwork_id, fhandler.manif_form.instance.manifestation_id])
-        url = view_utils.append_callback_save_success_parameter(request, url)
+        url = view_serv.append_callback_save_success_parameter(request, url)
         return redirect(url)
 
 
@@ -871,7 +871,7 @@ def to_overview_manif(manif: CofkUnionManifestation):
         manif.repo_name = repo.inst.institution_name
 
     manif.type_display_name = dict(manif_type_choices).get(manif.manifestation_type, '')
-    manif.manifestation_receipt_calendar_display = date_utils.decode_calendar(manif.manifestation_receipt_calendar)
+    manif.manifestation_receipt_calendar_display = date_serv.decode_calendar(manif.manifestation_receipt_calendar)
 
     return manif
 
@@ -921,7 +921,7 @@ def overview_view(request, iwork_id):
         work_be_mention_link_list=(WorkLinkData(r.work_from) for r in
                                    work.work_to_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
         manif_set=list(map(to_overview_manif, work.manif_set.iterator())),
-        original_calendar_display=date_utils.decode_calendar(work.original_calendar),
+        original_calendar_display=date_serv.decode_calendar(work.original_calendar),
     )
 
     context.update(WorkFormDescriptor(work).create_context())
@@ -937,7 +937,7 @@ class WorkQuickInitView(CorrView):
 @login_required
 def return_quick_init(request, pk):
     work = CofkUnionWork.objects.get(iwork_id=pk)
-    return view_utils.render_return_quick_init(
+    return view_serv.render_return_quick_init(
         request, 'Work',
         work_utils.get_recref_display_name(work),
         work_utils.get_recref_target_id(work),
@@ -999,11 +999,11 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             'location_rec_pk': create_search_fn_location_recref([REL_TYPE_WAS_SENT_TO]),
             'location_sent_rec_pk': create_search_fn_location_recref(
                 [REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
-        } | query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
+        } | query_serv.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
                                                 'change_timestamp') \
-            | query_utils.create_from_to_datetime('date_of_work_std_from', 'date_of_work_std_to',
+            | query_serv.create_from_to_datetime('date_of_work_std_from', 'date_of_work_std_to',
                                                   'date_of_work_std',
-                                                  convert_fn=date_utils.search_datestr_to_db_datestr, )
+                                                  convert_fn=date_serv.search_datestr_to_db_datestr, )
 
     def get_queryset(self):
         if not self.request_data:
@@ -1012,7 +1012,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
 
     def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:
-        queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
+        queries = query_serv.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
 
         search_fields_maps = {
             'manifestations_searchable': [
@@ -1041,7 +1041,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         }
 
         queries.extend(
-            query_utils.create_queries_by_lookup_field(
+            query_serv.create_queries_by_lookup_field(
                 request_data, self.search_fields,
                 search_fields_maps=search_fields_maps,
                 search_fields_fn_maps={
@@ -1087,12 +1087,12 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
-        return renderer_utils.create_table_search_results_renderer('work/expanded_search_table_layout.html')
+        return renderer_serv.create_table_search_results_renderer('work/expanded_search_table_layout.html')
 
     @property
     def compact_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
         # Compact search results for works are also table formatted
-        return renderer_utils.create_table_search_results_renderer('work/compact_search_table_layout.html')
+        return renderer_serv.create_table_search_results_renderer('work/compact_search_table_layout.html')
 
     @property
     def return_quick_init_vname(self) -> str:
@@ -1111,7 +1111,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         if not self.has_perms(constant.PM_EXPORT_FILE_WORK):
             return None
 
-        return (lambda: view_utils.create_export_file_name('work', 'csv'),
+        return (lambda: view_serv.create_export_file_name('work', 'csv'),
                 lambda: DownloadCsvHandler(WorkCsvHeaderValues()).create_csv_file,
                 constant.PM_EXPORT_FILE_WORK,
                 )
@@ -1123,7 +1123,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         if not self.has_perms(constant.PM_EXPORT_FILE_WORK):
             return None
 
-        return (lambda: view_utils.create_export_file_name('work', 'xlsx'),
+        return (lambda: view_serv.create_export_file_name('work', 'xlsx'),
                 lambda: excel_maker.create_work_excel,
                 constant.PM_EXPORT_FILE_WORK,
                 )
@@ -1238,7 +1238,7 @@ class WorkCsvHeaderValues(HeaderValues):
 def create_queryset_by_queries(model_class: Type[models.Model], queries: Iterable[Q] = None,
                                sort_by=None):
     queryset = model_class.objects.filter()
-    queryset = query_utils.update_queryset(queryset, model_class, queries,
+    queryset = query_serv.update_queryset(queryset, model_class, queries,
                                            sort_by=sort_by)
     queryset = queryset.prefetch_related('cofkworkpersonmap_set__person',
                                          'cofkworklocationmap_set__location',

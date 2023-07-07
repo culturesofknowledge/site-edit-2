@@ -1,7 +1,7 @@
 from django.db import models
 
-from core.helper import model_utils
-from core.helper.model_utils import RecordTracker
+from core.helper import model_serv
+from core.helper.model_serv import RecordTracker
 from core.models import Recref
 
 
@@ -10,9 +10,9 @@ class CofkUnionLocation(models.Model, RecordTracker):
     location_name = models.CharField(max_length=500)
     latitude = models.CharField(max_length=20, blank=True, null=True)
     longitude = models.CharField(max_length=20, blank=True, null=True)
-    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
-    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     change_user = models.CharField(max_length=50)
     location_synonyms = models.TextField(blank=True, null=True)
     editors_notes = models.TextField(blank=True, null=True)

@@ -13,10 +13,10 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from core import constant
 from core.export_data import excel_header_values, excel_utils
-from core.helper import model_utils
-from sharedlib import data_utils
+from core.helper import model_serv
 from core.helper.view_components import HeaderValues
 from core.models import CofkUnionResource
+from sharedlib import data_utils
 from work.models import CofkUnionWork
 
 log = logging.getLogger(__name__)
@@ -114,7 +114,7 @@ def create_work_excel(queryable_works: Iterable[CofkUnionWork],
     def _find_manif_list():
         manif_list = itertools.chain.from_iterable(w.manif_set.all()
                                                    for w in queryable_works)
-        return model_utils.UniqueModelPkFilter(manif_list)
+        return model_serv.UniqueModelPkFilter(manif_list)
 
     def _find_person_list():
         person_list = itertools.chain.from_iterable(w.find_persons_by_rel_type([
@@ -125,19 +125,19 @@ def create_work_excel(queryable_works: Iterable[CofkUnionWork],
             constant.REL_TYPE_INTENDED_FOR,
             constant.REL_TYPE_MENTION,
         ]) for w in queryable_works)
-        return model_utils.UniqueModelPkFilter(person_list)
+        return model_serv.UniqueModelPkFilter(person_list)
 
     def _find_location_list():
         location_list = itertools.chain.from_iterable(w.find_locations_by_rel_type([
             constant.REL_TYPE_WAS_SENT_FROM,
             constant.REL_TYPE_WAS_SENT_TO,
         ]) for w in queryable_works)
-        return model_utils.UniqueModelPkFilter(location_list)
+        return model_serv.UniqueModelPkFilter(location_list)
 
     def _find_inst_list():
-        inst_list = (manif.inst for manif in model_utils.UniqueModelPkFilter(_find_manif_list()))
+        inst_list = (manif.inst for manif in model_serv.UniqueModelPkFilter(_find_manif_list()))
         inst_list = filter(None, inst_list)
-        return model_utils.UniqueModelPkFilter(inst_list)
+        return model_serv.UniqueModelPkFilter(inst_list)
 
     def _fill_fn(workbook: Workbook):
         fill_work_sheet(workbook.create_sheet(), queryable_works)

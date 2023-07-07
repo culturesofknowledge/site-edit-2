@@ -2,7 +2,7 @@ import collections
 
 from django.urls import reverse
 
-from core.helper import recref_utils
+from core.helper import recref_serv
 from location import location_utils
 from person.models import CofkUnionPerson
 from siteedit2.utils.log_utils import log_no_url
@@ -80,7 +80,7 @@ def get_display_dict_other_details(person: CofkUnionPerson, new_line='\n') -> st
     result_map = collections.defaultdict(list)
     for query_fn, name_fn, left_obj_fn in query_name_map:
         for mmap in query_fn():
-            display_name = recref_utils.get_recref_rel_desc(mmap, left_obj_fn(mmap),
+            display_name = recref_serv.get_recref_rel_desc(mmap, left_obj_fn(mmap),
                                                             default_raw_value=True)
             result_map[display_name].append(name_fn(mmap))
 

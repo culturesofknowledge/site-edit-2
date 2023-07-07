@@ -17,8 +17,7 @@ from django.utils.html import strip_tags
 import person.views
 from core import constant
 from core.constant import REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE_MENTION
-from core.helper import query_utils, recref_utils, date_utils, query_cache_utils, model_utils, media_service
-from sharedlib import thread_utils
+from core.helper import query_serv, recref_serv, date_serv, query_cache_serv, model_serv, media_serv
 from core.helper.view_components import HeaderValues, DownloadCsvHandler
 from core.models import CofkUnionImage, CofkUnionRelationshipType, CofkUnionComment, CofkUnionResource
 from institution.models import CofkUnionInstitution
@@ -27,6 +26,7 @@ from location.queries import create_sql_count_work_by_location
 from manifestation.models import CofkUnionManifestation
 from person import person_utils
 from person.models import CofkUnionPerson
+from sharedlib import thread_utils
 from work import work_utils
 from work.models import CofkUnionWork
 from work.work_utils import DisplayableWork
@@ -100,7 +100,7 @@ def is_published_by_filter_work(obj, work_prefix) -> int:
 
 
 def to_csv_pk(obj):
-    return f'{model_utils.get_table_name(obj)}-{obj.pk}'
+    return f'{model_serv.get_table_name(obj)}-{obj.pk}'
 
 
 def to_db_pk(table_name, id_val):
@@ -164,7 +164,7 @@ class ImageFrontendCsv(HeaderValues):
     def _cut_img_url(self, v):
         if not isinstance(v, str):
             return v
-        return re.sub(r'^' + media_service.IMG_URL, '/', v)
+        return re.sub(r'^' + media_serv.IMG_URL, '/', v)
 
     def _is_published(self, obj):
         check_list = [
@@ -186,7 +186,7 @@ class InstFrontendCsv(HeaderValues):
 
     def count_inst_work(self):
         q = work_utils.q_visible_works(prefix='cofkmanifinstmap__manif__work', check_hidden_date=False)
-        q &= recref_utils.create_q_rel_type(constant.REL_TYPE_STORED_IN, prefix='cofkmanifinstmap')
+        q &= recref_serv.create_q_rel_type(constant.REL_TYPE_STORED_IN, prefix='cofkmanifinstmap')
         queryset = (CofkUnionInstitution.objects
                     .values('institution_id')
                     .annotate(count=Count('institution_id'))
@@ -262,7 +262,7 @@ class LocationFrontendCsv(HeaderValues):
 
 class ManifFrontendCsv(HeaderValues):
     def __init__(self):
-        self.lookup_doc_desc_map = query_cache_utils.create_lookup_doc_desc_map()
+        self.lookup_doc_desc_map = query_cache_serv.create_lookup_doc_desc_map()
 
     def get_header_list(self) -> list[str]:
         return [
@@ -335,7 +335,7 @@ class ManifFrontendCsv(HeaderValues):
                           'manifestation_type': lambda o: self.lookup_doc_desc_map.get(
                               o.manifestation_type, o.manifestation_type),
                           'published': lambda o: is_published_work(o.work),
-                          'manifestation_creation_calendar': lambda o: date_utils.decode_calendar(
+                          'manifestation_creation_calendar': lambda o: date_serv.decode_calendar(
                               o.manifestation_creation_calendar),
                       } | creation_change_user_settings()
         return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
@@ -460,7 +460,7 @@ def is_url_for_published(url: str, cache_urls: dict[str, bool]) -> int:
         return 1
     if is_http_url(url):
         return int(cache_urls.get(url, False))
-    return media_service.is_img_exists_by_url(url)
+    return media_serv.is_img_exists_by_url(url)
 
 
 class ResourceFrontendCsv(HeaderValues):
@@ -501,7 +501,7 @@ class ResourceFrontendCsv(HeaderValues):
 
 class WorkFrontendCsv(HeaderValues):
     def __init__(self):
-        self.catalogue_map = query_cache_utils.create_catalogue_name_map()
+        self.catalogue_map = query_cache_serv.create_catalogue_name_map()
 
     def get_header_list(self) -> list[str]:
         return [
@@ -560,7 +560,7 @@ class WorkFrontendCsv(HeaderValues):
                           'work_id': to_csv_pk,
                           'published': is_published_work,
                           'accession_code': self._get_accession_code,
-                          'original_calendar': lambda o: date_utils.decode_calendar(o.original_calendar),
+                          'original_calendar': lambda o: date_serv.decode_calendar(o.original_calendar),
                           'date_of_work_std_gregorian': lambda o: re.sub(r'^10000-', '9999-',
                                                                          o.date_of_work_std_gregorian),
                           'original_catalogue': lambda o: self.catalogue_map.get(o.original_catalogue_id,
@@ -622,13 +622,13 @@ class RelationshipFrontendCsv(HeaderValues):
         if isinstance(obj, dict):
             value_dict = obj
         else:
-            left_obj, right_obj = recref_utils.get_left_right_rel_obj(obj)
+            left_obj, right_obj = recref_serv.get_left_right_rel_obj(obj)
             convert_map = {
                 'relationship_id': to_csv_pk,
-                'left_table_name': lambda o: model_utils.get_table_name(left_obj),
+                'left_table_name': lambda o: model_serv.get_table_name(left_obj),
                 'left_id_value': lambda o: to_csv_pk(left_obj),
                 'relationship_type': lambda o: f'cofk_union_relationship_type-{o.relationship_type}',
-                'right_table_name': lambda o: model_utils.get_table_name(right_obj),
+                'right_table_name': lambda o: model_serv.get_table_name(right_obj),
                 'right_id_value': lambda o: to_csv_pk(right_obj),
                 'relationship_valid_from': lambda o: to_datetime_str(o.from_date),
                 'relationship_valid_till': lambda o: to_datetime_str(o.to_date),
@@ -653,7 +653,7 @@ def create_location_queryset():
         'recd_count': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_TO]),
         'mentioned_count': create_sql_count_work_by_location([REL_TYPE_MENTION]),
     }
-    queryset = query_utils.update_queryset(queryset, CofkUnionLocation, None, annotate=annotate)
+    queryset = query_serv.update_queryset(queryset, CofkUnionLocation, None, annotate=annotate)
     return queryset
 
 
@@ -666,7 +666,7 @@ def preloaded_csv_settings(objects_factory, target_csv_type_factory, model_class
 
 
 def find_all_recrefs():
-    for recref_class in recref_utils.find_all_recref_class():
+    for recref_class in recref_serv.find_all_recref_class():
         for r in recref_class.objects.iterator():
             yield r
 
@@ -676,10 +676,10 @@ def find_all_recrefs():
         fake_work = CofkUnionWork(pk=manif.work_id)
         yield {
             'relationship_id': f'{manif.pk}-{manif.work_id}',
-            'left_table_name': model_utils.get_table_name(manif),
+            'left_table_name': model_serv.get_table_name(manif),
             'left_id_value': to_csv_pk(manif),
             'relationship_type': constant.REL_TYPE_IS_MANIF_OF,
-            'right_table_name': model_utils.get_table_name(fake_work),
+            'right_table_name': model_serv.get_table_name(fake_work),
             'right_id_value': to_csv_pk(fake_work),
             'relationship_valid_from': '',
             'relationship_valid_till': '',
@@ -693,9 +693,9 @@ def export_all(output_dir: str = '.'):
     output_dir.mkdir(parents=True, exist_ok=True)
 
     global cache_username_map
-    cache_username_map = query_cache_utils.create_username_map()
+    cache_username_map = query_cache_serv.create_username_map()
     global cached_catalogue_status
-    cached_catalogue_status = query_cache_utils.create_catalogue_status_map()
+    cached_catalogue_status = query_cache_serv.create_catalogue_status_map()
 
     settings = [
         preloaded_csv_settings(

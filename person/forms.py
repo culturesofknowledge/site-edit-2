@@ -8,9 +8,9 @@ from django.forms.utils import ErrorList
 
 from core import constant
 from core.form_label_maps import field_label_map
-from core.helper import form_utils, date_utils
+from core.helper import form_serv, date_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
-from core.helper.form_utils import TargetPersonMRRForm, LocationRecrefField, BasicSearchFieldset, SearchCharField, \
+from core.helper.form_serv import TargetPersonMRRForm, LocationRecrefField, BasicSearchFieldset, SearchCharField, \
     SearchIntField
 from core.models import CofkUnionOrgType, CofkUnionRoleCategory
 from person.models import CofkUnionPerson
@@ -104,44 +104,44 @@ class PersonForm(ModelForm):
                                    )
                                    )
 
-    date_of_birth_year = form_utils.create_year_field()
-    date_of_birth_month = form_utils.create_month_field()
-    date_of_birth_day = form_utils.create_day_field()
-    date_of_birth2_year = form_utils.create_year_field()
-    date_of_birth2_month = form_utils.create_month_field()
-    date_of_birth2_day = form_utils.create_day_field()
-    date_of_birth_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    date_of_birth_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    date_of_birth_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    date_of_birth_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    date_of_birth_year = form_serv.create_year_field()
+    date_of_birth_month = form_serv.create_month_field()
+    date_of_birth_day = form_serv.create_day_field()
+    date_of_birth2_year = form_serv.create_year_field()
+    date_of_birth2_month = form_serv.create_month_field()
+    date_of_birth2_day = form_serv.create_day_field()
+    date_of_birth_inferred = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
+    date_of_birth_uncertain = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
+    date_of_birth_approx = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
+    date_of_birth_is_range = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_birth_calendar = forms.CharField(required=False,
-                                             widget=forms.RadioSelect(choices=date_utils.calendar_choices, ))
+                                             widget=forms.RadioSelect(choices=date_serv.calendar_choices, ))
 
-    date_of_death_year = form_utils.create_year_field()
-    date_of_death_month = form_utils.create_month_field()
-    date_of_death_day = form_utils.create_day_field()
-    date_of_death2_year = form_utils.create_year_field()
-    date_of_death2_month = form_utils.create_month_field()
-    date_of_death2_day = form_utils.create_day_field()
-    date_of_death_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    date_of_death_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    date_of_death_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    date_of_death_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    date_of_death_year = form_serv.create_year_field()
+    date_of_death_month = form_serv.create_month_field()
+    date_of_death_day = form_serv.create_day_field()
+    date_of_death2_year = form_serv.create_year_field()
+    date_of_death2_month = form_serv.create_month_field()
+    date_of_death2_day = form_serv.create_day_field()
+    date_of_death_inferred = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
+    date_of_death_uncertain = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
+    date_of_death_approx = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
+    date_of_death_is_range = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_death_calendar = forms.CharField(required=False,
-                                             widget=forms.RadioSelect(choices=date_utils.calendar_choices, ))
+                                             widget=forms.RadioSelect(choices=date_serv.calendar_choices, ))
 
-    flourished_year = form_utils.create_year_field()
-    flourished_month = form_utils.create_month_field()
-    flourished_day = form_utils.create_day_field()
-    flourished2_year = form_utils.create_year_field()
-    flourished2_month = form_utils.create_month_field()
-    flourished2_day = form_utils.create_day_field()
-    flourished_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    flourished_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    flourished_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    flourished_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    flourished_year = form_serv.create_year_field()
+    flourished_month = form_serv.create_month_field()
+    flourished_day = form_serv.create_day_field()
+    flourished2_year = form_serv.create_year_field()
+    flourished2_month = form_serv.create_month_field()
+    flourished2_day = form_serv.create_day_field()
+    flourished_inferred = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
+    flourished_uncertain = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
+    flourished_approx = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
+    flourished_is_range = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
     flourished_calendar = forms.CharField(required=False,
-                                          widget=forms.RadioSelect(choices=date_utils.calendar_choices, ))
+                                          widget=forms.RadioSelect(choices=date_serv.calendar_choices, ))
 
     organisation_type = OrgTypeField(required=False)
 
@@ -213,7 +213,7 @@ class PersonForm(ModelForm):
 
     def clean(self):
         log.debug(f'cleaned_data: {self.cleaned_data}')
-        form_utils.clean_by_default_value(self.cleaned_data, [
+        form_serv.clean_by_default_value(self.cleaned_data, [
             'date_of_birth_inferred',
             'date_of_birth_uncertain',
             'date_of_birth_approx',
@@ -260,20 +260,20 @@ class GeneralSearchFieldset(BasicSearchFieldset):
                                                  "alternative names and titles or roles/professions. Roles and professions "
                                                  "may have been entered as free text and/or as a list of standard categories "
                                                  "(see below):")
-    names_and_titles_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    names_and_titles_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
-    birth_year_from = form_utils.create_year_field(_class='searchfield')
-    birth_year_to = form_utils.create_year_field(_class='searchfield')
+    birth_year_from = form_serv.create_year_field(_class='searchfield')
+    birth_year_to = form_serv.create_year_field(_class='searchfield')
     birth_year_info = 'Can be entered in YYYY format. (In the case of organisations, ' \
                       'this field may hold the date of formation.)'
 
-    death_year_from = form_utils.create_year_field(_class='searchfield')
-    death_year_to = form_utils.create_year_field(_class='searchfield')
+    death_year_from = form_serv.create_year_field(_class='searchfield')
+    death_year_to = form_serv.create_year_field(_class='searchfield')
     death_year_info = 'Can be entered in YYYY format. (In the case of organisations, ' \
                       'this field may hold the date of dissolution.)'
 
-    flourished_year_from = form_utils.create_year_field(_class='searchfield')
-    flourished_year_to = form_utils.create_year_field(_class='searchfield')
+    flourished_year_from = form_serv.create_year_field(_class='searchfield')
+    flourished_year_to = form_serv.create_year_field(_class='searchfield')
     flourished_info = 'Can be entered in YYYY format.'
 
     gender = SearchCharField(widget=forms.Select(choices=search_gender_choices))
@@ -283,47 +283,47 @@ class GeneralSearchFieldset(BasicSearchFieldset):
                                                 "Group if correspondent is an organisation or group.")
 
     organisation_type = SearchCharField()
-    organisation_type_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    organisation_type_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     sent = SearchIntField(help_text="Number of letters from this author/sender. "
                                     "You can search on these 'number' fields using 'Advanced Search', "
                                     "e.g. you could enter something like 'Sent greater than 100' to "
                                     "identify the more prolific authors.")
-    sent_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
+    sent_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
     recd = SearchIntField(label=field_label_map['person']['recd'],
                           help_text='Number of letters sent to this addressee.')
-    recd_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
+    recd_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
     all_works = SearchIntField(label=field_label_map['person']['all_works'],
                                help_text='Total of letters to and from this person/organisation.')
-    all_works_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
+    all_works_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
     mentioned = SearchIntField(help_text='Number of letters in which this person/organisation was mentioned.')
-    mentioned_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
+    mentioned_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
     roles = SearchCharField(label=field_label_map['person']['roles'],
                             help_text='Also known as Professional categories.')
-    roles_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    roles_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     editors_notes = SearchCharField(label=field_label_map['person']['editors_notes'],
                                     help_text='Notes for internal use, intended to hold temporary queries etc.')
-    editors_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    editors_notes_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     further_reading = SearchCharField()
-    further_reading_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    further_reading_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     images = SearchCharField()
-    images_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    images_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     other_details = SearchCharField(help_text='Summary of any other information about the person or group, '
                                               'including membership of organisations, known geographical '
                                               'locations, researchers\' notes and related resources.')
-    other_details_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    other_details_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     iperson_id = SearchIntField(label=field_label_map['person']['iperson_id'],
                                 help_text='The unique ID for the record within this database.')
-    iperson_id_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
+    iperson_id_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
 
 class PersonOtherRelationChoices(TextChoices):

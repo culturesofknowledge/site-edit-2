@@ -1,4 +1,4 @@
-from core.helper import model_utils
+from core.helper import model_serv
 from core.models import CofkLookupDocumentType
 from manifestation.models import CofkUnionManifestation
 
@@ -12,7 +12,7 @@ def get_recref_target_id(manif: CofkUnionManifestation):
 
 
 def create_manif_id(iwork_id) -> str:
-    return f'W{iwork_id}-{model_utils.next_seq_safe("cofk_union_manif_manif_id_seq")}'
+    return f'W{iwork_id}-{model_serv.next_seq_safe("cofk_union_manif_manif_id_seq")}'
 
 
 def get_doctype_desc(manif: CofkUnionManifestation) -> str:

@@ -1,14 +1,14 @@
 from django.http import FileResponse
 
-from core.helper import media_service
+from core.helper import media_serv
 from login.views import dashboard
 
 default_view = dashboard
 
 
 def download_file(request, file_path):
-    real_file_path = media_service.FILE_DOWNLOAD_PATH.joinpath(file_path).resolve()
-    if not real_file_path.as_posix().startswith(media_service.FILE_DOWNLOAD_PATH.as_posix()):
+    real_file_path = media_serv.FILE_DOWNLOAD_PATH.joinpath(file_path).resolve()
+    if not real_file_path.as_posix().startswith(media_serv.FILE_DOWNLOAD_PATH.as_posix()):
         raise ValueError('Invalid path')
 
     response = FileResponse(real_file_path.open('rb'),

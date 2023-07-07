@@ -22,9 +22,8 @@ from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
 
-from core.helper import media_service
-
 import core.views
+from core.helper import media_serv
 
 urlpatterns = [
     path('', RedirectView.as_view(url='/login/dashboard')),
@@ -43,7 +42,7 @@ urlpatterns = [
 ]
 
 for url_path, file_path in [
-    ('img', media_service.IMG_PATH),
+    ('img', media_serv.IMG_PATH),
 ]:
     urlpatterns += static(urljoin(settings.MEDIA_URL, url_path), document_root=file_path)
 
