@@ -11,8 +11,10 @@
             {% endwith %}
         </div>
 
-        <fieldset>
-            <legend id="{{ header_id|add:'_date' }}" class="toc-sub-item">Date of {{ name }} in standard format</legend>
+        <fieldset class="date-standard-format">
+            <legend id="{{ header_id|add:'_date' }}" class="toc-sub-item">
+                Date of {{ name }} in standard format
+            </legend>
             <div class="margin-bottom">
                 <div class="is-range-div">
                     {{ is_range }}
