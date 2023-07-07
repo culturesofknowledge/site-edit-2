@@ -1,6 +1,7 @@
 """
 export data to csv for Emlo-frontend
 """
+import csv
 import logging
 import re
 import time
@@ -18,8 +19,7 @@ from core import constant
 from core.constant import REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE_MENTION
 from core.helper import query_utils, recref_utils, thread_utils, date_utils, query_cache_utils, model_utils
 from core.helper.view_components import HeaderValues, DownloadCsvHandler
-from core.models import CofkUnionImage, CofkUnionComment, CofkUnionRelationshipType, \
-    CofkUnionResource
+from core.models import CofkUnionImage, CofkUnionRelationshipType, CofkUnionComment, CofkUnionResource
 from core.services import media_service
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
@@ -101,6 +101,11 @@ def is_published_by_filter_work(obj, work_prefix) -> int:
 
 def to_csv_pk(obj):
     return f'{model_utils.get_table_name(obj)}-{obj.pk}'
+
+
+def to_db_pk(table_name, id_val):
+    new_id_val = re.sub(r'^' + table_name + '-', '', id_val)
+    return new_id_val
 
 
 class CommentFrontendCsv(HeaderValues):
@@ -572,6 +577,26 @@ class WorkFrontendCsv(HeaderValues):
 
 
 class RelationshipFrontendCsv(HeaderValues):
+    def __init__(self, csv_home_dir: str):
+        csv_home_dir = Path(csv_home_dir)
+
+        # dict format:  table_name -> { id -> published (1 or 0) }
+        self.cache_published = {}
+        for table_name, (id_field, published_field) in [
+            ('cofk_union_work', ('work_id', 'published'),),
+            ('cofk_union_image', ('image_id', 'published'),),
+            ('cofk_union_resource', ('resource_id', 'published'),),
+            ('cofk_union_manifestation', ('manifestation_id', 'published'),),
+        ]:
+            table_dict = {}
+            with open(csv_home_dir / f'{table_name}.csv', mode='r') as csvfile:
+                for row_dict in csv.DictReader(csvfile):
+                    id_val = row_dict[id_field]
+                    new_id_val = to_db_pk(table_name, id_val)
+                    # assert new_id_val != id_val, f'{table_name} --- {id_val} --- {new_id_val}'
+                    table_dict[new_id_val] = row_dict[published_field] == '1'
+
+            self.cache_published[table_name] = table_dict
 
     def get_header_list(self) -> list[str]:
         return [
@@ -586,23 +611,39 @@ class RelationshipFrontendCsv(HeaderValues):
             'published',
         ]
 
+    def _is_table_item_published(self, table_name: str, id_value: str) -> bool:
+        if table_name not in self.cache_published:
+            return True
+
+        db_id = to_db_pk(table_name, id_value)
+        return self.cache_published[table_name].get(db_id, False)
+
     def obj_to_values(self, obj) -> Iterable:
         if isinstance(obj, dict):
-            return [obj.get(k) for k in self.get_header_list()]
+            value_dict = obj
+        else:
+            left_obj, right_obj = recref_utils.get_left_right_rel_obj(obj)
+            convert_map = {
+                'relationship_id': to_csv_pk,
+                'left_table_name': lambda o: model_utils.get_table_name(left_obj),
+                'left_id_value': lambda o: to_csv_pk(left_obj),
+                'relationship_type': lambda o: f'cofk_union_relationship_type-{o.relationship_type}',
+                'right_table_name': lambda o: model_utils.get_table_name(right_obj),
+                'right_id_value': lambda o: to_csv_pk(right_obj),
+                'relationship_valid_from': lambda o: to_datetime_str(o.from_date),
+                'relationship_valid_till': lambda o: to_datetime_str(o.to_date),
+                'published': always_published,
+            }
+            values = obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
+            value_dict = dict(zip(self.get_header_list(), values))
 
-        left_obj, right_obj = recref_utils.get_left_right_rel_obj(obj)
-        convert_map = {
-            'relationship_id': to_csv_pk,
-            'left_table_name': lambda o: model_utils.get_table_name(left_obj),
-            'left_id_value': lambda o: to_csv_pk(left_obj),
-            'relationship_type': lambda o: f'cofk_union_relationship_type-{o.relationship_type}',
-            'right_table_name': lambda o: model_utils.get_table_name(right_obj),
-            'right_id_value': lambda o: to_csv_pk(right_obj),
-            'relationship_valid_from': lambda o: to_datetime_str(o.from_date),
-            'relationship_valid_till': lambda o: to_datetime_str(o.to_date),
-            'published': always_published,
-        }
-        return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
+        # set published based on the published status of the left and right objects
+        left_published = self._is_table_item_published(value_dict['left_table_name'], value_dict['left_id_value'])
+        right_published = self._is_table_item_published(value_dict['right_table_name'], value_dict['right_id_value'])
+        if not left_published or not right_published:
+            value_dict['published'] = 0
+
+        return [value_dict.get(k) for k in self.get_header_list()]
 
 
 def create_location_queryset():
@@ -629,18 +670,20 @@ def find_all_recrefs():
         for r in recref_class.objects.iterator():
             yield r
 
+    # manif, work relationship
     for manif in CofkUnionManifestation.objects.iterator():
         manif: CofkUnionManifestation
+        fake_work = CofkUnionWork(pk=manif.work_id)
         yield {
-            'relationship_id': f'{manif.pk}-{manif.work.pk}',
+            'relationship_id': f'{manif.pk}-{manif.work_id}',
             'left_table_name': model_utils.get_table_name(manif),
             'left_id_value': to_csv_pk(manif),
             'relationship_type': constant.REL_TYPE_IS_MANIF_OF,
-            'right_table_name': model_utils.get_table_name(manif.work),
-            'right_id_value': to_csv_pk(manif.work),
+            'right_table_name': model_utils.get_table_name(fake_work),
+            'right_id_value': to_csv_pk(fake_work),
             'relationship_valid_from': '',
             'relationship_valid_till': '',
-            'published': 1,
+            'published': 1 if CofkUnionWork.objects.filter(pk=manif.work_id).exists() else 0,
         }
 
 
@@ -672,10 +715,14 @@ def export_all(output_dir: str = '.'):
          RelTypeFrontendCsv, CofkUnionRelationshipType),
         (lambda: DisplayableWork.objects.iterator(),
          WorkFrontendCsv, CofkUnionWork),
-        (find_all_recrefs, RelationshipFrontendCsv, 'cofk_union_relationship'),
         preloaded_csv_settings(
             lambda: CofkUnionImage.objects.iterator(),
             ImageFrontendCsv, CofkUnionImage),
+
+        # relationship csv must be last, because it uses data from other csvs
+        (find_all_recrefs,
+         lambda: RelationshipFrontendCsv(output_dir),
+         'cofk_union_relationship'),
     ]
     for objects_factory, target_csv_type_factory, name_item in settings:
         filename = name_item if isinstance(name_item, str) else name_item._meta.db_table
