@@ -2,6 +2,9 @@
     {{ multi_rel_recref_formset.management_form }}
     {% for form in multi_rel_recref_formset %}
         {{ form }}
+        {% if forloop.last %}
+            <pre>Uncheck all checkbox to remove relationship of entity</pre>
+        {% endif %}
     {% endfor %}
 </div>
 
