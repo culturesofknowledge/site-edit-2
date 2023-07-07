@@ -7,7 +7,8 @@ from collections.abc import Iterable
 from django.conf import settings
 
 from core import constant
-from core.helper import general_model_utils, str_utils
+from core.helper import general_model_utils
+from sharedlib import str_utils
 from core.models import CofkUnionComment, CofkUnionResource
 from person import person_utils
 from person.models import CofkUnionPerson

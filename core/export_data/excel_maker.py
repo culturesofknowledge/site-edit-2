@@ -13,7 +13,8 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from core import constant
 from core.export_data import excel_header_values, excel_utils
-from core.helper import data_utils, model_utils
+from core.helper import model_utils
+from sharedlib import data_utils
 from core.helper.view_components import HeaderValues
 from core.models import CofkUnionResource
 from work.models import CofkUnionWork

@@ -22,7 +22,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
 
-from core.services import media_service
+from core.helper import media_service
 
 import core.views
 

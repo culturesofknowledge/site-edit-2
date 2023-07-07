@@ -24,8 +24,10 @@ from django.views.generic import ListView
 import core.constant as core_constant
 from core import constant
 from core.form_label_maps import field_label_map
-from core.helper import email_utils, query_utils, general_model_utils, recref_utils, model_utils, \
-    django_utils, inspect_utils, url_utils, date_utils, str_utils, perm_utils
+from core.helper import query_utils, general_model_utils, recref_utils, model_utils, \
+    url_utils, date_utils, perm_utils, media_service
+from sharedlib import inspect_utils, str_utils
+from sharedlib.djangolib import django_utils, email_utils
 from core.helper.form_utils import build_search_components
 from core.helper.model_utils import ModelLike, RecordTracker
 from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
@@ -33,8 +35,6 @@ from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompact
 from core.helper.url_utils import VNAME_FULL_FORM, VNAME_SEARCH
 from core.helper.view_components import DownloadCsvHandler
 from core.models import CofkUnionResource, CofkUnionComment, CofkUserSavedQuery, CofkUserSavedQuerySelection
-from core.services import media_service
-from work import work_utils
 from work.models import CofkUnionWork
 
 if TYPE_CHECKING:

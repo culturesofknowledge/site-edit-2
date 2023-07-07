@@ -1,6 +1,6 @@
 from django.http import FileResponse
 
-from core.services import media_service
+from core.helper import media_service
 from login.views import dashboard
 
 default_view = dashboard

@@ -5,7 +5,8 @@ from django.test import TestCase
 from selenium.webdriver.common.by import By
 
 import location.fixtures
-from core.helper import model_utils, file_utils
+from core.helper import model_utils
+from sharedlib import file_utils
 from core.helper.view_components import DownloadCsvHandler
 from location.models import CofkUnionLocation, CofkLocationResourceMap
 from location.recref_adapter import LocationResourceRecrefAdapter

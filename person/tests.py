@@ -2,7 +2,8 @@ from selenium.webdriver.common.by import By
 
 import person.fixtures
 from core import constant
-from core.helper import selenium_utils, model_utils
+from core.helper import model_utils
+from sharedlib import selenium_utils
 from person.models import CofkUnionPerson, CofkPersonResourceMap
 from person.recref_adapter import PersonResourceRecrefAdapter
 from person.views import PersonMergeChoiceView

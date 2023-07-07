@@ -1,7 +1,7 @@
 from django.db import migrations
 
 from audit import audit_migrations_utils
-from core.helper import migrations_utils
+from sharedlib.djangolib import migrations_utils
 
 trigger_sql__dbf_cofk_union_audit_any = """
 """

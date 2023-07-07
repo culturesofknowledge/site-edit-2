@@ -17,10 +17,10 @@ from django.utils.html import strip_tags
 import person.views
 from core import constant
 from core.constant import REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE_MENTION
-from core.helper import query_utils, recref_utils, thread_utils, date_utils, query_cache_utils, model_utils
+from core.helper import query_utils, recref_utils, date_utils, query_cache_utils, model_utils, media_service
+from sharedlib import thread_utils
 from core.helper.view_components import HeaderValues, DownloadCsvHandler
 from core.models import CofkUnionImage, CofkUnionRelationshipType, CofkUnionComment, CofkUnionResource
-from core.services import media_service
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from location.queries import create_sql_count_work_by_location

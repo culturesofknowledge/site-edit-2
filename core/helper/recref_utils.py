@@ -9,7 +9,9 @@ from django.db.models import Model, Q
 from django.db.models.fields.related_descriptors import ForwardManyToOneDescriptor
 from django.forms import BaseForm
 
-from core.helper import inspect_utils, django_utils, model_utils
+from core.helper import model_utils
+from sharedlib import inspect_utils
+from sharedlib.djangolib import django_utils
 from core.models import Recref, CofkUnionRelationshipType
 from core.recref_settings import recref_left_right_list
 

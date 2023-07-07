@@ -19,7 +19,8 @@ from psycopg2.extras import DictCursor
 
 from audit.models import CofkUnionAuditLiteral, CofkUnionAuditRelationship
 from core import constant
-from core.helper import iter_utils, model_utils, recref_utils, perm_utils
+from core.helper import model_utils, recref_utils, perm_utils
+from sharedlib import iter_utils
 from core.helper.model_utils import ModelLike
 from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType, CofkUnionRelationshipType, \
     CofkUnionImage, CofkUnionOrgType, CofkUnionRoleCategory, CofkUnionSubject, Iso639LanguageCode, CofkLookupCatalogue, \
