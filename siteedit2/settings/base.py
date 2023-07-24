@@ -185,6 +185,10 @@ LOGGING = {
         #     'level': 'DEBUG',
         #     'propagate': True,
         # },
+        'urllib3.connectionpool' : {
+            'level': 'INFO',
+            'propagate': True,
+        },
     },
     'root': {
         'level': 'DEBUG',

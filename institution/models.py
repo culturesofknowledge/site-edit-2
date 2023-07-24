@@ -1,7 +1,7 @@
 from django.db import models
 
-from core.helper import model_utils
-from core.helper.model_utils import RecordTracker
+from core.helper import model_serv
+from core.helper.model_serv import RecordTracker
 from core.models import Recref
 
 
@@ -13,9 +13,9 @@ class CofkUnionInstitution(models.Model, RecordTracker):
     institution_city_synonyms = models.TextField(blank=True, null=False, default='')
     institution_country = models.TextField()
     institution_country_synonyms = models.TextField(blank=True, null=False, default='')
-    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
-    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     change_user = models.CharField(max_length=50)
     editors_notes = models.TextField(blank=True, null=True)
     uuid = models.UUIDField(blank=True, null=True)

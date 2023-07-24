@@ -1,5 +1,4 @@
 import logging
-import warnings
 from typing import Iterable, Type
 
 from django import forms
@@ -7,10 +6,11 @@ from django.db.models import TextChoices, Choices, Model
 from django.forms import BoundField, CharField, Form, formset_factory
 from django.template.loader import render_to_string
 
-from core.helper import widgets_utils, data_utils, recref_utils
+from core.helper import widgets_serv, recref_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.models import Recref
 from person import person_utils
+from sharedlib import data_utils
 from work.recref_adapter import WorkLocRecrefAdapter, ManifInstRecrefAdapter
 
 log = logging.getLogger(__name__)
@@ -77,7 +77,7 @@ def clean_by_default_value(cleaned_data: dict, field_names: Iterable[str],
 class ZeroOneCheckboxField(forms.BooleanField):
     def __init__(self, is_str=True, *args, **kwargs):
         default_kwargs = dict(
-            widget=widgets_utils.create_common_checkbox(),
+            widget=widgets_serv.create_common_checkbox(),
             initial='0',
             required=False,
         )
@@ -250,8 +250,8 @@ class SubRecrefForm(forms.Form):
     rel_type = 'unknown rel_type'
     rel_type_label = 'unknown rel_type_label'
     recref_id = forms.CharField(required=False, widget=forms.HiddenInput())
-    from_date = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
-    to_date = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
+    from_date = forms.DateField(required=False, widget=widgets_serv.NewDateInput())
+    to_date = forms.DateField(required=False, widget=widgets_serv.NewDateInput())
     is_selected = ZeroOneCheckboxField(required=False, is_str=False)
 
 
@@ -371,7 +371,7 @@ class MultiRelRecrefForm(forms.Form):
                            if not recref.get('recref_id') and recref.get('is_selected'))
         for recref_data in new_recref_list:
             recref = recref_adapter.upsert_recref(recref_data['rel_type'], host_model, target_model, username=username)
-            recref = recref_utils.fill_common_recref_field(recref, recref_data, username)
+            recref = recref_serv.fill_common_recref_field(recref, recref_data, username)
             recref.save()
             log.info(f'add new [{target_model}][{recref}]')
 
@@ -495,7 +495,7 @@ class BasicSearchFieldset(forms.Form):
     change_user_lookup = create_lookup_field(StrLookupChoices.choices)
 
     change_timestamp_from = forms.DateField(required=False,
-                                            widget=widgets_utils.SearchDateTimeInput(attrs={'class': 'searchfield'}))
+                                            widget=widgets_serv.SearchDateTimeInput(attrs={'class': 'searchfield'}))
     change_timestamp_to = forms.DateField(required=False,
-                                          widget=widgets_utils.SearchDateTimeInput(attrs={'class': 'searchfield'}))
+                                          widget=widgets_serv.SearchDateTimeInput(attrs={'class': 'searchfield'}))
     change_timestamp_info = datetime_search_info

@@ -1,10 +1,5 @@
-from time import sleep
-
-from django.contrib.auth.models import Permission
-from django.test import TestCase
-
 from core import constant
-from core.helper import webdriver_actions, perm_utils
+from core.helper import webdriver_actions, perm_serv
 from login.fixtures import create_test_user, create_test_user__a
 from siteedit2.utils.test_utils import EmloSeleniumTestCase
 
@@ -35,7 +30,7 @@ class TestPermission(EmloSeleniumTestCase):
 
     def test_audit_search__with_perm(self):
         user = create_test_user('test_user_x1', raw_password='pass')
-        user.user_permissions.add(perm_utils.get_perm_by_full_name(constant.PM_VIEW_AUDIT))
+        user.user_permissions.add(perm_serv.get_perm_by_full_name(constant.PM_VIEW_AUDIT))
         user.save()
         self.assert_audit_permission(user, has_perm=True)
 

@@ -1,5 +1,6 @@
 | Short  | Description             |
 |--------|-------------------------|
+| serv   | Service                 |
 | vname  | View name               |
 | seq    | Sequence                |
 | recref | Record Reference        |

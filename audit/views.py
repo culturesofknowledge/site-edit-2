@@ -6,8 +6,8 @@ from audit import forms
 from audit.forms import AuditSearchFieldset
 from audit.models import CofkUnionAuditLiteral
 from core import constant
-from core.helper import renderer_utils, query_utils
-from core.helper.view_utils import DefaultSearchView
+from core.helper import renderer_serv, query_serv
+from core.helper.view_serv import DefaultSearchView
 
 
 class AuditSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearchView):
@@ -22,15 +22,15 @@ class AuditSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearch
             return CofkUnionAuditLiteral.objects.none()
 
         field_fn_maps = {
-                            'table_name': query_utils.create_eq_query,
-                            'column_name': query_utils.create_eq_query,
-                            'change_type': query_utils.create_eq_query,
-                        } | query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
+                            'table_name': query_serv.create_eq_query,
+                            'column_name': query_serv.create_eq_query,
+                            'change_type': query_serv.create_eq_query,
+                        } | query_serv.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
                                                                 'change_timestamp')
 
-        queries = query_utils.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
+        queries = query_serv.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
         queries.extend(
-            query_utils.create_queries_by_lookup_field(self.request_data, [
+            query_serv.create_queries_by_lookup_field(self.request_data, [
                 'change_user', 'table_name', 'key_value_text', 'key_decode',
                 'change_made', 'audit_id',
             ], search_fields_maps={
@@ -42,7 +42,7 @@ class AuditSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearch
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
-        return renderer_utils.create_table_search_results_renderer('audit/search_table_layout.html')
+        return renderer_serv.create_table_search_results_renderer('audit/search_table_layout.html')
 
     @property
     def query_fieldset_list(self) -> Iterable:

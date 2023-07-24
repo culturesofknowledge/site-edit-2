@@ -1,7 +1,9 @@
 import datetime
 import logging
 from datetime import date
+from typing import Any
 
+from django.db.models import Q
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
@@ -15,6 +17,7 @@ from siteedit2.utils.log_utils import log_no_url
 from work.models import CofkUnionWork
 
 log = logging.getLogger(__name__)
+HIDDEN_DATE_STD = '1900-01-01'
 
 
 def get_recref_display_name(work: CofkUnionWork):
@@ -318,3 +321,53 @@ def flags(work: CofkUnionWork):
             tooltip.append(f'(Destination as marked: {work.destination_as_marked})')
 
     return ', '.join(tooltip)
+
+
+def q_hidden_works(prefix=None, check_hidden_date=True):
+    """
+    In original EMLO edit, there have three methods to hide work record
+    * work_to_be_deleted = 1
+    * related original_catalogue of work is not published
+    * date_of_work_std = '1900-01-01'
+    """
+    if prefix:
+        prefix = prefix + '__'
+    else:
+        prefix = ''
+
+    q = (
+            Q(**{prefix + 'work_to_be_deleted': 1})
+            | Q(**{prefix + 'original_catalogue__publish_status': 0})
+    )
+    if check_hidden_date:
+        q |= Q(**{prefix + 'date_of_work_std': HIDDEN_DATE_STD})
+    return q
+
+
+def q_visible_works(prefix=None, check_hidden_date=True):
+    if prefix:
+        prefix = prefix + '__'
+    else:
+        prefix = ''
+    q = Q(**{prefix + 'work_to_be_deleted': 0})
+    q &= (
+            Q(**{prefix + 'original_catalogue__isnull': True})
+            | Q(**{prefix + 'original_catalogue__publish_status': 1})
+    )
+    if check_hidden_date:
+        q &= ~Q(**{prefix + 'date_of_work_std': HIDDEN_DATE_STD})
+    return q
+
+
+def is_hidden_work(work: CofkUnionWork, cached_catalogue_status: dict[Any, int] = None):
+    if work is None:
+        return True
+
+    if cached_catalogue_status:
+        is_catalogue_published = cached_catalogue_status.get(work.original_catalogue_id, False)
+    else:
+        is_catalogue_published = work.original_catalogue is not None and work.original_catalogue.publish_status
+
+    return (work.work_to_be_deleted or
+            not is_catalogue_published or
+            work.date_of_work_std == HIDDEN_DATE_STD)

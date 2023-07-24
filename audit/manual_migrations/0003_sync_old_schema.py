@@ -1,6 +1,6 @@
 from django.db import migrations
 
-from core.helper import migrations_utils
+from sharedlib.djangolib import migrations_utils
 
 
 class Migration(migrations.Migration):

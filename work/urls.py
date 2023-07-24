@@ -1,6 +1,6 @@
 from django.urls import path, re_path
 
-from core.helper import url_utils
+from core.helper import url_serv
 from core.views import default_view
 from . import views
 
@@ -16,7 +16,7 @@ urlpatterns = [
     path('form/overview/<int:iwork_id>', views.overview_view, name='overview_form'),
 ]
 urlpatterns.extend(
-    url_utils.create_common_urls_for_section(
+    url_serv.create_common_urls_for_section(
         init_view=views.CorrView.as_view(),
         # edit_view=views.full_form,
         search_view=views.WorkSearchView.as_view(),
@@ -25,7 +25,7 @@ urlpatterns.extend(
     )
 )
 
-urlpatterns.extend(url_utils.create_urls_for_quick_init(
+urlpatterns.extend(url_serv.create_urls_for_quick_init(
     views.WorkQuickInitView.as_view(),
     views.return_quick_init,
 ))

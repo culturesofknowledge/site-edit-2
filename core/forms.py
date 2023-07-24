@@ -3,9 +3,9 @@ from django.conf import settings
 from django.forms import ModelForm, HiddenInput, IntegerField, Form
 from django.urls import reverse
 
-from core.helper import form_utils, model_utils
-from core.helper import widgets_utils
-from core.helper.form_utils import CommonTextareaField, ZeroOneCheckboxField
+from core.helper import form_serv, model_serv
+from core.helper import widgets_serv
+from core.helper.form_serv import CommonTextareaField, ZeroOneCheckboxField
 from core.models import CofkUnionComment, CofkUnionResource, CofkUnionImage, CofkLookupCatalogue, CofkUnionRoleCategory, \
     CofkUnionSubject, CofkUnionOrgType
 from manifestation.models import CofkUnionManifestation
@@ -17,9 +17,9 @@ class RecrefForm(forms.Form):
     recref_id = forms.CharField(required=False, widget=forms.HiddenInput())
     target_id = forms.CharField(required=False, widget=forms.HiddenInput())
     rec_name = forms.CharField(required=False)
-    from_date = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
-    to_date = forms.DateField(required=False, widget=widgets_utils.NewDateInput())
-    is_delete = form_utils.DeleteCheckboxField()
+    from_date = forms.DateField(required=False, widget=widgets_serv.NewDateInput())
+    to_date = forms.DateField(required=False, widget=widgets_serv.NewDateInput())
+    is_delete = form_serv.DeleteCheckboxField()
 
     @property
     def target_url(self) -> str:
@@ -52,7 +52,7 @@ class ManifRecrefForm(RecrefForm):
         if not manif_id:
             return ''
 
-        manif: CofkUnionManifestation = model_utils.get_safe(CofkUnionManifestation, pk=manif_id)
+        manif: CofkUnionManifestation = model_serv.get_safe(CofkUnionManifestation, pk=manif_id)
         if not manif:
             return ''
 
@@ -62,11 +62,11 @@ class ManifRecrefForm(RecrefForm):
 class CommentForm(ModelForm):
     comment_id = IntegerField(required=False, widget=HiddenInput())
 
-    record_tracker_label = form_utils.record_tracker_label_fn_factory('Note')
+    record_tracker_label = form_serv.record_tracker_label_fn_factory('Note')
 
-    comment = form_utils.CommonTextareaField(required=True)
+    comment = form_serv.CommonTextareaField(required=True)
 
-    is_delete = form_utils.DeleteCheckboxField()
+    is_delete = form_serv.DeleteCheckboxField()
 
     class Meta:
         model = CofkUnionComment
@@ -94,7 +94,7 @@ class ResourceForm(ModelForm):
     resource_details = CommonTextareaField(required=False, label='Further details of resource')
     resource_details.widget.attrs.update({'class': 'res_standtext'})
 
-    record_tracker_label = form_utils.record_tracker_label_fn_factory('Entry')
+    record_tracker_label = form_serv.record_tracker_label_fn_factory('Entry')
 
     is_delete = ZeroOneCheckboxField(is_str=False, label='Delete')
     is_delete.widget.attrs.update({'class': 'warn-checked'})
@@ -120,7 +120,7 @@ class ImageForm(ModelForm):
                                 label='URL for thumbnail (if any)')
     credits = forms.CharField(required=False,
                               label="Credits for 'front end' display*")
-    licence_details = form_utils.CommonTextareaField(label='Either: full text of licence*')
+    licence_details = form_serv.CommonTextareaField(label='Either: full text of licence*')
 
     licence_url = forms.CharField(required=False,
                                   label='licence URL*',
@@ -128,7 +128,7 @@ class ImageForm(ModelForm):
                                   )
     licence_url.widget.attrs.update({'class': 'url_checker', })
 
-    can_be_displayed = form_utils.ZeroOneCheckboxField(required=False,
+    can_be_displayed = form_serv.ZeroOneCheckboxField(required=False,
                                                        label='Can be displayed to public',
                                                        initial='1', )
     display_order = forms.IntegerField(required=False, label='Order for display in front end', initial=1)
@@ -161,7 +161,7 @@ class UploadImageForm(Form):
 class CatalogueForm(ModelForm):
     catalogue_name = forms.CharField(label="Description")
     catalogue_code = forms.CharField(label="Code")
-    publish_status = form_utils.ZeroOneCheckboxField(required=False, label='Publish', initial='1', )
+    publish_status = form_serv.ZeroOneCheckboxField(required=False, label='Publish', initial='1', )
 
     class Meta:
         model = CofkLookupCatalogue

@@ -5,8 +5,8 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 
-from core.helper import renderer_utils, query_utils
-from core.helper.view_utils import DefaultSearchView
+from core.helper import renderer_serv, query_serv
+from core.helper.view_serv import DefaultSearchView
 from core.lang_forms import LangSearchFieldset
 from core.models import Iso639LanguageCode, CofkUnionFavouriteLanguage
 
@@ -45,20 +45,20 @@ class LanguageSearchView(LoginRequiredMixin, DefaultSearchView):
         if not self.request_data:
             return model_class.objects.none()
 
-        queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
+        queries = query_serv.create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
 
         queryset = model_class.objects.filter()
         queries.extend(
-            query_utils.create_queries_by_lookup_field(self.request_data, self.search_fields)
+            query_serv.create_queries_by_lookup_field(self.request_data, self.search_fields)
         )
-        queryset = query_utils.update_queryset(queryset, model_class, queries,
+        queryset = query_serv.update_queryset(queryset, model_class, queries,
                                                sort_by=self.get_sort_by())
 
         return queryset
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
-        return renderer_utils.create_table_search_results_renderer(
+        return renderer_serv.create_table_search_results_renderer(
             'core/language_expanded_search_table_layout.html'
         )
 

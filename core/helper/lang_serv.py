@@ -3,7 +3,7 @@ from typing import Iterable
 
 from django import forms
 
-from core.helper import model_utils, form_utils, widgets_utils
+from core.helper import model_serv, form_serv, widgets_serv
 from core.models import Iso639LanguageCode
 
 log = logging.getLogger(__name__)
@@ -17,7 +17,7 @@ class LangModelAdapter:
 
 def create_lang_formset(lang_models: Iterable, lang_rec_id_name: str,
                         request_data=None, prefix='lang', extra=0):
-    initial_list = model_utils.models_to_dict_list(lang_models)
+    initial_list = model_serv.models_to_dict_list(lang_models)
     initial_list = list(initial_list)
     for initial in initial_list:
         initial['lang_name'] = (Iso639LanguageCode.objects
@@ -26,7 +26,7 @@ def create_lang_formset(lang_models: Iterable, lang_rec_id_name: str,
                                 .first() or f'Unknown Language [{initial["language_code_id"]}]')
         initial['lang_rec_id'] = initial[lang_rec_id_name]
 
-    return form_utils.create_formset(
+    return form_serv.create_formset(
         LangForm,
         post_data=request_data or None,
         prefix=prefix,
@@ -38,7 +38,7 @@ def create_lang_formset(lang_models: Iterable, lang_rec_id_name: str,
 class LangForm(forms.Form):
     notes = forms.CharField(required=False)
     lang_name = forms.CharField(required=False, widget=forms.HiddenInput())
-    is_delete = form_utils.DeleteCheckboxField()
+    is_delete = form_serv.DeleteCheckboxField()
     lang_rec_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
 
 
@@ -47,7 +47,7 @@ class NewLangForm(forms.Form):
         'list': 'id_language_list',
     }))
 
-    language_list = forms.Field(required=False, widget=widgets_utils.Datalist(choices=[]))
+    language_list = forms.Field(required=False, widget=widgets_serv.Datalist(choices=[]))
 
     def remove_selected_lang_choices(self, selected_langs: Iterable):
         choices = self.fields['language_list'].widget.choices

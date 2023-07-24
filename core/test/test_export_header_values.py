@@ -4,7 +4,7 @@ from django.test import TestCase
 
 from core.export_data.excel_header_values import WorkExcelHeaderValues
 from core.fixtures import fixture_default_lookup_catalogue
-from core.helper import file_utils
+from sharedlib import file_utils
 from core.helper.view_components import DownloadCsvHandler
 from institution.models import CofkUnionInstitution
 from institution.views import InstSearchView, InstCsvHeaderValues

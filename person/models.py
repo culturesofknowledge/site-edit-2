@@ -1,11 +1,10 @@
 import functools
 
 from django.db import models
-from django.db.models.expressions import RawSQL
 from django.utils.safestring import mark_safe
 
-from core.helper import model_utils
-from core.helper.model_utils import RecordTracker
+from core.helper import model_serv
+from core.helper.model_serv import RecordTracker
 from core.models import Recref
 
 SEQ_NAME_COFKUNIONPERSION__IPERSON_ID = 'cofk_union_person_iperson_id_seq'
@@ -34,12 +33,12 @@ class CofkUnionPerson(models.Model, RecordTracker):
     gender = models.CharField(max_length=1)
     is_organisation = models.CharField(max_length=1)
     iperson_id = models.IntegerField(
-        default=functools.partial(model_utils.next_seq_safe, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID),
+        default=functools.partial(model_serv.next_seq_safe, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID),
         unique=True,
     )
-    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
-    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     change_user = models.CharField(max_length=50)
     editors_notes = models.TextField(blank=True, null=True)
     further_reading = models.TextField(blank=True, null=True)
@@ -207,15 +206,3 @@ def create_person_id(iperson_id) -> str:
     return f'cofk_union_person-iperson_id:{iperson_id}'
 
 
-def create_sql_count_work_by_person(rel_type_list):
-    return RawSQL("""
-    select count(*)
-    from cofk_union_work w
-    where exists( select 1
-                  from cofk_work_person_map wpm
-                  where wpm.work_id = w.work_id
-                    and wpm.person_id = cofk_union_person.person_id
-                    and wpm.relationship_type in %s
-                    limit 1
-              )
-    """, [tuple(rel_type_list)])
