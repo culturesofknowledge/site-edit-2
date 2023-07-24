@@ -573,7 +573,7 @@ def create_queryset_by_queries(model_class: Type[models.Model], queries: Iterabl
         'mentioned': create_sql_count_work_by_person([REL_TYPE_MENTION]),
     }
 
-    queryset = query_serv.update_queryset(queryset, model_class, queries,
+    queryset = query_serv.update_queryset(queryset, model_class, queries=queries,
                                            annotate=annotate, sort_by=sort_by)
 
     return queryset

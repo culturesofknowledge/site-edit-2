@@ -653,7 +653,7 @@ def create_location_queryset():
         'recd_count': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_TO]),
         'mentioned_count': create_sql_count_work_by_location([REL_TYPE_MENTION]),
     }
-    queryset = query_serv.update_queryset(queryset, CofkUnionLocation, None, annotate=annotate)
+    queryset = query_serv.update_queryset(queryset, CofkUnionLocation, annotate=annotate)
     return queryset
 
 

@@ -3,7 +3,7 @@ from typing import Callable, Iterable
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-from core.helper import renderer_serv, view_serv
+from core.helper import renderer_serv, view_serv, query_serv
 from core.helper.view_serv import DefaultSearchView
 from manifestation import manif_utils
 from manifestation.models import CofkUnionManifestation
@@ -12,10 +12,13 @@ from manifestation.models import CofkUnionManifestation
 class ManifSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
+    def entity(self) -> str:
+        return 'Manifestation,Manifestations'
+
+    @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
-            ('-change_timestamp', 'Change Timestamp desc',),
-            ('change_timestamp', 'Change Timestamp asc',),
+            ('change_timestamp', 'Change Timestamp',),
         ]
 
     @property
@@ -24,8 +27,7 @@ class ManifSearchView(LoginRequiredMixin, DefaultSearchView):
 
     def get_queryset(self):
         queryset = CofkUnionManifestation.objects.all()
-        if sort_by := self.get_sort_by():
-            queryset = queryset.order_by(sort_by)
+        queryset = query_serv.update_queryset(queryset, CofkUnionManifestation, sort_by=self.get_sort_by())
         return queryset
 
     @property

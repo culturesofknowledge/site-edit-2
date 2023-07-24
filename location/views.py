@@ -44,7 +44,7 @@ def create_queryset_by_queries(model_class: Type[models.Model], queries: Iterabl
         'all_works': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
     }
 
-    queryset = query_serv.update_queryset(queryset, model_class, queries, annotate=annotate,
+    queryset = query_serv.update_queryset(queryset, model_class, queries=queries, annotate=annotate,
                                            sort_by=sort_by)
     return queryset
 

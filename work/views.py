@@ -523,12 +523,12 @@ class ManifFFH(BasicWorkFFH):
 
         # language
         lang_serv.maintain_lang_records(self.edit_lang_formset,
-                                         lambda pk: CofkUnionLanguageOfManifestation.objects.get(pk=pk))
+                                        lambda pk: CofkUnionLanguageOfManifestation.objects.get(pk=pk))
 
         lang_serv.add_new_lang_record(request.POST.getlist('lang_note'),
-                                       request.POST.getlist('lang_name'),
-                                       manif.manifestation_id,
-                                       ManifLangModelAdapter(), )
+                                      request.POST.getlist('lang_name'),
+                                      manif.manifestation_id,
+                                      ManifLangModelAdapter(), )
 
         create_recref_if_field_exist(self.manif_form, manif, request.user.username,
                                      selected_id_field_name='selected_scribe_id',
@@ -634,12 +634,12 @@ class DetailsFFH(BasicWorkFFH):
 
         # language
         lang_serv.maintain_lang_records(self.lang_formset,
-                                         lambda pk: CofkUnionLanguageOfWork.objects.get(pk=pk))
+                                        lambda pk: CofkUnionLanguageOfWork.objects.get(pk=pk))
 
         lang_serv.add_new_lang_record(request.POST.getlist('lang_note'),
-                                       request.POST.getlist('lang_name'),
-                                       work.work_id,
-                                       WorkLangModelAdapter(), )
+                                      request.POST.getlist('lang_name'),
+                                      work.work_id,
+                                      WorkLangModelAdapter(), )
 
         self.save_all_recref_formset(work, request)
         self.maintain_all_recref_records(request, work)
@@ -1000,10 +1000,10 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             'location_sent_rec_pk': create_search_fn_location_recref(
                 [REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
         } | query_serv.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                'change_timestamp') \
+                                               'change_timestamp') \
             | query_serv.create_from_to_datetime('date_of_work_std_from', 'date_of_work_std_to',
-                                                  'date_of_work_std',
-                                                  convert_fn=date_serv.search_datestr_to_db_datestr, )
+                                                 'date_of_work_std',
+                                                 convert_fn=date_serv.search_datestr_to_db_datestr, )
 
     def get_queryset(self):
         if not self.request_data:
@@ -1238,8 +1238,8 @@ class WorkCsvHeaderValues(HeaderValues):
 def create_queryset_by_queries(model_class: Type[models.Model], queries: Iterable[Q] = None,
                                sort_by=None):
     queryset = model_class.objects.filter()
-    queryset = query_serv.update_queryset(queryset, model_class, queries,
-                                           sort_by=sort_by)
+    queryset = query_serv.update_queryset(queryset, model_class, queries=queries,
+                                          sort_by=sort_by)
     queryset = queryset.prefetch_related('cofkworkpersonmap_set__person',
                                          'cofkworklocationmap_set__location',
                                          'cofkworkresourcemap_set__resource',
