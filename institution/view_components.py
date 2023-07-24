@@ -1,4 +1,4 @@
-from core.helper.view_utils import FormDescriptor
+from core.helper.view_serv import FormDescriptor
 from institution import inst_utils
 
 

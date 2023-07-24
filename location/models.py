@@ -1,8 +1,7 @@
 from django.db import models
-from django.db.models.expressions import RawSQL
 
-from core.helper import model_utils
-from core.helper.model_utils import RecordTracker
+from core.helper import model_serv
+from core.helper.model_serv import RecordTracker
 from core.models import Recref
 
 
@@ -11,9 +10,9 @@ class CofkUnionLocation(models.Model, RecordTracker):
     location_name = models.CharField(max_length=500)
     latitude = models.CharField(max_length=20, blank=True, null=True)
     longitude = models.CharField(max_length=20, blank=True, null=True)
-    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
-    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     change_user = models.CharField(max_length=50)
     location_synonyms = models.TextField(blank=True, null=True)
     editors_notes = models.TextField(blank=True, null=True)
@@ -73,15 +72,3 @@ class CofkLocationImageMap(Recref):
         ]
 
 
-def create_sql_count_work_by_location(rel_type_list):
-    return RawSQL("""
-    select count(*)
-    from cofk_union_work w
-    where exists( select 1
-                  from cofk_work_location_map wlm
-                  where wlm.work_id = w.work_id
-                    and wlm.location_id = cofk_union_location.location_id
-                    and wlm.relationship_type in %s
-                    limit 1
-              )
-    """, [tuple(rel_type_list)])

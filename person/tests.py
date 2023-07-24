@@ -2,10 +2,11 @@ from selenium.webdriver.common.by import By
 
 import person.fixtures
 from core import constant
-from core.helper import selenium_utils, model_utils
+from core.helper import model_serv
 from person.models import CofkUnionPerson, CofkPersonResourceMap
 from person.recref_adapter import PersonResourceRecrefAdapter
 from person.views import PersonMergeChoiceView
+from sharedlib import selenium_utils
 from siteedit2.utils import test_utils
 from siteedit2.utils.test_utils import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
     CommentM2MTester, CommonSearchTests, MergeTests
@@ -100,7 +101,7 @@ class PersonFormTest(EmloSeleniumTestCase):
 
 
 def prepare_person_records() -> list[CofkUnionPerson]:
-    return model_utils.create_multi_records_by_dict_list(CofkUnionPerson, (
+    return model_serv.create_multi_records_by_dict_list(CofkUnionPerson, (
         person.fixtures.person_dict_a,
         person.fixtures.person_dict_b,
     ))

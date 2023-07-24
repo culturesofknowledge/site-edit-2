@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import Type
 
-from core.helper import model_utils
+from core.helper import model_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter, TargetCommentRecrefAdapter, \
     TargetResourceRecrefAdapter, TargetImageRecrefAdapter
 from core.models import Recref, CofkUnionSubject
@@ -28,7 +28,7 @@ class WorkLocRecrefAdapter(RecrefFormAdapter):
         return CofkWorkLocationMap
 
     def find_target_instance(self, target_id):
-        return model_utils.get_safe(CofkUnionLocation, location_id=target_id)
+        return model_serv.get_safe(CofkUnionLocation, location_id=target_id)
 
     def set_parent_target_instance(self, recref, parent, target):
         recref: CofkWorkLocationMap
@@ -53,7 +53,7 @@ class ManifInstRecrefAdapter(RecrefFormAdapter):
         return CofkManifInstMap
 
     def find_target_instance(self, target_id):
-        return model_utils.get_safe(CofkUnionInstitution, institution_id=target_id)
+        return model_serv.get_safe(CofkUnionInstitution, institution_id=target_id)
 
     def set_parent_target_instance(self, recref, parent, target):
         recref: CofkManifInstMap
@@ -79,7 +79,7 @@ class WorkSubjectRecrefAdapter(RecrefFormAdapter):
         return CofkWorkSubjectMap
 
     def find_target_instance(self, target_id):
-        return model_utils.get_safe(CofkUnionSubject, subject_id=target_id)
+        return model_serv.get_safe(CofkUnionSubject, subject_id=target_id)
 
     def set_parent_target_instance(self, recref, parent, target):
         recref: CofkWorkSubjectMap

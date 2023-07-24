@@ -9,7 +9,7 @@ from django.utils import timezone
 from openpyxl.workbook import Workbook
 
 from core import constant
-from core.helper import perm_utils
+from core.helper import perm_serv
 from core.models import Iso639LanguageCode
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
@@ -117,5 +117,5 @@ class UploadIncludedFactoryTestCase(UploadIncludedTestCase):
         self.admin = CofkUser.objects.create(username='admin', is_staff=True)
 
         super_group = Group.objects.create(name='super')
-        super_group.permissions.add(perm_utils.get_perm_by_full_name(constant.PM_CHANGE_COLLECTWORK))
+        super_group.permissions.add(perm_serv.get_perm_by_full_name(constant.PM_CHANGE_COLLECTWORK))
         super_group.user_set.add(self.admin)

@@ -21,10 +21,10 @@ import core.fixtures
 import location.fixtures
 import person.fixtures
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_IS_RELATED_TO
-from core.helper import model_utils, recref_utils, url_utils, webdriver_actions
+from core.helper import model_serv, recref_serv, url_serv, webdriver_actions
 from core.helper.common_recref_adapter import RecrefFormAdapter
-from core.helper.model_utils import ModelLike
-from core.helper.view_utils import BasicSearchView
+from core.helper.model_serv import ModelLike
+from core.helper.view_serv import BasicSearchView
 from core.models import CofkLookupCatalogue, CofkUnionComment, CofkUnionResource
 from location.models import CofkUnionLocation
 from login.fixtures import create_test_user__a
@@ -370,8 +370,8 @@ def create_location_by_dict(loc_dict: dict = None) -> CofkUnionLocation:
                                  instance_dict=loc_dict or location.fixtures.location_dict_a)
 
 
-def create_model_instance(model_class: Type[model_utils.ModelLike],
-                          instance_dict: dict) -> model_utils.ModelLike:
+def create_model_instance(model_class: Type[model_serv.ModelLike],
+                          instance_dict: dict) -> model_serv.ModelLike:
     obj = model_class(**instance_dict)
     obj.save()
     return obj
@@ -449,7 +449,7 @@ def add_resources_by_msgs(msgs: Iterable[str], parent, recref_form_adapter_class
 
 
 def cnt_recref(recref_class, instance: ModelLike):
-    recref_list = recref_utils.find_recref_list(recref_class, instance)
+    recref_list = recref_serv.find_recref_list(recref_class, instance)
     return len(list(recref_list))
 
 
@@ -517,7 +517,7 @@ class MergeTests(LoginTestCase):
     def test_merge_choice(self):
         objs = self.prepare_data()
         url = reverse(f'{self.app_name}:merge')
-        url = url_utils.build_url_query(url, [
+        url = url_serv.build_url_query(url, [
             ('__merge_id', self.ChoiceView.get_id_field().field.value_from_object(m))
             for m in objs
         ])

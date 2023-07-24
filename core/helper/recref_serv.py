@@ -2,19 +2,19 @@ import dataclasses
 import logging
 import typing
 from typing import Callable, Any, Optional
-from typing import Type, Iterable, TYPE_CHECKING
+from typing import Type, Iterable
 
 from django.core.cache import cache
-from django.db.models import Model
+from django.db.models import Model, Q
 from django.db.models.fields.related_descriptors import ForwardManyToOneDescriptor
 from django.forms import BaseForm
 
-from core.helper import inspect_utils, django_utils, model_utils
+from core.helper import model_serv
+from core.helper.model_serv import ModelLike
 from core.models import Recref, CofkUnionRelationshipType
 from core.recref_settings import recref_left_right_list
-
-if TYPE_CHECKING:
-    from core.helper.model_utils import ModelLike
+from sharedlib import inspect_utils
+from sharedlib.djangolib import django_utils
 
 log = logging.getLogger(__name__)
 
@@ -113,6 +113,13 @@ def get_bounded_members(recref_class: Type[RecrefLike]) -> list[ForwardManyToOne
     return bounded_members
 
 
+def find_all_recref_class() -> Iterable[Type[RecrefLike]]:
+    models = django_utils.all_model_classes()
+    recref_class_list = (m for m in models
+                         if inspect_utils.issubclass_safe(m, Recref) and m != Recref)
+    return recref_class_list
+
+
 def find_all_recref_bounded_data(models: Iterable[Type['ModelLike']] = None) -> Iterable[RecrefBoundedData]:
     models = models or django_utils.all_model_classes()
     recref_class_list = (m for m in models
@@ -158,7 +165,7 @@ def get_parent_related_field_by_bounded_data(bounded_data, parent_model):
 
 def find_recref_list(recref_class, parent_model, parent_field=None) -> Iterable['Recref']:
     if parent_field is None:
-        parent_field = model_utils.get_related_field(recref_class, parent_model.__class__)
+        parent_field = model_serv.get_related_field(recref_class, parent_model.__class__)
 
     if isinstance(parent_field, ForwardManyToOneDescriptor):
         field_name = parent_field.field.name
@@ -174,13 +181,17 @@ def find_recref_list_by_bounded_data(bounded_data, parent_model) -> Iterable['Re
     return find_recref_list(bounded_data.recref_class, parent_model, parent_field=parent_field)
 
 
-def create_rel_type_filter_kwargs(rel_type: str | Iterable) -> dict:
-    filter_kwargs = {}
+def create_q_rel_type(rel_type: str | Iterable, prefix=None) -> Q:
     if isinstance(rel_type, str):
-        filter_kwargs['relationship_type'] = rel_type
+        name = f'relationship_type'
     else:
-        filter_kwargs['relationship_type__in'] = rel_type
-    return filter_kwargs
+        name = f'relationship_type__in'
+        rel_type = set(rel_type)
+
+    if prefix:
+        name = f'{prefix}__{name}'
+
+    return Q(**{name: rel_type})
 
 
 def prefetch_filter_rel_type(recref_set, rel_types: str | Iterable[str]) -> Iterable:

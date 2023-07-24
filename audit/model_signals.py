@@ -7,8 +7,8 @@ from audit import audit_recref_adapter
 from audit.audit_recref_adapter import AuditRecrefAdapter
 from audit.models import CofkUnionAuditLiteral
 from core import constant
-from core.helper import model_utils
-from core.helper.recref_utils import get_left_right_rel_obj
+from core.helper import model_serv
+from core.helper.recref_serv import get_left_right_rel_obj
 from core.models import CofkUnionComment, CofkUnionRelationshipType, CofkUnionResource, Recref, \
     CofkUnionNationality, CofkUnionImage, CofkUnionRoleCategory, CofkUnionSubject
 from institution.models import CofkUnionInstitution
@@ -149,7 +149,7 @@ def handle_update_recref_date(sender: ModelBase, instance: models.Model):
     if not issubclass(sender, Recref):
         return
 
-    if instance.pk is None or not (old_instance := model_utils.get_safe(sender, pk=instance.pk)):
+    if instance.pk is None or not (old_instance := model_serv.get_safe(sender, pk=instance.pk)):
         # since pk not exist yet, create audit record created by handle_create_audit_relation for new record
         instance.todo_audit = True
         return
