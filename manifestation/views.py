@@ -5,7 +5,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 from core.helper import renderer_serv, view_serv, query_serv
 from core.helper.view_serv import DefaultSearchView
-from manifestation import manif_utils
+from manifestation import manif_serv
 from manifestation.models import CofkUnionManifestation
 
 
@@ -40,6 +40,6 @@ def return_quick_init(request, pk):
     manif = CofkUnionManifestation.objects.get(pk=pk)
     return view_serv.render_return_quick_init(
         request, 'Manifestation',
-        manif_utils.get_recref_display_name(manif),
-        manif_utils.get_recref_target_id(manif),
+        manif_serv.get_recref_display_name(manif),
+        manif_serv.get_recref_target_id(manif),
     )

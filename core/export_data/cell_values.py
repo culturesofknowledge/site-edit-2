@@ -10,7 +10,7 @@ from django.conf import settings
 from core import constant
 from core.helper import general_model_serv
 from core.models import CofkUnionComment, CofkUnionResource
-from person import person_utils
+from person import person_serv
 from person.models import CofkUnionPerson
 from sharedlib import str_utils
 
@@ -76,14 +76,14 @@ def person_roles(obj: CofkUnionPerson) -> str:
 
 
 def person_names_titles_roles(obj: CofkUnionPerson) -> str:
-    return ''.join(person_utils.get_name_details(obj))
+    return ''.join(person_serv.get_name_details(obj))
 
 
 def person_other_details(obj: CofkUnionPerson, type_name_cache: dict = None) -> str:
     result_map = collections.defaultdict(list)
     for person_map in obj.active_relationships.all():
         result_map[person_map.relationship_type].append(
-            person_utils.get_recref_display_name(person_map.related)
+            person_serv.get_recref_display_name(person_map.related)
         )
 
     if type_name_cache:

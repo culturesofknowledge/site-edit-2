@@ -11,9 +11,9 @@ from core import constant
 from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, \
     REL_TYPE_MENTION
 from core.models import CofkLookupCatalogue
-from location import location_utils
-from person import person_utils
-from siteedit2.utils.log_utils import log_no_url
+from location import location_serv
+from person import person_serv
+from siteedit2.serv.log_serv import log_no_url
 from work.models import CofkUnionWork
 
 log = logging.getLogger(__name__)
@@ -50,12 +50,12 @@ def join_names(names):
 
 
 def find_related_person_names(work: CofkUnionWork, rel_type):
-    return (person_utils.get_recref_display_name(r.person)
+    return (person_serv.get_recref_display_name(r.person)
             for r in work.cofkworkpersonmap_set.filter(relationship_type=rel_type))
 
 
 def find_related_location_names(work: CofkUnionWork, rel_type):
-    return (location_utils.get_recref_display_name(r.location)
+    return (location_serv.get_recref_display_name(r.location)
             for r in work.cofkworklocationmap_set.filter(relationship_type=rel_type))
 
 

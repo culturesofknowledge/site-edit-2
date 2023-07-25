@@ -1,7 +1,7 @@
 import manifestation.fixtures
 from core.helper import model_serv
 from manifestation.models import CofkUnionManifestation
-from siteedit2.utils.test_utils import EmloSeleniumTestCase, CommonSearchTests
+from siteedit2.serv.test_serv import EmloSeleniumTestCase, CommonSearchTests
 from work.models import CofkUnionWork
 
 

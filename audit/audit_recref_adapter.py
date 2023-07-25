@@ -3,7 +3,7 @@ from django.db import models
 from core import constant
 from location.models import CofkUnionLocation
 from manifestation.models import CofkUnionManifestation
-from person import person_utils
+from person import person_serv
 
 
 class AuditRecrefAdapter:
@@ -42,7 +42,7 @@ class PersonAuditAdapter(AuditRecrefAdapter):
         return self.instance.iperson_id
 
     def key_decode(self, is_expand_details=False):
-        return person_utils.decode_person(self.instance, is_expand_details=is_expand_details)
+        return person_serv.decode_person(self.instance, is_expand_details=is_expand_details)
 
 
 class ResourceAuditAdapter(AuditRecrefAdapter):

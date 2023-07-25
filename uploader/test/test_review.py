@@ -5,7 +5,7 @@ from django.core.exceptions import PermissionDenied
 
 from core.constant import REL_TYPE_CREATED
 from uploader.spreadsheet import CofkUploadExcelFile
-from uploader.test.test_utils import UploadIncludedFactoryTestCase, spreadsheet_data, upload_status, MockMessages
+from uploader.test.test_serv import UploadIncludedFactoryTestCase, spreadsheet_data, upload_status, MockMessages
 from uploader.views import upload_review
 from work.models import CofkUnionWork
 

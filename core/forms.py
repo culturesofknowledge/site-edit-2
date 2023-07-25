@@ -9,8 +9,8 @@ from core.helper.form_serv import CommonTextareaField, ZeroOneCheckboxField
 from core.models import CofkUnionComment, CofkUnionResource, CofkUnionImage, CofkLookupCatalogue, CofkUnionRoleCategory, \
     CofkUnionSubject, CofkUnionOrgType
 from manifestation.models import CofkUnionManifestation
-from person import person_utils
-from work import work_utils
+from person import person_serv
+from work import work_serv
 
 
 class RecrefForm(forms.Form):
@@ -29,7 +29,7 @@ class RecrefForm(forms.Form):
 class PersonRecrefForm(RecrefForm):
     @property
     def target_url(self) -> str:
-        return person_utils.get_checked_form_url_by_pk(self.initial.get('target_id'))
+        return person_serv.get_checked_form_url_by_pk(self.initial.get('target_id'))
 
 
 class LocRecrefForm(RecrefForm):
@@ -41,7 +41,7 @@ class LocRecrefForm(RecrefForm):
 class WorkRecrefForm(RecrefForm):
     @property
     def target_url(self) -> str:
-        return work_utils.get_checked_form_url_by_pk(self.initial.get('target_id'))
+        return work_serv.get_checked_form_url_by_pk(self.initial.get('target_id'))
 
 
 class ManifRecrefForm(RecrefForm):

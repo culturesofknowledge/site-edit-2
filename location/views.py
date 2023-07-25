@@ -11,7 +11,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 
 from core import constant
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM
-from core.export_data import download_csv_utils, cell_values
+from core.export_data import download_csv_serv, cell_values
 from core.forms import CommentForm
 from core.helper import view_serv, renderer_serv, query_serv, perm_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
@@ -23,7 +23,7 @@ from core.helper.view_handler import FullFormHandler
 from core.helper.view_serv import BasicSearchView, CommonInitFormViewTemplate, MergeChoiceViews, MergeChoiceContext, \
     MergeActionViews, MergeConfirmViews, DeleteConfirmView
 from core.models import Recref
-from location import location_utils
+from location import location_serv
 from location.forms import LocationForm, GeneralSearchFieldset
 from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap, CofkLocationImageMap
 from location.queries import create_sql_count_work_by_location
@@ -73,8 +73,8 @@ def return_quick_init(request, pk):
     location: CofkUnionLocation = CofkUnionLocation.objects.get(location_id=pk)
     return view_serv.render_return_quick_init(
         request, 'Place',
-        location_utils.get_recref_display_name(location),
-        location_utils.get_recref_target_id(location),
+        location_serv.get_recref_display_name(location),
+        location_serv.get_recref_target_id(location),
     )
 
 
@@ -317,7 +317,7 @@ class LocationCsvHeaderValues(HeaderValues):
             obj.sent,
             obj.recd,
             obj.all_works,
-            download_csv_utils.join_comment_lines(obj.comments.iterator()),
+            download_csv_serv.join_comment_lines(obj.comments.iterator()),
             cell_values.resource_str_by_list(obj.resources.iterator()),
             obj.latitude,
             obj.longitude,
@@ -328,7 +328,7 @@ class LocationCsvHeaderValues(HeaderValues):
             obj.element_5_eg_county,
             obj.element_6_eg_country,
             obj.element_7_eg_empire,
-            download_csv_utils.join_image_lines(obj.images.iterator()),
+            download_csv_serv.join_image_lines(obj.images.iterator()),
             obj.change_user,
             cell_values.simple_datetime(obj.change_timestamp),
         )
