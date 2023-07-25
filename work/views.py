@@ -494,7 +494,8 @@ class ManifFFH(BasicWorkFFH):
     def save(self, request):
 
         # handle remove manif list
-        for _manif_id in request.POST.getlist('del_manif_id_list'):
+        del_manif_id_list = request.POST.getlist('del_manif_id_list')
+        for _manif_id in del_manif_id_list:
             log.info(f'del manif -- [{_manif_id}]')
             get_object_or_404(CofkUnionManifestation, pk=_manif_id).delete()
 
@@ -504,9 +505,8 @@ class ManifFFH(BasicWorkFFH):
 
         # handle save
         manif: CofkUnionManifestation = self.manif_form.instance
-        if not manif.manifestation_id \
-                and not (self.manif_form.has_changed() or request.POST.getlist('lang_name')):
-            log.debug('ignore save new manif, if manif_form has no changed')
+        if manif.manifestation_id in del_manif_id_list:
+            log.debug(f'current manif[{manif.manifestation_id}] removed[{del_manif_id_list}] no need to save')
             return
 
         log.debug(f'changed_data : {self.manif_form.changed_data}')
@@ -730,11 +730,12 @@ class ManifView(BasicWorkFormView):
                         request=request, *args, **kwargs)
 
     def resp_after_saved(self, request, fhandler):
-        if not fhandler.manif_form.instance.manifestation_id:
+        manif_id = fhandler.manif_form.instance.manifestation_id
+        if not manif_id or not model_serv.is_exist(CofkUnionManifestation, {'manifestation_id': manif_id}):
             return redirect('work:manif_init', fhandler.request_iwork_id)
 
         url = reverse('work:manif_update',
-                      args=[fhandler.request_iwork_id, fhandler.manif_form.instance.manifestation_id])
+                      args=[fhandler.request_iwork_id, manif_id])
         url = view_serv.append_callback_save_success_parameter(request, url)
         return redirect(url)
 
