@@ -136,8 +136,8 @@ def sec_to_min(sec):
     return f'{floor(sec / 60)}m,{sec % 60}s'
 
 
-def log_save_records(target, size, used_sec):
-    print(f'migrated records [{sec_to_min(used_sec):>7}][{size:>7,}][{target}]')
+def log_save_records(target, size, used_sec, text='migrated records'):
+    print(f'{text} [{sec_to_min(used_sec):>7}][{size:>7,}][{target}]')
 
 
 class Command(BaseCommand):
@@ -635,6 +635,71 @@ def create_check_fn_by_unique_together_model(model: Type[model_serv.ModelLike]):
     return _fn
 
 
+def create_destination_and_origin_records():
+    start_sec = time.time()
+    location_primary_map = {}
+    origins = []
+    destinations = []
+
+    qs = CofkCollectWork.objects\
+        .filter(origin_id__isnull= False)\
+        .exclude(pk__in=list(CofkCollectOriginOfWork.objects.values_list('iwork_id', flat=True))).all()
+
+    for w in qs:
+        last_origin_id = CofkCollectOriginOfWork.objects.filter(upload_id=w.upload_id).values_list(
+            'origin_id').order_by('-origin_id')
+
+        if last_origin_id:
+            next_origin_id = last_origin_id[0][0] + 1
+        else:
+            next_origin_id = 1
+
+        if w.origin_id not in location_primary_map:
+            origin_id = CofkCollectLocation.objects.filter(location_id=w.origin_id).values_list('pk').first()[0]
+            location_primary_map[w.origin_id] = origin_id
+        else:
+            origin_id = location_primary_map[w.origin_id]
+
+        origins.append(CofkCollectOriginOfWork(location_id=origin_id, iwork_id=w.pk,
+                                               upload_id=w.upload_id,
+                                               origin_id=next_origin_id))
+
+    CofkCollectOriginOfWork.objects.bulk_create(origins)
+
+    log_save_records(f'{CofkCollectOriginOfWork.__module__}.CofkCollectOriginOfWork', len(origins),
+                     time.time() - start_sec, ' created records')
+    start_sec = time.time()
+
+    qs = CofkCollectWork.objects\
+        .filter(destination_id__isnull=False)\
+        .exclude(pk__in=list(CofkCollectDestinationOfWork.objects.values_list('iwork_id', flat=True))).all()
+
+    for w in qs:
+        last_destination_id = CofkCollectDestinationOfWork.objects.filter(upload_id=w.upload_id).values_list(
+            'destination_id').order_by('-destination_id')
+
+        if last_destination_id:
+            next_destination_id = last_destination_id[0][0] + 1
+        else:
+            next_destination_id = 1
+
+        if w.destination_id not in location_primary_map:
+            destination_id = \
+            CofkCollectLocation.objects.filter(location_id=w.destination_id).values_list('pk').first()[0]
+            location_primary_map[w.destination_id] = destination_id
+        else:
+            destination_id = location_primary_map[w.destination_id]
+
+        destinations.append(CofkCollectDestinationOfWork(location_id=destination_id, iwork_id=w.pk,
+                                                         upload_id=w.upload_id,
+                                                         destination_id=next_destination_id))
+
+    CofkCollectDestinationOfWork.objects.bulk_create(destinations)
+
+    log_save_records(f'{CofkCollectDestinationOfWork.__module__}.CofkCollectDestinationOfWork', len(destinations),
+                     time.time() - start_sec, ' created records')
+
+
 def data_migration(user, password, database, host, port):
     start_migrate = time.time()
     warnings.filterwarnings('ignore',
@@ -738,7 +803,6 @@ def data_migration(user, password, database, host, port):
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectWork),
                               col_val_handler_fn_list=[_val_handler_collect_upload],
                               )
-
     clone_rows_by_model_class(conn, CofkCollectAddresseeOfWork,
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectAddresseeOfWork),
                               col_val_handler_fn_list=[_val_handler_collect_person])
@@ -748,11 +812,11 @@ def data_migration(user, password, database, host, port):
     clone_rows_by_model_class(conn, CofkCollectDestinationOfWork,
                               col_val_handler_fn_list=[_val_handler_collect_location],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectDestinationOfWork))
+    clone_rows_by_model_class(conn, CofkCollectOriginOfWork, col_val_handler_fn_list=[_val_handler_collect_location],
+                              check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectOriginOfWork))
     clone_rows_by_model_class(conn, CofkCollectLanguageOfWork,
                               col_val_handler_fn_list=[_val_handler_language, _val_handler_collect_work],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectLanguageOfWork))
-    clone_rows_by_model_class(conn, CofkCollectOriginOfWork, col_val_handler_fn_list=[_val_handler_collect_location],
-                              check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectOriginOfWork))
     clone_rows_by_model_class(conn, CofkCollectPersonMentionedInWork,
                               col_val_handler_fn_list=[_val_handler_collect_person],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(
@@ -765,6 +829,8 @@ def data_migration(user, password, database, host, port):
                               col_val_handler_fn_list=[_val_handler_collect_location],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(
                                   CofkCollectPlaceMentionedInWork))
+
+    create_destination_and_origin_records()
 
     # ### manif
     clone_rows_by_model_class(conn, CofkUnionManifestation,
@@ -781,8 +847,8 @@ def data_migration(user, password, database, host, port):
     # clone recref records
     clone_recref_simple_by_field_pairs(conn)
 
-    # remove all audit records that created by data_migrations
-    print('remove all audit records that created by data_migrations')
+    # remove all audit records created by data_migrations
+    print('remove all audit records created by data_migrations')
     CofkUnionAuditLiteral.objects.filter(audit_id__gt=max_audit_literal_id).delete()
     CofkUnionAuditRelationship.objects.filter(audit_id__gt=max_audit_relationship_id).delete()
     print('[END] remove all audit')
