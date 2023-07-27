@@ -6,9 +6,9 @@ from django.db import models
 
 from core.helper import recref_serv, model_serv
 from core.models import Recref, CofkUnionComment, CofkUnionResource, CofkUnionImage
-from location import location_utils
+from location import location_serv
 from location.models import CofkUnionLocation
-from person import person_utils
+from person import person_serv
 from person.models import CofkUnionPerson
 
 log = logging.getLogger(__name__)
@@ -107,7 +107,7 @@ class TargetImageRecrefAdapter(RecrefFormAdapter, ABC):
 
 class TargetPersonRecrefAdapter(RecrefFormAdapter, ABC):
     def find_target_display_name_by_id(self, target_id):
-        return person_utils.get_recref_display_name(self.find_target_instance(target_id))
+        return person_serv.get_recref_display_name(self.find_target_instance(target_id))
 
     def find_target_instance(self, target_id):
         return model_serv.get_safe(CofkUnionPerson, person_id=target_id)
@@ -118,7 +118,7 @@ class TargetPersonRecrefAdapter(RecrefFormAdapter, ABC):
 
 class TargetLocationRecrefAdapter(RecrefFormAdapter, ABC):
     def find_target_display_name_by_id(self, target_id):
-        return location_utils.get_recref_display_name(self.find_target_instance(target_id))
+        return location_serv.get_recref_display_name(self.find_target_instance(target_id))
 
     def find_target_instance(self, target_id):
         return model_serv.get_safe(CofkUnionLocation, location_id=target_id)

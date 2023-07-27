@@ -384,7 +384,7 @@ class ManifPersonRecrefAdapter(TargetPersonRecrefAdapter):
 #
 #     @classmethod
 #     def get_target_name(cls, recref: Recref):
-#         return person_utils.get_recref_display_name(recref)
+#         return person_serv.get_recref_display_name(recref)
 #
 #     @classmethod
 #     def get_target_id(cls, recref: Recref):

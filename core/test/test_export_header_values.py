@@ -4,7 +4,6 @@ from django.test import TestCase
 
 from core.export_data.excel_header_values import WorkExcelHeaderValues
 from core.fixtures import fixture_default_lookup_catalogue
-from sharedlib import file_utils
 from core.helper.view_components import DownloadCsvHandler
 from institution.models import CofkUnionInstitution
 from institution.views import InstSearchView, InstCsvHeaderValues
@@ -12,9 +11,10 @@ from location.models import CofkUnionLocation
 from location.views import LocationCsvHeaderValues, LocationSearchView
 from person.models import CofkUnionPerson
 from person.views import PersonSearchView, PersonCsvHeaderValues
+from sharedlib import file_utils
 from work.fixtures import fixture_work_simple_a
 from work.views import WorkSearchView, WorkCsvHeaderValues
-from work.work_utils import DisplayableWork
+from work.work_serv import DisplayableWork
 
 
 class TestWorkExcelHeaderValues(TestCase):

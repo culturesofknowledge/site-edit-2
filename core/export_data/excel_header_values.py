@@ -10,9 +10,9 @@ from core.models import CofkUnionResource
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from manifestation.models import CofkUnionManifestation
-from person import person_utils
+from person import person_serv
 from person.models import CofkUnionPerson
-from work.work_utils import DisplayableWork
+from work.work_serv import DisplayableWork
 
 
 class ResourceExcelHeaderValues(HeaderValues):
@@ -172,7 +172,7 @@ class PersonExcelHeaderValues(HeaderValues):
 
     def obj_to_values(self, obj: CofkUnionPerson) -> Iterable:
         return [
-            person_utils.get_display_id(obj),
+            person_serv.get_display_id(obj),
             obj.foaf_name,
             obj.skos_altlabel,
             cell_values.person_roles(obj),

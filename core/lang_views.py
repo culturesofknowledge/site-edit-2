@@ -28,7 +28,7 @@ class LanguageSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def entity(self) -> str:
-        return 'Languages,Language'
+        return 'Language,Languages'
 
     @property
     def search_field_fn_maps(self) -> dict:
@@ -51,7 +51,7 @@ class LanguageSearchView(LoginRequiredMixin, DefaultSearchView):
         queries.extend(
             query_serv.create_queries_by_lookup_field(self.request_data, self.search_fields)
         )
-        queryset = query_serv.update_queryset(queryset, model_class, queries,
+        queryset = query_serv.update_queryset(queryset, model_class, queries=queries,
                                                sort_by=self.get_sort_by())
 
         return queryset

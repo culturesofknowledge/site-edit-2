@@ -8,7 +8,7 @@ from django.forms import ModelForm
 from django.shortcuts import render, redirect, get_object_or_404
 
 from core import constant
-from core.export_data import cell_values, download_csv_utils
+from core.export_data import cell_values, download_csv_serv
 from core.helper import renderer_serv, query_serv, view_serv, perm_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.model_serv import ModelLike
@@ -18,7 +18,7 @@ from core.helper.view_components import HeaderValues, DownloadCsvHandler
 from core.helper.view_serv import CommonInitFormViewTemplate, DefaultSearchView, MergeChoiceViews, MergeActionViews, \
     MergeConfirmViews
 from core.models import Recref
-from institution import inst_utils, models
+from institution import inst_serv, models
 from institution.forms import InstitutionForm, GeneralSearchFieldset
 from institution.models import CofkUnionInstitution
 from institution.recref_adapter import InstResourceRecrefAdapter, InstImageRecrefAdapter
@@ -181,8 +181,8 @@ def return_quick_init(request, pk):
     inst: CofkUnionInstitution = CofkUnionInstitution.objects.get(institution_id=pk)
     return view_serv.render_return_quick_init(
         request, 'Repositories',
-        inst_utils.get_recref_display_name(inst),
-        inst_utils.get_recref_target_id(inst),
+        inst_serv.get_recref_display_name(inst),
+        inst_serv.get_recref_target_id(inst),
     )
 
 
@@ -256,7 +256,7 @@ class InstCsvHeaderValues(HeaderValues):
             obj.institution_country_synonyms,
             cell_values.resource_str_by_list(obj.resources.iterator()),
             obj.editors_notes,
-            download_csv_utils.join_image_lines(obj.images.iterator()),
+            download_csv_serv.join_image_lines(obj.images.iterator()),
             cell_values.simple_datetime(obj.change_timestamp),
             obj.change_user,
         ]

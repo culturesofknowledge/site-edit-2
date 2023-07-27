@@ -13,7 +13,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from core import constant
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_BORN_IN_LOCATION, REL_TYPE_DIED_AT_LOCATION, \
     REL_TYPE_MENTION, TRUE_CHAR
-from core.export_data import cell_values, download_csv_utils
+from core.export_data import cell_values, download_csv_serv
 from core.forms import CommentForm, PersonRecrefForm
 from core.helper import renderer_serv, view_serv, query_serv, recref_serv, form_serv, perm_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
@@ -26,12 +26,12 @@ from core.helper.view_handler import FullFormHandler
 from core.helper.view_serv import CommonInitFormViewTemplate, BasicSearchView, MergeChoiceViews, MergeActionViews, \
     MergeConfirmViews, DeleteConfirmView
 from core.models import Recref
-from person import person_utils
+from person import person_serv
 from person.forms import PersonForm, GeneralSearchFieldset, PersonOtherRecrefForm, search_gender_choices, \
     search_person_or_group
 from person.models import CofkUnionPerson, CofkPersonPersonMap, create_person_id, \
     CofkPersonCommentMap, CofkPersonResourceMap, CofkPersonImageMap
-from person.person_utils import DisplayablePerson
+from person.person_serv import DisplayablePerson
 from person.queries import create_sql_count_work_by_person
 from person.recref_adapter import PersonCommentRecrefAdapter, PersonResourceRecrefAdapter, PersonRoleRecrefAdapter, \
     ActivePersonRecrefAdapter, PassivePersonRecrefAdapter, PersonImageRecrefAdapter, PersonLocRecrefAdapter
@@ -90,8 +90,8 @@ def return_quick_init(request, pk):
     person = CofkUnionPerson.objects.get(iperson_id=pk)
     return view_serv.render_return_quick_init(
         request, 'Person',
-        person_utils.get_recref_display_name(person),
-        person_utils.get_recref_target_id(person),
+        person_serv.get_recref_display_name(person),
+        person_serv.get_recref_target_id(person),
     )
 
 
@@ -463,7 +463,7 @@ class PersonCsvHeaderValues(HeaderValues):
             obj.iperson_id,
             obj.editors_notes,
             obj.further_reading,
-            download_csv_utils.join_image_lines(obj.images.iterator()),
+            download_csv_serv.join_image_lines(obj.images.iterator()),
             obj.other_details_for_display(),
             cell_values.simple_datetime(obj.change_timestamp),
             obj.change_user,
@@ -573,7 +573,7 @@ def create_queryset_by_queries(model_class: Type[models.Model], queries: Iterabl
         'mentioned': create_sql_count_work_by_person([REL_TYPE_MENTION]),
     }
 
-    queryset = query_serv.update_queryset(queryset, model_class, queries,
+    queryset = query_serv.update_queryset(queryset, model_class, queries=queries,
                                            annotate=annotate, sort_by=sort_by)
 
     return queryset

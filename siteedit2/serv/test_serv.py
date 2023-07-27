@@ -12,7 +12,7 @@ from django.test import TestCase
 from django.urls import reverse
 from selenium import webdriver
 from selenium.common import NoSuchElementException
-from selenium.webdriver import DesiredCapabilities
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.select import Select
@@ -44,22 +44,19 @@ class EmloSeleniumTestCase(StaticLiveServerTestCase):
 
     @classmethod
     def _get_selenium_driver(cls):
-        path_chrome_driver = settings.SELENIUM_CHROME_DRIVER_PATH
-        if path_chrome_driver:
+        options = Options()
+        if settings.SELENIUM_CHROME_LOCAL_DRIVER:
             # run selenium with your local browser
-            options = webdriver.ChromeOptions()
             options.add_argument('--start-maximized')  # maximize browser window
-            browser_driver = webdriver.Chrome(path_chrome_driver, options=options)
+            browser_driver = webdriver.Chrome(options=options)
         else:
             # run selenium with docker remote browser
-            options = webdriver.ChromeOptions()
             options.add_argument("no-sandbox")
             options.add_argument("--disable-gpu")
             options.add_argument("--window-size=800,600")
             options.add_argument("--disable-dev-shm-usage")
             browser_driver = webdriver.Remote(
                 command_executor=f'http://{settings.SELENIUM_HOST_PORT}/wd/hub',
-                desired_capabilities=DesiredCapabilities.CHROME,
                 options=options,
             )
 

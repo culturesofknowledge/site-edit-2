@@ -4,5 +4,10 @@
         {{ form }}
     {% endfor %}
 </div>
+{% for form in multi_rel_recref_formset|slice:":1" %}
+    <div style="font-style: italic" class="margin-bottom">
+        User can delete entity by uncheck all checkbox of related entity.
+    </div>
+{% endfor %}
 
 {% include "core/component/recref.html" with recref_type=recref_type id_field=id_field label=label_add %}

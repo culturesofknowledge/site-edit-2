@@ -42,8 +42,8 @@ def date_to_simple_date_str(dt):
 calendar_choices = [
     ('', 'Unknown'),
     ('G', 'Gregorian'),
-    ('JM', 'Julian (year starting 25th Mar)'),
     ('JJ', 'Julian (year starting 1st Jan)'),
+    ('JM', 'Julian (year starting 25th Mar)'),
     ('O', 'Other'),
 ]
 

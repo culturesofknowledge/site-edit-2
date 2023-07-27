@@ -87,8 +87,8 @@ class CofkUnionPerson(models.Model, RecordTracker):
 
     @property
     def names_and_roles(self) -> str:
-        from person import person_utils
-        names_and_roles = ''.join(f'<p>{s}</p>' for s in person_utils.get_name_details(self))
+        from person import person_serv
+        names_and_roles = ''.join(f'<p>{s}</p>' for s in person_serv.get_name_details(self))
         return mark_safe(names_and_roles)
 
     def to_string(self, is_details=False) -> str:

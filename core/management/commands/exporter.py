@@ -24,12 +24,12 @@ from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from location.queries import create_sql_count_work_by_location
 from manifestation.models import CofkUnionManifestation
-from person import person_utils
+from person import person_serv
 from person.models import CofkUnionPerson
 from sharedlib import thread_utils
-from work import work_utils
+from work import work_serv
 from work.models import CofkUnionWork
-from work.work_utils import DisplayableWork
+from work.work_serv import DisplayableWork
 
 log = logging.getLogger(__name__)
 cache_username_map = {}
@@ -91,11 +91,11 @@ def always_published(*args, **kwargs):
 
 
 def is_published_work(w) -> int:
-    return int(not work_utils.is_hidden_work(w, cached_catalogue_status=cached_catalogue_status))
+    return int(not work_serv.is_hidden_work(w, cached_catalogue_status=cached_catalogue_status))
 
 
 def is_published_by_filter_work(obj, work_prefix) -> int:
-    return int(obj.__class__.objects.filter(work_utils.q_hidden_works(prefix=work_prefix) &
+    return int(obj.__class__.objects.filter(work_serv.q_hidden_works(prefix=work_prefix) &
                                             Q(pk=obj.pk)).count() == 0)
 
 
@@ -185,7 +185,7 @@ class InstFrontendCsv(HeaderValues):
         self.inst_document_count = self.count_inst_work()
 
     def count_inst_work(self):
-        q = work_utils.q_visible_works(prefix='cofkmanifinstmap__manif__work', check_hidden_date=False)
+        q = work_serv.q_visible_works(prefix='cofkmanifinstmap__manif__work', check_hidden_date=False)
         q &= recref_serv.create_q_rel_type(constant.REL_TYPE_STORED_IN, prefix='cofkmanifinstmap')
         queryset = (CofkUnionInstitution.objects
                     .values('institution_id')
@@ -403,7 +403,7 @@ class PersonFrontendCsv(HeaderValues):
     def obj_to_values(self, obj) -> Iterable:
         convert_map = {
                           'person_id': to_csv_pk,
-                          'foaf_name': lambda o: person_utils.decode_person(o),
+                          'foaf_name': lambda o: person_serv.decode_person(o),
                           'sent_count': lambda o: o.sent,
                           'recd_count': lambda o: o.recd,
                           'mentioned_count': lambda o: o.mentioned,
@@ -653,7 +653,7 @@ def create_location_queryset():
         'recd_count': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_TO]),
         'mentioned_count': create_sql_count_work_by_location([REL_TYPE_MENTION]),
     }
-    queryset = query_serv.update_queryset(queryset, CofkUnionLocation, None, annotate=annotate)
+    queryset = query_serv.update_queryset(queryset, CofkUnionLocation, annotate=annotate)
     return queryset
 
 
