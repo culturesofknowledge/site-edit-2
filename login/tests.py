@@ -1,7 +1,7 @@
 from core import constant
 from core.helper import webdriver_actions, perm_serv
 from login.fixtures import create_test_user, create_test_user__a
-from siteedit2.utils.test_utils import EmloSeleniumTestCase
+from siteedit2.serv.test_serv import EmloSeleniumTestCase
 
 
 class TestPermission(EmloSeleniumTestCase):

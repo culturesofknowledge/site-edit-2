@@ -119,8 +119,8 @@ class CofkUnionManifestation(models.Model, RecordTracker):
         return (mm.manif_from for mm in recref_serv.prefetch_filter_rel_type(self.manif_to_set, REL_TYPE_ENCLOSED_IN))
 
     def to_string(self):
-        from manifestation import manif_utils
-        return '\n'.join(manif_utils.get_manif_details(self))
+        from manifestation import manif_serv
+        return '\n'.join(manif_serv.get_manif_details(self))
 
 
 class CofkUnionLanguageOfManifestation(models.Model):

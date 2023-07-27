@@ -9,7 +9,7 @@ from django.template.loader import render_to_string
 from core.helper import widgets_serv, recref_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.models import Recref
-from person import person_utils
+from person import person_serv
 from sharedlib import data_utils
 from work.recref_adapter import WorkLocRecrefAdapter, ManifInstRecrefAdapter
 
@@ -420,7 +420,7 @@ class MultiRelRecrefForm(forms.Form):
 class TargetPersonMRRForm(MultiRelRecrefForm):
     @property
     def target_url(self):
-        return person_utils.get_checked_form_url_by_pk(self.initial.get('target_id'))
+        return person_serv.get_checked_form_url_by_pk(self.initial.get('target_id'))
 
 
 def save_multi_rel_recref_formset(multi_rel_recref_formset, parent, request):

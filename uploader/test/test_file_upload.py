@@ -8,7 +8,7 @@ from uploader.constants import MANDATORY_SHEETS
 from uploader.models import CofkCollectWork, CofkCollectAuthorOfWork, \
     CofkCollectAddresseeOfWork, CofkCollectOriginOfWork, CofkCollectDestinationOfWork, CofkCollectManifestation
 from uploader.spreadsheet import CofkUploadExcelFile
-from uploader.test.test_utils import UploadIncludedTestCase, spreadsheet_data
+from uploader.test.test_serv import UploadIncludedTestCase, spreadsheet_data
 from uploader.validation import CofkExcelFileError
 
 log = logging.getLogger(__name__)

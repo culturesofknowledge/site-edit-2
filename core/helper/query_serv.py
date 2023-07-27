@@ -175,7 +175,7 @@ def create_exists_by_mode(model_class, queries, annotate: dict = None) -> Exists
 
 
 def update_queryset(queryset,
-                    model_class, queries,
+                    model_class, queries=None,
                     annotate: dict = None,
                     sort_by=None, ):
     """

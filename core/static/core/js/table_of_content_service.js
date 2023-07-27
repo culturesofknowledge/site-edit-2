@@ -17,7 +17,7 @@ function isElementInViewpoint(ele) {
 function build_table_of_content_ui() {
     let toc_items = $('.toc-item, .toc-sub-item');
 
-    if(toc_items.length === 0)  {
+    if (toc_items.length === 0) {
         // Publications has no toc items
         return
     }
@@ -95,6 +95,20 @@ function setup_table_of_content() {
                 delayed_table_of_content_scroll_fn = null;
 
             }, 200)
+        }
+    });
+
+    $('#toc-body a').on('click', function (e) {
+        /* scrolling to target element with offset */
+        e.preventDefault();
+        let y_offset = 130;
+
+        const element = document.getElementById(e.target.getAttribute('href').substring(1));
+        if (element) {
+            window.scrollTo({
+                top: window.scrollY + element.getBoundingClientRect().top - y_offset,
+                behavior: 'smooth'
+            });
         }
     });
 

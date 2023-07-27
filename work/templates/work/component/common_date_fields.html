@@ -7,12 +7,14 @@
 
         <div class="margin-bottom calendar-div">
             {% with new_label_text="Calendar used for the date supplied below in 'Date of "|add:name|add:" in Standard Format':" %}
-                {% include "core/component/common_form_choices.html" with label_text=new_label_text choices_field=calendar_used %}
+                {% include "core/component/common_form_choices.html" with label_text=new_label_text choices_field=calendar_used as_col=True %}
             {% endwith %}
         </div>
 
-        <fieldset>
-            <legend id="{{ header_id|add:'_date' }}" class="toc-sub-item">Date of {{ name }} in standard format</legend>
+        <fieldset class="date-standard-format">
+            <legend id="{{ header_id|add:'_date' }}" class="toc-sub-item">
+                Date of {{ name }} in standard format
+            </legend>
             <div class="margin-bottom">
                 <div class="is-range-div">
                     {{ is_range }}

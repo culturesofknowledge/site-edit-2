@@ -3,9 +3,9 @@ import re
 from django import template
 from django.utils.safestring import mark_safe
 
-from work import work_utils
+from work import work_serv
 from work.models import CofkUnionWork
-from work.work_utils import DisplayableWork
+from work.work_serv import DisplayableWork
 
 register = template.Library()
 
@@ -15,7 +15,7 @@ img_pattern = re.compile(r'(xxxCofkImageIDStartxxx)(.*?)(xxxCofkImageIDEndxxx)')
 
 @register.filter
 def exclamation(work: CofkUnionWork):
-    return work_utils.flags(work)
+    return work_serv.flags(work)
 
 
 @register.filter

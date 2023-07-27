@@ -7,8 +7,8 @@ from person.models import CofkUnionPerson, CofkPersonResourceMap
 from person.recref_adapter import PersonResourceRecrefAdapter
 from person.views import PersonMergeChoiceView
 from sharedlib import selenium_utils
-from siteedit2.utils import test_utils
-from siteedit2.utils.test_utils import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
+from siteedit2.serv import test_serv
+from siteedit2.serv.test_serv import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
     CommentM2MTester, CommonSearchTests, MergeTests
 
 
@@ -29,10 +29,10 @@ class PersonFormTest(EmloSeleniumTestCase):
                          person.fixtures.person_min_dict_a.get('foaf_name'))
 
     def test_full_form__GET_simple(self):
-        pson_a = test_utils.create_person_by_dict()
+        pson_a = test_serv.create_person_by_dict()
 
         url = self.create_full_form_url(pson_a.iperson_id)
-        test_utils.simple_test_full_form__GET(
+        test_serv.simple_test_full_form__GET(
             self, pson_a,
             url, [
                 'foaf_name', 'skos_altlabel', 'person_aliases',
@@ -70,8 +70,8 @@ class PersonFormTest(EmloSeleniumTestCase):
         m2m_tester.assert_after_update()
 
     def test_recref(self):
-        pson_a = test_utils.create_person_by_dict()
-        test_utils.create_location_by_dict()
+        pson_a = test_serv.create_person_by_dict()
+        test_serv.create_location_by_dict()
 
         form_url = self.create_full_form_url(pson_a.iperson_id)
         test_cases = [
@@ -97,7 +97,7 @@ class PersonFormTest(EmloSeleniumTestCase):
                  expected_rel_type=constant.REL_TYPE_WAS_PATRON_OF,
                  form_url=form_url, ),
         ]
-        test_utils.run_recref_test_by_test_cases(self, test_cases)
+        test_serv.run_recref_test_by_test_cases(self, test_cases)
 
 
 def prepare_person_records() -> list[CofkUnionPerson]:

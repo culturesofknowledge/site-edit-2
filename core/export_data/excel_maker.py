@@ -12,7 +12,7 @@ from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
 from core import constant
-from core.export_data import excel_header_values, excel_utils
+from core.export_data import excel_header_values, excel_serv
 from core.helper import model_serv
 from core.helper.view_components import HeaderValues
 from core.models import CofkUnionResource
@@ -32,11 +32,11 @@ def fill_sheet(sheet: 'Worksheet',
     sheet.append(header_values.get_header_list())
 
     apply_header_style(sheet)
-    excel_utils.fill_header_style(sheet)
+    excel_serv.fill_header_style(sheet)
 
     rows = (header_values.obj_to_values(obj) for obj in rows)
     rows = map(data_utils.to_str_list_no_none, rows)
-    rows = map(excel_utils.escape_xlsx_char_by_row, rows)
+    rows = map(excel_serv.escape_xlsx_char_by_row, rows)
     for row in rows:
         sheet.append(row)
 

@@ -3,9 +3,9 @@ import collections
 from django.urls import reverse
 
 from core.helper import recref_serv
-from location import location_utils
+from location import location_serv
 from person.models import CofkUnionPerson
-from siteedit2.utils.log_utils import log_no_url
+from siteedit2.serv.log_serv import log_no_url
 
 
 def get_recref_display_name(person: CofkUnionPerson):
@@ -68,7 +68,7 @@ def get_display_dict_other_details(person: CofkUnionPerson, new_line='\n') -> st
 
         # locations
         (lambda: person.cofkpersonlocationmap_set.all(),
-         lambda mm: location_utils.get_recref_display_name(mm.location),
+         lambda mm: location_serv.get_recref_display_name(mm.location),
          lambda mm: CofkUnionPerson,),
 
         # comments
@@ -81,7 +81,7 @@ def get_display_dict_other_details(person: CofkUnionPerson, new_line='\n') -> st
     for query_fn, name_fn, left_obj_fn in query_name_map:
         for mmap in query_fn():
             display_name = recref_serv.get_recref_rel_desc(mmap, left_obj_fn(mmap),
-                                                            default_raw_value=True)
+                                                           default_raw_value=True)
             result_map[display_name].append(name_fn(mmap))
 
     # add resources

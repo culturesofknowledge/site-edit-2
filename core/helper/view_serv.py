@@ -448,7 +448,7 @@ class DefaultSearchView(BasicSearchView):
 
     @property
     def entity(self) -> str:
-        return '__ENTITIES__,__ENTITY__'
+        return '__ENTITY__,__ENTITIES__'
 
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:

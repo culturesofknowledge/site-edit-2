@@ -3,8 +3,7 @@ function on_lang_del_click(e) {
     $(e.target.parentElement).remove();
 }
 
-function on_lang_select_change(e, selected_text, selected_val) {
-    let selected_lang = selected_text;
+function on_lang_select_change(e, selected_lang, selected_val) {
     if (!selected_lang) {
         return
     }

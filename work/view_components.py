@@ -1,12 +1,12 @@
 from core.helper.view_serv import FormDescriptor
-from work import work_utils
+from work import work_serv
 
 
 class WorkFormDescriptor(FormDescriptor):
 
     @property
     def name(self):
-        return work_utils.get_recref_display_name(self.obj)
+        return work_serv.get_recref_display_name(self.obj)
 
     @property
     def model_name(self):
