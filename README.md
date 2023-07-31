@@ -43,6 +43,14 @@ python3 manage.py createsuperuser
 ```
 
 
+How to run export tool
+----------------------------------
+after runnning following command, all csv files will be generated in current folder
+```shell
+python3 manage.py exporter
+```
+
+
 # Changes to database schema
 
 Because of EMLO Edit's interdependence with EMLO Collect and EMLO Front end it has been a major requirement to

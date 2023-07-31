@@ -36,6 +36,14 @@ cache_username_map = {}
 cached_catalogue_status = {}
 
 
+class Command(BaseCommand):
+    def add_arguments(self, parser: ArgumentParser):
+        parser.add_argument('-o', '--output_dir', type=str, default='.')
+
+    def handle(self, *args, **options):
+        export_all(options['output_dir'])
+
+
 def to_datetime_str(dt) -> str:
     if not dt:
         return ''
@@ -65,14 +73,6 @@ def check_urls(urls: Iterable[str], n_thread=100) -> dict[str, bool]:
     for i, (url, is_alive) in enumerate(thread_utils.yield_run_fn_results(_send_request, zip(urls), n_thread=n_thread)):
         results[url] = is_alive
     return results
-
-
-class Command(BaseCommand):
-    def add_arguments(self, parser: ArgumentParser):
-        parser.add_argument('-o', '--output_dir', type=str, default='.')
-
-    def handle(self, *args, **options):
-        export_all(options['output_dir'])
 
 
 def get_values_by_names(obj, names: list[str]) -> Iterable:
