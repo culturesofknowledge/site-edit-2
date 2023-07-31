@@ -1,0 +1,48 @@
+{% extends "core/emlo_logined.html" %}
+{% load cl_filters %}
+
+{% block content %}
+
+<h1>Uploads</h1>
+
+<div style="text-align: right;">
+    <h2>{{ page_obj|get_results_on_page }} out
+        of {{ paginator.count | floatformat:'g' }} uploads</h2>
+</div>
+
+{% include 'core/component/pagination.html' %}
+
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Date/time</th>
+        <th>Source of data</th>
+        <th>Contact email</th>
+        <th>Works uploaded</th>
+        <th>Accepted</th>
+        <th>Rejected</th>
+        <th>Status</th>
+        <td></td>
+        <!--<td></td>-->
+    </tr>
+{% for upload in object_list %}
+    <tr>
+
+        <td>{{ upload.upload_id }}</td>
+        <td>{{ upload.upload_timestamp }}</td>
+        <td>{{ upload.upload_name }}</td>
+        <td>{{ upload.uploader_email }}</td>
+        <td>{{ upload.total_works }}</td>
+        <td>{{ upload.works_accepted }}</td>
+        <td>{{ upload.works_rejected }}</td>
+        <td>{{ upload.upload_status }}</td>
+        <td><form action="/upload/{{ upload.upload_id }}"><button type="submit" class="btn">Review</button></form></td>
+        <!--<td><input type="button" value="Export"></td>-->
+
+    </tr>
+{% endfor %}
+</table>
+
+{% include 'core/component/pagination.html' %}
+
+{% endblock %}

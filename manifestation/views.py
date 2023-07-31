@@ -13,7 +13,7 @@ class ManifSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def entity(self) -> str:
-        return 'Manifestation,Manifestations'
+        return 'manifestation,manifestations'
 
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:

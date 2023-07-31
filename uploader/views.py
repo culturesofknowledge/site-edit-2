@@ -1,23 +1,31 @@
 import logging
 import os
 import time
+from typing import Iterable, Callable, List
 from zipfile import BadZipFile
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.files.storage import default_storage
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.utils.decorators import method_decorator
-from django.views.generic import ListView
+from django.views.generic import ListView, TemplateView
 
 from core import constant
+from core.form_label_maps import field_label_map
+from core.helper.query_serv import create_from_to_datetime, create_queries_by_field_fn_maps, \
+    create_queries_by_lookup_field
+from core.helper.renderer_serv import create_table_search_results_renderer
+from core.helper.view_serv import DefaultSearchView
 from core.models import CofkLookupCatalogue
-from uploader.forms import CofkCollectUploadForm
+from uploader.forms import CofkCollectUploadForm, GeneralSearchFieldset
 from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectAddresseeOfWork, CofkCollectAuthorOfWork, \
     CofkCollectDestinationOfWork, CofkCollectLanguageOfWork, CofkCollectOriginOfWork, CofkCollectPersonMentionedInWork, \
-    CofkCollectWorkResource, CofkCollectInstitution, CofkCollectLocation, CofkCollectManifestation, CofkCollectPerson
+    CofkCollectWorkResource, CofkCollectInstitution, CofkCollectLocation, CofkCollectManifestation, CofkCollectPerson, \
+    CofkCollectSubjectOfWork
 from uploader.review import accept_works, reject_works, get_work
 from uploader.spreadsheet import CofkUploadExcelFile
 from uploader.validation import CofkExcelFileError
@@ -115,9 +123,29 @@ def handle_upload(request) -> dict:
 class UploadView(ListView):
     model = CofkCollectUpload
     ordering = '-upload_timestamp'
-    template_name = 'uploader/form.html'
-    form = CofkCollectUploadForm
+    template_name = 'uploader/list.html'
     paginate_by = 250
+
+    def get_queryset(self, **kwargs):
+        qs = super().get_queryset(**kwargs)
+        # Filter so only uploads Awaiting review or Partly reviewed are displayed
+        return qs.filter(upload_status_id__in=[1, 2])
+
+    def get(self, request, *args, **kwargs):
+        response = super().get(self, request, *args, **kwargs)
+
+        if kwargs:
+            response.context_data |= kwargs
+
+        return response
+
+
+@method_decorator([login_required,
+                   permission_required(constant.PM_CHANGE_COLLECTWORK, raise_exception=True)],
+                  name='dispatch')
+class AddUploadView(TemplateView):
+    template_name = "uploader/form.html"
+    form = CofkCollectUploadForm
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -135,13 +163,6 @@ class UploadView(ListView):
 
         return self.get(self, request, *args, **kwargs)
 
-    def get(self, request, *args, **kwargs):
-        response = super().get(self, request, *args, **kwargs)
-
-        if kwargs:
-            response.context_data |= kwargs
-
-        return response
 
 @login_required
 @permission_required(constant.PM_CHANGE_COLLECTWORK, raise_exception=True)
@@ -149,7 +170,7 @@ def upload_review(request, upload_id, **kwargs):
     template_url = 'uploader/review.html'
     upload = CofkCollectUpload.objects.filter(upload_id=upload_id).first()
 
-    works_paginator = Paginator(CofkCollectWork.objects.filter(upload=upload).order_by('pk'), 25)
+    works_paginator = Paginator(CofkCollectWork.objects.filter(upload=upload).order_by('pk'), 99999)
     page_number = request.GET.get('page', 1)
     works_page = works_paginator.get_page(page_number)
 
@@ -160,6 +181,7 @@ def upload_review(request, upload_id, **kwargs):
                'addressees': CofkCollectAddresseeOfWork.objects.filter(upload=upload),
                'mentioned': CofkCollectPersonMentionedInWork.objects.filter(upload=upload),
                'languages': CofkCollectLanguageOfWork.objects.filter(upload=upload),
+               'subjects': CofkCollectSubjectOfWork.objects.filter(upload=upload),
                # Authors, addressees and mentioned link to People, here we're only
                # passing new people for review purposes
                'people': CofkCollectPerson.objects.filter(upload=upload, union_iperson__isnull=True),
@@ -184,3 +206,73 @@ def upload_review(request, upload_id, **kwargs):
         reject_works(request, context, upload)
 
     return render(request, template_url, context)
+
+
+class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
+
+    @property
+    def query_fieldset_list(self) -> Iterable:
+        return [GeneralSearchFieldset(self.request_data)]
+
+    @property
+    def search_field_label_map(self) -> dict:
+        return field_label_map['collect_work']
+
+    @property
+    def search_field_fn_maps(self) -> dict:
+        return create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
+                                                   'change_timestamp')
+
+    @property
+    def entity(self) -> str:
+        return 'uploaded work,uploaded works'
+
+    @property
+    def default_order(self) -> str:
+        return 'asc'
+
+    @property
+    def sort_by_choices(self) -> list[tuple[str, str]]:
+        return [
+            ('union_iwork_id', 'ID in main database',),
+            ('source', 'Source',),
+            ('contact', 'Contact',),
+        ]
+
+    @property
+    def search_field_combines(self) -> dict[str: List[str]]:
+        return {'source': ['accession_code'],
+                'contact': ['upload__uploader_email'],
+                'status': ['upload_status__status_desc'],
+                'id_main': ['union_iwork__pk'],
+                'authors': ['authors__iperson__primary_name'],
+                'addressees': ['addressees__iperson__primary_name'],
+                'origin': ['origin__location__location_name'],
+                'destination': ['destination__location__location_name'],
+                'manifestations': ['manifestations__repository__institution_name',
+                                  'manifestations__id_number_or_shelfmark',
+                                  'manifestations__printed_edition_details',
+                                  'manifestations__manifestation_notes'],
+                'languages': ['languages__language_code__language_name'],
+                'subjects': ['subjects__subject__subject_desc'],
+                'people_mentioned': ['people_mentioned__iperson__primary_name'],
+                'places_mentioned': ['places_mentioned__location__location_name'],
+                'resources': ['resources__resource_name', 'resources__resource_url']}
+
+    def get_queryset(self):
+        if not self.request_data:
+            return CofkCollectWork.objects.none()
+
+        # queries for like_fields
+        queries = create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
+
+        queries.extend(
+            create_queries_by_lookup_field(self.request_data,
+                                           search_field_names=self.search_fields,
+                                           search_fields_maps=self.search_field_combines)
+        )
+        return self.create_queryset_by_queries(CofkCollectWork, queries)
+
+    @property
+    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+        return create_table_search_results_renderer('uploader/search_table_layout.html')

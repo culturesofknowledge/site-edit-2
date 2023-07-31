@@ -79,8 +79,6 @@ class BasicSearchView(ListView):
     def search_field_label_map(self) -> dict:
         """
         A dictionary mapping between the model field name and the labelling of that field.
-
-        Only used by self.simplified_query.
         """
         if self.app_name in field_label_map:
             return field_label_map[self.app_name]
@@ -129,7 +127,7 @@ class BasicSearchView(ListView):
                     field_name in self.request_data and f'{field_name}_lookup' in self.request_data and
                     'blank' in self.request_data.get(f'{field_name}_lookup')):
                 label_name = self.search_field_label_map.get(field_name) or field_name.replace('_', ' ').capitalize()
-                lookup_key = self.request_data.get(f'{field_name}_lookup').replace('_', ' ')
+                lookup_key = self.request_data.get(f'{field_name}_lookup', 'equals').replace('_', ' ')
 
                 if 'blank' in lookup_key:
                     simplified_query.append(f'{label_name} {lookup_key}.')

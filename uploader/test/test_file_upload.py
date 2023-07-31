@@ -60,7 +60,7 @@ class TestFileUpload(UploadIncludedTestCase):
     def test_work_data(self):
         work_data = [[1,"test","J",1660,1,1,1660,1,2,1,1,1,1,"test","newton",15257,"test",1,1,"test","Wren",
                            22859,"test",1,1,"test","Burford",400285,"test",1,1,"Carisbrooke",782,"test",1,1,"test",
-                           "test","fra;eng",'','','','','','',"test","test","test","Baskerville",885,"test",
+                           "","fra;eng",'','','','','','',"test","test","test","Baskerville",885,"test",
                            "test","EMLO","http://emlo.bodleian.ox.ac.uk/","Early Modern Letters Online test"]]
         filename = self.create_excel_file({'Work': work_data})
 
@@ -98,7 +98,7 @@ class TestFileUpload(UploadIncludedTestCase):
         """
         data = {'Work': [[1, "test", "J", 1660, 1, 1, 'sss', 1, 2, 1, 1, 1, 1, "test", "newton", 15257, "test", 1, 1,
              "test", "Wren", 22859, "test", 1, "s1", "test", "Burford", 1, "test", 1, 1, "Carisbrooke",
-             782, "test", 1, 1, "test", "test", "fra;aaj", '', '', '', '', '', '', "test", "test", "test",
+             782, "test", 1, 1, "test", "", "fra;aaj", '', '', '', '', '', '', "test", "test", "test",
              "Baskerville", 885, "test", "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/",
              "Early Modern Letters Online test"]],
                 'Places': [['Burford', 1],

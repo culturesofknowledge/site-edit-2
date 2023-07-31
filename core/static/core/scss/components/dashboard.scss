@@ -2,6 +2,15 @@
     list-style: none;
 }
 
+.main_menu li {
+    display: inline-block;
+    margin-left: 1em;
+    background: aliceblue;
+    border-radius: 5px;
+    padding: 0.5em;
+    margin-top: 0.5em;
+}
+
 .main_menu li a {
     font-size: $typescale-3;
 

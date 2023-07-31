@@ -1,0 +1,193 @@
+{% load utils %}
+
+<table id="results_table">
+    <thead>
+    <tr></tr>
+    <tr>
+        <th>Source of data</th>
+        <th>Contact</th>
+        <th>Status of work</th>
+        <th>ID in main database</th>
+        <th>Editors' notes</th>
+        <th>Date of work</th>
+        <th>Date of work as marked</th>
+        <th>Original calendar</th>
+        <th>Notes on date of work</th>
+        <th>Authors</th>
+        <th>Authors as marked</th>
+        <th>Notes on authors</th>
+        <th>Origin</th>
+        <th>Origin as marked</th>
+        <th>Addressees</th>
+        <th>Addressees as marked</th>
+        <th>Notes on addressees</th>
+        <th>Destination</th>
+        <th>Destination as marked</th>
+        <th>Manifestations</th>
+        <th>Abstract</th>
+        <th>Keywords</th>
+        <th>Languages of work</th>
+        <th>Subjects of work</th>
+        <th>Incipit</th>
+        <th>Excipit</th>
+        <th>People mentioned</th>
+        <th>Notes on people mentioned</th>
+        <th>Places mentioned</th>
+        <th>Issues</th>
+        <th>Notes on letter</th>
+        <th>Related resources</th>
+        <th>Upload ID</th>
+        <th>Work ID in tool</th>
+    </tr>
+    </thead>
+    <tbody>
+
+    {% for r in search_results %}
+        <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}">
+            <td>
+                {% if r.accession_code %}
+                    {{ r.accession_code }}
+                {% endif %}
+            </td>
+            <td>
+                <a href="mailto:{{ r.upload.uploader_email }}" title="Contact the contributor" target="_blank" tabindex="1">Contact</a>
+            </td>
+            <td>
+                {{ r.upload_status.status_desc }}
+            </td>
+            <td>
+                {{ r.work.iwork_id }}
+            </td>
+            <td>
+                {% if r.editors_notes %}
+                    {{ r.editors_notes }}
+                {% endif %}
+            </td>
+            <td>
+                {% if r.date_of_work_std %}
+                    {{ r.date_of_work_std }}
+                {% endif %}
+            </td>
+            <td>
+                {% if r.date_of_work_as_marked %}
+                    {{ r.date_of_work_as_marked }}
+                {% endif %}
+            </td>
+            <td>
+                {% if r.original_calendar %}
+                    {{ r.original_calendar }}
+                {% endif %}
+            </td>
+            <td>
+                {% if r.notes_on_date_of_work %}
+                    {{ r.notes_on_date_of_work }}
+                {% endif %}
+            </td>
+            <td>
+                {% get_people r.authors.all  %}
+            </td>
+            <td>
+                {% if r.authors_as_marked %}
+                    {{ r.authors_as_marked }}
+                {% endif %}
+            </td>
+            <td>
+                {% if r.notes_on_authors %}
+                    {{ r.notes_on_authors }}
+                {% endif %}
+            </td>
+            <td>
+                {% display_origin r %}
+            </td>
+            <td>
+                {% if r.origin_as_marked %}
+                    {{ r.origin_as_marked }}
+                {% endif %}
+            </td>
+           <td>
+               {% get_people r.addressees.all  %}
+            </td>
+            <td>
+                {% if r.addressees_as_marked %}
+                    {{ r.addressees_as_marked }}
+                {% endif %}
+            </td>
+            <td>
+                {% if r.notes_on_addressees %}
+                    {{ r.notes_on_addressees }}
+                {% endif %}
+            </td>
+            <td>
+                {% display_destination r %}
+            </td>
+            <td>
+                {% if r.destination_as_marked %}
+                    {{ r.destination_as_marked }}
+                {% endif %}
+            </td>
+            <td>
+                <ol>
+                {% for a in r.manifestations.all %}
+                    <li>{{ a.to_string }}</li>
+                {% endfor %}
+                </ol>
+            </td>
+            <td>
+                {% if r.abstract %}
+                    {{ r.abstract }}
+                {% endif %}
+            </td>
+            <td>
+                {% if r.keywords %}
+                    {{ r.keywords }}
+                {% endif %}
+            </td>
+            <td>
+                {% get_languages r.languages.all %}
+            </td>
+            <td>
+                {% display_subjects r.subjects.all %}
+            </td>
+            <td>
+                {% if r.incipit %}
+                    {{ r.incipit }}
+                {% endif %}
+            </td>
+            <td>
+                {% if r.excipit %}
+                    {{ r.excipit }}
+                {% endif %}
+            </td>
+            <td>
+                {% get_people r.people_mentioned.all  %}
+            </td>
+            <td>
+                {% if r.notes_on_people_mentioned %}
+                    {{ r.notes_on_people_mentioned }}
+                {% endif %}
+            </td>
+            <td>
+                {% display_places_mentioned r %}
+            </td>
+            <td>
+                {{ r.display_issues }}
+            </td>
+            <td>
+                {% if r.notes_on_letter %}
+                    {{ r.notes_on_letter }}
+                {% endif %}
+            </td>
+            <td>
+                {% display_resources r.resources.all %}
+            </td>
+            <td>
+                {{ r.upload.pk }}
+            </td>
+            <td>
+                {{ r.iwork_id }}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+
+</table>
