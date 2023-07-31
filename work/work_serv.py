@@ -153,17 +153,25 @@ class DisplayableWork(CofkUnionWork):
 
     @property
     def places_from_for_display(self) -> str:
-        # Derived value for CofkUnionQueryable
+        origin = ''
         if self.origin_location:
-            return str(self.origin_location)
-        return ''
+            origin = str(self.origin_location)
+
+        if self.origin_as_marked:
+            origin += f'<br/><br/>As marked: {self.origin_as_marked}'
+
+        return origin
 
     @property
     def places_to_for_display(self) -> str:
-        # Derived value for CofkUnionQueryable
+        destination = ''
         if self.destination_location:
-            return str(self.destination_location)
-        return ''
+            destination = str(self.destination_location)
+
+        if self.destination_as_marked:
+            destination += f'<br/><br/>As marked: {self.destination_as_marked}'
+
+        return destination
 
     @property
     def manifestations_for_display(self):
