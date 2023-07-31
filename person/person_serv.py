@@ -104,6 +104,16 @@ class DisplayablePerson(CofkUnionPerson):
     def other_details_for_display(self, new_line='\n'):
         return get_display_dict_other_details(self, new_line=new_line)
 
+    def flourished_for_display(self) -> str:
+        if self.flourished_year and self.flourished2_year:
+            return f'{self.flourished_year} to {self.flourished2_year}'
+        elif self.flourished_year and self.flourished_is_range:
+            return f'{self.flourished_year} or after'
+        elif self.flourished2_year and self.flourished_is_range:
+            return f'{self.flourished2_year} or before'
+        elif self.flourished_year:
+            return self.flourished_year
+
 
 def decode_is_range_year(year1, year2, is_range):
     if year2 is not None:
