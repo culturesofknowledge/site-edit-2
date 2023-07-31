@@ -233,6 +233,9 @@ class DisplayableWork(CofkUnionWork):
     def other_details(self):
         _other_details = []
 
+        if self.keywords:
+            _other_details.append(f'<strong>Keywords</strong>: {self.keywords}')
+
         if self.abstract:
             _other_details.append(f'<strong>Abstract</strong>: {self.abstract}')
 
