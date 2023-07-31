@@ -2,7 +2,7 @@ from datetime import datetime
 
 from django.db import models
 
-from manifestation.manif_utils import get_doctype_desc
+from manifestation.manif_serv import get_doctype_desc
 
 
 class CofkCollectStatus(models.Model):
