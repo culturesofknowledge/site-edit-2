@@ -16,10 +16,10 @@ from location import fixtures as location_fixtures
 from manifestation import fixtures as manif_fixtures
 from manifestation.models import CofkUnionManifestation
 from person import fixtures as person_fixtures
-from siteedit2.utils import test_utils
-from siteedit2.utils.test_utils import EmloSeleniumTestCase, FieldValTester, CommonSearchTests
+from siteedit2.serv import test_serv
+from siteedit2.serv.test_serv import EmloSeleniumTestCase, FieldValTester, CommonSearchTests
 from work import fixtures as work_fixtures
-from work import work_utils
+from work import work_serv
 from work.forms import WorkPersonRecrefAdapter
 from work.models import CofkUnionWork, CofkUnionLanguageOfWork
 from work.recref_adapter import WorkLocRecrefAdapter, WorkResourceRecrefAdapter, WorkCommentRecrefAdapter
@@ -59,7 +59,7 @@ class WorkFormTests(EmloSeleniumTestCase):
         _assert_url_case('/work/form/details/')
 
     def save_work(self, work: CofkUnionWork):
-        work.work_id = work_utils.create_work_id(work.iwork_id)
+        work.work_id = work_serv.create_work_id(work.iwork_id)
         work.update_current_user_timestamp('test_user')
         work.save()
         return work
@@ -123,10 +123,10 @@ class WorkFormTests(EmloSeleniumTestCase):
         work.authors_as_marked = input_authors_as_marked
 
     def test_corr__recref(self):
-        test_utils.create_empty_lookup_cat()
-        work = test_utils.create_work_by_dict()
+        test_serv.create_empty_lookup_cat()
+        work = test_serv.create_work_by_dict()
 
-        test_utils.create_person_by_dict()
+        test_serv.create_person_by_dict()
         form_url = self.get_url_by_viewname('work:corr_form', iwork_id=work.iwork_id)
         test_cases = [
             dict(recref_form_name='selected_author_id',
@@ -145,7 +145,7 @@ class WorkFormTests(EmloSeleniumTestCase):
                  expected_rel_type=constant.REL_TYPE_WORK_IS_REPLY_TO,
                  form_url=form_url, ),
         ]
-        test_utils.run_recref_test_by_test_cases(self, test_cases)
+        test_serv.run_recref_test_by_test_cases(self, test_cases)
 
     def test_detes__create(self):
         self.goto_vname('work:dates_form')
@@ -331,7 +331,7 @@ def prepare_works_for_search(core_constant=None):
         works.append(work_fixtures.fixture_work_by_dict(w))
 
     target_work = works[0]
-    # recref_utils.upsert_recref()
+    # recref_serv.upsert_recref()
 
     #  person relationship
     create_related_obj_by_obj_dict(target_work,
@@ -390,7 +390,7 @@ def prepare_works_for_search(core_constant=None):
                             notes='notes b').save()
 
     # update queryable work TOBEREMOVE
-    # work_utils.clone_queryable_work(target_work, reload=True)
+    # work_serv.clone_queryable_work(target_work, reload=True)
 
     return works
 

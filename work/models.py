@@ -1,5 +1,4 @@
 import functools
-import warnings
 from typing import Iterable, Union
 
 from django.db import models
@@ -7,9 +6,9 @@ from django.db import models
 from core import constant
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_COMMENT_DATE, \
     REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO
-from core.helper import model_utils, recref_utils
-from core.helper.model_utils import RecordTracker
-from core.models import Recref, CofkLookupCatalogue
+from core.helper import model_serv, recref_serv
+from core.helper.model_serv import RecordTracker
+from core.models import Recref
 
 SEQ_NAME_COFKUNIONWORK__IWORK_ID = 'cofk_union_work_iwork_id_seq'
 
@@ -57,17 +56,17 @@ class CofkUnionWork(models.Model, RecordTracker):
     accession_code = models.CharField(max_length=1000, blank=True, null=True)
     work_to_be_deleted = models.SmallIntegerField(default=0)
     iwork_id = models.IntegerField(
-        default=functools.partial(model_utils.next_seq_safe, SEQ_NAME_COFKUNIONWORK__IWORK_ID),
+        default=functools.partial(model_serv.next_seq_safe, SEQ_NAME_COFKUNIONWORK__IWORK_ID),
         unique=True,
     )
     editors_notes = models.TextField(blank=True, null=True)
     edit_status = models.CharField(max_length=3, default='')
     relevant_to_cofk = models.CharField(max_length=3, default='Y')
-    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
-    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     change_user = models.CharField(max_length=50)
-    uuid = models.UUIDField(blank=True, null=True, default=model_utils.default_uuid)
+    uuid = models.UUIDField(blank=True, null=True, default=model_serv.default_uuid)
     subjects = models.ManyToManyField(to='core.CofkUnionSubject',
                                       through='CofkWorkSubjectMap', related_name='work', )
 
@@ -78,16 +77,16 @@ class CofkUnionWork(models.Model, RecordTracker):
         ]
 
     def find_comments_by_rel_type(self, rel_type) -> Iterable['CofkUnionComment']:
-        return (r.comment for r in recref_utils.prefetch_filter_rel_type(self.cofkworkcommentmap_set, rel_type))
+        return (r.comment for r in recref_serv.prefetch_filter_rel_type(self.cofkworkcommentmap_set, rel_type))
 
     def find_persons_by_rel_type(self, rel_type: str | Iterable) -> Iterable['CofkUnionPerson']:
-        return (r.person for r in recref_utils.prefetch_filter_rel_type(self.cofkworkpersonmap_set, rel_type))
+        return (r.person for r in recref_serv.prefetch_filter_rel_type(self.cofkworkpersonmap_set, rel_type))
 
     def find_locations_by_rel_type(self, rel_type) -> Iterable['CofkUnionLocation']:
-        return (r.location for r in recref_utils.prefetch_filter_rel_type(self.cofkworklocationmap_set, rel_type))
+        return (r.location for r in recref_serv.prefetch_filter_rel_type(self.cofkworklocationmap_set, rel_type))
 
     def find_work_to_list_by_rel_type(self, rel_type) -> Iterable['CofkUnionWork']:
-        return (r.work_to for r in recref_utils.prefetch_filter_rel_type(self.work_from_set, rel_type))
+        return (r.work_to for r in recref_serv.prefetch_filter_rel_type(self.work_from_set, rel_type))
 
     @property
     def author_comments(self) -> Iterable['CofkUnionComment']:

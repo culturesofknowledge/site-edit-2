@@ -73,6 +73,8 @@ REL_TYPE_WAS_BORN_IN_LOCATION = 'was_born_in_location'
 REL_TYPE_WAS_IN_LOCATION = 'was_in_location'
 REL_TYPE_DIED_AT_LOCATION = 'died_at_location'
 
+REL_TYPE_IS_MANIF_OF = 'is_manifestation_of'
+
 DEFAULT_YEAR = 9999
 DEFAULT_MONTH = 12
 DEFAULT_DAY = 31

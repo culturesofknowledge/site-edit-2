@@ -2,7 +2,7 @@ import logging
 
 from uploader.models import CofkCollectAuthorOfWork
 from uploader.spreadsheet import CofkUploadExcelFile
-from uploader.test.test_utils import UploadIncludedTestCase
+from uploader.test.test_serv import UploadIncludedTestCase
 
 log = logging.getLogger(__name__)
 

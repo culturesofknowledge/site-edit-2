@@ -5,13 +5,14 @@ from django.test import TestCase
 from selenium.webdriver.common.by import By
 
 import location.fixtures
-from core.helper import model_utils, file_utils
+from core.helper import model_serv
 from core.helper.view_components import DownloadCsvHandler
 from location.models import CofkUnionLocation, CofkLocationResourceMap
 from location.recref_adapter import LocationResourceRecrefAdapter
 from location.views import LocationMergeChoiceView, LocationCsvHeaderValues
-from siteedit2.utils import test_utils
-from siteedit2.utils.test_utils import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
+from sharedlib import file_utils
+from siteedit2.serv import test_serv
+from siteedit2.serv.test_serv import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
     CommentM2MTester, CommonSearchTests, MergeTests
 
 if TYPE_CHECKING:
@@ -37,7 +38,7 @@ class LocationFormTests(EmloSeleniumTestCase):
         loc_a.save()
         url = self.get_url_by_viewname('location:full_form',
                                        location_id=loc_a.location_id)
-        test_utils.simple_test_full_form__GET(
+        test_serv.simple_test_full_form__GET(
             self, loc_a,
             url, ['editors_notes', 'element_1_eg_room', 'element_4_eg_city', 'latitude']
         )
@@ -69,7 +70,7 @@ class LocationFormTests(EmloSeleniumTestCase):
 
 
 def prepare_loc_records() -> list[CofkUnionLocation]:
-    return model_utils.create_multi_records_by_dict_list(CofkUnionLocation, (
+    return model_serv.create_multi_records_by_dict_list(CofkUnionLocation, (
         location.fixtures.location_dict_a,
         location.fixtures.location_dict_b,
     ))

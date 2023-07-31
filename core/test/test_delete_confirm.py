@@ -1,18 +1,9 @@
-import re
-import time
-
 from django.urls import reverse
-from selenium.common import ElementClickInterceptedException
-from selenium.webdriver import ActionChains
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions
-from selenium.webdriver.support.wait import WebDriverWait
 
 from location.fixtures import create_location_a
 from person.fixtures import create_person_obj
-from person.models import CofkUnionPerson
 from publication.models import CofkUnionPublication
-from siteedit2.utils.test_utils import EmloSeleniumTestCase
+from siteedit2.serv.test_serv import EmloSeleniumTestCase
 
 
 class TestDeleteConfirm(EmloSeleniumTestCase):

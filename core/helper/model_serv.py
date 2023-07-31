@@ -10,6 +10,11 @@ from django.db import models
 from django.db.models import Model, Max, ForeignKey
 
 ModelLike = typing.TypeVar('ModelLike', bound=models.Model)
+ModelOrClass = ModelLike | Type[ModelLike]
+
+
+def get_table_name(model) -> str:
+    return model._meta.db_table
 
 
 class RecordTracker:
@@ -112,3 +117,7 @@ class UniqueModelPkFilter:
             if model.pk not in self.pk_list:
                 self.pk_list.add(model.pk)
                 yield model
+
+
+def is_exist(model: Type[ModelLike], cond: dict) -> bool:
+    return model.objects.filter(**cond).exists()

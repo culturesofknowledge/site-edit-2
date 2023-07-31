@@ -6,7 +6,7 @@ from django.db.models import F, Exists, OuterRef
 from django.db.models import Q, Lookup, lookups
 from django.db.models.lookups import GreaterThanOrEqual, LessThanOrEqual
 
-from core.helper import date_utils
+from core.helper import date_serv
 
 log = logging.getLogger(__name__)
 
@@ -151,7 +151,7 @@ nullable_lookup_keys = [
 def create_from_to_datetime(from_field_name: str, to_field_name: str,
                             db_field_name: str, convert_fn: Callable = None) -> dict:
     if convert_fn is None:
-        convert_fn = date_utils.str_to_search_datetime
+        convert_fn = date_serv.str_to_search_datetime
 
     return {
         from_field_name: lambda _, v: GreaterThanOrEqual(
@@ -175,13 +175,13 @@ def create_exists_by_mode(model_class, queries, annotate: dict = None) -> Exists
 
 
 def update_queryset(queryset,
-                    model_class, queries,
+                    model_class, queries=None,
                     annotate: dict = None,
                     sort_by=None, ):
     """
     help you to update queryset
 
-    it's new method compare to view_utils.create_queryset_by_queries
+    it's new method compare to view_serv.create_queryset_by_queries
     """
 
     if annotate:

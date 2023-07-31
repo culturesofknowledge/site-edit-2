@@ -24,16 +24,17 @@ from django.views.generic import ListView
 import core.constant as core_constant
 from core import constant
 from core.form_label_maps import field_label_map
-from core.helper import email_utils, query_utils, general_model_utils, recref_utils, model_utils, \
-    django_utils, inspect_utils, url_utils, date_utils, str_utils, perm_utils
-from core.helper.form_utils import build_search_components
-from core.helper.model_utils import ModelLike, RecordTracker
-from core.helper.renderer_utils import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
+from core.helper import query_serv, general_model_serv, recref_serv, model_serv, \
+    url_serv, date_serv, perm_serv, media_serv
+from core.helper.form_serv import build_search_components
+from core.helper.model_serv import ModelLike, RecordTracker
+from core.helper.renderer_serv import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
     demo_table_search_results_renderer
-from core.helper.url_utils import VNAME_FULL_FORM, VNAME_SEARCH
+from core.helper.url_serv import VNAME_FULL_FORM, VNAME_SEARCH
 from core.helper.view_components import DownloadCsvHandler
 from core.models import CofkUnionResource, CofkUnionComment, CofkUserSavedQuery, CofkUserSavedQuerySelection
-from core.services import media_service
+from sharedlib import inspect_utils, str_utils
+from sharedlib.djangolib import django_utils, email_utils
 from work.models import CofkUnionWork
 
 if TYPE_CHECKING:
@@ -61,7 +62,7 @@ def send_email_file_by_url(file_name, to_email):
 
 def create_export_file_name(name, suffix):
     return '{}_{}_{}.{}'.format(name,
-                                date_utils.date_to_simple_date_str(datetime.utcnow()),
+                                date_serv.date_to_simple_date_str(datetime.utcnow()),
                                 str_utils.create_random_str(10),
                                 suffix)
 
@@ -100,7 +101,7 @@ class BasicSearchView(ListView):
         A dictionary mapping between form field names where there is more than one field to search against
         simultaneously, such as with ranges.
 
-        Used with query_utils.create_queries_by_field_fn_maps and query_utils.create_from_to_datetime for instance.
+        Used with query_serv.create_queries_by_field_fn_maps and query_serv.create_from_to_datetime for instance.
         """
         raise NotImplementedError()
 
@@ -246,7 +247,7 @@ class BasicSearchView(ListView):
         queryset = model_class.objects.all()
 
         if queries:
-            queryset = queryset.filter(query_utils.all_queries_match(queries))
+            queryset = queryset.filter(query_serv.all_queries_match(queries))
 
         if sort_by is None:
             sort_by = self.get_sort_by()
@@ -383,12 +384,12 @@ class BasicSearchView(ListView):
     def resp_download_by_export_setting(self, request, export_setting, *args, **kwargs):
         file_name_factory, file_factory, perms = export_setting
         if perms and (user := request.user):
-            perm_utils.validate_permission_denied(user, perms)
+            perm_serv.validate_permission_denied(user, perms)
 
         def file_fn():
             file_name = file_name_factory()
-            tmp_path = media_service.FILE_DOWNLOAD_PATH.joinpath(file_name)
-            file_factory()(self.get_queryset(), tmp_path)
+            tmp_path = media_serv.FILE_DOWNLOAD_PATH.joinpath(file_name)
+            file_factory()(self.get_queryset().iterator(), tmp_path)
             return file_name
 
         return self.resp_file_download(request, file_fn, *args, **kwargs)
@@ -447,7 +448,7 @@ class DefaultSearchView(BasicSearchView):
 
     @property
     def entity(self) -> str:
-        return '__ENTITIES__,__ENTITY__'
+        return '__ENTITY__,__ENTITIES__'
 
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
@@ -586,8 +587,8 @@ class MergeChoiceViews(View):
         id_list = request.GET.getlist('__merge_id')
         return render(request, 'core/merge_choice.html', {
             'choice_list': self.to_context_list(id_list),
-            'merge_action_url': url_utils.reverse_url_by_request(url_utils.VNAME_MERGE_CONFIRM, request),
-            'return_url': url_utils.reverse_url_by_request(url_utils.VNAME_SEARCH, request),
+            'merge_action_url': url_serv.reverse_url_by_request(url_serv.VNAME_MERGE_CONFIRM, request),
+            'return_url': url_serv.reverse_url_by_request(url_serv.VNAME_SEARCH, request),
         })
 
     @staticmethod
@@ -616,13 +617,13 @@ class MergeChoiceViews(View):
 
     @staticmethod
     def create_merge_choice_context(model: ModelLike) -> 'MergeChoiceContext':
-        name = general_model_utils.get_display_name(model)
+        name = general_model_serv.get_display_name(model)
 
-        bounded_data_list = recref_utils.find_bounded_data_list_by_related_model(model)
+        bounded_data_list = recref_serv.find_bounded_data_list_by_related_model(model)
         related_records = []
         for bounded_data in bounded_data_list:
-            _, related_field = recref_utils.get_parent_related_field_by_bounded_data(bounded_data, model)
-            recref_list = list(recref_utils.find_recref_list_by_bounded_data(bounded_data, model))
+            _, related_field = recref_serv.get_parent_related_field_by_bounded_data(bounded_data, model)
+            recref_list = list(recref_serv.find_recref_list_by_bounded_data(bounded_data, model))
             if not recref_list:
                 continue
 
@@ -632,7 +633,7 @@ class MergeChoiceViews(View):
                     related_records.append((_name,
                                             [get_recref_ref_name(related_field, r) for r in _recref_list]))
             else:
-                related_records.append((general_model_utils.get_name_by_model_class(related_model),
+                related_records.append((general_model_serv.get_name_by_model_class(related_model),
                                         [get_recref_ref_name(related_field, r) for r in recref_list]))
 
         return MergeChoiceContext(model_pk=model.pk, name=name, related_records=related_records)
@@ -649,8 +650,8 @@ class MergeChoiceViews(View):
 
 def find_all_recref_by_models(model_list):
     for model in model_list:
-        for bounded_data in recref_utils.find_bounded_data_list_by_related_model(model):
-            records = recref_utils.find_recref_list_by_bounded_data(bounded_data, model)
+        for bounded_data in recref_serv.find_bounded_data_list_by_related_model(model):
+            records = recref_serv.find_recref_list_by_bounded_data(bounded_data, model)
             yield from records
 
 
@@ -659,21 +660,21 @@ def get_recref_ref_name(related_field, recref) -> str:
     if isinstance(related_model, CofkUnionComment):
         return '[{}] {}'.format(
             related_model.pk,
-            general_model_utils.get_display_name(related_model)
+            general_model_serv.get_display_name(related_model)
         )
     elif isinstance(related_model, CofkUnionResource):
         return '{} ({}) '.format(
-            general_model_utils.get_display_name(related_model),
+            general_model_serv.get_display_name(related_model),
             related_model.resource_url,
         )
     else:
-        return general_model_utils.get_display_name(related_model)
+        return general_model_serv.get_display_name(related_model)
 
 
 def find_work_by_recref_list(recref_list: Iterable['Recref']):
     pk_set = set()
     for recref in recref_list:
-        field = model_utils.get_related_field(recref.__class__, CofkUnionWork)
+        field = model_serv.get_related_field(recref.__class__, CofkUnionWork)
         if field is None:
             continue
 
@@ -706,7 +707,7 @@ class MergeConfirmViews(View):
         return render(request, 'core/merge_confirm.html', {
             'selected': MergeChoiceViews.create_merge_choice_context(selected_model),
             'others': (MergeChoiceViews.create_merge_choice_context(m) for m in other_models),
-            'merge_action_url': url_utils.reverse_url_by_request(url_utils.VNAME_MERGE_ACTION, request),
+            'merge_action_url': url_serv.reverse_url_by_request(url_serv.VNAME_MERGE_ACTION, request),
         })
 
 
@@ -731,7 +732,7 @@ class MergeActionViews(View):
         recref_list: Iterable[Recref] = find_all_recref_by_models(other_models)
         recref_list = list(recref_list)
         for recref in recref_list:
-            parent_field, related_field = recref_utils.get_parent_related_field_by_recref(recref, selected_model)
+            parent_field, related_field = recref_serv.get_parent_related_field_by_recref(recref, selected_model)
 
             # update related_field on recref
             related_field_name = parent_field.field.name
@@ -774,8 +775,8 @@ class MergeActionViews(View):
                 ('__merge_id', self.get_id_field().field.value_from_object(m))
                 for m in [selected_model] + list(other_models)
             ]
-            url = url_utils.build_url_query(
-                url_utils.reverse_url_by_request(url_utils.VNAME_MERGE_CHOICE, request),
+            url = url_serv.build_url_query(
+                url_serv.reverse_url_by_request(url_serv.VNAME_MERGE_CHOICE, request),
                 query)
             return redirect(url)
 
@@ -787,15 +788,15 @@ class MergeActionViews(View):
         # prepare results context
         results = defaultdict(list)
         for recref in recref_list:
-            _, related_field = recref_utils.get_parent_related_field_by_recref(recref, selected_model)
-            results[general_model_utils.get_name_by_model_class(related_field.field.related_model)].append(
+            _, related_field = recref_serv.get_parent_related_field_by_recref(recref, selected_model)
+            results[general_model_serv.get_name_by_model_class(related_field.field.related_model)].append(
                 get_recref_ref_name(related_field, recref)
             )
 
         return render(request, 'core/merge_report.html', {
             'summary': results.items(),
-            'return_url': url_utils.reverse_url_by_request(url_utils.VNAME_SEARCH, request),
-            'name': general_model_utils.get_display_name(selected_model),
+            'return_url': url_serv.reverse_url_by_request(url_serv.VNAME_SEARCH, request),
+            'name': general_model_serv.get_display_name(selected_model),
         })
 
 
@@ -856,7 +857,7 @@ class DeleteConfirmView(View):
 
     def get_name(self):
         """ name for display in label or title """
-        return general_model_utils.get_name_by_model_class(self.get_model_class())
+        return general_model_serv.get_name_by_model_class(self.get_model_class())
 
     def find_obj_by_obj_id(self, input_id) -> ModelLike | None:
         return self.get_model_class().objects.filter(pk=input_id).first()
@@ -875,7 +876,7 @@ class DeleteConfirmView(View):
 
     def post(self, request, obj_id, *args, **kwargs):
         obj = self.find_obj_by_obj_id(obj_id)
-        obj_name = general_model_utils.get_display_name(obj)
+        obj_name = general_model_serv.get_display_name(obj)
         if not obj:
             return HttpResponseNotFound()
         obj.delete()

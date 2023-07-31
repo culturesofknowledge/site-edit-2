@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-from siteedit2.utils import log_utils
+from sharedlib import log_utils
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -151,7 +151,7 @@ LOGGING = {
         'detailed_web': {
             'format': log_utils.detailed_web_fmt,
             'datefmt': '%Y%m%d %H%M%S',
-            'class': 'siteedit2.utils.log_utils.ColorFormatter',
+            'class': 'sharedlib.log_utils.ColorFormatter',
         },
     },
     'handlers': {
@@ -185,6 +185,10 @@ LOGGING = {
         #     'level': 'DEBUG',
         #     'propagate': True,
         # },
+        'urllib3.connectionpool' : {
+            'level': 'INFO',
+            'propagate': True,
+        },
     },
     'root': {
         'level': 'DEBUG',
@@ -246,4 +250,4 @@ EXPORT_ROOT_URL = 'http://localhost:8020'
 
 
 # Test
-SELENIUM_CHROME_DRIVER_PATH = ''
+SELENIUM_CHROME_LOCAL_DRIVER = False

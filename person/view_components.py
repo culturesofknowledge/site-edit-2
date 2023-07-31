@@ -1,12 +1,12 @@
-from core.helper.view_utils import FormDescriptor
-from person import person_utils
+from core.helper.view_serv import FormDescriptor
+from person import person_serv
 
 
 class PersonFormDescriptor(FormDescriptor):
 
     @property
     def name(self):
-        return person_utils.get_recref_display_name(self.obj)
+        return person_serv.get_recref_display_name(self.obj)
 
     @property
     def model_name(self):

@@ -7,9 +7,9 @@ from django.shortcuts import redirect, get_object_or_404
 from django.shortcuts import render
 
 from core import constant
-from core.helper import renderer_utils, query_utils, view_utils, perm_utils
-from core.helper.model_utils import ModelLike
-from core.helper.view_utils import CommonInitFormViewTemplate, DefaultSearchView, DeleteConfirmView
+from core.helper import renderer_serv, query_serv, view_serv, perm_serv
+from core.helper.model_serv import ModelLike
+from core.helper.view_serv import CommonInitFormViewTemplate, DefaultSearchView, DeleteConfirmView
 from publication.forms import PublicationForm, GeneralSearchFieldset
 from publication.models import CofkUnionPublication
 
@@ -22,7 +22,7 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def search_field_fn_maps(self) -> dict:
-        return query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
+        return query_serv.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
                                                    'change_timestamp')
 
     @property
@@ -52,16 +52,16 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
             return CofkUnionPublication.objects.none()
 
         # queries for like_fields
-        queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
+        queries = query_serv.create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
 
         queries.extend(
-            query_utils.create_queries_by_lookup_field(self.request_data, self.search_fields)
+            query_serv.create_queries_by_lookup_field(self.request_data, self.search_fields)
         )
         return self.create_queryset_by_queries(CofkUnionPublication, queries)
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
-        return renderer_utils.create_table_search_results_renderer('publication/search_table_layout.html')
+        return renderer_serv.create_table_search_results_renderer('publication/search_table_layout.html')
 
 
 class PubInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitFormViewTemplate):
@@ -87,18 +87,18 @@ def full_form(request, pk):
         return render(request, 'publication/init_form.html',
                       {
                           'pub_form': pub_form,
-                      } | view_utils.create_is_save_success_context(is_save_success)
+                      } | view_serv.create_is_save_success_context(is_save_success)
                       )
 
     is_save_success = False
     if request.POST:
-        perm_utils.validate_permission_denied(request.user, constant.PM_CHANGE_PUBLICATION)
+        perm_serv.validate_permission_denied(request.user, constant.PM_CHANGE_PUBLICATION)
         if not pub_form.is_valid():
             return _render_form()
 
         pub.update_current_user_timestamp(request.user.username)
         pub_form.save()
-        is_save_success = view_utils.mark_callback_save_success(request)
+        is_save_success = view_serv.mark_callback_save_success(request)
 
     return _render_form()
 

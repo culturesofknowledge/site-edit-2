@@ -5,7 +5,7 @@ emlojs.selectfilter_service = {
         const root_name = 'selectfilter-root';
         if (ele) {
             for (let p of $(ele).parents()) {
-                if (p.classList.contains(root_name)){
+                if (p.classList.contains(root_name)) {
                     return $(p)
                 }
             }
@@ -26,14 +26,21 @@ emlojs.selectfilter_service = {
         let root_ele = emlojs.selectfilter_service.find_root_ele(event.target)
         emlojs.selectfilter_service.define_list(root_ele)
     },
-    define_list: function (root_jqe) {
+    define_list: function (root_jqe, is_ignore_case = true) {
+        function is_any_matched_selected_text(val_text, selected_text) {
+            if (is_ignore_case) {
+                selected_text = selected_text.toLowerCase()
+                val_text = val_text.map((item) => item.toLowerCase())
+            }
+            return val_text.some((item) => item.includes(selected_text))
+        }
         let list_jqe = root_jqe.find('.sf-list')
         list_jqe.html('')
         let selected_text = root_jqe.find('.sf-input').val()
         let selected_list = root_jqe.find('datalist option')
         selected_list = selected_list.map((i, e) => [[e.value, e.text]])
         if (selected_text !== '') {
-            selected_list = selected_list.filter((i, e) => e.some((item) => item.includes(selected_text)));
+            selected_list = selected_list.filter((i, e) => is_any_matched_selected_text(e, selected_text))
         }
         for (let option_jqe of selected_list) {
             let item_jqe = $('<div class="sf-item">')

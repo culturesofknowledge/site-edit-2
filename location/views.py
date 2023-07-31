@@ -11,28 +11,42 @@ from django.shortcuts import render, get_object_or_404, redirect
 
 from core import constant
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM
-from core.export_data import download_csv_utils, cell_values
+from core.export_data import download_csv_serv, cell_values
 from core.forms import CommentForm
-from core.helper import view_utils, renderer_utils, query_utils, perm_utils
+from core.helper import view_serv, renderer_serv, query_serv, perm_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
-from core.helper.model_utils import ModelLike
+from core.helper.model_serv import ModelLike
 from core.helper.recref_handler import RecrefFormsetHandler, ImageRecrefHandler, TargetResourceFormsetHandler
-from core.helper.renderer_utils import CompactSearchResultsRenderer
+from core.helper.renderer_serv import CompactSearchResultsRenderer
 from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
-from core.helper.view_utils import BasicSearchView, CommonInitFormViewTemplate, MergeChoiceViews, MergeChoiceContext, \
+from core.helper.view_serv import BasicSearchView, CommonInitFormViewTemplate, MergeChoiceViews, MergeChoiceContext, \
     MergeActionViews, MergeConfirmViews, DeleteConfirmView
 from core.models import Recref
-from location import location_utils
+from location import location_serv
 from location.forms import LocationForm, GeneralSearchFieldset
-from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap, CofkLocationImageMap, \
-    create_sql_count_work_by_location
+from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap, CofkLocationImageMap
+from location.queries import create_sql_count_work_by_location
 from location.recref_adapter import LocationCommentRecrefAdapter, LocationResourceRecrefAdapter, \
     LocationImageRecrefAdapter
 from location.view_components import LocationFormDescriptor
 
 log = logging.getLogger(__name__)
 FormOrFormSet = Union[BaseForm, BaseFormSet]
+
+
+def create_queryset_by_queries(model_class: Type[models.Model], queries: Iterable[Q],
+                               sort_by=None):
+    queryset = model_class.objects
+    annotate = {
+        'sent': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_FROM]),
+        'recd': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_TO]),
+        'all_works': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
+    }
+
+    queryset = query_serv.update_queryset(queryset, model_class, queries=queries, annotate=annotate,
+                                           sort_by=sort_by)
+    return queryset
 
 
 class LocationInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitFormViewTemplate):
@@ -57,10 +71,10 @@ class LocationQuickInitView(LocationInitView):
 @login_required
 def return_quick_init(request, pk):
     location: CofkUnionLocation = CofkUnionLocation.objects.get(location_id=pk)
-    return view_utils.render_return_quick_init(
+    return view_serv.render_return_quick_init(
         request, 'Place',
-        location_utils.get_recref_display_name(location),
-        location_utils.get_recref_target_id(location),
+        location_serv.get_recref_display_name(location),
+        location_serv.get_recref_target_id(location),
     )
 
 
@@ -117,7 +131,7 @@ class LocationFFH(FullFormHandler):
             {
                 'loc_id': self.location_id,
             } | LocationFormDescriptor(self.loc).create_context()
-            | view_utils.create_is_save_success_context(is_save_success)
+            | view_serv.create_is_save_success_context(is_save_success)
         )
         return context
 
@@ -131,7 +145,7 @@ def full_form(request, location_id):
 
     is_save_success = False
     if request.method == 'POST':
-        perm_utils.validate_permission_denied(request.user, constant.PM_CHANGE_LOCATION)
+        perm_serv.validate_permission_denied(request.user, constant.PM_CHANGE_LOCATION)
 
         if fhandler.is_invalid():
             return fhandler.render_form(request)
@@ -144,7 +158,7 @@ def full_form(request, location_id):
 
         log.info(f'location [{location_id}] have been saved')
         fhandler.load_data(location_id, request_data=None)
-        is_save_success = view_utils.mark_callback_save_success(request)
+        is_save_success = view_serv.mark_callback_save_success(request)
 
     return fhandler.render_form(request, is_save_success=is_save_success)
 
@@ -186,7 +200,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
     def search_field_fn_maps(self) -> dict:
-        return query_utils.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
+        return query_serv.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
                                                    'change_timestamp')
 
     @property
@@ -218,19 +232,6 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
             ('change_timestamp', 'Last edit',),
         ]
 
-    def create_queryset_by_queries(self, model_class: Type[models.Model], queries: Iterable[Q],
-                                   sort_by=None):
-        queryset = model_class.objects
-        annotate = {
-            'sent': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_FROM]),
-            'recd': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_TO]),
-            'all_works': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
-        }
-
-        queryset = query_utils.update_queryset(queryset, model_class, queries, annotate=annotate,
-                                               sort_by=sort_by)
-        return queryset
-
     def get_queryset(self):
         if not self.request_data:
             return CofkUnionLocation.objects.none()
@@ -244,12 +245,12 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
                               'researchers_notes': ['comments__comment'],
                               'images': ['images__image_filename']}
 
-        queries = query_utils.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
+        queries = query_serv.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
         queries.extend(
-            query_utils.create_queries_by_lookup_field(request_data, self.search_fields, search_fields_maps)
+            query_serv.create_queries_by_lookup_field(request_data, self.search_fields, search_fields_maps)
         )
 
-        return self.create_queryset_by_queries(CofkUnionLocation, queries, sort_by=sort_by)
+        return create_queryset_by_queries(CofkUnionLocation, queries, sort_by=sort_by)
 
     @property
     def entity(self) -> str:
@@ -265,11 +266,11 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
     def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
-        return renderer_utils.create_compact_renderer(item_template_name='location/compact_item.html')
+        return renderer_serv.create_compact_renderer(item_template_name='location/compact_item.html')
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
-        return renderer_utils.create_table_search_results_renderer(
+        return renderer_serv.create_table_search_results_renderer(
             'location/search_table_layout.html'
         )
 
@@ -277,7 +278,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
     def csv_export_setting(self):
         if not self.has_perms(constant.PM_EXPORT_FILE_LOCATION):
             return None
-        return (lambda: view_utils.create_export_file_name('location', 'csv'),
+        return (lambda: view_serv.create_export_file_name('location', 'csv'),
                 lambda: DownloadCsvHandler(LocationCsvHeaderValues()).create_csv_file,
                 constant.PM_EXPORT_FILE_LOCATION,)
 
@@ -316,7 +317,7 @@ class LocationCsvHeaderValues(HeaderValues):
             obj.sent,
             obj.recd,
             obj.all_works,
-            download_csv_utils.join_comment_lines(obj.comments.iterator()),
+            download_csv_serv.join_comment_lines(obj.comments.iterator()),
             cell_values.resource_str_by_list(obj.resources.iterator()),
             obj.latitude,
             obj.longitude,
@@ -327,7 +328,7 @@ class LocationCsvHeaderValues(HeaderValues):
             obj.element_5_eg_county,
             obj.element_6_eg_country,
             obj.element_7_eg_empire,
-            download_csv_utils.join_image_lines(obj.images.iterator()),
+            download_csv_serv.join_image_lines(obj.images.iterator()),
             obj.change_user,
             cell_values.simple_datetime(obj.change_timestamp),
         )

@@ -3,8 +3,8 @@ from typing import Iterable, Optional
 from django.db import models
 
 from core.constant import REL_TYPE_STORED_IN, REL_TYPE_ENCLOSED_IN
-from core.helper import model_utils, recref_utils
-from core.helper.model_utils import RecordTracker
+from core.helper import model_serv, recref_serv
+from core.helper.model_serv import RecordTracker
 from core.models import Recref
 
 
@@ -58,9 +58,9 @@ class CofkUnionManifestation(models.Model, RecordTracker):
     manifestation_incipit = models.TextField(blank=True, null=True)
     manifestation_excipit = models.TextField(blank=True, null=True)
     manifestation_ps = models.TextField(blank=True, null=True)
-    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
-    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_utils.default_current_timestamp)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     change_user = models.CharField(max_length=50)
     manifestation_creation_date2_year = models.IntegerField(blank=True, null=True)
     manifestation_creation_date2_month = models.IntegerField(blank=True, null=True)
@@ -107,20 +107,20 @@ class CofkUnionManifestation(models.Model, RecordTracker):
         db_table = 'cofk_union_manifestation'
 
     def find_comments_by_rel_type(self, rel_type) -> Iterable['CofkUnionComment']:
-        return (r.comment for r in recref_utils.prefetch_filter_rel_type(self.cofkmanifcommentmap_set, rel_type))
+        return (r.comment for r in recref_serv.prefetch_filter_rel_type(self.cofkmanifcommentmap_set, rel_type))
 
     def find_selected_inst(self) -> Optional['CofkManifInstMap']:
-        return next(recref_utils.prefetch_filter_rel_type(self.cofkmanifinstmap_set, REL_TYPE_STORED_IN), None)
+        return next(recref_serv.prefetch_filter_rel_type(self.cofkmanifinstmap_set, REL_TYPE_STORED_IN), None)
 
     def find_enclosed_in(self):
-        return (mm.manif_to for mm in recref_utils.prefetch_filter_rel_type(self.manif_from_set, REL_TYPE_ENCLOSED_IN))
+        return (mm.manif_to for mm in recref_serv.prefetch_filter_rel_type(self.manif_from_set, REL_TYPE_ENCLOSED_IN))
 
     def find_encloses(self):
-        return (mm.manif_from for mm in recref_utils.prefetch_filter_rel_type(self.manif_to_set, REL_TYPE_ENCLOSED_IN))
+        return (mm.manif_from for mm in recref_serv.prefetch_filter_rel_type(self.manif_to_set, REL_TYPE_ENCLOSED_IN))
 
     def to_string(self):
-        from manifestation import manif_utils
-        return '\n'.join(manif_utils.get_manif_details(self))
+        from manifestation import manif_serv
+        return '\n'.join(manif_serv.get_manif_details(self))
 
 
 class CofkUnionLanguageOfManifestation(models.Model):

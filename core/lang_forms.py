@@ -1,8 +1,8 @@
 from django import forms
 
 from core.form_label_maps import field_label_map
-from core.helper import form_utils
-from core.helper.form_utils import BasicSearchFieldset, SearchCharField, SearchIntField
+from core.helper import form_serv
+from core.helper.form_serv import BasicSearchFieldset, SearchCharField
 
 search_is_favorite_choices = [
     (None, 'Any'),
@@ -18,18 +18,18 @@ class LangSearchFieldset(BasicSearchFieldset):
     code_639_3 = SearchCharField(
         label=field_label_map['lang']['code_639_3'],
         help_text='E.g. eng for English')
-    code_639_3_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    code_639_3_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
     code_639_1 = SearchCharField(
         label=field_label_map['lang']['code_639_1'],
         help_text="E.g. en for English. Only the more widely-spoken languages have 2-letter codes. "
                   "To get a list of languages with 2-letter codes, click the Advanced Search button, "
                   "then choose 'Is not blank' from the dropdown list next to the 'Alternative 2-letter code' field.")
-    code_639_1_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    code_639_1_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
     language_name = SearchCharField(
         label=field_label_map['lang']['language_name'],
         help_text='English, French, Arabic, etc. The name may be anglicised, '
                   'e.g. Persian rather than Farsi.')
-    language_name_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    language_name_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     is_favorite = SearchCharField(
         help_text="""

@@ -5,21 +5,19 @@ from typing import Type, Any
 
 from django.db.models import Model
 
-from core.helper.model_utils import ModelLike
+from core.helper.model_serv import ModelLike, ModelOrClass
 from core.models import CofkUnionComment, CofkUnionResource, CofkUnionImage
-from institution import inst_utils
+from institution import inst_serv
 from institution.models import CofkUnionInstitution
-from location import location_utils
+from location import location_serv
 from location.models import CofkUnionLocation
-from manifestation import manif_utils
+from manifestation import manif_serv
 from manifestation.models import CofkUnionManifestation
-from person import person_utils
+from person import person_serv
 from person.models import CofkUnionPerson
 from publication.models import CofkUnionPublication
-from work import work_utils
+from work import work_serv
 from work.models import CofkUnionWork
-
-ModelOrClass = ModelLike | Type[ModelLike]
 
 
 def get_model_class_safe(model: ModelOrClass) -> Type[ModelLike]:
@@ -48,11 +46,11 @@ def get_display_name(model: ModelLike) -> str:
     if not model:
         return ''
     name_fn_map = [
-        (CofkUnionLocation, location_utils.get_recref_display_name),
-        (CofkUnionPerson, person_utils.get_recref_display_name),
-        (CofkUnionWork, work_utils.get_recref_display_name),
-        (CofkUnionManifestation, manif_utils.get_recref_display_name),
-        (CofkUnionInstitution, inst_utils.get_recref_display_name),
+        (CofkUnionLocation, location_serv.get_recref_display_name),
+        (CofkUnionPerson, person_serv.get_recref_display_name),
+        (CofkUnionWork, work_serv.get_recref_display_name),
+        (CofkUnionManifestation, manif_serv.get_recref_display_name),
+        (CofkUnionInstitution, inst_serv.get_recref_display_name),
         (CofkUnionComment, lambda c: c and c.comment),
         (CofkUnionResource, lambda c: c and c.resource_name),
         (CofkUnionPublication, lambda c: c and (c.publication_details or c.abbrev or c.pk)),
@@ -94,8 +92,8 @@ def get_display_id(model: ModelLike) -> Any:
         return ''
 
     id_fn_map = [
-        (CofkUnionWork, work_utils.get_display_id),
-        (CofkUnionPerson, person_utils.get_display_id),
+        (CofkUnionWork, work_serv.get_display_id),
+        (CofkUnionPerson, person_serv.get_display_id),
     ]
 
     try:

@@ -2,16 +2,17 @@
 This module contains the functions to
 convert input to required format of cell value
 """
+import collections
 from collections.abc import Iterable
 
 from django.conf import settings
 
 from core import constant
-from core.helper import general_model_utils, str_utils
+from core.helper import general_model_serv
 from core.models import CofkUnionComment, CofkUnionResource
-from person import person_utils
+from person import person_serv
 from person.models import CofkUnionPerson
-import collections
+from sharedlib import str_utils
 
 DELIMITER_SHACKLE = ' ~ '
 DELIMITER_SEMICOLON = '; '
@@ -30,10 +31,10 @@ def notes(note_list: Iterable[CofkUnionComment]) -> str:
 
 def name_id(objects: Iterable) -> [str, str]:
     objects = list(objects)
-    name = (general_model_utils.get_display_name(p) for p in objects)
+    name = (general_model_serv.get_display_name(p) for p in objects)
     name = common_join_text(name)
 
-    id_str = (general_model_utils.get_display_id(p) for p in objects)
+    id_str = (general_model_serv.get_display_id(p) for p in objects)
     id_str = map(str, id_str)
     id_str = common_join_text(id_str)
     return name, id_str
@@ -75,14 +76,14 @@ def person_roles(obj: CofkUnionPerson) -> str:
 
 
 def person_names_titles_roles(obj: CofkUnionPerson) -> str:
-    return ''.join(person_utils.get_name_details(obj))
+    return ''.join(person_serv.get_name_details(obj))
 
 
 def person_other_details(obj: CofkUnionPerson, type_name_cache: dict = None) -> str:
     result_map = collections.defaultdict(list)
     for person_map in obj.active_relationships.all():
         result_map[person_map.relationship_type].append(
-            person_utils.get_recref_display_name(person_map.related)
+            person_serv.get_recref_display_name(person_map.related)
         )
 
     if type_name_cache:

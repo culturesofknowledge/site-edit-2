@@ -8,10 +8,10 @@ from django.forms import CharField
 from core import constant
 from core.constant import DEFAULT_EMPTY_DATE_STR, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO
 from core.form_label_maps import field_label_map
-from core.helper import form_utils
-from core.helper import widgets_utils
+from core.helper import form_serv, date_serv
+from core.helper import widgets_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter, TargetPersonRecrefAdapter
-from core.helper.form_utils import TargetPersonMRRForm, LocationRecrefField, InstRecrefField, BasicSearchFieldset, \
+from core.helper.form_serv import TargetPersonMRRForm, LocationRecrefField, InstRecrefField, BasicSearchFieldset, \
     SearchCharField, SearchIntField
 from core.models import Recref, CofkUnionSubject, CofkLookupCatalogue
 from institution.models import CofkUnionInstitution
@@ -20,13 +20,6 @@ from work.models import CofkUnionWork, CofkWorkPersonMap
 
 log = logging.getLogger(__name__)
 
-original_calendar_choices = [
-    ('', 'Unknown'),
-    ('G', 'Gregorian'),
-    ('JM', 'Julian (year starting 25th Mar)'),
-    ('JJ', 'Julian (year starting 1st Jan)'),
-    ('O', 'Other'),
-]
 manif_type_choices = [
     ('ALS', 'Letter'),
     ('D', 'Draft'),
@@ -53,12 +46,12 @@ def create_auto_date_field():
 
 class CorrForm(forms.ModelForm):
     authors_as_marked = forms.CharField(required=False)
-    authors_inferred = form_utils.ZeroOneCheckboxField(is_str=False)
-    authors_uncertain = form_utils.ZeroOneCheckboxField(is_str=False)
+    authors_inferred = form_serv.ZeroOneCheckboxField(is_str=False)
+    authors_uncertain = form_serv.ZeroOneCheckboxField(is_str=False)
 
     addressees_as_marked = forms.CharField(required=False)
-    addressees_inferred = form_utils.ZeroOneCheckboxField(is_str=False)
-    addressees_uncertain = form_utils.ZeroOneCheckboxField(is_str=False)
+    addressees_inferred = form_serv.ZeroOneCheckboxField(is_str=False)
+    addressees_uncertain = form_serv.ZeroOneCheckboxField(is_str=False)
 
     # extra field
     selected_author_id = forms.CharField(required=False)
@@ -79,21 +72,21 @@ class CorrForm(forms.ModelForm):
 
 class DatesForm(forms.ModelForm):
     date_of_work_as_marked = forms.CharField(required=False)
-    date_of_work_std_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    date_of_work_std_year = form_utils.create_year_field()
-    date_of_work_std_month = form_utils.create_month_field()
-    date_of_work_std_day = form_utils.create_day_field()
-    date_of_work2_std_year = form_utils.create_year_field()
-    date_of_work2_std_month = form_utils.create_month_field()
-    date_of_work2_std_day = form_utils.create_day_field()
-    date_of_work_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    date_of_work_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    date_of_work_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    date_of_work_std_is_range = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
+    date_of_work_std_year = form_serv.create_year_field()
+    date_of_work_std_month = form_serv.create_month_field()
+    date_of_work_std_day = form_serv.create_day_field()
+    date_of_work2_std_year = form_serv.create_year_field()
+    date_of_work2_std_month = form_serv.create_month_field()
+    date_of_work2_std_day = form_serv.create_day_field()
+    date_of_work_inferred = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
+    date_of_work_uncertain = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
+    date_of_work_approx = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
 
     date_of_work_std = create_auto_date_field()
     date_of_work_std_gregorian = create_auto_date_field()
     original_calendar = CharField(required=False,
-                                  widget=forms.RadioSelect(choices=original_calendar_choices))
+                                  widget=forms.RadioSelect(choices=date_serv.calendar_choices))
 
     class Meta:
         model = CofkUnionWork
@@ -117,12 +110,12 @@ class DatesForm(forms.ModelForm):
 
 class PlacesForm(forms.ModelForm):
     origin_as_marked = CharField(required=False)
-    origin_inferred = form_utils.ZeroOneCheckboxField(is_str=False)
-    origin_uncertain = form_utils.ZeroOneCheckboxField(is_str=False)
+    origin_inferred = form_serv.ZeroOneCheckboxField(is_str=False)
+    origin_uncertain = form_serv.ZeroOneCheckboxField(is_str=False)
 
     destination_as_marked = CharField(required=False)
-    destination_inferred = form_utils.ZeroOneCheckboxField(is_str=False)
-    destination_uncertain = form_utils.ZeroOneCheckboxField(is_str=False)
+    destination_inferred = form_serv.ZeroOneCheckboxField(is_str=False)
+    destination_uncertain = form_serv.ZeroOneCheckboxField(is_str=False)
 
     # extract
     selected_origin_location_id = LocationRecrefField(required=False)
@@ -142,12 +135,12 @@ class PlacesForm(forms.ModelForm):
 
 class DetailsForm(forms.ModelForm):
     accession_code = CharField(required=False)
-    editors_notes = form_utils.CommonTextareaField()
-    incipit = form_utils.CommonTextareaField()
-    explicit = form_utils.CommonTextareaField()
-    ps = form_utils.CommonTextareaField()
-    abstract = form_utils.CommonTextareaField()
-    keywords = form_utils.CommonTextareaField()
+    editors_notes = form_serv.CommonTextareaField()
+    incipit = form_serv.CommonTextareaField()
+    explicit = form_serv.CommonTextareaField()
+    ps = form_serv.CommonTextareaField()
+    abstract = form_serv.CommonTextareaField()
+    keywords = form_serv.CommonTextareaField()
 
     class Meta:
         model = CofkUnionWork
@@ -163,87 +156,70 @@ class DetailsForm(forms.ModelForm):
 
 
 class ManifForm(forms.ModelForm):
-    manifestation_type = form_utils.CharSelectField(choices=manif_type_choices)
+    manifestation_type = form_serv.CharSelectField(choices=manif_type_choices)
 
     id_number_or_shelfmark = forms.CharField(required=False)
-    printed_edition_details = form_utils.CommonTextareaField()
+    printed_edition_details = form_serv.CommonTextareaField()
 
     manifestation_creation_date_as_marked = forms.CharField(required=False)
-    manifestation_creation_date_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    manifestation_creation_date_year = form_utils.create_year_field()
-    manifestation_creation_date_month = form_utils.create_month_field()
-    manifestation_creation_date_day = form_utils.create_day_field()
-    manifestation_creation_date2_year = form_utils.create_year_field()
-    manifestation_creation_date2_month = form_utils.create_month_field()
-    manifestation_creation_date2_day = form_utils.create_day_field()
-    manifestation_creation_date_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    manifestation_creation_date_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    manifestation_creation_date_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    manifestation_creation_date_is_range = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
+    manifestation_creation_date_year = form_serv.create_year_field()
+    manifestation_creation_date_month = form_serv.create_month_field()
+    manifestation_creation_date_day = form_serv.create_day_field()
+    manifestation_creation_date2_year = form_serv.create_year_field()
+    manifestation_creation_date2_month = form_serv.create_month_field()
+    manifestation_creation_date2_day = form_serv.create_day_field()
+    manifestation_creation_date_inferred = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
+    manifestation_creation_date_uncertain = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
+    manifestation_creation_date_approx = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
 
     manifestation_creation_date = create_auto_date_field()
     manifestation_creation_date_gregorian = create_auto_date_field()
 
     manifestation_creation_calendar = CharField(required=False,
-                                                widget=forms.RadioSelect(choices=original_calendar_choices))
+                                                widget=forms.RadioSelect(choices=date_serv.calendar_choices))
 
     date_of_receipt_as_marked = forms.CharField(required=False)
-    manifestation_receipt_date_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    manifestation_receipt_date_year = form_utils.create_year_field()
-    manifestation_receipt_date_month = form_utils.create_month_field()
-    manifestation_receipt_date_day = form_utils.create_day_field()
-    manifestation_receipt_date2_year = form_utils.create_year_field()
-    manifestation_receipt_date2_month = form_utils.create_month_field()
-    manifestation_receipt_date2_day = form_utils.create_day_field()
-    manifestation_receipt_date_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    manifestation_receipt_date_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    manifestation_receipt_date_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
+    manifestation_receipt_date_is_range = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
+    manifestation_receipt_date_year = form_serv.create_year_field()
+    manifestation_receipt_date_month = form_serv.create_month_field()
+    manifestation_receipt_date_day = form_serv.create_day_field()
+    manifestation_receipt_date2_year = form_serv.create_year_field()
+    manifestation_receipt_date2_month = form_serv.create_month_field()
+    manifestation_receipt_date2_day = form_serv.create_day_field()
+    manifestation_receipt_date_inferred = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
+    manifestation_receipt_date_uncertain = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
+    manifestation_receipt_date_approx = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
 
     manifestation_receipt_date = create_auto_date_field()
     manifestation_receipt_date_gregorian = create_auto_date_field()
 
     manifestation_receipt_calendar = CharField(required=False,
-                                               widget=forms.RadioSelect(choices=original_calendar_choices))
+                                               widget=forms.RadioSelect(choices=date_serv.calendar_choices))
 
-    non_letter_enclosures = form_utils.CommonTextareaField()
-    accompaniments = form_utils.CommonTextareaField()
+    non_letter_enclosures = form_serv.CommonTextareaField()
+    accompaniments = form_serv.CommonTextareaField()
 
-    # lang_note = forms.MultipleChoiceField(required=False)
-    # lang_name = forms.MultipleChoiceField(required=False)
-
-    # date_of_work_as_marked = forms.CharField(required=False)
-    # date_of_work_std_is_range = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    # date_of_work_std_year = form_utils.create_year_field()
-    # date_of_work_std_month = form_utils.create_month_field()
-    # date_of_work_std_day = form_utils.create_day_field()
-    # date_of_work_inferred = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    # date_of_work_uncertain = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    # date_of_work_approx = form_utils.ZeroOneCheckboxField(is_str=False, initial=0)
-    #
-    # date_of_work_std = create_auto_date_field()
-    # date_of_work_std_gregorian = create_auto_date_field()
-    # original_calendar = CharField(required=False,
-    #                               widget=forms.RadioSelect(choices=original_calendar_choices))
-
-    opened = form_utils.CharSelectField(choices=manif_letter_opened_choices)
+    opened = form_serv.CharSelectField(choices=manif_letter_opened_choices)
     paper_size = forms.CharField(required=False)
     stored_folded = forms.CharField(required=False)
     paper_type_or_watermark = forms.CharField(required=False)
     number_of_pages_of_document = forms.IntegerField(required=False)
-    seal = form_utils.CommonTextareaField()
+    seal = form_serv.CommonTextareaField()
     postage_marks = forms.CharField(required=False)
     postage_costs_as_marked = forms.CharField(required=False)
     postage_costs = forms.CharField(required=False)
-    address = form_utils.CommonTextareaField()
-    routing_mark_stamp = form_utils.CommonTextareaField()
-    routing_mark_ms = form_utils.CommonTextareaField()
-    handling_instructions = form_utils.CommonTextareaField()
-    endorsements = form_utils.CommonTextareaField()
+    address = form_serv.CommonTextareaField()
+    routing_mark_stamp = form_serv.CommonTextareaField()
+    routing_mark_ms = form_serv.CommonTextareaField()
+    handling_instructions = form_serv.CommonTextareaField()
+    endorsements = form_serv.CommonTextareaField()
     non_delivery_reason = forms.CharField(required=False)
 
-    manifestation_is_translation = form_utils.ZeroOneCheckboxField(is_str=False)
+    manifestation_is_translation = form_serv.ZeroOneCheckboxField(is_str=False)
 
-    manifestation_incipit = form_utils.CommonTextareaField()
-    manifestation_excipit = form_utils.CommonTextareaField()
+    manifestation_incipit = form_serv.CommonTextareaField()
+    manifestation_excipit = form_serv.CommonTextareaField()
 
     # extra fields
     selected_scribe_id = forms.CharField(required=False)
@@ -317,9 +293,9 @@ class CommonWorkForm(forms.Form):
     """ Common fields for work pages """
 
     catalogue = forms.CharField(required=False, widget=forms.Select())
-    catalogue_list = forms.Field(required=False, widget=widgets_utils.Datalist())
+    catalogue_list = forms.Field(required=False, widget=widgets_serv.Datalist())
 
-    work_to_be_deleted = form_utils.DeleteCheckboxField(is_str=False, initial=0)
+    work_to_be_deleted = form_serv.DeleteCheckboxField(is_str=False, initial=0)
 
 
 class AuthorRelationChoices(TextChoices):
@@ -408,7 +384,7 @@ class ManifPersonRecrefAdapter(TargetPersonRecrefAdapter):
 #
 #     @classmethod
 #     def get_target_name(cls, recref: Recref):
-#         return person_utils.get_recref_display_name(recref)
+#         return person_serv.get_recref_display_name(recref)
 #
 #     @classmethod
 #     def get_target_id(cls, recref: Recref):
@@ -471,104 +447,110 @@ del_help_text = "Yes or No. If 'Yes', the record is marked for deletion."
 id_help_text = 'The unique ID for the record within the current CofK database.'
 change_help_text = 'Username of the person who last changed the record.'
 
-work_to_be_deleted_choices =[(0, 'No'), (1, 'Yes')]
+work_to_be_deleted_choices = [(0, 'No'), (1, 'Yes')]
+
 
 class CompactSearchFieldset(BasicSearchFieldset):
     title = 'Compact Search'
     template_name = 'work/component/work_compact_search_fieldset.html'
 
-    institution_names = CofkUnionInstitution.objects\
+    institution_names = CofkUnionInstitution.objects \
         .order_by('institution_name').values_list('institution_name', flat=True).distinct()
     manif_type = [t[1] for t in manif_type_choices]
     subject_names = CofkUnionSubject.objects.order_by('subject_desc').values_list('subject_desc', flat=True).distinct()
-    catalog_names = CofkLookupCatalogue.objects\
+    catalog_names = CofkLookupCatalogue.objects \
         .order_by('catalogue_name').values_list('catalogue_name', flat=True).distinct()
-
 
     # Fields shared with both search forms
     description = SearchCharField(help_text=description_help_text)
-    description_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    description_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     editors_notes = SearchCharField(label=field_label_map['work']['editors_notes'])
-    editors_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    editors_notes_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     sender_or_recipient = SearchCharField(help_text=sender_recipient_help_text)
-    sender_or_recipient_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    sender_or_recipient_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     origin_or_destination = SearchCharField(help_text=origin_destination_help_text)
-    origin_or_destination_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    origin_or_destination_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     date_of_work_as_marked = SearchCharField(help_text=date_as_marked_help_text)
-    date_of_work_as_marked_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    date_of_work_as_marked_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     date_of_work_std_year = SearchIntField(min_value=1000, max_value=1850,
-                                           label=field_label_map['work']['date_of_work_std_year'], help_text=year_help_text)
-    date_of_work_std_year_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
+                                           label=field_label_map['work']['date_of_work_std_year'],
+                                           help_text=year_help_text)
+    date_of_work_std_year_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
     date_of_work_std_month = SearchIntField(min_value=1, max_value=12,
-                                            label=field_label_map['work']['date_of_work_std_month'], help_text=month_help_text)
-    date_of_work_std_month_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
+                                            label=field_label_map['work']['date_of_work_std_month'],
+                                            help_text=month_help_text)
+    date_of_work_std_month_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
     date_of_work_std_day = SearchIntField(min_value=1, max_value=31,
-                                          label=field_label_map['work']['date_of_work_std_day'], help_text=day_help_text)
-    date_of_work_std_day_lookup = form_utils.create_lookup_field(form_utils.IntLookupChoices.choices)
+                                          label=field_label_map['work']['date_of_work_std_day'],
+                                          help_text=day_help_text)
+    date_of_work_std_day_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
     date_of_work_std_from = forms.DateField(required=False,
-                                            widget=widgets_utils.SearchDateTimeInput(attrs={'class': 'searchfield'}))
+                                            widget=widgets_serv.SearchDateTimeInput(attrs={'class': 'searchfield'}))
     date_of_work_std_to = forms.DateField(required=False,
-                                          widget=widgets_utils.SearchDateTimeInput(attrs={'class': 'searchfield'}))
+                                          widget=widgets_serv.SearchDateTimeInput(attrs={'class': 'searchfield'}))
     date_of_work_std_info = date_of_work_help_text
 
     creators_searchable = SearchCharField(label=field_label_map['work']['creators_searchable'])
-    creators_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    creators_searchable_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     notes_on_authors = SearchCharField(label=field_label_map['work']['notes_on_authors'])
-    notes_on_authors_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    notes_on_authors_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     addressees_searchable = SearchCharField(label=field_label_map['work']['addressees_searchable'])
-    addressees_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    addressees_searchable_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
-    places_from_searchable = SearchCharField(label=field_label_map['work']['places_from_searchable'], help_text=places_from_searchable)
-    places_from_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    places_from_searchable = SearchCharField(label=field_label_map['work']['places_from_searchable'],
+                                             help_text=places_from_searchable)
+    places_from_searchable_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
-    places_to_searchable = SearchCharField(label=field_label_map['work']['places_to_searchable'], help_text=places_to_searchable)
-    places_to_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    places_to_searchable = SearchCharField(label=field_label_map['work']['places_to_searchable'],
+                                           help_text=places_to_searchable)
+    places_to_searchable_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     flags = SearchCharField(help_text=flags_help_text)
-    flags_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    flags_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     images = SearchCharField(help_text=img_help_text)
-    images_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    images_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
-    manifestations_searchable = SearchCharField(label=field_label_map['work']['manifestations_searchable'], help_text=manif_help_text)
-    manifestations_searchable_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    manifestations_searchable = SearchCharField(label=field_label_map['work']['manifestations_searchable'],
+                                                help_text=manif_help_text)
+    manifestations_searchable_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     related_resources = SearchCharField()
-    related_resources_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    related_resources_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     language_of_work = SearchCharField()
-    language_of_work_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    language_of_work_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     subjects = SearchCharField()
-    subjects_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    subjects_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     abstract = SearchCharField(help_text=abstr_help_text)
-    abstract_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    abstract_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     general_notes = SearchCharField()
-    general_notes_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    general_notes_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     original_catalogue = SearchCharField()
-    original_catalogue_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    original_catalogue_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     accession_code = SearchCharField(label=field_label_map['work']['accession_code'], help_text=acc_help_text)
-    accession_code_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    accession_code_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
-    work_to_be_deleted = form_utils.ZeroOneCheckboxField(required=False)
-    work_to_be_deleted_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    work_to_be_deleted = form_serv.ZeroOneCheckboxField(required=False)
+    work_to_be_deleted_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     work_id = SearchCharField(help_text=id_help_text)
-    work_id_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    work_id_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
 
 class ExpandedSearchFieldset(CompactSearchFieldset):
@@ -576,10 +558,10 @@ class ExpandedSearchFieldset(CompactSearchFieldset):
     template_name = 'work/component/work_expanded_search_fieldset.html'
 
     destination_as_marked = SearchCharField()
-    destination_as_marked_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    destination_as_marked_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     people_mentioned = SearchCharField(help_text='This field contains a list of people mentioned within a work.')
-    people_mentioned_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    people_mentioned_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     keywords = SearchCharField(help_text=keywords_help_text)
-    keywords_lookup = form_utils.create_lookup_field(form_utils.StrLookupChoices.choices)
+    keywords_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)

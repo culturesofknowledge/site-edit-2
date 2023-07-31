@@ -2,11 +2,19 @@
     <label style="width: 100%">{{ label_text }}</label>
 {% endif %}
 {{ choices_field.errors }}
+{% if as_col %}
+    <div class="col">
+{% endif %}
+
 {% for cb in choices_field %}
-    <small class="choice-item">
+    <small class="choice-item {{ as_col|yesno:' row col--1of1,' }}">
         {{ cb.tag }}
         <label for="{{ cb.id_for_label }}">
             {{ cb.choice_label }}
         </label>
     </small>
 {% endfor %}
+
+{% if as_col %}
+    </div>
+{% endif %}

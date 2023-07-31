@@ -37,3 +37,19 @@ def str_to_std_datetime(datetime_str):
 
 def date_to_simple_date_str(dt):
     return dt.strftime(constant.SIMPLE_DATE_FORMAT)
+
+
+calendar_choices = [
+    ('', 'Unknown'),
+    ('G', 'Gregorian'),
+    ('JJ', 'Julian (year starting 1st Jan)'),
+    ('JM', 'Julian (year starting 25th Mar)'),
+    ('O', 'Other'),
+]
+
+
+def decode_calendar(calendar_code, default='Unknown'):
+    for code, name in calendar_choices:
+        if code == calendar_code:
+            return name
+    return default

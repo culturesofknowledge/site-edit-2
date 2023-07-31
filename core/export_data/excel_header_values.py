@@ -4,16 +4,15 @@ from django.urls import reverse
 
 from core import constant
 from core.export_data import cell_values
-from core.helper import general_model_utils
+from core.helper import general_model_serv
 from core.helper.view_components import HeaderValues
 from core.models import CofkUnionResource
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from manifestation.models import CofkUnionManifestation
-from person import person_utils
+from person import person_serv
 from person.models import CofkUnionPerson
-from work.models import CofkUnionWork
-from work.work_utils import DisplayableWork
+from work.work_serv import DisplayableWork
 
 
 class ResourceExcelHeaderValues(HeaderValues):
@@ -130,7 +129,7 @@ class LocationExcelHeaderValues(HeaderValues):
                                                          delimiter=cell_values.DELIMITER_SEMICOLON)
         return [
             obj.location_id,
-            general_model_utils.get_display_name(obj),
+            general_model_serv.get_display_name(obj),
             obj.element_1_eg_room,
             obj.element_2_eg_building,
             obj.element_3_eg_parish,
@@ -173,7 +172,7 @@ class PersonExcelHeaderValues(HeaderValues):
 
     def obj_to_values(self, obj: CofkUnionPerson) -> Iterable:
         return [
-            person_utils.get_display_id(obj),
+            person_serv.get_display_id(obj),
             obj.foaf_name,
             obj.skos_altlabel,
             cell_values.person_roles(obj),

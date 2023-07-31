@@ -19,8 +19,8 @@ from psycopg2.extras import DictCursor
 
 from audit.models import CofkUnionAuditLiteral, CofkUnionAuditRelationship
 from core import constant
-from core.helper import iter_utils, model_utils, recref_utils, perm_utils
-from core.helper.model_utils import ModelLike
+from core.helper import model_serv, recref_serv, perm_serv
+from core.helper.model_serv import ModelLike
 from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType, CofkUnionRelationshipType, \
     CofkUnionImage, CofkUnionOrgType, CofkUnionRoleCategory, CofkUnionSubject, Iso639LanguageCode, CofkLookupCatalogue, \
     SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID, CofkUserSavedQuery, CofkUserSavedQuerySelection, CofkUnionFavouriteLanguage
@@ -30,6 +30,7 @@ from login.models import CofkUser
 from manifestation.models import CofkUnionManifestation, CofkUnionLanguageOfManifestation, CofkManifManifMap
 from person.models import CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID, CofkPersonPersonMap
 from publication.models import CofkUnionPublication
+from sharedlib import iter_utils
 from uploader.models import CofkCollectStatus, CofkCollectUpload, CofkCollectInstitution, CofkCollectLocation, \
     CofkCollectLocationResource, CofkCollectPerson, CofkCollectOccupationOfPerson, CofkCollectPersonResource, \
     CofkCollectInstitutionResource, CofkCollectWork, CofkCollectAddresseeOfWork, CofkCollectLanguageOfWork, \
@@ -117,7 +118,7 @@ def clone_rows_by_model_class(conn, model_class: Type[ModelLike],
         seq_name = create_seq_col_name(model_class)
 
     if seq_name and int_pk_col_name:
-        max_pk = model_utils.find_max_id(model_class, int_pk_col_name)
+        max_pk = model_serv.find_max_id(model_class, int_pk_col_name)
         if isinstance(max_pk, str):
             raise ValueError(f'max_pk should be int -- [{max_pk}][{type(max_pk)}]')
 
@@ -435,7 +436,7 @@ def migrate_groups_and_permissions(conn):
         group = Group.objects.get(name=group_name)
 
         for permission_code in permission_codes:
-            permission = perm_utils.get_perm_by_full_name(permission_code)
+            permission = perm_serv.get_perm_by_full_name(permission_code)
             if permission:
                 group.permissions.add(permission)
             else:
@@ -605,7 +606,7 @@ def choice_recref_clone_direction(field_a, field_b):
 
 
 def clone_recref_simple_by_field_pairs(conn):
-    bounded_pairs = (b.pair for b in recref_utils.find_all_recref_bounded_data())
+    bounded_pairs = (b.pair for b in recref_serv.find_all_recref_bounded_data())
     bounded_pairs: Iterable[tuple[ForwardManyToOneDescriptor, ForwardManyToOneDescriptor]]
 
     for field_a, field_b in bounded_pairs:
@@ -618,8 +619,8 @@ def clone_recref_simple_by_field_pairs(conn):
             clone_recref_simple(conn, field_b, field_a)
 
 
-def create_check_fn_by_unique_together_model(model: Type[model_utils.ModelLike]):
-    def _fn(instance: model_utils.ModelLike):
+def create_check_fn_by_unique_together_model(model: Type[model_serv.ModelLike]):
+    def _fn(instance: model_serv.ModelLike):
         if not model._meta.unique_together:
             raise ValueError(f'{model} have no unique_together {model._meta.unique_together}')
         fields = [getattr(model, field_name) for field_name in model._meta.unique_together[0]]
@@ -643,8 +644,8 @@ def data_migration(user, password, database, host, port):
     conn = psycopg2.connect(database=database, password=password,
                             user=user, host=host, port=port)
     print(conn)
-    max_audit_literal_id = model_utils.find_max_id(CofkUnionAuditLiteral, 'audit_id') or 0
-    max_audit_relationship_id = model_utils.find_max_id(CofkUnionAuditRelationship, 'audit_id') or 0
+    max_audit_literal_id = model_serv.find_max_id(CofkUnionAuditLiteral, 'audit_id') or 0
+    max_audit_relationship_id = model_serv.find_max_id(CofkUnionAuditRelationship, 'audit_id') or 0
 
     clone_rows_by_model_class(conn, CofkLookupCatalogue)
     clone_rows_by_model_class(conn, CofkLookupDocumentType)

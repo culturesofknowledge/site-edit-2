@@ -13,7 +13,7 @@ from core.constant import REL_TYPE_STORED_IN, REL_TYPE_CREATED, REL_TYPE_WAS_ADD
 from core.models import CofkUnionResource, CofkLookupCatalogue
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
-from manifestation import manif_utils
+from manifestation import manif_serv
 from manifestation.models import CofkUnionManifestation, CofkManifInstMap
 from person.models import CofkUnionPerson, create_person_id
 from uploader.models import CofkCollectUpload, CofkCollectWork
@@ -25,7 +25,7 @@ log = logging.getLogger(__name__)
 
 def create_union_work(union_work_dict: dict, collect_work: CofkCollectWork):
     # work_id is primary key in CofkUnionWork
-    # note that work_utils.create_work_id uses a different less detailed format
+    # note that work_serv.create_work_id uses a different less detailed format
     union_work_dict['work_id'] = f'work_{datetime.now().strftime("%Y%m%d%H%M%S%f")}_{collect_work.iwork_id}'
     exclude = ['iwork_id', 'subjects']
 
@@ -194,7 +194,7 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
         union_maps = []
 
         for manif in context['manifestations'].filter(iwork_id=work_id).all():
-            union_manif_dict = {'manifestation_id': manif_utils.create_manif_id(union_work.iwork_id),
+            union_manif_dict = {'manifestation_id': manif_serv.create_manif_id(union_work.iwork_id),
                                 'work': union_work}
             for field in [f for f in manif._meta.get_fields() if f.name != 'manifestation_id']:
                 try:

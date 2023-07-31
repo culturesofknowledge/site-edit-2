@@ -1,18 +1,18 @@
 from abc import ABC
 from typing import Type
 
-from core.helper import model_utils
+from core.helper import model_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter, TargetCommentRecrefAdapter, \
     TargetResourceRecrefAdapter, TargetImageRecrefAdapter
 from core.models import Recref, CofkUnionSubject
-from institution import inst_utils
+from institution import inst_serv
 from institution.models import CofkUnionInstitution
-from location import location_utils
+from location import location_serv
 from location.models import CofkUnionLocation
-from manifestation import manif_utils
+from manifestation import manif_serv
 from manifestation.models import CofkUnionManifestation, CofkManifInstMap, CofkManifManifMap, CofkManifCommentMap, \
     CofkManifImageMap
-from work import work_utils
+from work import work_serv
 from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkSubjectMap, CofkWorkWorkMap, CofkWorkCommentMap, \
     CofkWorkResourceMap
 
@@ -22,13 +22,13 @@ class WorkLocRecrefAdapter(RecrefFormAdapter):
         self.parent: CofkUnionWork = parent
 
     def find_target_display_name_by_id(self, target_id):
-        return location_utils.get_recref_display_name(self.find_target_instance(target_id))
+        return location_serv.get_recref_display_name(self.find_target_instance(target_id))
 
     def recref_class(self) -> Type[Recref]:
         return CofkWorkLocationMap
 
     def find_target_instance(self, target_id):
-        return model_utils.get_safe(CofkUnionLocation, location_id=target_id)
+        return model_serv.get_safe(CofkUnionLocation, location_id=target_id)
 
     def set_parent_target_instance(self, recref, parent, target):
         recref: CofkWorkLocationMap
@@ -47,13 +47,13 @@ class ManifInstRecrefAdapter(RecrefFormAdapter):
         self.parent: CofkUnionManifestation = parent
 
     def find_target_display_name_by_id(self, target_id):
-        return inst_utils.get_recref_display_name(self.find_target_instance(target_id))
+        return inst_serv.get_recref_display_name(self.find_target_instance(target_id))
 
     def recref_class(self) -> Type[Recref]:
         return CofkManifInstMap
 
     def find_target_instance(self, target_id):
-        return model_utils.get_safe(CofkUnionInstitution, institution_id=target_id)
+        return model_serv.get_safe(CofkUnionInstitution, institution_id=target_id)
 
     def set_parent_target_instance(self, recref, parent, target):
         recref: CofkManifInstMap
@@ -79,7 +79,7 @@ class WorkSubjectRecrefAdapter(RecrefFormAdapter):
         return CofkWorkSubjectMap
 
     def find_target_instance(self, target_id):
-        return model_utils.get_safe(CofkUnionSubject, subject_id=target_id)
+        return model_serv.get_safe(CofkUnionSubject, subject_id=target_id)
 
     def set_parent_target_instance(self, recref, parent, target):
         recref: CofkWorkSubjectMap
@@ -96,7 +96,7 @@ class WorkSubjectRecrefAdapter(RecrefFormAdapter):
 class WorkWorkRecrefAdapter(RecrefFormAdapter, ABC):
 
     def find_target_display_name_by_id(self, target_id):
-        return work_utils.get_recref_display_name(CofkUnionWork.objects.get(work_id=target_id))
+        return work_serv.get_recref_display_name(CofkUnionWork.objects.get(work_id=target_id))
 
     def recref_class(self) -> Type[Recref]:
         return CofkWorkWorkMap
@@ -138,7 +138,7 @@ class LaterLetterRecrefAdapter(WorkWorkRecrefAdapter):
 class ManifManifRecrefAdapter(RecrefFormAdapter, ABC):
 
     def find_target_display_name_by_id(self, target_id):
-        return manif_utils.get_recref_display_name(self.find_target_instance(target_id))
+        return manif_serv.get_recref_display_name(self.find_target_instance(target_id))
 
     def recref_class(self) -> Type[Recref]:
         return CofkManifManifMap

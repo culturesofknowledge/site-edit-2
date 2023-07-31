@@ -1,7 +1,9 @@
 import datetime
 import logging
 from datetime import date
+from typing import Any
 
+from django.db.models import Q
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
@@ -9,12 +11,13 @@ from core import constant
 from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, \
     REL_TYPE_MENTION
 from core.models import CofkLookupCatalogue
-from location import location_utils
-from person import person_utils
-from siteedit2.utils.log_utils import log_no_url
+from location import location_serv
+from person import person_serv
+from siteedit2.serv.log_serv import log_no_url
 from work.models import CofkUnionWork
 
 log = logging.getLogger(__name__)
+HIDDEN_DATE_STD = '1900-01-01'
 
 
 def get_recref_display_name(work: CofkUnionWork):
@@ -47,12 +50,12 @@ def join_names(names):
 
 
 def find_related_person_names(work: CofkUnionWork, rel_type):
-    return (person_utils.get_recref_display_name(r.person)
+    return (person_serv.get_recref_display_name(r.person)
             for r in work.cofkworkpersonmap_set.filter(relationship_type=rel_type))
 
 
 def find_related_location_names(work: CofkUnionWork, rel_type):
-    return (location_utils.get_recref_display_name(r.location)
+    return (location_serv.get_recref_display_name(r.location)
             for r in work.cofkworklocationmap_set.filter(relationship_type=rel_type))
 
 
@@ -318,3 +321,53 @@ def flags(work: CofkUnionWork):
             tooltip.append(f'(Destination as marked: {work.destination_as_marked})')
 
     return ', '.join(tooltip)
+
+
+def q_hidden_works(prefix=None, check_hidden_date=True):
+    """
+    In original EMLO edit, there have three methods to hide work record
+    * work_to_be_deleted = 1
+    * related original_catalogue of work is not published
+    * date_of_work_std = '1900-01-01'
+    """
+    if prefix:
+        prefix = prefix + '__'
+    else:
+        prefix = ''
+
+    q = (
+            Q(**{prefix + 'work_to_be_deleted': 1})
+            | Q(**{prefix + 'original_catalogue__publish_status': 0})
+    )
+    if check_hidden_date:
+        q |= Q(**{prefix + 'date_of_work_std': HIDDEN_DATE_STD})
+    return q
+
+
+def q_visible_works(prefix=None, check_hidden_date=True):
+    if prefix:
+        prefix = prefix + '__'
+    else:
+        prefix = ''
+    q = Q(**{prefix + 'work_to_be_deleted': 0})
+    q &= (
+            Q(**{prefix + 'original_catalogue__isnull': True})
+            | Q(**{prefix + 'original_catalogue__publish_status': 1})
+    )
+    if check_hidden_date:
+        q &= ~Q(**{prefix + 'date_of_work_std': HIDDEN_DATE_STD})
+    return q
+
+
+def is_hidden_work(work: CofkUnionWork, cached_catalogue_status: dict[Any, int] = None):
+    if work is None:
+        return True
+
+    if cached_catalogue_status:
+        is_catalogue_published = cached_catalogue_status.get(work.original_catalogue_id, False)
+    else:
+        is_catalogue_published = work.original_catalogue is not None and work.original_catalogue.publish_status
+
+    return (work.work_to_be_deleted or
+            not is_catalogue_published or
+            work.date_of_work_std == HIDDEN_DATE_STD)
