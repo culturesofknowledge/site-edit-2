@@ -49,9 +49,7 @@
         <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}"
             entry_id="{{ r.iperson_id }}" target="_blank">
             <td>
-                <a href="{% url 'person:full_form' r.iperson_id %}">
-                    {{ r.names_and_roles }}
-                </a>
+                {{ r.names_and_roles }}
             </td>
 
             <td>
