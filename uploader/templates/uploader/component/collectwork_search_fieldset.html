@@ -1,0 +1,105 @@
+{% extends "core/component/search_fieldset/fieldset.html" %}
+
+{% block fields %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.source field_lookup=form.source_lookup %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.contact field_lookup=form.contact_lookup %}
+
+    {% include "core/component/common_field_layout.html" with field=form.status %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.id_main field_lookup=form.id_main_lookup %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.editors_notes field_lookup=form.editors_notes_lookup %}
+
+    <!-- Year -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_std_year field_lookup=form.date_of_work_std_year_lookup %}
+
+    <!-- Month -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_std_month field_lookup=form.date_of_work_std_month_lookup %}
+
+    <!-- Day -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_std_day field_lookup=form.date_of_work_std_day_lookup %}
+
+    <!-- Date as marked -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_as_marked field_lookup=form.date_of_work_as_marked_lookup %}
+
+    <!-- Original calendar -->
+    {% include "core/component/common_field_layout.html" with field=form.original_calendar %}
+
+    <!-- Notes on date of work -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.notes_on_date_of_work field_lookup=form.notes_on_date_of_work_lookup %}
+
+    <!-- Authors -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.authors field_lookup=form.authors_lookup %}
+
+    <!-- Authors as marked -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.authors_as_marked field_lookup=form.authors_as_marked_lookup %}
+
+    <!-- Notes on authors -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.notes_on_authors field_lookup=form.notes_on_authors_lookup %}
+
+    <!-- Origin -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.origin field_lookup=form.origin_lookup %}
+
+    <!-- Origin as marked -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.origin_as_marked field_lookup=form.origin_as_marked_lookup %}
+
+    <!-- Addressees -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.addressees field_lookup=form.addressees_lookup %}
+
+    <!-- Addressees as marked -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.addressees_as_marked field_lookup=form.addressees_as_marked_lookup %}
+
+    <!-- Notes on addressees -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.notes_on_addressees field_lookup=form.notes_on_addressees_lookup %}
+
+    <!-- Destination -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.destination field_lookup=form.destination_lookup %}
+
+    <!-- Destination as marked -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.destination_as_marked field_lookup=form.destination_as_marked_lookup %}
+
+    <!-- Manifestations -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.manifestations field_lookup=form.manifestations_lookup %}
+
+    <!-- Abstract -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.abstract field_lookup=form.abstract_lookup %}
+
+    <!-- Keywords -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.keywords field_lookup=form.keywords_lookup %}
+
+    <!-- Languages -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.languages field_lookup=form.languages_lookup %}
+
+    <!-- Subjects -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.subjects field_lookup=form.subjects_lookup %}
+
+    <!-- Incipit -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.incipit field_lookup=form.incipit_lookup %}
+
+    <!-- Excipit -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.excipit field_lookup=form.excipit_lookup %}
+
+    <!-- People mentioned -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.people_mentioned field_lookup=form.people_mentioned_lookup %}
+
+    <!-- Notes on people mentioned -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.notes_on_people_mentioned field_lookup=form.notes_on_people_mentioned_lookup %}
+
+    <!-- Places mentioned -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.places_mentioned field_lookup=form.places_mentioned_lookup %}
+
+    <!-- Issues -->
+    <!-- {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.issues field_lookup=form.issues_lookup %} -->
+
+    <!-- Notes on letter -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.notes_on_letter field_lookup=form.notes_on_letter_lookup %}
+
+    <!-- Related resources -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.resources field_lookup=form.resources_lookup %}
+
+    <!-- Upload id -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.upload_id field_lookup=form.upload_id_lookup %}
+
+{% endblock %}

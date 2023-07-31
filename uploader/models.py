@@ -2,6 +2,8 @@ from datetime import datetime
 
 from django.db import models
 
+from manifestation.manif_utils import get_doctype_desc
+
 
 class CofkCollectStatus(models.Model):
     '''
@@ -91,6 +93,16 @@ class CofkCollectLocation(models.Model):
         db_table = 'cofk_collect_location'
         unique_together = (('upload', 'location_id'),)
 
+    def to_string(self):
+        location = self.location_name
+        if self.union_location_id:
+            location += f' [ID {self.union_location_id}]'
+
+        if self.editors_notes:
+            location += f' [editor\'s notes: {self.editors_notes}]'
+
+        return location
+
     def __str__(self):
         return str(self.union_location) if self.union_location is not None else f'{self.location_name} (collect)'
 
@@ -127,8 +139,22 @@ class CofkCollectManifestation(models.Model):
         db_table = 'cofk_collect_manifestation'
         unique_together = (('upload', 'iwork_id', 'manifestation_id'),)
 
-    def __str__(self):
-        return f'Manifestation #{self.manifestation_id}'
+    def to_string(self):
+        manif = get_doctype_desc(self) + '. '
+
+        if self.repository:
+            manif += f'Repository: {self.repository.institution_name}. '
+
+        if self.id_number_or_shelfmark:
+            manif += f'Shelfmark: {self.id_number_or_shelfmark}. '
+
+        if self.printed_edition_details:
+            manif += f'Printed edition details: {self.printed_edition_details}. '
+
+        if self.manifestation_notes:
+            manif += f'Notes on document: {self.manifestation_notes}. '
+
+        return manif
 
 
 class CofkCollectImageOfManif(models.Model):
@@ -190,8 +216,40 @@ class CofkCollectPerson(models.Model):
         db_table = 'cofk_collect_person'
         unique_together = (('upload', 'iperson_id'),)
 
-    def __str__(self):
-        return str(self.union_iperson) if self.union_iperson is not None else f'{self.primary_name} (collect)'
+    def to_string(self, is_details=False) -> str:
+        """
+        Used by work.creators_for_display and work.addressees_for_display
+        """
+        dob = str(self.date_of_birth_year)
+        dod = str(self.date_of_death_year)
+
+        if self.date_of_death_is_range == 1:
+            dod += ' or after'
+
+        if self.date_of_birth_is_range == 1:
+            dob += ' or before'
+
+        if self.date_of_birth_year and self.date_of_death_year:
+            person = f'{self.primary_name}, {dob}-{dod}'
+        elif self.date_of_birth_year:
+            person = f'{self.primary_name} b. {dob}'
+        elif self.date_of_death_year:
+            person = f'{self.primary_name} d. {dod}'
+        else:
+            person = str(self.primary_name)
+
+        fos = str(self.flourished_year)
+        foe = str(self.flourished2_year)
+
+        if self.flourished_year and self.flourished2_year:
+            person += f', fl. {fos}-{foe}'
+        elif self.flourished_year:
+            person += f', fl. {fos}'
+
+        return person
+
+    #def __str__(self):
+    #    return str(self.union_iperson) if self.union_iperson is not None else f'{self.primary_name} (collect)'
 
 
 class CofkCollectOccupationOfPerson(models.Model):
@@ -493,6 +551,11 @@ class CofkCollectWork(models.Model):
 
         return ', '.join(issues)
 
+    @property
+    def display_issues(self) -> str:
+        return '\n'.join([self.display_date_issues, self.display_origin_issues, self.display_destination_issues,
+                         self.display_authors_issues, self.display_addressees_issues, self.display_mentioned_issues])
+
 
 class CofkCollectAddresseeOfWork(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
@@ -517,9 +580,6 @@ class CofkCollectAuthorOfWork(models.Model):
     iwork = models.ForeignKey('uploader.CofkCollectWork', models.CASCADE, related_name='authors')
     notes_on_author = models.TextField(blank=True, null=True)
     _id = models.CharField(max_length=32, blank=True, null=True)
-
-    def __str__(self):
-        return str(self.iperson)
 
     class Meta:
         db_table = 'cofk_collect_author_of_work'
@@ -560,8 +620,8 @@ class CofkCollectLanguageOfWork(models.Model):
 class CofkCollectOriginOfWork(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     origin_id = models.IntegerField()
-    location = models.ForeignKey('uploader.CofkCollectLocation', models.CASCADE, related_name='origin')
-    iwork = models.ForeignKey('uploader.CofkCollectWork', models.CASCADE)
+    location = models.ForeignKey('uploader.CofkCollectLocation', models.CASCADE)
+    iwork = models.ForeignKey('uploader.CofkCollectWork', models.CASCADE, related_name='origin')
     notes_on_origin = models.TextField(blank=True, null=True)
     _id = models.CharField(max_length=32, blank=True, null=True)
 

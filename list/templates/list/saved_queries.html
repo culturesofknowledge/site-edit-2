@@ -34,9 +34,10 @@
         </tr>
 
     {% for saved_query in object_list %}
+        <form method="post" class="edit_forms">
         <tr>
+
             <td>
-                <form method="post" class="edit_forms">
                 {% csrf_token %}
                 <textarea name="query_title" class="no_border"
                  id="id_query_title_{{ saved_query.pk }}">{{ saved_query.title }}</textarea>
@@ -55,9 +56,10 @@
                 <button type="button" class="btn inline_btn" onclick="window.open('{{ saved_query.url }}', '_blank').focus();">Run</button>
                 <button type="submit" class="btn inline_btn" name="delete">Delete</button>
 
-            </form>
             </td>
+
         </tr>
+        </form>
     {% endfor %}
     </table>
 

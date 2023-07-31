@@ -132,3 +132,17 @@ have an added id sequence value.
 
 For the secondary relationship tables however the changes mean that the `*entity*_id` in the secondary table now refers
 to the new primary key of the new entity table.
+
+## Additions
+
+The tables `cofk_collect_origin_of_work` and `cofk_collect_destination_of_work` contain 34,357 and 16,350 records
+respectively. However `cofk_collect_work` has the fields `origin_id` and `destination_id` which contain 274,053
+and 170,789 records respectively that have a non null value for that field. In other words two methods have been used
+to link together Collect Works and Collect Locations, via the dedicated tables or via fields in `cofk_collect_work`.
+
+It is not possible to convert the fields `origin_id` and `destination_id` in `cofk_collect_work` into foreign keys
+because that would create a cyclical relationship between the tables.
+
+Instead 239,526 new `cofk_collect_origin_of_work` and 154,463 `cofk_collect_destination_of_work` records will be
+created as part of the data migration process. This renders the `origin_id` and `destination_id` of the
+`cofk_collect_work` obsolete.

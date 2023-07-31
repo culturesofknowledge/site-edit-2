@@ -1,3 +1,5 @@
+from typing import Union
+
 from core.helper import model_serv
 from core.models import CofkLookupDocumentType
 from manifestation.models import CofkUnionManifestation
@@ -15,7 +17,7 @@ def create_manif_id(iwork_id) -> str:
     return f'W{iwork_id}-{model_serv.next_seq_safe("cofk_union_manif_manif_id_seq")}'
 
 
-def get_doctype_desc(manif: CofkUnionManifestation) -> str:
+def get_doctype_desc(manif: Union['CofkUnionManifestation', 'CofkCollectManifestation']) -> str:
     if doctype := CofkLookupDocumentType.objects.filter(document_type_code=manif.manifestation_type).first():
         return doctype.document_type_desc
     else:
@@ -23,8 +25,7 @@ def get_doctype_desc(manif: CofkUnionManifestation) -> str:
 
 
 def get_manif_details(manif: CofkUnionManifestation) -> list[str]:
-    first_line = ''
-    first_line += get_doctype_desc(manif) + '. '
+    first_line = get_doctype_desc(manif) + '. '
     if manif.postage_marks:
         first_line += f'Postmark: {manif.postage_marks}. '
 

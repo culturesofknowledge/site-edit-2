@@ -3,6 +3,7 @@ import logging
 from django.test import TransactionTestCase, RequestFactory
 
 import manifestation.fixtures
+import manifestation.fixtures
 from core.helper import model_serv
 from core.test.test_export_header_values import MockResolver
 from manifestation.models import CofkUnionManifestation
