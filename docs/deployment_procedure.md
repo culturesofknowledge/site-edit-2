@@ -16,6 +16,9 @@ git clone https://github.com/culturesofknowledge/site-edit-2
 cd site-edit-2/siteedit2/settings
 cp gunweb.py.example gunweb.py
 # change hostname / ip in  ALLOWED_HOSTS, CSRF_TRUSTED_ORIGINS
+# about email setting, see [How to set up email service ?]
+# for export in search page, you need to update EXPORT_ROOT_URL
+# e.g. EXPORT_ROOT_URL = 'http://your-emlo-edit-hostname'
 vi gunweb.py
 
 
@@ -69,7 +72,29 @@ Q & A
 
 ### How to set up email service ?
 
-* TODO
+we used django buildin email module, following variable need to be set:
+update `site-edit-2/siteedit2/settings/gunweb.py`
+```python
+# Host for sending email.
+EMAIL_HOST = "smtp.mailgun.org"
+
+# Port for sending email.
+EMAIL_PORT = 587
+
+# Whether to send SMTP 'Date' header in the local time zone or in UTC.
+EMAIL_USE_LOCALTIME = False
+EMAIL_HOST_USER = "postmaster@kasjldkajsdk.mailgun.org"
+EMAIL_HOST_PASSWORD = "alksdjalskdjalskdjlaksdjlkas"
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = False
+EMAIL_SSL_CERTFILE = None
+EMAIL_SSL_KEYFILE = None
+EMAIL_TIMEOUT = 60
+
+EMAIL_FROM_EMAIL = f"Excited User <mailgun@kajsdlkasjdlkasjdl.mailgun.org>"
+
+```
+
 
 ### How to read logs of web server
 
