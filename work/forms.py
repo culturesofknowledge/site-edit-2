@@ -557,6 +557,9 @@ class ExpandedSearchFieldset(CompactSearchFieldset):
     title = 'Expanded Search'
     template_name = 'work/component/work_expanded_search_fieldset.html'
 
+    origin_as_marked = SearchCharField()
+    origin_as_marked_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
+
     destination_as_marked = SearchCharField()
     destination_as_marked_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
