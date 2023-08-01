@@ -91,7 +91,8 @@ def apply_header_style(sheet):
 
 
 def get_flat_resource_list(objects, get_resource_map_set_fn) -> Iterable['CofkUnionResource']:
-    return itertools.chain.from_iterable((r.resource for r in get_resource_map_set_fn(w).all()) for w in objects)
+    return itertools.chain.from_iterable((r.resource for r in get_resource_map_set_fn(w).iterator())
+                                         for w in objects)
 
 
 def _create_excel_by_fill_fn(fill_fn: Callable[[Workbook], NoReturn],
@@ -112,7 +113,7 @@ def _create_excel_by_fill_fn(fill_fn: Callable[[Workbook], NoReturn],
 def create_work_excel(queryable_works: Iterable[CofkUnionWork],
                       file_path: str = None) -> 'openpyxl.Workbook':
     def _find_manif_list():
-        manif_list = itertools.chain.from_iterable(w.manif_set.all()
+        manif_list = itertools.chain.from_iterable(w.manif_set.iterator()
                                                    for w in queryable_works)
         return model_serv.UniqueModelPkFilter(manif_list)
 
