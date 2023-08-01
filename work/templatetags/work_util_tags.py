@@ -44,9 +44,8 @@ def more_info(work: DisplayableWork):
 
 
 @register.filter
-def render_queryable_resources(values: str):
+def display_resources(values: str):
     resources = re.findall(link_pattern, values)
-    html = values
 
     if len(resources) > 1:
         html = '<ul>'

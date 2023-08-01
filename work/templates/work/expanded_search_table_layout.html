@@ -81,8 +81,14 @@
                 {% endif %}
             </td>
             <td>
+                {% if r.related_works %}
+                    Matches:
+                    {{ r.related_works|display_resources }}
+                {% endif %}
+
                 {% if r.related_resources %}
-                    {{ r.related_resources|render_queryable_resources }}
+                    Resources:
+                    {{ r.related_resources|display_resources }}
                 {% endif %}
             </td>
             <td>

@@ -207,20 +207,31 @@ class DisplayableWork(CofkUnionWork):
         return self.queryable_people(REL_TYPE_MENTION)
 
     @property
-    def related_resources(self):
-        '''
-        This field combines related resources and related works.
-        '''
+    def related_works(self) -> str:
+        start = 'xxxCofkLinkStartxxx'
+        end = 'xxxCofkLinkEndxxx'
+        start_href = 'xxxCofkHrefStartxxx'
+        end_href = 'xxxCofkHrefEndxxx'
+        works = ''
+
+        if to_works := self.work_to_set.all():
+            print(to_works)
+            for w in to_works:
+                print(w.relationship_type)
+            works += ", ".join([
+                f'{start}{start_href}{reverse("work:overview_form", args=[t.work_from.iwork_id])}{end_href}{t.work_from.description}{end}'
+                for t in to_works])
+
+        return works
+
+
+    @property
+    def related_resources(self) -> str:
         start = 'xxxCofkLinkStartxxx'
         end = 'xxxCofkLinkEndxxx'
         start_href = 'xxxCofkHrefStartxxx'
         end_href = 'xxxCofkHrefEndxxx'
         resources = ''
-
-        if to_works := self.work_to_set.all():
-            resources += ", ".join([
-                f'{start}{start_href}{reverse("work:overview_form", args=[t.work_from.iwork_id])}{end_href}{t.work_from.description}{end}'
-                for t in to_works])
 
         if linked_resources := self.cofkworkresourcemap_set.all():
             resources += ", ".join(

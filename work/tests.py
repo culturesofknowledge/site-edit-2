@@ -459,7 +459,7 @@ class WorkSearchTests(EmloSeleniumTestCase, CommonSearchTests):
             uncertainties='',
             images='',
             manifestations='ABC. Postmark: postage_marks a. id_number_or_shelfmark a printed_edition_details a',
-            related_resources='resource_name a\nresource_name b',
+            related_resources='Resources:\nresource_name a\nresource_name b',
             subjects='Astronomy',
             other_details='Keywords: keywords value\n\nAbstract: abstract value\n\nLanguages: English (notes a), Japanese (notes b)\n\nNotes: comment a, comment b',
             id=target_work.iwork_id,
