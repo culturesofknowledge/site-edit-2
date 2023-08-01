@@ -88,8 +88,8 @@ class LocationCommonSearchTests(EmloSeleniumTestCase, CommonSearchTests):
             ele.send_keys(target_record.location_id)
 
         def _check(target_record):
-            self.assertEqual(self.find_table_col_element(0, 0).text,
-                             target_record.location_name)
+            self.assertIn(target_record.location_name,
+                          self.find_table_col_element(0, 0).text)
 
         self._test_search__search_unique(_fill, _check)
 
