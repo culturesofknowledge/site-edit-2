@@ -76,9 +76,8 @@ def create_search_fn_person_recref(rel_types: list) -> Callable:
     return _fn
 
 
-def create_lookup_fn_by_person(rel_types: list) -> Callable:
-    return create_recref_lookup_fn(rel_types, 'cofkworkpersonmap__person',
-                                   query_serv.person_detail_fields)
+def create_lookup_fn_by_person(rel_types: list, fields: list[str]=query_serv.person_detail_fields) -> Callable:
+    return create_recref_lookup_fn(rel_types, 'cofkworkpersonmap__person', fields)
 
 
 def create_lookup_fn_by_comment(rel_types: list) -> Callable:
@@ -100,6 +99,16 @@ def create_lookup_fn_by_resource(rel_types: list) -> Callable:
     return create_recref_lookup_fn(rel_types, 'cofkworkresourcemap__resource',
                                    query_serv.resource_detail_fields)
 
+def create_people_lookups(request_data, field_pairs: list[tuple]) -> dict:
+    people_lookups = {}
+
+    for field_pair in field_pairs:
+        if request_data.get(f'{field_pair[0]}_lookup') in ['starts_with', 'not_start_with']:
+            people_lookups[field_pair[0]] = create_lookup_fn_by_person(field_pair[1], ['foaf_name'])
+        else:
+            people_lookups[field_pair[0]] = create_lookup_fn_by_person(field_pair[1])
+
+    return people_lookups
 
 def lookup_fn_flags(lookup_fn, field_name, value):
     cond_map = [
@@ -1041,22 +1050,25 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             ],
         }
 
+        people_pairs = [('creators_searchable', [REL_TYPE_CREATED]),
+                        ('addressees_searchable', [REL_TYPE_WAS_ADDRESSED_TO]),
+                        ('sender_or_recipient', [REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO]),
+                        ('people_mentioned', [REL_TYPE_MENTION])]
+
+        people_lookups = create_people_lookups(request_data, people_pairs)
+
         queries.extend(
             query_serv.create_queries_by_lookup_field(
                 request_data, self.search_fields,
                 search_fields_maps=search_fields_maps,
-                search_fields_fn_maps={
-                    'creators_searchable': create_lookup_fn_by_person([REL_TYPE_CREATED]),
+                search_fields_fn_maps=people_lookups | {
                     'notes_on_authors': create_lookup_fn_by_comment([REL_TYPE_COMMENT_AUTHOR]),
                     'places_from_searchable': create_lookup_fn_by_location([REL_TYPE_WAS_SENT_FROM]),
-                    'addressees_searchable': create_lookup_fn_by_person([REL_TYPE_WAS_ADDRESSED_TO]),
                     'places_to_searchable': create_lookup_fn_by_location([REL_TYPE_WAS_SENT_TO]),
-                    'sender_or_recipient': create_lookup_fn_by_person([REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO]),
                     'origin_or_destination': create_lookup_fn_by_location(
                         [REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
                     'related_resources': create_lookup_fn_by_resource([REL_TYPE_IS_RELATED_TO]),
                     'general_notes': create_lookup_fn_by_comment([REL_TYPE_COMMENT_REFERS_TO]),
-                    'people_mentioned': create_lookup_fn_by_person([REL_TYPE_MENTION]),
                     'flags': lookup_fn_flags,
                 })
         )
