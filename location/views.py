@@ -218,7 +218,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
             ('recd', 'Rec\'d',),
             ('all_works', 'Sent or Rec\'d',),
             ('researchers_notes', 'Researchers\' notes',),
-            ('related_resources', 'Related resources',),
+            ('resources', 'Related resources',),
             ('latitude', 'Latitude',),
             ('longitude', 'Longitude',),
             ('element_1_eg_room', '1. E.g.room',),

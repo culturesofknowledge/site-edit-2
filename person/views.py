@@ -319,7 +319,8 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             ('editors_notes', 'Editors\' notes',),
             ('further_reading', 'Further reading',),
             ('images', 'Images',),
-            ('other_details', 'Other details',),
+            # Other details is a collection of various relationships that is difficult to generate in db query
+            # ('other_details', 'Other details',),
             ('change_timestamp', 'Change Timestamp',),
             ('change_user', 'Change user',),
             ('iperson_id', 'Person or Group ID',),
