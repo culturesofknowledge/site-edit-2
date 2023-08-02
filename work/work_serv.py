@@ -215,15 +215,11 @@ class DisplayableWork(CofkUnionWork):
         works = ''
 
         if to_works := self.work_to_set.all():
-            print(to_works)
-            for w in to_works:
-                print(w.relationship_type)
             works += ", ".join([
                 f'{start}{start_href}{reverse("work:overview_form", args=[t.work_from.iwork_id])}{end_href}{t.work_from.description}{end}'
                 for t in to_works])
 
         return works
-
 
     @property
     def related_resources(self) -> str:

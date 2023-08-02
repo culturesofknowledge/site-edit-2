@@ -46,6 +46,7 @@ def more_info(work: DisplayableWork):
 @register.filter
 def display_resources(values: str):
     resources = re.findall(link_pattern, values)
+    html = ''
 
     if len(resources) > 1:
         html = '<ul>'
