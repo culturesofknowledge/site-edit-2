@@ -965,9 +965,9 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         return [
             #('addressees', 'Addressee',),
             #('creators_searchable', 'Author/sender',),
-            ('date_of_work_std_day', 'Date for ordering (in original calendar)',),
+            ('date_of_work_std', 'Date for ordering (in original calendar)',),
             ('date_of_work_as_marked', 'Date of work as marked',),
-            ('date_of_work_day', 'Day',),
+            ('date_of_work_std_day', 'Day',),
             ('description', 'Description',),
             #('places_to_searchable', 'Destination (standardised)',),
             ('editors_notes', 'Editors\' notes',),
