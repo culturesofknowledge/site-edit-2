@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Iterable, Type
 
 from django import forms
@@ -499,3 +500,34 @@ class BasicSearchFieldset(forms.Form):
     change_timestamp_to = forms.DateField(required=False,
                                           widget=widgets_serv.SearchDateTimeInput(attrs={'class': 'searchfield'}))
     change_timestamp_info = datetime_search_info
+
+
+class EmloLineboxField(CommonTextareaField):
+    def __init__(self, n_rows=7, **kwargs):
+        super().__init__(n_rows=n_rows, **kwargs)
+        self.delimiter = kwargs.pop('delimiter', '; ')
+
+    def prepare_value(self, value):
+        new_value = re.sub(self.delimiter, '\r\n', value)
+        return super().prepare_value(new_value)
+
+    def clean(self, value):
+        new_value = re.sub(r'\r?\n', self.delimiter, value)
+        return super().clean(new_value)
+
+
+class YesEmptyCheckboxField(forms.CharField):
+    def __init__(self, *args, **kwargs):
+        widget = forms.CheckboxInput({'class': 'elcheckbox'},
+                                     check_test=lambda v: v == 'Y')
+        default_kwargs = dict(
+            widget=widget,
+            initial='',
+            required=False,
+        )
+        kwargs = default_kwargs | kwargs
+        super().__init__(*args, **kwargs)
+
+    def clean(self, value):
+        new_value = super().clean(value)
+        return 'Y' if new_value == 'True' else ''
