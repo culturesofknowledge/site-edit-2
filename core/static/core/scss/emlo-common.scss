@@ -292,7 +292,16 @@ tr.selectable_entry:not(.selected):hover {
     background-color: white;
     padding: 0.2em;
     z-index: 99;
+
+    h3 {
+      margin: 0;
+    }
   }
+}
+.sub-form-desc .desc-id {
+  padding: 3px;
+  font-size: 1em;
+  font-weight: bolder;
 }
 
 
