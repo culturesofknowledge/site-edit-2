@@ -201,8 +201,9 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
     def search_field_fn_maps(self) -> dict:
-        return query_serv.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                   'change_timestamp')
+        return query_serv.create_from_to_datetime('change_timestamp_from',
+                                                  'change_timestamp_to',
+                                                  'change_timestamp')
 
     @property
     def query_fieldset_list(self) -> Iterable:
@@ -240,11 +241,15 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
         return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
 
     def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:
-        search_fields_maps = {'location_name': ['location_name', 'location_synonyms'],
-                              'resources': ['resources__resource_name', 'resources__resource_details',
+        search_fields_maps = {'resources': ['resources__resource_name', 'resources__resource_details',
                                             'resources__resource_url'],
                               'researchers_notes': ['comments__comment'],
                               'images': ['images__image_filename']}
+
+        if request_data.get(f'location_name_lookup') in ['starts_with', 'not_start_with']:
+            search_fields_maps['location_name'] = ['location_name']
+        else:
+            search_fields_maps['location_name'] = ['location_name', 'location_synonyms']
 
         queries = query_serv.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
         queries.extend(

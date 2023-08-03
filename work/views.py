@@ -85,9 +85,8 @@ def create_lookup_fn_by_comment(rel_types: list) -> Callable:
                                    query_serv.comment_detail_fields)
 
 
-def create_lookup_fn_by_location(rel_types: list) -> Callable:
-    return create_recref_lookup_fn(rel_types, 'cofkworklocationmap__location',
-                                   query_serv.location_detail_fields)
+def create_lookup_fn_by_location(rel_types: list, fields: list[str]=query_serv.location_detail_fields) -> Callable:
+    return create_recref_lookup_fn(rel_types, 'cofkworklocationmap__location', fields)
 
 
 def create_lookup_fn_by_image(rel_types: list) -> Callable:
@@ -109,6 +108,17 @@ def create_people_lookups(request_data, field_pairs: list[tuple]) -> dict:
             people_lookups[field_pair[0]] = create_lookup_fn_by_person(field_pair[1])
 
     return people_lookups
+
+def create_location_lookups(request_data, field_pairs: list[tuple]) -> dict:
+    location_lookups = {}
+
+    for field_pair in field_pairs:
+        if request_data.get(f'{field_pair[0]}_lookup') in ['starts_with', 'not_start_with']:
+            location_lookups[field_pair[0]] = create_lookup_fn_by_location(field_pair[1], ['location_name'])
+        else:
+            location_lookups[field_pair[0]] = create_lookup_fn_by_location(field_pair[1])
+
+    return location_lookups
 
 def lookup_fn_flags(lookup_fn, field_name, value):
     cond_map = [
@@ -1056,16 +1066,18 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
         people_lookups = create_people_lookups(request_data, people_pairs)
 
+        location_pairs = [('places_from_searchable', [REL_TYPE_WAS_SENT_FROM]),
+                          ('places_to_searchable', [REL_TYPE_WAS_SENT_TO]),
+                          ('origin_or_destination', [REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),]
+
+        location_lookups = create_location_lookups(request_data, location_pairs)
+
         queries.extend(
             query_serv.create_queries_by_lookup_field(
                 request_data, self.search_fields,
                 search_fields_maps=search_fields_maps,
-                search_fields_fn_maps=people_lookups | {
+                search_fields_fn_maps=people_lookups | location_lookups | {
                     'notes_on_authors': create_lookup_fn_by_comment([REL_TYPE_COMMENT_AUTHOR]),
-                    'places_from_searchable': create_lookup_fn_by_location([REL_TYPE_WAS_SENT_FROM]),
-                    'places_to_searchable': create_lookup_fn_by_location([REL_TYPE_WAS_SENT_TO]),
-                    'origin_or_destination': create_lookup_fn_by_location(
-                        [REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
                     'related_resources': create_lookup_fn_by_resource([REL_TYPE_IS_RELATED_TO]),
                     'general_notes': create_lookup_fn_by_comment([REL_TYPE_COMMENT_REFERS_TO]),
                     'flags': lookup_fn_flags,

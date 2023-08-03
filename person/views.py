@@ -383,6 +383,11 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
     def get_queryset_by_request_data(self, request_data, sort_by=None):
         queries = query_serv.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
 
+        search_fields_maps = self.search_field_combines
+
+        if request_data.get(f'names_and_titles_lookup') in ['starts_with', 'not_start_with']:
+            search_fields_maps['names_and_titles'] = ['foaf_name']
+
         search_field_fn_maps = {
             'other_details': lookup_other_details,
         }
@@ -391,7 +396,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             query_serv.create_queries_by_lookup_field(
                 request_data,
                 search_field_names=self.search_fields,
-                search_fields_maps=self.search_field_combines,
+                search_fields_maps=search_fields_maps,
                 search_fields_fn_maps=search_field_fn_maps,
             )
         )
