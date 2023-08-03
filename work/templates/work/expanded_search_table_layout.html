@@ -103,7 +103,7 @@
                 {% include 'core/component/search_table_layout/link_record.html' with id=r.iwork_id view='work:full_form' %}
             </td>
             <td>
-                {{ r.change_timestamp }} by {{ r.change_user }}<br/>
+                {{ r.change_timestamp|date:"d M Y H:i" }} by {{ r.change_user }}<br/>
                 Source: {{ r.accession_code }}<br/>
                 [{{ r.catalogue }}]
             </td>
