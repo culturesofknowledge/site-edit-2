@@ -158,7 +158,7 @@ class DisplayableWork(CofkUnionWork):
             origin = str(self.origin_location)
 
         if self.origin_as_marked:
-            origin += f'<br/><br/>As marked: {self.origin_as_marked}'
+            origin += f'\n\nAs marked: {self.origin_as_marked}'
 
         return origin
 
@@ -169,7 +169,7 @@ class DisplayableWork(CofkUnionWork):
             destination = str(self.destination_location)
 
         if self.destination_as_marked:
-            destination += f'<br/><br/>As marked: {self.destination_as_marked}'
+            destination += f'\n\nAs marked: {self.destination_as_marked}'
 
         return destination
 
