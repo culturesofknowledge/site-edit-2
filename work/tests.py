@@ -500,7 +500,7 @@ class WorkSearchTests(EmloSeleniumTestCase, CommonSearchTests):
             'subjects': 'a',
             'keywords': 'a',
             # 'drawer': 'a',
-            'work_id': 'a',
+            'iwork_id': 'a',
             'change_timestamp_from': '1111',
             'change_timestamp_to': '1112',
         }
