@@ -84,6 +84,12 @@ def create_queries_by_lookup_field(request_data: dict,
                                    search_fields_maps: dict[str, Iterable[str]] = None,
                                    search_fields_fn_maps: dict[str, Callable] = None,
                                    ) -> Iterable[Q]:
+    """
+    :param search_fields_maps
+    used to define one or more aliases for lookup search field
+    e.g. {'date_of_birth_year': ['mydate1', 'mydate2']}
+    it will look up db field `mydate1` and `mydate2` instead of `date_of_birth_year`
+    """
     for field_name in search_field_names:
         field_val = request_data.get(field_name)
         lookup_key = request_data.get(f'{field_name}_lookup')
@@ -96,16 +102,28 @@ def create_queries_by_lookup_field(request_data: dict,
             continue
 
         if search_fields_maps and field_name in search_fields_maps:
+            # handle search_fields_maps
+
+            _names = list(search_fields_maps[field_name])
+            if (lookup_idx := lookup_idx_map.get(lookup_key)) is not None:
+                _names = [_names[lookup_idx]]
+            conn_type = lookup_conn_type_map.get(lookup_key, Q.OR)
+
             q = Q()
-            for search_field in search_fields_maps[field_name]:
+            for search_field in _names:
                 log.debug(f'query cond: field_name[{field_name}] search_field[{search_field}] '
                           f'field_val[{field_val}] lookup_key[{lookup_key}]')
-                q.add(run_lookup_fn(lookup_fn, search_field, field_val), Q.OR)
+                q.add(run_lookup_fn(lookup_fn, search_field, field_val), conn_type)
+
             yield q
+
         elif search_fields_fn_maps and field_name in search_fields_fn_maps:
+            # handle search_fields_fn_maps
             log.debug(f'query cond: field_name[{field_name}] field_val[{field_val}] lookup_key[{lookup_key}]')
             yield search_fields_fn_maps[field_name](lookup_fn, field_name, field_val)
+
         else:
+            # handle normal case
             log.debug(f'query cond: field_name[{field_name}] field_val[{field_val}] lookup_key[{lookup_key}]')
             yield run_lookup_fn(lookup_fn, field_name, field_val)
 
@@ -141,6 +159,30 @@ choices_lookup_map = {
     'greater_than': lookups.GreaterThan,
     None: lookups.IExact,
     '': lookups.IExact,
+}
+
+""" 
+if value of search_fields_maps have more than one element,
+some lookup key may only apply in first or last element,
+
+0 == first element
+-1 == last element
+None == all element
+"""
+lookup_idx_map = {
+    'starts_with': 0,
+    'not_start_with': 0,
+    'ends_with': -1,
+    'not_end_with': -1,
+}
+
+
+"""
+default lookup connection type is `Q.OR`
+"""
+lookup_conn_type_map = {
+    'is_blank': Q.AND,
+    'not_contain': Q.AND,
 }
 
 nullable_lookup_keys = [
