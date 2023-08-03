@@ -1,6 +1,6 @@
 import functools
 import logging
-from typing import Callable, Iterable
+from typing import Callable, Iterable, Any
 
 from django.db.models import F, Exists, OuterRef
 from django.db.models import Q, Lookup, lookups
@@ -82,13 +82,18 @@ def create_queries_by_field_fn_maps(field_fn_maps: dict, data: dict) -> list[Q]:
 def create_queries_by_lookup_field(request_data: dict,
                                    search_field_names: list[str],
                                    search_fields_maps: dict[str, Iterable[str]] = None,
-                                   search_fields_fn_maps: dict[str, Callable] = None,
+                                   search_fields_fn_maps: dict[str, 'LookupFn'] = None,
                                    ) -> Iterable[Q]:
     """
     :param search_fields_maps
     used to define one or more aliases for lookup search field
     e.g. {'date_of_birth_year': ['mydate1', 'mydate2']}
     it will look up db field `mydate1` and `mydate2` instead of `date_of_birth_year`
+
+    :param search_fields_fn_maps
+    allow to define more complex lookup function, for example multi relationship query
+    Lookupfn is Callable and return a Q object
+
     """
     for field_name in search_field_names:
         field_val = request_data.get(field_name)
@@ -241,7 +246,8 @@ def update_queryset(queryset,
     return queryset
 
 
-def create_recref_lookup_fn(rel_types: list, recref_field_name: str, cond_fields: list[str]):
+LookupFn = Callable[[Callable, str, Any], Q]
+def create_recref_lookup_fn(rel_types: list, recref_field_name: str, cond_fields: list[str]) -> LookupFn:
     recref_name = '__'.join(recref_field_name.split('__')[:-1])
 
     def _fn(lookup_fn, f, v):
