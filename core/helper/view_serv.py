@@ -400,6 +400,7 @@ class BasicSearchView(ListView):
     def resp_download_excel(self, request, *args, **kwargs):
         return self.resp_download_by_export_setting(request, self.excel_export_setting, *args, **kwargs)
 
+    @django_utils.log_request_time
     def get(self, request, *args, **kwargs):
         if to_user_messages := request.GET.get('to_user_messages'):
             self.add_to_user_messages(to_user_messages)
