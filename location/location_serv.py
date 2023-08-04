@@ -28,6 +28,6 @@ class DisplayableLocation(CofkUnionLocation):
         location = self.location_name
 
         if self.location_synonyms:
-            location += f'<br/><br/>Alternative names: {self.location_synonyms}'
+            location += f'\n\nAlternative names: {self.location_synonyms}'
 
         return mark_safe(location)

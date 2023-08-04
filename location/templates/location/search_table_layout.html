@@ -29,7 +29,7 @@
         <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}"
             entry_id="{{ r.location_id }}">
             <td>
-                {{ r.display_location }}
+                {{ r.display_location|linebreaksbr }}
             </td>
             <td>
                 {% include 'core/component/search_table_layout/link_record.html' with id=r.location_id view='location:full_form' %}
