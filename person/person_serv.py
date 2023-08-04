@@ -104,21 +104,28 @@ class DisplayablePerson(CofkUnionPerson):
     def other_details_for_display(self, new_line='\n'):
         return get_display_dict_other_details(self, new_line=new_line)
 
+    @property
     def flourished_for_display(self) -> str:
-        if self.flourished_year and self.flourished2_year:
-            return f'{self.flourished_year} to {self.flourished2_year}'
-        elif self.flourished_year and self.flourished_is_range:
-            return f'{self.flourished_year} or after'
-        elif self.flourished2_year and self.flourished_is_range:
-            return f'{self.flourished2_year} or before'
-        elif self.flourished_year:
-            return self.flourished_year
+        return decode_is_range_year(self.flourished_year, self.flourished2_year, self.flourished2_year, True)
+    @property
+    def person_birth_for_display(self) -> str:
+        return decode_is_range_year(self.date_of_birth_year, self.date_of_birth2_year,
+                                    self.date_of_birth_is_range, True)
+
+    @property
+    def person_death_for_display(self) -> str:
+        return decode_is_range_year(self.date_of_death_year, self.date_of_death2_year,
+                                    self.date_of_death_is_range, True)
 
 
-def decode_is_range_year(year1, year2, is_range):
-    if year2 is not None:
+def decode_is_range_year(year1, year2, is_range, for_web=False) -> str | None:
+    display_year = None
+
+    if for_web and year1 is not None and year2 is not None:
+        display_year = f'{year1} to {year2}'
+    elif year2 is not None:
         display_year = f'{year2} or before'
-    else:
+    elif year1 is not None:
         display_year = f'{year1}'
         if is_range == 1:
             display_year += ' or after'
