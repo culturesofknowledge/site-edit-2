@@ -216,7 +216,7 @@ class CofkCollectPerson(models.Model):
         db_table = 'cofk_collect_person'
         unique_together = (('upload', 'iperson_id'),)
 
-    def to_string(self, is_details=False) -> str:
+    def to_string(self) -> str:
         """
         Used by work.creators_for_display and work.addressees_for_display
         """
@@ -247,9 +247,6 @@ class CofkCollectPerson(models.Model):
             person += f', fl. {fos}'
 
         return person
-
-    #def __str__(self):
-    #    return str(self.union_iperson) if self.union_iperson is not None else f'{self.primary_name} (collect)'
 
 
 class CofkCollectOccupationOfPerson(models.Model):
@@ -393,12 +390,10 @@ class CofkCollectWork(models.Model):
     addressees_uncertain = models.SmallIntegerField(default=0)
     notes_on_addressees = models.TextField(blank=True, null=True)
     destination_id = models.IntegerField(blank=True, null=True)
-    # destination = models.ForeignKey('CofkCollectDestinationOfWork', models.CASCADE, blank=True, null=True)
     destination_as_marked = models.TextField(blank=True, null=True)
     destination_inferred = models.SmallIntegerField(default=0)
     destination_uncertain = models.SmallIntegerField(default=0)
     origin_id = models.IntegerField(blank=True, null=True)
-    # origin = models.ForeignKey('CofkCollectOriginOfWork', models.CASCADE, blank=True, null=True)
     origin_as_marked = models.TextField(blank=True, null=True)
     origin_inferred = models.SmallIntegerField(default=0)
     origin_uncertain = models.SmallIntegerField(default=0)
@@ -413,8 +408,7 @@ class CofkCollectWork(models.Model):
     upload_status = models.ForeignKey(CofkCollectStatus, models.SET_NULL,
                                       db_column='upload_status', null=True)
     editors_notes = models.TextField(blank=True, null=True)
-    _id = models.CharField(db_column='_id', max_length=32, blank=True,
-                           null=True)  # Field renamed because it started with '_'.
+    _id = models.CharField(db_column='_id', max_length=32, blank=True, null=True)
     date_of_work2_approx = models.SmallIntegerField(default=0)
     date_of_work2_inferred = models.SmallIntegerField(default=0)
     date_of_work2_uncertain = models.SmallIntegerField(default=0)
@@ -433,9 +427,6 @@ class CofkCollectWork(models.Model):
     class Meta:
         db_table = 'cofk_collect_work'
         unique_together = (('upload', 'iwork_id'),)
-
-    # def __str__(self):
-    #   return f'Work #{self.iwork_id}'
 
     @property
     def date_of_work_std(self):
