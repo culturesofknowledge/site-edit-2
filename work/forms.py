@@ -549,13 +549,16 @@ class CompactSearchFieldset(BasicSearchFieldset):
     work_to_be_deleted = form_serv.ZeroOneCheckboxField(required=False)
     work_to_be_deleted_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
-    work_id = SearchCharField(help_text=id_help_text)
-    work_id_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
+    iwork_id = SearchCharField(label=field_label_map['work']['iwork_id'], help_text=id_help_text)
+    iwork_id_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
 
 class ExpandedSearchFieldset(CompactSearchFieldset):
     title = 'Expanded Search'
     template_name = 'work/component/work_expanded_search_fieldset.html'
+
+    origin_as_marked = SearchCharField()
+    origin_as_marked_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     destination_as_marked = SearchCharField()
     destination_as_marked_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)

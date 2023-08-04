@@ -2,11 +2,11 @@
 {% load static cl_filters %}
 {% block content %}
 
-    <div class="col col--1of3" style="text-align: center;">
+    <div class="col col--1of3" class="align-center">
         <h1> {{ title }} </h1>
     </div>
 
-    <div id="user_messages" style="background: darkgray;">
+    <div id="user_messages">
         {% for to_user_msg in to_user_messages %}
             <h1>{{ to_user_msg }}</h1>
         {% endfor %}
@@ -97,7 +97,7 @@
                             {% endif %}
                         </div>
                         {# Only display search rendering selection for work #}
-                        {% if 'work' in entity %}
+                        {% if entity|first in 'work' %}
                             <div class="col col--1of2">
                                 <h3 class="sr-only">Layout</h3>
                                 <div class="align-right">

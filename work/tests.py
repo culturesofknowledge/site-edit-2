@@ -453,15 +453,15 @@ class WorkSearchTests(EmloSeleniumTestCase, CommonSearchTests):
             editors_notes=target_work.editors_notes,
             date_for_ordering='1122-11-22\nAs marked: work_dict_a.date_of_work_as_marked',
             author_sender='person aaaa b. 1921',
-            origin='location_name value',
+            origin='location_name value\n\nAs marked: origin_as_marked value',
             addressee='person bbbb d. 1922',
             destination='location_name value 2',
             uncertainties='',
             images='',
             manifestations='ABC. Postmark: postage_marks a. id_number_or_shelfmark a printed_edition_details a',
-            related_resources='resource_name a\nresource_name b',
+            related_resources='Resources:\nresource_name a\nresource_name b',
             subjects='Astronomy',
-            other_details='Abstract: abstract value\n\nLanguages: English (notes a), Japanese (notes b)\n\nNotes: comment a, comment b',
+            other_details='Keywords: keywords value\n\nAbstract: abstract value\n\nLanguages: English (notes a), Japanese (notes b)\n\nNotes: comment a, comment b',
             id=target_work.iwork_id,
         )
         assert_table_row(self, table_row_data_dict[target_work.iwork_id], expected_data)
@@ -500,7 +500,7 @@ class WorkSearchTests(EmloSeleniumTestCase, CommonSearchTests):
             'subjects': 'a',
             'keywords': 'a',
             # 'drawer': 'a',
-            'work_id': 'a',
+            'iwork_id': 'a',
             'change_timestamp_from': '1111',
             'change_timestamp_to': '1112',
         }

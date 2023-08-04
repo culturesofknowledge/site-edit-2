@@ -105,6 +105,41 @@ class DisplayablePerson(CofkUnionPerson):
         return get_display_dict_other_details(self, new_line=new_line)
 
 
+class SearchResultPerson(DisplayablePerson):
+    """
+    Some properties or functions used by the search page
+    """
+
+    class Meta:
+        proxy = True
+
+    def decode_year_range(self, year1, year2, is_range) -> str | None:
+        display_year = ''
+
+        if year1 is not None and year2 is not None:
+            display_year = f'{year1} to {year2}'
+        elif year2 is not None:
+            display_year = f'{year2} or before'
+        elif year1 is not None:
+            display_year = f'{year1}'
+            if is_range == 1:
+                display_year += ' or after'
+
+        return display_year
+
+    def flourished_year_range(self):
+        return self.decode_year_range(self.flourished_year, self.flourished2_year,
+                                      self.flourished_is_range)
+
+    def birth_year_range(self):
+        return self.decode_year_range(self.date_of_birth_year, self.date_of_birth2_year,
+                                      self.date_of_birth_is_range)
+
+    def death_year_range(self):
+        return self.decode_year_range(self.date_of_death_year, self.date_of_death2_year,
+                                      self.date_of_death_is_range)
+
+
 def decode_is_range_year(year1, year2, is_range):
     if year2 is not None:
         display_year = f'{year2} or before'

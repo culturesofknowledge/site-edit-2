@@ -31,7 +31,7 @@ from person.forms import PersonForm, GeneralSearchFieldset, PersonOtherRecrefFor
     search_person_or_group
 from person.models import CofkUnionPerson, CofkPersonPersonMap, create_person_id, \
     CofkPersonCommentMap, CofkPersonResourceMap, CofkPersonImageMap
-from person.person_serv import DisplayablePerson
+from person.person_serv import DisplayablePerson, SearchResultPerson
 from person.queries import create_sql_count_work_by_person
 from person.recref_adapter import PersonCommentRecrefAdapter, PersonResourceRecrefAdapter, PersonRoleRecrefAdapter, \
     ActivePersonRecrefAdapter, PassivePersonRecrefAdapter, PersonImageRecrefAdapter, PersonLocRecrefAdapter
@@ -260,11 +260,11 @@ def full_form(request, iperson_id):
         fhandler.img_recref_handler.save(fhandler.person_form.instance, request)
         form_serv.save_multi_rel_recref_formset(fhandler.person_other_formset, fhandler.person_form.instance, request)
         recref_serv.create_recref_if_field_exist(fhandler.person_form,
-                                                  fhandler.person_form.instance,
-                                                  request.user.username,
-                                                  selected_id_field_name='selected_other_id',
-                                                  rel_type=constant.REL_TYPE_UNSPECIFIED_RELATIONSHIP_WITH,
-                                                  recref_adapter=PersonOtherRecrefForm.create_recref_adapter())
+                                                 fhandler.person_form.instance,
+                                                 request.user.username,
+                                                 selected_id_field_name='selected_other_id',
+                                                 rel_type=constant.REL_TYPE_UNSPECIFIED_RELATIONSHIP_WITH,
+                                                 recref_adapter=PersonOtherRecrefForm.create_recref_adapter())
         fhandler.role_handler.save(request, fhandler.person_form.instance)
 
         fhandler.birth_loc_handler.upsert_recref_if_field_exist(
@@ -300,7 +300,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
                 'flourished_year_from': lambda _, v: GreaterThanOrEqual(F('flourished_year'), v),
                 'flourished_year_to': lambda _, v: LessThanOrEqual(F('flourished2_year'), v),
                 } | query_serv.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                        'change_timestamp')
+                                                       'change_timestamp')
 
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
@@ -319,7 +319,8 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             ('editors_notes', 'Editors\' notes',),
             ('further_reading', 'Further reading',),
             ('images', 'Images',),
-            ('other_details', 'Other details',),
+            # Other details is a collection of various relationships that is difficult to generate in db query
+            # ('other_details', 'Other details',),
             ('change_timestamp', 'Change Timestamp',),
             ('change_user', 'Change user',),
             ('iperson_id', 'Person or Group ID',),
@@ -394,7 +395,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
                 search_fields_fn_maps=search_field_fn_maps,
             )
         )
-        return create_queryset_by_queries(DisplayablePerson, queries, sort_by=sort_by)
+        return create_queryset_by_queries(SearchResultPerson, queries, sort_by=sort_by)
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
@@ -546,17 +547,17 @@ def lookup_other_details(lookup_fn, f, v):
 
         itertools.chain(
             query_serv.join_fields('cofkpersonlocationmap__location',
-                                    query_serv.location_detail_fields),
+                                   query_serv.location_detail_fields),
             query_serv.join_fields('active_relationships__related',
-                                    query_serv.person_detail_fields),
+                                   query_serv.person_detail_fields),
             query_serv.join_fields('passive_relationships__person',
-                                    query_serv.person_detail_fields),
+                                   query_serv.person_detail_fields),
             query_serv.join_fields('cofkpersoncommentmap__comment',
-                                    query_serv.comment_detail_fields),
+                                   query_serv.comment_detail_fields),
             query_serv.join_fields('cofkpersonresourcemap__resource',
-                                    query_serv.resource_detail_fields),
+                                   query_serv.resource_detail_fields),
             query_serv.join_fields('cofkpersonimagemap__image',
-                                    query_serv.image_detail_fields),
+                                   query_serv.image_detail_fields),
         ), v)
 
     return q
@@ -574,6 +575,6 @@ def create_queryset_by_queries(model_class: Type[models.Model], queries: Iterabl
     }
 
     queryset = query_serv.update_queryset(queryset, model_class, queries=queries,
-                                           annotate=annotate, sort_by=sort_by)
+                                          annotate=annotate, sort_by=sort_by)
 
     return queryset

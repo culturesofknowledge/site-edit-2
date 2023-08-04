@@ -41,6 +41,10 @@
   margin-bottom: 1vw;
 }
 
+#user_messages {
+  background-color: $light-grey;
+}
+
 tr.selectable_entry td ul {
   padding: 0 0 0 calc(.75 * 1rem);
   margin-top: 0;

@@ -216,6 +216,8 @@ class CofkUserSavedQuery(models.Model):
             return reverse(f'institution:{VNAME_SEARCH}')
         elif 'audit_trail' == self.query_class:
             return reverse(f'audit:{VNAME_SEARCH}')
+        elif 'uploader' == self.query_class:
+            return reverse('uploader:upload_works')
 
         return reverse(f'{self.query_class}:{VNAME_SEARCH}')
 

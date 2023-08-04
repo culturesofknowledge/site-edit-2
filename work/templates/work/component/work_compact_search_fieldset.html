@@ -85,7 +85,7 @@
     {{ form.work_to_be_deleted.errors }}
 
     <!-- Work ID -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.work_id field_lookup=form.work_id_lookup %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.iwork_id field_lookup=form.iwork_id_lookup %}
 
     <!-- Last edit -->
     {% include "core/component/search_fieldset/from_to_year.html" with title='Last edit' from_field=form.change_timestamp_from to_field=form.change_timestamp_to field_info=form.change_timestamp_info %}
