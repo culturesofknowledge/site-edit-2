@@ -104,28 +104,46 @@ class DisplayablePerson(CofkUnionPerson):
     def other_details_for_display(self, new_line='\n'):
         return get_display_dict_other_details(self, new_line=new_line)
 
-    @property
-    def flourished_for_display(self) -> str:
-        return decode_is_range_year(self.flourished_year, self.flourished2_year, self.flourished2_year, True)
-    @property
-    def person_birth_for_display(self) -> str:
-        return decode_is_range_year(self.date_of_birth_year, self.date_of_birth2_year,
-                                    self.date_of_birth_is_range, True)
 
-    @property
-    def person_death_for_display(self) -> str:
-        return decode_is_range_year(self.date_of_death_year, self.date_of_death2_year,
-                                    self.date_of_death_is_range, True)
+class SearchResultPerson(DisplayablePerson):
+    """
+    Some properties or functions used by the search page
+    """
+
+    class Meta:
+        proxy = True
+
+    def decode_year_range(self, year1, year2, is_range) -> str | None:
+        display_year = ''
+
+        if year1 is not None and year2 is not None:
+            display_year = f'{year1} to {year2}'
+        elif year2 is not None:
+            display_year = f'{year2} or before'
+        elif year1 is not None:
+            display_year = f'{year1}'
+            if is_range == 1:
+                display_year += ' or after'
+
+        return display_year
+
+    def flourished_year_range(self):
+        return self.decode_year_range(self.flourished_year, self.flourished2_year,
+                                      self.flourished_is_range)
+
+    def birth_year_range(self):
+        return self.decode_year_range(self.date_of_birth_year, self.date_of_birth2_year,
+                                      self.date_of_birth_is_range)
+
+    def death_year_range(self):
+        return self.decode_year_range(self.date_of_death_year, self.date_of_death2_year,
+                                      self.date_of_death_is_range)
 
 
-def decode_is_range_year(year1, year2, is_range, for_web=False) -> str | None:
-    display_year = None
-
-    if for_web and year1 is not None and year2 is not None:
-        display_year = f'{year1} to {year2}'
-    elif year2 is not None:
+def decode_is_range_year(year1, year2, is_range):
+    if year2 is not None:
         display_year = f'{year2} or before'
-    elif year1 is not None:
+    else:
         display_year = f'{year1}'
         if is_range == 1:
             display_year += ' or after'
