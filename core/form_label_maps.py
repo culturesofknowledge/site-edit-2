@@ -90,7 +90,7 @@ field_label_map = {
         'subjects': 'Subjects',
         'keywords': 'Keywords',
         'drawer': 'Drawer',
-        'work_id': 'Work ID', },
+        'iwork_id': 'Work ID', },
     'lang': {
         'code_639_3': '3-letter language code',
         'code_639_1': 'Alternative 2-letter code',

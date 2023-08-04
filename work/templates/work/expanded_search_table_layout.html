@@ -45,22 +45,22 @@
             </td>
             <td>
                 {% if r.creators_for_display %}
-                    {{ r.creators_for_display|safe }}
+                    {{ r.creators_for_display|linebreaksbr }}
                 {% endif %}
             </td>
             <td>
                 {% if r.places_from_for_display %}
-                    {{ r.places_from_for_display|safe }}
+                    {{ r.places_from_for_display|linebreaksbr }}
                 {% endif %}
             </td>
             <td>
                 {% if r.addressees_for_display %}
-                    {{ r.addressees_for_display|safe }}
+                    {{ r.addressees_for_display|linebreaksbr }}
                 {% endif %}
             </td>
             <td>
                 {% if r.places_to_for_display %}
-                    {{ r.places_to_for_display|safe }}
+                    {{ r.places_to_for_display|linebreaksbr }}
                 {% endif %}
             </td>
             <td>
@@ -81,8 +81,14 @@
                 {% endif %}
             </td>
             <td>
+                {% if r.related_works %}
+                    Matches:
+                    {{ r.related_works|display_resources }}
+                {% endif %}
+
                 {% if r.related_resources %}
-                    {{ r.related_resources|render_queryable_resources }}
+                    Resources:
+                    {{ r.related_resources|display_resources }}
                 {% endif %}
             </td>
             <td>
@@ -97,7 +103,7 @@
                 {% include 'core/component/search_table_layout/link_record.html' with id=r.iwork_id view='work:full_form' %}
             </td>
             <td>
-                {{ r.change_timestamp }} by {{ r.change_user }}<br/>
+                {{ r.change_timestamp|date:"d M Y H:i" }} by {{ r.change_user }}<br/>
                 Source: {{ r.accession_code }}<br/>
                 [{{ r.catalogue }}]
             </td>

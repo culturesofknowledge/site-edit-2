@@ -468,9 +468,10 @@ def build_search_components(sort_by_choices: list[tuple[str, str]], entity: str)
         num_record = forms.IntegerField(label=f'{entity} per page',
                                         widget=forms.Select(choices=[
                                             (10, 10),
-                                            (25, 25),
                                             (50, 50),
                                             (100, 100),
+                                            (250, 250),
+                                            (500, 500)
                                         ], attrs={'class': 'searchcontrol'}),
                                         required=False, )
         page = forms.IntegerField(widget=forms.HiddenInput())

@@ -3,7 +3,7 @@
 <table id="results_table">
     <colgroup>
         <col style="min-width: 100px">
-        <col style="min-width: 200px">
+        <col>
         <col>
         <col>
         <col>
@@ -49,27 +49,19 @@
         <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}"
             entry_id="{{ r.iperson_id }}" target="_blank">
             <td>
-                <a href="{% url 'person:full_form' r.iperson_id %}">
-                    {{ r.names_and_roles }}
-                </a>
+                {{ r.names_and_roles }}
             </td>
 
             <td>
-                {% if r.date_of_birth_year %}
-                    {{ r.date_of_birth_year }}
-                {% endif %}
+                {{ r.birth_year_range }}
             </td>
 
             <td>
-                {% if r.date_of_death_year %}
-                    {{ r.date_of_death_year }}
-                {% endif %}
+                {{ r.death_year_range }}
             </td>
 
             <td>
-                {% if r.flourished_year %}
-                    {{ r.flourished_year }}
-                {% endif %}
+                {{ r.flourished_year_range }}
             </td>
 
             <td>

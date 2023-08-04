@@ -25,6 +25,7 @@ from core.helper.view_serv import BasicSearchView, CommonInitFormViewTemplate, M
 from core.models import Recref
 from location import location_serv
 from location.forms import LocationForm, GeneralSearchFieldset
+from location.location_serv import DisplayableLocation
 from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap, CofkLocationImageMap
 from location.queries import create_sql_count_work_by_location
 from location.recref_adapter import LocationCommentRecrefAdapter, LocationResourceRecrefAdapter, \
@@ -200,8 +201,9 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
     def search_field_fn_maps(self) -> dict:
-        return query_serv.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                   'change_timestamp')
+        return query_serv.create_from_to_datetime('change_timestamp_from',
+                                                  'change_timestamp_to',
+                                                  'change_timestamp')
 
     @property
     def query_fieldset_list(self) -> Iterable:
@@ -217,7 +219,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
             ('recd', 'Rec\'d',),
             ('all_works', 'Sent or Rec\'d',),
             ('researchers_notes', 'Researchers\' notes',),
-            ('related_resources', 'Related resources',),
+            ('resources', 'Related resources',),
             ('latitude', 'Latitude',),
             ('longitude', 'Longitude',),
             ('element_1_eg_room', '1. E.g.room',),
@@ -234,7 +236,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
 
     def get_queryset(self):
         if not self.request_data:
-            return CofkUnionLocation.objects.none()
+            return DisplayableLocation.objects.none()
 
         return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
 
@@ -250,7 +252,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
             query_serv.create_queries_by_lookup_field(request_data, self.search_fields, search_fields_maps)
         )
 
-        return create_queryset_by_queries(CofkUnionLocation, queries, sort_by=sort_by)
+        return create_queryset_by_queries(DisplayableLocation, queries, sort_by=sort_by)
 
     @property
     def entity(self) -> str:

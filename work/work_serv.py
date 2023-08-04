@@ -153,17 +153,25 @@ class DisplayableWork(CofkUnionWork):
 
     @property
     def places_from_for_display(self) -> str:
-        # Derived value for CofkUnionQueryable
+        origin = ''
         if self.origin_location:
-            return str(self.origin_location)
-        return ''
+            origin = str(self.origin_location)
+
+        if self.origin_as_marked:
+            origin += f'\n\nAs marked: {self.origin_as_marked}'
+
+        return origin
 
     @property
     def places_to_for_display(self) -> str:
-        # Derived value for CofkUnionQueryable
+        destination = ''
         if self.destination_location:
-            return str(self.destination_location)
-        return ''
+            destination = str(self.destination_location)
+
+        if self.destination_as_marked:
+            destination += f'\n\nAs marked: {self.destination_as_marked}'
+
+        return destination
 
     @property
     def manifestations_for_display(self):
@@ -199,20 +207,27 @@ class DisplayableWork(CofkUnionWork):
         return self.queryable_people(REL_TYPE_MENTION)
 
     @property
-    def related_resources(self):
-        '''
-        This field combines related resources and related works.
-        '''
+    def related_works(self) -> str:
+        start = 'xxxCofkLinkStartxxx'
+        end = 'xxxCofkLinkEndxxx'
+        start_href = 'xxxCofkHrefStartxxx'
+        end_href = 'xxxCofkHrefEndxxx'
+        works = ''
+
+        if to_works := self.work_to_set.all():
+            works += ", ".join([
+                f'{start}{start_href}{reverse("work:overview_form", args=[t.work_from.iwork_id])}{end_href}{t.work_from.description}{end}'
+                for t in to_works])
+
+        return works
+
+    @property
+    def related_resources(self) -> str:
         start = 'xxxCofkLinkStartxxx'
         end = 'xxxCofkLinkEndxxx'
         start_href = 'xxxCofkHrefStartxxx'
         end_href = 'xxxCofkHrefEndxxx'
         resources = ''
-
-        if to_works := self.work_to_set.all():
-            resources += ", ".join([
-                f'{start}{start_href}{reverse("work:overview_form", args=[t.work_from.iwork_id])}{end_href}{t.work_from.description}{end}'
-                for t in to_works])
 
         if linked_resources := self.cofkworkresourcemap_set.all():
             resources += ", ".join(
@@ -224,6 +239,9 @@ class DisplayableWork(CofkUnionWork):
     @property
     def other_details(self):
         _other_details = []
+
+        if self.keywords:
+            _other_details.append(f'<strong>Keywords</strong>: {self.keywords}')
 
         if self.abstract:
             _other_details.append(f'<strong>Abstract</strong>: {self.abstract}')

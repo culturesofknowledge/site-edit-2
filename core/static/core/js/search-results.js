@@ -294,10 +294,12 @@ $(window).on('submit', function (e) {
     // to clutter the resulting URL unnecessarily
     Array.from(e.target.elements).forEach(function (l) {
         if (l.className.indexOf('searchfield') > -1 && l.value === '') {
-            l.disabled = true;
+            var lookup = e.target.elements[l.name + '_lookup'];
 
-            if (e.target.elements[l.name + '_lookup']) {
-                e.target.elements[l.name + '_lookup'].disabled = true;
+            if (lookup && lookup.value.indexOf('blank') === -1) {
+                // Do not disable if user is searching for blank/not blank
+                l.disabled = true;
+                lookup.disabled = true;
             }
         }
     });
