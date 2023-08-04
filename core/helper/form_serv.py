@@ -509,11 +509,11 @@ class EmloLineboxField(CommonTextareaField):
         self.delimiter = kwargs.pop('delimiter', '; ')
 
     def prepare_value(self, value):
-        new_value = re.sub(self.delimiter, '\r\n', value)
+        new_value = value and re.sub(self.delimiter, '\r\n', value)
         return super().prepare_value(new_value)
 
     def clean(self, value):
-        new_value = re.sub(r'\r?\n', self.delimiter, value)
+        new_value = value and re.sub(r'\r?\n', self.delimiter, value)
         return super().clean(new_value)
 
 
