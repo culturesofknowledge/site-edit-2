@@ -63,10 +63,6 @@ from work.work_serv import DisplayableWork
 log = logging.getLogger(__name__)
 
 
-def get_location_id(model: models.Model):
-    return model and model.location_id
-
-
 def create_search_fn_person_recref(rel_types: list) -> Callable:
     def _fn(f, v):
         return Q(**{
@@ -77,51 +73,14 @@ def create_search_fn_person_recref(rel_types: list) -> Callable:
     return _fn
 
 
-def create_lookup_fn_by_person(rel_types: list, fields: list[str] = query_serv.person_detail_fields) -> Callable:
-    return create_recref_lookup_fn(rel_types, 'cofkworkpersonmap__person', fields)
-
-
 def create_lookup_fn_by_comment(rel_types: list) -> Callable:
     return create_recref_lookup_fn(rel_types, 'cofkworkcommentmap__comment',
                                    query_serv.comment_detail_fields)
 
 
-def create_lookup_fn_by_location(rel_types: list, fields: list[str] = query_serv.location_detail_fields) -> Callable:
-    return create_recref_lookup_fn(rel_types, 'cofkworklocationmap__location', fields)
-
-
-def create_lookup_fn_by_image(rel_types: list) -> Callable:
-    return create_recref_lookup_fn(rel_types, 'manif_set__image',
-                                   query_serv.image_detail_fields)
-
-
 def create_lookup_fn_by_resource(rel_types: list) -> Callable:
     return create_recref_lookup_fn(rel_types, 'cofkworkresourcemap__resource',
                                    query_serv.resource_detail_fields)
-
-
-def create_people_lookups(request_data, field_pairs: list[tuple]) -> dict:
-    people_lookups = {}
-
-    for field_pair in field_pairs:
-        if request_data.get(f'{field_pair[0]}_lookup') in ['starts_with', 'not_start_with']:
-            people_lookups[field_pair[0]] = create_lookup_fn_by_person(field_pair[1], ['foaf_name'])
-        else:
-            people_lookups[field_pair[0]] = create_lookup_fn_by_person(field_pair[1])
-
-    return people_lookups
-
-
-def create_location_lookups(request_data, field_pairs: list[tuple]) -> dict:
-    location_lookups = {}
-
-    for field_pair in field_pairs:
-        if request_data.get(f'{field_pair[0]}_lookup') in ['starts_with', 'not_start_with']:
-            location_lookups[field_pair[0]] = create_lookup_fn_by_location(field_pair[1], ['location_name'])
-        else:
-            location_lookups[field_pair[0]] = create_lookup_fn_by_location(field_pair[1])
-
-    return location_lookups
 
 
 def lookup_fn_flags(lookup_fn, field_name, value):

@@ -24,7 +24,7 @@ from django.views.generic import ListView
 import core.constant as core_constant
 from core import constant
 from core.form_label_maps import field_label_map
-from core.helper import query_serv, general_model_serv, recref_serv, model_serv, \
+from core.helper import general_model_serv, recref_serv, model_serv, \
     url_serv, date_serv, perm_serv, media_serv
 from core.helper.form_serv import build_search_components
 from core.helper.model_serv import ModelLike, RecordTracker
@@ -34,7 +34,7 @@ from core.helper.url_serv import VNAME_FULL_FORM, VNAME_SEARCH
 from core.helper.view_components import DownloadCsvHandler
 from core.models import CofkUnionResource, CofkUnionComment, CofkUserSavedQuery, CofkUserSavedQuerySelection
 from sharedlib import inspect_utils, str_utils
-from sharedlib.djangolib import django_utils, email_utils
+from sharedlib.djangolib import django_utils, email_utils, query_utils
 from work.models import CofkUnionWork
 
 if TYPE_CHECKING:
@@ -247,7 +247,7 @@ class BasicSearchView(ListView):
         queryset = model_class.objects.all()
 
         if queries:
-            queryset = queryset.filter(query_serv.all_queries_match(queries))
+            queryset = queryset.filter(query_utils.all_queries_match(queries))
 
         if sort_by is None:
             sort_by = self.get_sort_by()

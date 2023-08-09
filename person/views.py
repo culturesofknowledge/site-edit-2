@@ -542,22 +542,22 @@ class PersonDeleteConfirmView(LoginRequiredMixin, DeleteConfirmView):
 
 
 def lookup_other_details(lookup_fn, f, v):
-    q = query_serv.create_q_by_field_names(
+    q = query_utils.create_q_by_field_names(
         lookup_fn,
 
         itertools.chain(
-            query_serv.join_fields('cofkpersonlocationmap__location',
-                                   query_serv.location_detail_fields),
-            query_serv.join_fields('active_relationships__related',
-                                   query_serv.person_detail_fields),
-            query_serv.join_fields('passive_relationships__person',
-                                   query_serv.person_detail_fields),
-            query_serv.join_fields('cofkpersoncommentmap__comment',
-                                   query_serv.comment_detail_fields),
-            query_serv.join_fields('cofkpersonresourcemap__resource',
-                                   query_serv.resource_detail_fields),
-            query_serv.join_fields('cofkpersonimagemap__image',
-                                   query_serv.image_detail_fields),
+            query_utils.join_fields('cofkpersonlocationmap__location',
+                                    query_serv.location_detail_fields),
+            query_utils.join_fields('active_relationships__related',
+                                    query_serv.person_detail_fields),
+            query_utils.join_fields('passive_relationships__person',
+                                    query_serv.person_detail_fields),
+            query_utils.join_fields('cofkpersoncommentmap__comment',
+                                    query_serv.comment_detail_fields),
+            query_utils.join_fields('cofkpersonresourcemap__resource',
+                                    query_serv.resource_detail_fields),
+            query_utils.join_fields('cofkpersonimagemap__image',
+                                    query_serv.image_detail_fields),
         ), v)
 
     return q
