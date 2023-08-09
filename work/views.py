@@ -5,9 +5,8 @@ from typing import Iterable, Any, Type
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.postgres.aggregates import StringAgg
 from django.db import models
-from django.db.models import F, Q, Case, When, Value, OuterRef, CharField
+from django.db.models import F, Q, Case, When, Value, OuterRef
 from django.db.models.lookups import Exact
 from django.forms import BaseForm
 from django.shortcuts import render, get_object_or_404, redirect
@@ -35,7 +34,7 @@ from core.helper.recref_serv import create_recref_if_field_exist
 from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_serv import DefaultSearchView
-from core.models import Recref, CofkLookupCatalogue
+from core.models import Recref, CofkLookupCatalogue, CofkLookupDocumentType
 from institution import inst_serv
 from location import location_serv
 from location.models import CofkUnionLocation
@@ -990,7 +989,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             ('language_of_work', 'Language of work',),
             ('change_user', 'Last changed by',),
             ('change_timestamp', 'Last edit',),
-            # ('manifestations_searchable', 'Manifestations',),
+            ('manifestations_searchable', 'Manifestations',),
             ('date_of_work_std_month', 'Month',),
             ('places_from_searchable', 'Origin (standardised)',),
             ('origin_as_marked', 'Origin as marked',),
@@ -1039,17 +1038,6 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         queries = query_serv.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
 
         search_fields_maps = {
-            'manifestations_searchable': [
-                'manif_set__manifestation_type',
-                'manif_set__postage_marks',
-                'manif_set__id_number_or_shelfmark',
-                'manif_set__printed_edition_details',
-                'manif_set__manifestation_incipit',
-                'manif_set__manifestation_excipit',
-                'manif_set__cofkmanifinstmap_set__inst__institution_name',
-                'manif_set__manif_from_set__manif_to__id_number_or_shelfmark',
-                'manif_set__manif_to_set__manif_from__id_number_or_shelfmark',
-            ],
             'language_of_work': [
                 'language_set__language_code__language_name',
                 'language_set__language_code__code_639_3',
@@ -1082,8 +1070,8 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         simplified_query = super().simplified_query
 
         if self.search_field_fn_maps:
-            work_to_be_deleted = self.request_data[
-                'work_to_be_deleted'] if 'work_to_be_deleted' in self.request_data else None
+            work_to_be_deleted = (self.request_data['work_to_be_deleted']
+                                  if 'work_to_be_deleted' in self.request_data else None)
 
             if work_to_be_deleted:
                 if work_to_be_deleted == 'on':
@@ -1267,7 +1255,7 @@ def create_joined_person_ann_field(relationship_types):
                              default=Value('')),
         '_birth_range': Case(When(cofkworkpersonmap__person__date_of_birth_is_range=1, then=Value(' or before')),
                              default=Value('')),
-        'person_detail': StringAgg(query_utils.concat_safe([
+        'person_detail': query_utils.join_values_for_search([
             'cofkworkpersonmap__person__foaf_name',
             'cofkworkpersonmap__person__date_of_birth_year',
             '_birth_range',
@@ -1275,7 +1263,7 @@ def create_joined_person_ann_field(relationship_types):
             '_death_range',
             'cofkworkpersonmap__person__skos_altlabel',
             'cofkworkpersonmap__person__person_aliases',
-        ]), '', default=Value(''), output_field=CharField()),
+        ]),
     }).values_list('person_detail', flat=True)
     return subquery
 
@@ -1285,13 +1273,34 @@ def create_joined_location_ann_field(relationship_types, target_fields: list[str
         cofkworklocationmap__work_id=OuterRef('pk'),
         cofkworklocationmap__relationship_type__in=relationship_types,
     ).annotate(**{
-        'location_detail': StringAgg(query_utils.concat_safe([
+        'location_detail': query_utils.join_values_for_search([
             'cofkworklocationmap__location__location_name',
             'origin_as_marked',
             'destination_as_marked',
-
-        ]), '', default=Value(''), output_field=CharField()),
+        ])
     }).values_list('location_detail', flat=True)
+    return subquery
+
+
+def create_joined_manif_ann_field():
+    subquery = CofkUnionWork.objects.filter(
+        manif_set__work_id=OuterRef('pk'),
+    ).annotate(
+        _doctype_desc=(CofkLookupDocumentType.objects
+                       .filter(document_type_code=OuterRef('manif_set__manifestation_type'))
+                       .values_list('document_type_desc', flat=True)),
+        manif_detail=query_utils.join_values_for_search([
+            '_doctype_desc',
+            'manif_set__postage_marks',
+            'manif_set__cofkmanifinstmap_set__inst__institution_name',
+            'manif_set__id_number_or_shelfmark',
+            'manif_set__printed_edition_details',
+            'manif_set__manifestation_incipit',
+            'manif_set__manifestation_excipit',
+            'manif_set__manif_from_set__manif_to__id_number_or_shelfmark',
+            'manif_set__manif_to_set__manif_from__id_number_or_shelfmark',
+        ])
+    ).values_list('manif_detail', flat=True)
     return subquery
 
 
@@ -1325,7 +1334,7 @@ def create_queryset_by_queries(model_class: Type[models.Model], queries: Iterabl
                 'destination_as_marked',
             ]
         ),
-
+        'manifestations_searchable': create_joined_manif_ann_field(),
     }
 
     queryset = model_class.objects.filter()
