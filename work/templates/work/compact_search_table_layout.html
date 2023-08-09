@@ -54,7 +54,7 @@
             </td>
             <td>
                 {% if r.related_resources %}
-                    {{ r.related_resources|render_queryable_resources }}
+                    {{ r.related_resources|display_resources }}
                 {% endif %}
             </td>
             <td>
