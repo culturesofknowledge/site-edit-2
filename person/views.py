@@ -5,7 +5,7 @@ from typing import Callable, Iterable, Type, Any, NoReturn, TYPE_CHECKING, List
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db import models
-from django.db.models import F, Q
+from django.db.models import F, Q, OuterRef
 from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual, Exact
 from django.forms import BaseForm
 from django.shortcuts import render, redirect, get_object_or_404
@@ -36,6 +36,7 @@ from person.queries import create_sql_count_work_by_person
 from person.recref_adapter import PersonCommentRecrefAdapter, PersonResourceRecrefAdapter, PersonRoleRecrefAdapter, \
     ActivePersonRecrefAdapter, PassivePersonRecrefAdapter, PersonImageRecrefAdapter, PersonLocRecrefAdapter
 from person.view_components import PersonFormDescriptor
+from sharedlib.djangolib import query_utils
 from work.forms import AuthorRelationChoices, AddresseeRelationChoices
 
 if TYPE_CHECKING:
@@ -328,12 +329,11 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
     def search_field_combines(self) -> dict[str: List[str]]:
-        return {'names_and_titles': ['foaf_name', 'skos_altlabel', 'skos_hiddenlabel', 'person_aliases',
-                                     'roles__role_category_desc'],  # names and roles search
-                'roles': ['roles__role_category_desc'],
-                'images': ['images__image_filename'],
-                'organisation_type': ['organisation_type__org_type_desc'],
-                }
+        return {
+            'roles': ['roles__role_category_desc'],
+            'images': ['images__image_filename'],
+            'organisation_type': ['organisation_type__org_type_desc'],
+        }
 
     @property
     def merge_page_vname(self) -> str:
@@ -565,13 +565,27 @@ def lookup_other_details(lookup_fn, f, v):
 
 def create_queryset_by_queries(model_class: Type[models.Model], queries: Iterable[Q] = None, sort_by=None):
     queryset = model_class.objects
-
     annotate = {
         'sent': create_sql_count_work_by_person(AuthorRelationChoices.values),
         'recd': create_sql_count_work_by_person(AddresseeRelationChoices.values),
         'all_works': create_sql_count_work_by_person(
             AuthorRelationChoices.values + AddresseeRelationChoices.values),
         'mentioned': create_sql_count_work_by_person([REL_TYPE_MENTION]),
+
+        'rolenames': CofkUnionPerson.objects.filter(
+            cofkpersonrolemap__person_id=OuterRef('pk'),
+        )
+        .annotate(_rolenames=query_utils.join_values_for_search('cofkpersonrolemap__role__role_category_desc'))
+        .values_list('_rolenames', flat=True),
+        'names_and_titles': query_utils.concat_safe(
+            [
+                'foaf_name',
+                'skos_altlabel',
+                'person_aliases',
+                'rolenames',
+            ]
+        )
+
     }
 
     queryset = query_serv.update_queryset(queryset, model_class, queries=queries,
