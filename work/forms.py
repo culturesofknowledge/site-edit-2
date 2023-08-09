@@ -563,8 +563,9 @@ class ExpandedSearchFieldset(CompactSearchFieldset):
     destination_as_marked = SearchCharField()
     destination_as_marked_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
-    mentioned_searchale = SearchCharField(help_text='This field contains a list of people mentioned within a work.')
-    mentioned_searchale_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
+    mentioned_searchable = SearchCharField(label=field_label_map['work']['mentioned_searchable'],
+                                           help_text='This field contains a list of people mentioned within a work.')
+    mentioned_searchable_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     keywords = SearchCharField(help_text=keywords_help_text)
     keywords_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)

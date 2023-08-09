@@ -83,7 +83,7 @@ field_label_map = {
         'general_notes': 'General notes',
         'original_catalogue': 'Original catalogue',
         'accession_code': 'Source of record',
-        'people_mentioned': 'People mentioned',
+        'mentioned_searchable': 'People mentioned',
         'origin_as_marked': 'Origin as marked',
         'destination_as_marked': 'Destination as marked',
         'subjects': 'Subjects',

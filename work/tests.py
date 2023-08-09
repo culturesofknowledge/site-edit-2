@@ -494,7 +494,7 @@ class WorkSearchTests(EmloSeleniumTestCase, CommonSearchTests):
             'general_notes': 'a',
             'original_catalogue': 'a',
             'accession_code': 'a',
-            'people_mentioned': 'a',
+            'mentioned_searchable': 'a',
             # 'origin_as_marked': 'a',
             'destination_as_marked': 'a',
             'subjects': 'a',
