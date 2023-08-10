@@ -1,4 +1,3 @@
-import datetime
 import logging
 from datetime import date
 from typing import Any
@@ -7,10 +6,8 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
-from core import constant
 from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, \
     REL_TYPE_MENTION
-from core.models import CofkLookupCatalogue
 from location import location_serv
 from person import person_serv
 from siteedit2.serv.log_serv import log_no_url
@@ -86,35 +83,6 @@ def create_work_id(iwork_id) -> str:
 def get_checked_form_url_by_pk(pk):
     if work := CofkUnionWork.objects.get(pk=pk):
         return reverse('work:full_form', args=[work.iwork_id])
-
-
-def _get_original_catalogue_val(work: CofkUnionWork, field_name):
-    if work.original_catalogue_id:
-        return work.original_catalogue.catalogue_code
-    else:
-        cat = CofkLookupCatalogue.objects.filter(catalogue_code='').first()
-        return cat.catalogue_code if cat else ''
-
-
-special_clone_fields = {
-    'original_catalogue': _get_original_catalogue_val,
-    'date_of_work_std': lambda w, n: datetime.datetime.strptime(
-        w.date_of_work_std or constant.DEFAULT_EMPTY_DATE_STR,
-        constant.STD_DATE_FORMAT).date(),
-}
-
-
-def _get_clone_value_default(work: CofkUnionWork, field_name):
-    return getattr(work, field_name)
-
-
-def _get_clone_value(work: CofkUnionWork, field_name):
-    val_fn = special_clone_fields.get(field_name, _get_clone_value_default)
-    return val_fn(work, field_name)
-
-
-def reload_work(work: CofkUnionWork) -> CofkUnionWork | None:
-    return CofkUnionWork.objects.filter(pk=work.pk).first()
 
 
 def get_display_id(work: CofkUnionWork):
