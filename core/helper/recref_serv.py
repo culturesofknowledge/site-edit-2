@@ -4,12 +4,11 @@ import typing
 from typing import Callable, Any, Optional
 from typing import Type, Iterable
 
-from django.core.cache import cache
 from django.db.models import Model, Q
 from django.db.models.fields.related_descriptors import ForwardManyToOneDescriptor
 from django.forms import BaseForm
 
-from core.helper import model_serv
+from core.helper import model_serv, query_cache_serv
 from core.helper.model_serv import ModelLike
 from core.models import Recref, CofkUnionRelationshipType
 from core.recref_settings import recref_left_right_list
@@ -206,12 +205,8 @@ def prefetch_filter_rel_type(recref_set, rel_types: str | Iterable[str]) -> Iter
 
 
 def get_all_union_relationship_types(expires=10800) -> list[CofkUnionRelationshipType]:
-    key = 'all_union_relationship_types'
-    result = cache.get(key)
-    if result is None:
-        result = list(CofkUnionRelationshipType.objects.all())
-        cache.set(key, result, expires)
-    return result
+    return query_cache_serv.load_cache(query_cache_serv.ck_all_union_relationship_types,
+                                       lambda: list(CofkUnionRelationshipType.objects.all()))
 
 
 def find_relationship_type(relationship_code: str) -> CofkUnionRelationshipType | None:

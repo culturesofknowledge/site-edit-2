@@ -2,6 +2,7 @@ import functools
 from typing import Iterable, Callable
 
 from django.contrib.postgres.aggregates import StringAgg
+from django.core.cache import cache
 from django.db.models import TextField, Value, Q, Lookup, F, lookups, Exists, OuterRef
 from django.db.models.functions import Concat, Cast
 
@@ -61,6 +62,7 @@ def cond_not(lookup_fn: Callable) -> Callable:
     """
     add not condition to lookup_fn
     """
+
     def _fn(field, val):
         q = lookup_fn(F(field), val)
         if not isinstance(q, Q):
@@ -87,3 +89,11 @@ def create_exists_by_mode(model_class, queries, annotate: dict = None) -> Exists
             pk=OuterRef('pk'),
         )
     )
+
+
+def load_cache(key, data_fn, expires=10800):
+    result = cache.get(key)
+    if result is None:
+        result = data_fn()
+        cache.set(key, result, expires)
+    return result

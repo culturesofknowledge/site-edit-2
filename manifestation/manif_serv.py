@@ -1,7 +1,6 @@
 from typing import Union
 
-from core.helper import model_serv
-from core.models import CofkLookupDocumentType
+from core.helper import model_serv, query_cache_serv
 from manifestation.models import CofkUnionManifestation
 
 
@@ -18,10 +17,7 @@ def create_manif_id(iwork_id) -> str:
 
 
 def get_doctype_desc(manif: Union['CofkUnionManifestation', 'CofkCollectManifestation']) -> str:
-    if doctype := CofkLookupDocumentType.objects.filter(document_type_code=manif.manifestation_type).first():
-        return doctype.document_type_desc
-    else:
-        return manif.manifestation_type
+    return query_cache_serv.create_lookup_doc_desc_map().get(manif.manifestation_type, manif.manifestation_type)
 
 
 def get_manif_details(manif: CofkUnionManifestation) -> list[str]:
