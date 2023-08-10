@@ -177,6 +177,10 @@
 
 
         window.on_form_completed = function (data) {
+            /*
+            this is for button 'Save and Close',
+            form page in new tab can all this function to reload the search page
+             */
             location.reload()
         }
         $('.open-link-btn').each(function (index, ele) {
