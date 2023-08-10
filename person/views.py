@@ -590,5 +590,15 @@ def create_queryset_by_queries(model_class: Type[models.Model], queries: Iterabl
 
     queryset = query_serv.update_queryset(queryset, model_class, queries=queries,
                                           annotate=annotate, sort_by=sort_by)
+    queryset = queryset.prefetch_related(
+        'cofkpersonlocationmap_set__location',
+        'cofkpersoncommentmap_set__comment',
+        'roles',
+        'resources',
+        'images',
+        'comments',
+        'active_relationships__related',
+        'passive_relationships__person',
+    )
 
     return queryset
