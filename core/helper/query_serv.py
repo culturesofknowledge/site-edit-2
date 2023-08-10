@@ -102,12 +102,20 @@ def create_queries_by_lookup_field(request_data: dict,
             yield run_lookup_fn(lookup_fn, field_name, field_val)
 
 
+def lookup_icontains_wildcard(field, value):
+    field = F(field)
+    if isinstance(value, str) and '%' in value:
+        return lookups.IRegex(field, value.replace('%', '.*'))
+    else:
+        return lookups.IContains(field, value)
+
+
 choices_lookup_map = {
-    'contains': lookups.IContains,
+    'contains': lookup_icontains_wildcard,
     'starts_with': lookups.IStartsWith,
     'ends_with': lookups.IEndsWith,
     'equals': lookups.IExact,
-    'not_contain': cond_not(lookups.IContains),
+    'not_contain': cond_not(lookup_icontains_wildcard),
     'not_start_with': cond_not(lookups.IStartsWith),
     'not_end_with': cond_not(lookups.IEndsWith),
     'not_equal_to': cond_not(lookups.IExact),
