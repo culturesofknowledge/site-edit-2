@@ -204,7 +204,7 @@ def prefetch_filter_rel_type(recref_set, rel_types: str | Iterable[str]) -> Iter
             yield recref
 
 
-def get_all_union_relationship_types(expires=10800) -> list[CofkUnionRelationshipType]:
+def get_all_union_relationship_types() -> list[CofkUnionRelationshipType]:
     return query_cache_serv.load_cache(query_cache_serv.ck_all_union_relationship_types,
                                        lambda: list(CofkUnionRelationshipType.objects.all()))
 
