@@ -14,6 +14,7 @@ from django.core.management import BaseCommand
 from django.db.models import Count, Q
 from django.utils.html import strip_tags
 
+import person.subqueries
 import person.views
 from core import constant
 from core.constant import REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE_MENTION
@@ -22,7 +23,7 @@ from core.helper.view_components import HeaderValues, DownloadCsvHandler
 from core.models import CofkUnionImage, CofkUnionRelationshipType, CofkUnionComment, CofkUnionResource
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
-from location.queries import create_sql_count_work_by_location
+from location.subqueries import create_sql_count_work_by_location
 from manifestation.models import CofkUnionManifestation
 from person import person_serv
 from person.models import CofkUnionPerson
@@ -709,7 +710,7 @@ def export_all(output_dir: str = '.'):
          LocationFrontendCsv, CofkUnionLocation),
         (lambda: CofkUnionManifestation.objects.iterator(),
          ManifFrontendCsv, CofkUnionManifestation),
-        (lambda: person.views.create_queryset_by_queries(CofkUnionPerson, ).iterator(),
+        (lambda: person.subqueries.create_queryset_by_queries(CofkUnionPerson, ).iterator(),
          PersonFrontendCsv, CofkUnionPerson),
         (lambda: CofkUnionRelationshipType.objects.iterator(),
          RelTypeFrontendCsv, CofkUnionRelationshipType),

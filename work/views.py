@@ -5,8 +5,7 @@ from typing import Iterable, Any, Type
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db import models
-from django.db.models import F, Q, Case, When, Value, OuterRef
+from django.db.models import F, Q, Model
 from django.db.models.lookups import Exact
 from django.forms import BaseForm
 from django.shortcuts import render, get_object_or_404, redirect
@@ -34,7 +33,7 @@ from core.helper.recref_serv import create_recref_if_field_exist
 from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_serv import DefaultSearchView
-from core.models import Recref, CofkLookupCatalogue, CofkLookupDocumentType
+from core.models import Recref, CofkLookupCatalogue
 from institution import inst_serv
 from location import location_serv
 from location.models import CofkUnionLocation
@@ -44,8 +43,7 @@ from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, \
     CofkUnionLanguageOfManifestation, CofkManifImageMap
 from person import person_serv
 from person.models import CofkUnionPerson
-from sharedlib.djangolib import query_utils
-from work import work_serv
+from work import work_serv, subqueries
 from work.forms import WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \
     ManifPersonRecrefAdapter, ScribeRelationChoices, \
@@ -1198,94 +1196,29 @@ class WorkCsvHeaderValues(HeaderValues):
         return values
 
 
-def create_joined_person_ann_field(relationship_types):
-    """
-    make person searchable by StringAgg and concat target fields
-    one work can have multiple person, that is reason why we need to use StringAgg
-
-    list of target fields should be same as output in frontend
-    which should be able to find in CofkUnionPerson.to_string
-    """
-    subquery = CofkUnionWork.objects.filter(
-        cofkworkpersonmap__work_id=OuterRef('pk'),
-        cofkworkpersonmap__relationship_type__in=relationship_types,
-    ).annotate(**{
-        '_death_range': Case(When(cofkworkpersonmap__person__date_of_death_is_range=1, then=Value(' or after')),
-                             default=Value('')),
-        '_birth_range': Case(When(cofkworkpersonmap__person__date_of_birth_is_range=1, then=Value(' or before')),
-                             default=Value('')),
-        'person_detail': query_utils.join_values_for_search([
-            'cofkworkpersonmap__person__foaf_name',
-            'cofkworkpersonmap__person__date_of_birth_year',
-            '_birth_range',
-            'cofkworkpersonmap__person__date_of_death_year',
-            '_death_range',
-            'cofkworkpersonmap__person__skos_altlabel',
-            'cofkworkpersonmap__person__person_aliases',
-        ]),
-    }).values_list('person_detail', flat=True)
-    return subquery
-
-
-def create_joined_location_ann_field(relationship_types, target_fields: list[str]):
-    subquery = CofkUnionWork.objects.filter(
-        cofkworklocationmap__work_id=OuterRef('pk'),
-        cofkworklocationmap__relationship_type__in=relationship_types,
-    ).annotate(**{
-        'location_detail': query_utils.join_values_for_search([
-            'cofkworklocationmap__location__location_name',
-            'origin_as_marked',
-            'destination_as_marked',
-        ])
-    }).values_list('location_detail', flat=True)
-    return subquery
-
-
-def create_joined_manif_ann_field():
-    subquery = CofkUnionWork.objects.filter(
-        manif_set__work_id=OuterRef('pk'),
-    ).annotate(
-        _doctype_desc=(CofkLookupDocumentType.objects
-                       .filter(document_type_code=OuterRef('manif_set__manifestation_type'))
-                       .values_list('document_type_desc', flat=True)),
-        manif_detail=query_utils.join_values_for_search([
-            '_doctype_desc',
-            'manif_set__postage_marks',
-            'manif_set__cofkmanifinstmap_set__inst__institution_name',
-            'manif_set__id_number_or_shelfmark',
-            'manif_set__printed_edition_details',
-            'manif_set__manifestation_incipit',
-            'manif_set__manifestation_excipit',
-            'manif_set__manif_from_set__manif_to__id_number_or_shelfmark',
-            'manif_set__manif_to_set__manif_from__id_number_or_shelfmark',
-        ])
-    ).values_list('manif_detail', flat=True)
-    return subquery
-
-
-def create_queryset_by_queries(model_class: Type[models.Model], queries: Iterable[Q] = None,
+def create_queryset_by_queries(model_class: Type[Model], queries: Iterable[Q] = None,
                                sort_by=None):
     # some fields in annotate for sorting and filtering, it could be different with frontend display
     annotate = {
-        'addressees_searchable': create_joined_person_ann_field([REL_TYPE_WAS_ADDRESSED_TO]),
-        'creators_searchable': create_joined_person_ann_field([REL_TYPE_CREATED]),
-        'mentioned_searchable': create_joined_person_ann_field([REL_TYPE_MENTION]),
-        'sender_or_recipient': create_joined_person_ann_field([REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO]),
-        'places_from_searchable': create_joined_location_ann_field(
+        'addressees_searchable': subqueries.create_joined_person_ann_field([REL_TYPE_WAS_ADDRESSED_TO]),
+        'creators_searchable': subqueries.create_joined_person_ann_field([REL_TYPE_CREATED]),
+        'mentioned_searchable': subqueries.create_joined_person_ann_field([REL_TYPE_MENTION]),
+        'sender_or_recipient': subqueries.create_joined_person_ann_field([REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO]),
+        'places_from_searchable': subqueries.create_joined_location_ann_field(
             [REL_TYPE_WAS_SENT_FROM],
             [
                 'cofkworklocationmap__location__location_name',
                 'origin_as_marked',
             ]
         ),
-        'places_to_searchable': create_joined_location_ann_field(
+        'places_to_searchable': subqueries.create_joined_location_ann_field(
             [REL_TYPE_WAS_SENT_TO],
             [
                 'cofkworklocationmap__location__location_name',
                 'destination_as_marked',
             ]
         ),
-        'origin_or_destination': create_joined_location_ann_field(
+        'origin_or_destination': subqueries.create_joined_location_ann_field(
             [REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM],
             [
                 'cofkworklocationmap__location__location_name',
@@ -1293,7 +1226,7 @@ def create_queryset_by_queries(model_class: Type[models.Model], queries: Iterabl
                 'destination_as_marked',
             ]
         ),
-        'manifestations_searchable': create_joined_manif_ann_field(),
+        'manifestations_searchable': subqueries.create_joined_manif_ann_field(),
     }
 
     queryset = model_class.objects.filter()
