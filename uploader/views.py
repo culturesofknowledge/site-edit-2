@@ -216,6 +216,7 @@ def lookup_fn_issues(lookup_fn, field_name, value):
     cond_map = [
         (r'Date\s+of\s+work\s+INFERRED', lambda: Q(date_of_work_inferred=1)),
         (r'Date\s+of\s+work\s+UNCERTAIN', lambda: Q(date_of_work_uncertain=1)),
+        (r'Date\s+of\s+work\s+APPROXIMATE', lambda: Q(date_of_work_approx=1)),
         (r'Author\s*/\s*sender\s+INFERRED', lambda: Q(authors_inferred=1)),
         (r'Author\s*/\s*sender\s+UNCERTAIN', lambda: Q(authors_uncertain=1)),
         (r'Addressee\s+INFERRED', lambda: Q(addressees_inferred=1)),
@@ -265,6 +266,37 @@ class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
             ('union_iwork_id', 'ID in main database',),
             ('source', 'Source',),
             ('contact', 'Contact',),
+            ('status', 'Status of work'),
+            ('editors_notes', 'Editors\'s notes',),
+            # ('date_of_work', 'Date of work'),
+            ('date_of_work_as_marked', 'Date of work as marked'),
+            ('original_calendar', 'Original calendar'),
+            ('notes_on_date_of_work', 'Notes on date of work'),
+            ('authors', 'Authors'),
+            ('authors_as_marked', 'Authors as marked'),
+            ('notes_on_authors', 'Notes on authors'),
+            ('origin', 'Origin'),
+            ('origin_as_marked', 'Origin as marked'),
+            ('addressees', 'Addressees'),
+            ('addressees_as_marked', 'Addressees as marked'),
+            ('notes_on_addressees', 'Notes on addressees'),
+            ('destination', 'Destination'),
+            ('destination_as_marked', 'Destination as marked'),
+            ('manifestations', 'Manifestations'),
+            ('abstract', 'Abstract'),
+            ('keywords', 'Keywords'),
+            ('languages', 'Languages of work'),
+            ('subjects', 'Subjects of work'),
+            ('incipit', 'Incipit'),
+            ('excipit', 'Excipit'),
+            ('people_mentioned', 'People mentioned'),
+            ('notes_on_people_mentioned', 'Notes on people mentioned'),
+            ('places_mentioned', 'Places mentioned'),
+            # ('issues', 'Issues'),
+            ('notes_on_letter', 'Notes on letter'),
+            ('resources', 'Related resources'),
+            ('upload_id', 'Upload ID'),
+            ('iwork_id', 'Work ID in tool'),
         ]
 
     @property
@@ -285,7 +317,8 @@ class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
                 'subjects': ['subjects__subject__subject_desc'],
                 'people_mentioned': ['people_mentioned__iperson__primary_name'],
                 'places_mentioned': ['places_mentioned__location__location_name'],
-                'resources': ['resources__resource_name', 'resources__resource_url']}
+                'resources': ['resources__resource_name', 'resources__resource_url'],
+                'upload_id': ['upload__pk']}
 
     def get_queryset(self):
         if not self.request_data:
