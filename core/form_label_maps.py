@@ -128,6 +128,7 @@ field_label_map = {
         'people_mentioned': 'People mentioned',
         'notes_on_people_mentioned': 'Notes on people mentioned',
         'places_mentioned': 'Places mentioned',
+        'issues': 'Issues',
         'notes_on_letter': 'Notes on letter',
         'resources': 'Related resources',
         'upload_id': 'Upload ID'

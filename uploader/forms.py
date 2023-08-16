@@ -150,6 +150,9 @@ class GeneralSearchFieldset(BasicSearchFieldset):
     places_mentioned = SearchCharField()
     places_mentioned_lookup = create_lookup_field(StrLookupChoices.choices)
 
+    issues = SearchCharField()
+    issues_lookup = create_lookup_field(StrLookupChoices.choices)
+
     notes_on_letter = SearchCharField()
     notes_on_letter_lookup = create_lookup_field(StrLookupChoices.choices)
 

@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import time
 from typing import Iterable, Callable, List
 from zipfile import BadZipFile
@@ -9,6 +10,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.files.storage import default_storage
 from django.core.paginator import Paginator
+from django.db.models import Q
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -22,7 +24,7 @@ from core.helper.renderer_serv import create_table_search_results_renderer
 from core.helper.view_serv import DefaultSearchView
 from core.models import CofkLookupCatalogue
 from uploader.forms import CofkCollectUploadForm, GeneralSearchFieldset
-from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectAddresseeOfWork, CofkCollectAuthorOfWork, \
+from uploader.models import CofkCollectUpload, CofkCollectAddresseeOfWork, CofkCollectAuthorOfWork, \
     CofkCollectDestinationOfWork, CofkCollectLanguageOfWork, CofkCollectOriginOfWork, CofkCollectPersonMentionedInWork, \
     CofkCollectWorkResource, CofkCollectInstitution, CofkCollectLocation, CofkCollectManifestation, CofkCollectPerson, \
     CofkCollectSubjectOfWork
@@ -209,6 +211,31 @@ def upload_review(request, upload_id, **kwargs):
     return render(request, template_url, context)
 
 
+def lookup_fn_issues(lookup_fn, field_name, value):
+
+    cond_map = [
+        (r'Date\s+of\s+work\s+INFERRED', lambda: Q(date_of_work_inferred=1)),
+        (r'Date\s+of\s+work\s+UNCERTAIN', lambda: Q(date_of_work_uncertain=1)),
+        (r'Author\s*/\s*sender\s+INFERRED', lambda: Q(authors_inferred=1)),
+        (r'Author\s*/\s*sender\s+UNCERTAIN', lambda: Q(authors_uncertain=1)),
+        (r'Addressee\s+INFERRED', lambda: Q(addressees_inferred=1)),
+        (r'Addressee\s+UNCERTAIN', lambda: Q(addressees_uncertain=1)),
+        (r'Origin\s+INFERRED', lambda: Q(origin_inferred=1)),
+        (r'Origin\s+UNCERTAIN', lambda: Q(origin_uncertain=1)),
+        (r'Destination\s+INFERRED', lambda: Q(destination_inferred=1)),
+        (r'Destination\s+UNCERTAIN', lambda: Q(destination_uncertain=1)),
+        (r'People\s+mentioned\s+INFERRED', lambda: Q(mentioned_inferred=1)),
+        (r'People\s+mentioned\s+UNCERTAIN', lambda: Q(mentioned_uncertain=1)),
+        (r'Place\s+mentioned\s+INFERRED', lambda: Q(place_mentioned_inferred=1)),
+        (r'Place\s+mentioned\s+UNCERTAIN', lambda: Q(place_mentioned_uncertain=1)),
+    ]
+
+    query = Q()
+    for pattern, q in cond_map:
+        if re.search(pattern, value, re.IGNORECASE):
+            query |= q()
+    return query
+
 class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
@@ -264,13 +291,17 @@ class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
         if not self.request_data:
             return DisplayablCollecteWork.objects.none()
 
+        return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
+
+    def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:
         # queries for like_fields
-        queries = create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
+        queries = create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
 
         queries.extend(
-            create_queries_by_lookup_field(self.request_data,
+            create_queries_by_lookup_field(request_data,
                                            search_field_names=self.search_fields,
-                                           search_fields_maps=self.search_field_combines)
+                                           search_fields_maps=self.search_field_combines,
+                                           search_fields_fn_maps={'issues': lookup_fn_issues, })
         )
 
         return self.create_queryset_by_queries(DisplayablCollecteWork, queries, sort_by=sort_by)
