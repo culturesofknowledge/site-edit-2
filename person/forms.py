@@ -11,7 +11,7 @@ from core.form_label_maps import field_label_map
 from core.helper import form_serv, date_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.form_serv import TargetPersonMRRForm, LocationRecrefField, BasicSearchFieldset, SearchCharField, \
-    SearchIntField
+    SearchIntField, EmloLineboxField, YesEmptyCheckboxField
 from core.models import CofkUnionOrgType, CofkUnionRoleCategory
 from person.models import CofkUnionPerson
 from person.recref_adapter import ActivePersonRecrefAdapter
@@ -23,23 +23,6 @@ person_gender_choices = [
     ('F', 'Female'),
     ('', 'Unknown or not applicable'),
 ]
-
-
-class YesEmptyCheckboxField(forms.CharField):
-    def __init__(self, *args, **kwargs):
-        widget = forms.CheckboxInput({'class': 'elcheckbox'},
-                                     check_test=lambda v: v == 'Y')
-        default_kwargs = dict(
-            widget=widget,
-            initial='',
-            required=False,
-        )
-        kwargs = default_kwargs | kwargs
-        super().__init__(*args, **kwargs)
-
-    def clean(self, value):
-        new_value = super().clean(value)
-        return 'Y' if new_value == 'True' else ''
 
 
 class OrgTypeField(forms.IntegerField):
@@ -103,6 +86,8 @@ class PersonForm(ModelForm):
                                        ]
                                    )
                                    )
+    skos_altlabel = EmloLineboxField()
+    person_aliases = EmloLineboxField()
 
     date_of_birth_year = form_serv.create_year_field()
     date_of_birth_month = form_serv.create_month_field()

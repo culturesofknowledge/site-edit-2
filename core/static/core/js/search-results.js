@@ -232,7 +232,7 @@ function add_hide_buttons_to_columns() {
 function radialTransparentIfScrolledDown() {
     let fieldset = $('#actionbox-container').parent().find('fieldset');
     let fieldset_offset = fieldset.offset();
-    if (fieldset_offset === undefined){
+    if (fieldset_offset === undefined) {
         return
     }
 
@@ -243,14 +243,13 @@ function radialTransparentIfScrolledDown() {
     }
 }
 
-function scrolling()    {
+function scrolling() {
     radialTransparentIfScrolledDown();
     let scroll_position = document.documentElement.scrollTop || document.body.scrollTop;
 
-    if(scroll_position > 0 && !$('#scroll-to-top').is(":visible"))   {
+    if (scroll_position > 0 && !$('#scroll-to-top').is(":visible")) {
         $('#scroll-to-top').fadeIn();
-    }
-    else if(scroll_position == 0 && $('#scroll-to-top').is(":visible")) {
+    } else if (scroll_position == 0 && $('#scroll-to-top').is(":visible")) {
         $('#scroll-to-top').fadeOut();
     }
 }
@@ -280,8 +279,9 @@ $(function () {
         emlojs.recref_select_service.setup_all()
     }
 
-    $('#scroll-to-top a').on('click', function(event)   {
-        event.preventDefault(); $('html, body').animate({scrollTop: '0px'}, 300);
+    $('#scroll-to-top a').on('click', function (event) {
+        event.preventDefault();
+        $('html, body').animate({scrollTop: '0px'}, 300);
     });
 
     scrolling();
@@ -308,4 +308,11 @@ $(window).on('submit', function (e) {
     if (event.submitter && event.submitter.value == 'save_query') {
         return confirm('Are you sure you want to save this query?');
     }
+
+    // mark search button as loading
+    let search_btn = $('.actionbox button[type="submit"].save')
+    search_btn.html( 'Loading.....')
+    search_btn.attr('disabled', true)
+
+
 });

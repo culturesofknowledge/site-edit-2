@@ -27,9 +27,9 @@ from location import location_serv
 from location.forms import LocationForm, GeneralSearchFieldset
 from location.location_serv import DisplayableLocation
 from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap, CofkLocationImageMap
-from location.queries import create_sql_count_work_by_location
 from location.recref_adapter import LocationCommentRecrefAdapter, LocationResourceRecrefAdapter, \
     LocationImageRecrefAdapter
+from location.subqueries import create_sql_count_work_by_location
 from location.view_components import LocationFormDescriptor
 
 log = logging.getLogger(__name__)

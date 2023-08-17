@@ -8,3 +8,25 @@ CSRF_TRUSTED_ORIGINS = ['http://192.168.56.10', ]
 
 MEDIA_ROOT = Path(EMLO_APP_HOME).joinpath('media').as_posix()
 STATIC_ROOT = Path(EMLO_APP_HOME).joinpath('static').as_posix()
+
+# # Host for sending email.
+# EMAIL_HOST = "smtp.mailgun.org"
+#
+# # Port for sending email.
+# EMAIL_PORT = 587
+#
+# # Whether to send SMTP 'Date' header in the local time zone or in UTC.
+# EMAIL_USE_LOCALTIME = False
+# EMAIL_HOST_USER = "postmaster@lakjdlaksjdlkasjdlkasj.mailgun.org"
+# EMAIL_HOST_PASSWORD = "lakjdlakjdlkasjdlkasjdlkajsdlkajsld"
+# EMAIL_USE_TLS = False
+# EMAIL_USE_SSL = False
+# EMAIL_SSL_CERTFILE = None
+# EMAIL_SSL_KEYFILE = None
+# EMAIL_TIMEOUT = 60
+#
+# EMAIL_FROM_EMAIL = f"Excited User <mailgun@kasldajsldkajslk.mailgun.org>"
+
+
+# # used by export file in search page
+# EXPORT_ROOT_URL = 'http://your-emlo-edit-hostname'

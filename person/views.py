@@ -4,15 +4,14 @@ from typing import Callable, Iterable, Type, Any, NoReturn, TYPE_CHECKING, List
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.db import models
-from django.db.models import F, Q
+from django.db.models import F
 from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual, Exact
 from django.forms import BaseForm
 from django.shortcuts import render, redirect, get_object_or_404
 
 from core import constant
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_BORN_IN_LOCATION, REL_TYPE_DIED_AT_LOCATION, \
-    REL_TYPE_MENTION, TRUE_CHAR
+    TRUE_CHAR
 from core.export_data import cell_values, download_csv_serv
 from core.forms import CommentForm, PersonRecrefForm
 from core.helper import renderer_serv, view_serv, query_serv, recref_serv, form_serv, perm_serv
@@ -32,11 +31,11 @@ from person.forms import PersonForm, GeneralSearchFieldset, PersonOtherRecrefFor
 from person.models import CofkUnionPerson, CofkPersonPersonMap, create_person_id, \
     CofkPersonCommentMap, CofkPersonResourceMap, CofkPersonImageMap
 from person.person_serv import DisplayablePerson, SearchResultPerson
-from person.queries import create_sql_count_work_by_person
 from person.recref_adapter import PersonCommentRecrefAdapter, PersonResourceRecrefAdapter, PersonRoleRecrefAdapter, \
     ActivePersonRecrefAdapter, PassivePersonRecrefAdapter, PersonImageRecrefAdapter, PersonLocRecrefAdapter
+from person.subqueries import create_queryset_by_queries
 from person.view_components import PersonFormDescriptor
-from work.forms import AuthorRelationChoices, AddresseeRelationChoices
+from sharedlib.djangolib import query_utils
 
 if TYPE_CHECKING:
     from core.helper.view_serv import MergeChoiceContext
@@ -328,12 +327,11 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
     def search_field_combines(self) -> dict[str: List[str]]:
-        return {'names_and_titles': ['foaf_name', 'skos_altlabel', 'skos_hiddenlabel', 'person_aliases',
-                                     'roles__role_category_desc'],  # names and roles search
-                'roles': ['roles__role_category_desc'],
-                'images': ['images__image_filename'],
-                'organisation_type': ['organisation_type__org_type_desc'],
-                }
+        return {
+            'roles': ['roles__role_category_desc'],
+            'images': ['images__image_filename'],
+            'organisation_type': ['organisation_type__org_type_desc'],
+        }
 
     @property
     def merge_page_vname(self) -> str:
@@ -542,39 +540,24 @@ class PersonDeleteConfirmView(LoginRequiredMixin, DeleteConfirmView):
 
 
 def lookup_other_details(lookup_fn, f, v):
-    q = query_serv.create_q_by_field_names(
+    q = query_utils.create_q_by_field_names(
         lookup_fn,
 
         itertools.chain(
-            query_serv.join_fields('cofkpersonlocationmap__location',
-                                   query_serv.location_detail_fields),
-            query_serv.join_fields('active_relationships__related',
-                                   query_serv.person_detail_fields),
-            query_serv.join_fields('passive_relationships__person',
-                                   query_serv.person_detail_fields),
-            query_serv.join_fields('cofkpersoncommentmap__comment',
-                                   query_serv.comment_detail_fields),
-            query_serv.join_fields('cofkpersonresourcemap__resource',
-                                   query_serv.resource_detail_fields),
-            query_serv.join_fields('cofkpersonimagemap__image',
-                                   query_serv.image_detail_fields),
+            query_utils.join_fields('cofkpersonlocationmap__location',
+                                    query_serv.location_detail_fields),
+            query_utils.join_fields('active_relationships__related',
+                                    query_serv.person_detail_fields),
+            query_utils.join_fields('passive_relationships__person',
+                                    query_serv.person_detail_fields),
+            query_utils.join_fields('cofkpersoncommentmap__comment',
+                                    query_serv.comment_detail_fields),
+            query_utils.join_fields('cofkpersonresourcemap__resource',
+                                    query_serv.resource_detail_fields),
+            query_utils.join_fields('cofkpersonimagemap__image',
+                                    query_serv.image_detail_fields),
         ), v)
 
     return q
 
 
-def create_queryset_by_queries(model_class: Type[models.Model], queries: Iterable[Q] = None, sort_by=None):
-    queryset = model_class.objects
-
-    annotate = {
-        'sent': create_sql_count_work_by_person(AuthorRelationChoices.values),
-        'recd': create_sql_count_work_by_person(AddresseeRelationChoices.values),
-        'all_works': create_sql_count_work_by_person(
-            AuthorRelationChoices.values + AddresseeRelationChoices.values),
-        'mentioned': create_sql_count_work_by_person([REL_TYPE_MENTION]),
-    }
-
-    queryset = query_serv.update_queryset(queryset, model_class, queries=queries,
-                                          annotate=annotate, sort_by=sort_by)
-
-    return queryset

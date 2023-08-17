@@ -14,7 +14,12 @@ class CofkUnionPerson(models.Model, RecordTracker):
     person_id = models.CharField(primary_key=True, max_length=100)
     foaf_name = models.CharField(max_length=200)
     skos_altlabel = models.TextField(blank=True, null=True)  # Synonyms
-    skos_hiddenlabel = models.TextField(blank=True, null=True)  # 'Other versions of name'
+
+    """
+    'Other versions of name'
+    who assign value and use this field ?
+    """
+    skos_hiddenlabel = models.TextField(blank=True, null=True)
     person_aliases = models.TextField(blank=True, null=True)  # Difference between synonyms and aliases?
     date_of_birth_year = models.IntegerField(blank=True, null=True)
     date_of_birth_month = models.IntegerField(blank=True, null=True)

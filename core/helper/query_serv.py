@@ -1,12 +1,13 @@
-import functools
 import logging
 from typing import Callable, Iterable, Any
 
-from django.db.models import F, Exists, OuterRef
-from django.db.models import Q, Lookup, lookups
+from django.db.models import F
+from django.db.models import Q, lookups
 from django.db.models.lookups import GreaterThanOrEqual, LessThanOrEqual
 
 from core.helper import date_serv
+from sharedlib.djangolib.query_utils import join_fields, run_lookup_fn, create_q_by_field_names, \
+    cond_not, is_blank, create_exists_by_mode
 
 log = logging.getLogger(__name__)
 
@@ -35,40 +36,8 @@ resource_detail_fields = [
 ]
 
 
-def create_lookup_query(field, lookup, value) -> Q:
-    return Q(**{f'{field}__{lookup}': value})
-
-
-def create_contains_query(field, value) -> Q:
-    return create_lookup_query(field, 'contains', value)
-
-
 def create_eq_query(field, value) -> Q:
     return Q(**{field: value})
-
-
-def create_query_factory_by_lookup(lookup):
-    def _query_factory(field, value):
-        return lookup(F(field), value)
-
-    return _query_factory
-
-
-def any_queries_match(queries: Iterable[Q]) -> Q:
-    return functools.reduce(lambda a, b: a | b, queries, Q())
-
-
-def all_queries_match(queries: Iterable[Q]) -> Q:
-    return functools.reduce(lambda a, b: a & b, queries, Q())
-
-
-def run_lookup_fn(_fn, _field, _val):
-    if (isinstance(_fn, type)
-            and issubclass(_fn, Lookup)
-            and not isinstance(_field, F)):
-        _field = F(_field)
-
-    return _fn(_field, _val)
 
 
 def create_queries_by_field_fn_maps(field_fn_maps: dict, data: dict) -> list[Q]:
@@ -133,28 +102,20 @@ def create_queries_by_lookup_field(request_data: dict,
             yield run_lookup_fn(lookup_fn, field_name, field_val)
 
 
-def cond_not(lookup_fn: Callable) -> Callable:
-    def _fn(field, val):
-        q = lookup_fn(F(field), val)
-        if not isinstance(q, Q):
-            q = Q(q)
-        return ~q
-
-    return _fn
-
-
-def is_blank(field, val) -> Callable:
-    if not isinstance(field, F):
-        field = F(field)
-    return lookups.IsNull(field, True) | lookups.Exact(field, '')
+def lookup_icontains_wildcard(field, value):
+    field = F(field)
+    if isinstance(value, str) and '%' in value:
+        return lookups.IRegex(field, value.replace('%', '.*'))
+    else:
+        return lookups.IContains(field, value)
 
 
 choices_lookup_map = {
-    'contains': lookups.IContains,
+    'contains': lookup_icontains_wildcard,
     'starts_with': lookups.IStartsWith,
     'ends_with': lookups.IEndsWith,
     'equals': lookups.IExact,
-    'not_contain': cond_not(lookups.IContains),
+    'not_contain': cond_not(lookup_icontains_wildcard),
     'not_start_with': cond_not(lookups.IStartsWith),
     'not_end_with': cond_not(lookups.IEndsWith),
     'not_equal_to': cond_not(lookups.IExact),
@@ -181,7 +142,6 @@ lookup_idx_map = {
     'not_end_with': -1,
 }
 
-
 """
 default lookup connection type is `Q.OR`
 """
@@ -206,19 +166,6 @@ def create_from_to_datetime(from_field_name: str, to_field_name: str,
         to_field_name: lambda _, v: LessThanOrEqual(
             F(db_field_name), convert_fn(v)),
     }
-
-
-def create_exists_by_mode(model_class, queries, annotate: dict = None) -> Exists:
-    queryset = model_class.objects
-    if annotate:
-        queryset = queryset.annotate(**annotate)
-
-    return Exists(
-        queryset.filter(
-            all_queries_match(queries),
-            pk=OuterRef('pk'),
-        )
-    )
 
 
 def update_queryset(queryset,
@@ -247,6 +194,8 @@ def update_queryset(queryset,
 
 
 LookupFn = Callable[[Callable, str, Any], Q]
+
+
 def create_recref_lookup_fn(rel_types: list, recref_field_name: str, cond_fields: list[str]) -> LookupFn:
     recref_name = '__'.join(recref_field_name.split('__')[:-1])
 
@@ -262,17 +211,3 @@ def create_recref_lookup_fn(rel_types: list, recref_field_name: str, cond_fields
         return query & cond_query
 
     return _fn
-
-
-def create_q_by_field_names(lookup_fn: Callable, field_names: Iterable[str], field_val: str,
-                            conn_type=Q.OR) -> Q:
-    q = Q()
-    for n in field_names:
-        q.add(run_lookup_fn(lookup_fn, n, field_val), conn_type)
-    return q
-
-
-def join_fields(parent_field: str, child_fields: Iterable[str]) -> Iterable[str]:
-    return (
-        f'{parent_field}__{n}' for n in child_fields
-    )

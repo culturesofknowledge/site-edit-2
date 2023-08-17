@@ -5,8 +5,7 @@ from typing import Iterable, Any, Type
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db import models
-from django.db.models import F, Q
+from django.db.models import F, Q, Model
 from django.db.models.lookups import Exact
 from django.forms import BaseForm
 from django.shortcuts import render, get_object_or_404, redirect
@@ -44,7 +43,7 @@ from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, \
     CofkUnionLanguageOfManifestation, CofkManifImageMap
 from person import person_serv
 from person.models import CofkUnionPerson
-from work import work_serv
+from work import work_serv, subqueries
 from work.forms import WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \
     ManifPersonRecrefAdapter, ScribeRelationChoices, \
@@ -62,10 +61,6 @@ from work.work_serv import DisplayableWork
 log = logging.getLogger(__name__)
 
 
-def get_location_id(model: models.Model):
-    return model and model.location_id
-
-
 def create_search_fn_person_recref(rel_types: list) -> Callable:
     def _fn(f, v):
         return Q(**{
@@ -76,49 +71,15 @@ def create_search_fn_person_recref(rel_types: list) -> Callable:
     return _fn
 
 
-def create_lookup_fn_by_person(rel_types: list, fields: list[str]=query_serv.person_detail_fields) -> Callable:
-    return create_recref_lookup_fn(rel_types, 'cofkworkpersonmap__person', fields)
-
-
 def create_lookup_fn_by_comment(rel_types: list) -> Callable:
     return create_recref_lookup_fn(rel_types, 'cofkworkcommentmap__comment',
                                    query_serv.comment_detail_fields)
-
-
-def create_lookup_fn_by_location(rel_types: list, fields: list[str]=query_serv.location_detail_fields) -> Callable:
-    return create_recref_lookup_fn(rel_types, 'cofkworklocationmap__location', fields)
-
-
-def create_lookup_fn_by_image(rel_types: list) -> Callable:
-    return create_recref_lookup_fn(rel_types, 'manif_set__image',
-                                   query_serv.image_detail_fields)
 
 
 def create_lookup_fn_by_resource(rel_types: list) -> Callable:
     return create_recref_lookup_fn(rel_types, 'cofkworkresourcemap__resource',
                                    query_serv.resource_detail_fields)
 
-def create_people_lookups(request_data, field_pairs: list[tuple]) -> dict:
-    people_lookups = {}
-
-    for field_pair in field_pairs:
-        if request_data.get(f'{field_pair[0]}_lookup') in ['starts_with', 'not_start_with']:
-            people_lookups[field_pair[0]] = create_lookup_fn_by_person(field_pair[1], ['foaf_name'])
-        else:
-            people_lookups[field_pair[0]] = create_lookup_fn_by_person(field_pair[1])
-
-    return people_lookups
-
-def create_location_lookups(request_data, field_pairs: list[tuple]) -> dict:
-    location_lookups = {}
-
-    for field_pair in field_pairs:
-        if request_data.get(f'{field_pair[0]}_lookup') in ['starts_with', 'not_start_with']:
-            location_lookups[field_pair[0]] = create_lookup_fn_by_location(field_pair[1], ['location_name'])
-        else:
-            location_lookups[field_pair[0]] = create_lookup_fn_by_location(field_pair[1])
-
-    return location_lookups
 
 def lookup_fn_flags(lookup_fn, field_name, value):
     cond_map = [
@@ -973,25 +934,25 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
-            #('addressees', 'Addressee',),
-            #('creators_searchable', 'Author/sender',),
+            ('addressees_searchable', 'Addressee',),
+            ('creators_searchable', 'Author/sender',),
             ('date_of_work_std', 'Date for ordering (in original calendar)',),
             ('date_of_work_as_marked', 'Date of work as marked',),
             ('date_of_work_std_day', 'Day',),
             ('description', 'Description',),
-            #('places_to_searchable', 'Destination (standardised)',),
+            ('places_to_searchable', 'Destination (standardised)',),
             ('editors_notes', 'Editors\' notes',),
-            #('flags', 'Flags',),
-            #('language_of_work', 'Language of work',),
+            # ('flags', 'Flags',),
+            ('language_of_work', 'Language of work',),
             ('change_user', 'Last changed by',),
             ('change_timestamp', 'Last edit',),
-            #('manifestations_searchable', 'Manifestations',),
+            ('manifestations_searchable', 'Manifestations',),
             ('date_of_work_std_month', 'Month',),
-            #('places_from_searchable', 'Origin (standardised)',),
+            ('places_from_searchable', 'Origin (standardised)',),
             ('origin_as_marked', 'Origin as marked',),
             ('original_catalogue', 'Original catalogue',),
             ('work_to_be_deleted', 'Record to be deleted',),
-            #('related_resources', 'Related resources',),
+            # ('related_resources', 'Related resources',),
             ('accession_code', 'Source of record',),
             ('iwork_id', 'Work ID',),
             ('date_of_work_std_year', 'Year',),
@@ -1034,21 +995,10 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         queries = query_serv.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
 
         search_fields_maps = {
-            'manifestations_searchable': [
-                'manif_set__manifestation_type',
-                'manif_set__postage_marks',
-                'manif_set__id_number_or_shelfmark',
-                'manif_set__printed_edition_details',
-                'manif_set__manifestation_incipit',
-                'manif_set__manifestation_excipit',
-                'manif_set__cofkmanifinstmap_set__inst__institution_name',
-                'manif_set__manif_from_set__manif_to__id_number_or_shelfmark',
-                'manif_set__manif_to_set__manif_from__id_number_or_shelfmark',
-            ],
             'language_of_work': [
+                'language_set__language_code__language_name',
                 'language_set__language_code__code_639_3',
                 'language_set__language_code__code_639_1',
-                'language_set__language_code__language_name',
             ],
             'original_catalogue': [
                 'original_catalogue__catalogue_code',
@@ -1059,24 +1009,11 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             ],
         }
 
-        people_pairs = [('creators_searchable', [REL_TYPE_CREATED]),
-                        ('addressees_searchable', [REL_TYPE_WAS_ADDRESSED_TO]),
-                        ('sender_or_recipient', [REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO]),
-                        ('people_mentioned', [REL_TYPE_MENTION])]
-
-        people_lookups = create_people_lookups(request_data, people_pairs)
-
-        location_pairs = [('places_from_searchable', [REL_TYPE_WAS_SENT_FROM]),
-                          ('places_to_searchable', [REL_TYPE_WAS_SENT_TO]),
-                          ('origin_or_destination', [REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),]
-
-        location_lookups = create_location_lookups(request_data, location_pairs)
-
         queries.extend(
             query_serv.create_queries_by_lookup_field(
                 request_data, self.search_fields,
                 search_fields_maps=search_fields_maps,
-                search_fields_fn_maps=people_lookups | location_lookups | {
+                search_fields_fn_maps={
                     'notes_on_authors': create_lookup_fn_by_comment([REL_TYPE_COMMENT_AUTHOR]),
                     'related_resources': create_lookup_fn_by_resource([REL_TYPE_IS_RELATED_TO]),
                     'general_notes': create_lookup_fn_by_comment([REL_TYPE_COMMENT_REFERS_TO]),
@@ -1090,8 +1027,8 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         simplified_query = super().simplified_query
 
         if self.search_field_fn_maps:
-            work_to_be_deleted = self.request_data[
-                'work_to_be_deleted'] if 'work_to_be_deleted' in self.request_data else None
+            work_to_be_deleted = (self.request_data['work_to_be_deleted']
+                                  if 'work_to_be_deleted' in self.request_data else None)
 
             if work_to_be_deleted:
                 if work_to_be_deleted == 'on':
@@ -1259,11 +1196,44 @@ class WorkCsvHeaderValues(HeaderValues):
         return values
 
 
-def create_queryset_by_queries(model_class: Type[models.Model], queries: Iterable[Q] = None,
+def create_queryset_by_queries(model_class: Type[Model], queries: Iterable[Q] = None,
                                sort_by=None):
+    # some fields in annotate for sorting and filtering, it could be different with frontend display
+    annotate = {
+        'addressees_searchable': subqueries.create_joined_person_ann_field([REL_TYPE_WAS_ADDRESSED_TO]),
+        'creators_searchable': subqueries.create_joined_person_ann_field([REL_TYPE_CREATED]),
+        'mentioned_searchable': subqueries.create_joined_person_ann_field([REL_TYPE_MENTION]),
+        'sender_or_recipient': subqueries.create_joined_person_ann_field([REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO]),
+        'places_from_searchable': subqueries.create_joined_location_ann_field(
+            [REL_TYPE_WAS_SENT_FROM],
+            [
+                'cofkworklocationmap__location__location_name',
+                'origin_as_marked',
+            ]
+        ),
+        'places_to_searchable': subqueries.create_joined_location_ann_field(
+            [REL_TYPE_WAS_SENT_TO],
+            [
+                'cofkworklocationmap__location__location_name',
+                'destination_as_marked',
+            ]
+        ),
+        'origin_or_destination': subqueries.create_joined_location_ann_field(
+            [REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM],
+            [
+                'cofkworklocationmap__location__location_name',
+                'origin_as_marked',
+                'destination_as_marked',
+            ]
+        ),
+        'manifestations_searchable': subqueries.create_joined_manif_ann_field(),
+    }
+
     queryset = model_class.objects.filter()
     queryset = query_serv.update_queryset(queryset, model_class, queries=queries,
-                                          sort_by=sort_by)
+                                          sort_by=sort_by,
+                                          annotate=annotate
+                                          )
     queryset = queryset.prefetch_related('cofkworkpersonmap_set__person',
                                          'cofkworklocationmap_set__location',
                                          'cofkworkresourcemap_set__resource',

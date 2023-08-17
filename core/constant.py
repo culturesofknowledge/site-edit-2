@@ -28,7 +28,10 @@ REL_TYPE_MENTION = 'mentions'  # for work -- person
 REL_TYPE_WORK_IS_REPLY_TO = 'is_reply_to'
 REL_TYPE_WORK_MATCHES = 'matches'
 
+# also name as places_to, origin
 REL_TYPE_WAS_SENT_TO = 'was_sent_to'
+
+# also name as places_from, origin
 REL_TYPE_WAS_SENT_FROM = 'was_sent_from'
 
 REL_TYPE_FORMERLY_OWNED = 'formerly_owned'

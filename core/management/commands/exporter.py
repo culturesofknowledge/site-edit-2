@@ -14,6 +14,7 @@ from django.core.management import BaseCommand
 from django.db.models import Count, Q
 from django.utils.html import strip_tags
 
+import person.subqueries
 import person.views
 from core import constant
 from core.constant import REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE_MENTION
@@ -22,7 +23,7 @@ from core.helper.view_components import HeaderValues, DownloadCsvHandler
 from core.models import CofkUnionImage, CofkUnionRelationshipType, CofkUnionComment, CofkUnionResource
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
-from location.queries import create_sql_count_work_by_location
+from location.subqueries import create_sql_count_work_by_location
 from manifestation.models import CofkUnionManifestation
 from person import person_serv
 from person.models import CofkUnionPerson
@@ -34,6 +35,14 @@ from work.work_serv import DisplayableWork
 log = logging.getLogger(__name__)
 cache_username_map = {}
 cached_catalogue_status = {}
+
+
+class Command(BaseCommand):
+    def add_arguments(self, parser: ArgumentParser):
+        parser.add_argument('-o', '--output_dir', type=str, default='.')
+
+    def handle(self, *args, **options):
+        export_all(options['output_dir'])
 
 
 def to_datetime_str(dt) -> str:
@@ -65,14 +74,6 @@ def check_urls(urls: Iterable[str], n_thread=100) -> dict[str, bool]:
     for i, (url, is_alive) in enumerate(thread_utils.yield_run_fn_results(_send_request, zip(urls), n_thread=n_thread)):
         results[url] = is_alive
     return results
-
-
-class Command(BaseCommand):
-    def add_arguments(self, parser: ArgumentParser):
-        parser.add_argument('-o', '--output_dir', type=str, default='.')
-
-    def handle(self, *args, **options):
-        export_all(options['output_dir'])
 
 
 def get_values_by_names(obj, names: list[str]) -> Iterable:
@@ -709,7 +710,7 @@ def export_all(output_dir: str = '.'):
          LocationFrontendCsv, CofkUnionLocation),
         (lambda: CofkUnionManifestation.objects.iterator(),
          ManifFrontendCsv, CofkUnionManifestation),
-        (lambda: person.views.create_queryset_by_queries(CofkUnionPerson, ).iterator(),
+        (lambda: person.subqueries.create_queryset_by_queries(CofkUnionPerson, ).iterator(),
          PersonFrontendCsv, CofkUnionPerson),
         (lambda: CofkUnionRelationshipType.objects.iterator(),
          RelTypeFrontendCsv, CofkUnionRelationshipType),
