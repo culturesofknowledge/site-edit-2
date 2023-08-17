@@ -4,7 +4,7 @@ from core.helper.date_serv import decode_calendar
 from uploader.models import CofkCollectWork
 
 
-class DisplayablCollecteWork(CofkCollectWork):
+class DisplayableCollectWork(CofkCollectWork):
     """
     Wrapper for display collect work
     """

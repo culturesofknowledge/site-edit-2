@@ -30,7 +30,7 @@ from uploader.models import CofkCollectUpload, CofkCollectAddresseeOfWork, CofkC
     CofkCollectSubjectOfWork
 from uploader.review import accept_works, reject_works, get_work
 from uploader.spreadsheet import CofkUploadExcelFile
-from uploader.uploader_serv import DisplayablCollecteWork
+from uploader.uploader_serv import DisplayableCollectWork
 from uploader.validation import CofkExcelFileError
 
 log = logging.getLogger(__name__)
@@ -173,7 +173,7 @@ def upload_review(request, upload_id, **kwargs):
     template_url = 'uploader/review.html'
     upload = CofkCollectUpload.objects.filter(upload_id=upload_id).first()
 
-    works_paginator = Paginator(DisplayablCollecteWork.objects.filter(upload=upload).order_by('pk'), 99999)
+    works_paginator = Paginator(DisplayableCollectWork.objects.filter(upload=upload).order_by('pk'), 99999)
     page_number = request.GET.get('page', 1)
     works_page = works_paginator.get_page(page_number)
 
@@ -322,7 +322,7 @@ class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     def get_queryset(self):
         if not self.request_data:
-            return DisplayablCollecteWork.objects.none()
+            return DisplayableCollectWork.objects.none()
 
         return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
 
@@ -337,7 +337,7 @@ class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
                                            search_fields_fn_maps={'issues': lookup_fn_issues, })
         )
 
-        return self.create_queryset_by_queries(DisplayablCollecteWork, queries, sort_by=sort_by)
+        return self.create_queryset_by_queries(DisplayableCollectWork, queries, sort_by=sort_by)
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
