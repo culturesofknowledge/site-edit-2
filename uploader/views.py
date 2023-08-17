@@ -210,8 +210,59 @@ def upload_review(request, upload_id, **kwargs):
 
     return render(request, template_url, context)
 
+def lookup_fn_date_of_work(lookup_fn, field_name, value):
+    value = str(value).strip()
+    query = Q()
+    date_pattern = r'^([\d\?]{4})(?:-([\d]{2}|[\?]{2}))?(?:-([\d]{2}|[\?]{2}))?$'
+    matches = [re.search(date_pattern, v) for v in value.split(' to ')]
 
-def lookup_fn_issues(lookup_fn, field_name, value):
+    if len(matches) == 1:
+        year = matches[0].group(1)
+        month = matches[0].group(2)
+        day = matches[0].group(3)
+
+        if year and year != '????':
+            query &= Q(date_of_work_std_year=year)
+
+        if month and month != '??':
+            query &= Q(date_of_work_std_month=month)
+
+        if day and day != '??':
+            query &= Q(date_of_work_std_day=day)
+    elif len(matches) == 2:
+        year = matches[0].group(1)
+        month = matches[0].group(2)
+        day = matches[0].group(3)
+        year2 = matches[1].group(1)
+        month2 = matches[1].group(2)
+        day2 = matches[1].group(3)
+
+        if year and year != '????':
+            query &= Q(date_of_work_std_year__gte=year)
+
+        if month and month != '??':
+            query &= Q(date_of_work_std_month__gte=month)
+
+        if day and day != '??':
+            query &= Q(date_of_work_std_day__gte=day)
+
+        if year2 and year2 != '????':
+            query &= Q(date_of_work_std_year__lte=year2)
+
+        if month2 and month2 != '??':
+            query &= Q(date_of_work_std_month__lte=month2)
+
+        if day2 and day2 != '??':
+            query &= Q(date_of_work_std_day__lte=day2)
+
+    else:
+        query = Q(pk=0)
+
+    return query
+
+
+
+def lookup_fn_issues(value):
 
     cond_map = [
         (r'Date\s+of\s+work\s+INFERRED', lambda: Q(date_of_work_inferred=1)),
@@ -268,7 +319,7 @@ class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
             ('contact', 'Contact',),
             ('status', 'Status of work'),
             ('editors_notes', 'Editors\'s notes',),
-            # ('date_of_work', 'Date of work'),
+            ('date_of_work_sort', 'Date of work'),
             ('date_of_work_as_marked', 'Date of work as marked'),
             ('original_calendar', 'Original calendar'),
             ('notes_on_date_of_work', 'Notes on date of work'),
@@ -318,7 +369,9 @@ class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
                 'people_mentioned': ['people_mentioned__iperson__primary_name'],
                 'places_mentioned': ['places_mentioned__location__location_name'],
                 'resources': ['resources__resource_name', 'resources__resource_url'],
-                'upload_id': ['upload__pk']}
+                'upload_id': ['upload__pk'],
+                'date_of_work_sort': ['date_of_work_std_year', 'date_of_work_std_month',
+                                      'date_of_work_std_day']}
 
     def get_queryset(self):
         if not self.request_data:
@@ -334,7 +387,8 @@ class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
             create_queries_by_lookup_field(request_data,
                                            search_field_names=self.search_fields,
                                            search_fields_maps=self.search_field_combines,
-                                           search_fields_fn_maps={'issues': lookup_fn_issues, })
+                                           search_fields_fn_maps={'issues': lookup_fn_issues,
+                                                                  'date_of_work': lookup_fn_date_of_work})
         )
 
         return self.create_queryset_by_queries(DisplayableCollectWork, queries, sort_by=sort_by)

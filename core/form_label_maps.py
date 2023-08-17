@@ -102,6 +102,7 @@ field_label_map = {
         'status': 'Upload status',
         'id_main': 'ID in main database',
         'editors_notes': "Editors' notes",
+        'date_of_work': 'Date of work',
         'date_of_work_as_marked': 'Date of work as marked',
         'date_of_work_std_year': 'Year',
         'date_of_work_std_month': 'Month',

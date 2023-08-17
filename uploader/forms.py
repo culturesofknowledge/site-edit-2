@@ -3,7 +3,6 @@ from django import forms
 from core.form_label_maps import field_label_map
 from core.helper.form_serv import SearchCharField, create_lookup_field, StrLookupChoices, SearchIntField, \
     IntLookupChoices, BasicSearchFieldset
-from core.helper.widgets_serv import SearchDateTimeInput
 from uploader.models import CofkCollectUpload, CofkCollectWork
 
 excelMimeTypes = ".xls," \
@@ -62,22 +61,10 @@ class GeneralSearchFieldset(BasicSearchFieldset):
                                     help_text='Notes for internal use, intended to hold temporary queries etc.')
     editors_notes_lookup = create_lookup_field(StrLookupChoices.choices)
 
-    date_of_work_std_year = SearchIntField(min_value=1000, max_value=1850,
-                                           label=field_label_map['collect_work']['date_of_work_std_year'])
-    date_of_work_std_year_lookup = create_lookup_field(IntLookupChoices.choices)
-
-    date_of_work_std_month = SearchIntField(min_value=1, max_value=12,
-                                            label=field_label_map['collect_work']['date_of_work_std_month'])
-    date_of_work_std_month_lookup = create_lookup_field(IntLookupChoices.choices)
-
-    date_of_work_std_day = SearchIntField(min_value=1, max_value=31,
-                                          label=field_label_map['collect_work']['date_of_work_std_day'])
-    date_of_work_std_day_lookup = create_lookup_field(IntLookupChoices.choices)
-
-    date_of_work_std_from = forms.DateField(required=False,
-                                            widget=SearchDateTimeInput(attrs={'class': 'searchfield'}))
-    date_of_work_std_to = forms.DateField(required=False,
-                                          widget=SearchDateTimeInput(attrs={'class': 'searchfield'}))
+    date_of_work = SearchCharField(help_text='A text field, normally in YYYY-MM-DD format, but with unknown parts of'
+                                             ' the date replaced by question marks, e.g. \'1659-09-??\'.'
+                                             ' Occasionally this field will hold a date range, e.g.'
+                                             ' \'1659-09-15 to 1659-09-16\'.')
 
     date_of_work_as_marked = SearchCharField()
     date_of_work_as_marked_lookup = create_lookup_field(StrLookupChoices.choices)
