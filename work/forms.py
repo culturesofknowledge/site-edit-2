@@ -547,7 +547,6 @@ class CompactSearchFieldset(BasicSearchFieldset):
     accession_code_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     work_to_be_deleted = form_serv.ZeroOneCheckboxField(required=False)
-    work_to_be_deleted_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     iwork_id = SearchCharField(label=field_label_map['work']['iwork_id'], help_text=id_help_text)
     iwork_id_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)

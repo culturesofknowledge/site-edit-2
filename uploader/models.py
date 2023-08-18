@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from django.db import models
 
 from manifestation.manif_serv import get_doctype_desc
@@ -216,7 +214,7 @@ class CofkCollectPerson(models.Model):
         db_table = 'cofk_collect_person'
         unique_together = (('upload', 'iperson_id'),)
 
-    def to_string(self, is_details=False) -> str:
+    def to_string(self) -> str:
         """
         Used by work.creators_for_display and work.addressees_for_display
         """
@@ -248,9 +246,6 @@ class CofkCollectPerson(models.Model):
 
         return person
 
-    #def __str__(self):
-    #    return str(self.union_iperson) if self.union_iperson is not None else f'{self.primary_name} (collect)'
-
 
 class CofkCollectOccupationOfPerson(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
@@ -274,55 +269,6 @@ class CofkCollectPersonResource(models.Model):
     class Meta:
         db_table = 'cofk_collect_person_resource'
         unique_together = (('upload', 'resource_id'),)
-
-
-class CofkCollectWorkSummary(models.Model):
-    upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
-    work_id_in_tool = models.OneToOneField('uploader.CofkCollectWork', models.CASCADE)
-    source_of_data = models.CharField(max_length=250, blank=True, null=True)
-    notes_on_letter = models.TextField(blank=True, null=True)
-    date_of_work = models.CharField(max_length=32, blank=True, null=True)
-    date_of_work_as_marked = models.CharField(max_length=250, blank=True, null=True)
-    original_calendar = models.CharField(max_length=30, blank=True, null=True)
-    date_of_work_is_range = models.CharField(max_length=30, blank=True, null=True)
-    date_of_work_inferred = models.CharField(max_length=30, blank=True, null=True)
-    date_of_work_uncertain = models.CharField(max_length=30, blank=True, null=True)
-    date_of_work_approx = models.CharField(max_length=30, blank=True, null=True)
-    notes_on_date_of_work = models.TextField(blank=True, null=True)
-    authors = models.TextField(blank=True, null=True)
-    authors_as_marked = models.TextField(blank=True, null=True)
-    authors_inferred = models.CharField(max_length=30, blank=True, null=True)
-    authors_uncertain = models.CharField(max_length=30, blank=True, null=True)
-    notes_on_authors = models.TextField(blank=True, null=True)
-    addressees = models.TextField(blank=True, null=True)
-    addressees_as_marked = models.TextField(blank=True, null=True)
-    addressees_inferred = models.CharField(max_length=30, blank=True, null=True)
-    addressees_uncertain = models.CharField(max_length=30, blank=True, null=True)
-    notes_on_addressees = models.TextField(blank=True, null=True)
-    destination = models.TextField(blank=True, null=True)
-    destination_as_marked = models.TextField(blank=True, null=True)
-    destination_inferred = models.CharField(max_length=30, blank=True, null=True)
-    destination_uncertain = models.CharField(max_length=30, blank=True, null=True)
-    origin = models.TextField(blank=True, null=True)
-    origin_as_marked = models.TextField(blank=True, null=True)
-    origin_inferred = models.CharField(max_length=30, blank=True, null=True)
-    origin_uncertain = models.CharField(max_length=30, blank=True, null=True)
-    abstract = models.TextField(blank=True, null=True)
-    keywords = models.TextField(blank=True, null=True)
-    languages_of_work = models.TextField(blank=True, null=True)
-    subjects_of_work = models.TextField(blank=True, null=True)
-    incipit = models.TextField(blank=True, null=True)
-    excipit = models.TextField(blank=True, null=True)
-    people_mentioned = models.TextField(blank=True, null=True)
-    notes_on_people_mentioned = models.TextField(blank=True, null=True)
-    places_mentioned = models.TextField(blank=True, null=True)
-    manifestations = models.TextField(blank=True, null=True)
-    related_resources = models.TextField(blank=True, null=True)
-    editors_notes = models.TextField(blank=True, null=True)
-
-    class Meta:
-        db_table = 'cofk_collect_work_summary'
-        unique_together = (('upload', 'work_id_in_tool'),)
 
 
 class CofkCollectInstitution(models.Model):
@@ -393,12 +339,10 @@ class CofkCollectWork(models.Model):
     addressees_uncertain = models.SmallIntegerField(default=0)
     notes_on_addressees = models.TextField(blank=True, null=True)
     destination_id = models.IntegerField(blank=True, null=True)
-    # destination = models.ForeignKey('CofkCollectDestinationOfWork', models.CASCADE, blank=True, null=True)
     destination_as_marked = models.TextField(blank=True, null=True)
     destination_inferred = models.SmallIntegerField(default=0)
     destination_uncertain = models.SmallIntegerField(default=0)
     origin_id = models.IntegerField(blank=True, null=True)
-    # origin = models.ForeignKey('CofkCollectOriginOfWork', models.CASCADE, blank=True, null=True)
     origin_as_marked = models.TextField(blank=True, null=True)
     origin_inferred = models.SmallIntegerField(default=0)
     origin_uncertain = models.SmallIntegerField(default=0)
@@ -413,8 +357,7 @@ class CofkCollectWork(models.Model):
     upload_status = models.ForeignKey(CofkCollectStatus, models.SET_NULL,
                                       db_column='upload_status', null=True)
     editors_notes = models.TextField(blank=True, null=True)
-    _id = models.CharField(db_column='_id', max_length=32, blank=True,
-                           null=True)  # Field renamed because it started with '_'.
+    _id = models.CharField(db_column='_id', max_length=32, blank=True, null=True)
     date_of_work2_approx = models.SmallIntegerField(default=0)
     date_of_work2_inferred = models.SmallIntegerField(default=0)
     date_of_work2_uncertain = models.SmallIntegerField(default=0)
@@ -433,128 +376,6 @@ class CofkCollectWork(models.Model):
     class Meta:
         db_table = 'cofk_collect_work'
         unique_together = (('upload', 'iwork_id'),)
-
-    # def __str__(self):
-    #   return f'Work #{self.iwork_id}'
-
-    @property
-    def date_of_work_std(self):
-        try:
-            return datetime(self.date_of_work_std_year, self.date_of_work_std_month, self.date_of_work_std_day) \
-                .strftime("%d %b %Y")
-        except Exception:
-            pass
-
-    @property
-    def date_of_work2_std(self):
-        try:
-            return datetime(self.date_of_work2_std_year, self.date_of_work2_std_month, self.date_of_work2_std_day) \
-                .strftime("%d %b %Y")
-        except Exception:
-            pass
-
-    @property
-    def display_daterange(self):
-        if self.date_of_work_std and self.date_of_work2_std:
-            return f'{self.date_of_work_std} to {self.date_of_work2_std}'
-        elif self.date_of_work_std:
-            return f'{self.date_of_work_std} to ????-??-??'
-
-        return f'????-??-?? To {self.date_of_work2_std}'
-
-    @property
-    def display_original_calendar(self):
-        if self.original_calendar == 'G':
-            return 'Gregorian'
-        elif self.original_calendar == 'J':
-            return 'Julian'  # This will switch to "JJ" after accepted, see review.php
-        elif self.original_calendar == 'JJ':
-            return 'Julian (January year start)'
-        elif self.original_calendar == 'JM':
-            return 'Julian (March year start)'
-
-    @property
-    def display_date_issues(self):
-        issues = []
-
-        if self.date_of_work_std_is_range == 1:
-            issues.append('estimated or known range')
-
-        if self.date_of_work_inferred == 1:
-            issues.append('inferred')
-
-        if self.date_of_work_uncertain == 1:
-            issues.append('uncertain')
-
-        if self.date_of_work_approx == 1:
-            issues.append('approximate')
-
-        return ', '.join(issues)
-
-    @property
-    def display_origin_issues(self):
-        issues = []
-
-        if self.origin_inferred == 1:
-            issues.append('inferred')
-
-        if self.origin_uncertain == 1:
-            issues.append('uncertain')
-
-        return ', '.join(issues)
-
-    @property
-    def display_destination_issues(self):
-        issues = []
-
-        if self.destination_inferred == 1:
-            issues.append('inferred')
-
-        if self.destination_uncertain == 1:
-            issues.append('uncertain')
-
-        return ', '.join(issues)
-
-    @property
-    def display_authors_issues(self):
-        issues = []
-
-        if self.authors_inferred == 1:
-            issues.append('inferred')
-
-        if self.authors_uncertain == 1:
-            issues.append('uncertain')
-
-        return ', '.join(issues)
-
-    @property
-    def display_addressees_issues(self):
-        issues = []
-
-        if self.addressees_inferred == 1:
-            issues.append('inferred')
-
-        if self.addressees_uncertain == 1:
-            issues.append('uncertain')
-
-        return ', '.join(issues)
-
-    @property
-    def display_mentioned_issues(self):
-        issues = []
-
-        if self.mentioned_inferred == 1:
-            issues.append('inferred')
-
-        if self.mentioned_uncertain == 1:
-            issues.append('uncertain')
-
-        return ', '.join(issues)
-
-    @property
-    def display_issues(self) -> str:
-        return '\n'.join([self.display_date_issues, self.display_origin_issues, self.display_destination_issues,
-                         self.display_authors_issues, self.display_addressees_issues, self.display_mentioned_issues])
 
 
 class CofkCollectAddresseeOfWork(models.Model):

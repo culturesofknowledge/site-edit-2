@@ -48,7 +48,7 @@ calendar_choices = [
 ]
 
 
-def decode_calendar(calendar_code, default='Unknown'):
+def decode_calendar(calendar_code, default='Unknown') -> str:
     for code, name in calendar_choices:
         if code == calendar_code:
             return name

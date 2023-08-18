@@ -2,18 +2,18 @@
 
 <tr>
     <td class="header">Date of work</td>
-    <td>{{ work.display_daterange }}
+    <td>{{ work.display_date }}
 
         {% if work.date_of_work_as_marked %}
             <br/>As marked: {{ work.date_of_work_as_marked }}
         {% endif %}
 
-        {% if work.display_original_calendar %}
+        {% if work.original_calendar %}
             <br/>Original calendar: {{ work.display_original_calendar }}
         {% endif %}
 
         {% if work.display_date_issues %}
-            <br/>Issues with date of work: {{ work.display_date_issues }}
+            <br/>{{ work.display_date_issues }}
         {% endif %}
 
         {% if work.notes_on_date_of_work %}
@@ -55,7 +55,7 @@
         {% endif %}
 
         {% if work.display_authors_issues %}
-            <br/>Issues with author{{ authors|pluralize:",s" }}: {{ work.display_authors_issues }}
+            <br/>{{ work.display_authors_issues }}
         {% endif %}
 
         {% if work.notes_on_authors %}
@@ -74,7 +74,7 @@
         {% endif %}
 
         {% if work.display_origin_issues %}
-            <br/>Issues with origin: {{ work.display_origin_issues }}
+            <br/>{{ work.display_origin_issues }}
         {% endif %}
     </td>
 </tr>
@@ -92,8 +92,8 @@
             <br/>As marked: {{ work.addressees_as_marked }}
         {% endif %}
 
-        {% if work.display_authors_issues %}
-            <br/>Issues with author{{ authors|pluralize:",s" }}: {{ work.display_addressees_issues }}
+        {% if work.display_addressees_issues %}
+            <br/>{{ work.display_addressees_issues }}
         {% endif %}
 
         {% if work.notes_on_addressees %}
@@ -112,7 +112,7 @@
         {% endif %}
 
         {% if work.display_destination_issues %}
-            <br/>Issues with destination: {{ work.display_destination_issues }}
+            <br/>{{ work.display_destination_issues }}
         {% endif %}
     </td>
 </tr>
@@ -162,7 +162,7 @@
         {% endif %}
 
         {% if work.display_mentioned_issues %}
-            <br/>Issues with {{ mentioned|pluralize:"person,people" }} mentioned: {{ work.display_mentioned_issues }}
+            <br/>{{ work.display_mentioned_issues }}
         {% endif %}
 
         {% if work.notes_on_people_mentioned %}

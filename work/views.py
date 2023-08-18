@@ -85,6 +85,7 @@ def lookup_fn_flags(lookup_fn, field_name, value):
     cond_map = [
         (r'Date\s+of\s+work\s+INFERRED', lambda: Q(date_of_work_inferred=1)),
         (r'Date\s+of\s+work\s+UNCERTAIN', lambda: Q(date_of_work_uncertain=1)),
+        (r'Date\s+of\s+work\s+APPROXIMATE', lambda: Q(date_of_work_approx=1)),
         (r'Author\s*/\s*sender\s+INFERRED', lambda: Q(authors_inferred=1)),
         (r'Author\s*/\s*sender\s+UNCERTAIN', lambda: Q(authors_uncertain=1)),
         (r'Addressee\s+INFERRED', lambda: Q(addressees_inferred=1)),

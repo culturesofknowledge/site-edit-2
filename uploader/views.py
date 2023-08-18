@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import time
 from typing import Iterable, Callable, List
 from zipfile import BadZipFile
@@ -9,6 +10,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.files.storage import default_storage
 from django.core.paginator import Paginator
+from django.db.models import Q
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -22,12 +24,13 @@ from core.helper.renderer_serv import create_table_search_results_renderer
 from core.helper.view_serv import DefaultSearchView
 from core.models import CofkLookupCatalogue
 from uploader.forms import CofkCollectUploadForm, GeneralSearchFieldset
-from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectAddresseeOfWork, CofkCollectAuthorOfWork, \
+from uploader.models import CofkCollectUpload, CofkCollectAddresseeOfWork, CofkCollectAuthorOfWork, \
     CofkCollectDestinationOfWork, CofkCollectLanguageOfWork, CofkCollectOriginOfWork, CofkCollectPersonMentionedInWork, \
     CofkCollectWorkResource, CofkCollectInstitution, CofkCollectLocation, CofkCollectManifestation, CofkCollectPerson, \
     CofkCollectSubjectOfWork
 from uploader.review import accept_works, reject_works, get_work
 from uploader.spreadsheet import CofkUploadExcelFile
+from uploader.uploader_serv import DisplayableCollectWork
 from uploader.validation import CofkExcelFileError
 
 log = logging.getLogger(__name__)
@@ -170,7 +173,7 @@ def upload_review(request, upload_id, **kwargs):
     template_url = 'uploader/review.html'
     upload = CofkCollectUpload.objects.filter(upload_id=upload_id).first()
 
-    works_paginator = Paginator(CofkCollectWork.objects.filter(upload=upload).order_by('pk'), 99999)
+    works_paginator = Paginator(DisplayableCollectWork.objects.filter(upload=upload).order_by('pk'), 99999)
     page_number = request.GET.get('page', 1)
     works_page = works_paginator.get_page(page_number)
 
@@ -207,6 +210,83 @@ def upload_review(request, upload_id, **kwargs):
 
     return render(request, template_url, context)
 
+def lookup_fn_date_of_work(lookup_fn, field_name, value):
+    value = str(value).strip()
+    query = Q()
+    date_pattern = r'^([\d\?]{4})(?:-([\d]{2}|[\?]{2}))?(?:-([\d]{2}|[\?]{2}))?$'
+    matches = [re.search(date_pattern, v) for v in value.split(' to ')]
+
+    if len(matches) == 1:
+        year = matches[0].group(1)
+        month = matches[0].group(2)
+        day = matches[0].group(3)
+
+        if year and year != '????':
+            query &= Q(date_of_work_std_year=year)
+
+        if month and month != '??':
+            query &= Q(date_of_work_std_month=month)
+
+        if day and day != '??':
+            query &= Q(date_of_work_std_day=day)
+    elif len(matches) == 2:
+        year = matches[0].group(1)
+        month = matches[0].group(2)
+        day = matches[0].group(3)
+        year2 = matches[1].group(1)
+        month2 = matches[1].group(2)
+        day2 = matches[1].group(3)
+
+        if year and year != '????':
+            query &= Q(date_of_work_std_year__gte=year)
+
+        if month and month != '??':
+            query &= Q(date_of_work_std_month__gte=month)
+
+        if day and day != '??':
+            query &= Q(date_of_work_std_day__gte=day)
+
+        if year2 and year2 != '????':
+            query &= Q(date_of_work_std_year__lte=year2)
+
+        if month2 and month2 != '??':
+            query &= Q(date_of_work_std_month__lte=month2)
+
+        if day2 and day2 != '??':
+            query &= Q(date_of_work_std_day__lte=day2)
+
+    else:
+        query = Q(pk=0)
+
+    return query
+
+
+
+def lookup_fn_issues(value):
+
+    cond_map = [
+        (r'Date\s+of\s+work\s+INFERRED', lambda: Q(date_of_work_inferred=1)),
+        (r'Date\s+of\s+work\s+UNCERTAIN', lambda: Q(date_of_work_uncertain=1)),
+        (r'Date\s+of\s+work\s+APPROXIMATE', lambda: Q(date_of_work_approx=1)),
+        (r'Author\s*/\s*sender\s+INFERRED', lambda: Q(authors_inferred=1)),
+        (r'Author\s*/\s*sender\s+UNCERTAIN', lambda: Q(authors_uncertain=1)),
+        (r'Addressee\s+INFERRED', lambda: Q(addressees_inferred=1)),
+        (r'Addressee\s+UNCERTAIN', lambda: Q(addressees_uncertain=1)),
+        (r'Origin\s+INFERRED', lambda: Q(origin_inferred=1)),
+        (r'Origin\s+UNCERTAIN', lambda: Q(origin_uncertain=1)),
+        (r'Destination\s+INFERRED', lambda: Q(destination_inferred=1)),
+        (r'Destination\s+UNCERTAIN', lambda: Q(destination_uncertain=1)),
+        (r'People\s+mentioned\s+INFERRED', lambda: Q(mentioned_inferred=1)),
+        (r'People\s+mentioned\s+UNCERTAIN', lambda: Q(mentioned_uncertain=1)),
+        (r'Place\s+mentioned\s+INFERRED', lambda: Q(place_mentioned_inferred=1)),
+        (r'Place\s+mentioned\s+UNCERTAIN', lambda: Q(place_mentioned_uncertain=1)),
+    ]
+
+    query = Q()
+    for pattern, q in cond_map:
+        if re.search(pattern, value, re.IGNORECASE):
+            query |= q()
+    return query
 
 class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
@@ -237,6 +317,37 @@ class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
             ('union_iwork_id', 'ID in main database',),
             ('source', 'Source',),
             ('contact', 'Contact',),
+            ('status', 'Status of work'),
+            ('editors_notes', 'Editors\'s notes',),
+            ('date_of_work_sort', 'Date of work'),
+            ('date_of_work_as_marked', 'Date of work as marked'),
+            ('original_calendar', 'Original calendar'),
+            ('notes_on_date_of_work', 'Notes on date of work'),
+            ('authors', 'Authors'),
+            ('authors_as_marked', 'Authors as marked'),
+            ('notes_on_authors', 'Notes on authors'),
+            ('origin', 'Origin'),
+            ('origin_as_marked', 'Origin as marked'),
+            ('addressees', 'Addressees'),
+            ('addressees_as_marked', 'Addressees as marked'),
+            ('notes_on_addressees', 'Notes on addressees'),
+            ('destination', 'Destination'),
+            ('destination_as_marked', 'Destination as marked'),
+            ('manifestations', 'Manifestations'),
+            ('abstract', 'Abstract'),
+            ('keywords', 'Keywords'),
+            ('languages', 'Languages of work'),
+            ('subjects', 'Subjects of work'),
+            ('incipit', 'Incipit'),
+            ('excipit', 'Excipit'),
+            ('people_mentioned', 'People mentioned'),
+            ('notes_on_people_mentioned', 'Notes on people mentioned'),
+            ('places_mentioned', 'Places mentioned'),
+            # ('issues', 'Issues'),
+            ('notes_on_letter', 'Notes on letter'),
+            ('resources', 'Related resources'),
+            ('upload_id', 'Upload ID'),
+            ('iwork_id', 'Work ID in tool'),
         ]
 
     @property
@@ -257,21 +368,30 @@ class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
                 'subjects': ['subjects__subject__subject_desc'],
                 'people_mentioned': ['people_mentioned__iperson__primary_name'],
                 'places_mentioned': ['places_mentioned__location__location_name'],
-                'resources': ['resources__resource_name', 'resources__resource_url']}
+                'resources': ['resources__resource_name', 'resources__resource_url'],
+                'upload_id': ['upload__pk'],
+                'date_of_work_sort': ['date_of_work_std_year', 'date_of_work_std_month',
+                                      'date_of_work_std_day']}
 
     def get_queryset(self):
         if not self.request_data:
-            return CofkCollectWork.objects.none()
+            return DisplayableCollectWork.objects.none()
 
+        return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
+
+    def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:
         # queries for like_fields
-        queries = create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
+        queries = create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
 
         queries.extend(
-            create_queries_by_lookup_field(self.request_data,
+            create_queries_by_lookup_field(request_data,
                                            search_field_names=self.search_fields,
-                                           search_fields_maps=self.search_field_combines)
+                                           search_fields_maps=self.search_field_combines,
+                                           search_fields_fn_maps={'issues': lookup_fn_issues,
+                                                                  'date_of_work': lookup_fn_date_of_work})
         )
-        return self.create_queryset_by_queries(CofkCollectWork, queries)
+
+        return self.create_queryset_by_queries(DisplayableCollectWork, queries, sort_by=sort_by)
 
     @property
     def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:

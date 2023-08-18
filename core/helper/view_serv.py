@@ -371,7 +371,7 @@ class BasicSearchView(ListView):
         for key in (key for key, value in request.GET.items() if key in all_search_fields and value != ''):
             selections.append(CofkUserSavedQuerySelection(query=saved_query,
                                                           column_name=key,
-                                                          op_value=request.GET[key + '_lookup'],
+                                                          op_value=request.GET.get(key + '_lookup', 'equals'),
                                                           column_value=request.GET[key]))
 
         saved_query.save()
