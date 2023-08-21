@@ -7,7 +7,7 @@ from django.db.models.lookups import GreaterThanOrEqual, LessThanOrEqual
 
 from core.helper import date_serv
 from sharedlib.djangolib.query_utils import join_fields, run_lookup_fn, create_q_by_field_names, \
-    cond_not, is_blank, create_exists_by_mode
+    cond_not, is_blank, create_exists_by_mode, is_blank_int
 
 log = logging.getLogger(__name__)
 
@@ -120,6 +120,7 @@ choices_lookup_map = {
     'not_end_with': cond_not(lookups.IEndsWith),
     'not_equal_to': cond_not(lookups.IExact),
     'is_blank': is_blank,
+    'is_blank_int': is_blank_int,
     'not_blank': cond_not(is_blank),
     'less_than': lookups.LessThan,
     'greater_than': lookups.GreaterThan,
@@ -147,11 +148,12 @@ default lookup connection type is `Q.OR`
 """
 lookup_conn_type_map = {
     'is_blank': Q.AND,
+    'is_blank_int': Q.AND,
     'not_contain': Q.AND,
 }
 
 nullable_lookup_keys = [
-    'is_blank', 'not_blank',
+    'is_blank', 'not_blank', 'is_blank_int'
 ]
 
 

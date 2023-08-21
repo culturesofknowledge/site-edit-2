@@ -123,7 +123,7 @@ class IntLookupChoices(TextChoices):
     LESS_THAN = 'less_than', 'less than (<)'
     GREATER_THAN = 'greater_than', 'greater than (>)'
 
-    IS_BLANK = 'is_blank', 'is blank',
+    IS_BLANK = 'is_blank_int', 'is blank',
     NOT_BLANK = 'not_blank', 'not blank',
 
 
