@@ -45,9 +45,14 @@ python3 manage.py createsuperuser
 
 How to run export tool
 ----------------------------------
-after runnning following command, all csv files will be generated in current folder
+after runnning following command, all csv files will be generated in current folder or source code folder if you run in docker
 ```shell
 python3 manage.py exporter
+```
+* or docker
+```shell
+# site-edit-2_web_1 is the name of docker container, could be different in your environment
+docker exec -it site-edit-2_web_1 python3 /code/manage.py exporter
 ```
 
 

@@ -19,6 +19,7 @@ cp gunweb.py.example gunweb.py
 # about email setting, see [How to set up email service ?]
 # for export in search page, you need to update EXPORT_ROOT_URL
 # e.g. EXPORT_ROOT_URL = 'http://your-emlo-edit-hostname'
+# for more settings please see gunweb.py.example
 vi gunweb.py
 
 
