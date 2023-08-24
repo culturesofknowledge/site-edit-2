@@ -1,6 +1,3 @@
-from openpyxl.styles import Font, PatternFill
-
-
 def escape_xlsx_char(ch):
     illegal_xlsx_chars = {
         '\x00': '\\x00',  # NULL
@@ -45,10 +42,3 @@ def escape_xlsx_char_by_word(word):
 
 def escape_xlsx_char_by_row(row):
     return (escape_xlsx_char_by_word(col_val) for col_val in row)
-
-
-def fill_header_style(sheet):
-    # apply style font bold and background color gray in the first row
-    for cell in sheet[1]:
-        cell.font = Font(bold=True)
-        cell.fill = PatternFill(fill_type='solid', fgColor='D3D3D3')

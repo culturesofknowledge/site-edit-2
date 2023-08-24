@@ -1,3 +1,8 @@
+"""
+This settings file is used for docker unittest tests.
+"""
+
+
 from siteedit2.settings.base import *  # noqa
 
 ALLOWED_HOSTS = ['0.0.0.0', 'localhost', 'pycharm-py']
