@@ -19,13 +19,42 @@
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_as_marked field_lookup=form.date_of_work_as_marked_lookup %}
 
     <!-- Year -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_std_year field_lookup=form.date_of_work_std_year_lookup %}
+    <!--<div class="row-no-margin">-->
+
+        <label>Year month day</label>
+
+        <div class="search-fieldset-tippy-container" data-tippy-content="Year month and day work was created. (Use 'is blank' option in Advanced Search to find works without year/month/day)">
+            <span data-feather="info" aria-hidden="true"></span>
+        </div>
+
+        <div class="row-no-margin">
+            <div class="col--1of6 advanced_search">
+                {{ form.date_of_work_std_year_lookup }}
+            </div>
+            <div class="col--2of6 search_input">
+                {{ form.date_of_work_std_year }}
+            </div>
+            <div class="col--1of6 advanced_search">
+                {{ form.date_of_work_std_month_lookup }}
+            </div>
+            <div class="col--2of6 search_input">
+                {{ form.date_of_work_std_month }}
+            </div>
+            <div class="col--1of6 advanced_search">
+                {{ form.date_of_work_std_day_lookup }}
+            </div>
+            <div class="col--2of6 search_input">
+                {{ form.date_of_work_std_day }}
+            </div>
+        </div>
+    <!-- {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_std_year field_lookup=form.date_of_work_std_year_lookup %} -->
 
     <!-- Month -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_std_month field_lookup=form.date_of_work_std_month_lookup %}
+    <!-- {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_std_month field_lookup=form.date_of_work_std_month_lookup %} -->
 
     <!-- Day -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_std_day field_lookup=form.date_of_work_std_day_lookup %}
+    <!--{% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_std_day field_lookup=form.date_of_work_std_day_lookup %}-->
+    <!--</div>-->
 
     <!-- Year range -->
     {% include "core/component/search_fieldset/from_to_year.html" with title='Date for ordering (in original calendar)' from_field=form.date_of_work_std_from to_field=form.date_of_work_std_to field_info=form.date_of_work_std_info %}

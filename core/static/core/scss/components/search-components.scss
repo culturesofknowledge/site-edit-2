@@ -1,0 +1,17 @@
+#search-components {
+    /*max-width: 900px;*/
+    font-size: 14px;
+    clear: both;
+}
+
+#search-components label {
+    font-size: 14px;
+}
+
+.search-control {
+    background-color: $faint-grey;
+    border-radius: $space-sm;
+    padding: $space-sm;
+    height: 100%;
+    width: 100%;
+}
