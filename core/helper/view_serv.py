@@ -25,7 +25,7 @@ import core.constant as core_constant
 from core import constant
 from core.form_label_maps import field_label_map
 from core.helper import general_model_serv, recref_serv, model_serv, \
-    url_serv, date_serv, perm_serv, media_serv
+    url_serv, date_serv, perm_serv, media_serv, query_serv
 from core.helper.form_serv import build_search_components
 from core.helper.model_serv import ModelLike, RecordTracker
 from core.helper.renderer_serv import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
@@ -122,14 +122,17 @@ class BasicSearchView(ListView):
 
         for field_name in self.search_fields:
             field_val = self.request_data.get(field_name)
+            lookup_val = self.request_data.get(f'{field_name}_lookup', 'equals')
 
             if (field_val is not None and field_val != '') or (
-                    field_name in self.request_data and f'{field_name}_lookup' in self.request_data and
-                    'blank' in self.request_data.get(f'{field_name}_lookup')):
+                    field_name in self.request_data and
+                    f'{field_name}_lookup' in self.request_data and
+                    lookup_val in query_serv.nullable_lookup_keys
+            ):
                 label_name = self.search_field_label_map.get(field_name) or field_name.replace('_', ' ').capitalize()
-                lookup_key = self.request_data.get(f'{field_name}_lookup', 'equals').replace('_', ' ').replace(' int', '')
+                lookup_key = lookup_val.replace('_', ' ')
 
-                if 'blank' in lookup_key:
+                if lookup_val in query_serv.nullable_lookup_keys:
                     simplified_query.append(f'{label_name} {lookup_key}.')
                 else:
                     if lookup_key.startswith('not'):

@@ -71,7 +71,7 @@ def cond_not(lookup_fn: Callable) -> Callable:
 
     return _fn
 
-def is_blank_int(field, val) -> Callable:
+def is_null(field, val) -> Callable:
     if not isinstance(field, F):
         field = F(field)
     return lookups.IsNull(field, True)

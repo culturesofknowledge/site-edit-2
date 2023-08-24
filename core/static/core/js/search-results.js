@@ -305,7 +305,7 @@ $(window).on('submit', function (e) {
         if (l.className.indexOf('searchfield') > -1 && l.value === '') {
             var lookup = e.target.elements[l.name + '_lookup'];
 
-            if (lookup && lookup.value.indexOf('blank') === -1) {
+            if (lookup && !['blank', 'null'].some(w => lookup.value.includes(w))){
                 // Do not disable if user is searching for blank/not blank
                 l.disabled = true;
                 lookup.disabled = true;
