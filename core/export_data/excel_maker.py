@@ -6,10 +6,8 @@ import itertools
 import logging
 from typing import Iterable, NoReturn, Callable
 
-import openpyxl
-from openpyxl.styles import Font, PatternFill
-from openpyxl.workbook import Workbook
-from openpyxl.worksheet.worksheet import Worksheet
+from xlsxwriter import Workbook
+from xlsxwriter.worksheet import Worksheet
 
 from core import constant
 from core.export_data import excel_header_values, excel_serv
@@ -25,69 +23,77 @@ log = logging.getLogger(__name__)
 def fill_sheet(sheet: 'Worksheet',
                rows: Iterable[CofkUnionWork],
                header_values: HeaderValues,
-               sheet_name) -> NoReturn:
+               sheet_name,
+               header_format=None) -> NoReturn:
     sheet.title = sheet_name
 
     # fill header
-    sheet.append(header_values.get_header_list())
-
-    apply_header_style(sheet)
-    excel_serv.fill_header_style(sheet)
+    for col_idx, col_val in enumerate(header_values.get_header_list()):
+        args = [0, col_idx, col_val]
+        if header_format:
+            args.append(header_format)
+        sheet.write(*args)
 
     rows = (header_values.obj_to_values(obj) for obj in rows)
     rows = map(data_utils.to_str_list_no_none, rows)
     rows = map(excel_serv.escape_xlsx_char_by_row, rows)
-    for row in rows:
-        sheet.append(row)
+    for row_idx, row in enumerate(rows, start=1):
+        for col_idx, col_val in enumerate(row):
+            sheet.write_string(row_idx, col_idx, col_val)
 
 
-def fill_work_sheet(sheet, rows):
+def fill_work_sheet(sheet, rows, header_format=None):
     log.debug('start fill work sheet')
     return fill_sheet(sheet, rows=rows,
                       header_values=excel_header_values.WorkExcelHeaderValues(),
-                      sheet_name='work')
+                      sheet_name='work',
+                      header_format=header_format,
+                      )
 
 
-def fill_person_sheet(sheet, rows):
+def fill_person_sheet(sheet, rows, header_hormat=None):
     log.debug('start fill person sheet')
     return fill_sheet(sheet, rows=rows,
                       header_values=excel_header_values.PersonExcelHeaderValues(),
-                      sheet_name='person')
+                      sheet_name='person',
+                      header_format=header_hormat,
+                      )
 
 
-def fill_location_sheet(sheet, rows):
+def fill_location_sheet(sheet, rows, header_hormat=None):
     log.debug('start fill location sheet')
     return fill_sheet(sheet, rows=rows,
                       header_values=excel_header_values.LocationExcelHeaderValues(),
-                      sheet_name='location')
+                      sheet_name='location',
+                      header_format=header_hormat,
+                      )
 
 
-def fill_manif_sheet(sheet, rows):
+def fill_manif_sheet(sheet, rows, header_hormat=None):
     log.debug('start fill manifestation sheet')
     return fill_sheet(sheet, rows=rows,
                       header_values=excel_header_values.ManifExcelHeaderValues(),
-                      sheet_name='manifestation')
+                      sheet_name='manifestation',
+                      header_format=header_hormat,
+                      )
 
 
-def fill_inst_sheet(sheet, rows):
+def fill_inst_sheet(sheet, rows, header_hormat=None):
     log.debug('start fill institution sheet')
     return fill_sheet(sheet, rows=rows,
                       header_values=excel_header_values.InstExcelHeaderValues(),
-                      sheet_name='institution')
+                      sheet_name='institution',
+                      header_format=header_hormat,
+                      )
 
 
-def fill_resource_sheet(sheet, rows):
+def fill_resource_sheet(sheet, rows, header_hormat=None):
     log.debug('start fill resource sheet')
     return fill_sheet(sheet, rows=rows,
                       header_values=excel_header_values.ResourceExcelHeaderValues(),
-                      sheet_name='resource')
-
-
-def apply_header_style(sheet):
-    # apply style font bold and background color gray in the first row
-    for cell in sheet[1]:
-        cell.font = Font(bold=True)
-        cell.fill = PatternFill(fill_type='solid', fgColor='D3D3D3')
+                      sheet_name='resource',
+                      header_format=header_hormat,
+                      )
 
 
 def get_flat_resource_list(objects, get_resource_map_set_fn) -> Iterable['CofkUnionResource']:
@@ -98,20 +104,16 @@ def get_flat_resource_list(objects, get_resource_map_set_fn) -> Iterable['CofkUn
 def _create_excel_by_fill_fn(fill_fn: Callable[[Workbook], NoReturn],
                              file_path: str = None):
     log.info('[Start] create excel')
-    wb = openpyxl.Workbook()
-    wb.remove_sheet(wb.active)
-
+    wb = Workbook(file_path)
     fill_fn(wb)
-
-    if file_path:
-        wb.save(file_path)
-
+    wb.close()
     log.info(f'[Completed] create excel [{file_path=}] ')
-    return wb
 
 
 def create_work_excel(queryable_works: Iterable[CofkUnionWork],
-                      file_path: str = None) -> 'openpyxl.Workbook':
+                      file_path: str = None) -> 'Workbook':
+    queryable_works = list(queryable_works)
+
     def _find_manif_list():
         manif_list = itertools.chain.from_iterable(w.manif_set.iterator()
                                                    for w in queryable_works)
@@ -141,11 +143,15 @@ def create_work_excel(queryable_works: Iterable[CofkUnionWork],
         return model_serv.UniqueModelPkFilter(inst_list)
 
     def _fill_fn(workbook: Workbook):
-        fill_work_sheet(workbook.create_sheet(), queryable_works)
-        fill_person_sheet(workbook.create_sheet(), _find_person_list())
-        fill_location_sheet(workbook.create_sheet(), _find_location_list())
-        fill_manif_sheet(workbook.create_sheet(), _find_manif_list())
-        fill_inst_sheet(workbook.create_sheet(), _find_inst_list())
+        header_format = workbook.add_format({
+            'bold': True,
+            'bg_color': 'D3D3D3',
+        })
+        fill_work_sheet(workbook.add_worksheet(), queryable_works, header_format=header_format)
+        fill_person_sheet(workbook.add_worksheet(), _find_person_list(), header_hormat=header_format)
+        fill_location_sheet(workbook.add_worksheet(), _find_location_list(), header_hormat=header_format)
+        fill_manif_sheet(workbook.add_worksheet(), _find_manif_list(), header_hormat=header_format)
+        fill_inst_sheet(workbook.add_worksheet(), _find_inst_list(), header_hormat=header_format)
 
         resource_list = itertools.chain(
             get_flat_resource_list(queryable_works, lambda obj: obj.cofkworkresourcemap_set),
@@ -153,6 +159,6 @@ def create_work_excel(queryable_works: Iterable[CofkUnionWork],
             get_flat_resource_list(_find_location_list(), lambda obj: obj.cofklocationresourcemap_set),
             get_flat_resource_list(_find_inst_list(), lambda obj: obj.cofkinstitutionresourcemap_set),
         )
-        fill_resource_sheet(workbook.create_sheet(), resource_list)
+        fill_resource_sheet(workbook.add_worksheet(), resource_list, header_hormat=header_format)
 
     return _create_excel_by_fill_fn(_fill_fn, file_path=file_path)

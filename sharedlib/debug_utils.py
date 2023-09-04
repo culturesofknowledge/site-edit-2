@@ -1,6 +1,8 @@
 import functools
+import logging
 import time
 
+log=logging.getLogger(__name__)
 
 class Timer:
     def __init__(self, name=None, n_precision=5, log_fn=print):
@@ -56,3 +58,51 @@ class Timer:
                 return func(*args, **kwargs)
 
         return wrapper
+
+
+def to_list(fn):
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        return list(fn(*args, **kwargs))
+
+    return wrapper
+
+
+def print_memory_usage(fn):
+    import psutil
+
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        result = fn(*args, **kwargs)
+
+        log.debug('------------------------------------')
+
+        # Get the virtual memory usage statistics
+        virtual_memory = psutil.virtual_memory()
+
+        log.debug('Virtual Memory Usage:')
+        log.debug(f'Total: {virtual_memory.total / (1024 ** 2):.2f} MB')
+        log.debug(f'Available: {virtual_memory.available / (1024 ** 2):.2f} MB')
+        log.debug(f'Used: {virtual_memory.used / (1024 ** 2):.2f} MB')
+        log.debug(f'Percent Used: {virtual_memory.percent}%')
+
+        # Get the swap memory usage statistics
+        # swap_memory = psutil.swap_memory()
+        #
+        # log.debug('\nSwap Memory Usage:')
+        # log.debug(f'Total: {swap_memory.total / (1024 ** 2):.2f} MB')
+        # log.debug(f'Used: {swap_memory.used / (1024 ** 2):.2f} MB')
+        # log.debug(f'Free: {swap_memory.free / (1024 ** 2):.2f} MB')
+        # log.debug(f'Percent Used: {swap_memory.percent}%')
+
+        # Get the memory usage of the current process
+        process = psutil.Process()
+        process_memory = process.memory_info()
+
+        log.debug('Current Process Memory Usage:')
+        log.debug(f'RSS (Resident Set Size): {process_memory.rss / (1024 ** 2):.2f} MB')
+        log.debug(f'VMS (Virtual Memory Size): {process_memory.vms / (1024 ** 2):.2f} MB')
+
+        return result
+
+    return wrapper

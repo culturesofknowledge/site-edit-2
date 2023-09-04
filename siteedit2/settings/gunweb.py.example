@@ -1,14 +1,17 @@
 from .base import *  # noqa
 from pathlib import Path
 
-DEBUG = False
+
+###### Host, IP and domain
 
 ALLOWED_HOSTS = ['192.168.56.10']
 CSRF_TRUSTED_ORIGINS = ['http://192.168.56.10', ]
 
-MEDIA_ROOT = Path(EMLO_APP_HOME).joinpath('media').as_posix()
-STATIC_ROOT = Path(EMLO_APP_HOME).joinpath('static').as_posix()
+# # used by export file in search page
+# EXPORT_ROOT_URL = 'http://your-emlo-edit-hostname'
 
+
+##### Email
 # # Host for sending email.
 # EMAIL_HOST = "smtp.mailgun.org"
 #
@@ -28,5 +31,17 @@ STATIC_ROOT = Path(EMLO_APP_HOME).joinpath('static').as_posix()
 # EMAIL_FROM_EMAIL = f"Excited User <mailgun@kasldajsldkajslk.mailgun.org>"
 
 
-# # used by export file in search page
-# EXPORT_ROOT_URL = 'http://your-emlo-edit-hostname'
+###### Other settings
+
+DEBUG = False
+
+MEDIA_ROOT = Path(EMLO_APP_HOME).joinpath('media').as_posix()
+STATIC_ROOT = Path(EMLO_APP_HOME).joinpath('static').as_posix()
+
+# # key that is used to encrypt the session cookie (must be set), value should be a random string
+# SECRET_KEY = 'akldja;slkdjaksdjalksdjalksdaksdjaksdjl'
+
+
+######### HTTPS
+# SECURE_SSL_REDIRECT = True
+# CSRF_COOKIE_SECURE = True
