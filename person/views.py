@@ -195,8 +195,9 @@ class PersonFFH(FullFormHandler):
         )
         self.person_other_formset = PersonOtherRecrefForm.create_formset_by_records(
             request_data,
-            self.person.active_relationships.iterator() if self.person else [],
-            prefix='person_other'
+            active_records=self.person.active_relationships.iterator() if self.person else [],
+            passive_records=self.person.passive_relationships.iterator() if self.person else [],
+            prefix='person_other',
         )
 
         self.add_recref_formset_handler(PersonCommentFormsetHandler(
@@ -562,3 +563,7 @@ def lookup_other_details(lookup_fn, f, v):
         ), v, conn_type=conn_type)
 
     return q
+
+
+def get_target_or_related_id(recref: CofkPersonPersonMap):
+    return recref.related_id

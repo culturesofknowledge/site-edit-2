@@ -397,16 +397,20 @@ class MultiRelRecrefForm(forms.Form):
     @classmethod
     def create_formset_by_records(cls, post_data,
                                   records: Iterable[Recref], prefix):
+        records = (r for r in records if r.relationship_type in cls.get_rel_type_choices_values())
+        records = data_utils.group_by(records, lambda r: cls.get_target_id(r)).items()
+        return cls._create_formset_by_id_recref_list(post_data, records, prefix)
+
+    @classmethod
+    def _create_formset_by_id_recref_list(cls, post_data,
+                                          id_recref_list: Iterable[tuple[str, list[Recref]]],
+                                          prefix):
         initial_list = []
         recref_adapter = cls.create_recref_adapter()
-        records = (r for r in records if r.relationship_type in cls.get_rel_type_choices_values())
-        for person_id, recref_list in data_utils.group_by(records, lambda r: cls.get_target_id(r)).items():
-            recref_list: list[Recref]
+        for target_id, recref_list in id_recref_list:
             initial_list.append({
-                'name': recref_adapter.find_target_display_name_by_id(
-                    recref_adapter.get_target_id(recref_list[0])
-                ),
-                'target_id': person_id,
+                'name': recref_adapter.find_target_display_name_by_id(target_id),
+                'target_id': target_id,
                 'recref_list': recref_list,
             })
 
