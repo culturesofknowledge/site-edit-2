@@ -360,7 +360,7 @@ class MultiRelRecrefForm(forms.Form):
         del_recref_list = (recref for recref in recref_list
                            if recref.get('recref_id') and not recref.get('is_selected'))
         for recref_data in del_recref_list:
-            db_recref = recref_adapter.recref_class().objects.filter(recref_id=recref_data['recref_id']).first()
+            db_recref = recref_adapter.find_recref_by_id(recref_data['recref_id'])
             if db_recref:
                 log.info(f'delete [{db_recref.relationship_type}][{db_recref}]')
                 db_recref.delete()
@@ -383,7 +383,7 @@ class MultiRelRecrefForm(forms.Form):
             update_recref_list = (recref for recref in recref_list
                                   if recref.get('recref_id') and recref.get('is_selected'))
         for recref_data in update_recref_list:
-            db_recref = recref_adapter.recref_class().objects.filter(recref_id=recref_data['recref_id']).first()
+            db_recref = recref_adapter.find_recref_by_id(recref_data['recref_id'])
             if db_recref:
                 if (db_recref.from_date != recref_data['from_date'] or
                         db_recref.to_date != recref_data['to_date']):
