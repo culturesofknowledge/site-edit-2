@@ -81,7 +81,7 @@ def create_queries_by_lookup_field(request_data: dict,
             _names = list(search_fields_maps[field_name])
             if (lookup_idx := lookup_idx_map.get(lookup_key)) is not None:
                 _names = [_names[lookup_idx]]
-            conn_type = lookup_conn_type_map.get(lookup_key, Q.OR)
+            conn_type = get_lookup_conn_type_by_lookup_key(lookup_key)
 
             q = Q()
             for search_field in _names:
@@ -157,6 +157,16 @@ nullable_lookup_keys = [
     'is_blank', 'not_blank',
     'is_null', 'not_null',
 ]
+
+
+def get_lookup_key_by_lookup_fn(lookup_fn):
+    for k, v in choices_lookup_map.items():
+        if v == lookup_fn:
+            return k
+    return None
+
+def get_lookup_conn_type_by_lookup_key(lookup_key):
+    return lookup_conn_type_map.get(lookup_key, Q.OR)
 
 
 def create_from_to_datetime(from_field_name: str, to_field_name: str,

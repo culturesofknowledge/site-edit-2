@@ -540,6 +540,9 @@ class PersonDeleteConfirmView(LoginRequiredMixin, DeleteConfirmView):
 
 
 def lookup_other_details(lookup_fn, f, v):
+    conn_type = query_serv.get_lookup_conn_type_by_lookup_key(
+        query_serv.get_lookup_key_by_lookup_fn(lookup_fn)
+    )
     q = query_utils.create_q_by_field_names(
         lookup_fn,
 
@@ -556,8 +559,6 @@ def lookup_other_details(lookup_fn, f, v):
                                     query_serv.resource_detail_fields),
             query_utils.join_fields('cofkpersonimagemap__image',
                                     query_serv.image_detail_fields),
-        ), v)
+        ), v, conn_type=conn_type)
 
     return q
-
-
