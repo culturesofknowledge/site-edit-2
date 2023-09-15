@@ -145,51 +145,51 @@ class PersonFFH(FullFormHandler):
         )
         self.parent_handler = MultiRecrefAdapterHandler(
             request_data, name='parent',
-            recref_adapter=ActivePersonRecrefAdapter(self.person),
+            recref_adapter=PassivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_PARENT_OF,
         )
         self.children_handler = MultiRecrefAdapterHandler(
             request_data, name='children',
-            recref_adapter=PassivePersonRecrefAdapter(self.person),
+            recref_adapter=ActivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_PARENT_OF,
         )
         self.employer_handler = MultiRecrefAdapterHandler(
             request_data, name='employer',
-            recref_adapter=ActivePersonRecrefAdapter(self.person),
+            recref_adapter=PassivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_EMPLOYED,
         )
         self.employee_handler = MultiRecrefAdapterHandler(
             request_data, name='employee',
-            recref_adapter=PassivePersonRecrefAdapter(self.person),
+            recref_adapter=ActivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_EMPLOYED,
         )
 
         self.teacher_handler = MultiRecrefAdapterHandler(
             request_data, name='teacher',
-            recref_adapter=ActivePersonRecrefAdapter(self.person),
+            recref_adapter=PassivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_TAUGHT,
         )
         self.student_handler = MultiRecrefAdapterHandler(
             request_data, name='student',
-            recref_adapter=PassivePersonRecrefAdapter(self.person),
+            recref_adapter=ActivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_TAUGHT,
         )
 
         self.patron_handler = MultiRecrefAdapterHandler(
             request_data, name='patron',
-            recref_adapter=ActivePersonRecrefAdapter(self.person),
+            recref_adapter=PassivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_WAS_PATRON_OF,
         )
         self.protege_handler = MultiRecrefAdapterHandler(
             request_data, name='protege',
-            recref_adapter=PassivePersonRecrefAdapter(self.person),
+            recref_adapter=ActivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_WAS_PATRON_OF,
         )
