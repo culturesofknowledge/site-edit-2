@@ -13,11 +13,7 @@ class CofkUser(AbstractBaseUser, PermissionsMixin):
     failed_logins = models.IntegerField(null=False, default=0, blank=True)
     prev_login = models.DateTimeField(null=True, blank=True)
     login_time = models.DateTimeField(null=True, blank=True)
-
-    # Active changed to boolean
     is_active = models.BooleanField(default=True, null=False)
-
-    # Can be changed to email field
     email = models.EmailField(null=True)
 
     is_staff = models.BooleanField(default=False, help_text='Identifies whether the user can log into the admin site')

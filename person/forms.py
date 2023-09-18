@@ -1,3 +1,4 @@
+import itertools
 import logging
 from typing import Iterable
 
@@ -12,9 +13,10 @@ from core.helper import form_serv, date_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.form_serv import TargetPersonMRRForm, LocationRecrefField, BasicSearchFieldset, SearchCharField, \
     SearchIntField, EmloLineboxField, YesEmptyCheckboxField
-from core.models import CofkUnionOrgType, CofkUnionRoleCategory
+from core.models import CofkUnionOrgType, CofkUnionRoleCategory, Recref
 from person.models import CofkUnionPerson
-from person.recref_adapter import ActivePersonRecrefAdapter
+from person.recref_adapter import ActivePersonRecrefAdapter, PassivePersonRecrefAdapter
+from sharedlib import data_utils
 
 log = logging.getLogger(__name__)
 
@@ -312,15 +314,15 @@ class GeneralSearchFieldset(BasicSearchFieldset):
 
 
 class PersonOtherRelationChoices(TextChoices):
-    UNSPECIFIED_RELATIONSHIP_WITH = constant.REL_TYPE_UNSPECIFIED_RELATIONSHIP_WITH, 'Unspecified Relationship With'
-    ACQUAINTANCE_OF = constant.REL_TYPE_ACQUAINTANCE_OF, 'Acquaintance Of'
-    WAS_BUSINESS_ASSOCIATE = constant.REL_TYPE_WAS_BUSINESS_ASSOCIATE, 'Was A Business Associate Of'
-    COLLABORATED_WITH = constant.REL_TYPE_COLLABORATED_WITH, 'Collaborated With'
-    COLLEAGUE_OF = constant.REL_TYPE_COLLEAGUE_OF, 'Colleague Of'
-    FRIEND_OF = constant.REL_TYPE_FRIEND_OF, 'Friend Of'
-    RELATIVE_OF = constant.REL_TYPE_RELATIVE_OF, 'Relative Of'
-    SIBLING_OF = constant.REL_TYPE_SIBLING_OF, 'Sibling Of'
-    SPOUSE_OF = constant.REL_TYPE_SPOUSE_OF, 'Spouse Of'
+    UNSPECIFIED_RELATIONSHIP_WITH = constant.REL_TYPE_UNSPECIFIED_RELATIONSHIP_WITH, 'Unspecified relationship'
+    ACQUAINTANCE_OF = constant.REL_TYPE_ACQUAINTANCE_OF, 'Acquaintance'
+    WAS_BUSINESS_ASSOCIATE = constant.REL_TYPE_WAS_BUSINESS_ASSOCIATE, 'Business associate'
+    COLLABORATED_WITH = constant.REL_TYPE_COLLABORATED_WITH, 'Collaborator'
+    COLLEAGUE_OF = constant.REL_TYPE_COLLEAGUE_OF, 'Colleague'
+    FRIEND_OF = constant.REL_TYPE_FRIEND_OF, 'Friend'
+    RELATIVE_OF = constant.REL_TYPE_RELATIVE_OF, 'Relative'
+    SIBLING_OF = constant.REL_TYPE_SIBLING_OF, 'Sibling'
+    SPOUSE_OF = constant.REL_TYPE_SPOUSE_OF, 'Spouse'
 
 
 class PersonOtherRecrefForm(TargetPersonMRRForm):
@@ -337,3 +339,25 @@ class PersonOtherRecrefForm(TargetPersonMRRForm):
             person_id=target_id,
             relationship_type__in=self.get_rel_type_choices_values(),
         )
+
+    @classmethod
+    def create_formset_by_records(cls, post_data,
+                                  active_records: Iterable[Recref],
+                                  passive_records: Iterable[Recref],
+                                  prefix):
+        """
+        PersonOtherRecrefForm is special, because it can see both direction of relationship.
+        that is why we need to merge both active and passive records.
+
+        We can do the update and delete for the merged records
+        """
+
+        active_adapter = ActivePersonRecrefAdapter()
+        passive_adapter = PassivePersonRecrefAdapter()
+        records = itertools.chain(
+            ((active_adapter.get_target_id(r), r) for r in active_records),
+            ((passive_adapter.get_target_id(r), r) for r in passive_records),
+        )
+        records = (r for r in records if r[1].relationship_type in cls.get_rel_type_choices_values())
+        records = data_utils.group_by(records, key_fn=lambda r: r[0], val_fn=lambda r: r[1]).items()
+        return cls._create_formset_by_id_recref_list(post_data, records, prefix)

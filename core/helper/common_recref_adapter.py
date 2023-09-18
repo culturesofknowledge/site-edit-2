@@ -68,6 +68,9 @@ class RecrefFormAdapter:
         targets = (self.find_target_instance(i) for i in target_id_list)
         return targets
 
+    def find_recref_by_id(self, recref_id):
+        return self.recref_class().objects.filter(recref_id=recref_id).first()
+
 
 class TargetCommentRecrefAdapter(RecrefFormAdapter, ABC):
     def find_target_display_name_by_id(self, target_id):

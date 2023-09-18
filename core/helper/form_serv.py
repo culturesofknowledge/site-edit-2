@@ -360,7 +360,7 @@ class MultiRelRecrefForm(forms.Form):
         del_recref_list = (recref for recref in recref_list
                            if recref.get('recref_id') and not recref.get('is_selected'))
         for recref_data in del_recref_list:
-            db_recref = recref_adapter.recref_class().objects.filter(recref_id=recref_data['recref_id']).first()
+            db_recref = recref_adapter.find_recref_by_id(recref_data['recref_id'])
             if db_recref:
                 log.info(f'delete [{db_recref.relationship_type}][{db_recref}]')
                 db_recref.delete()
@@ -383,7 +383,7 @@ class MultiRelRecrefForm(forms.Form):
             update_recref_list = (recref for recref in recref_list
                                   if recref.get('recref_id') and recref.get('is_selected'))
         for recref_data in update_recref_list:
-            db_recref = recref_adapter.recref_class().objects.filter(recref_id=recref_data['recref_id']).first()
+            db_recref = recref_adapter.find_recref_by_id(recref_data['recref_id'])
             if db_recref:
                 if (db_recref.from_date != recref_data['from_date'] or
                         db_recref.to_date != recref_data['to_date']):
@@ -397,16 +397,20 @@ class MultiRelRecrefForm(forms.Form):
     @classmethod
     def create_formset_by_records(cls, post_data,
                                   records: Iterable[Recref], prefix):
+        records = (r for r in records if r.relationship_type in cls.get_rel_type_choices_values())
+        records = data_utils.group_by(records, lambda r: cls.get_target_id(r)).items()
+        return cls._create_formset_by_id_recref_list(post_data, records, prefix)
+
+    @classmethod
+    def _create_formset_by_id_recref_list(cls, post_data,
+                                          id_recref_list: Iterable[tuple[str, list[Recref]]],
+                                          prefix):
         initial_list = []
         recref_adapter = cls.create_recref_adapter()
-        records = (r for r in records if r.relationship_type in cls.get_rel_type_choices_values())
-        for person_id, recref_list in data_utils.group_by(records, lambda r: cls.get_target_id(r)).items():
-            recref_list: list[Recref]
+        for target_id, recref_list in id_recref_list:
             initial_list.append({
-                'name': recref_adapter.find_target_display_name_by_id(
-                    recref_adapter.get_target_id(recref_list[0])
-                ),
-                'target_id': person_id,
+                'name': recref_adapter.find_target_display_name_by_id(target_id),
+                'target_id': target_id,
                 'recref_list': recref_list,
             })
 

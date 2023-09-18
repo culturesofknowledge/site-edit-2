@@ -145,58 +145,59 @@ class PersonFFH(FullFormHandler):
         )
         self.parent_handler = MultiRecrefAdapterHandler(
             request_data, name='parent',
-            recref_adapter=ActivePersonRecrefAdapter(self.person),
+            recref_adapter=PassivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_PARENT_OF,
         )
         self.children_handler = MultiRecrefAdapterHandler(
             request_data, name='children',
-            recref_adapter=PassivePersonRecrefAdapter(self.person),
+            recref_adapter=ActivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_PARENT_OF,
         )
         self.employer_handler = MultiRecrefAdapterHandler(
             request_data, name='employer',
-            recref_adapter=ActivePersonRecrefAdapter(self.person),
+            recref_adapter=PassivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_EMPLOYED,
         )
         self.employee_handler = MultiRecrefAdapterHandler(
             request_data, name='employee',
-            recref_adapter=PassivePersonRecrefAdapter(self.person),
+            recref_adapter=ActivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_EMPLOYED,
         )
 
         self.teacher_handler = MultiRecrefAdapterHandler(
             request_data, name='teacher',
-            recref_adapter=ActivePersonRecrefAdapter(self.person),
+            recref_adapter=PassivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_TAUGHT,
         )
         self.student_handler = MultiRecrefAdapterHandler(
             request_data, name='student',
-            recref_adapter=PassivePersonRecrefAdapter(self.person),
+            recref_adapter=ActivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_TAUGHT,
         )
 
         self.patron_handler = MultiRecrefAdapterHandler(
             request_data, name='patron',
-            recref_adapter=ActivePersonRecrefAdapter(self.person),
+            recref_adapter=PassivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_WAS_PATRON_OF,
         )
         self.protege_handler = MultiRecrefAdapterHandler(
             request_data, name='protege',
-            recref_adapter=PassivePersonRecrefAdapter(self.person),
+            recref_adapter=ActivePersonRecrefAdapter(self.person),
             recref_form_class=PersonRecrefForm,
             rel_type=constant.REL_TYPE_WAS_PATRON_OF,
         )
         self.person_other_formset = PersonOtherRecrefForm.create_formset_by_records(
             request_data,
-            self.person.active_relationships.iterator() if self.person else [],
-            prefix='person_other'
+            active_records=self.person.active_relationships.iterator() if self.person else [],
+            passive_records=self.person.passive_relationships.iterator() if self.person else [],
+            prefix='person_other',
         )
 
         self.add_recref_formset_handler(PersonCommentFormsetHandler(
@@ -540,6 +541,9 @@ class PersonDeleteConfirmView(LoginRequiredMixin, DeleteConfirmView):
 
 
 def lookup_other_details(lookup_fn, f, v):
+    conn_type = query_serv.get_lookup_conn_type_by_lookup_key(
+        query_serv.get_lookup_key_by_lookup_fn(lookup_fn)
+    )
     q = query_utils.create_q_by_field_names(
         lookup_fn,
 
@@ -556,8 +560,10 @@ def lookup_other_details(lookup_fn, f, v):
                                     query_serv.resource_detail_fields),
             query_utils.join_fields('cofkpersonimagemap__image',
                                     query_serv.image_detail_fields),
-        ), v)
+        ), v, conn_type=conn_type)
 
     return q
 
 
+def get_target_or_related_id(recref: CofkPersonPersonMap):
+    return recref.related_id
