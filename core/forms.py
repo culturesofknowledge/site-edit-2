@@ -136,7 +136,7 @@ class ImageForm(ModelForm):
     def clean_display_order(self):
         display_order = self.cleaned_data.get('display_order')
         try:
-            int(display_order)
+            return int(display_order)
         except:
             raise forms.ValidationError('Display order must be an integer')
 
