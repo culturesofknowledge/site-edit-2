@@ -599,6 +599,7 @@ def choice_recref_clone_direction(field_a, field_b):
     ]
     for cur_recref_model, left_name in mapping:
         if issubclass(recref_model, cur_recref_model):
+            # KTODO double check CofkPersonPersonMap left right mapping correct, left should be person_id, right should be related_id
             return _choice_by_left_name(left_name)
 
     log.warning(f'unknown left right mapping {field_a.field.model}')
