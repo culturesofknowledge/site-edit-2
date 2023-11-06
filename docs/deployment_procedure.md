@@ -1,4 +1,4 @@
-last update date: 2023-01-12
+last update date: 2023-11-06
 
 
 Pre-condition
@@ -25,6 +25,7 @@ vi gunweb.py
 
 cd ../../docker/site-edit-2/
 cp gunweb.env.example .gunweb.env
+ln -sf .gunweb.env .env    # .env for `db` service
 # edit variable in .gunweb.env if needed
 vi .gunweb.env
 
