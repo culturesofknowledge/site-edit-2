@@ -114,7 +114,8 @@ Procedure for data migration
     * old DB is running and can be connected to docker
     * at least 8GB RAM in server
     * command `psql` installed
-* 172.17.0.1 is ip of docker host, is mean 127.0.0.1 of docker host
+* `-o` and `-t` should be ip and port of old DB, in my case it is 172.17.0.1
+  * 172.17.0.1 is ip of docker host, docker host is the machine that run docker
 * `old_audit_data.sql` is file that contain audit data
 
 ```shell
@@ -131,3 +132,8 @@ psql --host localhost --port 25432 -d postgres --password  --username postgres  
 Config for `HTTPS` 
 -------------------------------
 * set `SESSION_COOKIE_SECURE` and `CSRF_COOKIE_SECURE` to `True` in django files
+
+
+Offical Django Deployment checklist
+--------------------------------------------
+* https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/

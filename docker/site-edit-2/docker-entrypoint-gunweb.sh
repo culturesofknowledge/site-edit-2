@@ -39,7 +39,6 @@ cd $DJANGODIR
 
 python3 manage.py compilescss
 python3 manage.py collectstatic -c --no-input
-# cp $DJANGODIR/core/static/core/scss/main.css $EMLO_APP_HOME/static/
 
 
 echo "Making migrations"
