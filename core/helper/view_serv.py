@@ -302,9 +302,9 @@ class BasicSearchView(ListView):
         }
         is_compact_layout = (self.request_data.get('display-style', core_constant.SEARCH_LAYOUT_TABLE)
                              == core_constant.SEARCH_LAYOUT_GRID)
-        results_renderer = (self.compact_search_results_renderer_factory
-                            if is_compact_layout
-                            else self.table_search_results_renderer_factory)
+        results_renderer_factory: RendererFactory = (self.compact_search_results_renderer_factory
+                                                     if is_compact_layout
+                                                     else self.table_search_results_renderer_factory)
 
         query_fieldset_list = self.query_fieldset_list if is_compact_layout else self.expanded_query_fieldset_list
 
@@ -313,7 +313,7 @@ class BasicSearchView(ListView):
                                                                        self.request_data.dict()),
                         'entity': self.entity or '',
                         'title': self.entity.split(',')[1].title() if self.entity else 'Title',
-                        'results_renderer': results_renderer(self.get_search_results_context(context)),
+                        'results_renderer': results_renderer_factory(self.get_search_results_context(context)),
                         'is_compact_layout': is_compact_layout,
                         'to_user_messages': getattr(self, 'to_user_messages', []),
                         'simplified_query': self.simplified_query,
