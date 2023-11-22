@@ -30,6 +30,7 @@ from core.helper.query_serv import create_recref_lookup_fn
 from core.helper.recref_handler import SingleRecrefHandler, RecrefFormsetHandler, SubjectHandler, ImageRecrefHandler, \
     TargetResourceFormsetHandler, MultiRecrefAdapterHandler
 from core.helper.recref_serv import create_recref_if_field_exist
+from core.helper.renderer_serv import RendererFactory
 from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_serv import DefaultSearchView
@@ -1048,11 +1049,11 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         return simplified_query
 
     @property
-    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+    def table_search_results_renderer_factory(self) -> RendererFactory:
         return renderer_serv.create_table_search_results_renderer('work/expanded_search_table_layout.html')
 
     @property
-    def compact_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+    def compact_search_results_renderer_factory(self) -> RendererFactory:
         # Compact search results for works are also table formatted
         return renderer_serv.create_table_search_results_renderer('work/compact_search_table_layout.html')
 

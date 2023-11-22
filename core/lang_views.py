@@ -1,4 +1,4 @@
-from typing import Callable, Iterable
+from typing import Iterable
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 
 from core.helper import renderer_serv, query_serv
+from core.helper.renderer_serv import RendererFactory
 from core.helper.view_serv import DefaultSearchView
 from core.lang_forms import LangSearchFieldset
 from core.models import Iso639LanguageCode, CofkUnionFavouriteLanguage
@@ -57,7 +58,7 @@ class LanguageSearchView(LoginRequiredMixin, DefaultSearchView):
         return queryset
 
     @property
-    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+    def table_search_results_renderer_factory(self) -> RendererFactory:
         return renderer_serv.create_table_search_results_renderer(
             'core/language_expanded_search_table_layout.html'
         )

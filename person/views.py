@@ -19,7 +19,7 @@ from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.model_serv import ModelLike
 from core.helper.recref_handler import RecrefFormsetHandler, RoleCategoryHandler, ImageRecrefHandler, \
     TargetResourceFormsetHandler, MultiRecrefAdapterHandler, SingleRecrefHandler
-from core.helper.renderer_serv import CompactSearchResultsRenderer
+from core.helper.renderer_serv import RendererFactory
 from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_serv import CommonInitFormViewTemplate, BasicSearchView, MergeChoiceViews, MergeActionViews, \
@@ -397,11 +397,11 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         return create_queryset_by_queries(SearchResultPerson, queries, sort_by=sort_by)
 
     @property
-    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+    def table_search_results_renderer_factory(self) -> RendererFactory:
         return renderer_serv.create_table_search_results_renderer('person/search_table_layout.html')
 
     @property
-    def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
+    def compact_search_results_renderer_factory(self) -> RendererFactory:
         return renderer_serv.create_compact_renderer(item_template_name='person/compact_item.html')
 
     @property

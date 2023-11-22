@@ -9,6 +9,7 @@ from django.shortcuts import render
 from core import constant
 from core.helper import renderer_serv, query_serv, view_serv, perm_serv
 from core.helper.model_serv import ModelLike
+from core.helper.renderer_serv import RendererFactory
 from core.helper.view_serv import CommonInitFormViewTemplate, DefaultSearchView, DeleteConfirmView
 from publication.forms import PublicationForm, GeneralSearchFieldset
 from publication.models import CofkUnionPublication
@@ -60,7 +61,7 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
         return self.create_queryset_by_queries(CofkUnionPublication, queries)
 
     @property
-    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+    def table_search_results_renderer_factory(self) -> RendererFactory:
         return renderer_serv.create_table_search_results_renderer('publication/search_table_layout.html')
 
 

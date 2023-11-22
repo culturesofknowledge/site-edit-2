@@ -1,4 +1,4 @@
-from typing import Callable, Iterable
+from typing import Iterable
 
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 
@@ -7,6 +7,7 @@ from audit.forms import AuditSearchFieldset
 from audit.models import CofkUnionAuditLiteral
 from core import constant
 from core.helper import renderer_serv, query_serv
+from core.helper.renderer_serv import RendererFactory
 from core.helper.view_serv import DefaultSearchView
 
 
@@ -41,7 +42,7 @@ class AuditSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearch
         return self.create_queryset_by_queries(CofkUnionAuditLiteral, queries)
 
     @property
-    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+    def table_search_results_renderer_factory(self) -> RendererFactory:
         return renderer_serv.create_table_search_results_renderer('audit/search_table_layout.html')
 
     @property

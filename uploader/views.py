@@ -2,7 +2,7 @@ import logging
 import os
 import re
 import time
-from typing import Iterable, Callable, List
+from typing import Iterable, List
 from zipfile import BadZipFile
 
 from django.conf import settings
@@ -20,7 +20,7 @@ from core import constant
 from core.form_label_maps import field_label_map
 from core.helper.query_serv import create_from_to_datetime, create_queries_by_field_fn_maps, \
     create_queries_by_lookup_field
-from core.helper.renderer_serv import create_table_search_results_renderer
+from core.helper.renderer_serv import create_table_search_results_renderer, RendererFactory
 from core.helper.view_serv import DefaultSearchView
 from core.models import CofkLookupCatalogue
 from uploader.forms import CofkCollectUploadForm, GeneralSearchFieldset
@@ -394,5 +394,5 @@ class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
         return self.create_queryset_by_queries(DisplayableCollectWork, queries, sort_by=sort_by)
 
     @property
-    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+    def table_search_results_renderer_factory(self) -> RendererFactory:
         return create_table_search_results_renderer('uploader/search_table_layout.html')

@@ -17,7 +17,7 @@ from core.helper import view_serv, renderer_serv, query_serv, perm_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.model_serv import ModelLike
 from core.helper.recref_handler import RecrefFormsetHandler, ImageRecrefHandler, TargetResourceFormsetHandler
-from core.helper.renderer_serv import CompactSearchResultsRenderer
+from core.helper.renderer_serv import RendererFactory
 from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_serv import BasicSearchView, CommonInitFormViewTemplate, MergeChoiceViews, MergeChoiceContext, \
@@ -267,11 +267,11 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
         return 'location:return_quick_init'
 
     @property
-    def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
+    def compact_search_results_renderer_factory(self) -> RendererFactory:
         return renderer_serv.create_compact_renderer(item_template_name='location/compact_item.html')
 
     @property
-    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+    def table_search_results_renderer_factory(self) -> RendererFactory:
         return renderer_serv.create_table_search_results_renderer(
             'location/search_table_layout.html'
         )

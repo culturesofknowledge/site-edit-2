@@ -13,7 +13,7 @@ from core.helper import renderer_serv, query_serv, view_serv, perm_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.model_serv import ModelLike
 from core.helper.recref_handler import ImageRecrefHandler, TargetResourceFormsetHandler
-from core.helper.renderer_serv import CompactSearchResultsRenderer
+from core.helper.renderer_serv import RendererFactory
 from core.helper.view_components import HeaderValues, DownloadCsvHandler
 from core.helper.view_serv import CommonInitFormViewTemplate, DefaultSearchView, MergeChoiceViews, MergeActionViews, \
     MergeConfirmViews
@@ -95,11 +95,11 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
         return self.create_queryset_by_queries(CofkUnionInstitution, queries, sort_by=sort_by).distinct()
 
     @property
-    def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
+    def compact_search_results_renderer_factory(self) -> RendererFactory:
         return renderer_serv.create_compact_renderer(item_template_name='institution/compact_item.html')
 
     @property
-    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+    def table_search_results_renderer_factory(self) -> RendererFactory:
         return renderer_serv.create_table_search_results_renderer('institution/search_table_layout.html')
 
     @property

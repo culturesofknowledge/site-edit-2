@@ -1,9 +1,8 @@
-from typing import Callable, Iterable
-
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from core.helper import renderer_serv, view_serv, query_serv
+from core.helper.renderer_serv import RendererFactory
 from core.helper.view_serv import DefaultSearchView
 from manifestation import manif_serv
 from manifestation.models import CofkUnionManifestation
@@ -31,7 +30,7 @@ class ManifSearchView(LoginRequiredMixin, DefaultSearchView):
         return queryset
 
     @property
-    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+    def table_search_results_renderer_factory(self) -> RendererFactory:
         return renderer_serv.create_table_search_results_renderer('manif/search_table_layout.html')
 
 

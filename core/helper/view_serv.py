@@ -28,8 +28,8 @@ from core.helper import general_model_serv, recref_serv, model_serv, \
     url_serv, date_serv, perm_serv, media_serv, query_serv
 from core.helper.form_serv import build_search_components
 from core.helper.model_serv import ModelLike, RecordTracker
-from core.helper.renderer_serv import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
-    demo_table_search_results_renderer
+from core.helper.renderer_serv import DemoCompactSearchResultsRenderer, \
+    demo_table_search_results_renderer, RendererFactory
 from core.helper.url_serv import VNAME_FULL_FORM, VNAME_SEARCH
 from core.helper.view_components import DownloadCsvHandler
 from core.models import CofkUnionResource, CofkUnionComment, CofkUserSavedQuery, CofkUserSavedQuerySelection
@@ -202,13 +202,13 @@ class BasicSearchView(ListView):
         return 'asc'
 
     @property
-    def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
-        """ factory of Compact layout """
+    def compact_search_results_renderer_factory(self) -> RendererFactory:
+        """ factory of renderer (Callable) than callable can create Compact layout """
         raise NotImplementedError('missing compact_search_results_renderer_factory')
 
     @property
-    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
-        """ factory of Table layout """
+    def table_search_results_renderer_factory(self) -> RendererFactory:
+        """ factory of renderer (Callable) than callable can create Table layout """
         raise NotImplementedError('missing table_search_results_renderer_factory')
 
     @property
@@ -465,11 +465,11 @@ class DefaultSearchView(BasicSearchView):
         return 'desc'
 
     @property
-    def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
+    def compact_search_results_renderer_factory(self) -> RendererFactory:
         return DemoCompactSearchResultsRenderer
 
     @property
-    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+    def table_search_results_renderer_factory(self) -> RendererFactory:
         return demo_table_search_results_renderer
 
     def get_queryset(self):
