@@ -16,13 +16,13 @@ class CofkPeople(CofkEntity, ABC):
     def __init__(self, upload: CofkCollectUpload, sheet):
         super().__init__(upload, sheet)
         self.people: List[CofkCollectPerson] = []
+        iperson_ids = list(CofkCollectPerson.objects.values_list('iperson_id').order_by('-iperson_id')[:1])
+        latest_iperson_id = iperson_ids[0][0] if len(iperson_ids) == 1 else 0
 
         for index, row in enumerate(self.iter_rows(), start=1 + self.sheet.header_length):
             per_dict = self.get_row(row, index)
             self.check_required(per_dict)
             self.check_data_types(per_dict)
-            iperson_ids = list(CofkCollectPerson.objects.values_list('iperson_id').order_by('-iperson_id')[:1])
-            latest_iperson_id = iperson_ids[0][0] if len(iperson_ids) == 1 else 0
 
             if 'iperson_id' in per_dict and 'primary_name' in per_dict:
                 ids, names = self.clean_lists(per_dict, 'iperson_id', 'primary_name')
