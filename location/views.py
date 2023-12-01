@@ -268,6 +268,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
     def compact_search_results_renderer_factory(self) -> RendererFactory:
+        # TOBEREMOVE 20231122 no longer used in UI webpage, but it have only one display layout
         return renderer_serv.create_compact_renderer(item_template_name='location/compact_item.html')
 
     @property
