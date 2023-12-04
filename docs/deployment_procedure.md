@@ -12,8 +12,10 @@ Procedure for first time deploy
 ```shell
 # copy or clone project to server 
 git clone https://github.com/culturesofknowledge/site-edit-2
+cd site-edit-2
+git submodule update --init --recursive
 
-cd site-edit-2/siteedit2/settings
+cd siteedit2/settings
 cp gunweb.py.example gunweb.py
 # change hostname / ip in  ALLOWED_HOSTS, CSRF_TRUSTED_ORIGINS
 # about email setting, see [How to set up email service ?]
