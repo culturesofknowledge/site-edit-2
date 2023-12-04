@@ -1,0 +1,3 @@
+[submodule "cllib"]
+	path = cllib
+	url = git@github.com:CottageLabs/cllib.git

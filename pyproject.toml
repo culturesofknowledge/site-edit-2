@@ -25,6 +25,8 @@ dependencies = [
     'more-itertools~=9.1',
     'psutil~=5.9',
     'XlsxWriter~=3.1',
+
+    'cllib==0.0.1',
 ]
 
 
