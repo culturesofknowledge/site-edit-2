@@ -4,6 +4,15 @@ from core import constant
 
 
 def str_to_search_datetime(datetime_str):
+    """
+    >>> str_to_search_datetime('2020')
+    datetime.datetime(2020, 1, 1, 0, 0)
+    >>> str_to_search_datetime('2020-12-22')
+
+    >>> str_to_search_datetime('22/12/2020')
+    datetime.datetime(2020, 12, 22, 0, 0)
+    """
+
     if len(datetime_str) == 4:
         datetime_str = f'01/01/{datetime_str}'
     elif len(datetime_str) == 7:
@@ -17,7 +26,14 @@ def str_to_search_datetime(datetime_str):
         pass
 
 
-def search_datestr_to_db_datestr(date_str):
+def search_datestr_to_db_datestr(date_str: str) -> str:
+    """
+    >>> search_datestr_to_db_datestr('31/12/2020')
+    '2020-12-31'
+    >>> search_datestr_to_db_datestr('2020')
+    '2020-01-01'
+    """
+
     if not date_str:
         return date_str
     dates = date_str.split('/')
@@ -36,6 +52,10 @@ def str_to_std_datetime(datetime_str):
 
 
 def date_to_simple_date_str(dt):
+    """
+    >>> date_to_simple_date_str(datetime.datetime(2020, 1, 1))
+    '20200101'
+    """
     return dt.strftime(constant.SIMPLE_DATE_FORMAT)
 
 
