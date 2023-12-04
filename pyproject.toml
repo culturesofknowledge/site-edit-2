@@ -1,0 +1,50 @@
+[project]
+name = "site-edit-2"
+version = "0.0.1"
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+]
+dependencies = [
+    'asgiref==3.5.2',
+    'Django==4.0.6',
+    'openpyxl==3.0.10',
+    'psycopg2==2.9.3',
+    'pycountry==22.3.5',
+    'sqlparse==0.4.2',
+    'selenium~=4.15',
+    'django-compressor~=4.0',
+    'django-sass-processor~=1.2.1',
+    'libsass~=0.21.0',
+    'Pillow~=9.2.0',
+    'requests~=2.28.1',
+    'gunicorn~=20.1.0',
+    'beautifulsoup4~=4.11.2',
+    'more-itertools~=9.1',
+    'psutil~=5.9',
+    'XlsxWriter~=3.1',
+]
+
+
+
+[[project.authors]]
+name = "somebody"
+
+
+[build-system]
+requires = ["setuptools", ]
+build-backend = "setuptools.build_meta"
+
+
+[project.scripts]
+
+
+[tool.setuptools.packages.find]
+exclude = [
+    'devscript',
+    'docker',
+    'docs',
+    'files',
+]
