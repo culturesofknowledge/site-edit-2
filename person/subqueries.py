@@ -5,10 +5,10 @@ from django.db.models import Count, Q
 from django.db.models.expressions import OuterRef
 from django.db.models.functions import Coalesce
 
+from cllib_django import query_utils
 from core.constant import REL_TYPE_MENTION
 from core.helper import query_serv
 from person.models import CofkUnionPerson
-from sharedlib.djangolib import query_utils
 from work import work_serv
 from work.forms import AuthorRelationChoices, AddresseeRelationChoices
 

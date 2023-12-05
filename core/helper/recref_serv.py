@@ -9,11 +9,11 @@ from django.db.models.fields.related_descriptors import ForwardManyToOneDescript
 from django.forms import BaseForm
 
 from cllib import inspect_utils
+from cllib_django import django_utils
 from core.helper import model_serv, query_cache_serv
 from core.helper.model_serv import ModelLike
 from core.models import Recref, CofkUnionRelationshipType
 from core.recref_settings import recref_left_right_list
-from sharedlib.djangolib import django_utils
 
 log = logging.getLogger(__name__)
 

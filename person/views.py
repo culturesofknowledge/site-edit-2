@@ -9,6 +9,7 @@ from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual, Exact
 from django.forms import BaseForm
 from django.shortcuts import render, redirect, get_object_or_404
 
+from cllib_django import query_utils
 from core import constant
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_BORN_IN_LOCATION, REL_TYPE_DIED_AT_LOCATION, \
     TRUE_CHAR
@@ -35,7 +36,6 @@ from person.recref_adapter import PersonCommentRecrefAdapter, PersonResourceRecr
     ActivePersonRecrefAdapter, PassivePersonRecrefAdapter, PersonImageRecrefAdapter, PersonLocRecrefAdapter
 from person.subqueries import create_queryset_by_queries
 from person.view_components import PersonFormDescriptor
-from sharedlib.djangolib import query_utils
 
 if TYPE_CHECKING:
     from core.helper.view_serv import MergeChoiceContext

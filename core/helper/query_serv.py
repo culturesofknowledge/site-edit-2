@@ -5,9 +5,9 @@ from django.db.models import F
 from django.db.models import Q, lookups
 from django.db.models.lookups import GreaterThanOrEqual, LessThanOrEqual
 
-from core.helper import date_serv
-from sharedlib.djangolib.query_utils import join_fields, run_lookup_fn, create_q_by_field_names, \
+from cllib_django.query_utils import join_fields, run_lookup_fn, create_q_by_field_names, \
     cond_not, is_blank, create_exists_by_mode, is_null
+from core.helper import date_serv
 
 log = logging.getLogger(__name__)
 

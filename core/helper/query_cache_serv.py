@@ -1,6 +1,6 @@
+from cllib_django.query_utils import load_cache  # noqa
 from core.models import CofkLookupCatalogue, CofkLookupDocumentType
 from login.models import CofkUser
-from sharedlib.djangolib.query_utils import load_cache  # noqa
 
 ck_all_union_relationship_types = 'all_union_relationship_types'
 

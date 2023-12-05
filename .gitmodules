@@ -1,3 +1,6 @@
 [submodule "cllib"]
 	path = cllib
 	url = git@github.com:CottageLabs/cllib.git
+[submodule "cllib-django"]
+	path = cllib-django
+	url = git@github.com:CottageLabs/cllib-django.git
