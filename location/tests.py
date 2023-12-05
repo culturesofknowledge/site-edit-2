@@ -5,7 +5,7 @@ from django.test import TestCase
 from selenium.webdriver.common.by import By
 
 import location.fixtures
-from cllib import file_utils
+from cllib import path_utils
 from core.helper import model_serv
 from core.helper.view_components import DownloadCsvHandler
 from location.models import CofkUnionLocation, CofkLocationResourceMap
@@ -109,7 +109,7 @@ class LocationDownloadCsvHandlerTests(TestCase):
     def test_create_csv_file(self):
         queryset = CofkUnionLocation.objects.all()[:10]
         record_size = queryset.count()
-        csv_path = file_utils.create_new_tmp_file_path()
+        csv_path = path_utils.create_tmp_path()
         csv_handler = DownloadCsvHandler(LocationCsvHeaderValues())
         csv_handler.create_csv_file(queryset, csv_path)
 
