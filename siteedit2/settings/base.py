@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-from sharedlib import log_utils
+from cllib import log_utils
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -151,7 +151,7 @@ LOGGING = {
         'detailed_web': {
             'format': log_utils.detailed_web_fmt,
             'datefmt': '%Y%m%d %H%M%S',
-            'class': 'sharedlib.log_utils.ColorFormatter',
+            'class': 'cllib.log_utils.ColorFormatter',
         },
     },
     'handlers': {

@@ -7,11 +7,11 @@ from django.db.models import TextChoices, Choices, Model
 from django.forms import BoundField, CharField, Form, formset_factory
 from django.template.loader import render_to_string
 
+from cllib import data_utils
 from core.helper import widgets_serv, recref_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.models import Recref
 from person import person_serv
-from sharedlib import data_utils
 from work.recref_adapter import WorkLocRecrefAdapter, ManifInstRecrefAdapter
 
 log = logging.getLogger(__name__)

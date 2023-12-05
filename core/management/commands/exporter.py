@@ -17,6 +17,7 @@ from django.utils.html import strip_tags
 
 import person.subqueries
 import person.views
+from cllib import thread_utils
 from core import constant
 from core.constant import REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE_MENTION
 from core.helper import query_serv, recref_serv, date_serv, query_cache_serv, model_serv, media_serv
@@ -28,7 +29,6 @@ from location.subqueries import create_sql_count_work_by_location
 from manifestation.models import CofkUnionManifestation
 from person import person_serv
 from person.models import CofkUnionPerson
-from sharedlib import thread_utils
 from work import work_serv
 from work.models import CofkUnionWork
 from work.work_serv import DisplayableWork

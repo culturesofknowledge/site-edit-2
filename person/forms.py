@@ -7,6 +7,7 @@ from django.db.models import TextChoices, Model
 from django.forms import ModelForm, CharField
 from django.forms.utils import ErrorList
 
+from cllib import data_utils
 from core import constant
 from core.form_label_maps import field_label_map
 from core.helper import form_serv, date_serv
@@ -16,7 +17,6 @@ from core.helper.form_serv import TargetPersonMRRForm, LocationRecrefField, Basi
 from core.models import CofkUnionOrgType, CofkUnionRoleCategory, Recref
 from person.models import CofkUnionPerson
 from person.recref_adapter import ActivePersonRecrefAdapter, PassivePersonRecrefAdapter
-from sharedlib import data_utils
 
 log = logging.getLogger(__name__)
 

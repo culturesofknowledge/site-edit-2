@@ -18,6 +18,7 @@ from django.db.models.fields.related_descriptors import ForwardManyToOneDescript
 from psycopg2.extras import DictCursor
 
 from audit.models import CofkUnionAuditLiteral, CofkUnionAuditRelationship
+from cllib import iter_utils
 from core import constant
 from core.helper import model_serv, recref_serv, perm_serv
 from core.helper.model_serv import ModelLike
@@ -30,7 +31,6 @@ from login.models import CofkUser
 from manifestation.models import CofkUnionManifestation, CofkUnionLanguageOfManifestation, CofkManifManifMap
 from person.models import CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID, CofkPersonPersonMap
 from publication.models import CofkUnionPublication
-from sharedlib import iter_utils
 from uploader.models import CofkCollectStatus, CofkCollectUpload, CofkCollectInstitution, CofkCollectLocation, \
     CofkCollectLocationResource, CofkCollectPerson, CofkCollectOccupationOfPerson, CofkCollectPersonResource, \
     CofkCollectInstitutionResource, CofkCollectWork, CofkCollectAddresseeOfWork, CofkCollectLanguageOfWork, \

@@ -22,6 +22,7 @@ from django.views import View
 from django.views.generic import ListView
 
 import core.constant as core_constant
+from cllib import inspect_utils, str_utils
 from core import constant
 from core.form_label_maps import field_label_map
 from core.helper import general_model_serv, recref_serv, model_serv, \
@@ -33,7 +34,6 @@ from core.helper.renderer_serv import DemoCompactSearchResultsRenderer, \
 from core.helper.url_serv import VNAME_FULL_FORM, VNAME_SEARCH
 from core.helper.view_components import DownloadCsvHandler
 from core.models import CofkUnionResource, CofkUnionComment, CofkUserSavedQuery, CofkUserSavedQuerySelection
-from sharedlib import inspect_utils, str_utils
 from sharedlib.djangolib import django_utils, email_utils, query_utils
 from work.models import CofkUnionWork
 

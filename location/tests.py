@@ -5,12 +5,12 @@ from django.test import TestCase
 from selenium.webdriver.common.by import By
 
 import location.fixtures
+from cllib import file_utils
 from core.helper import model_serv
 from core.helper.view_components import DownloadCsvHandler
 from location.models import CofkUnionLocation, CofkLocationResourceMap
 from location.recref_adapter import LocationResourceRecrefAdapter
 from location.views import LocationMergeChoiceView, LocationCsvHeaderValues
-from sharedlib import file_utils
 from siteedit2.serv import test_serv
 from siteedit2.serv.test_serv import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
     CommentM2MTester, CommonSearchTests, MergeTests

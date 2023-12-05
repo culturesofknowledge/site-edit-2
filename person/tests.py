@@ -1,12 +1,12 @@
 from selenium.webdriver.common.by import By
 
 import person.fixtures
+from cllib import selenium_utils
 from core import constant
 from core.helper import model_serv
 from person.models import CofkUnionPerson, CofkPersonResourceMap
 from person.recref_adapter import PersonResourceRecrefAdapter
 from person.views import PersonMergeChoiceView
-from sharedlib import selenium_utils
 from siteedit2.serv import test_serv
 from siteedit2.serv.test_serv import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
     CommentM2MTester, CommonSearchTests, MergeTests

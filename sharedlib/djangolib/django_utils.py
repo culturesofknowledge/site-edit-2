@@ -6,7 +6,7 @@ from typing import Iterable
 from django.apps import apps
 from django.core.handlers.wsgi import WSGIRequest
 
-from sharedlib.debug_utils import Timer
+from cllib.debug_utils import Timer
 
 log = logging.getLogger(__name__)
 

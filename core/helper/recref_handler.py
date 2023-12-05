@@ -18,13 +18,13 @@ from django.db import models
 from django.forms import forms, ModelForm
 from django.template.loader import render_to_string
 
+from cllib import iter_utils
 from core import constant as core_constant
 from core.forms import ImageForm, UploadImageForm, ResourceForm, RecrefForm
 from core.helper import recref_serv, model_serv, media_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.form_serv import create_formset
 from core.models import Recref, CofkUnionImage, CofkUnionRoleCategory, CofkUnionSubject
-from sharedlib import iter_utils
 
 log = logging.getLogger(__name__)
 
