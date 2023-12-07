@@ -1,8 +1,9 @@
 import logging
 from typing import Callable, Iterable, Any
 
-from django.db.models import F
+from django.db.models import F, QuerySet
 from django.db.models import Q, lookups
+from django.db.models.base import ModelBase
 from django.db.models.lookups import GreaterThanOrEqual, LessThanOrEqual
 
 from cllib_django.query_utils import join_fields, run_lookup_fn, create_q_by_field_names, \
@@ -165,6 +166,7 @@ def get_lookup_key_by_lookup_fn(lookup_fn):
             return k
     return None
 
+
 def get_lookup_conn_type_by_lookup_key(lookup_key):
     return lookup_conn_type_map.get(lookup_key, Q.OR)
 
@@ -182,10 +184,11 @@ def create_from_to_datetime(from_field_name: str, to_field_name: str,
     }
 
 
-def update_queryset(queryset,
-                    model_class, queries=None,
+def update_queryset(queryset: QuerySet,
+                    model_class: ModelBase,
+                    queries: Iterable[Q] = None,
                     annotate: dict = None,
-                    sort_by=None, ):
+                    sort_by: Iterable[str] = None, ):
     """
     help you to update queryset
 
@@ -203,7 +206,7 @@ def update_queryset(queryset,
     if sort_by:
         queryset = queryset.order_by(*sort_by)
 
-    log.debug(f'queryset sql\n: {str(queryset.query)}')
+    log.debug('queryset sql\n: %s', convert_queryset_to_sql(queryset))
     return queryset
 
 
@@ -225,3 +228,7 @@ def create_recref_lookup_fn(rel_types: list, recref_field_name: str, cond_fields
         return query & cond_query
 
     return _fn
+
+
+def convert_queryset_to_sql(queryset: QuerySet) -> str:
+    return str(queryset.query)
