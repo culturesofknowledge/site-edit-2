@@ -27,6 +27,9 @@ dependencies = [
 
     'cllib~=0.2',
     'cllib-django~=0.0',
+
+    'pylint~=3.0',
+    'pylint-django~=2.5',
 ]
 
 
