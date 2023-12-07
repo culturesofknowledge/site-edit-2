@@ -1,9 +1,9 @@
 from django.urls import reverse
 
+from core.helper.test_serv import EmloSeleniumTestCase
 from location.fixtures import create_location_a
 from person.fixtures import create_person_obj
 from publication.models import CofkUnionPublication
-from siteedit2.serv.test_serv import EmloSeleniumTestCase
 
 
 class TestDeleteConfirm(EmloSeleniumTestCase):

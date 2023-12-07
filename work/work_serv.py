@@ -8,9 +8,9 @@ from django.utils.safestring import mark_safe
 
 from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, \
     REL_TYPE_MENTION
+from core.helper.log_serv import log_no_url
 from location import location_serv
 from person import person_serv
-from siteedit2.serv.log_serv import log_no_url
 from work.models import CofkUnionWork
 
 log = logging.getLogger(__name__)

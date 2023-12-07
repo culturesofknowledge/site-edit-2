@@ -3,9 +3,9 @@ import collections
 from django.urls import reverse
 
 from core.helper import recref_serv
+from core.helper.log_serv import log_no_url
 from location import location_serv
 from person.models import CofkUnionPerson
-from siteedit2.serv.log_serv import log_no_url
 
 
 def get_recref_display_name(person: CofkUnionPerson):

@@ -1,4 +1,4 @@
-from siteedit2.serv.test_serv import EmloSeleniumTestCase
+from core.helper.test_serv import EmloSeleniumTestCase
 
 
 # Create your tests here.

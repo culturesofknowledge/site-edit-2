@@ -6,14 +6,13 @@ from selenium.webdriver.common.by import By
 
 import location.fixtures
 from cllib import path_utils
-from core.helper import model_serv
+from core.helper import model_serv, test_serv
+from core.helper.test_serv import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
+    CommentM2MTester, CommonSearchTests, MergeTests
 from core.helper.view_components import DownloadCsvHandler
 from location.models import CofkUnionLocation, CofkLocationResourceMap
 from location.recref_adapter import LocationResourceRecrefAdapter
 from location.views import LocationMergeChoiceView, LocationCsvHeaderValues
-from siteedit2.serv import test_serv
-from siteedit2.serv.test_serv import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
-    CommentM2MTester, CommonSearchTests, MergeTests
 
 if TYPE_CHECKING:
     from core.helper.common_recref_adapter import TargetResourceRecrefAdapter

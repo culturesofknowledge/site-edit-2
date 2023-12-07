@@ -10,14 +10,14 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_CREATED, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_ADDRESSED_TO, \
     REL_TYPE_WAS_SENT_TO, REL_TYPE_IS_RELATED_TO
 from core.fixtures import fixture_default_lookup_catalogue, res_dict_a, res_dict_b
+from core.helper import test_serv
+from core.helper.test_serv import EmloSeleniumTestCase, FieldValTester, CommonSearchTests
 from core.models import Iso639LanguageCode, CofkUnionResource, CofkUnionSubject, CofkUnionComment, \
     CofkUnionFavouriteLanguage
 from location import fixtures as location_fixtures
 from manifestation import fixtures as manif_fixtures
 from manifestation.models import CofkUnionManifestation
 from person import fixtures as person_fixtures
-from siteedit2.serv import test_serv
-from siteedit2.serv.test_serv import EmloSeleniumTestCase, FieldValTester, CommonSearchTests
 from work import fixtures as work_fixtures
 from work import work_serv
 from work.forms import WorkPersonRecrefAdapter

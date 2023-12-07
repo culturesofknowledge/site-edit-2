@@ -2,12 +2,11 @@ from django.test import TestCase
 
 import location.fixtures
 import location.fixtures
-from core.helper import recref_serv
+from core.helper import recref_serv, test_serv
 from core.models import CofkUnionComment
 from location.models import CofkLocationCommentMap
 from location.recref_adapter import LocationCommentRecrefAdapter
 from manifestation.models import CofkManifCommentMap, CofkUnionManifestation
-from siteedit2.serv import test_serv
 
 
 class RecrefUtilsTests(TestCase):
