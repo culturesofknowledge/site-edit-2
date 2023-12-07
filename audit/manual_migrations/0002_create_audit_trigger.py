@@ -2,6 +2,7 @@ from django.db import migrations
 
 from audit import audit_migrations_serv
 from cllib_django import migrations_utils
+from core.helper import migrations_serv
 
 trigger_sql__dbf_cofk_union_audit_any = """
 """
@@ -35,8 +36,8 @@ class Migration(migrations.Migration):
     ]
     operations = [
 
-        *migrations_utils.create_default_change_user_timestamp('cofk_union_audit_literal'),
-        *migrations_utils.create_default_change_user_timestamp('cofk_union_audit_relationship'),
+        *migrations_serv.create_default_change_user_timestamp('cofk_union_audit_literal'),
+        *migrations_serv.create_default_change_user_timestamp('cofk_union_audit_relationship'),
         # *migrations_utils.create_default_empty('cofk_union_audit_relationship', [
         #     'left_id_value_new',
         #     'left_id_decode_new',
