@@ -1,8 +1,15 @@
 import doctest
 
-from core.helper import date_serv
+from core.helper import date_serv, query_serv
 
 
 def load_tests(loader, tests, ignore):
-    tests.addTests(doctest.DocTestSuite(date_serv))
+    doctest_modules = [
+        date_serv,
+        query_serv,
+    ]
+
+    tests.addTests(
+        map(doctest.DocTestSuite, doctest_modules)
+    )
     return tests

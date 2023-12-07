@@ -231,4 +231,20 @@ def create_recref_lookup_fn(rel_types: list, recref_field_name: str, cond_fields
 
 
 def convert_queryset_to_sql(queryset: QuerySet) -> str:
+    """
+
+    Examples
+    --------
+    >>> from login.models import CofkUser
+    >>> queryset = CofkUser.objects.filter().values('email').filter(email='x')
+    >>> convert_queryset_to_sql(queryset)
+    'SELECT "cofk_user"."email" FROM "cofk_user" WHERE "cofk_user"."email" = x'
+
+    Parameters
+    ----------
+    queryset
+
+    Returns
+    -------
+    """
     return str(queryset.query)
