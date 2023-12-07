@@ -8,7 +8,6 @@ from django.utils.safestring import mark_safe
 
 from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, \
     REL_TYPE_MENTION
-from core.helper.log_serv import log_no_url
 from location import location_serv
 from person import person_serv
 from work.models import CofkUnionWork
@@ -79,10 +78,12 @@ def create_work_id(iwork_id) -> str:
     return f'cofk_union_work-iwork_id:{iwork_id}'
 
 
-@log_no_url
 def get_checked_form_url_by_pk(pk):
     if work := CofkUnionWork.objects.get(pk=pk):
         return reverse('work:full_form', args=[work.iwork_id])
+
+    log.warning(f'get form url failed, work not found [%s]', pk)
+    return ''
 
 
 def get_display_id(work: CofkUnionWork):

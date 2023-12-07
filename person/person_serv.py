@@ -1,11 +1,13 @@
 import collections
+import logging
 
 from django.urls import reverse
 
 from core.helper import recref_serv
-from core.helper.log_serv import log_no_url
 from location import location_serv
 from person.models import CofkUnionPerson
+
+log = logging.getLogger(__name__)
 
 
 def get_recref_display_name(person: CofkUnionPerson):
@@ -28,10 +30,12 @@ def get_display_id(person: CofkUnionPerson):
     return person and person.iperson_id
 
 
-@log_no_url
 def get_checked_form_url_by_pk(pk):
     if person := CofkUnionPerson.objects.get(pk=pk):
         return reverse('person:full_form', args=[person.iperson_id])
+
+    log.warning(f'get form url failed, person not found [%s]', pk)
+    return ''
 
 
 def role_name_str(person: CofkUnionPerson, delimiter=', ') -> str:
