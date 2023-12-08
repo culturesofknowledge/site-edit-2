@@ -40,10 +40,6 @@ resource_detail_fields = [
 ]
 
 
-def create_eq_query(field, value) -> Q:
-    return Q(**{field: value})
-
-
 def create_queries_by_field_fn_maps(request_data: dict, field_fn_maps: dict) -> list[Q]:
     # TODO suggest migrate this function to search_fields_fn_maps feature in create_queries_by_lookup_field
     query_field_values = ((f, request_data.get(f)) for f in field_fn_maps.keys())
