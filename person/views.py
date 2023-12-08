@@ -380,7 +380,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
 
     def get_queryset_by_request_data(self, request_data, sort_by=None):
-        queries = query_serv.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
+        queries = query_serv.create_queries_by_field_fn_maps(request_data, self.search_field_fn_maps)
 
         search_field_fn_maps = {
             'other_details': lookup_other_details,

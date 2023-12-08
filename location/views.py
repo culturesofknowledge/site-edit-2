@@ -247,7 +247,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
                               'researchers_notes': ['comments__comment'],
                               'images': ['images__image_filename']}
 
-        queries = query_serv.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
+        queries = query_serv.create_queries_by_field_fn_maps(request_data, self.search_field_fn_maps)
         queries.extend(
             query_serv.create_queries_by_lookup_field(request_data, self.search_fields, search_fields_maps)
         )

@@ -46,7 +46,7 @@ class LanguageSearchView(LoginRequiredMixin, DefaultSearchView):
         if not self.request_data:
             return model_class.objects.none()
 
-        queries = query_serv.create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
+        queries = query_serv.create_queries_by_field_fn_maps(self.request_data, self.search_field_fn_maps)
 
         queryset = model_class.objects.filter()
         queries.extend(

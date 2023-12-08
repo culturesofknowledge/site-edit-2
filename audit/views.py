@@ -29,7 +29,7 @@ class AuditSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearch
                         } | query_serv.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
                                                                 'change_timestamp')
 
-        queries = query_serv.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
+        queries = query_serv.create_queries_by_field_fn_maps(self.request_data, field_fn_maps)
         queries.extend(
             query_serv.create_queries_by_lookup_field(self.request_data, [
                 'change_user', 'table_name', 'key_value_text', 'key_decode',

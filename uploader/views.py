@@ -381,7 +381,7 @@ class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:
         # queries for like_fields
-        queries = create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
+        queries = create_queries_by_field_fn_maps(request_data, self.search_field_fn_maps)
 
         queries.extend(
             create_queries_by_lookup_field(request_data,

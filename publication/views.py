@@ -53,7 +53,7 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
             return CofkUnionPublication.objects.none()
 
         # queries for like_fields
-        queries = query_serv.create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
+        queries = query_serv.create_queries_by_field_fn_maps(self.request_data, self.search_field_fn_maps)
 
         queries.extend(
             query_serv.create_queries_by_lookup_field(self.request_data, self.search_fields)

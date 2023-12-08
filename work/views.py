@@ -994,7 +994,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
 
     def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:
-        queries = query_serv.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
+        queries = query_serv.create_queries_by_field_fn_maps(request_data, self.search_field_fn_maps)
 
         search_fields_maps = {
             'language_of_work': [

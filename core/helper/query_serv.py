@@ -44,8 +44,9 @@ def create_eq_query(field, value) -> Q:
     return Q(**{field: value})
 
 
-def create_queries_by_field_fn_maps(field_fn_maps: dict, data: dict) -> list[Q]:
-    query_field_values = ((f, data.get(f)) for f in field_fn_maps.keys())
+def create_queries_by_field_fn_maps(request_data: dict, field_fn_maps: dict) -> list[Q]:
+    # TODO suggest migrate this function to search_fields_fn_maps feature in create_queries_by_lookup_field
+    query_field_values = ((f, request_data.get(f)) for f in field_fn_maps.keys())
     query_field_values = ((f, v) for f, v in query_field_values if v)
     queries = [run_lookup_fn(field_fn_maps[f], f, v)
                for f, v in query_field_values]

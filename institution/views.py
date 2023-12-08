@@ -87,7 +87,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
 
     def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:
         # queries for like_fields
-        queries = query_serv.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
+        queries = query_serv.create_queries_by_field_fn_maps(request_data, self.search_field_fn_maps)
 
         queries.extend(
             query_serv.create_queries_by_lookup_field(request_data, self.search_fields, self.search_field_combines)
