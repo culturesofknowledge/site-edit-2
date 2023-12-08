@@ -1,16 +1,19 @@
 import logging
-from typing import Callable, Iterable, Any
+from typing import Callable, Iterable, Any, Literal
 
 from django.db.models import F, QuerySet
 from django.db.models import Q, lookups
 from django.db.models.base import ModelBase
 from django.db.models.lookups import GreaterThanOrEqual, LessThanOrEqual
 
+from cllib_django import query_utils
 from cllib_django.query_utils import join_fields, run_lookup_fn, create_q_by_field_names, \
     cond_not, is_blank, create_exists_by_mode, is_null
 from core.helper import date_serv
 
 log = logging.getLogger(__name__)
+
+LookupFn = Callable[[Callable, str, Any], Q]
 
 person_detail_fields = [
     'date_of_birth_year',
@@ -55,14 +58,31 @@ def create_queries_by_lookup_field(request_data: dict,
                                    search_fields_fn_maps: dict[str, 'LookupFn'] = None,
                                    ) -> Iterable[Q]:
     """
-    :param search_fields_maps
-    used to define one or more aliases for lookup search field
-    e.g. {'date_of_birth_year': ['mydate1', 'mydate2']}
-    it will look up db field `mydate1` and `mydate2` instead of `date_of_birth_year`
 
-    :param search_fields_fn_maps
-    allow to define more complex lookup function, for example multi relationship query
-    Lookupfn is Callable and return a Q object
+    Parameters
+    ----------
+    request_data
+    search_field_names
+        all possible name that can be used to create query,
+        it can be db column name or key name of search_fields_maps, search_fields_fn_maps
+
+    search_fields_maps
+        used to define one or more aliases for lookup search field
+        e.g. {'year': ['date_of_birth_year', 'some_year']}
+        it will look up db field `mydate1` and `mydate2` instead of `date_of_birth_year`
+
+    search_fields_fn_maps
+        allow to define more complex lookup function, for example multi relationship query
+        Lookupfn is Callable and return a Q object
+
+    Returns
+    -------
+
+    Examples
+    --------
+    >>> queries = create_queries_by_lookup_field({'a': 1, 'b': 2, 'z': 999}, ['a', 'b'])
+    >>> sorted(queries, key=lambda x: str(x))
+    [IExact(F(a), 1), IExact(F(b), 2)]
 
     """
     for field_name in search_field_names:
@@ -84,13 +104,12 @@ def create_queries_by_lookup_field(request_data: dict,
                 _names = [_names[lookup_idx]]
             conn_type = get_lookup_conn_type_by_lookup_key(lookup_key)
 
-            q = Q()
+            _queries = []
             for search_field in _names:
                 log.debug(f'query cond: field_name[{field_name}] search_field[{search_field}] '
                           f'field_val[{field_val}] lookup_key[{lookup_key}]')
-                q.add(run_lookup_fn(lookup_fn, search_field, field_val), conn_type)
-
-            yield q
+                _queries.append(run_lookup_fn(lookup_fn, search_field, field_val))
+            yield query_utils.concat_queries(_queries, conn_type)
 
         elif search_fields_fn_maps and field_name in search_fields_fn_maps:
             # handle search_fields_fn_maps
@@ -160,14 +179,14 @@ nullable_lookup_keys = [
 ]
 
 
-def get_lookup_key_by_lookup_fn(lookup_fn):
+def get_lookup_key_by_lookup_fn(lookup_fn) -> str | None:
     for k, v in choices_lookup_map.items():
         if v == lookup_fn:
             return k
     return None
 
 
-def get_lookup_conn_type_by_lookup_key(lookup_key):
+def get_lookup_conn_type_by_lookup_key(lookup_key) -> Literal[Q.OR, Q.AND]:
     return lookup_conn_type_map.get(lookup_key, Q.OR)
 
 
@@ -208,9 +227,6 @@ def update_queryset(queryset: QuerySet,
 
     log.debug('queryset sql\n: %s', convert_queryset_to_sql(queryset))
     return queryset
-
-
-LookupFn = Callable[[Callable, str, Any], Q]
 
 
 def create_recref_lookup_fn(rel_types: list, recref_field_name: str, cond_fields: list[str]) -> LookupFn:

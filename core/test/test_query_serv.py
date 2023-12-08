@@ -1,4 +1,5 @@
-from django.db.models import Q, Exists
+from django.db.models import Q, Exists, F
+from django.db.models.lookups import IExact
 from django.test import TestCase
 
 from core.helper import query_serv
@@ -35,3 +36,45 @@ class QuerySetUpdateTest(TestCase):
         self.assertIsNotNone(target_query)
         self.assertEqual(target_query.lhs.target.column, input_where_field)
         self.assertEqual(target_query.rhs, input_where_value)
+
+    def test_create_queries_by_lookup_field__normal(self):
+        query_list = query_serv.create_queries_by_lookup_field(
+            {'a': 1, 'b': 2, 'z': 999},
+            ['a', 'b']
+        )
+        self.assertSequenceEqual(
+            set(query_list),
+            {IExact(F('a'), 1), IExact(F('b'), 2), }
+        )
+
+    def test_create_queries_by_lookup_field__search_fields_maps(self):
+        query_list = query_serv.create_queries_by_lookup_field(
+            {'a': 1, 'b': 2, 'z': 999},
+            ['a', 'b'],
+            search_fields_maps={'a': ['a1', 'a2']},
+        )
+        self.assertSequenceEqual(
+            set(query_list),
+            {
+                IExact(F('a1'), 1) | IExact(F('a2'), 1),
+                IExact(F('b'), 2),
+            }
+        )
+
+    def test_create_queries_by_lookup_field__search_fields_fn_maps(self):
+
+        def lookup_fn(lookup, field, val):
+            return Q(**{field: 123})
+
+        query_list = query_serv.create_queries_by_lookup_field(
+            {'a': 1, 'b': 2, 'z': 999},
+            ['a', 'b'],
+            search_fields_fn_maps={'b': lookup_fn}
+        )
+        self.assertSequenceEqual(
+            set(query_list),
+            {
+                IExact(F('a'), 1),
+                Q(b=123),
+            }
+        )

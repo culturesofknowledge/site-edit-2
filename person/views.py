@@ -4,7 +4,7 @@ from typing import Callable, Iterable, Type, Any, NoReturn, TYPE_CHECKING, List
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.db.models import F
+from django.db.models import F, Q
 from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual, Exact
 from django.forms import BaseForm
 from django.shortcuts import render, redirect, get_object_or_404
@@ -541,7 +541,7 @@ class PersonDeleteConfirmView(LoginRequiredMixin, DeleteConfirmView):
         return desc_list
 
 
-def lookup_other_details(lookup_fn, f, v):
+def lookup_other_details(lookup_fn, f, v) -> Q:
     conn_type = query_serv.get_lookup_conn_type_by_lookup_key(
         query_serv.get_lookup_key_by_lookup_fn(lookup_fn)
     )
