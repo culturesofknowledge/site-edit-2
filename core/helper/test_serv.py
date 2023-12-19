@@ -45,15 +45,17 @@ class EmloSeleniumTestCase(StaticLiveServerTestCase):
     @classmethod
     def _get_selenium_driver(cls):
         options = Options()
+        options.add_argument("--window-size=1920,1080")
+        options.add_argument('--start-maximized')  # maximize browser window
         if settings.SELENIUM_CHROME_LOCAL_DRIVER:
             # run selenium with your local browser
-            options.add_argument('--start-maximized')  # maximize browser window
+            if settings.SELENIUM_CHROME_HEADLESS:
+                options.add_argument('--headless')
             browser_driver = webdriver.Chrome(options=options)
         else:
             # run selenium with docker remote browser
             options.add_argument("no-sandbox")
             options.add_argument("--disable-gpu")
-            options.add_argument("--window-size=800,600")
             options.add_argument("--disable-dev-shm-usage")
             browser_driver = webdriver.Remote(
                 command_executor=f'http://{settings.SELENIUM_HOST_PORT}/wd/hub',
