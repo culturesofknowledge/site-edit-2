@@ -34,10 +34,11 @@ class DownloadCsvHandler:
         return map(str, values)
 
     def create_csv_file(self, objects: Iterable, file_path: str | Path):
-        writer = csv.writer(open(file_path, 'w'), delimiter=self.get_delimiter())
-        writer.writerow(self.header_values.get_header_list())
-        writer.writerows((self._obj_to_str_values(self.header_values.obj_to_values, obj)
-                          for obj in objects))
+        with open(file_path, 'w') as f:
+            writer = csv.writer(f, delimiter=self.get_delimiter())
+            writer.writerow(self.header_values.get_header_list())
+            writer.writerows((self._obj_to_str_values(self.header_values.obj_to_values, obj)
+                              for obj in objects))
 
 
 class DownloadExcelHandler:
