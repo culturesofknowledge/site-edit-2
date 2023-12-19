@@ -1,6 +1,6 @@
 import logging
 
-from django.test import TransactionTestCase, RequestFactory
+from django.test import RequestFactory, TestCase
 
 import manifestation.fixtures
 import manifestation.fixtures
@@ -14,7 +14,7 @@ from work.models import CofkUnionWork
 log = logging.getLogger(__name__)
 
 
-class ManifestationTestCase(TransactionTestCase):
+class ManifestationTestCase(TestCase):
 
     def setUp(self) -> None:
         self.factory = RequestFactory()
