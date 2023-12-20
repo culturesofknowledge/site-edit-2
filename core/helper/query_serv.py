@@ -1,7 +1,7 @@
 import logging
 from typing import Callable, Iterable, Any, Literal
 
-from django.db.models import F, QuerySet, Exists
+from django.db.models import F, QuerySet
 from django.db.models import Q, lookups
 from django.db.models.base import ModelBase
 from django.db.models.lookups import GreaterThanOrEqual, LessThanOrEqual, Exact
@@ -281,6 +281,4 @@ def extract_sub_query(query: Query | QuerySet) -> Query:
     child = query.where.children[0]
     if isinstance(child, Exact):
         return child.lhs.query
-    elif isinstance(child, Exists):
-        return child.query
     return query
