@@ -285,6 +285,10 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
                 lambda: DownloadCsvHandler(LocationCsvHeaderValues()).create_csv_file,
                 constant.PM_EXPORT_FILE_LOCATION,)
 
+    @property
+    def app_name(self) -> str:
+        return 'location'
+
 
 class LocationCsvHeaderValues(HeaderValues):
     def get_header_list(self) -> list[str]:

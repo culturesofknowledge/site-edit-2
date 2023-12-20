@@ -1091,6 +1091,10 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                 constant.PM_EXPORT_FILE_WORK,
                 )
 
+    @property
+    def app_name(self) -> str:
+        return 'work'
+
 
 class WorkCommentFormsetHandler(RecrefFormsetHandler):
 

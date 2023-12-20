@@ -424,6 +424,10 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
                 lambda: DownloadCsvHandler(PersonCsvHeaderValues()).create_csv_file,
                 constant.PM_EXPORT_FILE_PERSON,)
 
+    @property
+    def app_name(self) -> str:
+        return 'person'
+
 
 class PersonCsvHeaderValues(HeaderValues):
 
