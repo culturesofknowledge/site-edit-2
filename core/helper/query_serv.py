@@ -1,10 +1,11 @@
 import logging
 from typing import Callable, Iterable, Any, Literal
 
-from django.db.models import F, QuerySet
+from django.db.models import F, QuerySet, Exists
 from django.db.models import Q, lookups
 from django.db.models.base import ModelBase
-from django.db.models.lookups import GreaterThanOrEqual, LessThanOrEqual
+from django.db.models.lookups import GreaterThanOrEqual, LessThanOrEqual, Exact
+from django.db.models.sql import Query
 
 from cllib_django import query_utils
 from cllib_django.query_utils import join_fields, run_lookup_fn, create_q_by_field_names, \
@@ -261,3 +262,25 @@ def convert_queryset_to_sql(queryset: QuerySet) -> str:
     -------
     """
     return str(queryset.query)
+
+
+def extract_sub_query(query: Query | QuerySet) -> Query:
+    """
+
+    Some query used `Exists` to avoid duplicate rows,
+    this function can extract the query from `Exists` object
+
+    Returns
+    -------
+
+    """
+
+    if isinstance(query, QuerySet):
+        query = query.query
+
+    child = query.where.children[0]
+    if isinstance(child, Exact):
+        return child.lhs.query
+    elif isinstance(child, Exists):
+        return child.query
+    return query

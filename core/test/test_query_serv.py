@@ -1,4 +1,4 @@
-from django.db.models import Q, Exists, F
+from django.db.models import Q, F
 from django.db.models.lookups import IExact
 from django.test import TestCase
 
@@ -19,16 +19,10 @@ class QuerySetUpdateTest(TestCase):
         # assert order by
         self.assertSequenceEqual(query.order_by, order_by)
 
-        # assert where clause
-        lv1where_childrens = query.where.children
-        self.assertEqual(len(lv1where_childrens), 1)
-        self.assertIsInstance(lv1where_childrens[0].lhs, Exists)
-
-        lv2where_childrens = lv1where_childrens[0].lhs.query.where.children
-        self.assertGreater(len(lv2where_childrens), 1)
+        where_childrens = query_serv.extract_sub_query(query).where.children
 
         target_query = None
-        for where_node in lv2where_childrens:
+        for where_node in where_childrens:
             if where_node.lhs.target.column == input_where_field:
                 target_query = where_node
                 break
