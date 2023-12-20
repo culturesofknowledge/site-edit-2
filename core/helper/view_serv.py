@@ -169,7 +169,9 @@ class BasicSearchView(ListView):
 
     @property
     def app_name(self) -> str:
-        return self.request.resolver_match.app_name
+        if (resolver_match := self.request.resolver_match) is None:
+            return ''
+        return resolver_match.app_name
 
     def expanded_query_fieldset_list(self) -> Iterable:
         """
