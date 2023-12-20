@@ -743,7 +743,7 @@ def export_all(output_dir: str = '.', skip_url_check=False):
          LocationFrontendCsv, CofkUnionLocation),
         (lambda: CofkUnionManifestation.objects.iterator(),
          ManifFrontendCsv, CofkUnionManifestation),
-        (lambda: person.subqueries.create_queryset_by_queries(CofkUnionPerson, ).iterator(),
+        (lambda: person.views.create_queryset_by_queries(CofkUnionPerson, ).iterator(),
          PersonFrontendCsv, CofkUnionPerson),
         (lambda: CofkUnionRelationshipType.objects.iterator(),
          RelTypeFrontendCsv, CofkUnionRelationshipType),
