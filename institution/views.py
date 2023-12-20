@@ -1,9 +1,10 @@
 import logging
 from abc import ABC
-from typing import Callable, Iterable, Type, TYPE_CHECKING, List
+from typing import Callable, Iterable, Type, TYPE_CHECKING
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.db.models import Lookup
 from django.forms import ModelForm
 from django.shortcuts import render, redirect, get_object_or_404
 
@@ -33,8 +34,10 @@ log = logging.getLogger(__name__)
 class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
 
     @property
-    def search_field_fn_maps(self) -> dict:
-        return query_serv.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to', 'change_timestamp')
+    def search_field_fn_maps(self) -> dict[str, Lookup]:
+        return query_serv.create_from_to_datetime('change_timestamp_from',
+                                                  'change_timestamp_to',
+                                                  'change_timestamp')
 
     @property
     def entity(self) -> str:
@@ -58,7 +61,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
         ]
 
     @property
-    def search_field_combines(self) -> dict[str: List[str]]:
+    def search_field_combines(self) -> dict[str: list[str]]:
         return {
             'institution_name': ['institution_name', 'institution_synonyms'],
             'institution_city': ['institution_city', 'institution_city_synonyms'],

@@ -1,11 +1,11 @@
 import itertools
 import logging
-from typing import Iterable, Union, Type, Callable, List
+from typing import Iterable, Union, Type, Callable
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, Lookup
 from django.forms import BaseForm, BaseFormSet
 from django.shortcuts import render, get_object_or_404, redirect
 
@@ -192,7 +192,7 @@ class LocationMergeActionView(LoginRequiredMixin, MergeActionViews):
 class LocationSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
-    def search_field_combines(self) -> dict[str: List[str]]:
+    def search_field_combines(self) -> dict[str: list[str]]:
         return {'location_name': ['location_name', 'location_synonyms'],
                 'resources': ['resources__resource_name', 'resources__resource_details',
                               'resources__resource_url'],
@@ -200,7 +200,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
                 'images': ['images__image_filename']}
 
     @property
-    def search_field_fn_maps(self) -> dict:
+    def search_field_fn_maps(self) -> dict[str, Lookup]:
         return query_serv.create_from_to_datetime('change_timestamp_from',
                                                   'change_timestamp_to',
                                                   'change_timestamp')

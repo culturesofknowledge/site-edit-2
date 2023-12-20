@@ -2,7 +2,7 @@ import logging
 import os
 import re
 import time
-from typing import Iterable, List
+from typing import Iterable
 from zipfile import BadZipFile
 
 from django.conf import settings
@@ -10,7 +10,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.files.storage import default_storage
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, Lookup
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -299,7 +299,7 @@ class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
         return field_label_map['collect_work']
 
     @property
-    def search_field_fn_maps(self) -> dict:
+    def search_field_fn_maps(self) -> dict[str, Lookup]:
         return create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
                                                    'change_timestamp')
 
@@ -351,7 +351,7 @@ class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
         ]
 
     @property
-    def search_field_combines(self) -> dict[str: List[str]]:
+    def search_field_combines(self) -> dict[str: list[str]]:
         return {'source': ['accession_code'],
                 'contact': ['upload__uploader_email'],
                 'status': ['upload_status__status_desc'],

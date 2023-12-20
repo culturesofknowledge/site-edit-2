@@ -12,7 +12,7 @@ from urllib.parse import urljoin
 from django import template
 from django.conf import settings
 from django.db import models
-from django.db.models import Q, ForeignKey, QuerySet
+from django.db.models import Q, ForeignKey, QuerySet, Lookup
 from django.db.models.query_utils import DeferredAttribute
 from django.forms import ModelForm
 from django.http import HttpResponseNotFound
@@ -96,7 +96,7 @@ class BasicSearchView(ListView):
         return [f for f in self.search_field_label_map.keys() if f not in exclude]
 
     @property
-    def search_field_fn_maps(self) -> dict:
+    def search_field_fn_maps(self) -> dict[str, Lookup]:
         """
         A dictionary mapping between form field names where there is more than one field to search against
         simultaneously, such as with ranges.
@@ -106,7 +106,7 @@ class BasicSearchView(ListView):
         raise NotImplementedError()
 
     @property
-    def search_field_combines(self) -> dict[str: List[str]]:
+    def search_field_combines(self) -> dict[str: list[str]]:
         """
         A dictionary mapping between search multiple fields under one form field.
         """
@@ -438,14 +438,14 @@ class BasicSearchView(ListView):
 class DefaultSearchView(BasicSearchView):
 
     @property
-    def search_field_fn_maps(self) -> dict:
+    def search_field_fn_maps(self) -> dict[str, Lookup]:
         """
         return
         """
         return {}
 
     @property
-    def search_field_combines(self) -> dict[str: List[str]]:
+    def search_field_combines(self) -> dict[str: list[str]]:
         return {}
 
     @property

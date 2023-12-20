@@ -1,12 +1,12 @@
 import itertools
 import logging
-from typing import Callable, Iterable, Type, Any, NoReturn, TYPE_CHECKING, List
+from typing import Callable, Iterable, Type, Any, NoReturn, TYPE_CHECKING
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db import models
 from django.db.models import F, Q, OuterRef
-from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual, Exact
+from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual, Exact, Lookup
 from django.forms import BaseForm
 from django.shortcuts import render, redirect, get_object_or_404
 
@@ -292,7 +292,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         return 'person,people'
 
     @property
-    def search_field_fn_maps(self) -> dict:
+    def search_field_fn_maps(self) -> dict[str, Lookup]:
         return {'gender': lambda f, v: Exact(F(f), '' if v == 'U' else v),
                 'person_or_group': lambda _, v: Exact(F('is_organisation'), 'Y' if v == 'G' else ''),
                 'birth_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_birth_year'), v),
@@ -329,7 +329,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         ]
 
     @property
-    def search_field_combines(self) -> dict[str: List[str]]:
+    def search_field_combines(self) -> dict[str: list[str]]:
         return {
             'roles': ['roles__role_category_desc'],
             'images': ['images__image_filename'],

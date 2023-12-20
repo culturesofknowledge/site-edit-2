@@ -6,7 +6,7 @@ from typing import Iterable, Any, Type
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import F, Q, Model
-from django.db.models.lookups import Exact
+from django.db.models.lookups import Exact, Lookup
 from django.forms import BaseForm
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
@@ -969,7 +969,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         return 'asc'
 
     @property
-    def search_field_fn_maps(self) -> dict:
+    def search_field_fn_maps(self) -> dict[str, Lookup]:
         return {
             'work_to_be_deleted': lambda f, v: Exact(F(f), '0' if v == 'On' else '1'),
             'person_sent_pk': create_search_fn_person_recref(AuthorRelationChoices.values),

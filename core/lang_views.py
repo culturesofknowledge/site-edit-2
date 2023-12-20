@@ -1,7 +1,7 @@
 from typing import Iterable
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q
+from django.db.models import Q, Lookup
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 
@@ -32,7 +32,7 @@ class LanguageSearchView(LoginRequiredMixin, DefaultSearchView):
         return 'Language,Languages'
 
     @property
-    def search_field_fn_maps(self) -> dict:
+    def search_field_fn_maps(self) -> dict[str, Lookup]:
         return {
             'is_favorite': query_is_favorite,
         }

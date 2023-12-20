@@ -2,6 +2,7 @@ from typing import Callable, Iterable, Type
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.db.models import Lookup
 from django.forms import ModelForm
 from django.shortcuts import redirect, get_object_or_404
 from django.shortcuts import render
@@ -22,7 +23,7 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
         return [GeneralSearchFieldset(self.request_data)]
 
     @property
-    def search_field_fn_maps(self) -> dict:
+    def search_field_fn_maps(self) -> dict[str, Lookup]:
         return query_serv.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
                                                    'change_timestamp')
 
