@@ -34,7 +34,7 @@ def get_checked_form_url_by_pk(pk):
     if person := CofkUnionPerson.objects.get(pk=pk):
         return reverse('person:full_form', args=[person.iperson_id])
 
-    log.warning(f'get form url failed, person not found [%s]', pk)
+    log.warning('get form url failed, person not found [%s]', pk)
     return ''
 
 

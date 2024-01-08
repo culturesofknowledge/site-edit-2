@@ -557,9 +557,9 @@ def _val_handler_collect_manifestation(row: dict, conn) -> dict:
 
 def _val_handler_manif__work_id(row: dict, conn):
     sql = 'select right_id_value from cofk_union_relationship ' \
-          f" where left_table_name = 'cofk_union_manifestation' " \
-          f" and right_table_name = 'cofk_union_work' " \
-          f" and left_id_value = %s "
+          " where left_table_name = 'cofk_union_manifestation' " \
+          " and right_table_name = 'cofk_union_work' " \
+          " and left_id_value = %s "
     vals = [row['manifestation_id']]
     results = list(iter_records(conn, sql, vals=vals))
     if len(results) == 1:

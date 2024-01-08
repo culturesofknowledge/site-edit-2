@@ -82,7 +82,7 @@ def get_checked_form_url_by_pk(pk):
     if work := CofkUnionWork.objects.get(pk=pk):
         return reverse('work:full_form', args=[work.iwork_id])
 
-    log.warning(f'get form url failed, work not found [%s]', pk)
+    log.warning('get form url failed, work not found [%s]', pk)
     return ''
 
 

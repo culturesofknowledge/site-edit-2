@@ -182,9 +182,9 @@ def find_recref_list_by_bounded_data(bounded_data, parent_model) -> Iterable['Re
 
 def create_q_rel_type(rel_type: str | Iterable, prefix=None) -> Q:
     if isinstance(rel_type, str):
-        name = f'relationship_type'
+        name = 'relationship_type'
     else:
-        name = f'relationship_type__in'
+        name = 'relationship_type__in'
         rel_type = set(rel_type)
 
     if prefix:

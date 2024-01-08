@@ -1034,7 +1034,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
             if work_to_be_deleted:
                 if work_to_be_deleted == 'on':
-                    simplified_query.append(f'Is to be deleted.')
+                    simplified_query.append('Is to be deleted.')
 
             _from = self.request_data['date_of_work_std_from'] if 'date_of_work_std_from' in self.request_data else None
             _to = self.request_data['date_of_work_std_to'] if 'date_of_work_std_to' in self.request_data else None

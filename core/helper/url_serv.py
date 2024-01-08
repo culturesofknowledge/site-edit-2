@@ -35,7 +35,7 @@ def create_common_urls_for_section(
     if edit_view is not None:
         paths.append(path(f'form/<int:{edit_id_name}>', edit_view, name=VNAME_FULL_FORM))
     if delete_view is not None:
-        paths.append(path(f'delete/<int:obj_id>', delete_view, name=VNAME_DELETE))
+        paths.append(path('delete/<int:obj_id>', delete_view, name=VNAME_DELETE))
     if search_view is not None:
         paths.append(path('search', search_view, name=VNAME_SEARCH))
         paths.append(path('', search_view, name=VNAME_HOME))
