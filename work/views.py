@@ -600,7 +600,7 @@ class DetailsFFH(BasicWorkFFH):
         return context
 
     def has_changed(self, request):
-        return (super(DetailsFFH, self).is_any_changed()
+        return (super().is_any_changed()
                 or self.subject_handler.has_changed(request)
                 or request.POST.getlist('lang_name'))
 
