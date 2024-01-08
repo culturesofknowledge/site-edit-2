@@ -173,6 +173,7 @@ class BasicSearchView(ListView):
             return ''
         return resolver_match.app_name
 
+    @property
     def expanded_query_fieldset_list(self) -> Iterable:
         """
         return iterable form for expanded view that can render search fieldset for searching
