@@ -98,7 +98,7 @@ class ZeroOneCheckboxField(forms.BooleanField):
 
 class DeleteCheckboxField(ZeroOneCheckboxField):
     def __init__(self, *args, is_str=False, required=False, **kwargs):
-        super().__init__(is_str, *args, required=required, **kwargs)
+        super().__init__(*args, is_str=is_str, required=required, **kwargs)
         self.widget.attrs.update({'class': 'warn-checked'})
 
 
