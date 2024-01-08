@@ -76,7 +76,7 @@ def clean_by_default_value(cleaned_data: dict, field_names: Iterable[str],
 
 
 class ZeroOneCheckboxField(forms.BooleanField):
-    def __init__(self, is_str=True, *args, **kwargs):
+    def __init__(self, *args, is_str=True, **kwargs):
         default_kwargs = dict(
             widget=widgets_serv.create_common_checkbox(),
             initial='0',
@@ -97,21 +97,21 @@ class ZeroOneCheckboxField(forms.BooleanField):
 
 
 class DeleteCheckboxField(ZeroOneCheckboxField):
-    def __init__(self, is_str=False, required=False, *args, **kwargs):
+    def __init__(self, *args, is_str=False, required=False, **kwargs):
         super().__init__(is_str, *args, required=required, **kwargs)
         self.widget.attrs.update({'class': 'warn-checked'})
 
 
 class SearchCharField(forms.CharField):
 
-    def __init__(self, required=False, *args, **kwargs):
+    def __init__(self, *args, required=False, **kwargs):
         super().__init__(*args, required=required, **kwargs)
         self.widget.attrs.update({'class': 'searchfield'})
 
 
 class SearchIntField(forms.IntegerField):
 
-    def __init__(self, required=False, *args, **kwargs):
+    def __init__(self, *args, required=False, **kwargs):
         super().__init__(*args, required=required, **kwargs)
         self.widget.attrs.update({'class': 'searchfield'})
 
