@@ -82,7 +82,7 @@ class RecrefFormsetHandler:
     * help for create formset
     * help for save target instance and create recref records
     * for example, User can create or edit Comment and Resource instance in form
-         instead of relationship (recref)
+         instead of relationship (recref) instance
     """
 
     def __init__(self, prefix, request_data,

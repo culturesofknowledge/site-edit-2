@@ -375,32 +375,6 @@ class ManifPersonRecrefAdapter(TargetPersonRecrefAdapter):
         return self.recref.cofkmanifpersonmap_set.filter(relationship_type=rel_type).iterator()
 
 
-# class ManifPersonRecrefForm(MultiRelRecrefForm):
-#     recref_adapter = ManifPersonRecrefAdapter(None)
-#
-#     @property
-#     def target_url(self):
-#         return get_peron_full_form_url_by_pk(self.initial.get('target_id'))
-#
-#     @classmethod
-#     def get_target_name(cls, recref: Recref):
-#         return person_serv.get_recref_display_name(recref)
-#
-#     @classmethod
-#     def get_target_id(cls, recref: Recref):
-#         cls.recref_adapter.target_id_name()
-#         pass
-#
-#     def find_recref_list_by_target_id(self, host_model: Model, target_id):
-#         pass
-#
-#     def find_target_model(self, target_id):
-#         pass
-#
-#     def create_recref(self, host_model, target_model) -> Recref:
-#         pass
-
-
 class WorkAuthorRecrefForm(WorkPersonMRRForm):
     relationship_types = AuthorRelationChoices
 
