@@ -364,11 +364,6 @@ class CorrFFH(BasicWorkFFH):
 
 
 class ManifFFH(BasicWorkFFH):
-    def __init__(self, iwork_id, template_name, *args, manif_id=None,
-                 request_data=None, request=None, **kwargs):
-        super().__init__(iwork_id, template_name, *args,
-                         manif_id=manif_id, request_data=request_data, request=request, **kwargs)
-
     def load_data(self, iwork_id, *args,
                   manif_id=None, request_data=None, request=None, **kwargs):
         super().load_data(iwork_id, request_data=request_data, request=request)
