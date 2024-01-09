@@ -48,7 +48,7 @@ class RecrefFormAdapter:
     def upsert_recref(self, rel_type, parent_instance, target_instance,
                       username=None,
                       org_recref=None,
-                      ):
+                      ) -> Recref:
         return recref_serv.upsert_recref(
             rel_type, parent_instance, target_instance,
             create_recref_fn=self.recref_class(),
@@ -60,7 +60,7 @@ class RecrefFormAdapter:
     def find_recref_records_by_related_manger(self, related_manger, rel_type):
         return related_manger.filter(relationship_type=rel_type).iterator()
 
-    def find_targets_id_list(self, rel_type):
+    def find_targets_id_list(self, rel_type) -> Iterable:
         return (self.get_target_id(r) for r in self.find_recref_records(rel_type))
 
     def find_all_targets_by_rel_type(self, rel_type) -> Iterable[models.Model]:
@@ -68,7 +68,7 @@ class RecrefFormAdapter:
         targets = (self.find_target_instance(i) for i in target_id_list)
         return targets
 
-    def find_recref_by_id(self, recref_id):
+    def find_recref_by_id(self, recref_id) -> Recref:
         return self.recref_class().objects.filter(recref_id=recref_id).first()
 
 

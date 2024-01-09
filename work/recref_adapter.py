@@ -125,8 +125,8 @@ class LaterLetterRecrefAdapter(WorkWorkRecrefAdapter):
         self.work = work
 
     def set_parent_target_instance(self, recref, parent, target):
-        recref.work_from = target
         recref.work_to = parent
+        recref.work_from = target
 
     def find_recref_records(self, rel_type):
         return self.work.work_to_set.filter(relationship_type=rel_type).iterator()
@@ -167,8 +167,8 @@ class EnclosedManifRecrefAdapter(ManifManifRecrefAdapter):
         self.manif: CofkUnionManifestation = manif
 
     def set_parent_target_instance(self, recref, parent, target):
-        recref.manif_from = target
         recref.manif_to = parent
+        recref.manif_from = target
 
     def find_recref_records(self, rel_type):
         return self.manif.manif_to_set.filter(relationship_type=rel_type).iterator()

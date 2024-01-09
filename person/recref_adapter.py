@@ -125,8 +125,8 @@ class PassivePersonRecrefAdapter(PersonPersonRecrefAdapter):
 
     def set_parent_target_instance(self, recref, parent, target):
         recref: CofkPersonPersonMap
-        recref.person = target
         recref.related = parent
+        recref.person = target
 
     def find_recref_records(self, rel_type):
         return self.find_recref_records_by_related_manger(self.parent.passive_relationships, rel_type)
