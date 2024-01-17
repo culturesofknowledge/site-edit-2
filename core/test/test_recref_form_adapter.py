@@ -3,7 +3,8 @@ from django.test import TestCase
 from location.models import CofkUnionLocation
 from manifestation.models import CofkUnionManifestation, CofkManifManifMap
 from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkWorkMap
-from work.recref_adapter import WorkLocRecrefAdapter, EarlierLetterRecrefAdapter, LaterLetterRecrefAdapter, EnclosureManifRecrefAdapter, EnclosedManifRecrefAdapter
+from work.recref_adapter import WorkLocRecrefAdapter, EarlierLetterRecrefAdapter, LaterLetterRecrefAdapter, \
+    EnclosureManifRecrefAdapter, EnclosedManifRecrefAdapter
 from django.test import TestCase
 
 from location.models import CofkUnionLocation
@@ -20,13 +21,10 @@ class RecrefFormAdapterTest(TestCase):
         rel_type = 'aaa'
         parent = CofkUnionWork()
         parent.save()
-
         target = CofkUnionLocation()
         target.save()
-
         recref_adapter = WorkLocRecrefAdapter(parent)
         recref_class = CofkWorkLocationMap
-
         self._test_recref_form_adapter(parent, target, rel_type, recref_adapter, recref_class)
 
     def test_earlier_letter_recref_adapter(self):
