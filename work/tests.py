@@ -389,9 +389,6 @@ def prepare_works_for_search(core_constant=None):
                             language_code=lang_jp,
                             notes='notes b').save()
 
-    # update queryable work TOBEREMOVE
-    # work_serv.clone_queryable_work(target_work, reload=True)
-
     return works
 
 
