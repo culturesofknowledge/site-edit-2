@@ -2,7 +2,6 @@ import logging
 
 from django import forms
 from django.db.models import TextChoices, Model
-from django.db.models.fields.related_descriptors import ForwardManyToOneDescriptor
 from django.forms import CharField
 
 from core import constant
@@ -10,13 +9,14 @@ from core.constant import DEFAULT_EMPTY_DATE_STR, REL_TYPE_CREATED, REL_TYPE_WAS
 from core.form_label_maps import field_label_map
 from core.helper import form_serv, date_serv
 from core.helper import widgets_serv
-from core.helper.common_recref_adapter import RecrefFormAdapter, TargetPersonRecrefAdapter
+from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.form_serv import TargetPersonMRRForm, LocationRecrefField, InstRecrefField, BasicSearchFieldset, \
     SearchCharField, SearchIntField
 from core.models import CofkUnionSubject, CofkLookupCatalogue
 from institution.models import CofkUnionInstitution
-from manifestation.models import CofkUnionManifestation, CofkManifPersonMap
-from work.models import CofkUnionWork, CofkWorkPersonMap
+from manifestation.models import CofkUnionManifestation
+from work.models import CofkUnionWork
+from work.recref_adapter import WorkPersonRecrefAdapter, ManifPersonRecrefAdapter
 
 log = logging.getLogger(__name__)
 
@@ -341,40 +341,6 @@ class WorkPersonMRRForm(TargetPersonMRRForm):
             person_id=target_id,
             relationship_type__in=self.get_rel_type_choices_values(),
         )
-
-
-class WorkPersonRecrefAdapter(TargetPersonRecrefAdapter):
-
-    def __init__(self, recref=None):
-        self.recref: CofkUnionWork = recref
-
-    def find_recref_records(self, rel_type):
-        return self.recref.cofkworkpersonmap_set.filter(relationship_type=rel_type).iterator()
-
-    @classmethod
-    def parent_field(cls) -> ForwardManyToOneDescriptor:
-        return CofkWorkPersonMap.work
-
-    @classmethod
-    def target_field(cls) -> ForwardManyToOneDescriptor:
-        return CofkWorkPersonMap.person
-
-
-class ManifPersonRecrefAdapter(TargetPersonRecrefAdapter):
-
-    def __init__(self, recref=None):
-        self.recref: CofkUnionManifestation = recref
-
-    def find_recref_records(self, rel_type):
-        return self.recref.cofkmanifpersonmap_set.filter(relationship_type=rel_type).iterator()
-
-    @classmethod
-    def parent_field(cls) -> ForwardManyToOneDescriptor:
-        return CofkManifPersonMap.manifestation
-
-    @classmethod
-    def target_field(cls) -> ForwardManyToOneDescriptor:
-        return CofkManifPersonMap.person
 
 
 class WorkAuthorRecrefForm(WorkPersonMRRForm):

@@ -3,16 +3,16 @@ from abc import ABC
 from django.db.models.fields.related_descriptors import ForwardManyToOneDescriptor
 
 from core.helper.common_recref_adapter import TargetCommentRecrefAdapter, \
-    TargetResourceRecrefAdapter, TargetImageRecrefAdapter, RecrefFormAdapter
+    TargetResourceRecrefAdapter, TargetImageRecrefAdapter, RecrefFormAdapter, TargetPersonRecrefAdapter
 from core.models import CofkUnionSubject
 from institution import inst_serv
 from location import location_serv
 from manifestation import manif_serv
 from manifestation.models import CofkUnionManifestation, CofkManifInstMap, CofkManifManifMap, CofkManifCommentMap, \
-    CofkManifImageMap
+    CofkManifImageMap, CofkManifPersonMap
 from work import work_serv
 from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkSubjectMap, CofkWorkWorkMap, CofkWorkCommentMap, \
-    CofkWorkResourceMap
+    CofkWorkResourceMap, CofkWorkPersonMap
 
 
 class WorkLocRecrefAdapter(RecrefFormAdapter):
@@ -211,3 +211,37 @@ class ManifImageRecrefAdapter(TargetImageRecrefAdapter):
     @classmethod
     def target_field(cls) -> ForwardManyToOneDescriptor:
         return CofkManifImageMap.image
+
+
+class WorkPersonRecrefAdapter(TargetPersonRecrefAdapter):
+
+    def __init__(self, recref=None):
+        self.recref: CofkUnionWork = recref
+
+    def find_recref_records(self, rel_type):
+        return self.recref.cofkworkpersonmap_set.filter(relationship_type=rel_type).iterator()
+
+    @classmethod
+    def parent_field(cls) -> ForwardManyToOneDescriptor:
+        return CofkWorkPersonMap.work
+
+    @classmethod
+    def target_field(cls) -> ForwardManyToOneDescriptor:
+        return CofkWorkPersonMap.person
+
+
+class ManifPersonRecrefAdapter(TargetPersonRecrefAdapter):
+
+    def __init__(self, recref=None):
+        self.recref: CofkUnionManifestation = recref
+
+    def find_recref_records(self, rel_type):
+        return self.recref.cofkmanifpersonmap_set.filter(relationship_type=rel_type).iterator()
+
+    @classmethod
+    def parent_field(cls) -> ForwardManyToOneDescriptor:
+        return CofkManifPersonMap.manifestation
+
+    @classmethod
+    def target_field(cls) -> ForwardManyToOneDescriptor:
+        return CofkManifPersonMap.person

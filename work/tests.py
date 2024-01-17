@@ -20,9 +20,9 @@ from manifestation.models import CofkUnionManifestation
 from person import fixtures as person_fixtures
 from work import fixtures as work_fixtures
 from work import work_serv
-from work.forms import WorkPersonRecrefAdapter
 from work.models import CofkUnionWork, CofkUnionLanguageOfWork
-from work.recref_adapter import WorkLocRecrefAdapter, WorkResourceRecrefAdapter, WorkCommentRecrefAdapter
+from work.recref_adapter import WorkLocRecrefAdapter, WorkResourceRecrefAdapter, WorkCommentRecrefAdapter, \
+    WorkPersonRecrefAdapter
 
 
 def wait_jquery_ready(selenium):

@@ -47,15 +47,15 @@ from person.models import CofkUnionPerson
 from work import work_serv, subqueries
 from work.forms import WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \
-    ManifPersonRecrefAdapter, ScribeRelationChoices, \
-    DetailsForm, WorkPersonRecrefAdapter, \
-    CommonWorkForm, manif_type_choices, CompactSearchFieldset, ExpandedSearchFieldset, \
+    ScribeRelationChoices, \
+    DetailsForm, CommonWorkForm, manif_type_choices, CompactSearchFieldset, ExpandedSearchFieldset, \
     ManifPersonMRRForm
 from work.models import CofkWorkPersonMap, CofkUnionWork, CofkWorkCommentMap, CofkWorkResourceMap, \
     CofkUnionLanguageOfWork
 from work.recref_adapter import WorkLocRecrefAdapter, ManifInstRecrefAdapter, WorkSubjectRecrefAdapter, \
     EarlierLetterRecrefAdapter, LaterLetterRecrefAdapter, EnclosureManifRecrefAdapter, EnclosedManifRecrefAdapter, \
-    WorkCommentRecrefAdapter, ManifCommentRecrefAdapter, WorkResourceRecrefAdapter, ManifImageRecrefAdapter
+    WorkCommentRecrefAdapter, ManifCommentRecrefAdapter, WorkResourceRecrefAdapter, ManifImageRecrefAdapter, \
+    WorkPersonRecrefAdapter, ManifPersonRecrefAdapter
 from work.view_components import WorkFormDescriptor
 from work.work_serv import DisplayableWork
 
