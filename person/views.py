@@ -96,13 +96,6 @@ def return_quick_init(request, pk):
     )
 
 
-class OrganisationRecrefConvertor:
-
-    @property
-    def target_id_name(self):
-        return 'location_id'
-
-
 def _get_other_persons_by_type(person: CofkUnionPerson, person_type: str) -> Iterable[CofkPersonPersonMap]:
     persons = (p for p in person.active_relationships.iterator()
                if p.person_type == person_type)
