@@ -24,24 +24,33 @@ class RecrefFormAdapter:
 
     """
 
+    @classmethod
+    def parent_field(cls) -> ForwardManyToOneDescriptor:
+        raise NotImplementedError()
 
-    def find_target_display_name_by_id(self, target_id):
+    @classmethod
+    def target_field(cls) -> ForwardManyToOneDescriptor:
+        raise NotImplementedError()
+
+    def find_target_display_name_by_id(self, target_id) -> str | None:
+        raise NotImplementedError()
+
+    def find_recref_records(self, rel_type) -> Iterable[Recref]:
         raise NotImplementedError()
 
     def recref_class(self) -> Type[Recref]:
-        raise NotImplementedError()
+        return self.parent_field().field.model
 
     def find_target_instance(self, target_id):
-        raise NotImplementedError()
+        target_field = self.target_field().field
+        return target_field.related_model.objects.filter(**{target_field.target_field.name: target_id}).first()
 
     def set_parent_target_instance(self, recref, parent, target):
-        raise NotImplementedError()
+        setattr(recref, self.parent_field().field.name, parent)
+        setattr(recref, self.target_field().field.name, target)
 
-    def find_recref_records(self, rel_type):
-        raise NotImplementedError()
-
-    def target_id_name(self) -> str:
-        raise NotImplementedError()
+    def target_id_name(self):
+        return self.target_field().field.attname
 
     def get_target_id(self, recref: Recref):
         if recref is None:
@@ -81,53 +90,29 @@ class RecrefFormAdapter:
         return self.recref_class().objects.filter(recref_id=recref_id).first()
 
 
-class FieldsBasedRecrefFormAdapter(RecrefFormAdapter, ABC):
-    @classmethod
-    def target_field(cls) -> ForwardManyToOneDescriptor:
-        raise NotImplementedError()
-
-    @classmethod
-    def parent_field(cls) -> ForwardManyToOneDescriptor:
-        raise NotImplementedError()
-
-    def recref_class(self) -> Type[Recref]:
-        return self.parent_field().field.model
-
-    def find_target_instance(self, target_id):
-        target_field = self.target_field().field
-        return target_field.related_model.objects.filter(**{target_field.target_field.name: target_id}).first()
-
-    def set_parent_target_instance(self, recref, parent, target):
-        setattr(recref, self.parent_field().field.name, parent)
-        setattr(recref, self.target_field().field.name, target)
-
-    def target_id_name(self):
-        return self.target_field().field.attname
-
-
-class TargetCommentRecrefAdapter(FieldsBasedRecrefFormAdapter, ABC):
+class TargetCommentRecrefAdapter(RecrefFormAdapter, ABC):
     def find_target_display_name_by_id(self, target_id):
         c: CofkUnionComment = self.find_target_instance(target_id)
         return c and c.comment
 
 
-class TargetResourceRecrefAdapter(FieldsBasedRecrefFormAdapter, ABC):
+class TargetResourceRecrefAdapter(RecrefFormAdapter, ABC):
     def find_target_display_name_by_id(self, target_id):
         c: CofkUnionResource = self.find_target_instance(target_id)
         return c and c.resource_name
 
 
-class TargetImageRecrefAdapter(FieldsBasedRecrefFormAdapter, ABC):
+class TargetImageRecrefAdapter(RecrefFormAdapter, ABC):
     def find_target_display_name_by_id(self, target_id):
         c: CofkUnionImage = self.find_target_instance(target_id)
         return c and c.image_filename
 
 
-class TargetPersonRecrefAdapter(FieldsBasedRecrefFormAdapter, ABC):
+class TargetPersonRecrefAdapter(RecrefFormAdapter, ABC):
     def find_target_display_name_by_id(self, target_id):
         return person_serv.get_recref_display_name(self.find_target_instance(target_id))
 
 
-class TargetLocationRecrefAdapter(FieldsBasedRecrefFormAdapter, ABC):
+class TargetLocationRecrefAdapter(RecrefFormAdapter, ABC):
     def find_target_display_name_by_id(self, target_id):
         return location_serv.get_recref_display_name(self.find_target_instance(target_id))

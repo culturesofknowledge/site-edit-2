@@ -3,7 +3,7 @@ from abc import ABC
 from django.db.models.fields.related_descriptors import ForwardManyToOneDescriptor
 
 from core.helper.common_recref_adapter import TargetCommentRecrefAdapter, \
-    TargetResourceRecrefAdapter, TargetImageRecrefAdapter, FieldsBasedRecrefFormAdapter
+    TargetResourceRecrefAdapter, TargetImageRecrefAdapter, RecrefFormAdapter
 from core.models import CofkUnionSubject
 from institution import inst_serv
 from location import location_serv
@@ -15,7 +15,7 @@ from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkSubjectMap, 
     CofkWorkResourceMap
 
 
-class WorkLocRecrefAdapter(FieldsBasedRecrefFormAdapter):
+class WorkLocRecrefAdapter(RecrefFormAdapter):
     def __init__(self, parent=None):
         self.parent: CofkUnionWork = parent
 
@@ -34,7 +34,7 @@ class WorkLocRecrefAdapter(FieldsBasedRecrefFormAdapter):
         return CofkWorkLocationMap.location
 
 
-class ManifInstRecrefAdapter(FieldsBasedRecrefFormAdapter):
+class ManifInstRecrefAdapter(RecrefFormAdapter):
     def __init__(self, parent=None):
         self.parent: CofkUnionManifestation = parent
 
@@ -53,7 +53,7 @@ class ManifInstRecrefAdapter(FieldsBasedRecrefFormAdapter):
         return CofkManifInstMap.inst
 
 
-class WorkSubjectRecrefAdapter(FieldsBasedRecrefFormAdapter):
+class WorkSubjectRecrefAdapter(RecrefFormAdapter):
     def __init__(self, parent=None):
         self.parent: CofkUnionSubject = parent
 
@@ -73,7 +73,7 @@ class WorkSubjectRecrefAdapter(FieldsBasedRecrefFormAdapter):
         return CofkWorkSubjectMap.subject
 
 
-class WorkWorkRecrefAdapter(FieldsBasedRecrefFormAdapter, ABC):
+class WorkWorkRecrefAdapter(RecrefFormAdapter, ABC):
 
     def find_target_display_name_by_id(self, target_id):
         return work_serv.get_recref_display_name(CofkUnionWork.objects.get(work_id=target_id))
@@ -111,7 +111,7 @@ class LaterLetterRecrefAdapter(WorkWorkRecrefAdapter):
         return CofkWorkWorkMap.work_from
 
 
-class ManifManifRecrefAdapter(FieldsBasedRecrefFormAdapter, ABC):
+class ManifManifRecrefAdapter(RecrefFormAdapter, ABC):
 
     def find_target_display_name_by_id(self, target_id):
         return manif_serv.get_recref_display_name(self.find_target_instance(target_id))

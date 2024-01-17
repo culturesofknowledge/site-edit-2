@@ -4,7 +4,7 @@ from django.db.models.fields.related_descriptors import ForwardManyToOneDescript
 
 from core.helper.common_recref_adapter import TargetCommentRecrefAdapter, TargetResourceRecrefAdapter, \
     TargetPersonRecrefAdapter, TargetImageRecrefAdapter, TargetLocationRecrefAdapter, \
-    FieldsBasedRecrefFormAdapter
+    RecrefFormAdapter
 from person.models import CofkUnionPerson, CofkPersonCommentMap, CofkPersonResourceMap, CofkPersonRoleMap, \
     CofkPersonPersonMap, CofkPersonImageMap, CofkPersonLocationMap
 
@@ -73,7 +73,7 @@ class PersonImageRecrefAdapter(TargetImageRecrefAdapter):
         return CofkPersonImageMap.image
 
 
-class PersonRoleRecrefAdapter(FieldsBasedRecrefFormAdapter):
+class PersonRoleRecrefAdapter(RecrefFormAdapter):
     def __init__(self, parent):
         self.parent: CofkUnionPerson = parent
 
