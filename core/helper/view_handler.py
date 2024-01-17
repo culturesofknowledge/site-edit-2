@@ -17,6 +17,8 @@ class FullFormHandler:
     this class provide many tools for View
     like `all_named_form_formset`, `save_all_comment_formset`
     """
+    # KTODO try extract to cllib_django
+    # KTODO add test cases
 
     def __init__(self, pk, *args, request_data=None, request=None, **kwargs):
         self.recref_formset_handlers: list[RecrefFormsetHandler] = []

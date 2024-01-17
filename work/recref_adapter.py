@@ -23,6 +23,7 @@ class WorkLocRecrefAdapter(RecrefFormAdapter):
         return location_serv.get_recref_display_name(self.find_target_instance(target_id))
 
     def find_recref_records(self, rel_type):
+        # KTODO try to make parent as parameter instead of self.parent
         return self.parent.cofkworklocationmap_set.filter(relationship_type=rel_type).iterator()
 
     @classmethod
