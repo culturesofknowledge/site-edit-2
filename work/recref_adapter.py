@@ -34,23 +34,36 @@ class WorkLocRecrefAdapter(RecrefFormAdapter):
         return CofkWorkLocationMap.location
 
 
-class ManifInstRecrefAdapter(RecrefFormAdapter):
-    def __init__(self, parent=None):
-        self.parent: CofkUnionManifestation = parent
-
-    def find_target_display_name_by_id(self, target_id):
-        return inst_serv.get_recref_display_name(self.find_target_instance(target_id))
+class WorkCommentRecrefAdapter(TargetCommentRecrefAdapter):
+    def __init__(self, parent):
+        self.parent: CofkUnionWork = parent
 
     def find_recref_records(self, rel_type):
-        return self.parent.cofkmanifinstmap_set.filter(relationship_type=rel_type).iterator()
+        return self.find_recref_records_by_related_manger(self.parent.cofkworkcommentmap_set, rel_type)
 
     @classmethod
     def parent_field(cls) -> ForwardManyToOneDescriptor:
-        return CofkManifInstMap.manif
+        return CofkWorkCommentMap.work
 
     @classmethod
     def target_field(cls) -> ForwardManyToOneDescriptor:
-        return CofkManifInstMap.inst
+        return CofkWorkCommentMap.comment
+
+
+class WorkResourceRecrefAdapter(TargetResourceRecrefAdapter):
+    def __init__(self, parent):
+        self.parent: CofkUnionWork = parent
+
+    def find_recref_records(self, rel_type):
+        return self.find_recref_records_by_related_manger(self.parent.cofkworkresourcemap_set, rel_type)
+
+    @classmethod
+    def parent_field(cls) -> ForwardManyToOneDescriptor:
+        return CofkWorkResourceMap.work
+
+    @classmethod
+    def target_field(cls) -> ForwardManyToOneDescriptor:
+        return CofkWorkResourceMap.resource
 
 
 class WorkSubjectRecrefAdapter(RecrefFormAdapter):
@@ -71,6 +84,23 @@ class WorkSubjectRecrefAdapter(RecrefFormAdapter):
     @classmethod
     def target_field(cls) -> ForwardManyToOneDescriptor:
         return CofkWorkSubjectMap.subject
+
+
+class WorkPersonRecrefAdapter(TargetPersonRecrefAdapter):
+
+    def __init__(self, recref=None):
+        self.recref: CofkUnionWork = recref
+
+    def find_recref_records(self, rel_type):
+        return self.recref.cofkworkpersonmap_set.filter(relationship_type=rel_type).iterator()
+
+    @classmethod
+    def parent_field(cls) -> ForwardManyToOneDescriptor:
+        return CofkWorkPersonMap.work
+
+    @classmethod
+    def target_field(cls) -> ForwardManyToOneDescriptor:
+        return CofkWorkPersonMap.person
 
 
 class WorkWorkRecrefAdapter(RecrefFormAdapter, ABC):
@@ -111,6 +141,74 @@ class LaterLetterRecrefAdapter(WorkWorkRecrefAdapter):
         return CofkWorkWorkMap.work_from
 
 
+class ManifCommentRecrefAdapter(TargetCommentRecrefAdapter):
+    def __init__(self, parent):
+        self.parent: CofkUnionManifestation = parent
+
+    def find_recref_records(self, rel_type):
+        return self.find_recref_records_by_related_manger(self.parent.cofkmanifcommentmap_set, rel_type)
+
+    @classmethod
+    def parent_field(cls) -> ForwardManyToOneDescriptor:
+        return CofkManifCommentMap.manifestation
+
+    @classmethod
+    def target_field(cls) -> ForwardManyToOneDescriptor:
+        return CofkManifCommentMap.comment
+
+
+class ManifImageRecrefAdapter(TargetImageRecrefAdapter):
+    def __init__(self, parent):
+        self.parent: CofkUnionManifestation = parent
+
+    def find_recref_records(self, rel_type):
+        return self.find_recref_records_by_related_manger(self.parent.cofkmanifimagemap_set, rel_type)
+
+    @classmethod
+    def parent_field(cls) -> ForwardManyToOneDescriptor:
+        return CofkManifImageMap.manif
+
+    @classmethod
+    def target_field(cls) -> ForwardManyToOneDescriptor:
+        return CofkManifImageMap.image
+
+
+class ManifPersonRecrefAdapter(TargetPersonRecrefAdapter):
+
+    def __init__(self, recref=None):
+        self.recref: CofkUnionManifestation = recref
+
+    def find_recref_records(self, rel_type):
+        return self.recref.cofkmanifpersonmap_set.filter(relationship_type=rel_type).iterator()
+
+    @classmethod
+    def parent_field(cls) -> ForwardManyToOneDescriptor:
+        return CofkManifPersonMap.manifestation
+
+    @classmethod
+    def target_field(cls) -> ForwardManyToOneDescriptor:
+        return CofkManifPersonMap.person
+
+
+class ManifInstRecrefAdapter(RecrefFormAdapter):
+    def __init__(self, parent=None):
+        self.parent: CofkUnionManifestation = parent
+
+    def find_target_display_name_by_id(self, target_id):
+        return inst_serv.get_recref_display_name(self.find_target_instance(target_id))
+
+    def find_recref_records(self, rel_type):
+        return self.parent.cofkmanifinstmap_set.filter(relationship_type=rel_type).iterator()
+
+    @classmethod
+    def parent_field(cls) -> ForwardManyToOneDescriptor:
+        return CofkManifInstMap.manif
+
+    @classmethod
+    def target_field(cls) -> ForwardManyToOneDescriptor:
+        return CofkManifInstMap.inst
+
+
 class ManifManifRecrefAdapter(RecrefFormAdapter, ABC):
 
     def find_target_display_name_by_id(self, target_id):
@@ -147,101 +245,3 @@ class EnclosedManifRecrefAdapter(ManifManifRecrefAdapter):
     @classmethod
     def target_field(cls) -> ForwardManyToOneDescriptor:
         return CofkManifManifMap.manif_from
-
-
-class WorkCommentRecrefAdapter(TargetCommentRecrefAdapter):
-    def __init__(self, parent):
-        self.parent: CofkUnionWork = parent
-
-    def find_recref_records(self, rel_type):
-        return self.find_recref_records_by_related_manger(self.parent.cofkworkcommentmap_set, rel_type)
-
-    @classmethod
-    def parent_field(cls) -> ForwardManyToOneDescriptor:
-        return CofkWorkCommentMap.work
-
-    @classmethod
-    def target_field(cls) -> ForwardManyToOneDescriptor:
-        return CofkWorkCommentMap.comment
-
-
-class ManifCommentRecrefAdapter(TargetCommentRecrefAdapter):
-    def __init__(self, parent):
-        self.parent: CofkUnionManifestation = parent
-
-    def find_recref_records(self, rel_type):
-        return self.find_recref_records_by_related_manger(self.parent.cofkmanifcommentmap_set, rel_type)
-
-    @classmethod
-    def parent_field(cls) -> ForwardManyToOneDescriptor:
-        return CofkManifCommentMap.manifestation
-
-    @classmethod
-    def target_field(cls) -> ForwardManyToOneDescriptor:
-        return CofkManifCommentMap.comment
-
-
-class WorkResourceRecrefAdapter(TargetResourceRecrefAdapter):
-    def __init__(self, parent):
-        self.parent: CofkUnionWork = parent
-
-    def find_recref_records(self, rel_type):
-        return self.find_recref_records_by_related_manger(self.parent.cofkworkresourcemap_set, rel_type)
-
-    @classmethod
-    def parent_field(cls) -> ForwardManyToOneDescriptor:
-        return CofkWorkResourceMap.work
-
-    @classmethod
-    def target_field(cls) -> ForwardManyToOneDescriptor:
-        return CofkWorkResourceMap.resource
-
-
-class ManifImageRecrefAdapter(TargetImageRecrefAdapter):
-    def __init__(self, parent):
-        self.parent: CofkUnionManifestation = parent
-
-    def find_recref_records(self, rel_type):
-        return self.find_recref_records_by_related_manger(self.parent.cofkmanifimagemap_set, rel_type)
-
-    @classmethod
-    def parent_field(cls) -> ForwardManyToOneDescriptor:
-        return CofkManifImageMap.manif
-
-    @classmethod
-    def target_field(cls) -> ForwardManyToOneDescriptor:
-        return CofkManifImageMap.image
-
-
-class WorkPersonRecrefAdapter(TargetPersonRecrefAdapter):
-
-    def __init__(self, recref=None):
-        self.recref: CofkUnionWork = recref
-
-    def find_recref_records(self, rel_type):
-        return self.recref.cofkworkpersonmap_set.filter(relationship_type=rel_type).iterator()
-
-    @classmethod
-    def parent_field(cls) -> ForwardManyToOneDescriptor:
-        return CofkWorkPersonMap.work
-
-    @classmethod
-    def target_field(cls) -> ForwardManyToOneDescriptor:
-        return CofkWorkPersonMap.person
-
-
-class ManifPersonRecrefAdapter(TargetPersonRecrefAdapter):
-
-    def __init__(self, recref=None):
-        self.recref: CofkUnionManifestation = recref
-
-    def find_recref_records(self, rel_type):
-        return self.recref.cofkmanifpersonmap_set.filter(relationship_type=rel_type).iterator()
-
-    @classmethod
-    def parent_field(cls) -> ForwardManyToOneDescriptor:
-        return CofkManifPersonMap.manifestation
-
-    @classmethod
-    def target_field(cls) -> ForwardManyToOneDescriptor:
-        return CofkManifPersonMap.person
