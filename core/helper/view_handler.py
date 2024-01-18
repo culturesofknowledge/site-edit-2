@@ -33,7 +33,7 @@ class FullFormHandler:
         """
         raise NotImplementedError()
 
-    def find_all_named_form_formset(self) -> Iterable[tuple[str, BaseForm | BaseFormSet]]:
+    def all_named_form_formset(self) -> Iterable[tuple[str, BaseForm | BaseFormSet]]:
         """
         find all variables in full_form_handler that is BaseForm or BaseFormSet
         """
@@ -42,7 +42,7 @@ class FullFormHandler:
         return attr_list
 
     @property
-    def all_recref_handlers(self):
+    def all_recref_handlers(self) -> Iterable[MultiRecrefHandler]:
         attr_list = (getattr(self, p) for p in dir(self))
         attr_list = (a for a in attr_list if isinstance(a, MultiRecrefHandler))
         return attr_list
@@ -54,7 +54,7 @@ class FullFormHandler:
     @property
     def every_form_formset(self) -> Iterable[BaseForm | BaseFormSet]:
         return itertools.chain(
-            (ff for _, ff in self.find_all_named_form_formset()),
+            (ff for _, ff in self.all_named_form_formset()),
             itertools.chain.from_iterable(
                 (h.new_form, h.update_formset) for h in self.all_recref_handlers
             ),
@@ -90,7 +90,7 @@ class FullFormHandler:
             c.save(parent, request)
 
     def create_context(self):
-        context = dict(self.find_all_named_form_formset())
+        context = dict(self.all_named_form_formset())
         for _, img_handler in self.all_img_recref_handlers():
             context.update(img_handler.create_context())
         for h in self.all_recref_handlers:
