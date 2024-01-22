@@ -17,8 +17,8 @@ class FullFormHandler:
     this class provide many tools for View
     like `all_named_form_formset`, `save_all_comment_formset`
     """
+
     # KTODO try extract to cllib_django
-    # KTODO add test cases
 
     def __init__(self, pk, *args, request_data=None, request=None, **kwargs):
         self.recref_formset_handlers: list[RecrefFormsetHandler] = []
@@ -51,6 +51,9 @@ class FullFormHandler:
         return ((name, var) for name, var in self.__dict__.items()
                 if isinstance(var, ImageRecrefHandler))
 
+    def all_recref_formset_handlers(self) -> Iterable[RecrefFormsetHandler]:
+        return self.recref_formset_handlers
+
     @property
     def every_form_formset(self) -> Iterable[BaseForm | BaseFormSet]:
         return itertools.chain(
@@ -61,7 +64,7 @@ class FullFormHandler:
             itertools.chain.from_iterable(
                 (h.upload_img_form, h.formset) for _, h in self.all_img_recref_handlers()
             ),
-            (h.formset for h in self.recref_formset_handlers),
+            (h.formset for h in self.all_recref_formset_handlers()),
         )
 
     def is_any_changed(self):
@@ -86,18 +89,18 @@ class FullFormHandler:
         self.recref_formset_handlers.append(recref_formset_handler)
 
     def save_all_recref_formset(self, parent, request):
-        for c in self.recref_formset_handlers:
+        for c in self.all_recref_formset_handlers():
             c.save(parent, request)
 
     def create_context(self):
         context = dict(self.all_named_form_formset())
-        for _, img_handler in self.all_img_recref_handlers():
-            context.update(img_handler.create_context())
-        for h in self.all_recref_handlers:
-            context.update(h.create_context())
-        context.update({h.context_name: h.formset
-                        for h in self.recref_formset_handlers})
-
+        context_list = itertools.chain(
+            (h.create_context() for _, h in self.all_img_recref_handlers()),
+            (h.create_context() for h in self.all_recref_handlers),
+            (h.create_context() for h in self.all_recref_formset_handlers())
+        )
+        for c in context_list:
+            context.update(c)
         return context
 
     def is_invalid(self):
