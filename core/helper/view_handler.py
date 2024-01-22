@@ -18,8 +18,6 @@ class FullFormHandler:
     like `all_named_form_formset`, `save_all_comment_formset`
     """
 
-    # KTODO try extract to cllib_django
-
     def __init__(self, pk, *args, request_data=None, request=None, **kwargs):
         self.recref_formset_handlers: list[RecrefFormsetHandler] = []
         self.load_data(pk,

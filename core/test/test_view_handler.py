@@ -182,8 +182,7 @@ class ComplexFullFormHandlerTest(BasicFullFormHandlerTest):
             'image-0-licence_url': ['http://cofk2.bodleian.ox.ac.uk/culturesofknowledge/licence/terms_of_use.html'],
             'image-0-can_be_displayed': ['1'], 'image-0-display_order': ['1']
         }
-        return DumpComplexFullFormHandler(pk=9999,
-                                          request_data=request_data,)
+        return DumpComplexFullFormHandler(pk=9999, request_data=request_data,)
 
     def test_all_named_form_formset(self):
         self.assertEqual(
