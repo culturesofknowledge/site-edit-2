@@ -3,7 +3,7 @@ from typing import List, Type, Any
 
 from django.db import models
 
-from core.models import Iso639LanguageCode, CofkUnionSubject
+from core.models import Iso639LanguageCode
 from uploader.entities.entity import CofkEntity
 from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectAddresseeOfWork, \
     CofkCollectAuthorOfWork, CofkCollectDestinationOfWork, CofkCollectLanguageOfWork, CofkCollectOriginOfWork, \
@@ -86,9 +86,6 @@ class CofkWork(CofkEntity):
 
             if 'language_id' in work_dict:
                 self.process_languages(work_dict, w)
-
-            if 'keywords' in work_dict:
-                self.process_subjects(work_dict, w)
 
         upload.total_works = len(self.works)
         upload.save()
@@ -187,19 +184,6 @@ class CofkWork(CofkEntity):
                                                                 language_of_work_id=language_of_work_id))
             else:
                 self.add_error(f'The value in column "language_id", "{language}" is not a valid ISO639 language.')
-
-    def process_subjects(self, work_dict: dict, work: CofkCollectWork):
-        work_subjects = work_dict['keywords'].split(',')
-
-        for subject in [s.strip() for s in work_subjects]:
-            union_subject = CofkUnionSubject.objects.filter(subject_desc__iexact=subject).first()
-
-            if union_subject:
-                self.subjects.append(CofkCollectSubjectOfWork(upload=self.upload, iwork=work,
-                                                              subject_of_work_id=self.get_new_id('subject_of_work_id'),
-                                                              subject=union_subject))
-            else:
-                self.add_error(f'The value in column "keywords", "{subject}" is not a valid subject.')
 
     def create_all(self):
         self.bulk_create(self.works)
