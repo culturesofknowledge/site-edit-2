@@ -22,6 +22,9 @@ def int_or_empty_string(value) -> bool:
 
     return False
 
+def has_valid_value(cell: Cell):
+    return cell.value is not None and cell.value != ''
+
 
 class CofkEntity:
     errors: dict[int, List[ValidationError]]
@@ -50,7 +53,7 @@ class CofkEntity:
 
     def get_row(self, row: Generator[Cell, None, None], row_number: int) -> dict:
         self.row = row_number
-        return {self.get_column_name_by_index(cell.column): cell.value for cell in row if cell.value is not None}
+        return {self.get_column_name_by_index(cell.column): cell.value for cell in row if has_valid_value(cell)}
 
     def get_column_by_name(self, name: str) -> List[Any]:
         return [[c.value for c in r if not isinstance(c, EmptyCell) and c.column <= len(self.fields['columns'])
