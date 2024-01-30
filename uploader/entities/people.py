@@ -20,18 +20,19 @@ class CofkPeople(CofkEntity, ABC):
         latest_iperson_id = iperson_ids[0][0] if len(iperson_ids) == 1 else 0
 
         for index, row in enumerate(self.iter_rows(), start=1 + self.sheet.header_length):
-            per_dict = self.get_row(row, index)
-            self.check_required(per_dict)
-            self.check_data_types(per_dict)
+            persons = self.get_row(row, index)
+            self.check_required(persons)
+            self.check_data_types(persons)
 
-            if 'iperson_id' in per_dict and 'primary_name' in per_dict:
-                ids, names = self.clean_lists(per_dict, 'iperson_id', 'primary_name')
-                for _id, name in zip(ids, names):
+            for per_dict in self.clean_lists(persons, 'iperson_id', 'primary_name'):
+                if 'iperson_id' in per_dict and per_dict['iperson_id'] is not None and 'primary_name' in per_dict:
+                    _id = per_dict['iperson_id']
+                    name = per_dict['primary_name']
                     """
                     A row in a people sheet can contain any number of semi colon separated people.
                     New people will have a name but not an id.
                     """
-                    if _id != '' and _id not in self.ids:
+                    if _id is not None and _id not in self.ids:
                         person = {'iperson_id': _id,
                                   'primary_name': name,
                                   'union_iperson': CofkUnionPerson.objects.filter(iperson_id=_id).first(),
@@ -53,15 +54,15 @@ class CofkPeople(CofkEntity, ABC):
                                       'editors_notes'] if 'editors_notes' in per_dict else None}
                         self.people.append(CofkCollectPerson(**person))
                     else:
-                        log.warning(f'{_id} duplicated in People sheet.')
-            elif 'primary_name' in per_dict and not self.person_exists_by_name(per_dict['primary_name']):
-                latest_iperson_id += 1
-                person = {'iperson_id': latest_iperson_id,
-                          'primary_name': per_dict['primary_name'],
-                          'upload': upload,
-                          'editors_notes': per_dict[
-                              'editors_notes'] if 'editors_notes' in per_dict else None}
-                self.people.append(CofkCollectPerson(**person))
+                        log.info(f'{_id} duplicated in People sheet.')
+                elif 'primary_name' in per_dict and not self.person_exists_by_name(per_dict['primary_name']):
+                    latest_iperson_id += 1
+                    person = {'iperson_id': latest_iperson_id,
+                              'primary_name': per_dict['primary_name'],
+                              'upload': upload,
+                              'editors_notes': per_dict[
+                                  'editors_notes'] if 'editors_notes' in per_dict else None}
+                    self.people.append(CofkCollectPerson(**person))
 
     def person_exists_by_name(self, name: str) -> bool:
-        return len([p for p in self.people if p.primary_name == name and p.iperson_id is None]) > 0
+        return len([p for p in self.people if p.primary_name == name and p.union_iperson is None]) > 0

@@ -47,6 +47,10 @@ class CofkWork(CofkEntity):
 
         for index, row in enumerate(self.iter_rows(), start=1 + self.sheet.header_length):
             work_dict = self.get_row(row, index)
+
+            if work_dict == {}:
+                continue
+
             self.check_required(work_dict)
             # TODO check work data types
             self.check_data_types(work_dict)
@@ -91,8 +95,8 @@ class CofkWork(CofkEntity):
         upload.save()
 
     def get_person(self, person_id: str, person_name: str=None) -> CofkCollectPerson:
-        if person_id == '':
-            people = [p for p in self.people if p.primary_name == person_name]
+        if person_id is None:
+            people = [p for p in self.people if p.primary_name.lower() == person_name.lower()]
 
             if len(people) == 1:
                 return people[0]
@@ -105,8 +109,8 @@ class CofkWork(CofkEntity):
             return person[0]
 
     def get_location(self, location_id: str, location_name: str=None) -> CofkCollectLocation:
-        if location_id == '':
-            locations = [l for l in self.locations if l.location_name == location_name]
+        if location_id is None:
+            locations = [l for l in self.locations if l.location_name.lower() == location_name.lower()]
 
             if len(locations) == 1:
                 return locations[0]
@@ -120,17 +124,17 @@ class CofkWork(CofkEntity):
 
     def process_people(self, work: CofkCollectWork, people_list: List[Any], people_model: Type[models.Model],
                        work_dict: dict, ids: str, names: str, id_type: str):
-        id_list, name_list = self.clean_lists(work_dict, ids, names)
+        for pers_dict in self.clean_lists(work_dict, ids, names):
+            _id = pers_dict[ids]
+            name = pers_dict[names]
 
-        for _id, name in zip(id_list, name_list):
             if person := self.get_person(_id, name):
                 related_person = people_model(upload=self.upload, iwork=work, iperson=person)
                 setattr(related_person, id_type, self.get_new_id(id_type))
                 people_list.append(related_person)
-
             else:
                 # Person not present in people sheet
-                if _id != '':
+                if _id is None:
                     self.add_error(f'Person with the id {_id} was listed in the {self.sheet.name} sheet but is'
                                    f' not present in the People sheet.')
                 else:
@@ -139,16 +143,16 @@ class CofkWork(CofkEntity):
 
     def process_locations(self, work: CofkCollectWork, location_list: List[Any], location_model: Type[models.Model],
                           work_dict: dict, ids: str, names: str, id_type: str):
-        id_list, name_list = self.clean_lists(work_dict, ids, names)
-
-        for _id, name in zip(id_list, name_list):
+        for work_dict in self.clean_lists(work_dict, ids, names):
+            _id = work_dict[ids]
+            name = work_dict[names]
             if location := self.get_location(_id, name):
                 related_location = location_model(upload=self.upload, iwork=work, location=location)
                 setattr(related_location, id_type, self.get_new_id(id_type))
                 location_list.append(related_location)
             else:
                 # Location not present in places sheet
-                if _id != '':
+                if _id is not None:
                     self.add_error(f'Location with the id {_id} was listed in the {self.sheet.name} sheet but is'
                                    f' not present in the Places sheet.')
                 else:

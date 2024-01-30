@@ -1,5 +1,5 @@
 import logging
-from typing import Tuple, List, Any, Generator
+from typing import List, Any, Generator
 
 from django.core.exceptions import ValidationError
 from django.db import models, IntegrityError
@@ -194,20 +194,33 @@ class CofkEntity:
         return {'errors': errors,
                 'total': total_errors}
 
-    def clean_lists(self, entity_dict: dict, ids_key, names_key) -> Tuple[List[int], List[int]]:
+    def clean_lists(self, entity_dict: dict, ids_key: str, names_key: str) -> List[dict]:
         """
         Validates lists of either people or locations and returns a tuple of lists.
         """
-        name_list = entity_dict[names_key].split(SEPARATOR)
+        ids = None
+        names = None
 
-        if ids_key not in entity_dict:
-            id_list = ['' * len(name_list)]
-        elif isinstance(entity_dict[ids_key], str):
-            id_list = [i for i in entity_dict[ids_key].split(SEPARATOR) if int_or_empty_string(i)]
-        else:
-            id_list = [str(entity_dict[ids_key])]
+        if ids_key in entity_dict:
+            if isinstance(entity_dict[ids_key], str):
+                ids = entity_dict[ids_key].split(SEPARATOR)
+            else:
+                ids = [str(entity_dict[ids_key])]
 
-        return id_list, name_list
+        if names_key in entity_dict and isinstance(entity_dict[names_key], str):
+            names = entity_dict[names_key].split(SEPARATOR)
+
+        if names is None:
+            return [{ids_key: _id, names_key: None} for _id in ids]
+        elif ids is None:
+            return [{ids_key: None, names_key: name} for name in names]
+        elif len(names) < len(ids):
+            return [{ids_key: _id, names_key: names[ix]} for ix, _id in enumerate(ids)]
+        elif len(names) > len(ids):
+            return [{ids_key: ids[ix] if ix < len(ids) else None, names_key: name} for ix, name in
+                    enumerate(names)]
+
+        return [{ids_key: _id, names_key: name} for _id, name in zip(ids, names)]
 
     def bulk_create(self, objects: List[models.Model]):
         if len(objects):
