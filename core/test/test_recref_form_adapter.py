@@ -5,69 +5,57 @@ from manifestation.models import CofkUnionManifestation, CofkManifManifMap
 from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkWorkMap
 from work.recref_adapter import WorkLocRecrefAdapter, EarlierLetterRecrefAdapter, LaterLetterRecrefAdapter, \
     EnclosureManifRecrefAdapter, EnclosedManifRecrefAdapter
-from django.test import TestCase
-
-from location.models import CofkUnionLocation
-from manifestation.models import CofkUnionManifestation, CofkManifManifMap
-from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkWorkMap
-from work.recref_adapter import WorkLocRecrefAdapter, EarlierLetterRecrefAdapter, LaterLetterRecrefAdapter, \
-    EnclosureManifRecrefAdapter, EnclosedManifRecrefAdapter
 
 
 class RecrefFormAdapterTest(TestCase):
 
     def test_work_loc_recref_adapter(self):
         # prepare data
-        rel_type = 'aaa'
         parent = CofkUnionWork()
         parent.save()
         target = CofkUnionLocation()
         target.save()
-        recref_adapter = WorkLocRecrefAdapter(parent)
-        recref_class = CofkWorkLocationMap
-        self._test_recref_form_adapter(parent, target, rel_type, recref_adapter, recref_class)
+        self._test_recref_form_adapter(parent, target, rel_type='aaa',
+                                       recref_adapter=WorkLocRecrefAdapter(parent),
+                                       recref_class=CofkWorkLocationMap)
 
     def test_earlier_letter_recref_adapter(self):
         # prepare data
-        rel_type = 'aaa'
         parent = CofkUnionWork()
         parent.save()
         target = CofkUnionWork()
         target.save()
-        recref_adapter = EarlierLetterRecrefAdapter(parent)
-        recref_class = CofkWorkWorkMap
-        self._test_recref_form_adapter(parent, target, rel_type, recref_adapter, recref_class)
+        self._test_recref_form_adapter(parent, target, rel_type='aaa',
+                                       recref_adapter=EarlierLetterRecrefAdapter(parent),
+                                       recref_class=CofkWorkWorkMap)
 
     def test_later_letter_recref_adapter(self):
         # prepare data
-        rel_type = 'aaa'
         parent = CofkUnionWork()
         parent.save()
         target = CofkUnionWork()
         target.save()
-        recref_adapter = LaterLetterRecrefAdapter(parent)
-        recref_class = CofkWorkWorkMap
-        self._test_recref_form_adapter(parent, target, rel_type, recref_adapter, recref_class)
+        self._test_recref_form_adapter(parent, target, rel_type='aaa',
+                                       recref_adapter=LaterLetterRecrefAdapter(parent),
+                                       recref_class=CofkWorkWorkMap)
 
     def test_enclosure_manif_recref_adapter(self):
-        rel_type = 'aaa'
         parent = CofkUnionManifestation()
         parent.save()
         target = CofkUnionManifestation()
         target.save()
-        recref_adapter = EnclosureManifRecrefAdapter(parent)
-        recref_class = CofkManifManifMap
-        self._test_recref_form_adapter(parent, target, rel_type, recref_adapter, recref_class)
+        self._test_recref_form_adapter(parent, target, rel_type='aaa',
+                                       recref_adapter=EnclosureManifRecrefAdapter(parent),
+                                       recref_class=CofkManifManifMap)
 
-    def test_enclosure_manif_recref_adapter(self):
-        rel_type = 'aaa'
+    def test_enclosed_manif_recref_adapter(self):
         parent = CofkUnionManifestation()
         parent.save()
         target = CofkUnionManifestation()
         target.save()
-        recref_adapter = EnclosedManifRecrefAdapter(parent)
-        recref_class = CofkManifManifMap
-        self._test_recref_form_adapter(parent, target, rel_type, recref_adapter, recref_class)
+        self._test_recref_form_adapter(parent, target, rel_type='aaa',
+                                       recref_adapter=EnclosedManifRecrefAdapter(parent),
+                                       recref_class=CofkManifManifMap)
 
     def _test_recref_form_adapter(self, parent, target, rel_type, recref_adapter, recref_class):
         # test upsert_recref
