@@ -472,7 +472,7 @@ class UrlAliveChecker:
     @staticmethod
     def _check_urls(urls: Iterable[str], n_thread=100) -> dict[str, bool]:
         results = {}
-        for i, (url, is_alive) in enumerate(
+        for _, (url, is_alive) in enumerate(
                 thread_utils.yield_run_fn_results(_send_request, zip(urls), n_thread=n_thread)):
             results[url] = is_alive
         return results

@@ -245,7 +245,7 @@ def get_left_right_rel_obj(recref: Recref)-> tuple[Model, Model]:
 def get_recref_rel_desc(recref: Recref,
                         left_model: 'ModelLike' | Type['ModelLike'],
                         default_raw_value=False) -> str:
-    left_rel_obj, right_rel_obj = get_left_right_rel_obj(recref)
+    left_rel_obj, _ = get_left_right_rel_obj(recref)
     if isinstance(left_model, Model):
         is_left = left_rel_obj == left_model
     else:

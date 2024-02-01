@@ -503,7 +503,7 @@ class WorkSearchTests(EmloSeleniumTestCase, CommonSearchTests):
         }
 
         table_type_id = 'display-as-list'
-        works = prepare_works_for_search()
+        prepare_works_for_search()
         self.goto_search_page()
         self.find_search_btn().click()
         self.find_element_by_css(f'label[for={table_type_id}]').click()

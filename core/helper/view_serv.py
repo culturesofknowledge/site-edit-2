@@ -739,7 +739,7 @@ class MergeActionViews(View):
         recref_list: Iterable[Recref] = find_all_recref_by_models(other_models)
         recref_list = list(recref_list)
         for recref in recref_list:
-            parent_field, related_field = recref_serv.get_parent_related_field_by_recref(recref, selected_model)
+            parent_field, _ = recref_serv.get_parent_related_field_by_recref(recref, selected_model)
 
             # update related_field on recref
             related_field_name = parent_field.field.name
