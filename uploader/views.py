@@ -91,14 +91,14 @@ def handle_upload(request) -> dict:
             report['total_errors'] = 1
             report['errors'] = {'file': {'total': 1, 'error': ['Could not read the file.']}}
             log.error(e)
-        # except ValueError as ve:
-        #    report['total_errors'] = 1
-        #    report['errors'] = {'file': {'total': 1, 'error': [ve]}}
-        #    log.error(ve)
-        # except Exception as e:
-        #    report['total_errors'] = 1
-        #    report['errors'] = 'Indeterminate error.'
-        #    log.error(e)
+        except ValueError as ve:
+            report['total_errors'] = 1
+            report['errors'] = {'file': {'total': 1, 'error': [ve]}}
+            log.error(ve)
+        except Exception as e:
+            report['total_errors'] = 1
+            report['errors'] = 'Indeterminate error.'
+            log.error(e)
 
         if cuef and cuef.errors:
             log.error(f'Deleting upload {new_upload}')
@@ -210,6 +210,7 @@ def upload_review(request, upload_id, **kwargs):
 
     return render(request, template_url, context)
 
+
 def lookup_fn_date_of_work(lookup_fn, field_name, value):
     value = str(value).strip()
     query = Q()
@@ -261,9 +262,7 @@ def lookup_fn_date_of_work(lookup_fn, field_name, value):
     return query
 
 
-
 def lookup_fn_issues(value):
-
     cond_map = [
         (r'Date\s+of\s+work\s+INFERRED', lambda: Q(date_of_work_inferred=1)),
         (r'Date\s+of\s+work\s+UNCERTAIN', lambda: Q(date_of_work_uncertain=1)),
@@ -288,6 +287,7 @@ def lookup_fn_issues(value):
             query |= q()
     return query
 
+
 class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
@@ -301,7 +301,7 @@ class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def search_field_fn_maps(self) -> dict:
         return create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                   'change_timestamp')
+                                       'change_timestamp')
 
     @property
     def entity(self) -> str:
@@ -361,9 +361,9 @@ class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
                 'origin': ['origin__location__location_name'],
                 'destination': ['destination__location__location_name'],
                 'manifestations': ['manifestations__repository__institution_name',
-                                  'manifestations__id_number_or_shelfmark',
-                                  'manifestations__printed_edition_details',
-                                  'manifestations__manifestation_notes'],
+                                   'manifestations__id_number_or_shelfmark',
+                                   'manifestations__printed_edition_details',
+                                   'manifestations__manifestation_notes'],
                 'languages': ['languages__language_code__language_name'],
                 'subjects': ['subjects__subject__subject_desc'],
                 'people_mentioned': ['people_mentioned__iperson__primary_name'],
