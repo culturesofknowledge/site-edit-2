@@ -25,14 +25,21 @@ class CofkPeople(CofkEntity, ABC):
             self.check_data_types(persons)
 
             for per_dict in self.clean_lists(persons, 'iperson_id', 'primary_name'):
-                if 'iperson_id' in per_dict and per_dict['iperson_id'] is not None and 'primary_name' in per_dict:
+                if 'iperson_id' in per_dict and per_dict['iperson_id'] is not None:
                     _id = per_dict['iperson_id']
-                    name = per_dict['primary_name']
+                    name = per_dict['primary_name'] if 'primary_name' in per_dict else None
+
+                    try:
+                        int(_id)
+                    except ValueError:
+                        self.add_error(f'Iperson_id "{_id}" is not a number')
+                        continue
+
                     """
                     A row in a people sheet can contain any number of semi colon separated people.
                     New people will have a name but not an id.
                     """
-                    if _id is not None and _id not in self.ids:
+                    if _id not in self.ids:
                         person = {'iperson_id': _id,
                                   'primary_name': name,
                                   'union_iperson': CofkUnionPerson.objects.filter(iperson_id=_id).first(),

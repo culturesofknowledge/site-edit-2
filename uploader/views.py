@@ -91,14 +91,14 @@ def handle_upload(request) -> dict:
             report['total_errors'] = 1
             report['errors'] = {'file': {'total': 1, 'error': ['Could not read the file.']}}
             log.error(e)
-        except ValueError as ve:
-            report['total_errors'] = 1
-            report['errors'] = {'file': {'total': 1, 'error': [ve]}}
-            log.error(ve)
-        except Exception as e:
-            report['total_errors'] = 1
-            report['errors'] = 'Indeterminate error.'
-            log.error(e)
+        # except ValueError as ve:
+        #    report['total_errors'] = 1
+        #    report['errors'] = {'file': {'total': 1, 'error': [ve]}}
+        #    log.error(ve)
+        # except Exception as e:
+        #    report['total_errors'] = 1
+        #    report['errors'] = 'Indeterminate error.'
+        #    log.error(e)
 
         if cuef and cuef.errors:
             log.error(f'Deleting upload {new_upload}')

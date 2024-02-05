@@ -31,6 +31,12 @@ class CofkLocations(CofkEntity, ABC):
                 if 'location_id' in loc_dict and loc_dict['location_id'] is not None:
                     loc_id = loc_dict['location_id']
 
+                    try:
+                        int(loc_id)
+                    except ValueError:
+                        self.add_error(f'Location_id "{loc_id}" is not a number')
+                        continue
+
                     if loc_id not in self.ids:
                         loc_dict['union_location'] = CofkUnionLocation.objects\
                             .filter(location_id=loc_id).first()
