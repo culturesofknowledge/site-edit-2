@@ -1,6 +1,7 @@
 version: "3.3"
 
 services:
+
   db:
     image: postgres:14
     environment:
@@ -11,6 +12,7 @@ services:
       - .env
     ports:
       - 25432:5432
+
   web:
     build:
       context: ../../
@@ -24,6 +26,7 @@ services:
       - .env
     depends_on:
       - db
+
   pgadmin:
     image: dpage/pgadmin4:latest
     environment:

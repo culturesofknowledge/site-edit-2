@@ -20,7 +20,7 @@ Dependencies (see `requirements.txt`):
 How to run all unitest with docker 
 ------------------------------------
 ```shell
-docker-compose -f $EMLO_CODE_HOME/docker-compose.yml -f $EMLO_CODE_HOME/docker-compose-pycharm.yml -f $EMLO_CODE_HOME/docker-compose-unittest.yml up pycharm-py
+docker-compose -f $EMLO_CODE_HOME/docker-compose.yml -f $EMLO_CODE_HOME/docker-compose-dev.yml up pycharm-py
 ```
 
 How to use data migration tool

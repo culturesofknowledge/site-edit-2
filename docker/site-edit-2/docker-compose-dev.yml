@@ -20,6 +20,7 @@ services:
       - DJANGO_SETTINGS_MODULE=siteedit2.settings.tests
     ports:
       - "8010:8010"
+    entrypoint: /code/docker/site-edit-2/docker-entrypoint-unittest.sh
 
   chrome:
     image: selenium/standalone-chrome:3.141
