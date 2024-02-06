@@ -29,6 +29,7 @@ cd ../../docker/site-edit-2/
 cp gunweb.env.example .gunweb.env
 ln -sf .gunweb.env .env    # .env for `db` service
 # edit variable in .gunweb.env if needed
+# e.g. `DJANGO_SECRET_KEY`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, 
 vi .gunweb.env
 
 
