@@ -80,13 +80,33 @@
 </tr>
 <tr>
     <td class="header">Addressee{{ addressees|pluralize:",s" }}</td>
-    <td>{% for addressee in addressees|filter_by_work:work %}
+    <td>{% if addressees|length > 1 %}
+            <ul>
+        {% endif %}
+
+        {% for addressee in addressees|filter_by_work:work %}
+            {% if addressees|length > 1 %}
+                <li>
+            {% endif %}
+
             {% if addressee.iperson.union_iperson %}
                 {{ addressee.iperson.union_iperson.foaf_name }}
             {% else %}
-                {{ addressee }}<br/>
+                {{ addressee.iperson.primary_name }}<br/>
+            {% endif %}
+
+            {% if addressees|length > 1 %}
+                </li>
+            {% else %}
+                <br/>
             {% endif %}
         {% endfor %}
+
+        {% if addressees|length > 1 %}
+        </ul>
+        {% else %}
+        <br/>
+        {% endif %}
 
         {% if work.addressees_as_marked %}
             <br/>As marked: {{ work.addressees_as_marked }}

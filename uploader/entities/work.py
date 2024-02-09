@@ -96,7 +96,7 @@ class CofkWork(CofkEntity):
 
     def get_person(self, person_id: str, person_name: str = None) -> CofkCollectPerson:
         if person_id is None or person_id == '':
-            people = [p for p in self.people if p.primary_name.lower() == person_name.lower()]
+            people = [p for p in self.people if p.primary_name and p.primary_name.lower() == person_name.lower()]
 
             if len(people) == 1:
                 return people[0]
@@ -110,7 +110,7 @@ class CofkWork(CofkEntity):
 
     def get_location(self, location_id: str, location_name: str = None) -> CofkCollectLocation:
         if location_id is None or location_id == '':
-            locations = [l for l in self.locations if l.location_name.lower() == location_name.lower()]
+            locations = [l for l in self.locations if l.location_name and l.location_name.lower() == location_name.lower()]
 
             if len(locations) == 1:
                 return locations[0]
