@@ -1,7 +1,5 @@
 import logging
-from typing import Union, List, Generator, Tuple, Set, Type
-
-from openpyxl.cell import Cell
+from typing import Union, List, Set, Type
 from openpyxl.reader.excel import load_workbook
 from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
@@ -34,15 +32,6 @@ class CofkSheet:
         self.header = [cell.value for cell in next(rows) if cell.value is not None]
         next(rows)
         self.rows = sum(1 for _ in rows)
-
-    @property
-    def data(self) -> Generator[Tuple[Cell], None, None]:
-        rows = (row for row in self.worksheet.iter_rows() if any([cell.value is not None for cell in row]))
-
-        for i in range(self.header_length):
-            next(rows)
-
-        return rows
 
     @property
     def missing_columns(self) -> Set[str]:

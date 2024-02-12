@@ -45,10 +45,10 @@ class CofkWork(CofkEntity):
         self.language_of_work_id: int = 0
         self.subject_of_work_id: int = 0
 
-        for index, row in enumerate(self.iter_rows(), start=1 + self.sheet.header_length):
+        for index, row in enumerate(self.sheet.worksheet.iter_rows(), start=1):
             work_dict = self.get_row(row, index)
 
-            if work_dict == {}:
+            if index <= self.sheet.header_length or work_dict == {}:
                 continue
 
             self.check_required(work_dict)

@@ -1,5 +1,5 @@
 import logging
-from typing import List, Any, Generator
+from typing import List, Generator
 
 from django.core.exceptions import ValidationError
 from django.db import models, IntegrityError
@@ -21,9 +21,6 @@ def int_or_empty_string(value) -> bool:
             return True
 
     return False
-
-def has_valid_value(cell: Cell):
-    return cell.value is not None and cell.value != ''
 
 
 class CofkEntity:
@@ -47,17 +44,14 @@ class CofkEntity:
         # openpyxl starts column count at 1
         return self.fields['columns'][index - 1]
 
-    def iter_rows(self) -> Generator[Generator[Cell, None, None], None, None]:
-        return ((c for c in r if not isinstance(c, EmptyCell)
-                 and c.column <= len(self.fields['columns'])) for r in self.sheet.data)
+    def has_valid_value(self, cell: Cell):
+        column_count = len(self.fields['columns'])
+        return (not isinstance(cell, EmptyCell) and cell.column <= column_count
+                and cell.value is not None and cell.value != '')
 
     def get_row(self, row: Generator[Cell, None, None], row_number: int) -> dict:
         self.row = row_number
-        return {self.get_column_name_by_index(cell.column): cell.value for cell in row if has_valid_value(cell)}
-
-    def get_column_by_name(self, name: str) -> List[Any]:
-        return [[c.value for c in r if not isinstance(c, EmptyCell) and c.column <= len(self.fields['columns'])
-                 and self.get_column_name_by_index(c.column) == name][0] for r in self.sheet.data]
+        return {self.get_column_name_by_index(cell.column): cell.value for cell in row if self.has_valid_value(cell)}
 
     def check_required(self, entity: dict):
         for missing in [m for m in self.fields['required'] if m not in entity]:
@@ -151,7 +145,6 @@ class CofkEntity:
                 elif isinstance(entity[range_columns[0]], int) and isinstance(entity[range_columns[1]], int)\
                         and entity[range_columns[0]] > entity[range_columns[1]]:
                     self.add_error(f'Column {range_columns[0]} can not be greater than {range_columns[1]}.')
-
 
     def add_error(self, error_msg: str | None, entity=None, row=None):
         if not row:

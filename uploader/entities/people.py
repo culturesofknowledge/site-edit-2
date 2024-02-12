@@ -19,8 +19,12 @@ class CofkPeople(CofkEntity, ABC):
         iperson_ids = list(CofkCollectPerson.objects.values_list('iperson_id').order_by('-iperson_id')[:1])
         latest_iperson_id = iperson_ids[0][0] if len(iperson_ids) == 1 else 0
 
-        for index, row in enumerate(self.iter_rows(), start=1 + self.sheet.header_length):
+        for index, row in enumerate(self.sheet.worksheet.iter_rows(), start=1):
             persons = self.get_row(row, index)
+
+            if index <= self.sheet.header_length or persons == {}:
+                continue
+
             self.check_required(persons)
             self.check_data_types(persons)
 
@@ -72,4 +76,4 @@ class CofkPeople(CofkEntity, ABC):
                     self.people.append(CofkCollectPerson(**person))
 
     def person_exists_by_name(self, name: str) -> bool:
-        return len([p for p in self.people if p.primary_name == name and p.union_iperson is None]) > 0
+        return len([p for p in self.people if p.primary_name.lower() == name.lower() and p.union_iperson is None]) > 0
