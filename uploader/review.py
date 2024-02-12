@@ -248,7 +248,9 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
 
     # Creating the relation entities
     for rel_map in rel_maps:
-        bulk_create(rel_map)
+        if len(rel_map) > 0:
+            bulk_create(rel_map)
+            log_msg.append(f'{len(rel_map)} {type(rel_map[0]).__name__}')
 
     # Update upload status of collect works
     CofkCollectWork.objects.bulk_update(collect_works, ['upload_status'])

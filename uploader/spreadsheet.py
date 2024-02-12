@@ -63,7 +63,7 @@ class CofkUploadExcelFile:
                 self.sheets[sheet] = CofkSheet(self.wb[sheet])
             except StopIteration:
                 self.missing.append(f'{sheet} is missing its header rows.')
-                #raise CofkExcelFileError(f'{sheet} is missing its header rows.')
+                # raise CofkExcelFileError(f'{sheet} is missing its header rows.')
 
             # Using same iteration to verify that required columns are present
             if sheet in self.sheets and self.sheets[sheet].missing_columns:
@@ -82,8 +82,9 @@ class CofkUploadExcelFile:
         if self.sheets['Work'].rows == 0:
             raise CofkExcelFileError("Spreadsheet contains no works.")
 
-        sheets = ', '.join([f'{sheet}: {self.sheets[sheet].rows}' for sheet in MANDATORY_SHEETS.keys()])
+        sheets = ', '.join([f'{sheet}: {self.sheets[sheet].rows} ({self.sheets[sheet].worksheet.calculate_dimension()})' for sheet in MANDATORY_SHEETS.keys()])
         log.info(f'{self.upload}: all {len(MANDATORY_SHEETS)} sheets verified: [{sheets}]')
+        # log.info(f'About to process {self.wb.sheet[sheet]}')
 
         # It's process the sheets in reverse order, starting with repositories/institutions
         self.sheets['Repositories'].entities = CofkRepositories(upload=self.upload,
@@ -154,7 +155,7 @@ class CofkUploadExcelFile:
             self.sheets['Manifestation'].entities.bulk_create(manifs)
             self.sheets['Manifestation'].entities.log_summary.append(f'{len(manifs)} CofkCollectManifestation')
 
-            log_msg = self.sheets['Work'].entities.log_summary + self.sheets['Manifestation'].entities.log_summary\
+            log_msg = self.sheets['Work'].entities.log_summary + self.sheets['Manifestation'].entities.log_summary \
                       + self.sheets['Repositories'].entities.log_summary
             log.info(f'{self.upload}: created ' + ', '.join(log_msg))
 
