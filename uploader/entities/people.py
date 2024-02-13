@@ -65,7 +65,7 @@ class CofkPeople(CofkEntity, ABC):
                                       'editors_notes'] if 'editors_notes' in per_dict else None}
                         self.people.append(CofkCollectPerson(**person))
                     else:
-                        log.info(f'{_id} duplicated in People sheet.')
+                        log.warning(f'{_id} duplicated in People sheet.')
                 elif 'primary_name' in per_dict and not self.person_exists_by_name(per_dict['primary_name']):
                     latest_iperson_id += 1
                     person = {'iperson_id': latest_iperson_id,
