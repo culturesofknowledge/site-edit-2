@@ -58,7 +58,8 @@ ignore-paths=.*/commands/playground.py,
              ./cllib,
              ./cllib-django,
              ./site_edit_2.egg-info,
-             ./work/manual_migrations/,
+             .*/migrations/,
+             .*/manual_migrations/,
 
 
 # Files or directories matching the regular expression patterns are skipped.
@@ -441,16 +442,23 @@ confidence=HIGH,
 #         use-implicit-booleaness-not-comparison-to-zero,
 #         no-name-in-module,  # false positives
 #         missing-function-docstring,
-disable=no-name-in-module,  # false positives
+disable=consider-using-f-string,
+        no-name-in-module,  # false positives
+        no-else-return,
         missing-function-docstring,
         missing-module-docstring,
         missing-class-docstring,
+        too-few-public-methods,
         too-many-arguments,
-        logging-fstring-interpolation, # not a big performance hit but limited coding style
         too-many-ancestors,   # incorrect for mixins
+        trailing-comma-tuple,
         use-dict-literal,
         unused-argument,  # sometime callback method arguments are unused
         logging-format-interpolation,
+        logging-fstring-interpolation, # not a big performance hit but limited coding style
+        logging-not-lazy,
+        fixme,
+        inconsistent-return-statements, # `return` or missing return for None is not a big deal
 
 
 # Enable the message, report, category or checker with the given id(s). You can
