@@ -210,6 +210,7 @@ def upload_review(request, upload_id, **kwargs):
 
     return render(request, template_url, context)
 
+
 def lookup_fn_date_of_work(lookup_fn, field_name, value):
     value = str(value).strip()
     query = Q()
@@ -361,9 +362,9 @@ class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
                 'origin': ['origin__location__location_name'],
                 'destination': ['destination__location__location_name'],
                 'manifestations': ['manifestations__repository__institution_name',
-                                  'manifestations__id_number_or_shelfmark',
-                                  'manifestations__printed_edition_details',
-                                  'manifestations__manifestation_notes'],
+                                   'manifestations__id_number_or_shelfmark',
+                                   'manifestations__printed_edition_details',
+                                   'manifestations__manifestation_notes'],
                 'languages': ['languages__language_code__language_name'],
                 'subjects': ['subjects__subject__subject_desc'],
                 'people_mentioned': ['people_mentioned__iperson__primary_name'],

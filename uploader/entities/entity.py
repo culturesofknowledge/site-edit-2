@@ -1,5 +1,5 @@
 import logging
-from typing import Tuple, List, Any, Generator
+from typing import List, Generator
 
 from django.core.exceptions import ValidationError
 from django.db import models, IntegrityError
@@ -44,17 +44,14 @@ class CofkEntity:
         # openpyxl starts column count at 1
         return self.fields['columns'][index - 1]
 
-    def iter_rows(self) -> Generator[Generator[Cell, None, None], None, None]:
-        return ((c for c in r if not isinstance(c, EmptyCell)
-                 and c.column <= len(self.fields['columns'])) for r in self.sheet.data)
+    def has_valid_value(self, cell: Cell):
+        column_count = len(self.fields['columns'])
+        return (not isinstance(cell, EmptyCell) and cell.column <= column_count
+                and cell.value is not None and cell.value != '')
 
     def get_row(self, row: Generator[Cell, None, None], row_number: int) -> dict:
         self.row = row_number
-        return {self.get_column_name_by_index(cell.column): cell.value for cell in row if cell.value is not None}
-
-    def get_column_by_name(self, name: str) -> List[Any]:
-        return [[c.value for c in r if not isinstance(c, EmptyCell) and c.column <= len(self.fields['columns'])
-                 and self.get_column_name_by_index(c.column) == name][0] for r in self.sheet.data]
+        return {self.get_column_name_by_index(cell.column): cell.value for cell in row if self.has_valid_value(cell)}
 
     def check_required(self, entity: dict):
         for missing in [m for m in self.fields['required'] if m not in entity]:
@@ -118,8 +115,8 @@ class CofkEntity:
 
         if 'combos' in self.fields:
             for combo in self.fields['combos']:
-                if combo[0] in entity and combo[1] in entity and isinstance(entity[combo[0]], str) and\
-                        SEPARATOR in entity[combo[0]] or (combo[1] in entity and SEPARATOR in entity[combo[1]]):
+                if combo[0] in entity and combo[1] in entity and isinstance(entity[combo[0]], str) and \
+                        (SEPARATOR in entity[combo[0]] or (combo[1] in entity and SEPARATOR in entity[combo[1]])):
                     if len(entity[combo[0]].split(SEPARATOR)) < len(entity[combo[1]].split(SEPARATOR)):
                         self.add_error(f'Column {combo[0]} has fewer ids than there are names in {combo[1]}.')
                     elif len(entity[combo[1]].split(SEPARATOR)) < len(entity[combo[0]].split(SEPARATOR)):
@@ -148,7 +145,6 @@ class CofkEntity:
                 elif isinstance(entity[range_columns[0]], int) and isinstance(entity[range_columns[1]], int)\
                         and entity[range_columns[0]] > entity[range_columns[1]]:
                     self.add_error(f'Column {range_columns[0]} can not be greater than {range_columns[1]}.')
-
 
     def add_error(self, error_msg: str | None, entity=None, row=None):
         if not row:
@@ -191,20 +187,33 @@ class CofkEntity:
         return {'errors': errors,
                 'total': total_errors}
 
-    def clean_lists(self, entity_dict: dict, ids_key, names_key) -> Tuple[List[int], List[int]]:
+    def clean_lists(self, entity_dict: dict, ids_key: str, names_key: str) -> List[dict]:
         """
         Validates lists of either people or locations and returns a tuple of lists.
         """
-        name_list = entity_dict[names_key].split(SEPARATOR)
+        ids = None
+        names = None
 
-        if ids_key not in entity_dict:
-            id_list = ['' * len(name_list)]
-        elif isinstance(entity_dict[ids_key], str):
-            id_list = [i for i in entity_dict[ids_key].split(SEPARATOR) if int_or_empty_string(i)]
-        else:
-            id_list = [str(entity_dict[ids_key])]
+        if ids_key in entity_dict:
+            if isinstance(entity_dict[ids_key], str):
+                ids = entity_dict[ids_key].split(SEPARATOR)
+            else:
+                ids = [str(entity_dict[ids_key])]
 
-        return id_list, name_list
+        if names_key in entity_dict and isinstance(entity_dict[names_key], str):
+            names = entity_dict[names_key].split(SEPARATOR)
+
+        if names is None:
+            return [{ids_key: _id, names_key: None} for _id in ids]
+        elif ids is None:
+            return [{ids_key: None, names_key: name} for name in names]
+        elif len(names) < len(ids):
+            return [{ids_key: _id, names_key: names[ix]} for ix, _id in enumerate(ids)]
+        elif len(names) > len(ids):
+            return [{ids_key: ids[ix] if ix < len(ids) else None, names_key: name} for ix, name in
+                    enumerate(names)]
+
+        return [{ids_key: _id, names_key: name} for _id, name in zip(ids, names)]
 
     def bulk_create(self, objects: List[models.Model]):
         if len(objects):

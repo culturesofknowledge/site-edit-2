@@ -2,9 +2,9 @@ import logging
 from abc import ABC
 from typing import List
 
+from institution.models import CofkUnionInstitution
 from uploader.entities.entity import CofkEntity
 from uploader.models import CofkCollectUpload, CofkCollectInstitution
-from institution.models import CofkUnionInstitution
 
 log = logging.getLogger(__name__)
 
@@ -17,8 +17,12 @@ class CofkRepositories(CofkEntity, ABC):
         super().__init__(upload, sheet)
         self.institutions: List[CofkCollectInstitution] = []
 
-        for index, row in enumerate(self.iter_rows(), start=1 + self.sheet.header_length):
+        for index, row in enumerate(self.sheet.worksheet.iter_rows(), start=1):
             inst_dict = self.get_row(row, index)
+
+            if index <= self.sheet.header_length or inst_dict == {}:
+                continue
+
             self.check_required(inst_dict)
             self.check_data_types(inst_dict)
 

@@ -6,6 +6,7 @@ from uploader.test.test_serv import UploadIncludedTestCase
 
 log = logging.getLogger(__name__)
 
+
 class TestLocations(UploadIncludedTestCase):
     def test_extra_location_no_union(self):
         """
@@ -19,7 +20,7 @@ class TestLocations(UploadIncludedTestCase):
              2, "test", "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/", "Early Modern Letters Online test"]],
             'People': [["Baskerville", 2],
                        ["newton", 15257],
-                       ["Wren", 22859] ,],
+                       ["Wren", 22859], ],
             'Places': [['Burford', 400285],
                        ['Carisbrooke', 5]],
             'Manifestation': [[1, 1, "ALS", 1, "Bodleian", "test", "test", '', '', '', '', ''],
@@ -30,7 +31,7 @@ class TestLocations(UploadIncludedTestCase):
         cuef = CofkUploadExcelFile(self.new_upload, filename)
 
         self.assertIn('There is no location with the id 5 in the Union catalogue.',
-                     cuef.errors['locations']['errors'][0]['errors'])
+                      cuef.errors['locations']['errors'][0]['errors'])
 
     def test_extra_location(self):
         """
@@ -44,7 +45,7 @@ class TestLocations(UploadIncludedTestCase):
              885, "test", "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/", "Early Modern Letters Online test"]],
             'People': [["Baskerville", 885],
                        ["newton", 15257],
-                       ["Wren", 22859],],
+                       ["Wren", 22859], ],
             'Places': [['Burford', 400285],
                        ['Cape Town']],
             'Manifestation': [[1, 1, "ALS", 1, "Bodleian", "test", "test", '', '', '', '', ''],

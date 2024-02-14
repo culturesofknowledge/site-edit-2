@@ -6,6 +6,7 @@ from uploader.test.test_serv import UploadIncludedTestCase
 
 log = logging.getLogger(__name__)
 
+
 class TestPeople(UploadIncludedTestCase):
 
     def test_extra_person_no_union(self):
@@ -20,7 +21,7 @@ class TestPeople(UploadIncludedTestCase):
              2, "test", "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/", "Early Modern Letters Online test"]],
             'People': [["Baskerville", 2],
                        ["newton", 15257],
-                       ["Wren", 22859] ,],
+                       ["Wren", 22859], ],
             'Places': [['Burford', 400285],
                        ['Carisbrooke', 782]],
             'Manifestation': [[1, 1, "ALS", 1, "Bodleian", "test", "test", '', '', '', '', ''],
@@ -31,8 +32,7 @@ class TestPeople(UploadIncludedTestCase):
         cuef = CofkUploadExcelFile(self.new_upload, filename)
 
         self.assertIn('There is no person with the id 2 in the Union catalogue.',
-                     cuef.errors['people']['errors'][0]['errors'])
-
+                      cuef.errors['people']['errors'][0]['errors'])
 
     def test_extra_person_omit_author_id_semicolon(self):
         """

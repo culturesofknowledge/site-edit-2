@@ -133,6 +133,16 @@ def get_work(works, work_id) -> list[CofkCollectWork] | None:
         pass
 
 
+def add_rel_maps(rel_maps: dict, entity_maps: List):
+    if not len(entity_maps):
+        return
+
+    if str(type(entity_maps[0])) not in rel_maps:
+        rel_maps[str(type(entity_maps[0]))] = []
+
+    rel_maps[str(type(entity_maps[0]))] += entity_maps
+
+
 def accept_works(request, context: dict, upload: CofkCollectUpload):
     collect_works = context['works_page'].paginator.object_list
 
@@ -149,7 +159,7 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
     union_works = []
     union_manifs = []
     union_resources = []
-    rel_maps = []
+    rel_maps = {}
 
     union_work_dict = {'accession_code': request.POST['accession_code'] if 'accession_code' in request.POST else None}
 
@@ -172,24 +182,25 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
         people_maps += link_person_to_work(entities=context['mentioned'],
                                            relationship_type=REL_TYPE_MENTION,
                                            union_work=union_work, work_id=work_id, request=request)
-        rel_maps.append(people_maps)
+        add_rel_maps(rel_maps, people_maps)
 
         # Link languages
         lang_maps = [CofkUnionLanguageOfWork(work=union_work, language_code=lang.language_code) for
                      lang in context['languages'].filter(iwork_id=work_id).all()]
 
-        rel_maps.append(lang_maps)
+        add_rel_maps(rel_maps, lang_maps)
 
         # Link subjects
-        rel_maps.append([CofkWorkSubjectMap(work=union_work, subject=s.subject, relationship_type=REL_TYPE_DEALS_WITH)
-                         for s in context['subjects'].filter(iwork_id=work_id).all()])
+        add_rel_maps(rel_maps, [CofkWorkSubjectMap(work=union_work, subject=s.subject,
+                                                   relationship_type=REL_TYPE_DEALS_WITH)
+                                for s in context['subjects'].filter(iwork_id=work_id).all()])
 
         # Link locations
         loc_maps = link_location_to_work(entities=context['destinations'], relationship_type=REL_TYPE_WAS_SENT_TO,
                                          union_work=union_work, work_id=work_id, request=request)
         loc_maps += link_location_to_work(entities=context['origins'], relationship_type=REL_TYPE_WAS_SENT_FROM,
                                           union_work=union_work, work_id=work_id, request=request)
-        rel_maps.append(loc_maps)
+        add_rel_maps(rel_maps, loc_maps)
 
         union_maps = []
 
@@ -217,7 +228,7 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
                 cmim.update_current_user_timestamp(request.user.username)
                 union_maps.append(cmim)
 
-        rel_maps.append(union_maps)
+        add_rel_maps(rel_maps, union_maps)
 
         res_maps = []
 
@@ -234,7 +245,7 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
             cwrm.update_current_user_timestamp(request.user.username)
             res_maps.append(cwrm)
 
-        rel_maps.append(res_maps)
+        add_rel_maps(rel_maps, res_maps)
 
         collect_work.upload_status_id = 4  # Accepted and saved into main database
 
@@ -248,7 +259,9 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
 
     # Creating the relation entities
     for rel_map in rel_maps:
-        bulk_create(rel_map)
+        if len(rel_maps[rel_map]) > 0:
+            bulk_create(rel_maps[rel_map])
+            log_msg.append(f'{len(rel_maps[rel_map])} {type(rel_maps[rel_map][0]).__name__}')
 
     # Update upload status of collect works
     CofkCollectWork.objects.bulk_update(collect_works, ['upload_status'])

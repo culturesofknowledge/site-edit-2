@@ -3,7 +3,7 @@ from typing import List, Type, Any
 
 from django.db import models
 
-from core.models import Iso639LanguageCode, CofkUnionSubject
+from core.models import Iso639LanguageCode
 from uploader.entities.entity import CofkEntity
 from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectAddresseeOfWork, \
     CofkCollectAuthorOfWork, CofkCollectDestinationOfWork, CofkCollectLanguageOfWork, CofkCollectOriginOfWork, \
@@ -45,8 +45,12 @@ class CofkWork(CofkEntity):
         self.language_of_work_id: int = 0
         self.subject_of_work_id: int = 0
 
-        for index, row in enumerate(self.iter_rows(), start=1 + self.sheet.header_length):
+        for index, row in enumerate(self.sheet.worksheet.iter_rows(), start=1):
             work_dict = self.get_row(row, index)
+
+            if index <= self.sheet.header_length or work_dict == {}:
+                continue
+
             self.check_required(work_dict)
             # TODO check work data types
             self.check_data_types(work_dict)
@@ -87,71 +91,68 @@ class CofkWork(CofkEntity):
             if 'language_id' in work_dict:
                 self.process_languages(work_dict, w)
 
-            if 'keywords' in work_dict:
-                self.process_subjects(work_dict, w)
-
         upload.total_works = len(self.works)
         upload.save()
 
-    def get_person(self, person_id: str, person_name: str=None) -> CofkCollectPerson:
-        if person_id == '':
-            people = [p for p in self.people if p.primary_name == person_name]
+    def get_person(self, person_id: str, person_name: str = None) -> CofkCollectPerson:
+        if person_id is None or person_id == '':
+            people = [p for p in self.people if p.primary_name and p.primary_name.lower() == person_name.lower()]
 
             if len(people) == 1:
                 return people[0]
             elif len(people) > 1:
                 self.add_error('Ambiguity in submitted people.')
         elif person := [p for p in self.people if
-                      p.union_iperson is not None and p.union_iperson.iperson_id == person_id]:
+                        p.union_iperson is not None and p.union_iperson.iperson_id == person_id]:
             return person[0]
         elif person := [p for p in self.people if p.iperson_id == person_id]:
             return person[0]
 
-    def get_location(self, location_id: str, location_name: str=None) -> CofkCollectLocation:
-        if location_id == '':
-            locations = [l for l in self.locations if l.location_name == location_name]
+    def get_location(self, location_id: str, location_name: str = None) -> CofkCollectLocation:
+        if location_id is None or location_id == '':
+            locations = [l for l in self.locations if l.location_name and l.location_name.lower() == location_name.lower()]
 
             if len(locations) == 1:
                 return locations[0]
             elif len(locations) > 1:
                 self.add_error('Ambiguity in submitted locations.')
         elif location := [l for l in self.locations if
-                        l.union_location is not None and l.union_location.location_id == int(location_id)]:
+                          l.union_location is not None and l.union_location.location_id == int(location_id)]:
             return location[0]
         elif location := [l for l in self.locations if l.location_id == int(location_id)]:
             return location[0]
 
     def process_people(self, work: CofkCollectWork, people_list: List[Any], people_model: Type[models.Model],
                        work_dict: dict, ids: str, names: str, id_type: str):
-        id_list, name_list = self.clean_lists(work_dict, ids, names)
+        for pers_dict in self.clean_lists(work_dict, ids, names):
+            _id = pers_dict[ids]
+            name = pers_dict[names]
 
-        for _id, name in zip(id_list, name_list):
             if person := self.get_person(_id, name):
                 related_person = people_model(upload=self.upload, iwork=work, iperson=person)
                 setattr(related_person, id_type, self.get_new_id(id_type))
                 people_list.append(related_person)
-
             else:
                 # Person not present in people sheet
-                if _id != '':
+                if _id is None:
                     self.add_error(f'Person with the id {_id} was listed in the {self.sheet.name} sheet but is'
                                    f' not present in the People sheet.')
                 else:
-                    self.add_error(f'A new person with the name "{name}" was listed in the {self.sheet.name} sheet'
+                    self.add_error(f'A person with the name "{name}" was listed in the {self.sheet.name} sheet'
                                    f' but is not present in the People sheet.')
 
     def process_locations(self, work: CofkCollectWork, location_list: List[Any], location_model: Type[models.Model],
                           work_dict: dict, ids: str, names: str, id_type: str):
-        id_list, name_list = self.clean_lists(work_dict, ids, names)
-
-        for _id, name in zip(id_list, name_list):
+        for work_dict in self.clean_lists(work_dict, ids, names):
+            _id = work_dict[ids]
+            name = work_dict[names]
             if location := self.get_location(_id, name):
                 related_location = location_model(upload=self.upload, iwork=work, location=location)
                 setattr(related_location, id_type, self.get_new_id(id_type))
                 location_list.append(related_location)
             else:
                 # Location not present in places sheet
-                if _id != '':
+                if _id is not None:
                     self.add_error(f'Location with the id {_id} was listed in the {self.sheet.name} sheet but is'
                                    f' not present in the Places sheet.')
                 else:
@@ -188,22 +189,9 @@ class CofkWork(CofkEntity):
             else:
                 self.add_error(f'The value in column "language_id", "{language}" is not a valid ISO639 language.')
 
-    def process_subjects(self, work_dict: dict, work: CofkCollectWork):
-        work_subjects = work_dict['keywords'].split(',')
-
-        for subject in [s.strip() for s in work_subjects]:
-            union_subject = CofkUnionSubject.objects.filter(subject_desc__iexact=subject).first()
-
-            if union_subject:
-                self.subjects.append(CofkCollectSubjectOfWork(upload=self.upload, iwork=work,
-                                                              subject_of_work_id=self.get_new_id('subject_of_work_id'),
-                                                              subject=union_subject))
-            else:
-                self.add_error(f'The value in column "keywords", "{subject}" is not a valid subject.')
-
     def create_all(self):
         self.bulk_create(self.works)
-        self.log_summary =  [f'{len(self.works)} {type(self.works[0]).__name__}']
+        self.log_summary = [f'{len(self.works)} {type(self.works[0]).__name__}']
 
         for entities in [self.authors, self.mentioned, self.addressees, self.origins, self.destinations,
                          self.resources, self.languages, self.subjects]:
