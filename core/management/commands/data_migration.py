@@ -18,6 +18,7 @@ from django.db.models.fields.related_descriptors import ForwardManyToOneDescript
 from psycopg2.extras import DictCursor
 
 from audit.models import CofkUnionAuditLiteral, CofkUnionAuditRelationship
+from cllib import iter_utils
 from core import constant
 from core.helper import model_serv, recref_serv, perm_serv
 from core.helper.model_serv import ModelLike
@@ -30,7 +31,6 @@ from login.models import CofkUser
 from manifestation.models import CofkUnionManifestation, CofkUnionLanguageOfManifestation, CofkManifManifMap
 from person.models import CofkUnionPerson, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID, CofkPersonPersonMap
 from publication.models import CofkUnionPublication
-from sharedlib import iter_utils
 from uploader.models import CofkCollectStatus, CofkCollectUpload, CofkCollectInstitution, CofkCollectLocation, \
     CofkCollectLocationResource, CofkCollectPerson, CofkCollectOccupationOfPerson, CofkCollectPersonResource, \
     CofkCollectInstitutionResource, CofkCollectWork, CofkCollectAddresseeOfWork, CofkCollectLanguageOfWork, \
@@ -557,9 +557,9 @@ def _val_handler_collect_manifestation(row: dict, conn) -> dict:
 
 def _val_handler_manif__work_id(row: dict, conn):
     sql = 'select right_id_value from cofk_union_relationship ' \
-          f" where left_table_name = 'cofk_union_manifestation' " \
-          f" and right_table_name = 'cofk_union_work' " \
-          f" and left_id_value = %s "
+          " where left_table_name = 'cofk_union_manifestation' " \
+          " and right_table_name = 'cofk_union_work' " \
+          " and left_id_value = %s "
     vals = [row['manifestation_id']]
     results = list(iter_records(conn, sql, vals=vals))
     if len(results) == 1:

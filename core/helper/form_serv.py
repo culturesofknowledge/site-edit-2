@@ -7,11 +7,11 @@ from django.db.models import TextChoices, Choices, Model
 from django.forms import BoundField, CharField, Form, formset_factory
 from django.template.loader import render_to_string
 
+from cllib import data_utils
 from core.helper import widgets_serv, recref_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.models import Recref
 from person import person_serv
-from sharedlib import data_utils
 from work.recref_adapter import WorkLocRecrefAdapter, ManifInstRecrefAdapter
 
 log = logging.getLogger(__name__)
@@ -76,7 +76,7 @@ def clean_by_default_value(cleaned_data: dict, field_names: Iterable[str],
 
 
 class ZeroOneCheckboxField(forms.BooleanField):
-    def __init__(self, is_str=True, *args, **kwargs):
+    def __init__(self, *args, is_str=True, **kwargs):
         default_kwargs = dict(
             widget=widgets_serv.create_common_checkbox(),
             initial='0',
@@ -97,21 +97,21 @@ class ZeroOneCheckboxField(forms.BooleanField):
 
 
 class DeleteCheckboxField(ZeroOneCheckboxField):
-    def __init__(self, is_str=False, required=False, *args, **kwargs):
-        super().__init__(is_str, *args, required=required, **kwargs)
+    def __init__(self, *args, is_str=False, required=False, **kwargs):
+        super().__init__(*args, is_str=is_str, required=required, **kwargs)
         self.widget.attrs.update({'class': 'warn-checked'})
 
 
 class SearchCharField(forms.CharField):
 
-    def __init__(self, required=False, *args, **kwargs):
+    def __init__(self, *args, required=False, **kwargs):
         super().__init__(*args, required=required, **kwargs)
         self.widget.attrs.update({'class': 'searchfield'})
 
 
 class SearchIntField(forms.IntegerField):
 
-    def __init__(self, required=False, *args, **kwargs):
+    def __init__(self, *args, required=False, **kwargs):
         super().__init__(*args, required=required, **kwargs)
         self.widget.attrs.update({'class': 'searchfield'})
 
@@ -259,7 +259,7 @@ class SubRecrefForm(forms.Form):
 class MultiRelRecrefForm(forms.Form):
     """
     this a class is form for handle multi relationship choices for one target.
-    it has multable choices (checkboxes) for relationship_type
+    it has multiple choices (checkboxes) for relationship_type
     """
     template_name = 'core/component/multi_rel_recref_form.html'
     no_date = True

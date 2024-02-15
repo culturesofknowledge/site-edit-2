@@ -6,7 +6,7 @@ from typing import Iterable, Any, Type
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import F, Q, Model
-from django.db.models.lookups import Exact
+from django.db.models.lookups import Exact, Lookup
 from django.forms import BaseForm
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
@@ -30,6 +30,7 @@ from core.helper.query_serv import create_recref_lookup_fn
 from core.helper.recref_handler import SingleRecrefHandler, RecrefFormsetHandler, SubjectHandler, ImageRecrefHandler, \
     TargetResourceFormsetHandler, MultiRecrefAdapterHandler
 from core.helper.recref_serv import create_recref_if_field_exist
+from core.helper.renderer_serv import RendererFactory
 from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_serv import DefaultSearchView
@@ -46,15 +47,15 @@ from person.models import CofkUnionPerson
 from work import work_serv, subqueries
 from work.forms import WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \
-    ManifPersonRecrefAdapter, ScribeRelationChoices, \
-    DetailsForm, WorkPersonRecrefAdapter, \
-    CommonWorkForm, manif_type_choices, CompactSearchFieldset, ExpandedSearchFieldset, \
+    ScribeRelationChoices, \
+    DetailsForm, CommonWorkForm, manif_type_choices, CompactSearchFieldset, ExpandedSearchFieldset, \
     ManifPersonMRRForm
 from work.models import CofkWorkPersonMap, CofkUnionWork, CofkWorkCommentMap, CofkWorkResourceMap, \
     CofkUnionLanguageOfWork
 from work.recref_adapter import WorkLocRecrefAdapter, ManifInstRecrefAdapter, WorkSubjectRecrefAdapter, \
     EarlierLetterRecrefAdapter, LaterLetterRecrefAdapter, EnclosureManifRecrefAdapter, EnclosedManifRecrefAdapter, \
-    WorkCommentRecrefAdapter, ManifCommentRecrefAdapter, WorkResourceRecrefAdapter, ManifImageRecrefAdapter
+    WorkCommentRecrefAdapter, ManifCommentRecrefAdapter, WorkResourceRecrefAdapter, ManifImageRecrefAdapter, \
+    WorkPersonRecrefAdapter, ManifPersonRecrefAdapter
 from work.view_components import WorkFormDescriptor
 from work.work_serv import DisplayableWork
 
@@ -114,7 +115,7 @@ def create_search_fn_location_recref(rel_types: list) -> Callable:
 
 
 class BasicWorkFFH(FullFormHandler):
-    def __init__(self, pk, template_name, request_data=None, request=None, *args, **kwargs):
+    def __init__(self, pk, template_name, *args, request_data=None, request=None, **kwargs):
         self.request_iwork_id = None
         super().__init__(pk, *args,
                          request_data=request_data or None,
@@ -182,8 +183,9 @@ class BasicWorkFFH(FullFormHandler):
 
 
 class PlacesFFH(BasicWorkFFH):
-    def __init__(self, pk, request_data=None, request=None, *args, **kwargs):
-        super().__init__(pk, 'work/places_form.html', *args, request_data=request_data, request=request, **kwargs)
+    def __init__(self, pk, *args, request_data=None, request=None, **kwargs):
+        super().__init__(pk, 'work/places_form.html', *args,
+                         request_data=request_data, request=request, **kwargs)
 
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
         super().load_data(pk, request_data=request_data, request=request)
@@ -246,7 +248,7 @@ class PlacesFFH(BasicWorkFFH):
 
 
 class DatesFFH(BasicWorkFFH):
-    def __init__(self, pk, request_data=None, request=None, *args, **kwargs):
+    def __init__(self, pk, *args, request_data=None, request=None, **kwargs):
         super().__init__(pk, 'work/dates_form.html', *args, request_data=request_data, request=request, **kwargs)
 
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
@@ -274,7 +276,7 @@ class DatesFFH(BasicWorkFFH):
 
 class CorrFFH(BasicWorkFFH):
 
-    def __init__(self, pk, request_data=None, request=None, *args, **kwargs):
+    def __init__(self, pk, *args, request_data=None, request=None, **kwargs):
         super().__init__(pk, 'work/corr_form.html', *args, request_data=request_data, request=request, **kwargs)
 
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
@@ -362,11 +364,6 @@ class CorrFFH(BasicWorkFFH):
 
 
 class ManifFFH(BasicWorkFFH):
-    def __init__(self, iwork_id, template_name, manif_id=None,
-                 request_data=None, request=None, *args, **kwargs):
-        super().__init__(iwork_id, template_name, *args,
-                         manif_id=manif_id, request_data=request_data, request=request, **kwargs)
-
     def load_data(self, iwork_id, *args,
                   manif_id=None, request_data=None, request=None, **kwargs):
         super().load_data(iwork_id, request_data=request_data, request=request)
@@ -523,7 +520,7 @@ class ManifFFH(BasicWorkFFH):
 
 
 class ResourcesFFH(BasicWorkFFH):
-    def __init__(self, pk, request_data=None, request=None, *args, **kwargs):
+    def __init__(self, pk, *args, request_data=None, request=None, **kwargs):
         super().__init__(pk, 'work/resources_form.html', *args, request_data=request_data, request=request, **kwargs)
 
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
@@ -543,7 +540,7 @@ class ResourcesFFH(BasicWorkFFH):
 
 
 class DetailsFFH(BasicWorkFFH):
-    def __init__(self, pk, request_data=None, request=None, *args, **kwargs):
+    def __init__(self, pk, *args, request_data=None, request=None, **kwargs):
         super().__init__(pk, 'work/details_form.html', *args, request_data=request_data, request=request, **kwargs)
 
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
@@ -603,7 +600,7 @@ class DetailsFFH(BasicWorkFFH):
         return context
 
     def has_changed(self, request):
-        return (super(DetailsFFH, self).is_any_changed()
+        return (super().is_any_changed()
                 or self.subject_handler.has_changed(request)
                 or request.POST.getlist('lang_name'))
 
@@ -661,7 +658,7 @@ def create_work_person_map_if_field_exist(form: BaseForm, work, username,
 class BasicWorkFormView(LoginRequiredMixin, View):
 
     @staticmethod
-    def create_fhandler(request, iwork_id=None, *args, **kwargs):
+    def create_fhandler(request, *args, iwork_id=None, **kwargs):
         raise NotImplementedError()
 
     @property
@@ -686,16 +683,16 @@ class BasicWorkFormView(LoginRequiredMixin, View):
         return redirect(url)
 
     @class_permission_required(constant.PM_CHANGE_WORK)
-    def post(self, request, iwork_id=None, *args, **kwargs):
-        fhandler = self.create_fhandler(request, iwork_id=iwork_id, *args, **kwargs)
+    def post(self, request, iwork_id=None, **kwargs):
+        fhandler = self.create_fhandler(request, iwork_id=iwork_id, **kwargs)
         if fhandler.is_invalid():
             return fhandler.render_form(request)
         fhandler.prepare_cleaned_data()
         fhandler.save(request)
         return self.resp_after_saved(request, fhandler)
 
-    def get(self, request, iwork_id=None, *args, **kwargs):
-        return self.create_fhandler(request, iwork_id, *args, **kwargs).render_form(
+    def get(self, request, iwork_id=None, **kwargs):
+        return self.create_fhandler(request, iwork_id=iwork_id, **kwargs).render_form(
             request, is_save_success=view_serv.mark_callback_save_success(request))
 
 
@@ -705,7 +702,7 @@ class ManifView(BasicWorkFormView):
         return 'work:manif_init'
 
     @staticmethod
-    def create_fhandler(request, iwork_id=None, *args, **kwargs):
+    def create_fhandler(request, *args, iwork_id=None, **kwargs):
         return ManifFFH(iwork_id, template_name='work/manif_base.html',
                         request_data=request.POST or None,
                         request=request, *args, **kwargs)
@@ -724,7 +721,7 @@ class ManifView(BasicWorkFormView):
 class CorrView(BasicWorkFormView):
 
     @staticmethod
-    def create_fhandler(request, iwork_id=None, *args, **kwargs):
+    def create_fhandler(request, *args, iwork_id=None, **kwargs):
         return CorrFFH(iwork_id, request_data=request.POST, request=request)
 
     @property
@@ -734,7 +731,7 @@ class CorrView(BasicWorkFormView):
 
 class DatesView(BasicWorkFormView):
     @staticmethod
-    def create_fhandler(request, iwork_id=None, *args, **kwargs):
+    def create_fhandler(request, *args, iwork_id=None, **kwargs):
         return DatesFFH(iwork_id, request_data=request.POST, request=request)
 
     @property
@@ -744,7 +741,7 @@ class DatesView(BasicWorkFormView):
 
 class PlacesView(BasicWorkFormView):
     @staticmethod
-    def create_fhandler(request, iwork_id=None, *args, **kwargs):
+    def create_fhandler(request, *args, iwork_id=None, **kwargs):
         return PlacesFFH(iwork_id, request_data=request.POST, request=request)
 
     @property
@@ -754,7 +751,7 @@ class PlacesView(BasicWorkFormView):
 
 class ResourcesView(BasicWorkFormView):
     @staticmethod
-    def create_fhandler(request, iwork_id=None, *args, **kwargs):
+    def create_fhandler(request, *args, iwork_id=None, **kwargs):
         return ResourcesFFH(iwork_id, request_data=request.POST, request=request)
 
     @property
@@ -765,7 +762,7 @@ class ResourcesView(BasicWorkFormView):
 class DetailsView(BasicWorkFormView):
 
     @staticmethod
-    def create_fhandler(request, iwork_id=None, *args, **kwargs):
+    def create_fhandler(request, *args, iwork_id=None, **kwargs):
         return DetailsFFH(iwork_id, request_data=request.POST, request=request)
 
     @property
@@ -968,7 +965,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         return 'asc'
 
     @property
-    def search_field_fn_maps(self) -> dict:
+    def search_field_fn_maps(self) -> dict[str, Lookup]:
         return {
             'work_to_be_deleted': lambda f, v: Exact(F(f), '0' if v == 'On' else '1'),
             'person_sent_pk': create_search_fn_person_recref(AuthorRelationChoices.values),
@@ -993,7 +990,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
 
     def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:
-        queries = query_serv.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
+        queries = query_serv.create_queries_by_field_fn_maps(request_data, self.search_field_fn_maps)
 
         search_fields_maps = {
             'language_of_work': [
@@ -1033,7 +1030,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
             if work_to_be_deleted:
                 if work_to_be_deleted == 'on':
-                    simplified_query.append(f'Is to be deleted.')
+                    simplified_query.append('Is to be deleted.')
 
             _from = self.request_data['date_of_work_std_from'] if 'date_of_work_std_from' in self.request_data else None
             _to = self.request_data['date_of_work_std_to'] if 'date_of_work_std_to' in self.request_data else None
@@ -1048,11 +1045,11 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         return simplified_query
 
     @property
-    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+    def table_search_results_renderer_factory(self) -> RendererFactory:
         return renderer_serv.create_table_search_results_renderer('work/expanded_search_table_layout.html')
 
     @property
-    def compact_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+    def compact_search_results_renderer_factory(self) -> RendererFactory:
         # Compact search results for works are also table formatted
         return renderer_serv.create_table_search_results_renderer('work/compact_search_table_layout.html')
 
@@ -1089,6 +1086,10 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                 lambda: excel_maker.create_work_excel,
                 constant.PM_EXPORT_FILE_WORK,
                 )
+
+    @property
+    def app_name(self) -> str:
+        return 'work'
 
 
 class WorkCommentFormsetHandler(RecrefFormsetHandler):

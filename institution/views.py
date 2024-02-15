@@ -1,9 +1,10 @@
 import logging
 from abc import ABC
-from typing import Callable, Iterable, Type, TYPE_CHECKING, List
+from typing import Callable, Iterable, Type, TYPE_CHECKING
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.db.models import Lookup
 from django.forms import ModelForm
 from django.shortcuts import render, redirect, get_object_or_404
 
@@ -13,7 +14,7 @@ from core.helper import renderer_serv, query_serv, view_serv, perm_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.model_serv import ModelLike
 from core.helper.recref_handler import ImageRecrefHandler, TargetResourceFormsetHandler
-from core.helper.renderer_serv import CompactSearchResultsRenderer
+from core.helper.renderer_serv import RendererFactory
 from core.helper.view_components import HeaderValues, DownloadCsvHandler
 from core.helper.view_serv import CommonInitFormViewTemplate, DefaultSearchView, MergeChoiceViews, MergeActionViews, \
     MergeConfirmViews
@@ -33,8 +34,10 @@ log = logging.getLogger(__name__)
 class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
 
     @property
-    def search_field_fn_maps(self) -> dict:
-        return query_serv.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to', 'change_timestamp')
+    def search_field_fn_maps(self) -> dict[str, Lookup]:
+        return query_serv.create_from_to_datetime('change_timestamp_from',
+                                                  'change_timestamp_to',
+                                                  'change_timestamp')
 
     @property
     def entity(self) -> str:
@@ -58,7 +61,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
         ]
 
     @property
-    def search_field_combines(self) -> dict[str: List[str]]:
+    def search_field_combines(self) -> dict[str: list[str]]:
         return {
             'institution_name': ['institution_name', 'institution_synonyms'],
             'institution_city': ['institution_city', 'institution_city_synonyms'],
@@ -87,7 +90,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
 
     def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:
         # queries for like_fields
-        queries = query_serv.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
+        queries = query_serv.create_queries_by_field_fn_maps(request_data, self.search_field_fn_maps)
 
         queries.extend(
             query_serv.create_queries_by_lookup_field(request_data, self.search_fields, self.search_field_combines)
@@ -95,11 +98,11 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
         return self.create_queryset_by_queries(CofkUnionInstitution, queries, sort_by=sort_by).distinct()
 
     @property
-    def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
+    def compact_search_results_renderer_factory(self) -> RendererFactory:
         return renderer_serv.create_compact_renderer(item_template_name='institution/compact_item.html')
 
     @property
-    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+    def table_search_results_renderer_factory(self) -> RendererFactory:
         return renderer_serv.create_table_search_results_renderer('institution/search_table_layout.html')
 
     @property

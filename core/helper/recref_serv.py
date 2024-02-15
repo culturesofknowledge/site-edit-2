@@ -8,12 +8,12 @@ from django.db.models import Model, Q
 from django.db.models.fields.related_descriptors import ForwardManyToOneDescriptor
 from django.forms import BaseForm
 
+from cllib import inspect_utils
+from cllib_django import django_utils
 from core.helper import model_serv, query_cache_serv
 from core.helper.model_serv import ModelLike
 from core.models import Recref, CofkUnionRelationshipType
 from core.recref_settings import recref_left_right_list
-from sharedlib import inspect_utils
-from sharedlib.djangolib import django_utils
 
 log = logging.getLogger(__name__)
 
@@ -182,9 +182,9 @@ def find_recref_list_by_bounded_data(bounded_data, parent_model) -> Iterable['Re
 
 def create_q_rel_type(rel_type: str | Iterable, prefix=None) -> Q:
     if isinstance(rel_type, str):
-        name = f'relationship_type'
+        name = 'relationship_type'
     else:
-        name = f'relationship_type__in'
+        name = 'relationship_type__in'
         rel_type = set(rel_type)
 
     if prefix:
@@ -217,22 +217,22 @@ def find_relationship_type(relationship_code: str) -> CofkUnionRelationshipType 
     return None
 
 
-def get_left_right_rel_obj(recref: Recref):
+def get_left_right_rel_obj(recref: Recref)-> tuple[Model, Model]:
     bounded_members = set(get_bounded_members(recref.__class__)[:2])
     bounded_member_classes = {f.field.related_model.__name__ for f in bounded_members}
-    _left_right_class = ((l, r) for rel_type, l, r in recref_left_right_list
+    left_right_class_names = ((l, r) for rel_type, l, r in recref_left_right_list
                          if recref.relationship_type == rel_type)
-    _left_right_class = (_ for _ in _left_right_class if set(_) == bounded_member_classes)
-    _left_right_class = next(_left_right_class, None)
+    left_right_class_names = (_ for _ in left_right_class_names if set(_) == bounded_member_classes)
+    left_right_class_names: tuple[str, str] = next(left_right_class_names, None)
 
     # define left_col, right_col
-    if _left_right_class is None:
+    if left_right_class_names is None:
         log.warning(f'left, right column not found, {recref}')
         left_col, right_col = bounded_members
     else:
         col_a, col_b = bounded_members
-        left_class, right_class = _left_right_class
-        if col_a.field.related_model == left_class:
+        left_class_name, _ = left_right_class_names
+        if col_a.field.related_model.__name__ == left_class_name:
             left_col, right_col = col_a, col_b
         else:
             left_col, right_col = col_b, col_a
@@ -245,7 +245,7 @@ def get_left_right_rel_obj(recref: Recref):
 def get_recref_rel_desc(recref: Recref,
                         left_model: 'ModelLike' | Type['ModelLike'],
                         default_raw_value=False) -> str:
-    left_rel_obj, right_rel_obj = get_left_right_rel_obj(recref)
+    left_rel_obj, _ = get_left_right_rel_obj(recref)
     if isinstance(left_model, Model):
         is_left = left_rel_obj == left_model
     else:

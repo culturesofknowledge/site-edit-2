@@ -12,7 +12,7 @@ from urllib.parse import urljoin
 from django import template
 from django.conf import settings
 from django.db import models
-from django.db.models import Q, ForeignKey, QuerySet
+from django.db.models import Q, ForeignKey, QuerySet, Lookup
 from django.db.models.query_utils import DeferredAttribute
 from django.forms import ModelForm
 from django.http import HttpResponseNotFound
@@ -22,19 +22,19 @@ from django.views import View
 from django.views.generic import ListView
 
 import core.constant as core_constant
+from cllib import inspect_utils, str_utils
+from cllib_django import django_utils, email_utils, query_utils
 from core import constant
 from core.form_label_maps import field_label_map
 from core.helper import general_model_serv, recref_serv, model_serv, \
     url_serv, date_serv, perm_serv, media_serv, query_serv
 from core.helper.form_serv import build_search_components
 from core.helper.model_serv import ModelLike, RecordTracker
-from core.helper.renderer_serv import CompactSearchResultsRenderer, DemoCompactSearchResultsRenderer, \
-    demo_table_search_results_renderer
+from core.helper.renderer_serv import DemoCompactSearchResultsRenderer, \
+    demo_table_search_results_renderer, RendererFactory
 from core.helper.url_serv import VNAME_FULL_FORM, VNAME_SEARCH
 from core.helper.view_components import DownloadCsvHandler
 from core.models import CofkUnionResource, CofkUnionComment, CofkUserSavedQuery, CofkUserSavedQuerySelection
-from sharedlib import inspect_utils, str_utils
-from sharedlib.djangolib import django_utils, email_utils, query_utils
 from work.models import CofkUnionWork
 
 if TYPE_CHECKING:
@@ -96,7 +96,7 @@ class BasicSearchView(ListView):
         return [f for f in self.search_field_label_map.keys() if f not in exclude]
 
     @property
-    def search_field_fn_maps(self) -> dict:
+    def search_field_fn_maps(self) -> dict[str, Lookup]:
         """
         A dictionary mapping between form field names where there is more than one field to search against
         simultaneously, such as with ranges.
@@ -106,7 +106,7 @@ class BasicSearchView(ListView):
         raise NotImplementedError()
 
     @property
-    def search_field_combines(self) -> dict[str: List[str]]:
+    def search_field_combines(self) -> dict[str: list[str]]:
         """
         A dictionary mapping between search multiple fields under one form field.
         """
@@ -169,8 +169,11 @@ class BasicSearchView(ListView):
 
     @property
     def app_name(self) -> str:
-        return self.request.resolver_match.app_name
+        if (resolver_match := self.request.resolver_match) is None:
+            return ''
+        return resolver_match.app_name
 
+    @property
     def expanded_query_fieldset_list(self) -> Iterable:
         """
         return iterable form for expanded view that can render search fieldset for searching
@@ -202,13 +205,13 @@ class BasicSearchView(ListView):
         return 'asc'
 
     @property
-    def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
-        """ factory of Compact layout """
+    def compact_search_results_renderer_factory(self) -> RendererFactory:
+        """ factory of renderer (Callable) than callable can create Compact layout """
         raise NotImplementedError('missing compact_search_results_renderer_factory')
 
     @property
-    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
-        """ factory of Table layout """
+    def table_search_results_renderer_factory(self) -> RendererFactory:
+        """ factory of renderer (Callable) than callable can create Table layout """
         raise NotImplementedError('missing table_search_results_renderer_factory')
 
     @property
@@ -302,9 +305,9 @@ class BasicSearchView(ListView):
         }
         is_compact_layout = (self.request_data.get('display-style', core_constant.SEARCH_LAYOUT_TABLE)
                              == core_constant.SEARCH_LAYOUT_GRID)
-        results_renderer = (self.compact_search_results_renderer_factory
-                            if is_compact_layout
-                            else self.table_search_results_renderer_factory)
+        results_renderer_factory: RendererFactory = (self.compact_search_results_renderer_factory
+                                                     if is_compact_layout
+                                                     else self.table_search_results_renderer_factory)
 
         query_fieldset_list = self.query_fieldset_list if is_compact_layout else self.expanded_query_fieldset_list
 
@@ -313,7 +316,7 @@ class BasicSearchView(ListView):
                                                                        self.request_data.dict()),
                         'entity': self.entity or '',
                         'title': self.entity.split(',')[1].title() if self.entity else 'Title',
-                        'results_renderer': results_renderer(self.get_search_results_context(context)),
+                        'results_renderer': results_renderer_factory(self.get_search_results_context(context)),
                         'is_compact_layout': is_compact_layout,
                         'to_user_messages': getattr(self, 'to_user_messages', []),
                         'simplified_query': self.simplified_query,
@@ -436,14 +439,14 @@ class BasicSearchView(ListView):
 class DefaultSearchView(BasicSearchView):
 
     @property
-    def search_field_fn_maps(self) -> dict:
+    def search_field_fn_maps(self) -> dict[str, Lookup]:
         """
         return
         """
         return {}
 
     @property
-    def search_field_combines(self) -> dict[str: List[str]]:
+    def search_field_combines(self) -> dict[str: list[str]]:
         return {}
 
     @property
@@ -465,11 +468,11 @@ class DefaultSearchView(BasicSearchView):
         return 'desc'
 
     @property
-    def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
+    def compact_search_results_renderer_factory(self) -> RendererFactory:
         return DemoCompactSearchResultsRenderer
 
     @property
-    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+    def table_search_results_renderer_factory(self) -> RendererFactory:
         return demo_table_search_results_renderer
 
     def get_queryset(self):
@@ -503,7 +506,7 @@ class CommonInitFormViewTemplate(View):
     def post(self, request, *args, **kwargs):
         form = self.form_factory(request.POST or None)
         if form.is_valid() and form.has_changed():
-            log.info(f'form have been changed')
+            log.info('form have been changed')
             new_instance = self.on_form_changed(request, form)
             return self.resp_after_saved(request, form, new_instance)
         else:
@@ -736,7 +739,7 @@ class MergeActionViews(View):
         recref_list: Iterable[Recref] = find_all_recref_by_models(other_models)
         recref_list = list(recref_list)
         for recref in recref_list:
-            parent_field, related_field = recref_serv.get_parent_related_field_by_recref(recref, selected_model)
+            parent_field, _ = recref_serv.get_parent_related_field_by_recref(recref, selected_model)
 
             # update related_field on recref
             related_field_name = parent_field.field.name

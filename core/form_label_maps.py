@@ -45,6 +45,8 @@ field_label_map = {
         'mentioned': 'Mentioned',
         'roles': 'Professional roles',
         'further_reading': 'Further reading',
+
+        # TODO seem like fields not belong to person
         'element_1_eg_room': '1. E.g. room',
         'element_2_eg_building': '2. E.g. building',
         'element_3_eg_parish': '3. E.g. parish',
@@ -52,6 +54,7 @@ field_label_map = {
         'element_5_eg_county': '5. E.g. county',
         'element_6_eg_country': '6. E.g. country',
         'element_7_eg_empire': '7. E.g. empire',
+
         'images': 'Images',
         'iperson_id': 'Person or Group ID',
         'other_details': 'Other details',

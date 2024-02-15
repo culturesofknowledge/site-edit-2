@@ -1,7 +1,7 @@
 from django.db.models import OuterRef, Case, When, Value
 
+from cllib_django import query_utils
 from core.models import CofkLookupDocumentType
-from sharedlib.djangolib import query_utils
 from work.models import CofkUnionWork
 
 

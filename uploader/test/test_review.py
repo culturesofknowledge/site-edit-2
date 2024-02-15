@@ -35,11 +35,11 @@ class TestReview(UploadIncludedFactoryTestCase):
 
         match = re.search(upload_status, str(response.content))
 
-        self.assertEquals(cuef.errors, {})
-        self.assertEquals(match.group('status'), 'Awaiting review')
-        self.assertEquals(match.group('works'), '1')
-        self.assertEquals(match.group('accepted'), '0')
-        self.assertEquals(match.group('rejected'), '0')
+        self.assertEqual(cuef.errors, {})
+        self.assertEqual(match.group('status'), 'Awaiting review')
+        self.assertEqual(match.group('works'), '1')
+        self.assertEqual(match.group('accepted'), '0')
+        self.assertEqual(match.group('rejected'), '0')
 
     def test_accept_upload(self):
         filename = self.create_excel_file(spreadsheet_data)
@@ -54,13 +54,13 @@ class TestReview(UploadIncludedFactoryTestCase):
 
         match = re.search(upload_status, str(response.content))
 
-        self.assertEquals(cuef.errors, {})
-        self.assertEquals(match.group('status'), 'Review complete')
-        self.assertEquals(match.group('works'), '1')
-        self.assertEquals(match.group('accepted'), '1')
-        self.assertEquals(match.group('rejected'), '0')
+        self.assertEqual(cuef.errors, {})
+        self.assertEqual(match.group('status'), 'Review complete')
+        self.assertEqual(match.group('works'), '1')
+        self.assertEqual(match.group('accepted'), '1')
+        self.assertEqual(match.group('rejected'), '0')
 
-        self.assertEquals(next(CofkUnionWork.objects.all()[0].find_persons_by_rel_type(REL_TYPE_CREATED)).foaf_name,
+        self.assertEqual(next(CofkUnionWork.objects.all()[0].find_persons_by_rel_type(REL_TYPE_CREATED)).foaf_name,
                           'Newton')
 
     def test_reject_upload(self):
@@ -76,8 +76,8 @@ class TestReview(UploadIncludedFactoryTestCase):
 
         match = re.search(upload_status, str(response.content))
 
-        self.assertEquals(cuef.errors, {})
-        self.assertEquals(match.group('status'), 'Review complete')
-        self.assertEquals(match.group('works'), '1')
-        self.assertEquals(match.group('accepted'), '0')
-        self.assertEquals(match.group('rejected'), '1')
+        self.assertEqual(cuef.errors, {})
+        self.assertEqual(match.group('status'), 'Review complete')
+        self.assertEqual(match.group('works'), '1')
+        self.assertEqual(match.group('accepted'), '0')
+        self.assertEqual(match.group('rejected'), '1')

@@ -7,15 +7,17 @@ import re
 import time
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Callable
 
 import requests
 from django.core.management import BaseCommand
+from django.db import models
 from django.db.models import Count, Q
 from django.utils.html import strip_tags
 
 import person.subqueries
 import person.views
+from cllib import thread_utils
 from core import constant
 from core.constant import REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE_MENTION
 from core.helper import query_serv, recref_serv, date_serv, query_cache_serv, model_serv, media_serv
@@ -27,7 +29,6 @@ from location.subqueries import create_sql_count_work_by_location
 from manifestation.models import CofkUnionManifestation
 from person import person_serv
 from person.models import CofkUnionPerson
-from sharedlib import thread_utils
 from work import work_serv
 from work.models import CofkUnionWork
 from work.work_serv import DisplayableWork
@@ -39,10 +40,11 @@ cached_catalogue_status = {}
 
 class Command(BaseCommand):
     def add_arguments(self, parser: ArgumentParser):
-        parser.add_argument('-o', '--output_dir', type=str, default='.')
+        parser.add_argument('-o', '--output-dir', type=str, default='.')
+        parser.add_argument('-s', '--skip-url-check', action='store_true', default=False)
 
     def handle(self, *args, **options):
-        export_all(options['output_dir'])
+        export_all(options['output_dir'], skip_url_check=options['skip_url_check'])
 
 
 def to_datetime_str(dt) -> str:
@@ -67,13 +69,6 @@ def _send_request(url, timeout=120):
     except Exception as e:
         log.debug(f'{type(e)} -- {str(e)}')
     return url, is_alive
-
-
-def check_urls(urls: Iterable[str], n_thread=100) -> dict[str, bool]:
-    results = {}
-    for i, (url, is_alive) in enumerate(thread_utils.yield_run_fn_results(_send_request, zip(urls), n_thread=n_thread)):
-        results[url] = is_alive
-    return results
 
 
 def get_values_by_names(obj, names: list[str]) -> Iterable:
@@ -132,8 +127,9 @@ class CommentFrontendCsv(HeaderValues):
 
 
 class ImageFrontendCsv(HeaderValues):
-    def __init__(self, objects_factory):
-        self.cache_urls_alive = load_cache_urls_alive((r.image_filename for r in objects_factory()))
+    def __init__(self, objects_factory, skip_url_check=False):
+        self.url_alive_checker = UrlAliveChecker(is_mock=skip_url_check)
+        self.url_alive_checker.cache_all((r.image_filename for r in objects_factory()))
 
     def get_header_list(self) -> list[str]:
         return [
@@ -170,7 +166,7 @@ class ImageFrontendCsv(HeaderValues):
     def _is_published(self, obj):
         check_list = [
             ('work', lambda: is_published_by_filter_work(obj, 'cofkmanifimagemap__manif__work')),
-            ('url', lambda: is_url_for_published(obj.image_filename, self.cache_urls_alive)),
+            ('url', lambda: is_url_for_published(obj.image_filename, self.url_alive_checker)),
         ]
         for name, fn in check_list:
             if not fn():
@@ -447,26 +443,58 @@ def is_http_url(url: str) -> bool:
     return isinstance(url, str) and url.startswith('http')
 
 
-def load_cache_urls_alive(urls: Iterable[str]) -> dict[str, bool]:
-    log.info('Loading cache_urls_alive...')
-    urls = filter(None, urls)
-    urls = (u for u in urls if is_http_url(u))
-    urls = set(urls)
-    cache_urls_alive = check_urls(urls)
-    return cache_urls_alive
+class UrlAliveChecker:
+
+    def __init__(self, is_mock: bool = False, n_thread=100):
+        """
+        Parameters
+        ----------
+        is_mock
+            will not send request if is_mock is True, and return True for all urls
+        """
+
+        self.is_mock = is_mock
+        self.n_thread = n_thread
+        self.cache_urls_alive = {}
+
+    def cache_all(self, urls: Iterable[str]):
+        if self.is_mock:
+            return self
+
+        log.info('Loading cache_urls_alive...')
+        urls = filter(None, urls)
+        urls = (u for u in urls if is_http_url(u))
+        urls = set(urls)
+        self.cache_urls_alive = self._check_urls(urls, self.n_thread)
+
+        return self
+
+    @staticmethod
+    def _check_urls(urls: Iterable[str], n_thread=100) -> dict[str, bool]:
+        results = {}
+        for _, (url, is_alive) in enumerate(
+                thread_utils.yield_run_fn_results(_send_request, zip(urls), n_thread=n_thread)):
+            results[url] = is_alive
+        return results
+
+    def is_alive(self, url: str) -> bool:
+        if self.is_mock:
+            return True
+        return self.cache_urls_alive.get(url, False)
 
 
-def is_url_for_published(url: str, cache_urls: dict[str, bool]) -> int:
+def is_url_for_published(url: str, url_alive_checker: UrlAliveChecker) -> int:
     if not url:
         return 1
     if is_http_url(url):
-        return int(cache_urls.get(url, False))
+        return int(url_alive_checker.is_alive(url))
     return media_serv.is_img_exists_by_url(url)
 
 
 class ResourceFrontendCsv(HeaderValues):
-    def __init__(self, objects_factory):
-        self.cache_urls_alive = load_cache_urls_alive((r.resource_url for r in objects_factory()))
+    def __init__(self, objects_factory, skip_url_check=False):
+        self.url_alive_checker = UrlAliveChecker(is_mock=skip_url_check)
+        self.url_alive_checker.cache_all((r.resource_url for r in objects_factory()))
 
     def get_header_list(self) -> list[str]:
         return [
@@ -497,7 +525,7 @@ class ResourceFrontendCsv(HeaderValues):
         return name
 
     def _get_published(self, obj):
-        return is_url_for_published(obj.resource_url, self.cache_urls_alive)
+        return is_url_for_published(obj.resource_url, self.url_alive_checker)
 
 
 class WorkFrontendCsv(HeaderValues):
@@ -658,10 +686,10 @@ def create_location_queryset():
     return queryset
 
 
-def preloaded_csv_settings(objects_factory, target_csv_type_factory, model_class):
+def preloaded_csv_settings(objects_factory, target_csv_type_factory, model_class, skip_url_check=False):
     return (
         objects_factory,
-        lambda: target_csv_type_factory(objects_factory),
+        lambda: target_csv_type_factory(objects_factory, skip_url_check=skip_url_check),
         model_class,
     )
 
@@ -688,7 +716,10 @@ def find_all_recrefs():
         }
 
 
-def export_all(output_dir: str = '.'):
+def export_all(output_dir: str = '.', skip_url_check=False):
+    if skip_url_check:
+        log.warning('skip_url_check is True, will not check if url is alive')
+
     start_time = time.time()
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -701,7 +732,9 @@ def export_all(output_dir: str = '.'):
     settings = [
         preloaded_csv_settings(
             lambda: CofkUnionResource.objects.iterator(),
-            ResourceFrontendCsv, CofkUnionResource),
+            ResourceFrontendCsv, CofkUnionResource,
+            skip_url_check=skip_url_check,
+        ),
         (lambda: CofkUnionComment.objects.iterator(),
          CommentFrontendCsv, CofkUnionComment),
         (lambda: CofkUnionInstitution.objects.iterator(),
@@ -710,7 +743,7 @@ def export_all(output_dir: str = '.'):
          LocationFrontendCsv, CofkUnionLocation),
         (lambda: CofkUnionManifestation.objects.iterator(),
          ManifFrontendCsv, CofkUnionManifestation),
-        (lambda: person.subqueries.create_queryset_by_queries(CofkUnionPerson, ).iterator(),
+        (lambda: person.views.create_queryset_by_queries(CofkUnionPerson, ).iterator(),
          PersonFrontendCsv, CofkUnionPerson),
         (lambda: CofkUnionRelationshipType.objects.iterator(),
          RelTypeFrontendCsv, CofkUnionRelationshipType),
@@ -718,7 +751,9 @@ def export_all(output_dir: str = '.'):
          WorkFrontendCsv, CofkUnionWork),
         preloaded_csv_settings(
             lambda: CofkUnionImage.objects.iterator(),
-            ImageFrontendCsv, CofkUnionImage),
+            ImageFrontendCsv, CofkUnionImage,
+            skip_url_check=skip_url_check,
+        ),
 
         # relationship csv must be last, because it uses data from other csvs
         (find_all_recrefs,
@@ -726,6 +761,10 @@ def export_all(output_dir: str = '.'):
          'cofk_union_relationship'),
     ]
     for objects_factory, target_csv_type_factory, name_item in settings:
+        objects_factory: Callable[[], Iterable]
+        target_csv_type_factory: Callable[[], HeaderValues]
+        name_item: str | models.Model
+
         filename = name_item if isinstance(name_item, str) else name_item._meta.db_table
         csv_path = output_dir / f'{filename}.csv'
         log.info(f'exporting to {csv_path}')

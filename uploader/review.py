@@ -281,7 +281,7 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
     if accepted_works > 1:
         messages.success(request, f'Successfully accepted {accepted_works} works.')
     else:
-        messages.success(request, f'Successfully accepted one work.')
+        messages.success(request, 'Successfully accepted one work.')
 
     log.info(f'{upload}: created ' + ', '.join(log_msg))
 

@@ -1,6 +1,7 @@
 """
 This settings file is used for docker unittest tests.
 """
+# pylint: disable=unused-wildcard-import,wildcard-import
 
 
 from siteedit2.settings.base import *  # noqa

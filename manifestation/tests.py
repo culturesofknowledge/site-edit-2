@@ -1,20 +1,20 @@
 import logging
 
-from django.test import TransactionTestCase, RequestFactory
+from django.test import RequestFactory, TestCase
 
 import manifestation.fixtures
 import manifestation.fixtures
 from core.helper import model_serv
+from core.helper.test_serv import EmloSeleniumTestCase, CommonSearchTests
 from core.test.test_export_header_values import MockResolver
 from manifestation.models import CofkUnionManifestation
 from manifestation.views import ManifSearchView
-from siteedit2.serv.test_serv import EmloSeleniumTestCase, CommonSearchTests
 from work.models import CofkUnionWork
 
 log = logging.getLogger(__name__)
 
 
-class ManifestationTestCase(TransactionTestCase):
+class ManifestationTestCase(TestCase):
 
     def setUp(self) -> None:
         self.factory = RequestFactory()

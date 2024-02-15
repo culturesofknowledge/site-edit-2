@@ -5,15 +5,14 @@ from django.test import TestCase
 from selenium.webdriver.common.by import By
 
 import location.fixtures
-from core.helper import model_serv
+from cllib import path_utils
+from core.helper import model_serv, test_serv
+from core.helper.test_serv import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
+    CommentM2MTester, CommonSearchTests, MergeTests
 from core.helper.view_components import DownloadCsvHandler
 from location.models import CofkUnionLocation, CofkLocationResourceMap
 from location.recref_adapter import LocationResourceRecrefAdapter
 from location.views import LocationMergeChoiceView, LocationCsvHeaderValues
-from sharedlib import file_utils
-from siteedit2.serv import test_serv
-from siteedit2.serv.test_serv import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
-    CommentM2MTester, CommonSearchTests, MergeTests
 
 if TYPE_CHECKING:
     from core.helper.common_recref_adapter import TargetResourceRecrefAdapter
@@ -109,7 +108,7 @@ class LocationDownloadCsvHandlerTests(TestCase):
     def test_create_csv_file(self):
         queryset = CofkUnionLocation.objects.all()[:10]
         record_size = queryset.count()
-        csv_path = file_utils.create_new_tmp_file_path()
+        csv_path = path_utils.create_tmp_path()
         csv_handler = DownloadCsvHandler(LocationCsvHeaderValues())
         csv_handler.create_csv_file(queryset, csv_path)
 

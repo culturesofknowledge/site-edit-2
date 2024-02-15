@@ -1,8 +1,8 @@
 import institution.fixtures
+from core.helper.test_serv import MergeTests
 from institution.models import CofkInstitutionResourceMap
 from institution.recref_adapter import InstResourceRecrefAdapter
 from institution.views import InstMergeChoiceView
-from siteedit2.serv.test_serv import MergeTests
 
 
 class InstMergeTests(MergeTests):

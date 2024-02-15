@@ -1,11 +1,12 @@
-from typing import Callable, Iterable
+from typing import Iterable
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q
+from django.db.models import Q, Lookup
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 
 from core.helper import renderer_serv, query_serv
+from core.helper.renderer_serv import RendererFactory
 from core.helper.view_serv import DefaultSearchView
 from core.lang_forms import LangSearchFieldset
 from core.models import Iso639LanguageCode, CofkUnionFavouriteLanguage
@@ -31,7 +32,7 @@ class LanguageSearchView(LoginRequiredMixin, DefaultSearchView):
         return 'Language,Languages'
 
     @property
-    def search_field_fn_maps(self) -> dict:
+    def search_field_fn_maps(self) -> dict[str, Lookup]:
         return {
             'is_favorite': query_is_favorite,
         }
@@ -45,7 +46,7 @@ class LanguageSearchView(LoginRequiredMixin, DefaultSearchView):
         if not self.request_data:
             return model_class.objects.none()
 
-        queries = query_serv.create_queries_by_field_fn_maps(self.search_field_fn_maps, self.request_data)
+        queries = query_serv.create_queries_by_field_fn_maps(self.request_data, self.search_field_fn_maps)
 
         queryset = model_class.objects.filter()
         queries.extend(
@@ -57,7 +58,7 @@ class LanguageSearchView(LoginRequiredMixin, DefaultSearchView):
         return queryset
 
     @property
-    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+    def table_search_results_renderer_factory(self) -> RendererFactory:
         return renderer_serv.create_table_search_results_renderer(
             'core/language_expanded_search_table_layout.html'
         )

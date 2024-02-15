@@ -25,13 +25,13 @@ class FullFormHandler:
                        request=request, *args, **kwargs)
 
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
+        """
+        subclass define all form and formset in this method
+        or other data that view need
+        """
         raise NotImplementedError()
 
-    def all_img_recref_handlers(self) -> Iterable[tuple[str, 'ImageRecrefHandler']]:
-        return ((name, var) for name, var in self.__dict__.items()
-                if isinstance(var, ImageRecrefHandler))
-
-    def find_all_named_form_formset(self) -> Iterable[tuple[str, BaseForm | BaseFormSet]]:
+    def all_named_form_formset(self) -> Iterable[tuple[str, BaseForm | BaseFormSet]]:
         """
         find all variables in full_form_handler that is BaseForm or BaseFormSet
         """
@@ -40,16 +40,29 @@ class FullFormHandler:
         return attr_list
 
     @property
-    def every_form_formset(self):
+    def all_recref_handlers(self) -> Iterable[MultiRecrefHandler]:
+        attr_list = (getattr(self, p) for p in dir(self))
+        attr_list = (a for a in attr_list if isinstance(a, MultiRecrefHandler))
+        return attr_list
+
+    def all_img_recref_handlers(self) -> Iterable[tuple[str, 'ImageRecrefHandler']]:
+        return ((name, var) for name, var in self.__dict__.items()
+                if isinstance(var, ImageRecrefHandler))
+
+    def all_recref_formset_handlers(self) -> Iterable[RecrefFormsetHandler]:
+        return self.recref_formset_handlers
+
+    @property
+    def every_form_formset(self) -> Iterable[BaseForm | BaseFormSet]:
         return itertools.chain(
-            (ff for _, ff in self.find_all_named_form_formset()),
+            (ff for _, ff in self.all_named_form_formset()),
             itertools.chain.from_iterable(
                 (h.new_form, h.update_formset) for h in self.all_recref_handlers
             ),
             itertools.chain.from_iterable(
                 (h.upload_img_form, h.formset) for _, h in self.all_img_recref_handlers()
             ),
-            (h.formset for h in self.recref_formset_handlers),
+            (h.formset for h in self.all_recref_formset_handlers()),
         )
 
     def is_any_changed(self):
@@ -70,28 +83,22 @@ class FullFormHandler:
         for recref_handler in self.all_recref_handlers:
             recref_handler.maintain_record(request, parent_instance)
 
-    @property
-    def all_recref_handlers(self):
-        attr_list = (getattr(self, p) for p in dir(self))
-        attr_list = (a for a in attr_list if isinstance(a, MultiRecrefHandler))
-        return attr_list
-
     def add_recref_formset_handler(self, recref_formset_handler: 'RecrefFormsetHandler'):
         self.recref_formset_handlers.append(recref_formset_handler)
 
     def save_all_recref_formset(self, parent, request):
-        for c in self.recref_formset_handlers:
+        for c in self.all_recref_formset_handlers():
             c.save(parent, request)
 
     def create_context(self):
-        context = dict(self.find_all_named_form_formset())
-        for _, img_handler in self.all_img_recref_handlers():
-            context.update(img_handler.create_context())
-        for h in self.all_recref_handlers:
-            context.update(h.create_context())
-        context.update({h.context_name: h.formset
-                        for h in self.recref_formset_handlers})
-
+        context = dict(self.all_named_form_formset())
+        context_list = itertools.chain(
+            (h.create_context() for _, h in self.all_img_recref_handlers()),
+            (h.create_context() for h in self.all_recref_handlers),
+            (h.create_context() for h in self.all_recref_formset_handlers())
+        )
+        for c in context_list:
+            context.update(c)
         return context
 
     def is_invalid(self):

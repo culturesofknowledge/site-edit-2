@@ -1,12 +1,14 @@
-from typing import Callable, Iterable
+from typing import Iterable
 
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 
 from audit import forms
 from audit.forms import AuditSearchFieldset
 from audit.models import CofkUnionAuditLiteral
+from cllib_django import query_utils
 from core import constant
 from core.helper import renderer_serv, query_serv
+from core.helper.renderer_serv import RendererFactory
 from core.helper.view_serv import DefaultSearchView
 
 
@@ -22,13 +24,13 @@ class AuditSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearch
             return CofkUnionAuditLiteral.objects.none()
 
         field_fn_maps = {
-                            'table_name': query_serv.create_eq_query,
-                            'column_name': query_serv.create_eq_query,
-                            'change_type': query_serv.create_eq_query,
+                            'table_name': query_utils.create_eq_query,
+                            'column_name': query_utils.create_eq_query,
+                            'change_type': query_utils.create_eq_query,
                         } | query_serv.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
                                                                 'change_timestamp')
 
-        queries = query_serv.create_queries_by_field_fn_maps(field_fn_maps, self.request_data)
+        queries = query_serv.create_queries_by_field_fn_maps(self.request_data, field_fn_maps)
         queries.extend(
             query_serv.create_queries_by_lookup_field(self.request_data, [
                 'change_user', 'table_name', 'key_value_text', 'key_decode',
@@ -41,7 +43,7 @@ class AuditSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearch
         return self.create_queryset_by_queries(CofkUnionAuditLiteral, queries)
 
     @property
-    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+    def table_search_results_renderer_factory(self) -> RendererFactory:
         return renderer_serv.create_table_search_results_renderer('audit/search_table_layout.html')
 
     @property

@@ -1,7 +1,9 @@
-from typing import Type
+from typing import Type, Callable, Iterable
 
 from django.template.loader import render_to_string
 
+Renderer = Callable[[], str]
+RendererFactory = Callable[[Iterable], Renderer]
 
 class SearchRecordRenderer:
     """ renderer for one record

@@ -10,7 +10,6 @@ from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_
     REL_TYPE_MENTION
 from location import location_serv
 from person import person_serv
-from siteedit2.serv.log_serv import log_no_url
 from work.models import CofkUnionWork
 
 log = logging.getLogger(__name__)
@@ -79,10 +78,12 @@ def create_work_id(iwork_id) -> str:
     return f'cofk_union_work-iwork_id:{iwork_id}'
 
 
-@log_no_url
 def get_checked_form_url_by_pk(pk):
     if work := CofkUnionWork.objects.get(pk=pk):
         return reverse('work:full_form', args=[work.iwork_id])
+
+    log.warning('get form url failed, work not found [%s]', pk)
+    return ''
 
 
 def get_display_id(work: CofkUnionWork):

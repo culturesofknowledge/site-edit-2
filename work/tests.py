@@ -10,19 +10,19 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_CREATED, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_ADDRESSED_TO, \
     REL_TYPE_WAS_SENT_TO, REL_TYPE_IS_RELATED_TO
 from core.fixtures import fixture_default_lookup_catalogue, res_dict_a, res_dict_b
+from core.helper import test_serv
+from core.helper.test_serv import EmloSeleniumTestCase, FieldValTester, CommonSearchTests
 from core.models import Iso639LanguageCode, CofkUnionResource, CofkUnionSubject, CofkUnionComment, \
     CofkUnionFavouriteLanguage
 from location import fixtures as location_fixtures
 from manifestation import fixtures as manif_fixtures
 from manifestation.models import CofkUnionManifestation
 from person import fixtures as person_fixtures
-from siteedit2.serv import test_serv
-from siteedit2.serv.test_serv import EmloSeleniumTestCase, FieldValTester, CommonSearchTests
 from work import fixtures as work_fixtures
 from work import work_serv
-from work.forms import WorkPersonRecrefAdapter
 from work.models import CofkUnionWork, CofkUnionLanguageOfWork
-from work.recref_adapter import WorkLocRecrefAdapter, WorkResourceRecrefAdapter, WorkCommentRecrefAdapter
+from work.recref_adapter import WorkLocRecrefAdapter, WorkResourceRecrefAdapter, WorkCommentRecrefAdapter, \
+    WorkPersonRecrefAdapter
 
 
 def wait_jquery_ready(selenium):
@@ -389,9 +389,6 @@ def prepare_works_for_search(core_constant=None):
                             language_code=lang_jp,
                             notes='notes b').save()
 
-    # update queryable work TOBEREMOVE
-    # work_serv.clone_queryable_work(target_work, reload=True)
-
     return works
 
 
@@ -506,7 +503,7 @@ class WorkSearchTests(EmloSeleniumTestCase, CommonSearchTests):
         }
 
         table_type_id = 'display-as-list'
-        works = prepare_works_for_search()
+        prepare_works_for_search()
         self.goto_search_page()
         self.find_search_btn().click()
         self.find_element_by_css(f'label[for={table_type_id}]').click()

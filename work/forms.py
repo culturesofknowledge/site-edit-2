@@ -1,5 +1,4 @@
 import logging
-from typing import Type
 
 from django import forms
 from django.db.models import TextChoices, Model
@@ -10,13 +9,14 @@ from core.constant import DEFAULT_EMPTY_DATE_STR, REL_TYPE_CREATED, REL_TYPE_WAS
 from core.form_label_maps import field_label_map
 from core.helper import form_serv, date_serv
 from core.helper import widgets_serv
-from core.helper.common_recref_adapter import RecrefFormAdapter, TargetPersonRecrefAdapter
+from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.form_serv import TargetPersonMRRForm, LocationRecrefField, InstRecrefField, BasicSearchFieldset, \
     SearchCharField, SearchIntField
-from core.models import Recref, CofkUnionSubject, CofkLookupCatalogue
+from core.models import CofkUnionSubject, CofkLookupCatalogue
 from institution.models import CofkUnionInstitution
-from manifestation.models import CofkUnionManifestation, CofkManifPersonMap
-from work.models import CofkUnionWork, CofkWorkPersonMap
+from manifestation.models import CofkUnionManifestation
+from work.models import CofkUnionWork
+from work.recref_adapter import WorkPersonRecrefAdapter, ManifPersonRecrefAdapter
 
 log = logging.getLogger(__name__)
 
@@ -341,64 +341,6 @@ class WorkPersonMRRForm(TargetPersonMRRForm):
             person_id=target_id,
             relationship_type__in=self.get_rel_type_choices_values(),
         )
-
-
-class WorkPersonRecrefAdapter(TargetPersonRecrefAdapter):
-
-    def __init__(self, recref=None):
-        self.recref: CofkUnionWork = recref
-
-    def recref_class(self) -> Type[Recref]:
-        return CofkWorkPersonMap
-
-    def set_parent_target_instance(self, recref, parent, target):
-        recref.work = parent
-        recref.person = target
-
-    def find_recref_records(self, rel_type):
-        return self.recref.cofkworkpersonmap_set.filter(relationship_type=rel_type).iterator()
-
-
-class ManifPersonRecrefAdapter(TargetPersonRecrefAdapter):
-
-    def __init__(self, recref=None):
-        self.recref: CofkUnionManifestation = recref
-
-    def recref_class(self) -> Type[Recref]:
-        return CofkManifPersonMap
-
-    def set_parent_target_instance(self, recref, parent, target):
-        recref.manifestation = parent
-        recref.person = target
-
-    def find_recref_records(self, rel_type):
-        return self.recref.cofkmanifpersonmap_set.filter(relationship_type=rel_type).iterator()
-
-
-# class ManifPersonRecrefForm(MultiRelRecrefForm):
-#     recref_adapter = ManifPersonRecrefAdapter(None)
-#
-#     @property
-#     def target_url(self):
-#         return get_peron_full_form_url_by_pk(self.initial.get('target_id'))
-#
-#     @classmethod
-#     def get_target_name(cls, recref: Recref):
-#         return person_serv.get_recref_display_name(recref)
-#
-#     @classmethod
-#     def get_target_id(cls, recref: Recref):
-#         cls.recref_adapter.target_id_name()
-#         pass
-#
-#     def find_recref_list_by_target_id(self, host_model: Model, target_id):
-#         pass
-#
-#     def find_target_model(self, target_id):
-#         pass
-#
-#     def create_recref(self, host_model, target_model) -> Recref:
-#         pass
 
 
 class WorkAuthorRecrefForm(WorkPersonMRRForm):

@@ -1,15 +1,17 @@
+from django.db.models.lookups import GreaterThanOrEqual, Exact, IContains
+from django.test import RequestFactory
+from django.test import TestCase
 from selenium.webdriver.common.by import By
 
 import person.fixtures
+from cllib import selenium_utils
 from core import constant
-from core.helper import model_serv
+from core.helper import model_serv, test_serv, query_serv
+from core.helper.test_serv import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
+    CommentM2MTester, CommonSearchTests, MergeTests
 from person.models import CofkUnionPerson, CofkPersonResourceMap
 from person.recref_adapter import PersonResourceRecrefAdapter
-from person.views import PersonMergeChoiceView
-from sharedlib import selenium_utils
-from siteedit2.serv import test_serv
-from siteedit2.serv.test_serv import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
-    CommentM2MTester, CommonSearchTests, MergeTests
+from person.views import PersonMergeChoiceView, PersonSearchView
 
 
 class PersonFormTest(EmloSeleniumTestCase):
@@ -122,6 +124,38 @@ class PersonCommonSearchTests(EmloSeleniumTestCase, CommonSearchTests):
                              str(target_record.iperson_id))
 
         self._test_search__search_unique(_fill, _check)
+
+
+class PersonQueryTests(TestCase):
+
+    def test_get_queryset(self):
+        request_factory = RequestFactory()
+
+        person_search_view = PersonSearchView()
+        person_search_view.setup(request_factory.get(
+            '',
+            data={
+                'gender': 'M',
+                'death_year_from': 1900,
+                'editors_notes': 'aaa',
+                'editors_notes_lookup': 'contains',
+            }),
+        )
+
+        queryset = person_search_view.get_queryset()
+        assert queryset is not None
+
+        where_childrens = query_serv.extract_sub_query(queryset).where.children
+        where_childrens = {c.lhs.target.column: c for c in where_childrens}
+
+        test_serv.assert_lookup(where_childrens['gender'],
+                                'gender', 'M', Exact)
+
+        test_serv.assert_lookup(where_childrens['date_of_death_year'],
+                                'date_of_death_year', '1900', GreaterThanOrEqual)
+
+        test_serv.assert_lookup(where_childrens['editors_notes'],
+                                'editors_notes', 'aaa', IContains)
 
 
 class PersonMergeTests(MergeTests):

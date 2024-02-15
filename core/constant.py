@@ -78,6 +78,7 @@ REL_TYPE_DIED_AT_LOCATION = 'died_at_location'
 
 REL_TYPE_IS_MANIF_OF = 'is_manifestation_of'
 
+# Date
 DEFAULT_YEAR = 9999
 DEFAULT_MONTH = 12
 DEFAULT_DAY = 31

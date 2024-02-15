@@ -7,7 +7,7 @@ import bs4
 from django.conf import settings
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.db import models
-from django.db.models import Model
+from django.db.models import Model, Lookup, Value
 from django.test import TestCase
 from django.urls import reverse
 from selenium import webdriver
@@ -45,15 +45,17 @@ class EmloSeleniumTestCase(StaticLiveServerTestCase):
     @classmethod
     def _get_selenium_driver(cls):
         options = Options()
+        options.add_argument("--window-size=1920,1080")
+        options.add_argument('--start-maximized')  # maximize browser window
         if settings.SELENIUM_CHROME_LOCAL_DRIVER:
             # run selenium with your local browser
-            options.add_argument('--start-maximized')  # maximize browser window
+            if settings.SELENIUM_CHROME_HEADLESS:
+                options.add_argument('--headless')
             browser_driver = webdriver.Chrome(options=options)
         else:
             # run selenium with docker remote browser
             options.add_argument("no-sandbox")
             options.add_argument("--disable-gpu")
-            options.add_argument("--window-size=800,600")
             options.add_argument("--disable-dev-shm-usage")
             browser_driver = webdriver.Remote(
                 command_executor=f'http://{settings.SELENIUM_HOST_PORT}/wd/hub',
@@ -534,3 +536,10 @@ class MergeTests(LoginTestCase):
         self.assertEqual(response.status_code, 200)
         soup = bs4.BeautifulSoup(response.content, features="html.parser")
         self.assertEqual(len(soup.select('.merge-items')), len(other_models) + 1)
+
+
+def assert_lookup(lookup: Lookup, field_name, value, lookup_type: Type[Lookup]):
+    assert lookup.lhs.target.column == field_name
+    actual_value = lookup.rhs.value if isinstance(lookup.rhs, Value) else lookup.rhs
+    assert actual_value == value
+    assert isinstance(lookup, lookup_type)

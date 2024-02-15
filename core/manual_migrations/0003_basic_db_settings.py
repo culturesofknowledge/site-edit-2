@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
 
         # for db function uuid_generate_v4
         migrations.RunSQL(
-            f'CREATE EXTENSION IF NOT EXISTS "uuid-ossp" ',
-            f'DROP EXTENSION IF EXISTS "uuid-ossp" ',
+            'CREATE EXTENSION IF NOT EXISTS "uuid-ossp" ',
+            'DROP EXTENSION IF EXISTS "uuid-ossp" ',
         ),
     ]

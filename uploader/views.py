@@ -2,7 +2,7 @@ import logging
 import os
 import re
 import time
-from typing import Iterable, Callable, List
+from typing import Iterable
 from zipfile import BadZipFile
 
 from django.conf import settings
@@ -10,7 +10,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.files.storage import default_storage
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, Lookup
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -20,7 +20,7 @@ from core import constant
 from core.form_label_maps import field_label_map
 from core.helper.query_serv import create_from_to_datetime, create_queries_by_field_fn_maps, \
     create_queries_by_lookup_field
-from core.helper.renderer_serv import create_table_search_results_renderer
+from core.helper.renderer_serv import create_table_search_results_renderer, RendererFactory
 from core.helper.view_serv import DefaultSearchView
 from core.models import CofkLookupCatalogue
 from uploader.forms import CofkCollectUploadForm, GeneralSearchFieldset
@@ -262,7 +262,9 @@ def lookup_fn_date_of_work(lookup_fn, field_name, value):
     return query
 
 
+
 def lookup_fn_issues(value):
+
     cond_map = [
         (r'Date\s+of\s+work\s+INFERRED', lambda: Q(date_of_work_inferred=1)),
         (r'Date\s+of\s+work\s+UNCERTAIN', lambda: Q(date_of_work_uncertain=1)),
@@ -287,7 +289,6 @@ def lookup_fn_issues(value):
             query |= q()
     return query
 
-
 class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
@@ -299,9 +300,9 @@ class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
         return field_label_map['collect_work']
 
     @property
-    def search_field_fn_maps(self) -> dict:
+    def search_field_fn_maps(self) -> dict[str, Lookup]:
         return create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                       'change_timestamp')
+                                                   'change_timestamp')
 
     @property
     def entity(self) -> str:
@@ -351,7 +352,7 @@ class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
         ]
 
     @property
-    def search_field_combines(self) -> dict[str: List[str]]:
+    def search_field_combines(self) -> dict[str: list[str]]:
         return {'source': ['accession_code'],
                 'contact': ['upload__uploader_email'],
                 'status': ['upload_status__status_desc'],
@@ -381,7 +382,7 @@ class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:
         # queries for like_fields
-        queries = create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
+        queries = create_queries_by_field_fn_maps(request_data, self.search_field_fn_maps)
 
         queries.extend(
             create_queries_by_lookup_field(request_data,
@@ -394,5 +395,5 @@ class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
         return self.create_queryset_by_queries(DisplayableCollectWork, queries, sort_by=sort_by)
 
     @property
-    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+    def table_search_results_renderer_factory(self) -> RendererFactory:
         return create_table_search_results_renderer('uploader/search_table_layout.html')

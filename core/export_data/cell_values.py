@@ -7,12 +7,12 @@ from collections.abc import Iterable
 
 from django.conf import settings
 
+from cllib import str_utils
 from core import constant
 from core.helper import general_model_serv
 from core.models import CofkUnionComment, CofkUnionResource
 from person import person_serv
 from person.models import CofkUnionPerson
-from sharedlib import str_utils
 
 DELIMITER_SHACKLE = ' ~ '
 DELIMITER_SEMICOLON = '; '

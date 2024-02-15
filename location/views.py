@@ -1,11 +1,11 @@
 import itertools
 import logging
-from typing import Iterable, Union, Type, Callable, List
+from typing import Iterable, Union, Type, Callable
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, Lookup
 from django.forms import BaseForm, BaseFormSet
 from django.shortcuts import render, get_object_or_404, redirect
 
@@ -17,7 +17,7 @@ from core.helper import view_serv, renderer_serv, query_serv, perm_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.model_serv import ModelLike
 from core.helper.recref_handler import RecrefFormsetHandler, ImageRecrefHandler, TargetResourceFormsetHandler
-from core.helper.renderer_serv import CompactSearchResultsRenderer
+from core.helper.renderer_serv import RendererFactory
 from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_serv import BasicSearchView, CommonInitFormViewTemplate, MergeChoiceViews, MergeChoiceContext, \
@@ -192,7 +192,7 @@ class LocationMergeActionView(LoginRequiredMixin, MergeActionViews):
 class LocationSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
-    def search_field_combines(self) -> dict[str: List[str]]:
+    def search_field_combines(self) -> dict[str: list[str]]:
         return {'location_name': ['location_name', 'location_synonyms'],
                 'resources': ['resources__resource_name', 'resources__resource_details',
                               'resources__resource_url'],
@@ -200,7 +200,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
                 'images': ['images__image_filename']}
 
     @property
-    def search_field_fn_maps(self) -> dict:
+    def search_field_fn_maps(self) -> dict[str, Lookup]:
         return query_serv.create_from_to_datetime('change_timestamp_from',
                                                   'change_timestamp_to',
                                                   'change_timestamp')
@@ -247,7 +247,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
                               'researchers_notes': ['comments__comment'],
                               'images': ['images__image_filename']}
 
-        queries = query_serv.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
+        queries = query_serv.create_queries_by_field_fn_maps(request_data, self.search_field_fn_maps)
         queries.extend(
             query_serv.create_queries_by_lookup_field(request_data, self.search_fields, search_fields_maps)
         )
@@ -267,11 +267,12 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
         return 'location:return_quick_init'
 
     @property
-    def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
+    def compact_search_results_renderer_factory(self) -> RendererFactory:
+        # TOBEREMOVE 20231122 no longer used in UI webpage, but it have only one display layout
         return renderer_serv.create_compact_renderer(item_template_name='location/compact_item.html')
 
     @property
-    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+    def table_search_results_renderer_factory(self) -> RendererFactory:
         return renderer_serv.create_table_search_results_renderer(
             'location/search_table_layout.html'
         )
@@ -283,6 +284,10 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
         return (lambda: view_serv.create_export_file_name('location', 'csv'),
                 lambda: DownloadCsvHandler(LocationCsvHeaderValues()).create_csv_file,
                 constant.PM_EXPORT_FILE_LOCATION,)
+
+    @property
+    def app_name(self) -> str:
+        return 'location'
 
 
 class LocationCsvHeaderValues(HeaderValues):

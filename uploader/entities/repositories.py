@@ -2,9 +2,9 @@ import logging
 from abc import ABC
 from typing import List
 
+from institution.models import CofkUnionInstitution
 from uploader.entities.entity import CofkEntity
 from uploader.models import CofkCollectUpload, CofkCollectInstitution
-from institution.models import CofkUnionInstitution
 
 log = logging.getLogger(__name__)
 

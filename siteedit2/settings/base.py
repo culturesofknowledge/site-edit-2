@@ -9,11 +9,13 @@ https://docs.djangoproject.com/en/4.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
+# pylint: disable=unused-wildcard-import,wildcard-import
+
 import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-from sharedlib import log_utils
+from cllib import log_utils
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -151,7 +153,7 @@ LOGGING = {
         'detailed_web': {
             'format': log_utils.detailed_web_fmt,
             'datefmt': '%Y%m%d %H%M%S',
-            'class': 'sharedlib.log_utils.ColorFormatter',
+            'class': 'cllib.log_utils.ColorFormatter',
         },
     },
     'handlers': {
@@ -185,7 +187,7 @@ LOGGING = {
         #     'level': 'DEBUG',
         #     'propagate': True,
         # },
-        'urllib3.connectionpool' : {
+        'urllib3.connectionpool': {
             'level': 'INFO',
             'propagate': True,
         },
@@ -232,7 +234,7 @@ MEDIA_URL = '/media/'
 
 DEFAULT_IMG_LICENCE_URL = 'http://cofk2.bodleian.ox.ac.uk/culturesofknowledge/licence/terms_of_use.html'
 
-EMAIL_FROM_EMAIL = f"Excited User <mailgun@<your mailgun messages url>>"
+EMAIL_FROM_EMAIL = "Excited User <mailgun@<your mailgun messages url>>"
 
 EMLO_SEQ_VAL_INIT = {
     'COFKUNIONPERSION__IPERSON_ID': 1000,
@@ -247,7 +249,6 @@ CSRF_COOKIE_SECURE = False
 # root url for generate url in export
 EXPORT_ROOT_URL = 'http://localhost:8020'
 
-
-
 # Test
 SELENIUM_CHROME_LOCAL_DRIVER = False
+SELENIUM_CHROME_HEADLESS = False

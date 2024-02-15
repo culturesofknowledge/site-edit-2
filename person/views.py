@@ -1,17 +1,19 @@
 import itertools
 import logging
-from typing import Callable, Iterable, Type, Any, NoReturn, TYPE_CHECKING, List
+from typing import Callable, Iterable, Type, Any, NoReturn, TYPE_CHECKING
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.db.models import F
-from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual, Exact
+from django.db import models
+from django.db.models import F, Q, OuterRef
+from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual, Exact, Lookup
 from django.forms import BaseForm
 from django.shortcuts import render, redirect, get_object_or_404
 
+from cllib_django import query_utils
 from core import constant
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_BORN_IN_LOCATION, REL_TYPE_DIED_AT_LOCATION, \
-    TRUE_CHAR
+    TRUE_CHAR, REL_TYPE_MENTION
 from core.export_data import cell_values, download_csv_serv
 from core.forms import CommentForm, PersonRecrefForm
 from core.helper import renderer_serv, view_serv, query_serv, recref_serv, form_serv, perm_serv
@@ -19,7 +21,7 @@ from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.model_serv import ModelLike
 from core.helper.recref_handler import RecrefFormsetHandler, RoleCategoryHandler, ImageRecrefHandler, \
     TargetResourceFormsetHandler, MultiRecrefAdapterHandler, SingleRecrefHandler
-from core.helper.renderer_serv import CompactSearchResultsRenderer
+from core.helper.renderer_serv import RendererFactory
 from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_serv import CommonInitFormViewTemplate, BasicSearchView, MergeChoiceViews, MergeActionViews, \
@@ -33,9 +35,9 @@ from person.models import CofkUnionPerson, CofkPersonPersonMap, create_person_id
 from person.person_serv import DisplayablePerson, SearchResultPerson
 from person.recref_adapter import PersonCommentRecrefAdapter, PersonResourceRecrefAdapter, PersonRoleRecrefAdapter, \
     ActivePersonRecrefAdapter, PassivePersonRecrefAdapter, PersonImageRecrefAdapter, PersonLocRecrefAdapter
-from person.subqueries import create_queryset_by_queries
+from person.subqueries import create_sql_count_work_by_person
 from person.view_components import PersonFormDescriptor
-from sharedlib.djangolib import query_utils
+from work.forms import AuthorRelationChoices, AddresseeRelationChoices
 
 if TYPE_CHECKING:
     from core.helper.view_serv import MergeChoiceContext
@@ -92,13 +94,6 @@ def return_quick_init(request, pk):
         person_serv.get_recref_display_name(person),
         person_serv.get_recref_target_id(person),
     )
-
-
-class OrganisationRecrefConvertor:
-
-    @property
-    def target_id_name(self):
-        return 'location_id'
 
 
 def _get_other_persons_by_type(person: CofkUnionPerson, person_type: str) -> Iterable[CofkPersonPersonMap]:
@@ -290,7 +285,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         return 'person,people'
 
     @property
-    def search_field_fn_maps(self) -> dict:
+    def search_field_fn_maps(self) -> dict[str, Lookup]:
         return {'gender': lambda f, v: Exact(F(f), '' if v == 'U' else v),
                 'person_or_group': lambda _, v: Exact(F('is_organisation'), 'Y' if v == 'G' else ''),
                 'birth_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_birth_year'), v),
@@ -327,7 +322,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         ]
 
     @property
-    def search_field_combines(self) -> dict[str: List[str]]:
+    def search_field_combines(self) -> dict[str: list[str]]:
         return {
             'roles': ['roles__role_category_desc'],
             'images': ['images__image_filename'],
@@ -380,7 +375,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
 
     def get_queryset_by_request_data(self, request_data, sort_by=None):
-        queries = query_serv.create_queries_by_field_fn_maps(self.search_field_fn_maps, request_data)
+        queries = query_serv.create_queries_by_field_fn_maps(request_data, self.search_field_fn_maps)
 
         search_field_fn_maps = {
             'other_details': lookup_other_details,
@@ -397,11 +392,12 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         return create_queryset_by_queries(SearchResultPerson, queries, sort_by=sort_by)
 
     @property
-    def table_search_results_renderer_factory(self) -> Callable[[Iterable], Callable]:
+    def table_search_results_renderer_factory(self) -> RendererFactory:
         return renderer_serv.create_table_search_results_renderer('person/search_table_layout.html')
 
     @property
-    def compact_search_results_renderer_factory(self) -> Type[CompactSearchResultsRenderer]:
+    def compact_search_results_renderer_factory(self) -> RendererFactory:
+        # TOBEREMOVE 20231122 no longer used in UI webpage, but it have only one display layout
         return renderer_serv.create_compact_renderer(item_template_name='person/compact_item.html')
 
     @property
@@ -420,6 +416,10 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         return (lambda: view_serv.create_export_file_name('person', 'csv'),
                 lambda: DownloadCsvHandler(PersonCsvHeaderValues()).create_csv_file,
                 constant.PM_EXPORT_FILE_PERSON,)
+
+    @property
+    def app_name(self) -> str:
+        return 'person'
 
 
 class PersonCsvHeaderValues(HeaderValues):
@@ -540,7 +540,7 @@ class PersonDeleteConfirmView(LoginRequiredMixin, DeleteConfirmView):
         return desc_list
 
 
-def lookup_other_details(lookup_fn, f, v):
+def lookup_other_details(lookup_fn, f, v) -> Q:
     conn_type = query_serv.get_lookup_conn_type_by_lookup_key(
         query_serv.get_lookup_key_by_lookup_fn(lookup_fn)
     )
@@ -567,3 +567,44 @@ def lookup_other_details(lookup_fn, f, v):
 
 def get_target_or_related_id(recref: CofkPersonPersonMap):
     return recref.related_id
+
+
+def create_queryset_by_queries(model_class: Type[models.Model], queries: Iterable[Q] = None, sort_by=None):
+    queryset = model_class.objects
+    annotate = {
+        'sent': create_sql_count_work_by_person(AuthorRelationChoices.values),
+        'recd': create_sql_count_work_by_person(AddresseeRelationChoices.values),
+        'all_works': create_sql_count_work_by_person(
+            AuthorRelationChoices.values + AddresseeRelationChoices.values),
+        'mentioned': create_sql_count_work_by_person([REL_TYPE_MENTION]),
+
+        'rolenames': CofkUnionPerson.objects.filter(
+            cofkpersonrolemap__person_id=OuterRef('pk'),
+        )
+        .annotate(_rolenames=query_utils.join_values_for_search('cofkpersonrolemap__role__role_category_desc'))
+        .values_list('_rolenames', flat=True),
+        'names_and_titles': query_utils.concat_safe(
+            [
+                'foaf_name',
+                'skos_altlabel',
+                'person_aliases',
+                'rolenames',
+            ]
+        )
+
+    }
+
+    queryset = query_serv.update_queryset(queryset, model_class, queries=queries,
+                                          annotate=annotate, sort_by=sort_by)
+    queryset = queryset.prefetch_related(
+        'cofkpersonlocationmap_set__location',
+        'cofkpersoncommentmap_set__comment',
+        'roles',
+        'resources',
+        'images',
+        'comments',
+        'active_relationships__related',
+        'passive_relationships__person',
+    )
+
+    return queryset
