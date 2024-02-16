@@ -22,12 +22,9 @@ from core.helper.query_serv import create_from_to_datetime, create_queries_by_fi
     create_queries_by_lookup_field
 from core.helper.renderer_serv import create_table_search_results_renderer, RendererFactory
 from core.helper.view_serv import DefaultSearchView
-from core.models import CofkLookupCatalogue
+from core.models import CofkLookupCatalogue, CofkLookupDocumentType
 from uploader.forms import CofkCollectUploadForm, GeneralSearchFieldset
-from uploader.models import CofkCollectUpload, CofkCollectAddresseeOfWork, CofkCollectAuthorOfWork, \
-    CofkCollectDestinationOfWork, CofkCollectLanguageOfWork, CofkCollectOriginOfWork, CofkCollectPersonMentionedInWork, \
-    CofkCollectWorkResource, CofkCollectInstitution, CofkCollectLocation, CofkCollectManifestation, CofkCollectPerson, \
-    CofkCollectSubjectOfWork
+from uploader.models import CofkCollectUpload
 from uploader.review import accept_works, reject_works, get_work
 from uploader.spreadsheet import CofkUploadExcelFile
 from uploader.uploader_serv import DisplayableCollectWork
@@ -171,29 +168,26 @@ class AddUploadView(TemplateView):
 @permission_required(constant.PM_CHANGE_COLLECTWORK, raise_exception=True)
 def upload_review(request, upload_id, **kwargs):
     template_url = 'uploader/review.html'
-    upload = CofkCollectUpload.objects.filter(upload_id=upload_id).first()
+    upload = CofkCollectUpload.objects.filter(pk=upload_id).first()
 
-    works_paginator = Paginator(DisplayableCollectWork.objects.filter(upload=upload).order_by('pk'), 99999)
+    prefetch = ['authors', 'addressees', 'people_mentioned', 'languages', 'subjects', 'manifestations', 'resources',
+                'upload_status', 'addressees__iperson', 'authors__iperson', 'people_mentioned__iperson',
+                'manifestations__repository', 'authors__iperson__union_iperson', 'addressees__iperson__union_iperson',
+                'origin__location', 'destination__location', 'origin__location__union_location',
+                'destination__location__union_location', 'languages__language_code']
+
+    works_paginator = Paginator(DisplayableCollectWork.objects.filter(upload=upload)
+                                .prefetch_related(*prefetch).order_by('pk'), 99999)
     page_number = request.GET.get('page', 1)
     works_page = works_paginator.get_page(page_number)
+
+    doc_types = CofkLookupDocumentType.objects.values_list('document_type_code', 'document_type_desc')
 
     # TODO, are all of these required for context?
     context = {'upload': upload,
                'works_page': works_page,
-               'authors': CofkCollectAuthorOfWork.objects.filter(upload=upload),
-               'addressees': CofkCollectAddresseeOfWork.objects.filter(upload=upload),
-               'mentioned': CofkCollectPersonMentionedInWork.objects.filter(upload=upload),
-               'languages': CofkCollectLanguageOfWork.objects.filter(upload=upload),
-               'subjects': CofkCollectSubjectOfWork.objects.filter(upload=upload),
-               # Authors, addressees and mentioned link to People, here we're only
-               # passing new people for review purposes
-               'people': CofkCollectPerson.objects.filter(upload=upload, union_iperson__isnull=True),
-               'places': CofkCollectLocation.objects.filter(upload=upload, union_location__isnull=True),
-               'destinations': CofkCollectDestinationOfWork.objects.filter(upload=upload),
-               'origins': CofkCollectOriginOfWork.objects.filter(upload=upload),
-               'institutions': CofkCollectInstitution.objects.filter(upload=upload),
-               'manifestations': CofkCollectManifestation.objects.filter(upload=upload),
-               'resources': CofkCollectWorkResource.objects.filter(upload=upload)}
+               'doc_types': list(doc_types)
+    }
 
     if 'accept_all' in request.POST or 'accept_work' in request.POST:
         context['accept_work'] = True
@@ -288,6 +282,7 @@ def lookup_fn_issues(value):
         if re.search(pattern, value, re.IGNORECASE):
             query |= q()
     return query
+
 
 class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
 

@@ -4,7 +4,6 @@ from typing import List, Union
 from django import template
 from django.db.models import QuerySet
 
-from core.models import CofkLookupDocumentType
 from uploader.models import CofkCollectWork, CofkCollectAuthorOfWork, CofkCollectAddresseeOfWork, \
     CofkCollectPersonMentionedInWork, CofkCollectLanguageOfWork, CofkCollectWorkResource, CofkCollectSubjectOfWork
 
@@ -12,17 +11,15 @@ register = template.Library()
 
 log = logging.getLogger(__name__)
 
-@register.filter
-def filter_by_work(queryset: QuerySet, work: CofkCollectWork):
-    """Filters a queryset by work"""
-    return queryset.filter(iwork=work).all()
 
-
-@register.filter
-def document_type(doc_type: str):
+@register.simple_tag(takes_context=True)
+def document_type(context, doc_type: str):
     """Looks document type description up"""
-    return CofkLookupDocumentType.objects.\
-        values_list('document_type_desc', flat=True).filter(document_type_code=doc_type).first()
+    result = [d[1] for d in context['doc_types'] if d[0] == doc_type]
+
+    if result:
+        return result[0]
+
 
 @register.simple_tag
 def get_people(queryset: Union[QuerySet, List[CofkCollectAuthorOfWork | CofkCollectAddresseeOfWork
@@ -44,7 +41,7 @@ def get_people(queryset: Union[QuerySet, List[CofkCollectAuthorOfWork | CofkColl
 
 @register.simple_tag
 def get_languages(queryset: Union[QuerySet, List[CofkCollectLanguageOfWork]]) -> str:
-        return '; '.join([str(l) for l in queryset])
+    return '; '.join([str(l) for l in queryset])
 
 
 @register.simple_tag
@@ -56,6 +53,7 @@ def display_origin(work: CofkCollectWork) -> str:
 
     return ''
 
+
 @register.simple_tag
 def display_destination(work: CofkCollectWork) -> str:
     if destination := work.destination.first():
@@ -64,6 +62,7 @@ def display_destination(work: CofkCollectWork) -> str:
         return f'[ID {work.destination_id}]'
 
     return ''
+
 
 @register.simple_tag
 def display_places_mentioned(work: CofkCollectWork) -> str:
@@ -87,23 +86,7 @@ def display_resources(queryset: Union[QuerySet, List[CofkCollectWorkResource]]) 
 
     return ' '.join(resources)
 
+
 @register.simple_tag
 def display_subjects(queryset: Union[QuerySet, List[CofkCollectSubjectOfWork]]) -> str:
     return ', '.join([s.subject.subject_desc for s in queryset])
-
-
-def get_location(queryset: QuerySet, loc_id: int):
-    loc = [loc for loc in queryset if loc.location.location_id == loc_id][0]
-
-    if loc.location.union_location:
-        return loc.location.union_location
-
-    return loc.location
-
-@register.simple_tag(takes_context=True)
-def get_origin(context, loc_id: int):
-    return get_location(context['origins'], loc_id)
-
-@register.simple_tag(takes_context=True)
-def get_destination(context, loc_id: int):
-    return get_location(context['destinations'], loc_id)

@@ -23,14 +23,14 @@
     </td>
 </tr>
 <tr>
-    <td class="header">Author{{ authors|pluralize:",s" }}</td>
+    <td class="header">Author{{ work.authors.all|pluralize:",s" }}</td>
     <td>
-        {% if authors|length > 1 %}
+        {% if work.authors.all|length > 1 %}
             <ul>
         {% endif %}
 
-        {% for author in authors|filter_by_work:work %}
-            {% if authors|length > 1 %}
+        {% for author in work.authors.all %}
+            {% if work.authors.all|length > 1 %}
                 <li>
             {% endif %}
             {% if author.iperson.union_iperson %}
@@ -38,13 +38,13 @@
             {% else %}
                 {{ author.iperson.primary_name }}
             {% endif %}
-            {% if authors|length > 1 %}
+            {% if work.authors.all|length > 1 %}
                 </li>
             {% else %}
                 <br/>
             {% endif %}
         {% endfor %}
-        {% if authors|length > 1 %}
+        {% if work.authors.all|length > 1 %}
             </ul>
         {% else %}
         <br/>
@@ -63,11 +63,17 @@
         {% endif %}
     </td>
 </tr>
+
+{% if work.origin_id or work.origin_as_marked or work.display_origin_issues %}
+
 <tr>
     <td class="header">Origin</td>
-    <td>{% if work.origin_id %}
-            {% get_origin work.origin_id %}
-        {% endif %}
+    <td>
+        {% for origin in work.origin.all %}
+
+            {{ origin.location }}
+
+        {% endfor %}
 
         {% if work.origin_as_marked %}
             <br/>As marked: {{ work.origin_as_marked }}
@@ -78,14 +84,17 @@
         {% endif %}
     </td>
 </tr>
+
+{% endif %}
+
 <tr>
-    <td class="header">Addressee{{ addressees|pluralize:",s" }}</td>
-    <td>{% if addressees|length > 1 %}
+    <td class="header">Addressee{{ work.addressees.all|pluralize:",s" }}</td>
+    <td>{% if work.addressees.all|length > 1 %}
             <ul>
         {% endif %}
 
-        {% for addressee in addressees|filter_by_work:work %}
-            {% if addressees|length > 1 %}
+        {% for addressee in work.addressees.all %}
+            {% if work.addressees|length > 1 %}
                 <li>
             {% endif %}
 
@@ -95,14 +104,14 @@
                 {{ addressee.iperson.primary_name }}<br/>
             {% endif %}
 
-            {% if addressees|length > 1 %}
+            {% if work.addressees.all|length > 1 %}
                 </li>
             {% else %}
                 <br/>
             {% endif %}
         {% endfor %}
 
-        {% if addressees|length > 1 %}
+        {% if work.addressees.all|length > 1 %}
         </ul>
         {% else %}
         <br/>
@@ -121,11 +130,17 @@
         {% endif %}
     </td>
 </tr>
+
+{% if work.destination_id or work.destination_as_marked or work.display_destination_issues %}
+
 <tr>
     <td class="header">Destination</td>
-    <td>{% if work.destination_id %}
-            {% get_destination work.destination_id %}
-        {% endif %}
+    <td>
+        {% for destination in work.destination.all %}
+
+            {{ destination.location }}
+
+        {% endfor %}
 
         {% if work.destination_as_marked %}
             <br/>As marked: {{ work.destination_as_marked }}
@@ -136,40 +151,51 @@
         {% endif %}
     </td>
 </tr>
+
+{% endif %}
+
+{% if work.languages.all %}
 <tr>
     <td class="header">Languages</td>
-    <td>{% for language in languages|filter_by_work:work %}
+    <td>{% for language in work.languages.all %}
             {{ language }}<br/>
         {% endfor %}
     </td>
 </tr>
+{% endif %}
+
 {% if work.incipit %}
 <tr>
     <td class="header">Incipit</td>
     <td>{{ work.incipit }}</td>
 </tr>
 {% endif %}
+
 {% if work.explicit %}
 <tr>
     <td class="header">Explicit</td>
     <td>{{ work.explicit }}</td>
 </tr>
 {% endif %}
+
 {% if work.abstract %}
 <tr>
     <td class="header">Abstract</td>
     <td>{{ work.abstract }}</td>
 </tr>
 {% endif %}
+
 {% if work.keywords %}
 <tr>
     <td class="header">Keywords</td>
     <td>{{ work.keywords }}</td>
 </tr>
 {% endif %}
+
+{% if work.mentioned.all %}
 <tr>
-    <td class="header">{{ mentioned|pluralize:"Person,People" }} mentioned</td>
-    <td>{% for mention in mentioned|filter_by_work:work %}
+    <td class="header">{{ work.mentioned.all|pluralize:"Person,People" }} mentioned</td>
+    <td>{% for mention in work.mentioned.all %}
             {% if mention.iperson.union_iperson %}
                 {{ mention.iperson.union_iperson.foaf_name }}<br/>
             {% else %}
@@ -186,18 +212,21 @@
         {% endif %}
 
         {% if work.notes_on_people_mentioned %}
-            <br/>Notes on {{ mentioned|pluralize:"person,people" }} mentioned: {{ work.notes_on_people_mentioned }}
+            <br/>Notes on {{ work.mentioned|pluralize:"person,people" }} mentioned: {{ work.notes_on_people_mentioned }}
         {% endif %}
     </td>
 </tr>
+{% endif %}
+
+{% if work.manifestations.all %}
 <tr>
     <td class="header">Repositories and versions</td>
     <td>
         <ul>
-            {% for manifestation in manifestations|filter_by_work:work %}
+            {% for manifestation in work.manifestations.all %}
             <li>
                 {% if manifestation.manifestation_type %}
-                Document type: {{ manifestation.manifestation_type|document_type }}<br/>
+                Document type: {% document_type manifestation.manifestation_type %}<br/>
                 {% endif %}
 
                 {% if manifestation.repository %}
@@ -223,6 +252,8 @@
         </ul>
     </td>
 </tr>
+{% endif %}
+
 {% if work.notes_on_letter %}
 <tr>
     <td class="header">General notes</td>
@@ -235,12 +266,15 @@
     <td>{{ work.editors_notes }}</td>
 </tr>
 {% endif %}
+
+{% if work.resources.all %}
 <tr>
     <td class="header">Related resources</td>
-    <td>{% for resource in resources|filter_by_work:work %}
+    <td>{% for resource in work.resources.all %}
             Description: {{ resource.resource_name }}<br/>
             URL: <a href="{{ resource.resource_url }}">{{ resource.resource_url }}</a><br/>
             Details: {{ resource.resource_details }}<br/>
         {% endfor %}
     </td>
 </tr>
+{% endif %}
