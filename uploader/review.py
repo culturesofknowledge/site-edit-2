@@ -43,10 +43,10 @@ def create_union_work(union_work_dict: dict, collect_work: CofkCollectWork):
     return CofkUnionWork(**union_work_dict)
 
 
-def link_person_to_work(entities: QuerySet, relationship_type: str, union_work: CofkUnionWork, work_id, request) \
+def link_person_to_work(entities: QuerySet, relationship_type: str, union_work: CofkUnionWork, request) \
         -> List[CofkWorkPersonMap]:
     person_maps = []
-    for person in entities.filter(iwork_id=work_id).all():
+    for person in entities.all():
         if person.iperson.union_iperson is None:
             union_iperson = CofkUnionPerson(foaf_name=person.iperson.primary_name)
             union_iperson.person_id = create_person_id(union_iperson.iperson_id)
@@ -63,10 +63,10 @@ def link_person_to_work(entities: QuerySet, relationship_type: str, union_work: 
     return person_maps
 
 
-def link_location_to_work(entities: QuerySet, relationship_type: str, union_work: CofkUnionWork, work_id, request) \
+def link_location_to_work(entities: QuerySet, relationship_type: str, union_work: CofkUnionWork, request) \
         -> List[CofkWorkLocationMap]:
     location_maps = []
-    for origin_or_dest in entities.filter(iwork_id=work_id).all():
+    for origin_or_dest in entities.all():
         if origin_or_dest.location.union_location is None:
             union_location = CofkUnionLocation(location_name=origin_or_dest.location.location_name)
             union_location.save()
@@ -80,35 +80,6 @@ def link_location_to_work(entities: QuerySet, relationship_type: str, union_work
         location_maps.append(cwlm)
 
     return location_maps
-
-
-def create_union_manifestations(work_id: int, union_work: CofkUnionWork, request, context) -> List[CofkManifInstMap]:
-    union_maps = []
-    for manif in context['manifestations'].filter(iwork_id=work_id).all():
-        union_dict = {'manifestation_creation_date_is_range': 0}
-        for field in [f for f in manif._meta.get_fields() if f.name != 'iwork_id']:
-            try:
-                CofkUnionManifestation._meta.get_field(field.name)
-                union_dict[field.name] = getattr(manif, field.name)
-
-            except FieldDoesNotExist:
-                # log.warning(f'Field {field} does not exist')
-                pass
-
-        union_manif = CofkUnionManifestation(**union_dict)
-        union_manif.work = union_work
-        union_manif.save()
-
-        if manif.repository_id is not None:
-            inst = context['institutions'].filter(id=manif.repository_id).first()
-            union_inst = CofkUnionInstitution.objects.filter(pk=inst.institution_id).first()
-
-            cmim = CofkManifInstMap(relationship_type=REL_TYPE_STORED_IN,
-                                    manif=union_manif, inst=union_inst, inst_id=union_inst.institution_id)
-            cmim.update_current_user_timestamp(request.user.username)
-            union_maps.append(cmim)
-
-    return union_maps
 
 
 def bulk_create(objects: List[Type[models.Model]]):
@@ -144,13 +115,10 @@ def add_rel_maps(rel_maps: dict, entity_maps: List):
 
 
 def accept_works(request, context: dict, upload: CofkCollectUpload):
-    collect_works = context['works_page'].paginator.object_list
+    collect_works = context['works_page'].paginator.object_list.filter(upload_status_id=1)
 
     if 'work_id' in request.POST:
         collect_works = get_work(collect_works, request.POST['work_id'])
-
-    # Skip any works that have already been reviewed
-    collect_works = [c for c in collect_works if c.upload_status_id == 1]
 
     if not collect_works:
         messages.error(request, 'No works in upload can be accepted.')
@@ -168,43 +136,42 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
             .filter(catalogue_code=request.POST['catalogue_code']).first()
 
     for collect_work in collect_works:
-        work_id = collect_work.pk
-
         # Create work
         union_work = create_union_work(union_work_dict, collect_work)
         union_works.append(union_work)
 
         # Link people
-        people_maps = link_person_to_work(entities=context['authors'], relationship_type=REL_TYPE_CREATED,
-                                          union_work=union_work, work_id=work_id, request=request)
-        people_maps += link_person_to_work(entities=context['addressees'], relationship_type=REL_TYPE_WAS_ADDRESSED_TO,
-                                           union_work=union_work, work_id=work_id, request=request)
-        people_maps += link_person_to_work(entities=context['mentioned'],
+        people_maps = link_person_to_work(entities=collect_work.authors, relationship_type=REL_TYPE_CREATED,
+                                          union_work=union_work, request=request)
+        people_maps += link_person_to_work(entities=collect_work.addressees,
+                                           relationship_type=REL_TYPE_WAS_ADDRESSED_TO, union_work=union_work,
+                                           request=request)
+        people_maps += link_person_to_work(entities=collect_work.people_mentioned,
                                            relationship_type=REL_TYPE_MENTION,
-                                           union_work=union_work, work_id=work_id, request=request)
+                                           union_work=union_work, request=request)
         add_rel_maps(rel_maps, people_maps)
 
         # Link languages
         lang_maps = [CofkUnionLanguageOfWork(work=union_work, language_code=lang.language_code) for
-                     lang in context['languages'].filter(iwork_id=work_id).all()]
+                     lang in collect_work.languages.all()]
 
         add_rel_maps(rel_maps, lang_maps)
 
         # Link subjects
         add_rel_maps(rel_maps, [CofkWorkSubjectMap(work=union_work, subject=s.subject,
                                                    relationship_type=REL_TYPE_DEALS_WITH)
-                                for s in context['subjects'].filter(iwork_id=work_id).all()])
+                                for s in collect_work.subjects.all()])
 
         # Link locations
-        loc_maps = link_location_to_work(entities=context['destinations'], relationship_type=REL_TYPE_WAS_SENT_TO,
-                                         union_work=union_work, work_id=work_id, request=request)
-        loc_maps += link_location_to_work(entities=context['origins'], relationship_type=REL_TYPE_WAS_SENT_FROM,
-                                          union_work=union_work, work_id=work_id, request=request)
+        loc_maps = link_location_to_work(entities=collect_work.destination, relationship_type=REL_TYPE_WAS_SENT_TO,
+                                         union_work=union_work, request=request)
+        loc_maps += link_location_to_work(entities=collect_work.origin, relationship_type=REL_TYPE_WAS_SENT_FROM,
+                                          union_work=union_work, request=request)
         add_rel_maps(rel_maps, loc_maps)
 
         union_maps = []
 
-        for manif in context['manifestations'].filter(iwork_id=work_id).all():
+        for manif in collect_work.manifestations.all():
             union_manif_dict = {'manifestation_id': manif_serv.create_manif_id(union_work.iwork_id),
                                 'work': union_work}
             for field in [f for f in manif._meta.get_fields() if f.name != 'manifestation_id']:
@@ -220,7 +187,7 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
             union_manifs.append(union_manif)
 
             if manif.repository_id is not None:
-                inst = context['institutions'].filter(id=manif.repository_id).first()
+                inst = manif.repository
                 union_inst = CofkUnionInstitution.objects.filter(pk=inst.institution_id).first()
 
                 cmim = CofkManifInstMap(relationship_type=REL_TYPE_STORED_IN,
@@ -233,7 +200,7 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
         res_maps = []
 
         # Link resources
-        for resource in context['resources'].filter(iwork_id=work_id).all():
+        for resource in collect_work.resources.all():
             union_resource = CofkUnionResource()
             union_resource.resource_url = resource.resource_url
             union_resource.resource_name = resource.resource_name
