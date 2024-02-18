@@ -97,7 +97,7 @@
                 {% endif %}
             </td>
             <td>
-                {% display_origin r %}
+                {% display_place r.origin.all %}
             </td>
             <td>
                 {% if r.origin_as_marked %}
@@ -118,7 +118,7 @@
                 {% endif %}
             </td>
             <td>
-                {% display_destination r %}
+                {% display_place r.destination.all %}
             </td>
             <td>
                 {% if r.destination_as_marked %}
@@ -167,7 +167,7 @@
                 {% endif %}
             </td>
             <td>
-                {% display_places_mentioned r %}
+                {% display_places_mentioned r.places_mentioned.all %}
             </td>
             <td>
                 {{ r.display_issues }}

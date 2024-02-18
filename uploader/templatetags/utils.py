@@ -4,7 +4,7 @@ from typing import List, Union
 from django import template
 from django.db.models import QuerySet
 
-from uploader.models import CofkCollectWork, CofkCollectAuthorOfWork, CofkCollectAddresseeOfWork, \
+from uploader.models import CofkCollectAuthorOfWork, CofkCollectAddresseeOfWork, \
     CofkCollectPersonMentionedInWork, CofkCollectLanguageOfWork, CofkCollectWorkResource, CofkCollectSubjectOfWork
 
 register = template.Library()
@@ -45,29 +45,16 @@ def get_languages(queryset: Union[QuerySet, List[CofkCollectLanguageOfWork]]) ->
 
 
 @register.simple_tag
-def display_origin(work: CofkCollectWork) -> str:
-    if origin := work.origin.first():
-        return str(origin)
-    elif work.origin_id:
-        return f'[ID {work.origin_id}]'
-
+def display_place(places: QuerySet) -> str:
+    if places:
+        return str(places[0])
     return ''
 
 
 @register.simple_tag
-def display_destination(work: CofkCollectWork) -> str:
-    if destination := work.destination.first():
-        return str(destination)
-    elif work.destination_id:
-        return f'[ID {work.destination_id}]'
-
-    return ''
-
-
-@register.simple_tag
-def display_places_mentioned(work: CofkCollectWork) -> str:
+def display_places_mentioned(places: QuerySet) -> str:
     places_mentioned = []
-    for place in work.places_mentioned.all():
+    for place in places:
         places_mentioned.append(place.location.to_string())
 
     return '; '.join(sorted(places_mentioned))

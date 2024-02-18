@@ -373,7 +373,18 @@ class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
         if not self.request_data:
             return DisplayableCollectWork.objects.none()
 
-        return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
+        queryset = self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
+
+        prefetch = ['upload', 'upload_status', 'work', 'authors', 'authors__iperson',
+                    'authors__iperson__union_iperson', 'addressees', 'people_mentioned', 'languages', 'subjects',
+                    'manifestations', 'resources', 'addressees__iperson', 'people_mentioned__iperson',
+                    'manifestations__repository', 'addressees__iperson__union_iperson',
+                    'origin__location', 'destination__location', 'origin__location__union_location',
+                    'destination__location__union_location', 'languages__language_code', 'places_mentioned__location',
+                    'places_mentioned__location__union_location', 'people_mentioned__iperson',
+                    'people_mentioned__iperson__union_iperson']
+
+        return queryset.prefetch_related(*prefetch)
 
     def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:
         # queries for like_fields
