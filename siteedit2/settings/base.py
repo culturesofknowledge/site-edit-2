@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'sass_processor',
+    'django_q',
     'core',
     'login',
     'uploader',
@@ -111,6 +112,25 @@ DATABASES = {
         'HOST': os.environ.get('POSTGRES_HOST', '__unknown_env__'),
         'PORT': '5432',
     }
+}
+
+# Django Q2 settings
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'django_cache',
+    }
+}
+
+Q_CLUSTER = {
+    'name': 'DjangORM',
+    'workers': 4,
+    'timeout': 90,
+    'retry': 120,
+    'queue_limit': 50,
+    'bulk': 10,
+    'orm': 'default'
 }
 
 # Password validation
@@ -235,6 +255,10 @@ MEDIA_URL = '/media/'
 DEFAULT_IMG_LICENCE_URL = 'http://cofk2.bodleian.ox.ac.uk/culturesofknowledge/licence/terms_of_use.html'
 
 EMAIL_FROM_EMAIL = "Excited User <mailgun@<your mailgun messages url>>"
+
+# Limit for file size, in kbs. Files larger than this will be queued.
+UPLOAD_ASYNCHRONOUS_FILESIZE_LIMIT = 1000
+UPLOAD_ROOT_URL = 'http://localhost:8000'
 
 EMLO_SEQ_VAL_INIT = {
     'COFKUNIONPERSION__IPERSON_ID': 1000,

@@ -14,7 +14,6 @@ log = logging.getLogger(__name__)
 
 class TestReview(UploadIncludedFactoryTestCase):
 
-
     def test_permission(self):
         # Create an instance of a GET request.
         request = self.factory.get("/upload")
@@ -46,7 +45,7 @@ class TestReview(UploadIncludedFactoryTestCase):
 
         cuef = CofkUploadExcelFile(self.new_upload, filename)
 
-        request = self.factory.post("/upload", {'confirm_accept': ''})
+        request = self.factory.post("/upload", {'work_id': 'all', 'action': 'accept', 'confirm': ''})
         request.user = self.admin
         request._messages = MockMessages()
 
@@ -61,14 +60,14 @@ class TestReview(UploadIncludedFactoryTestCase):
         self.assertEqual(match.group('rejected'), '0')
 
         self.assertEqual(next(CofkUnionWork.objects.all()[0].find_persons_by_rel_type(REL_TYPE_CREATED)).foaf_name,
-                          'Newton')
+                         'Newton')
 
     def test_reject_upload(self):
         filename = self.create_excel_file(spreadsheet_data)
 
         cuef = CofkUploadExcelFile(self.new_upload, filename)
 
-        request = self.factory.post("/upload", {'reject_work': ''})
+        request = self.factory.post("/upload", {'work_id': 'all', 'action': 'reject', 'confirm': ''})
         request.user = self.admin
         request._messages = MockMessages()
 
