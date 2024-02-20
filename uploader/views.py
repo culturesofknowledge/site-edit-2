@@ -76,27 +76,27 @@ class AddUploadView(TemplateView):
 
         if form.is_valid():
             filename = request.FILES['upload_file'].name
-            new_upload = form.save(commit=False)
-            new_upload.upload_status_id = 1
-            new_upload.upload_username = f'{request.user.forename} {request.user.surname}'
-            new_upload.uploader_email = request.user.email
-            new_upload.upload_timestamp = timezone.now()
-            new_upload.upload_name = filename + ' ' + str(new_upload.upload_timestamp)
-            new_upload.save()
+            upload = form.save(commit=False)
+            upload.upload_status_id = 1
+            upload.upload_username = f'{request.user.forename} {request.user.surname}'
+            upload.uploader_email = request.user.email
+            upload.upload_timestamp = timezone.now()
+            upload.upload_name = filename + ' ' + str(upload.upload_timestamp)
+            upload.save()
 
-            size = os.path.getsize(settings.MEDIA_ROOT + new_upload.upload_file.name) >> 10
+            size = os.path.getsize(settings.MEDIA_ROOT + upload.upload_file.name) >> 10
 
             if size > settings.UPLOAD_ASYNCHRONOUS_FILESIZE_LIMIT:
-                task = AsyncTask('core.helper.uploader_serv.handle_upload', new_upload, True, filename)
+                task = AsyncTask('core.helper.uploader_serv.handle_upload', upload, True, filename)
                 task.run()
 
                 kwargs['report'] = {'async': True,
                                     'file': filename,
-                                    'time': new_upload.upload_timestamp,
+                                    'time': upload.upload_timestamp,
                                     'size': size
                                     }
             else:
-                report = kwargs['report'] = handle_upload(request)
+                report = kwargs['report'] = handle_upload(upload)
 
                 # If workbook upload is successful redirect to review view
                 if 'total_errors' not in report:

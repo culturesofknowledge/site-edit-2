@@ -119,9 +119,13 @@ def accept_works(context: dict, upload: CofkCollectUpload, request=None, email_a
         if request:
             messages.error(request, msg)
         else:
-            email_utils.send_email(email_addresses,
-                                   subject='EMLO Works Accepted Result',
-                                   content=msg)
+            try:
+                email_utils.send_email(email_addresses,
+                                       subject='EMLO Works Accepted Result',
+                                       content=msg)
+            except Exception as e:
+                log.error('Sending email failed')
+                log.exception(e)
         return msg
 
     union_works = []
