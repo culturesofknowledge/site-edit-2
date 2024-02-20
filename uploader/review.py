@@ -2,10 +2,14 @@ import logging
 from datetime import datetime
 from typing import List, Type
 
+from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import FieldDoesNotExist
 from django.db import IntegrityError, models
 from django.db.models import QuerySet
+
+from cllib_django import email_utils
+from django.urls import reverse
 
 from core.constant import REL_TYPE_STORED_IN, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, \
     REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_IS_RELATED_TO, \
@@ -43,7 +47,7 @@ def create_union_work(union_work_dict: dict, collect_work: CofkCollectWork):
     return CofkUnionWork(**union_work_dict)
 
 
-def link_person_to_work(entities: QuerySet, relationship_type: str, union_work: CofkUnionWork, request) \
+def link_person_to_work(entities: QuerySet, relationship_type: str, union_work: CofkUnionWork, username: str) \
         -> List[CofkWorkPersonMap]:
     person_maps = []
     for person in entities.all():
@@ -57,13 +61,13 @@ def link_person_to_work(entities: QuerySet, relationship_type: str, union_work: 
         cwpm = CofkWorkPersonMap(relationship_type=relationship_type,
                                  work=union_work, person=person.iperson.union_iperson,
                                  person_id=person.iperson.union_iperson.person_id)
-        cwpm.update_current_user_timestamp(request.user.username)
+        cwpm.update_current_user_timestamp(username)
         person_maps.append(cwpm)
 
     return person_maps
 
 
-def link_location_to_work(entities: QuerySet, relationship_type: str, union_work: CofkUnionWork, request) \
+def link_location_to_work(entities: QuerySet, relationship_type: str, union_work: CofkUnionWork, username: str) \
         -> List[CofkWorkLocationMap]:
     location_maps = []
     for origin_or_dest in entities.all():
@@ -76,7 +80,7 @@ def link_location_to_work(entities: QuerySet, relationship_type: str, union_work
         cwlm = CofkWorkLocationMap(relationship_type=relationship_type,
                                    work=union_work, location=origin_or_dest.location.union_location,
                                    location_id=origin_or_dest.location.union_location.location_id)
-        cwlm.update_current_user_timestamp(request.user.username)
+        cwlm.update_current_user_timestamp(username)
         location_maps.append(cwlm)
 
     return location_maps
@@ -92,18 +96,6 @@ def bulk_create(objects: List[Type[models.Model]]):
             # self.add_error(f'Could not create {type(objects[0])} objects in database.')
 
 
-def get_work(works, work_id) -> list[CofkCollectWork] | None:
-    try:
-        work_id = int(work_id)
-    except ValueError:
-        return
-
-    try:
-        return [w for w in works if w.id == work_id]
-    except IndexError:
-        pass
-
-
 def add_rel_maps(rel_maps: dict, entity_maps: List):
     if not len(entity_maps):
         return
@@ -114,26 +106,36 @@ def add_rel_maps(rel_maps: dict, entity_maps: List):
     rel_maps[str(type(entity_maps[0]))] += entity_maps
 
 
-def accept_works(request, context: dict, upload: CofkCollectUpload):
-    collect_works = context['works_page'].paginator.object_list.filter(upload_status_id=1)
+def accept_works(context: dict, upload: CofkCollectUpload, request=None, email_addresses: List[str] = None):
+    filter_args = {'upload_status_id': 1}
 
-    if 'work_id' in request.POST:
-        collect_works = get_work(collect_works, request.POST['work_id'])
+    if 'work_id' in context and context['work_id'] != 'all':
+        filter_args['iwork_id'] = context['work_id']
+
+    log.info(filter_args)
+    collect_works = context['works_page'].paginator.object_list.filter(**filter_args)
 
     if not collect_works:
-        messages.error(request, 'No works in upload can be accepted.')
-        return
+        msg = f'No works in the upload "{upload.upload_name}" can be accepted (was the page refreshed?).'
+        if request:
+            messages.error(request, msg)
+        else:
+            email_utils.send_email(email_addresses,
+                                   subject='EMLO Works Accepted Result',
+                                   content=msg)
+        return msg
 
     union_works = []
     union_manifs = []
     union_resources = []
     rel_maps = {}
+    username = context['username']
 
-    union_work_dict = {'accession_code': request.POST['accession_code'] if 'accession_code' in request.POST else None}
+    union_work_dict = {'accession_code': context['accession_code'] if 'accession_code' in context else None}
 
-    if 'catalogue_code' in request.POST and request.POST['catalogue_code'] != '':
+    if 'catalogue_code' in context and context['catalogue_code'] != '':
         union_work_dict['original_catalogue'] = CofkLookupCatalogue.objects \
-            .filter(catalogue_code=request.POST['catalogue_code']).first()
+            .filter(catalogue_code=context['catalogue_code']).first()
 
     for collect_work in collect_works:
         # Create work
@@ -142,31 +144,34 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
 
         # Link people
         people_maps = link_person_to_work(entities=collect_work.authors, relationship_type=REL_TYPE_CREATED,
-                                          union_work=union_work, request=request)
+                                          union_work=union_work, username=username)
         people_maps += link_person_to_work(entities=collect_work.addressees,
                                            relationship_type=REL_TYPE_WAS_ADDRESSED_TO, union_work=union_work,
-                                           request=request)
+                                           username=username)
         people_maps += link_person_to_work(entities=collect_work.people_mentioned,
                                            relationship_type=REL_TYPE_MENTION,
-                                           union_work=union_work, request=request)
+                                           union_work=union_work, username=username)
         add_rel_maps(rel_maps, people_maps)
 
         # Link languages
         lang_maps = [CofkUnionLanguageOfWork(work=union_work, language_code=lang.language_code) for
                      lang in collect_work.languages.all()]
-
         add_rel_maps(rel_maps, lang_maps)
 
+        subj_maps = []
         # Link subjects
-        add_rel_maps(rel_maps, [CofkWorkSubjectMap(work=union_work, subject=s.subject,
-                                                   relationship_type=REL_TYPE_DEALS_WITH)
-                                for s in collect_work.subjects.all()])
+        for s in collect_work.subjects.all():
+            cwss = CofkWorkSubjectMap(work=union_work, subject=s.subject, relationship_type=REL_TYPE_DEALS_WITH)
+            cwss.update_current_user_timestamp(username)
+            subj_maps.append(cwss)
+
+        add_rel_maps(rel_maps, subj_maps)
 
         # Link locations
         loc_maps = link_location_to_work(entities=collect_work.destination, relationship_type=REL_TYPE_WAS_SENT_TO,
-                                         union_work=union_work, request=request)
+                                         union_work=union_work, username=username)
         loc_maps += link_location_to_work(entities=collect_work.origin, relationship_type=REL_TYPE_WAS_SENT_FROM,
-                                          union_work=union_work, request=request)
+                                          union_work=union_work, username=username)
         add_rel_maps(rel_maps, loc_maps)
 
         union_maps = []
@@ -192,7 +197,7 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
 
                 cmim = CofkManifInstMap(relationship_type=REL_TYPE_STORED_IN,
                                         manif=union_manif, inst=union_inst, inst_id=union_inst.institution_id)
-                cmim.update_current_user_timestamp(request.user.username)
+                cmim.update_current_user_timestamp(username)
                 union_maps.append(cmim)
 
         add_rel_maps(rel_maps, union_maps)
@@ -209,7 +214,7 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
 
             cwrm = CofkWorkResourceMap(relationship_type=REL_TYPE_IS_RELATED_TO, work=union_work,
                                        resource=union_resource, resource_id=union_resource.resource_id)
-            cwrm.update_current_user_timestamp(request.user.username)
+            cwrm.update_current_user_timestamp(username)
             res_maps.append(cwrm)
 
         add_rel_maps(rel_maps, res_maps)
@@ -235,6 +240,11 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
 
     accepted_works = len(collect_works)
 
+    if accepted_works > 1:
+        msg = f'Successfully accepted {accepted_works} works.'
+    else:
+        msg = 'Successfully accepted one work.'
+
     # Change state of upload and work
     upload.works_accepted += accepted_works
 
@@ -245,25 +255,30 @@ def accept_works(request, context: dict, upload: CofkCollectUpload):
 
     upload.save()
 
-    if accepted_works > 1:
-        messages.success(request, f'Successfully accepted {accepted_works} works.')
+    if request:
+        messages.success(request, msg)
     else:
-        messages.success(request, 'Successfully accepted one work.')
+        url = settings.UPLOAD_ROOT_URL + reverse('uploader:upload_works') + f'?upload_id={upload.pk}'
+        msg = (f'The upload "{upload.upload_name}" has been successfully processed.\n{msg}\n'
+               f'Click here: {url}')
+        email_utils.send_email(upload.uploader_email,
+                               subject='EMLO Works Accepted Result',
+                               content=msg)
 
     log.info(f'{upload}: created ' + ', '.join(log_msg))
 
 
-def reject_works(request, context: dict, upload: CofkCollectUpload):
-    collect_works = context['works_page'].paginator.object_list
+def reject_works(context: dict, upload: CofkCollectUpload, request):
+    filter_args = {'upload_status_id': 1}
 
-    if 'work_id' in request.POST:
-        collect_works = get_work(collect_works, request.GET['work_id'])
+    if 'work_id' in context and context['work_id'] != 'all':
+        filter_args['iwork_id'] = context['work_id']
 
-    # Skip any works that have already been reviewed
-    collect_works = [c for c in collect_works if c.upload_status_id == 1]
+    collect_works = context['works_page'].paginator.object_list.filter(**filter_args)
 
     if not collect_works:
-        messages.error(request, 'No works in upload can be deleted.')
+        msg = f'No works in the upload "{upload.upload_name}" can be deleted (was the page refreshed?).'
+        messages.error(request, msg)
         return
 
     for collect_work in collect_works:
@@ -281,4 +296,5 @@ def reject_works(request, context: dict, upload: CofkCollectUpload):
 
     upload.save()
 
+    messages.success(request, f'Successfully rejected {len(collect_works)} work/s')
     log.info(f'{upload}: rejected {len(collect_works)}')

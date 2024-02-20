@@ -1,6 +1,13 @@
-<fieldset style="max-width: 50%; margin-top: 1em;">
-    <h2>
-        {% if work or works_page.object_list|length == 1 %}
+<script>
+    let work_count = {{ works_page.paginator.count }};
+</script>
+
+<form method="post">
+    {% csrf_token %}
+
+<fieldset id="confirm" style="max-width: 50%; margin-top: 1em; display: none;">
+    <h2 id="confirm_title">
+        {% if works_page.object_list|length == 1 %}
             Accept the following work?
         {% else %}
             Accept the following {{ works_page.paginator.count }} works<!-- and any new people, places or repositories referenced by it-->?
@@ -25,10 +32,12 @@
             Change the default value for 'Source of data', and/or choose a catalogue from the drop-down list, then click Accept.</span></p>
     </div>
     <div>
-        {% if work %}
-        <input type="hidden" value="{{ work.id }}" name="work_id"/>
-        {% endif %}
-        <button class="btn inline_btn" name="confirm_accept">Confirm</button>
-        <button type="button" class="btn inline_btn" onclick="location.href='{% url 'uploader:upload_review' upload.upload_id %}'">Cancel</button>
+
+        <input type="hidden" value="all" name="work_id" id="work_id"/>
+        <input type="hidden" value="" name="action" id="action"/>
+
+        <button class="btn inline_btn" name="confirm">Confirm</button>
+        <button type="button" class="btn inline_btn" onclick="$('#confirm').hide(400);">Cancel</button>
     </div>
 </fieldset>
+</form>

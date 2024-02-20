@@ -30,16 +30,30 @@ If there are any issues with the upload they will be listed below.</p>
                     </small>
                 </p>
                 <h3>
-                    <span style="color: #f00;">&#x2717;</span> {{ report.file }}
+                    {% if report.async %}
+                        <span data-feather="clock" aria-hidden="true"></span>
+                    {% else %}
+                        <span style="color: #f00;">&#x2717;</span>
+                    {% endif %} {{ report.file }}
                 </h3>
+
+                {% if report.async %}
+                <p class="fw-700 search-result__date">
+                    <small>As this file is 1 mb or larger it will be processed separately, and you will be
+                        notified by email when it has finished.</small>
+                </p>
+                {% endif %}
+
                 {% if report.elapsed %}
                 <p class="fw-700 search-result__date">
                     <small>Processing time: {{ report.elapsed }}</small>
                 </p>
                 {% endif %}
+
                 <p class="fw-700 search-result__date">
                     <small>File size: {{ report.size }} kb</small>
                 </p>
+
                 {% if report.total_errors > 1 %}
                 <p class="fw-700 search-result__date">
                     <small>Errors: {{ report.total_errors }}</small>

@@ -10,6 +10,8 @@
         of {{ paginator.count | floatformat:'g' }} uploads</h2>
 </div>
 
+{% include "core/component/messages.html" %}
+
 {% include 'core/component/pagination.html' %}
 
 <table>

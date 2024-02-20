@@ -1,120 +1,36 @@
 import logging
 import os
 import re
-import time
 from typing import Iterable
-from zipfile import BadZipFile
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.files.storage import default_storage
 from django.core.paginator import Paginator
 from django.db.models import Q, Lookup
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView, TemplateView
+
+from django_q.tasks import AsyncTask
 
 from core import constant
 from core.form_label_maps import field_label_map
 from core.helper.query_serv import create_from_to_datetime, create_queries_by_field_fn_maps, \
     create_queries_by_lookup_field
 from core.helper.renderer_serv import create_table_search_results_renderer, RendererFactory
+from core.helper.uploader_serv import handle_upload
 from core.helper.view_serv import DefaultSearchView
 from core.models import CofkLookupCatalogue, CofkLookupDocumentType
 from uploader.forms import CofkCollectUploadForm, GeneralSearchFieldset
 from uploader.models import CofkCollectUpload
-from uploader.review import accept_works, reject_works, get_work
-from uploader.spreadsheet import CofkUploadExcelFile
+from uploader.review import accept_works, reject_works
 from uploader.uploader_serv import DisplayableCollectWork
-from uploader.validation import CofkExcelFileError
 
 log = logging.getLogger(__name__)
-
-
-def handle_upload(request) -> dict:
-    form = CofkCollectUploadForm(request.POST, request.FILES)
-    report = {}
-
-    if form.is_valid():
-        start = time.time()
-        new_upload = form.save(commit=False)
-        new_upload.upload_status_id = 1
-        new_upload.uploader_email = request.user.email
-        new_upload.upload_timestamp = timezone.now()
-        new_upload.save()
-
-        try:
-            file = default_storage.open(new_upload.upload_file.name, 'rb')
-        except OSError as oe:
-            report['total_errors'] = 1
-            report['errors'] = {'file': {'total': 1, 'error': [oe]}}
-            log.error(report['errors'])
-            return report
-        except Exception as e:
-            report['total_errors'] = 1
-            report['errors'] = 'Indeterminate error.'
-            log.error(e)
-            return report
-
-        log.info(f'User: {request.user.username} uploaded file: "{file}" ({new_upload})')
-
-        cuef = None
-        report = {
-            'file': request.FILES['upload_file']._name,
-            'time': new_upload.upload_timestamp,
-            'size': os.path.getsize(settings.MEDIA_ROOT + new_upload.upload_file.name) >> 10,
-            'upload_id': new_upload.upload_id, }
-
-        try:
-            cuef = CofkUploadExcelFile(new_upload, file)
-
-            elapsed = round(time.time() - start)
-
-            if not elapsed:
-                elapsed = '1 second'
-            else:
-                elapsed = f'{elapsed + 1} seconds'
-
-            report['elapsed'] = elapsed
-
-        except CofkExcelFileError as cmce:
-            errors = [str(cmce)]
-            report['total_errors'] = len(errors)
-            report['errors'] = {'file': {'total': len(errors), 'error': errors}}
-            log.error(cmce.msg)
-        except (FileNotFoundError, BadZipFile, OSError) as e:
-            report['total_errors'] = 1
-            report['errors'] = {'file': {'total': 1, 'error': ['Could not read the file.']}}
-            log.error(e)
-        except ValueError as ve:
-            report['total_errors'] = 1
-            report['errors'] = {'file': {'total': 1, 'error': [ve]}}
-            log.error(ve)
-        except Exception as e:
-            report['total_errors'] = 1
-            report['errors'] = 'Indeterminate error.'
-            log.error(e)
-
-        if cuef and cuef.errors:
-            log.error(f'Deleting upload {new_upload}')
-            new_upload.delete()
-            # TODO delete uploaded file
-            report['errors'] = cuef.errors
-            report['total_errors'] = cuef.total_errors
-        elif 'total_errors' in report:
-            log.error(f'Deleting upload {new_upload}')
-            new_upload.delete()
-        else:
-            new_upload.upload_name = request.FILES['upload_file']._name + ' ' + str(new_upload.upload_timestamp)
-            new_upload.uploader_email = request.user.email
-            new_upload.upload_username = f'{request.user.forename} {request.user.surname}'
-            new_upload.save()
-    else:
-        report['errors'] = 'Form invalid'
-
-    return report
 
 
 @method_decorator([login_required,
@@ -129,7 +45,7 @@ class UploadView(ListView):
     def get_queryset(self, **kwargs):
         qs = super().get_queryset(**kwargs)
         # Filter so only uploads Awaiting review or Partly reviewed are displayed
-        return qs.filter(upload_status_id__in=[1, 2])
+        return qs.filter(upload_status_id__in=[1, 2]).select_related('upload_status')
 
     def get(self, request, *args, **kwargs):
         response = super().get(self, request, *args, **kwargs)
@@ -155,11 +71,39 @@ class AddUploadView(TemplateView):
         return context
 
     def post(self, request, *args, **kwargs):
-        report = kwargs['report'] = handle_upload(request)
+        form = CofkCollectUploadForm(request.POST, request.FILES)
+        report = {}
 
-        # If workbook upload is successful redirect to review view
-        if 'total_errors' not in report:
-            return redirect(f'/upload/{report["upload_id"]}')
+        if form.is_valid():
+            filename = request.FILES['upload_file'].name
+            new_upload = form.save(commit=False)
+            new_upload.upload_status_id = 1
+            new_upload.upload_username = f'{request.user.forename} {request.user.surname}'
+            new_upload.uploader_email = request.user.email
+            new_upload.upload_timestamp = timezone.now()
+            new_upload.upload_name = filename + ' ' + str(new_upload.upload_timestamp)
+            new_upload.save()
+
+            size = os.path.getsize(settings.MEDIA_ROOT + new_upload.upload_file.name) >> 10
+
+            if size > settings.UPLOAD_ASYNCHRONOUS_FILESIZE_LIMIT:
+                task = AsyncTask('core.helper.uploader_serv.handle_upload', new_upload, True, filename)
+                task.run()
+
+                kwargs['report'] = {'async': True,
+                                    'file': filename,
+                                    'time': new_upload.upload_timestamp,
+                                    'size': size
+                                    }
+            else:
+                report = kwargs['report'] = handle_upload(request)
+
+                # If workbook upload is successful redirect to review view
+                if 'total_errors' not in report:
+                    return redirect(reverse('uploader:upload_review', args=[report["upload_id"]]))
+
+        else:
+            report['errors'] = 'Form invalid'
 
         return self.get(self, request, *args, **kwargs)
 
@@ -168,7 +112,7 @@ class AddUploadView(TemplateView):
 @permission_required(constant.PM_CHANGE_COLLECTWORK, raise_exception=True)
 def upload_review(request, upload_id, **kwargs):
     template_url = 'uploader/review.html'
-    upload = CofkCollectUpload.objects.filter(pk=upload_id).first()
+    upload: CofkCollectUpload = CofkCollectUpload.objects.filter(pk=upload_id).first()
 
     prefetch = ['authors', 'addressees', 'people_mentioned', 'languages', 'subjects', 'manifestations', 'resources',
                 'upload_status', 'addressees__iperson', 'authors__iperson', 'people_mentioned__iperson',
@@ -176,31 +120,57 @@ def upload_review(request, upload_id, **kwargs):
                 'origin__location', 'destination__location', 'origin__location__union_location',
                 'destination__location__union_location', 'languages__language_code']
 
+    per_page = request.GET.get('per_page', 1000)
+
+    try:
+        per_page = int(per_page)
+    except ValueError:
+        per_page = 1000
+
     works_paginator = Paginator(DisplayableCollectWork.objects.filter(upload=upload)
-                                .prefetch_related(*prefetch).order_by('pk'), 99999)
+                                .prefetch_related(*prefetch).order_by('pk'), per_page)
     page_number = request.GET.get('page', 1)
     works_page = works_paginator.get_page(page_number)
 
     doc_types = CofkLookupDocumentType.objects.values_list('document_type_code', 'document_type_desc')
+    catalogues = CofkLookupCatalogue.objects.all()
 
     # TODO, are all of these required for context?
     context = {'upload': upload,
                'works_page': works_page,
-               'doc_types': list(doc_types)
-    }
+               'doc_types': list(doc_types),
+               'username': request.user.username,
+               'catalogues': list(catalogues),
+               'per_page': per_page,
+               'per_page_options': [1000, 2500, 5000]
+               }
 
-    if 'accept_all' in request.POST or 'accept_work' in request.POST:
-        context['accept_work'] = True
-        context['catalogues'] = CofkLookupCatalogue.objects.all()
+    log.info(context)
 
-        work_id = request.POST['work_id'] if 'work_id' in request.POST else None
+    # copy variables onto context because we can't pickle the request object which means
+    # it can't be passed to Django Q2
+    for prop in ['work_id', 'accession_code', 'catalogue_code']:
+        if prop in request.POST:
+            context[prop] = request.POST[prop]
 
-        if work_id:
-            context['work'] = get_work(context['works_page'].paginator.object_list, work_id)[0]
-    elif 'confirm_accept' in request.POST:
-        accept_works(request, context, upload)
-    elif 'reject_all' in request.POST or 'reject_work' in request.POST:
-        reject_works(request, context, upload)
+    if 'confirm' in request.POST and 'action' in request.POST:
+        if request.POST['action'] == 'accept':
+            size = os.path.getsize(settings.MEDIA_ROOT + upload.upload_file.name) >> 10
+            accept_all = 'work_id' in request.POST and request.POST['work_id'] == 'all'
+
+            if accept_all and size > settings.UPLOAD_ASYNCHRONOUS_FILESIZE_LIMIT:
+                task = AsyncTask('uploader.review.accept_works', context, upload,
+                                 kwargs={'email_addresses': request.user.email})
+                task.run()
+
+                msg = (f'The upload {upload.upload_name} is being processed. '
+                       f'You will be notified of the results by email sent to {request.user.email}.')
+                messages.info(request, msg)
+                return redirect(reverse('uploader:upload_list'))
+            else:
+                accept_works(context, upload, request)
+        elif request.POST['action'] == 'reject':
+            reject_works(context, upload, request)
 
     return render(request, template_url, context)
 
@@ -256,9 +226,7 @@ def lookup_fn_date_of_work(lookup_fn, field_name, value):
     return query
 
 
-
 def lookup_fn_issues(value):
-
     cond_map = [
         (r'Date\s+of\s+work\s+INFERRED', lambda: Q(date_of_work_inferred=1)),
         (r'Date\s+of\s+work\s+UNCERTAIN', lambda: Q(date_of_work_uncertain=1)),
@@ -297,7 +265,7 @@ class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def search_field_fn_maps(self) -> dict[str, Lookup]:
         return create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                   'change_timestamp')
+                                       'change_timestamp')
 
     @property
     def entity(self) -> str:

@@ -3,7 +3,24 @@
 <div class="padding-top">
     <h1>Works</h1>
 
-    <p>Details of {{ works_page.paginator.count }} new work{{ works_page.paginator.count|pluralize:" was,s were" }} uploaded in this contribution.</p>
+    <form>
+        <p>
+            Details of {{ works_page.paginator.count }} new work{{ works_page.paginator.count|pluralize:" was,s were" }}
+            uploaded in this contribution.
+            You are viewing
+
+            <select name="per_page" style="width: unset;" onchange="this.form.submit();">
+                {% for per_page_option in per_page_options %}
+                    {% if per_page == per_page_option %}
+                        <option selected>{{ per_page_option }}</option>
+                    {% else %}
+                        <option>{{ per_page_option }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select> per page.
+
+        </p>
+    </form>
     <!--You can export details of the work{{ works|pluralize:",s"}} in this contribution to a spreadsheet <button>Export</button>-->
 
 </div>
@@ -12,34 +29,37 @@
 
 {% include "core/component/pagination.html" with entity='works' page_obj=works_page %}
 
-    {% for work in works_page %}
-        <div style="margin: 1em;">
-            <h3>Work {{ forloop.counter }} of {{ works_page.object_list|length }}</h3>
+{% for work in works_page %}
+<div style="margin: 1em;">
+    <h3>Work {{ forloop.counter0|add:works_page.start_index }} of {{ works_page.paginator.count }}</h3>
 
-            <!--<a href="#works">Works</a> - <a href="#people">People</a> - <a href="#repositories">Repositories</a> - --><a href="#top">Top of page</a> - <a href="#bottom">Bottom of page</a>
-        </div>
+    <!--<a href="#works">Works</a> - <a href="#people">People</a> - <a href="#repositories">Repositories</a> - --><a
+        href="#top">Top of page</a> - <a href="#bottom">Bottom of page</a>
+</div>
 
-        <table class="review">
-            <tr>
-                <td class="header">Status and possible actions</td>
-                <td><strong>{{ work.upload_status }}</strong> (Collect ID: {{ work.iwork_id }})<br/>
-                    {% if work.upload_status_id == 1 %}
-                    <form method="post">
-                        {% csrf_token %}
-                        <button name="accept_work" class="btn inline_btn">Accept</button> <button name="reject_work" class="btn inline_btn">Reject</button><br/>
-                        Note: confirmation will be required before Accept/Reject of work
-                        <input type="hidden" name="work_id" value="{{ work.id }}">
-                    </form>
-                    {% endif %}
-                </td>
-            </tr>
+<table class="review">
+    <tr>
+        <td class="header">Status and possible actions</td>
+        <td><strong>{{ work.upload_status }}</strong> (Collect ID: {{ work.iwork_id }})<br/>
+            {% if work.upload_status_id == 1 %}
+            <button name="accept_work" class="btn inline_btn" onclick="actionWork('accept', {{ work.iwork_id }});">
+                Accept
+            </button>
+            <button name="reject_work" class="btn inline_btn" onclick="actionWork('reject', {{ work.iwork_id }});">
+                Reject
+            </button>
+            <br/>
+            Note: confirmation will be required before Accept/Reject of work
+            {% endif %}
+        </td>
+    </tr>
 
-            {% include "uploader/component/work.html" %}
+    {% include "uploader/component/work.html" %}
 
-        </table>
+</table>
 
-    {% endfor %}
+{% endfor %}
 
-    <div id="bottom"></div>
+<div id="bottom"></div>
 
 {% include "core/component/pagination.html" with entity='works' page_obj=works_page %}
