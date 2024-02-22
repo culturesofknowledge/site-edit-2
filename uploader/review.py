@@ -264,9 +264,14 @@ def accept_works(context: dict, upload: CofkCollectUpload, request=None, email_a
         url = settings.UPLOAD_ROOT_URL + reverse('uploader:upload_works') + f'?upload_id={upload.pk}'
         msg = (f'The upload "{upload.upload_name}" has been successfully processed.\n{msg}\n'
                f'Click here: {url}')
-        email_utils.send_email(upload.uploader_email,
-                               subject='EMLO Works Accepted Result',
-                               content=msg)
+
+        try:
+            email_utils.send_email(upload.uploader_email,
+                                   subject='EMLO Works Accepted Result',
+                                   content=msg)
+        except Exception as e:
+            log.error('Sending email failed')
+            log.exception(e)
 
     log.info(f'{upload}: created ' + ', '.join(log_msg))
 

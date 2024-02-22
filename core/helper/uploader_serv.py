@@ -109,8 +109,12 @@ def handle_upload(upload: CofkCollectUpload, email_results: bool = False, file_n
             url = settings.UPLOAD_ROOT_URL + reverse('uploader:upload_review', args=[report["upload_id"]])
             content += f'\nYou can review the upload here: {url}'
 
-        email_utils.send_email(upload.uploader_email,
-                               subject='EMLO Uploader Result',
-                               content=content)
+        try:
+            email_utils.send_email(upload.uploader_email,
+                                   subject='EMLO Uploader Result',
+                                   content=content)
+        except Exception as e:
+            log.error('Sending email failed')
+            log.exception(e)
 
     return report

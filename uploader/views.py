@@ -158,7 +158,7 @@ def upload_review(request, upload_id, **kwargs):
 
             if accept_all and size > settings.UPLOAD_ASYNCHRONOUS_FILESIZE_LIMIT:
                 task = AsyncTask('uploader.review.accept_works', context, upload,
-                                 kwargs={'email_addresses': request.user.email})
+                                 email_addresses=request.user.email)
                 task.run()
 
                 msg = (f'The upload {upload.upload_name} is being processed. '
