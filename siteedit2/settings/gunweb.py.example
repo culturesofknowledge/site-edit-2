@@ -9,6 +9,7 @@ CSRF_TRUSTED_ORIGINS = ['http://192.168.56.10', ]
 
 # # used by export file in search page
 # EXPORT_ROOT_URL = 'http://your-emlo-edit-hostname'
+# UPLOAD_ROOT_URL = 'http://your-emlo-edit-hostname'
 
 
 ##### Email
