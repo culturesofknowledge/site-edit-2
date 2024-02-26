@@ -1,6 +1,5 @@
-
-<div id="places">
-    <h1>Places</h1>
+<div>
+    <h1 id="places">Places</h1>
 
     <p>Details of {{ places| length }} new location{{places|pluralize:",s"}}
         {{places|pluralize:"was, were"}} uploaded in this contribution. </p>
@@ -8,17 +7,18 @@
 
 {% for location in places %}
 
-    <p style="font-weight: bold; font-size: larger;">Places {{ forloop.counter }} of {{ places | length }}</p>
+<div style="margin: 1em;">
+    <h3>Places {{ forloop.counter }} of {{ places | length }}</h3>
+</div>
 
-    <div style="margin: 1em;">
-        <a href="#works">Works</a> - <a href="#people">People - <a href="#places">Places</a>
-    </div>
-    <table class="review">
-        <tr>
-            <td class="header">Location name</td>
-            <td>{{ location.location_name }}</td>
-        </tr>
-    </table>
-    <hr/>
+{% include "uploader/component/review_nav.html" %}
+
+<table class="review">
+    <tr>
+        <td class="header">Location name</td>
+        <td>{{ location.location_name }}</td>
+    </tr>
+</table>
+<hr/>
 
 {% endfor %}
