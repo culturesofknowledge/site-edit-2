@@ -65,14 +65,20 @@ class TestFileUpload(UploadIncludedTestCase):
              "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/", "Early Modern Letters Online test"]]
         filename = self.create_excel_file({'Work': work_data})
 
-        msg = 'A person with the name "newton" was listed in the Work sheet but is not present in the People sheet.'
+        msg = 'Person with the id 15257 was listed in the Work sheet but is not present in the People sheet.'
         msg_2 = 'Location with the id 400285 was listed in the Work sheet but is not present in the Places sheet.'
+        msg_3 = 'Person with the id 885 was listed in the Work sheet but is not present in the People sheet.'
+        msg_4 = 'Person with the id 22859 was listed in the Work sheet but is not present in the People sheet.'
+        msg_5 = 'Location with the id 782 was listed in the Work sheet but is not present in the Places sheet.'
 
         cuef = CofkUploadExcelFile(self.new_upload, filename)
 
         self.assertEqual(cuef.errors['work']['total'], 5)
         self.assertIn(msg, cuef.errors['work']['errors'][0]['errors'])
         self.assertIn(msg_2, cuef.errors['work']['errors'][0]['errors'])
+        self.assertIn(msg_3, cuef.errors['work']['errors'][0]['errors'])
+        self.assertIn(msg_4, cuef.errors['work']['errors'][0]['errors'])
+        self.assertIn(msg_5, cuef.errors['work']['errors'][0]['errors'])
 
     def test_successful_data(self):
         """

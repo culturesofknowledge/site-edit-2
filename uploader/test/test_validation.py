@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.utils import timezone
 
+from uploader.constants import MIN_YEAR, MAX_YEAR
 from uploader.entities.entity import CofkEntity
 from uploader.models import CofkCollectUpload, CofkCollectStatus
 
@@ -31,7 +32,7 @@ class TestValidation(TestCase):
         work = CofkEntity(self.new_upload, MockEntity('Work'))
 
         work.check_data_types({'date_of_work2_std_year': '1945'})
-        msg = 'date_of_work2_std_year: is 1945 but must be between 1500 and 1900'
+        msg = f'date_of_work2_std_year: is 1945 but must be between {MIN_YEAR} and {MAX_YEAR}'
         self.assertEqual(work.errors[1][0].message, msg)
 
     def test_bool(self):
