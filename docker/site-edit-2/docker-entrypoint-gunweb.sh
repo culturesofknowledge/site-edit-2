@@ -48,6 +48,10 @@ python manage.py makemigrations
 echo "Migrating"
 python manage.py migrate
 
+# Create cache table
+echo "Creating cache table"
+python manage.py createcachetable
+
 # Start server
 echo "Starting server"
 
