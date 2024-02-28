@@ -127,6 +127,9 @@ Procedure for data migration
 
 docker exec -it site-edit-2_gunicorn_web_1 python3 manage.py data_migration -d ouls -p password -u postgres -o 172.17.0.1 -t 15432
 
+# export audit data from old db
+pg_dump --host 172.17.0.1 --port 15432 -d ouls --password  --username postgres --data-only --table 'cofk_union_audit_literal' > old_audit_data.sql
+
 # copy audit data to new db by sql
 psql --host localhost --port 25432 -d postgres --password  --username postgres  < old_audit_data.sql
 ```
