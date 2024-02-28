@@ -8,9 +8,9 @@
     {% endif %}
 
         {% if person.iperson.union_iperson %}
-        {{ person.iperson.union_iperson.foaf_name }}
+        <u>{{ person.iperson.union_iperson.foaf_name }}</u>
         {% else %}
-        {{ person.iperson.primary_name }} (collect)
+        <u>{{ person.iperson.primary_name }} (collect)</u>
         {% endif %}
 
     {% if people|length > 1 %}

@@ -2,7 +2,7 @@
 
 <tr>
     <td class="header">Date of work</td>
-    <td>{{ work.display_date }}
+    <td><u>{{ work.display_date }}</u><br/>
 
         {% if work.date_of_work_as_marked %}
         <br/>As marked: {{ work.date_of_work_as_marked }}
@@ -49,7 +49,7 @@
     <td>
         {% for origin in work.origin.all %}
 
-        {{ origin.location }}
+        <u>{{ origin.location }}</u><br/>
 
         {% endfor %}
 
@@ -92,7 +92,7 @@
     <td>
         {% for destination in work.destination.all %}
 
-        {{ destination.location }}
+        <u>{{ destination.location }}</u><br/>
 
         {% endfor %}
 
