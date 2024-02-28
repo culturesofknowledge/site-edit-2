@@ -1,4 +1,4 @@
-<div>
+<div class="padding-top">
     <h1 id="places">Places</h1>
 
     <p>Details of {{ places| length }} new location{{places|pluralize:",s"}}
@@ -19,6 +19,5 @@
         <td>{{ location.location_name }}</td>
     </tr>
 </table>
-<hr/>
 
 {% endfor %}
