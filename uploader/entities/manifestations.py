@@ -45,7 +45,11 @@ class CofkManifestations(CofkEntity, ABC):
                                    f' but is not present in the Repository sheet.')
 
             if 'printed_edition_notes' in man_dict:
-                man_dict['printed_edition_details'] = man_dict.pop('printed_edition_notes')
+                if 'manifestation_notes' in man_dict:
+                    man_dict['manifestation_notes'] += ' ' + man_dict.pop('printed_edition_notes')
+                else:
+                    man_dict['manifestation_notes'] = man_dict.pop('printed_edition_notes')
+
             # TODO can this be right?
             if 'manifestation_type_p' in man_dict:
                 man_dict['manifestation_type'] = man_dict.pop('manifestation_type_p')
