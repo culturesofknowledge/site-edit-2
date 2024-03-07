@@ -30,11 +30,10 @@ orgline1b="CSRF_TRUSTED_ORIGINS = ['http://192.168.56.10', 'http://localhost', '
 sed -i "s|$orgline1a|$orgline1b|g" gunweb.py
 
 cd ../../docker/site-edit-2/
-cp gunweb.env.example .gunweb.env
+cp gunweb.env.example .env
 
-ln -sf .gunweb.env .env    # .env for `db` service
-# edit variable in .gunweb.env if needed
-# vi .gunweb.env
+# edit variable in .env if needed
+# vi .env
 
 
 # run testing

@@ -26,11 +26,10 @@ vi gunweb.py
 
 
 cd ../../docker/site-edit-2/
-cp gunweb.env.example .gunweb.env
-ln -sf .gunweb.env .env    # .env for `db` service
-# edit variable in .gunweb.env if needed
+cp gunweb.env.example .env
+# edit variable in .env if needed
 # e.g. `DJANGO_SECRET_KEY`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, 
-vi .gunweb.env
+vi .env
 
 
 # run docker 
@@ -73,7 +72,7 @@ Q & A
 
 ### improve throughput of web server
 
-* add number of working `GUN_NUM_WORKERS` in `.gunweb.env`
+* add number of working `GUN_NUM_WORKERS` in `.env`
 
 ### How to set up email service ?
 
