@@ -570,6 +570,18 @@ def _val_handler_manif__work_id(row: dict, conn):
     return row
 
 
+def _val_handler_image_path(row: dict, conn) -> dict:
+    org_paths = [
+        'https://emlo-edit.bodleian.ox.ac.uk/culturesofknowledge/images/'
+        'http://emlo-edit.bodleian.ox.ac.uk/culturesofknowledge/images/'
+    ]
+    for p in org_paths:
+        if row['image_filename'].startswith(p):
+            row['image_filename'] = row['image_filename'].replace(p, '/media/img/')
+
+    return row
+
+
 def clone_recref_simple(conn,
                         left_field: ForwardManyToOneDescriptor,
                         right_field: ForwardManyToOneDescriptor):
@@ -724,7 +736,8 @@ def data_migration(user, password, database, host, port):
     clone_rows_by_model_class(conn, CofkUnionOrgType)  # Static lookup table
     clone_rows_by_model_class(conn, CofkUnionResource)
     clone_rows_by_model_class(conn, CofkUnionComment)
-    clone_rows_by_model_class(conn, CofkUnionImage)
+    clone_rows_by_model_class(conn, CofkUnionImage,
+                              col_val_handler_fn_list=[_val_handler_image_path])
     clone_rows_by_model_class(conn, CofkUnionSubject)
     clone_rows_by_model_class(conn, CofkUnionRoleCategory)
     clone_rows_by_model_class(conn, CofkUnionRelationshipType, seq_name=None)
