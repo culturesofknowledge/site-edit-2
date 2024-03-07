@@ -1,12 +1,15 @@
 {% load utils  %}
 
 <div class="padding-top">
-    <h1>Works</h1>
+    <h1 id="works">Works</h1>
 
     <form>
         <p>
             Details of {{ works_page.paginator.count }} new work{{ works_page.paginator.count|pluralize:" was,s were" }}
             uploaded in this contribution.
+
+            {% if works_page.paginator.count > per_page %}
+
             You are viewing
 
             <select name="per_page" style="width: unset;" onchange="this.form.submit();">
@@ -18,6 +21,8 @@
                     {% endif %}
                 {% endfor %}
             </select> per page.
+
+            {% endif %}
 
         </p>
     </form>
@@ -33,8 +38,8 @@
 <div style="margin: 1em;">
     <h3>Work {{ forloop.counter0|add:works_page.start_index }} of {{ works_page.paginator.count }}</h3>
 
-    <!--<a href="#works">Works</a> - <a href="#people">People</a> - <a href="#repositories">Repositories</a> - --><a
-        href="#top">Top of page</a> - <a href="#bottom">Bottom of page</a>
+    {% include "uploader/component/review_nav.html" %}
+
 </div>
 
 <table class="review">
@@ -59,7 +64,5 @@
 </table>
 
 {% endfor %}
-
-<div id="bottom"></div>
 
 {% include "core/component/pagination.html" with entity='works' page_obj=works_page %}

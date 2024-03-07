@@ -26,7 +26,7 @@ from core.helper.uploader_serv import handle_upload
 from core.helper.view_serv import DefaultSearchView
 from core.models import CofkLookupCatalogue, CofkLookupDocumentType
 from uploader.forms import CofkCollectUploadForm, GeneralSearchFieldset
-from uploader.models import CofkCollectUpload
+from uploader.models import CofkCollectUpload, CofkCollectPerson, CofkCollectLocation
 from uploader.review import accept_works, reject_works
 from uploader.uploader_serv import DisplayableCollectWork
 
@@ -134,12 +134,16 @@ def upload_review(request, upload_id, **kwargs):
 
     doc_types = CofkLookupDocumentType.objects.values_list('document_type_code', 'document_type_desc')
     catalogues = CofkLookupCatalogue.objects.all()
+    people = CofkCollectPerson.objects.filter(upload=upload, union_iperson__isnull=True)
+    places = CofkCollectLocation.objects.filter(upload=upload, union_location__isnull=True)
 
     # TODO, are all of these required for context?
-    context = {'upload': upload,
+    context = {'username': request.user.username,
+               'upload': upload,
                'works_page': works_page,
+               'people': people,
+               'places': places,
                'doc_types': list(doc_types),
-               'username': request.user.username,
                'catalogues': list(catalogues),
                'per_page': per_page,
                'per_page_options': [1000, 2500, 5000]

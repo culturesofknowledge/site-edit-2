@@ -9,11 +9,14 @@
     <span id="upload-summary">Status: {{ upload.upload_status }} | Number of works uploaded: {{ upload.total_works }} | Accepted: {{ upload.works_accepted}} | Rejected: {{ upload.works_rejected}}</span>
 
     <div class="padding-top">
-        Back to list of contributions <button type="button" class="btn inline_btn" onclick="location.href='/upload'">Back</button>
+        Back to list of contributions
+        <button type="button" class="btn inline_btn" onclick="location.href='/upload'">Back</button>
 
-        Accept entire contribution <button class="btn inline_btn" name="accept_all" onclick="actionWork('accept', 'all');">Accept all</button>
+        Accept entire contribution
+        <button class="btn inline_btn" name="accept_all" onclick="actionWork('accept', 'all');">Accept all</button>
 
-        Reject entire contribution <button class="btn inline_btn" name="reject_all" onclick="actionWork('reject', 'all');">Reject all</button>
+        Reject entire contribution
+        <button class="btn inline_btn" name="reject_all" onclick="actionWork('reject', 'all');">Reject all</button>
     </div>
     <em>Note: confirmation will be required before Accept/Reject of entire contribution.</em>
 </div>
@@ -22,24 +25,14 @@
 
 {% include "uploader/component/confirm.html" %}
 
-{% if work %}
-    <table class="review">
-        <tr>
-            <td class="header">ID</td>
-            <td>{{ work.iwork_id }}</td>
-        </tr>
-        {% include "uploader/component/work.html" %}
-    </table>
-{% else %}
-    {% include "uploader/component/works.html" %}
-{% endif %}
+{% include "uploader/component/works.html" %}
 
 {% if people %}
-    {% include "uploader/component/people.html" %}
+{% include "uploader/component/people.html" %}
 {% endif %}
 
 {% if places %}
-    {% include "uploader/component/places.html" %}
+{% include "uploader/component/places.html" %}
 {% endif %}
 
 <!--
@@ -49,6 +42,8 @@
 
 {% endfor %}
 -->
+
+<div id="bottom"></div>
 
 <script src="{% static 'core/js/uploader.js' %}"></script>
 

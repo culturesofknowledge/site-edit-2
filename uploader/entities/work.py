@@ -134,11 +134,11 @@ class CofkWork(CofkEntity):
                 people_list.append(related_person)
             else:
                 # Person not present in people sheet
-                if _id is None:
+                if _id is not None:
                     self.add_error(f'Person with the id {_id} was listed in the {self.sheet.name} sheet but is'
                                    f' not present in the People sheet.')
                 else:
-                    self.add_error(f'A person with the name "{name}" was listed in the {self.sheet.name} sheet'
+                    self.add_error(f'A new person with the name "{name}" was listed in the {self.sheet.name} sheet'
                                    f' but is not present in the People sheet.')
 
     def process_locations(self, work: CofkCollectWork, location_list: List[Any], location_model: Type[models.Model],

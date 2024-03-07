@@ -1,0 +1,28 @@
+{% if people|length > 1 %}
+<ul>
+{% endif %}
+
+    {% for person in people %}
+    {% if people|length > 1 %}
+    <li>
+    {% endif %}
+
+        {% if person.iperson.union_iperson %}
+        <u>{{ person.iperson.union_iperson.foaf_name }}</u>
+        {% else %}
+        <u>{{ person.iperson.primary_name }} (collect)</u>
+        {% endif %}
+
+    {% if people|length > 1 %}
+    </li>
+    {% else %}
+    <br/>
+    {% endif %}
+
+    {% endfor %}
+{% if people|length > 1 %}
+</ul>
+
+{% else %}
+<br/>
+{% endif %}

@@ -2,22 +2,22 @@
 
 <tr>
     <td class="header">Date of work</td>
-    <td>{{ work.display_date }}
+    <td><u>{{ work.display_date }}</u><br/>
 
         {% if work.date_of_work_as_marked %}
-            <br/>As marked: {{ work.date_of_work_as_marked }}
+        <br/>As marked: {{ work.date_of_work_as_marked }}
         {% endif %}
 
         {% if work.original_calendar %}
-            <br/>Original calendar: {{ work.display_original_calendar }}
+        <br/>Original calendar: {{ work.display_original_calendar }}
         {% endif %}
 
         {% if work.display_date_issues %}
-            <br/>{{ work.display_date_issues }}
+        <br/>{{ work.display_date_issues }}
         {% endif %}
 
         {% if work.notes_on_date_of_work %}
-            <br/>Notes on date: {{ work.notes_on_date_of_work }}
+        <br/>Notes on date: {{ work.notes_on_date_of_work }}
         {% endif %}
 
     </td>
@@ -25,41 +25,19 @@
 <tr>
     <td class="header">Author{{ work.authors.all|pluralize:",s" }}</td>
     <td>
-        {% if work.authors.all|length > 1 %}
-            <ul>
-        {% endif %}
 
-        {% for author in work.authors.all %}
-            {% if work.authors.all|length > 1 %}
-                <li>
-            {% endif %}
-            {% if author.iperson.union_iperson %}
-                {{ author.iperson.union_iperson.foaf_name }}
-            {% else %}
-                {{ author.iperson.primary_name }}
-            {% endif %}
-            {% if work.authors.all|length > 1 %}
-                </li>
-            {% else %}
-                <br/>
-            {% endif %}
-        {% endfor %}
-        {% if work.authors.all|length > 1 %}
-            </ul>
-        {% else %}
-        <br/>
-        {% endif %}
+        {% include "uploader/component/list_person.html" with people=work.authors.all %}
 
         {% if work.authors_as_marked %}
-            As marked: {{ work.authors_as_marked }}
+        As marked: {{ work.authors_as_marked }}<br/>
         {% endif %}
 
         {% if work.display_authors_issues %}
-            <br/>{{ work.display_authors_issues }}
+        {{ work.display_authors_issues }}<br/>
         {% endif %}
 
         {% if work.notes_on_authors %}
-            <br/>Notes on author{{ authors|pluralize:",s" }}: {{ work.notes_on_authors }}
+        Notes on author{{ work.authors.all|pluralize:",s" }}: {{ work.notes_on_authors }}<br/>
         {% endif %}
     </td>
 </tr>
@@ -71,16 +49,16 @@
     <td>
         {% for origin in work.origin.all %}
 
-            {{ origin.location }}
+        <u>{{ origin.location }}</u><br/>
 
         {% endfor %}
 
         {% if work.origin_as_marked %}
-            <br/>As marked: {{ work.origin_as_marked }}
+        <br/>As marked: {{ work.origin_as_marked }}
         {% endif %}
 
         {% if work.display_origin_issues %}
-            <br/>{{ work.display_origin_issues }}
+        <br/>{{ work.display_origin_issues }}
         {% endif %}
     </td>
 </tr>
@@ -89,44 +67,20 @@
 
 <tr>
     <td class="header">Addressee{{ work.addressees.all|pluralize:",s" }}</td>
-    <td>{% if work.addressees.all|length > 1 %}
-            <ul>
-        {% endif %}
+    <td>
 
-        {% for addressee in work.addressees.all %}
-            {% if work.addressees|length > 1 %}
-                <li>
-            {% endif %}
-
-            {% if addressee.iperson.union_iperson %}
-                {{ addressee.iperson.union_iperson.foaf_name }}
-            {% else %}
-                {{ addressee.iperson.primary_name }}<br/>
-            {% endif %}
-
-            {% if work.addressees.all|length > 1 %}
-                </li>
-            {% else %}
-                <br/>
-            {% endif %}
-        {% endfor %}
-
-        {% if work.addressees.all|length > 1 %}
-        </ul>
-        {% else %}
-        <br/>
-        {% endif %}
+        {% include "uploader/component/list_person.html" with people=work.addressees.all %}
 
         {% if work.addressees_as_marked %}
-            <br/>As marked: {{ work.addressees_as_marked }}
+        As marked: {{ work.addressees_as_marked }}<br/>
         {% endif %}
 
         {% if work.display_addressees_issues %}
-            <br/>{{ work.display_addressees_issues }}
+        {{ work.display_addressees_issues }}<br/>
         {% endif %}
 
         {% if work.notes_on_addressees %}
-            <br/>Notes on author{{ authors|pluralize:",s" }}: {{ work.notes_on_addressees }}
+        Notes on addressee{{ work.addressees.all|pluralize:",s" }}: {{ work.notes_on_addressees }}<br/>
         {% endif %}
     </td>
 </tr>
@@ -138,16 +92,16 @@
     <td>
         {% for destination in work.destination.all %}
 
-            {{ destination.location }}
+        <u>{{ destination.location }}</u><br/>
 
         {% endfor %}
 
         {% if work.destination_as_marked %}
-            <br/>As marked: {{ work.destination_as_marked }}
+        <br/>As marked: {{ work.destination_as_marked }}
         {% endif %}
 
         {% if work.display_destination_issues %}
-            <br/>{{ work.display_destination_issues }}
+        <br/>{{ work.display_destination_issues }}
         {% endif %}
     </td>
 </tr>
@@ -158,7 +112,7 @@
 <tr>
     <td class="header">Languages</td>
     <td>{% for language in work.languages.all %}
-            {{ language }}<br/>
+        {{ language }}<br/>
         {% endfor %}
     </td>
 </tr>
@@ -192,27 +146,23 @@
 </tr>
 {% endif %}
 
-{% if work.mentioned.all %}
+{% if work.people_mentioned.all %}
 <tr>
-    <td class="header">{{ work.mentioned.all|pluralize:"Person,People" }} mentioned</td>
-    <td>{% for mention in work.mentioned.all %}
-            {% if mention.iperson.union_iperson %}
-                {{ mention.iperson.union_iperson.foaf_name }}<br/>
-            {% else %}
-                {{ mention }}<br/>
-            {% endif %}
-        {% endfor %}
+    <td class="header">{{ work.people_mentioned.all|pluralize:"Person,People" }} mentioned</td>
+    <td>
+
+        {% include "uploader/component/list_person.html" with people=work.people_mentioned.all %}
 
         {% if work.mentioned_as_marked %}
-            <br/>As marked: {{ work.mentioned_as_marked }}
+        As marked: {{ work.mentioned_as_marked }}<br/>
         {% endif %}
 
         {% if work.display_mentioned_issues %}
-            <br/>{{ work.display_mentioned_issues }}
+        {{ work.display_mentioned_issues }}<br/>
         {% endif %}
 
         {% if work.notes_on_people_mentioned %}
-            <br/>Notes on {{ work.mentioned|pluralize:"person,people" }} mentioned: {{ work.notes_on_people_mentioned }}
+        Notes on {{ work.people_mentioned.all|pluralize:"person,people" }} mentioned: {{ work.notes_on_people_mentioned }}<br/>
         {% endif %}
     </td>
 </tr>
@@ -260,6 +210,7 @@
     <td>{{ work.notes_on_letter }}</td>
 </tr>
 {% endif %}
+
 {% if work.editors_notes %}
 <tr>
     <td class="header">Project editors' notes</td>
@@ -271,9 +222,9 @@
 <tr>
     <td class="header">Related resources</td>
     <td>{% for resource in work.resources.all %}
-            Description: {{ resource.resource_name }}<br/>
-            URL: <a href="{{ resource.resource_url }}">{{ resource.resource_url }}</a><br/>
-            Details: {{ resource.resource_details }}<br/>
+        Description: {{ resource.resource_name }}<br/>
+        URL: <a href="{{ resource.resource_url }}">{{ resource.resource_url }}</a><br/>
+        Details: {{ resource.resource_details }}<br/>
         {% endfor %}
     </td>
 </tr>
