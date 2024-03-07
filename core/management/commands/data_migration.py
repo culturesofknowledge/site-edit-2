@@ -543,6 +543,7 @@ def _val_handler_collect_institution(row: dict, conn) -> dict:
         row['institution_id'] = pk
     return row
 
+
 def _val_handler_collect_manifestation(row: dict, conn) -> dict:
     upload_id = row['upload_id']
 
@@ -642,8 +643,8 @@ def create_destination_and_origin_records():
     origins = []
     destinations = []
 
-    qs = CofkCollectWork.objects\
-        .filter(origin_id__isnull= False)\
+    qs = CofkCollectWork.objects \
+        .filter(origin_id__isnull=False) \
         .exclude(pk__in=list(CofkCollectOriginOfWork.objects.values_list('iwork_id', flat=True))).all()
 
     for w in qs:
@@ -671,8 +672,8 @@ def create_destination_and_origin_records():
                      time.time() - start_sec, ' created records')
     start_sec = time.time()
 
-    qs = CofkCollectWork.objects\
-        .filter(destination_id__isnull=False)\
+    qs = CofkCollectWork.objects \
+        .filter(destination_id__isnull=False) \
         .exclude(pk__in=list(CofkCollectDestinationOfWork.objects.values_list('iwork_id', flat=True))).all()
 
     for w in qs:
@@ -686,7 +687,7 @@ def create_destination_and_origin_records():
 
         if w.destination_id not in location_primary_map:
             destination_id = \
-            CofkCollectLocation.objects.filter(location_id=w.destination_id).values_list('pk').first()[0]
+                CofkCollectLocation.objects.filter(location_id=w.destination_id).values_list('pk').first()[0]
             location_primary_map[w.destination_id] = destination_id
         else:
             destination_id = location_primary_map[w.destination_id]
