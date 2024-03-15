@@ -543,6 +543,7 @@ def _val_handler_collect_institution(row: dict, conn) -> dict:
         row['institution_id'] = pk
     return row
 
+
 def _val_handler_collect_manifestation(row: dict, conn) -> dict:
     upload_id = row['upload_id']
 
@@ -566,6 +567,18 @@ def _val_handler_manif__work_id(row: dict, conn):
         row['work_id'] = results[0][0]
     elif len(results) > 1:
         log.warning(f'one manif should have one work relationship {vals} -- {results} ')
+    return row
+
+
+def _val_handler_image_path(row: dict, conn) -> dict:
+    org_paths = [
+        'https://emlo-edit.bodleian.ox.ac.uk/culturesofknowledge/images/'
+        'http://emlo-edit.bodleian.ox.ac.uk/culturesofknowledge/images/'
+    ]
+    for p in org_paths:
+        if row['image_filename'].startswith(p):
+            row['image_filename'] = row['image_filename'].replace(p, '/media/img/')
+
     return row
 
 
@@ -642,8 +655,8 @@ def create_destination_and_origin_records():
     origins = []
     destinations = []
 
-    qs = CofkCollectWork.objects\
-        .filter(origin_id__isnull= False)\
+    qs = CofkCollectWork.objects \
+        .filter(origin_id__isnull=False) \
         .exclude(pk__in=list(CofkCollectOriginOfWork.objects.values_list('iwork_id', flat=True))).all()
 
     for w in qs:
@@ -671,8 +684,8 @@ def create_destination_and_origin_records():
                      time.time() - start_sec, ' created records')
     start_sec = time.time()
 
-    qs = CofkCollectWork.objects\
-        .filter(destination_id__isnull=False)\
+    qs = CofkCollectWork.objects \
+        .filter(destination_id__isnull=False) \
         .exclude(pk__in=list(CofkCollectDestinationOfWork.objects.values_list('iwork_id', flat=True))).all()
 
     for w in qs:
@@ -686,7 +699,7 @@ def create_destination_and_origin_records():
 
         if w.destination_id not in location_primary_map:
             destination_id = \
-            CofkCollectLocation.objects.filter(location_id=w.destination_id).values_list('pk').first()[0]
+                CofkCollectLocation.objects.filter(location_id=w.destination_id).values_list('pk').first()[0]
             location_primary_map[w.destination_id] = destination_id
         else:
             destination_id = location_primary_map[w.destination_id]
@@ -723,7 +736,8 @@ def data_migration(user, password, database, host, port):
     clone_rows_by_model_class(conn, CofkUnionOrgType)  # Static lookup table
     clone_rows_by_model_class(conn, CofkUnionResource)
     clone_rows_by_model_class(conn, CofkUnionComment)
-    clone_rows_by_model_class(conn, CofkUnionImage)
+    clone_rows_by_model_class(conn, CofkUnionImage,
+                              col_val_handler_fn_list=[_val_handler_image_path])
     clone_rows_by_model_class(conn, CofkUnionSubject)
     clone_rows_by_model_class(conn, CofkUnionRoleCategory)
     clone_rows_by_model_class(conn, CofkUnionRelationshipType, seq_name=None)

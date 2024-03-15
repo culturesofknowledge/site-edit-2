@@ -33,3 +33,15 @@ services:
       - "4444:4444"
       - "5959:5900"
 
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=name@example.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:
+      - "5050:80"
+    links:
+      - db
+    depends_on:
+      - db
+

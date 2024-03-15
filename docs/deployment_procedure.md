@@ -26,15 +26,14 @@ vi gunweb.py
 
 
 cd ../../docker/site-edit-2/
-cp gunweb.env.example .gunweb.env
-ln -sf .gunweb.env .env    # .env for `db` service
-# edit variable in .gunweb.env if needed
+cp gunweb.env.example .env
+# edit variable in .env if needed
 # e.g. `DJANGO_SECRET_KEY`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, 
-vi .gunweb.env
+vi .env
 
 
 # run docker 
-docker-compose -f docker-compose.yml -f docker-compose-gunweb.yml up -d --build db gunicorn_web nginx
+docker-compose -f docker-compose.yml -f docker-compose-gunweb.yml up -d --build db gunicorn_web nginx django-q
 # -d for run in background 
 # --build to build docker every time 
 
@@ -73,7 +72,7 @@ Q & A
 
 ### improve throughput of web server
 
-* add number of working `GUN_NUM_WORKERS` in `.gunweb.env`
+* add number of working `GUN_NUM_WORKERS` in `.env`
 
 ### How to set up email service ?
 
@@ -126,6 +125,9 @@ Procedure for data migration
 # after web server is up
 
 docker exec -it site-edit-2_gunicorn_web_1 python3 manage.py data_migration -d ouls -p password -u postgres -o 172.17.0.1 -t 15432
+
+# export audit data from old db
+pg_dump --host 172.17.0.1 --port 15432 -d ouls --password  --username postgres --data-only --table 'cofk_union_audit_literal' > old_audit_data.sql
 
 # copy audit data to new db by sql
 psql --host localhost --port 25432 -d postgres --password  --username postgres  < old_audit_data.sql

@@ -27,9 +27,6 @@ DJANGO_WSGI_MODULE=siteedit2.wsgi
 echo "Starting $NAME as `whoami`"
 # Activate the virtual environment
 
-# should be export by .gunweb.env
-# export DJANGO_SETTINGS_MODULE=siteedit2.settings.gunweb
-
 # Create the run directory if it doesn't exist
 RUNDIR=$(dirname $SOCKFILE)
 test -d $RUNDIR || mkdir -p $RUNDIR
