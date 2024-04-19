@@ -50,12 +50,14 @@ def create_union_work(union_work_dict: dict, collect_work: CofkCollectWork):
 def link_person_to_work(entities: QuerySet, relationship_type: str, union_work: CofkUnionWork, username: str) \
         -> List[CofkWorkPersonMap]:
     person_maps = []
-    for person in entities.all():
+    for person in entities.select_related('iperson').all():
         if person.iperson.union_iperson is None:
             union_iperson = CofkUnionPerson(foaf_name=person.iperson.primary_name)
             union_iperson.person_id = create_person_id(union_iperson.iperson_id)
+            union_iperson.update_current_user_timestamp(username)
             union_iperson.save()
             person.iperson.union_iperson = union_iperson
+            person.iperson.save()
             log.info(f'Created new union person {union_iperson}')
 
         cwpm = CofkWorkPersonMap(relationship_type=relationship_type,
@@ -70,11 +72,13 @@ def link_person_to_work(entities: QuerySet, relationship_type: str, union_work: 
 def link_location_to_work(entities: QuerySet, relationship_type: str, union_work: CofkUnionWork, username: str) \
         -> List[CofkWorkLocationMap]:
     location_maps = []
-    for origin_or_dest in entities.all():
+    for origin_or_dest in entities.select_related('location').all():
         if origin_or_dest.location.union_location is None:
             union_location = CofkUnionLocation(location_name=origin_or_dest.location.location_name)
+            union_location.update_current_user_timestamp(username)
             union_location.save()
             origin_or_dest.location.union_location = union_location
+            origin_or_dest.save()
             log.info(f'Created new union location {union_location}')
 
         cwlm = CofkWorkLocationMap(relationship_type=relationship_type,

@@ -99,12 +99,14 @@ def handle_upload(upload: CofkCollectUpload, email_results: bool = False, file_n
             for sheet in report['errors']:
                 sheet_errors = report['errors'][sheet]['total']
                 content += f'\n{sheet} sheet had {sheet_errors} errors\n'
-                for row in report['errors'][sheet]['errors']:
-                    row_number = row['row']
-                    content += f'\tRow {row_number}:\n'
 
-                    for error in row['errors']:
-                        content += f'\t\t— {error}\n'
+                if 'errors' in report['errors'][sheet]:
+                    for row in report['errors'][sheet]['errors']:
+                        row_number = row['row']
+                        content += f'\tRow {row_number}:\n'
+
+                        for error in row['errors']:
+                            content += f'\t\t— {error}\n'
         else:
             url = settings.UPLOAD_ROOT_URL + reverse('uploader:upload_review', args=[report["upload_id"]])
             content += f'\nYou can review the upload here: {url}'

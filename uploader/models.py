@@ -4,16 +4,16 @@ from manifestation.manif_serv import get_doctype_desc
 
 
 class CofkCollectStatus(models.Model):
-    '''
+    """
     1    Awaiting review
     2    Partly reviewed
     3    Review complete
     4    Accepted and saved into main database
     5    Rejected
-    ''' 
+    """
     status_id = models.AutoField(primary_key=True)
     status_desc = models.CharField(max_length=100)
-    editable = models.IntegerField(null=False, default=1)  # TODO schema changed for current system
+    editable = models.IntegerField(null=False, default=1)  # schema changed
 
     class Meta:
         db_table = 'cofk_collect_status'
@@ -50,7 +50,7 @@ class CofkCollectUpload(models.Model):
     uploader_email = models.CharField(max_length=250, default='')
     _id = models.CharField(max_length=32, blank=True, null=True)
     upload_name = models.CharField(max_length=254, blank=True, null=True)
-    upload_file = models.FileField(upload_to=user_directory_path)  # TODO schema changed for current system
+    upload_file = models.FileField(upload_to=user_directory_path, blank=True, null=True)  # schema changed
 
     class Meta:
         db_table = 'cofk_collect_upload'
@@ -60,8 +60,7 @@ class CofkCollectToolSession(models.Model):
     session_id = models.AutoField(primary_key=True)
     session_timestamp = models.DateTimeField()
     session_code = models.TextField(unique=True, blank=True, null=True)
-    username = models.ForeignKey(CofkCollectToolUser, models.SET_NULL, db_column='username', blank=True,
-                                 null=True)
+    username = models.ForeignKey(CofkCollectToolUser, models.SET_NULL, db_column='username', blank=True, null=True)
 
     class Meta:
         db_table = 'cofk_collect_tool_session'
@@ -307,10 +306,10 @@ class CofkCollectInstitutionResource(models.Model):
 
 
 class CofkCollectWork(models.Model):
-    '''
+    """
     The columns destination_id and origin_id are redundant as, even though they link to CofkCollectOriginOfWork and
-     CofkCollectDestinationOfWork, Django ORM already provides a link to them via related name.
-    '''
+    CofkCollectDestinationOfWork, Django ORM already provides a link to them via related name.
+    """
     upload = models.ForeignKey('CofkCollectUpload', models.CASCADE, related_name='upload')
     iwork_id = models.IntegerField()
     union_iwork = models.ForeignKey('work.CofkUnionWork', models.SET_NULL, blank=True, null=True,
@@ -427,7 +426,7 @@ class CofkCollectLanguageOfWork(models.Model):
     upload = models.ForeignKey('uploader.CofkCollectUpload', models.CASCADE)
     language_of_work_id = models.IntegerField()
     iwork = models.ForeignKey('uploader.CofkCollectWork', models.CASCADE, related_name='languages')
-    language_code = models.ForeignKey('core.Iso639LanguageCode', models.CASCADE, db_column='language_code', )
+    language_code = models.ForeignKey('core.Iso639LanguageCode', models.CASCADE, db_column='language_code')
     _id = models.CharField(max_length=32, blank=True, null=True)
 
     def __str__(self):

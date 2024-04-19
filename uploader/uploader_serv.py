@@ -51,7 +51,6 @@ class DisplayableCollectWork(CofkCollectWork):
 
         return f'????-??-?? To {self.date_of_work2_std}'
 
-
     @property
     def display_original_calendar(self) -> str:
         return decode_calendar(self.original_calendar)
@@ -99,7 +98,7 @@ class DisplayableCollectWork(CofkCollectWork):
             issues.append('uncertain')
 
         if issues:
-            return 'Issues with destination: ' +  ', '.join(issues)
+            return 'Issues with destination: ' + ', '.join(issues)
 
     @property
     def display_authors_issues(self) -> str | None:
@@ -112,7 +111,7 @@ class DisplayableCollectWork(CofkCollectWork):
             issues.append('uncertain')
 
         if issues:
-            return 'Issues with author/s: ' +', '.join(issues)
+            return 'Issues with author/s: ' + ', '.join(issues)
 
     @property
     def display_addressees_issues(self) -> str | None:
@@ -125,7 +124,7 @@ class DisplayableCollectWork(CofkCollectWork):
             issues.append('uncertain')
 
         if issues:
-            return 'Issues with addressee/s: ' +  ', '.join(issues)
+            return 'Issues with addressee/s: ' + ', '.join(issues)
 
     @property
     def display_mentioned_issues(self) -> str | None:
@@ -142,7 +141,7 @@ class DisplayableCollectWork(CofkCollectWork):
 
     @property
     def display_issues(self) -> str | None:
+        display_list = [self.display_date_issues, self.display_origin_issues, self.display_destination_issues,
+                        self.display_authors_issues, self.display_addressees_issues, self.display_mentioned_issues]
 
-        return mark_safe('<br/><br/>'.join(filter(None, [self.display_date_issues, self.display_origin_issues,
-                                       self.display_destination_issues, self.display_authors_issues,
-                                       self.display_addressees_issues, self.display_mentioned_issues])))
+        return mark_safe('<br/><br/>'.join(filter(None, display_list)))

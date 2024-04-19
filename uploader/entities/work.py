@@ -61,12 +61,13 @@ class CofkWork(CofkEntity):
             self.works.append(w)
 
             if 'author_names' in work_dict:
-                self.process_people(w, self.authors, CofkCollectAuthorOfWork, work_dict, 'author_ids', 'author_names',
-                                    'author_id')
+                self.process_people(w, self.authors, CofkCollectAuthorOfWork, work_dict, 'author_ids',
+                                    'author_names', 'author_id')
 
             if 'mention_id' in work_dict:
-                self.process_people(w, self.mentioned, CofkCollectPersonMentionedInWork, work_dict, 'emlo_mention_id',
-                                    'mention_id', 'mention_id')
+                self.process_people(w, self.mentioned, CofkCollectPersonMentionedInWork, work_dict,
+                                    'emlo_mention_id', 'mention_id', 'mention_id')
+
             if 'addressee_names' in work_dict:
                 self.process_people(w, self.addressees, CofkCollectAddresseeOfWork, work_dict, 'addressee_ids',
                                     'addressee_names', 'addressee_id')
@@ -76,8 +77,8 @@ class CofkWork(CofkEntity):
                                        'origin_name', 'origin_id')
 
             if 'destination_name' in work_dict:
-                self.process_locations(w, self.destinations, CofkCollectDestinationOfWork, work_dict, 'destination_id',
-                                       'destination_name', 'destination_id')
+                self.process_locations(w, self.destinations, CofkCollectDestinationOfWork, work_dict,
+                                       'destination_id', 'destination_name', 'destination_id')
 
             resource_dict = {k: work_dict[k] for k in work_dict if
                              k in ['resource_name', 'resource_url', 'resource_details']}
