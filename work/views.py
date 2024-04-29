@@ -1058,12 +1058,18 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         return 'work:return_quick_init'
 
     @property
+    def _query_fieldset_data(self):
+        return {
+            'iwork_id_lookup': 'equals',
+        } | self.request_data.dict()
+
+    @property
     def query_fieldset_list(self) -> Iterable:
-        return [CompactSearchFieldset(self.request_data.dict())]
+        return [CompactSearchFieldset(self._query_fieldset_data)]
 
     @property
     def expanded_query_fieldset_list(self) -> Iterable:
-        return [ExpandedSearchFieldset(self.request_data.dict())]
+        return [ExpandedSearchFieldset(self._query_fieldset_data)]
 
     @property
     def csv_export_setting(self):

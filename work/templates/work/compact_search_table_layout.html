@@ -47,11 +47,9 @@
                     {{ r.images|render_queryable_images }}
                 {% endif %}
             </td>
-            <td>
-                {% if r.manifestations_for_display %}
-                    {{ r.manifestations_for_display|render_queryable_manif }}
-                {% endif %}
-            </td>
+
+            {% include 'work/component/manif_display_td.html' with work=r %}
+
             <td>
                 {% if r.related_resources %}
                     {{ r.related_resources|display_resources }}
