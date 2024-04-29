@@ -69,8 +69,16 @@
             <td>
                 {% include "core/component/search_table_layout/res_result.html" with resources=r.resources %}
             </td>
-            <td> {{ r.latitude }} </td>
-            <td> {{ r.longitude }} </td>
+            <td>
+                {% if r.latitude %}
+                    {{ r.latitude }}
+                {% endif %}
+            </td>
+            <td>
+                {% if r.longitude %}
+                    {{ r.longitude }}
+                {% endif %}
+            </td>
             <td> {{ r.element_1_eg_room }} </td>
             <td> {{ r.element_2_eg_building }} </td>
             <td> {{ r.element_3_eg_parish }} </td>
