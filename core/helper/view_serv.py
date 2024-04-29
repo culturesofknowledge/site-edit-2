@@ -154,13 +154,6 @@ class BasicSearchView(ListView):
         return simplified_query
 
     @property
-    def query_fieldset_list(self) -> Iterable:
-        """
-        return iterable form that can render search fieldset for searching
-        """
-        raise NotImplementedError()
-
-    @property
     def entity(self) -> str:
         """
         return str containing singular and plural for entity separated by a comma
@@ -172,6 +165,13 @@ class BasicSearchView(ListView):
         if (resolver_match := self.request.resolver_match) is None:
             return ''
         return resolver_match.app_name
+
+    @property
+    def query_fieldset_list(self) -> Iterable:
+        """
+        return iterable form that can render search fieldset for searching
+        """
+        raise NotImplementedError()
 
     @property
     def expanded_query_fieldset_list(self) -> Iterable:
