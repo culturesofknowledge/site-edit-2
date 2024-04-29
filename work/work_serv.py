@@ -143,16 +143,13 @@ class DisplayableWork(CofkUnionWork):
         return destination
 
     @property
-    def manifestations_for_display(self):
+    def manifestations_for_display(self) -> list[str]:
         # Derived value for CofkUnionQueryable
         # Example:
         # Letter.Bodleian Library, University of Oxford: MS.Locke c. 19, f. 48 - - Printed copy. ‘The Clarendon Edition of the Works of John Locke: The Correspondence of John Locke’, ed.E.S.de Beer, 8 vols(Oxford: OUP, 1978), vol. 4, letter 1282.
         # see https://github.com/culturesofknowledge/site-edit/blob/9a74580d2567755ab068a2d8761df8f81718910e/docker-postgres/cofk-empty.postgres.schema.sql#L6541
-        manifestations = self.manif_set.all()
-        if len(manifestations) > 0:
-            return ", ".join([str(m.to_string()) for m in manifestations])
-        else:
-            return ''
+        manif_names = [m.to_string() for m in self.manif_set.all()]
+        return manif_names
 
     @property
     def images(self):
