@@ -293,6 +293,8 @@ class BasicSearchView(ListView):
         return sort_by
 
     def get_context_data(self, **kwargs):
+        """ API of Django, Get the context for this view. """
+
         context = super().get_context_data(**kwargs)
         context['recref_mode'] = self.request_data.get('recref_mode', '0')
 
