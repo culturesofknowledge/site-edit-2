@@ -197,7 +197,11 @@ tr.selectable_entry:not(.selected):hover {
 
   & > .grid-item {
     background-color: #f2f2f2;
+    & > .name {
+      font-size: $typescale-4;
+    }
   }
+
 }
 
 .sub-recref-form {
