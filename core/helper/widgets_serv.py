@@ -1,9 +1,7 @@
 from django import forms
 from django.forms import widgets
 
-
-def check_test_general_true(value):
-    return value == '1' or value == 1 or value is True
+from core.helper.data_serv import check_test_general_true
 
 
 def create_common_checkbox(**attrs):
