@@ -47,11 +47,10 @@ class LanguageSearchView(LoginRequiredMixin, DefaultSearchView):
             return model_class.objects.none()
 
         queries = query_serv.create_queries_by_field_fn_maps(self.request_data, self.search_field_fn_maps)
-
-        queryset = model_class.objects.filter()
         queries.extend(
             query_serv.create_queries_by_lookup_field(self.request_data, self.search_fields)
         )
+        queryset = model_class.objects.filter()
         queryset = query_serv.update_queryset(queryset, model_class, queries=queries,
                                                sort_by=self.get_sort_by())
 
