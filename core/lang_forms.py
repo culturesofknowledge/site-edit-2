@@ -4,12 +4,6 @@ from core.form_label_maps import field_label_map
 from core.helper import form_serv
 from core.helper.form_serv import BasicSearchFieldset, SearchCharField
 
-search_is_favorite_choices = [
-    (None, 'Any'),
-    (1, 'Yes'),
-    (0, 'No'),
-]
-
 
 class LangSearchFieldset(BasicSearchFieldset):
     title = 'Language'
@@ -37,4 +31,4 @@ The 'Favourite? ' field contains the word 'Yes' if this language has been select
 For example, you might select just English, French and Spanish from the thousands of potential languages listed here. You will then be offered the choice of just French, English and Spanish if you need to enter the language in which a work was composed.
 You can return to the list of languages to make further selections whenever required, and your additional selections will then appear within data entry screens elsewhere in the system.
         """.strip(),
-        widget=forms.Select(choices=search_is_favorite_choices))
+        widget=forms.Select(choices=form_serv.none_zero_one_choices))
