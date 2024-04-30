@@ -3,6 +3,14 @@ common_fields = {'change_user': 'Last edited by',
                  'change_timestamp_to': 'Change timestamp to'}
 
 field_label_map = {
+    'user': common_fields | {
+        'username': 'User name',
+        'surname': 'Surname',
+        'forename': 'Forename',
+        'email': 'Email',
+        'is_active': 'Active',
+        'is_staff': 'Staff',
+    },
     'audit': common_fields | {},
     'institution': common_fields | {
         'institution_name': 'Name',

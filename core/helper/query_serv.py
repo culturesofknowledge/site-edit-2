@@ -10,7 +10,7 @@ from django.db.models.sql import Query
 from cllib_django import query_utils
 from cllib_django.query_utils import join_fields, run_lookup_fn, create_q_by_field_names, \
     cond_not, is_blank, create_exists_by_mode, is_null
-from core.helper import date_serv
+from core.helper import date_serv, data_serv
 
 log = logging.getLogger(__name__)
 
@@ -282,3 +282,7 @@ def extract_sub_query(query: Query | QuerySet) -> Query:
     if isinstance(child, Exact):
         return child.lhs.query
     return query
+
+
+def lookup_fn_true_false(lookup_fn, field_name, value):
+    return Q(**{field_name: data_serv.check_test_general_true(value)})
