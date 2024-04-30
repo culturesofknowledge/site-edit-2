@@ -21,7 +21,9 @@
         <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}"
             entry_id="{{ r.pk }}">
 
-            <td>{{ r.username }}</td>
+            <td>
+                {% include 'core/component/search_table_layout/link_record.html' with id=r.pk view='user:full_form' %}
+            </td>
             <td>{{ r.email }}</td>
             <td>{{ r.surname }} {{ r.forename }}</td>
             <td>{{ r.failed_logins }}</td>

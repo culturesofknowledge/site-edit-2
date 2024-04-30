@@ -1,13 +1,71 @@
-from typing import Iterable
+from typing import Callable, Iterable
 
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.forms import ModelForm
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 
-from core.helper import renderer_serv, query_serv
+from core import constant
+from core.helper import renderer_serv, query_serv, view_serv, perm_serv
 from core.helper.renderer_serv import RendererFactory
-from core.helper.view_serv import DefaultSearchView
-from core.user_forms import UserSearchFieldset
+from core.helper.view_serv import CommonInitFormViewTemplate, DefaultSearchView
+from core.helper.view_serv import FormDescriptor
+from core.user_forms import UserSearchFieldset, UserForm
 from login.models import CofkUser
 
+
+class UserFormDescriptor(FormDescriptor):
+
+    @property
+    def name(self):
+        return f'{self.obj.surname} {self.obj.forename}'
+
+    @property
+    def model_name(self):
+        return 'User'
+
+class UserInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitFormViewTemplate):
+    permission_required = constant.PM_CHANGE_USER
+
+    def resp_form_page(self, request, form):
+        return render(request, 'core/user_init_form.html', {'form': form})
+
+    def resp_after_saved(self, request, form, new_instance):
+        return redirect('user:full_form', new_instance.pk)
+
+    @property
+    def form_factory(self) -> Callable[..., ModelForm]:
+        return UserForm
+
+
+@login_required
+def full_form(request, pk):
+    instance: CofkUser = get_object_or_404(CofkUser, pk=pk)
+    form = UserForm(request.POST or None, instance=instance)
+
+    def _render_form():
+        return render(request, 'core/user_init_form.html',
+                      ({
+                           'form': form,
+                       }
+                       | UserFormDescriptor(instance).create_context()
+                       | view_serv.create_is_save_success_context(is_save_success)
+                       ))
+
+    is_save_success = False
+    if request.POST:
+        perm_serv.validate_permission_denied(request.user, constant.PM_CHANGE_USER)
+
+        if view_serv.any_invalid_with_log([
+            form,
+        ]):
+            return _render_form()
+
+        form.save()
+        is_save_success = view_serv.mark_callback_save_success(request)
+
+    return _render_form()
 
 class UserSearchView(LoginRequiredMixin, DefaultSearchView):
 
@@ -25,6 +83,10 @@ class UserSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def default_order(self) -> str:
         return 'asc'
+
+    @property
+    def add_entry_url(self) -> str | None:
+        return reverse('user:init_form')
 
     def get_queryset(self):
         model_class = CofkUser

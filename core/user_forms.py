@@ -1,8 +1,31 @@
 from django import forms
+from django.forms import ModelForm
 
 from core.form_label_maps import field_label_map
 from core.helper import form_serv
 from core.helper.form_serv import BasicSearchFieldset, SearchCharField
+from login.models import CofkUser
+
+
+class UserForm(ModelForm):
+    username = form_serv.CharField(required=True)
+    email = forms.CharField(required=False, max_length=200)
+    forename = forms.CharField(required=False, max_length=200)
+    surname = forms.CharField(required=False, max_length=200)
+    is_active = form_serv.ZeroOneCheckboxField(is_str=False, required=False, initial=1)
+    is_staff = form_serv.ZeroOneCheckboxField(is_str=False, required=False, initial=0)
+
+
+    class Meta:
+        model = CofkUser
+        fields = (
+            'username',
+            'email',
+            'forename',
+            'surname',
+            'is_active',
+            'is_staff',
+        )
 
 
 class UserSearchFieldset(BasicSearchFieldset):
