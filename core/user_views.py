@@ -21,12 +21,6 @@ class UserSearchView(LoginRequiredMixin, DefaultSearchView):
     def entity(self) -> str:
         return 'User,Users'
 
-    # @property
-    # def search_field_fn_maps(self) -> dict[str, Lookup]:
-    #     return {
-    #         'is_favorite': query_is_favorite,
-    #     }
-
     @property
     def default_order(self) -> str:
         return 'asc'
