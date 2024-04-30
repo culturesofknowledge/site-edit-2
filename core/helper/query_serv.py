@@ -42,6 +42,7 @@ resource_detail_fields = [
 
 
 def create_queries_by_field_fn_maps(request_data: dict, field_fn_maps: dict) -> list[Q]:
+    """ use create_queries_by_lookup_field search_fields_fn_maps if possible """
     # TODO suggest migrate this function to search_fields_fn_maps feature in create_queries_by_lookup_field
     query_field_values = ((f, request_data.get(f)) for f in field_fn_maps.keys())
     query_field_values = ((f, v) for f, v in query_field_values if v)

@@ -105,7 +105,7 @@ field_label_map = {
         'code_639_3': '3-letter language code',
         'code_639_1': 'Alternative 2-letter code',
         'language_name': 'Language name',
-        'is_favourite': 'Favourite?',
+        'is_favorite': 'Favourite?',
     },
     'collect_work': {
         'source': 'Source',
