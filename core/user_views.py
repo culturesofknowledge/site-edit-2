@@ -2,7 +2,6 @@ from typing import Iterable
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.models import Group
 from django.shortcuts import render, redirect
 from django.urls import reverse
 
@@ -29,9 +28,7 @@ class UserFormDescriptor(FormDescriptor):
 @login_required
 def full_form(request, pk=None):
     instance: CofkUser = CofkUser.objects.filter(pk=pk).first()
-    form = UserForm(request.POST or None, instance=instance, initial={
-        'roles': [g.name for g in instance.groups.all()] if instance else [],
-    })
+    form = UserForm(request.POST or None, instance=instance)
 
     def _render_form():
         return render(request, 'core/user_init_form.html',
@@ -50,9 +47,6 @@ def full_form(request, pk=None):
             form,
         ]):
             return _render_form()
-
-        new_roles = [g.pk for g in Group.objects.filter(name__in=form.cleaned_data['roles']).all()]
-        form.instance.groups.set(new_roles)
 
         form.save()
         is_save_success = view_serv.mark_callback_save_success(request)

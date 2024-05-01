@@ -3,7 +3,7 @@ from django.forms import ModelForm
 
 from core import constant
 from core.form_label_maps import field_label_map
-from core.helper import form_serv, widgets_serv
+from core.helper import form_serv, widgets_serv, query_cache_serv
 from core.helper.form_serv import BasicSearchFieldset, SearchCharField
 from login.models import CofkUser
 
@@ -16,17 +16,6 @@ class UserForm(ModelForm):
     is_active = form_serv.ZeroOneCheckboxField(is_str=False, required=False, initial=1)
     is_staff = form_serv.ZeroOneCheckboxField(is_str=False, required=False, initial=0)
 
-    roles = forms.MultipleChoiceField(
-        required=False,
-        choices=(
-            (constant.ROLE_EDITOR, 'Can edit Union and Bodleian card index catalgoues'),
-            (constant.ROLE_REVIEWER, 'Informed of new uploads from data collection tool'),
-            (constant.ROLE_VIEWER, 'Read-only access'),
-            (constant.ROLE_SUPER, '*Supervisor*'),
-        ),
-        widget=widgets_serv.EmloCheckboxSelectMultiple,
-    )
-
     class Meta:
         model = CofkUser
         fields = (
@@ -36,7 +25,21 @@ class UserForm(ModelForm):
             'surname',
             'is_active',
             'is_staff',
+            'groups',
         )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        group_name_id_map = query_cache_serv.create_group_name_id_map()
+        self.fields['groups'].widget = widgets_serv.EmloCheckboxSelectMultiple()
+        self.fields['groups'].choices = (
+            (group_name_id_map[name], label)
+            for name, label in [
+            (constant.ROLE_EDITOR, 'Can edit Union and Bodleian card index catalgoues'),
+            (constant.ROLE_REVIEWER, 'Informed of new uploads from data collection tool'),
+            (constant.ROLE_VIEWER, 'Read-only access'),
+            (constant.ROLE_SUPER, '*Supervisor*'),
+        ])
 
 
 class UserSearchFieldset(BasicSearchFieldset):
