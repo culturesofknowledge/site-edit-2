@@ -51,8 +51,12 @@
                         {{ form.is_staff }}
                         <label for="{{ form.is_staff.id_for_label }}">Is staff?</label>
                     </div>
-
-
+                </fieldset>
+                <fieldset>
+                    <legend id="header_roles" class="toc-item">Roles</legend>
+                    {% for role in form.roles %}
+                        {{ role }}
+                    {% endfor %}
                 </fieldset>
                 {% include "core/component/actionbox_form.html" with save_perm=constant.PM_CHANGE_USER %}
                 {% include "core/component/close_if_save_success.html" with is_save_success=is_save_success %}

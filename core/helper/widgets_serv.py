@@ -38,3 +38,6 @@ class Datalist(widgets.ChoiceWidget):
         context["widget"]["choices"] = self.choices
         return context
 
+
+class EmloCheckboxSelectMultiple(widgets.CheckboxSelectMultiple):
+    option_template_name = 'core/widget/emlo_checkbox.html'

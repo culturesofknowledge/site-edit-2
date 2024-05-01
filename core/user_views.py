@@ -1,15 +1,15 @@
-from typing import Callable, Iterable
+from typing import Iterable
 
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.forms import ModelForm
-from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import Group
+from django.shortcuts import render, redirect
 from django.urls import reverse
 
 from core import constant
 from core.helper import renderer_serv, query_serv, view_serv, perm_serv
 from core.helper.renderer_serv import RendererFactory
-from core.helper.view_serv import CommonInitFormViewTemplate, DefaultSearchView
+from core.helper.view_serv import DefaultSearchView
 from core.helper.view_serv import FormDescriptor
 from core.user_forms import UserSearchFieldset, UserForm
 from login.models import CofkUser
@@ -25,24 +25,13 @@ class UserFormDescriptor(FormDescriptor):
     def model_name(self):
         return 'User'
 
-class UserInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitFormViewTemplate):
-    permission_required = constant.PM_CHANGE_USER
-
-    def resp_form_page(self, request, form):
-        return render(request, 'core/user_init_form.html', {'form': form})
-
-    def resp_after_saved(self, request, form, new_instance):
-        return redirect('user:full_form', new_instance.pk)
-
-    @property
-    def form_factory(self) -> Callable[..., ModelForm]:
-        return UserForm
-
 
 @login_required
-def full_form(request, pk):
-    instance: CofkUser = get_object_or_404(CofkUser, pk=pk)
-    form = UserForm(request.POST or None, instance=instance)
+def full_form(request, pk=None):
+    instance: CofkUser = CofkUser.objects.filter(pk=pk).first()
+    form = UserForm(request.POST or None, instance=instance, initial={
+        'roles': [g.name for g in instance.groups.all()] if instance else [],
+    })
 
     def _render_form():
         return render(request, 'core/user_init_form.html',
@@ -62,10 +51,18 @@ def full_form(request, pk):
         ]):
             return _render_form()
 
+        new_roles = [g.pk for g in Group.objects.filter(name__in=form.cleaned_data['roles']).all()]
+        form.instance.groups.set(new_roles)
+
         form.save()
         is_save_success = view_serv.mark_callback_save_success(request)
 
+        if pk is None:
+            # go to edit page url after init save success
+            return redirect(reverse('user:full_form', kwargs={'pk': form.instance.pk, }))
+
     return _render_form()
+
 
 class UserSearchView(LoginRequiredMixin, DefaultSearchView):
 
@@ -93,7 +90,6 @@ class UserSearchView(LoginRequiredMixin, DefaultSearchView):
         request_data = self.request_data.dict()
         if not request_data:
             return model_class.objects.none()
-
 
         queries = []
         queries.extend(

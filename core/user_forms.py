@@ -1,8 +1,9 @@
 from django import forms
 from django.forms import ModelForm
 
+from core import constant
 from core.form_label_maps import field_label_map
-from core.helper import form_serv
+from core.helper import form_serv, widgets_serv
 from core.helper.form_serv import BasicSearchFieldset, SearchCharField
 from login.models import CofkUser
 
@@ -11,10 +12,20 @@ class UserForm(ModelForm):
     username = form_serv.CharField(required=True)
     email = forms.CharField(required=False, max_length=200)
     forename = forms.CharField(required=False, max_length=200)
-    surname = forms.CharField(required=False, max_length=200)
+    surname = forms.CharField(required=True, max_length=200)
     is_active = form_serv.ZeroOneCheckboxField(is_str=False, required=False, initial=1)
     is_staff = form_serv.ZeroOneCheckboxField(is_str=False, required=False, initial=0)
 
+    roles = forms.MultipleChoiceField(
+        required=False,
+        choices=(
+            (constant.ROLE_EDITOR, 'Can edit Union and Bodleian card index catalgoues'),
+            (constant.ROLE_REVIEWER, 'Informed of new uploads from data collection tool'),
+            (constant.ROLE_VIEWER, 'Read-only access'),
+            (constant.ROLE_SUPER, '*Supervisor*'),
+        ),
+        widget=widgets_serv.EmloCheckboxSelectMultiple,
+    )
 
     class Meta:
         model = CofkUser

@@ -403,7 +403,7 @@ def migrate_groups_and_permissions(conn):
     group_permissions_dict = {
         # 'cofkviewer': [],
         # 'reviewer': [],
-        'cofkeditor': [
+        constant.ROLE_EDITOR: [
             constant.PM_CHANGE_WORK,
             constant.PM_CHANGE_PERSON,
             constant.PM_CHANGE_PUBLICATION,
@@ -416,7 +416,7 @@ def migrate_groups_and_permissions(conn):
             constant.PM_CHANGE_COLLECTWORK,
         ],
     }
-    group_permissions_dict['super'] = group_permissions_dict['cofkeditor'] + [
+    group_permissions_dict[constant.ROLE_SUPER] = group_permissions_dict[constant.ROLE_EDITOR] + [
         constant.PM_CHANGE_USER,
         constant.PM_CHANGE_COMMENT,
         constant.PM_VIEW_AUDIT,

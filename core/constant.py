@@ -113,3 +113,8 @@ PM_EXPORT_FILE_WORK = 'work.export_file'
 PM_EXPORT_FILE_PERSON = 'person.export_file'
 PM_EXPORT_FILE_LOCATION = 'location.export_file'
 PM_EXPORT_FILE_INST = 'institution.export_file'
+
+ROLE_REVIEWER = 'reviewer'
+ROLE_VIEWER = 'cofkviewer'
+ROLE_EDITOR = 'cofkeditor'
+ROLE_SUPER = 'super'
