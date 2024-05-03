@@ -27,7 +27,7 @@ from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, C
 log = logging.getLogger(__name__)
 
 
-def create_union_work(union_work_dict: dict, collect_work: CofkCollectWork):
+def create_union_work(union_work_dict: dict, collect_work: CofkCollectWork, username: str) -> CofkUnionWork:
     # work_id is primary key in CofkUnionWork
     # note that work_serv.create_work_id uses a different less detailed format
     union_work_dict['work_id'] = f'work_{datetime.now().strftime("%Y%m%d%H%M%S%f")}_{collect_work.iwork_id}'
@@ -44,7 +44,10 @@ def create_union_work(union_work_dict: dict, collect_work: CofkCollectWork):
             # log.warning(f'Field {field} does not exist')
             pass
 
-    return CofkUnionWork(**union_work_dict)
+    union_work = CofkUnionWork(**union_work_dict)
+    union_work.update_current_user_timestamp(username)
+
+    return union_work
 
 
 def link_person_to_work(entities: QuerySet, relationship_type: str, union_work: CofkUnionWork, username: str) \
@@ -172,7 +175,7 @@ def accept_works(context: dict, upload: CofkCollectUpload, request=None, email_a
     for collect_work in collect_works:
         log.debug(f'Processing work: {collect_work}')
         # Create work
-        union_work = create_union_work(union_work_dict, collect_work)
+        union_work = create_union_work(union_work_dict, collect_work, username)
         union_works.append(union_work)
 
         # Link people
@@ -243,6 +246,7 @@ def accept_works(context: dict, upload: CofkCollectUpload, request=None, email_a
             union_resource.resource_url = resource.resource_url
             union_resource.resource_name = resource.resource_name
             union_resource.resource_details = resource.resource_details
+            union_resource.update_current_user_timestamp(username)
             union_resources.append(union_resource)
 
             cwrm = CofkWorkResourceMap(relationship_type=REL_TYPE_IS_RELATED_TO, work=union_work,
