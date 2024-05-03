@@ -20,7 +20,7 @@ from location.models import CofkUnionLocation
 from manifestation import manif_serv
 from manifestation.models import CofkUnionManifestation, CofkManifInstMap
 from person.models import CofkUnionPerson, create_person_id
-from uploader.models import CofkCollectUpload, CofkCollectWork
+from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectPerson, CofkCollectLocation
 from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, CofkWorkResourceMap, \
     CofkUnionLanguageOfWork, CofkWorkSubjectMap
 
@@ -51,15 +51,6 @@ def link_person_to_work(entities: QuerySet, relationship_type: str, union_work: 
         -> List[CofkWorkPersonMap]:
     person_maps = []
     for person in entities.select_related('iperson').all():
-        if person.iperson.union_iperson is None:
-            union_iperson = CofkUnionPerson(foaf_name=person.iperson.primary_name)
-            union_iperson.person_id = create_person_id(union_iperson.iperson_id)
-            union_iperson.update_current_user_timestamp(username)
-            union_iperson.save()
-            person.iperson.union_iperson = union_iperson
-            person.iperson.save()
-            log.info(f'Created new union person {union_iperson}')
-
         cwpm = CofkWorkPersonMap(relationship_type=relationship_type,
                                  work=union_work, person=person.iperson.union_iperson,
                                  person_id=person.iperson.union_iperson.person_id)
@@ -73,14 +64,6 @@ def link_location_to_work(entities: QuerySet, relationship_type: str, union_work
         -> List[CofkWorkLocationMap]:
     location_maps = []
     for origin_or_dest in entities.select_related('location').all():
-        if origin_or_dest.location.union_location is None:
-            union_location = CofkUnionLocation(location_name=origin_or_dest.location.location_name)
-            union_location.update_current_user_timestamp(username)
-            union_location.save()
-            origin_or_dest.location.union_location = union_location
-            origin_or_dest.save()
-            log.info(f'Created new union location {union_location}')
-
         cwlm = CofkWorkLocationMap(relationship_type=relationship_type,
                                    work=union_work, location=origin_or_dest.location.union_location,
                                    location_id=origin_or_dest.location.union_location.location_id)
@@ -108,6 +91,44 @@ def add_rel_maps(rel_maps: dict, entity_maps: List):
         rel_maps[str(type(entity_maps[0]))] = []
 
     rel_maps[str(type(entity_maps[0]))] += entity_maps
+
+
+def get_collect_people(people: QuerySet, collect_people: List[CofkCollectPerson]) -> List[CofkCollectPerson]:
+    return [p.iperson for p in people if p.iperson not in collect_people and p.iperson.union_iperson is None]
+
+
+def get_collect_locations(locations: QuerySet, collect_locations: List[CofkCollectLocation]) -> List[CofkCollectLocation]:
+    return [l.location for l in locations if l.location not in collect_locations and l.location.union_location is None]
+
+
+def create_union_people_and_locations(collect_works, username: str):
+    collect_people = []
+    collect_locations = []
+
+    for collect_work in collect_works:
+        collect_people.extend(get_collect_people(collect_work.people_mentioned.all(), collect_people))
+        collect_people.extend(get_collect_people(collect_work.addressees.all(), collect_people))
+        collect_people.extend(get_collect_people(collect_work.authors.all(), collect_people))
+
+        collect_locations.extend(get_collect_locations(collect_work.destination.all(), collect_locations))
+        collect_locations.extend(get_collect_locations(collect_work.origin.all(), collect_locations))
+
+    for person in collect_people:
+        union_iperson = CofkUnionPerson(foaf_name=person.primary_name)
+        union_iperson.person_id = create_person_id(union_iperson.iperson_id)
+        union_iperson.update_current_user_timestamp(username)
+        union_iperson.save()
+        person.union_iperson = union_iperson
+        person.save()
+        log.info(f'Created new union person {union_iperson}')
+
+    for location in collect_locations:
+        union_location = CofkUnionLocation(location_name=location.location_name)
+        union_location.update_current_user_timestamp(username)
+        union_location.save()
+        location.union_location = union_location
+        location.save()
+        log.info(f'Created new union location {union_location}')
 
 
 def accept_works(context: dict, upload: CofkCollectUpload, request=None, email_addresses: List[str] = None):
@@ -144,7 +165,12 @@ def accept_works(context: dict, upload: CofkCollectUpload, request=None, email_a
         union_work_dict['original_catalogue'] = CofkLookupCatalogue.objects \
             .filter(catalogue_code=context['catalogue_code']).first()
 
+    # Create new union people and locations at this stage to avoid
+    # cache problems later
+    create_union_people_and_locations(collect_works, username)
+
     for collect_work in collect_works:
+        log.debug(f'Processing work: {collect_work}')
         # Create work
         union_work = create_union_work(union_work_dict, collect_work)
         union_works.append(union_work)
