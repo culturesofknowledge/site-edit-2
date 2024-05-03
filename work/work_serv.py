@@ -1,6 +1,6 @@
 import logging
 from datetime import date
-from typing import Any
+from typing import Any, List
 
 from django.db.models import Q
 from django.urls import reverse
@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 HIDDEN_DATE_STD = '1900-01-01'
 
 
-def get_recref_display_name(work: CofkUnionWork):
+def get_recref_display_name(work: CofkUnionWork) -> str:
     if not work:
         return ''
 
@@ -41,7 +41,7 @@ def get_recref_display_name(work: CofkUnionWork):
     return f'{work_date_str}: {from_person_str} {from_location_str} to {to_person_str} {to_location_str}'
 
 
-def join_names(names):
+def join_names(names) -> str:
     return ' ~ '.join(names)
 
 
@@ -143,7 +143,7 @@ class DisplayableWork(CofkUnionWork):
         return destination
 
     @property
-    def manifestations_for_display(self) -> list[str]:
+    def manifestations_for_display(self) -> List[str]:
         # Derived value for CofkUnionQueryable
         # Example:
         # Letter.Bodleian Library, University of Oxford: MS.Locke c. 19, f. 48 - - Printed copy. ‘The Clarendon Edition of the Works of John Locke: The Correspondence of John Locke’, ed.E.S.de Beer, 8 vols(Oxford: OUP, 1978), vol. 4, letter 1282.
@@ -152,7 +152,7 @@ class DisplayableWork(CofkUnionWork):
         return manif_names
 
     @property
-    def images(self):
+    def images(self) -> str:
         start = 'xxxCofkImageIDStartxxx'
         end = 'xxxCofkImageIDEndxxx'
 
@@ -203,7 +203,7 @@ class DisplayableWork(CofkUnionWork):
         return resources
 
     @property
-    def other_details(self):
+    def other_details(self) -> str:
         _other_details = []
 
         if self.keywords:
@@ -226,11 +226,11 @@ class DisplayableWork(CofkUnionWork):
         return mark_safe('<br/><br/>'.join(_other_details))
 
     @property
-    def language_of_work(self):
+    def language_of_work(self) -> str:
         return ", ".join([format_language(l) for l in self.language_set.all()])
 
     @property
-    def general_notes(self):
+    def general_notes(self) -> str:
         return ', '.join([c.comment for c in self.general_comments])
 
     @property
@@ -240,7 +240,7 @@ class DisplayableWork(CofkUnionWork):
         return ''
 
     @property
-    def subjects_for_display(self):
+    def subjects_for_display(self) -> str:
         # Derived value for CofkUnionQueryable
         return ", ".join([s.subject_desc for s in self.subjects.all()])
 
@@ -251,7 +251,7 @@ def format_language(lang: 'CofkUnionLanguageOfWork') -> str:
     return lang.language_code.language_name
 
 
-def flags(work: CofkUnionWork):
+def flags(work: CofkUnionWork) -> str:
     tooltip = []
 
     if work.date_of_work_inferred or work.date_of_work_uncertain:
@@ -307,7 +307,7 @@ def flags(work: CofkUnionWork):
     return ', '.join(tooltip)
 
 
-def q_hidden_works(prefix=None, check_hidden_date=True):
+def q_hidden_works(prefix=None, check_hidden_date=True) -> Q:
     """
     In original EMLO edit, there have three methods to hide work record
     * work_to_be_deleted = 1
@@ -346,7 +346,7 @@ def q_visible_works(prefix=None, check_hidden_date=True, check_published=False) 
     return q
 
 
-def is_hidden_work(work: CofkUnionWork, cached_catalogue_status: dict[Any, int] = None):
+def is_hidden_work(work: CofkUnionWork, cached_catalogue_status: dict[Any, int] = None) -> bool:
     if work is None:
         return True
 
