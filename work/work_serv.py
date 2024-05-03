@@ -328,16 +328,19 @@ def q_hidden_works(prefix=None, check_hidden_date=True):
     return q
 
 
-def q_visible_works(prefix=None, check_hidden_date=True):
+def q_visible_works(prefix=None, check_hidden_date=True, check_published=False) -> Q:
     if prefix:
         prefix = prefix + '__'
     else:
         prefix = ''
     q = Q(**{prefix + 'work_to_be_deleted': 0})
-    q &= (
-            Q(**{prefix + 'original_catalogue__isnull': True})
-            | Q(**{prefix + 'original_catalogue__publish_status': 1})
-    )
+
+    if check_published:
+        q &= (
+                Q(**{prefix + 'original_catalogue__isnull': True})
+                | Q(**{prefix + 'original_catalogue__publish_status': 1})
+        )
+
     if check_hidden_date:
         q &= ~Q(**{prefix + 'date_of_work_std': HIDDEN_DATE_STD})
     return q
