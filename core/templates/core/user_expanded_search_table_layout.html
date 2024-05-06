@@ -25,7 +25,7 @@
                 {% include 'core/component/search_table_layout/link_record.html' with id=r.pk view='user:full_form' %}
             </td>
             <td>{{ r.email }}</td>
-            <td>{{ r.surname }} {{ r.forename }}</td>
+            <td>{{ r.forename }} {{ r.surname }}</td>
             <td>{{ r.failed_logins }}</td>
             <td>{{ r.prev_login|default_if_none:'' }}</td>
             <td>{{ r.login_time|default_if_none:'' }}</td>
