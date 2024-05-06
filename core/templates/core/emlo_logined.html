@@ -34,6 +34,11 @@
                     <a href="{% url 'lang:search' %}">
                         <li>Language</li>
                     </a>
+                    {% if constant.PM_CHANGE_USER|can_show_for_perm:perms %}
+                    <a href="{% url 'user:search' %}">
+                        <li>User</li>
+                    </a>
+                    {% endif %}
                 </ul>
             </li>
         </ul>

@@ -1,7 +1,7 @@
 from typing import Iterable
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q, Lookup
+from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 
@@ -12,7 +12,7 @@ from core.lang_forms import LangSearchFieldset
 from core.models import Iso639LanguageCode, CofkUnionFavouriteLanguage
 
 
-def query_is_favorite(field, value):
+def lookup_fn_is_favorite(lookup, field, value):
     if value is None:
         return Q()
     else:
@@ -32,12 +32,6 @@ class LanguageSearchView(LoginRequiredMixin, DefaultSearchView):
         return 'Language,Languages'
 
     @property
-    def search_field_fn_maps(self) -> dict[str, Lookup]:
-        return {
-            'is_favorite': query_is_favorite,
-        }
-
-    @property
     def default_order(self) -> str:
         return 'asc'
 
@@ -46,12 +40,15 @@ class LanguageSearchView(LoginRequiredMixin, DefaultSearchView):
         if not self.request_data:
             return model_class.objects.none()
 
-        queries = query_serv.create_queries_by_field_fn_maps(self.request_data, self.search_field_fn_maps)
-
-        queryset = model_class.objects.filter()
+        queries = []
         queries.extend(
-            query_serv.create_queries_by_lookup_field(self.request_data, self.search_fields)
+            query_serv.create_queries_by_lookup_field(self.request_data, self.search_fields,
+                                                         search_fields_fn_maps={
+                                                              'is_favorite': lookup_fn_is_favorite,
+                                                         }
+                                                      )
         )
+        queryset = model_class.objects.filter()
         queryset = query_serv.update_queryset(queryset, model_class, queries=queries,
                                                sort_by=self.get_sort_by())
 

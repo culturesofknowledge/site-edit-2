@@ -244,6 +244,18 @@ class BasicSearchView(ListView):
         """
         return None
 
+    @property
+    def add_entry_url(self) -> str | None:
+        """
+        Add button will be shown if this is not None
+
+        Returns
+        -------
+            url to add entry
+
+        """
+        return None
+
     def get_queryset(self):
         raise NotImplementedError('missing get_queryset')
 
@@ -332,6 +344,9 @@ class BasicSearchView(ListView):
 
         if self.return_quick_init_vname:
             context['return_quick_init_vname'] = self.return_quick_init_vname
+
+        if self.add_entry_url:
+            context['add_entry_url'] = self.add_entry_url
 
         return context
 

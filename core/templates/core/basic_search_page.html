@@ -2,8 +2,15 @@
 {% load static cl_filters %}
 {% block content %}
 
-    <div class="col col--1of3" class="align-center">
-        <h1> {{ title }} </h1>
+    <div class="col col--1of3 align-center">
+        <div class="row">
+            <h1> {{ title }} </h1>
+            {% if add_entry_url %}
+            <div class="margin-left margin-top">
+                <a href="{{ add_entry_url }}" class="btn" target="_blank">Add +</a>
+            </div>
+            {% endif %}
+        </div>
     </div>
 
     <div id="user_messages">
@@ -12,7 +19,7 @@
         {% endfor %}
     </div>
 
-    <input id="num_records" type="hidden" value="{{ paginator.count }}" />
+    <input id="num_records" type="hidden" value="{{ paginator.count }}"/>
 
     <form id="search_form" method="get">
 
@@ -162,16 +169,16 @@
         {% endif %}
         let recref_mode = "{{ recref_mode }}";
 
-        $('#export_excel_btn').click(function (e){
+        $('#export_excel_btn').click(function (e) {
             let msg = 'Are you sure you want to export the search results to Excel?'
             let num_records = $('#num_records').val()
             if (num_records) {
                 msg = `Are you sure you want to export ${num_records} search results to Excel?`
             }
 
-            if (! confirm(msg)) {
+            if (!confirm(msg)) {
                 e.preventDefault();
-                return ;
+                return;
             }
         });
 
@@ -185,12 +192,12 @@
         }
         $('.open-link-btn').each(function (index, ele) {
             let btn_jqe = $(ele);
-            btn_jqe.mousedown(function (e){
+            btn_jqe.mousedown(function (e) {
                 e.preventDefault()
                 let url = btn_jqe.attr('url');
-                if (! url) {
+                if (!url) {
                     console.log(`url[${url}] not found in element -- ${ele}`)
-                    return ;
+                    return;
                 }
                 window.open(url).focus();
             });

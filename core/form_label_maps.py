@@ -3,6 +3,14 @@ common_fields = {'change_user': 'Last edited by',
                  'change_timestamp_to': 'Change timestamp to'}
 
 field_label_map = {
+    'user': common_fields | {
+        'username': 'User name',
+        'surname': 'Surname',
+        'forename': 'Forename',
+        'email': 'Email',
+        'is_active': 'Active',
+        'is_staff': 'Staff',
+    },
     'audit': common_fields | {},
     'institution': common_fields | {
         'institution_name': 'Name',
@@ -97,7 +105,7 @@ field_label_map = {
         'code_639_3': '3-letter language code',
         'code_639_1': 'Alternative 2-letter code',
         'language_name': 'Language name',
-        'is_favourite': 'Favourite?',
+        'is_favorite': 'Favourite?',
     },
     'collect_work': {
         'source': 'Source',

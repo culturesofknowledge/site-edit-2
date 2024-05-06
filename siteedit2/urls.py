@@ -39,6 +39,7 @@ urlpatterns = [
     path('audit/', include('audit.urls')),
     path('list/', include('list.urls')),
     path('lang/', include('core.lang_urls')),
+    path('user/', include('core.user_urls')),
 ]
 
 for url_path, file_path in [

@@ -1,0 +1,41 @@
+{% load cl_filters work_util_tags %}
+
+<table id="results_table">
+    <thead>
+    <tr></tr>
+    <tr>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Name</th>
+        <th>Failed Logins</th>
+        <th>Previous Login</th>
+        <th>Login Time</th>
+        <th>Is Active</th>
+        <th>Is Staff</th>
+    </tr>
+    </thead>
+    <tbody>
+
+
+    {% for r in search_results %}
+        <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}"
+            entry_id="{{ r.pk }}">
+
+            <td>
+                {% include 'core/component/search_table_layout/link_record.html' with id=r.pk view='user:full_form' %}
+            </td>
+            <td>{{ r.email }}</td>
+            <td>{{ r.forename }} {{ r.surname }}</td>
+            <td>{{ r.failed_logins }}</td>
+            <td>{{ r.prev_login|default_if_none:'' }}</td>
+            <td>{{ r.login_time|default_if_none:'' }}</td>
+            <td>{{ r.is_active }}</td>
+            <td>{{ r.is_staff }}</td>
+
+
+        </tr>
+    {% endfor %}
+    </tbody>
+
+</table>
+

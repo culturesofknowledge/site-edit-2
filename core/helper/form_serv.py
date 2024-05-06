@@ -32,6 +32,11 @@ short_month_choices = [
     (12, 'Dec'),
 ]
 
+none_zero_one_choices = [
+    (None, 'Any'),
+    (1, 'Yes'),
+    (0, 'No'),
+]
 datetime_search_info = "Enter as dd/mm/yyyy hh:mm or dd/mm/yyyy (please note: dd/mm/yyyy counts as the very " \
                        "start of a day)."
 
