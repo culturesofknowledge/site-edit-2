@@ -14,7 +14,6 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView, TemplateView
-
 from django_q.tasks import AsyncTask
 
 from core import constant
@@ -27,7 +26,7 @@ from core.helper.view_serv import DefaultSearchView
 from core.models import CofkLookupCatalogue, CofkLookupDocumentType
 from uploader.forms import CofkCollectUploadForm, GeneralSearchFieldset
 from uploader.models import CofkCollectUpload, CofkCollectPerson, CofkCollectLocation
-from uploader.review import accept_works, reject_works
+from uploader.review import reject_works
 from uploader.uploader_serv import DisplayableCollectWork
 
 log = logging.getLogger(__name__)
@@ -74,7 +73,7 @@ class AddUploadView(TemplateView):
         form = CofkCollectUploadForm(request.POST, request.FILES)
         report = {}
 
-        if form.is_valid():
+        if form.is_valid() and 'upload_file' in request.FILES:
             filename = request.FILES['upload_file'].name
             upload = form.save(commit=False)
             upload.upload_status_id = 1
@@ -157,20 +156,15 @@ def upload_review(request, upload_id, **kwargs):
 
     if 'confirm' in request.POST and 'action' in request.POST:
         if request.POST['action'] == 'accept':
-            size = os.path.getsize(settings.MEDIA_ROOT + upload.upload_file.name) >> 10
-            accept_all = 'work_id' in request.POST and request.POST['work_id'] == 'all'
+            task = AsyncTask('uploader.review.accept_works', context, upload,
+                             email_addresses=request.user.email)
+            task.run()
 
-            if accept_all and size > settings.UPLOAD_ASYNCHRONOUS_FILESIZE_LIMIT:
-                task = AsyncTask('uploader.review.accept_works', context, upload,
-                                 email_addresses=request.user.email)
-                task.run()
+            msg = (f'The upload {upload.upload_name} is being processed. '
+                   f'You will be notified of the results by email sent to {request.user.email}.')
+            messages.info(request, msg)
 
-                msg = (f'The upload {upload.upload_name} is being processed. '
-                       f'You will be notified of the results by email sent to {request.user.email}.')
-                messages.info(request, msg)
-                return redirect(reverse('uploader:upload_list'))
-            else:
-                accept_works(context, upload, request)
+            return redirect(reverse('uploader:upload_list'))
         elif request.POST['action'] == 'reject':
             reject_works(context, upload, request)
 
