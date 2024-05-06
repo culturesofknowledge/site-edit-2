@@ -181,8 +181,9 @@ class InstFrontendCsv(HeaderValues):
     def __init__(self):
         self.inst_document_count = self.count_inst_work()
 
-    def count_inst_work(self):
-        q = work_serv.q_visible_works(prefix='cofkmanifinstmap__manif__work', check_hidden_date=False)
+    def count_inst_work(self) -> dict:
+        q = work_serv.q_visible_works(prefix='cofkmanifinstmap__manif__work', check_hidden_date=False,
+                                      check_published=True)
         q &= recref_serv.create_q_rel_type(constant.REL_TYPE_STORED_IN, prefix='cofkmanifinstmap')
         queryset = (CofkUnionInstitution.objects
                     .values('institution_id')
