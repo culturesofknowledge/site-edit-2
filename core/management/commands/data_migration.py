@@ -424,6 +424,7 @@ def migrate_groups_and_permissions(conn):
         constant.PM_EXPORT_FILE_PERSON,
         constant.PM_EXPORT_FILE_LOCATION,
         constant.PM_EXPORT_FILE_INST,
+        constant.PM_TRIGGER_EXPORTER,
     ]
 
     # fill group records
