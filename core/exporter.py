@@ -5,6 +5,7 @@ import csv
 import logging
 import re
 import time
+import warnings
 from pathlib import Path
 from typing import Iterable, Callable
 
@@ -12,6 +13,7 @@ import requests
 from django.db import models
 from django.db.models import Count, Q
 from django.utils.html import strip_tags
+from urllib3.exceptions import InsecureRequestWarning
 
 import person.subqueries
 import person.views
@@ -48,13 +50,15 @@ def to_datetime_ms_str(dt) -> str:
     return dt.strftime('%Y-%m-%d %H:%M:%S.%f')
 
 
-def _send_request(url, timeout=120):
+def _send_request(url, timeout=20):
     is_alive = False
     try:
-        requests.get(url, headers={
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36'
-        }, timeout=timeout)
-        is_alive = True
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", InsecureRequestWarning)
+            resp = requests.get(url, headers={
+                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36'
+            }, timeout=timeout, verify=False)
+        is_alive = resp.status_code >= 400
     except Exception as e:
         log.debug(f'{type(e)} -- {str(e)}')
     return url, is_alive
