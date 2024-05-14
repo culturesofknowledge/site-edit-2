@@ -114,6 +114,8 @@ PM_EXPORT_FILE_PERSON = 'person.export_file'
 PM_EXPORT_FILE_LOCATION = 'location.export_file'
 PM_EXPORT_FILE_INST = 'institution.export_file'
 
+PM_TRIGGER_EXPORTER = 'core.trigger_exporter'
+
 ROLE_REVIEWER = 'reviewer'
 ROLE_VIEWER = 'cofkviewer'
 ROLE_EDITOR = 'cofkeditor'

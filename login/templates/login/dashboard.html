@@ -69,4 +69,22 @@
 
     </ul>
 
+    {% if constant.PM_TRIGGER_EXPORTER|can_show_for_perm:perms %}
+        <div class="margin-top-xl">
+            <h2>Export</h2>
+            {% if is_exporting %}
+                <p>Exporter is pending...</p>
+            {% else %}
+                <p>Click to start an export this evening</p>
+                <form action="{% url 'misc:trigger_export' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">Export</button>
+                </form>
+            {% endif %}
+        </div>
+    {% endif %}
+
+
+
+
 {% endblock %}

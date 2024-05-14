@@ -7,10 +7,9 @@ from django.contrib import messages
 from django.core.exceptions import FieldDoesNotExist
 from django.db import IntegrityError, models
 from django.db.models import QuerySet
-
-from cllib_django import email_utils
 from django.urls import reverse
 
+from cllib_django import email_utils
 from core.constant import REL_TYPE_STORED_IN, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, \
     REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_IS_RELATED_TO, \
     REL_TYPE_MENTION, REL_TYPE_DEALS_WITH
