@@ -1,3 +1,4 @@
+
 from django.apps import AppConfig
 from django.db import models
 from django.db.models.base import ModelBase
@@ -21,9 +22,12 @@ class AuditConfig(AppConfig):
             model_signals.handle_create_recref_date(sender, instance)
             model_signals.handle_update_audit_changed_user(sender, instance)
             model_signals.add_relation_audit_to_literal(sender, instance)
+            if created:
+                model_signals.handle_non_triggered_record(sender, instance, is_create=True)
 
         def on_post_delete(sender: ModelBase, instance: models.Model, using, **kwargs):
             model_signals.handle_update_audit_changed_user(sender, instance)
+            model_signals.handle_non_triggered_record(sender, instance, is_create=False)
 
         pre_save.connect(on_pre_save)
         post_save.connect(on_post_save)

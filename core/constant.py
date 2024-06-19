@@ -120,3 +120,8 @@ ROLE_REVIEWER = 'reviewer'
 ROLE_VIEWER = 'cofkviewer'
 ROLE_EDITOR = 'cofkeditor'
 ROLE_SUPER = 'super'
+
+# Audit
+CHANGE_TYPE_NEW = 'New'
+CHANGE_TYPE_CHANGE = 'Chg'
+CHANGE_TYPE_DELETE = 'Del'
