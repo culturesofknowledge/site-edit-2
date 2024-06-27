@@ -57,10 +57,12 @@
                     {{ form.groups }}
                 </fieldset>
 
-                <fieldset>
-                    <legend id="header_roles" class="toc-item">Reset password</legend>
-                    <a href="#" class="btn btn-primary">Reset password</a>
-                </fieldset>
+                {% if user_id %}
+                    <fieldset>
+                        <legend id="header_roles" class="toc-item">Reset password</legend>
+                        <a href="{% url 'user:reset-password' user_id %}" class="btn btn-primary">Reset password</a>
+                    </fieldset>
+                {% endif %}
                 {% include "core/component/actionbox_form.html" with save_perm=constant.PM_CHANGE_USER %}
                 {% include "core/component/close_if_save_success.html" with is_save_success=is_save_success %}
 

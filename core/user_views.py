@@ -1,11 +1,12 @@
 from typing import Iterable
 
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404
 from django.shortcuts import render, redirect
 from django.urls import reverse
 
+from cllib import str_utils
 from core import constant
 from core.helper import renderer_serv, query_serv, view_serv, perm_serv
 from core.helper.renderer_serv import RendererFactory
@@ -27,6 +28,7 @@ class UserFormDescriptor(FormDescriptor):
 
 
 @login_required
+@permission_required(constant.PM_CHANGE_USER)
 def full_form(request, pk=None):
     instance: CofkUser = CofkUser.objects.filter(pk=pk).first()
     form = UserForm(request.POST or None, instance=instance)
@@ -35,6 +37,7 @@ def full_form(request, pk=None):
         return render(request, 'user/init_form.html',
                       ({
                            'form': form,
+                           'user_id': instance and instance.pk,
                        }
                        | UserFormDescriptor(instance).create_context()
                        | view_serv.create_is_save_success_context(is_save_success)
@@ -108,3 +111,24 @@ class UserSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def query_fieldset_list(self) -> Iterable:
         return [UserSearchFieldset(self.request_data.dict())]
+
+
+@login_required
+@permission_required(constant.PM_CHANGE_USER)
+def reset_password(request, pk):
+    user: CofkUser = CofkUser.objects.filter(pk=pk).first()
+    if user is None:
+        # raise not found 404
+        raise Http404()
+
+
+    if request.POST:
+        new_password = str_utils.create_random_str(12)
+        user.set_password(new_password)
+        user.save()
+        return render(request, 'user/reset_password_completed.html',
+                      {'user': user, 'new_password': new_password})
+    else:
+        return render(request, 'user/reset_password.html', {'user': user})
+
+
