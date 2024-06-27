@@ -1,6 +1,8 @@
 """
 This module contains the functions to create Excel file and object(Workbook)
 for modules (e.g. work, person, location, etc.)
+
+This module and package `export_data` is designed for web search page export.
 """
 import itertools
 import logging
@@ -25,7 +27,8 @@ def fill_sheet(sheet: 'Worksheet',
                header_values: HeaderValues,
                sheet_name,
                header_format=None) -> NoReturn:
-    sheet.title = sheet_name
+    log.debug(f'start fill sheet [{sheet_name=}]')
+    sheet.name = sheet_name
 
     # fill header
     for col_idx, col_val in enumerate(header_values.get_header_list()):
@@ -43,55 +46,49 @@ def fill_sheet(sheet: 'Worksheet',
 
 
 def fill_work_sheet(sheet, rows, header_format=None):
-    log.debug('start fill work sheet')
     return fill_sheet(sheet, rows=rows,
                       header_values=excel_header_values.WorkExcelHeaderValues(),
-                      sheet_name='work',
+                      sheet_name='Work',
                       header_format=header_format,
                       )
 
 
 def fill_person_sheet(sheet, rows, header_hormat=None):
-    log.debug('start fill person sheet')
     return fill_sheet(sheet, rows=rows,
                       header_values=excel_header_values.PersonExcelHeaderValues(),
-                      sheet_name='person',
+                      sheet_name='Person',
                       header_format=header_hormat,
                       )
 
 
 def fill_location_sheet(sheet, rows, header_hormat=None):
-    log.debug('start fill location sheet')
     return fill_sheet(sheet, rows=rows,
                       header_values=excel_header_values.LocationExcelHeaderValues(),
-                      sheet_name='location',
+                      sheet_name='Location',
                       header_format=header_hormat,
                       )
 
 
 def fill_manif_sheet(sheet, rows, header_hormat=None):
-    log.debug('start fill manifestation sheet')
     return fill_sheet(sheet, rows=rows,
                       header_values=excel_header_values.ManifExcelHeaderValues(),
-                      sheet_name='manifestation',
+                      sheet_name='Manifestation',
                       header_format=header_hormat,
                       )
 
 
 def fill_inst_sheet(sheet, rows, header_hormat=None):
-    log.debug('start fill institution sheet')
     return fill_sheet(sheet, rows=rows,
                       header_values=excel_header_values.InstExcelHeaderValues(),
-                      sheet_name='institution',
+                      sheet_name='Institution',
                       header_format=header_hormat,
                       )
 
 
 def fill_resource_sheet(sheet, rows, header_hormat=None):
-    log.debug('start fill resource sheet')
     return fill_sheet(sheet, rows=rows,
                       header_values=excel_header_values.ResourceExcelHeaderValues(),
-                      sheet_name='resource',
+                      sheet_name='Resource',
                       header_format=header_hormat,
                       )
 

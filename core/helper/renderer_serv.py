@@ -69,8 +69,12 @@ def create_compact_renderer(
     return NewCompactSearchResultsRenderer
 
 
-def create_table_search_results_renderer(template_path, records_name='search_results', ):
+def create_table_search_results_renderer(template_path,
+                                         record_modifier=None,
+                                         records_name='search_results', ):
     def _renderer_by_record(records):
+        if record_modifier:
+            records = [record_modifier(record) for record in records]
         def _render():
             context = {
                 records_name: records

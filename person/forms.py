@@ -91,6 +91,8 @@ class PersonForm(ModelForm):
     skos_altlabel = EmloLineboxField()
     person_aliases = EmloLineboxField()
 
+    editors_notes = form_serv.CommonTextareaField()
+
     date_of_birth_year = form_serv.create_year_field()
     date_of_birth_month = form_serv.create_month_field()
     date_of_birth_day = form_serv.create_day_field()

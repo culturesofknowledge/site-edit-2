@@ -28,7 +28,7 @@ class AuditSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearch
                             'column_name': query_utils.create_eq_query,
                             'change_type': query_utils.create_eq_query,
                         } | query_serv.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
-                                                                'change_timestamp')
+                                                               'change_timestamp')
 
         queries = query_serv.create_queries_by_field_fn_maps(self.request_data, field_fn_maps)
         queries.extend(
@@ -44,7 +44,12 @@ class AuditSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearch
 
     @property
     def table_search_results_renderer_factory(self) -> RendererFactory:
-        return renderer_serv.create_table_search_results_renderer('audit/search_table_layout.html')
+        def record_modifier(record: CofkUnionAuditLiteral):
+            record.record_display_key = create_display_key(record)
+            return record
+
+        return renderer_serv.create_table_search_results_renderer('audit/search_table_layout.html',
+                                                                  record_modifier=record_modifier)
 
     @property
     def query_fieldset_list(self) -> Iterable:
@@ -59,3 +64,24 @@ class AuditSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearch
             return row
 
         return map(_update, records)
+
+
+def create_display_key(record: CofkUnionAuditLiteral) -> str:
+    if record.table_name == 'cofk_union_work':
+        result = f'Work ID {record.key_value_integer}'
+    elif record.table_name == 'cofk_union_person':
+        result = f'Person ID {record.key_value_integer}'
+    elif record.table_name == 'cofk_union_location':
+        result = f'Location ID {record.key_value_integer}'
+    elif record.table_name == 'cofk_union_institution':
+        result = f'Institution ID {record.key_value_integer}'
+    elif record.table_name == 'cofk_union_manifestation':
+        result = f'Manifestation ID {record.key_value_text}'
+    elif record.table_name == 'cofk_union_comment':
+        result = f'Comment ID {record.key_value_text}'
+    elif record.table_name == 'cofk_union_resource':
+        result = f'Resource ID {record.key_value_text}'
+    else:
+        result = record.key_value_text
+
+    return result
