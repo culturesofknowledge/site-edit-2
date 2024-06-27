@@ -2,6 +2,7 @@ from typing import Iterable
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import Http404
 from django.shortcuts import render, redirect
 from django.urls import reverse
 
@@ -31,7 +32,7 @@ def full_form(request, pk=None):
     form = UserForm(request.POST or None, instance=instance)
 
     def _render_form():
-        return render(request, 'core/user_init_form.html',
+        return render(request, 'user/init_form.html',
                       ({
                            'form': form,
                        }
@@ -101,7 +102,7 @@ class UserSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def table_search_results_renderer_factory(self) -> RendererFactory:
         return renderer_serv.create_table_search_results_renderer(
-            'core/user_expanded_search_table_layout.html'
+            'user/expanded_search_table_layout.html'
         )
 
     @property
