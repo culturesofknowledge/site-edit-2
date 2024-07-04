@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Callable, Iterable, Any, Literal
 
 from django.db.models import F, QuerySet
@@ -124,7 +125,7 @@ def create_queries_by_lookup_field(request_data: dict,
 def lookup_icontains_wildcard(field, value):
     field = F(field)
     if isinstance(value, str) and '%' in value:
-        return lookups.IRegex(field, value.replace('%', '.*'))
+        return lookups.IRegex(field, re.escape(value).replace('%', '.*'))
     else:
         return lookups.IContains(field, value)
 

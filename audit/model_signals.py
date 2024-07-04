@@ -1,5 +1,7 @@
+import datetime
 import logging
 
+import django
 from django.db import models
 from django.db.models.base import ModelBase
 
@@ -13,12 +15,81 @@ from core.models import CofkUnionComment, CofkUnionRelationshipType, CofkUnionRe
     CofkUnionNationality, CofkUnionImage, CofkUnionRoleCategory, CofkUnionSubject
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
-from manifestation.models import CofkUnionManifestation
+from manifestation.models import CofkUnionManifestation, CofkUnionLanguageOfManifestation
 from person.models import CofkUnionPerson
 from publication.models import CofkUnionPublication
-from work.models import CofkUnionWork
+from work.models import CofkUnionWork, CofkUnionLanguageOfWork
 
 log = logging.getLogger(__name__)
+
+
+def handle_non_triggered_record(sender: ModelBase, instance: models.Model, is_create: bool = True):
+    def _to_column_value(names):
+        return ', '.join(sorted(names))
+
+    if sender not in {
+        CofkUnionLanguageOfWork,
+        CofkUnionLanguageOfManifestation,
+    }:
+        return
+
+    if isinstance(instance, CofkUnionLanguageOfWork):
+        cur_lang_names = {l.language_code.language_name for l in instance.work.language_set.all()}
+
+    # parent_instance
+    if isinstance(instance, CofkUnionLanguageOfWork):
+        parent_instance = instance.work
+    elif isinstance(instance, CofkUnionLanguageOfManifestation):
+        parent_instance = instance.manifestation
+    else:
+        raise NotImplementedError(f'unsupported instance type {instance}')
+
+    audit_adapter = to_audit_adapter(parent_instance)
+    table_name = parent_instance._meta.db_table
+    key_value_integer = audit_adapter.key_value_integer()
+
+    org_audit = CofkUnionAuditLiteral.objects.filter(
+        change_timestamp__gt=django.utils.timezone.now() - datetime.timedelta(seconds=30),
+        table_name=table_name,
+        key_value_integer=key_value_integer,
+    ).first()
+
+    new_column_value = _to_column_value(cur_lang_names)
+    if org_audit:
+        # update existing audit for language change
+        org_audit.new_column_value = new_column_value
+        org_audit.save()
+        return
+
+    # prepare for new audit record for language change
+
+    changed_lang_name = instance.language_code.language_name
+
+    if is_create:
+        org_lang_names = cur_lang_names - {changed_lang_name}
+    else:
+        org_lang_names = cur_lang_names | {changed_lang_name}
+
+    # column_name
+    if isinstance(instance, CofkUnionLanguageOfWork):
+        column_name = 'language_of_work'
+    elif isinstance(instance, CofkUnionLanguageOfManifestation):
+        column_name = 'language_of_manifestation'
+    else:
+        raise NotImplementedError(f'unsupported instance type {instance}')
+
+    CofkUnionAuditLiteral.objects.create(
+        change_timestamp=model_serv.default_current_timestamp(),
+        change_user=parent_instance.change_user,
+        change_type=constant.CHANGE_TYPE_CHANGE,
+        table_name=table_name,
+        key_value_text=audit_adapter.key_value_text(),
+        key_value_integer=key_value_integer,
+        key_decode=audit_adapter.key_decode(),
+        column_name=column_name,
+        new_column_value=new_column_value,
+        old_column_value=_to_column_value(org_lang_names),
+    )
 
 
 def handle_update_audit_changed_user(sender: ModelBase, instance: models.Model, ):
@@ -101,7 +172,7 @@ def save_audit_records(instance: Recref, old_instance: Recref = None, ):
         # handle date fields
         literal = CofkUnionAuditLiteral(
             change_user=getattr(instance, 'change_user', constant.DEFAULT_CHANGE_USER),
-            change_type='New' if old_instance is None else 'Chg',
+            change_type=constant.CHANGE_TYPE_NEW if old_instance is None else constant.CHANGE_TYPE_CHANGE,
             table_name=instance._meta.db_table,
             key_value_text=' '.join(adapter.key_value_text() for adapter in adapters),
             key_value_integer=instance.recref_id,

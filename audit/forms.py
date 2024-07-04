@@ -1,5 +1,6 @@
 from django import forms
 
+from core import constant
 from core.helper import form_serv
 from core.helper.form_serv import CharSelectField, BasicSearchFieldset
 
@@ -229,9 +230,9 @@ changed_field_choices_dict = dict(changed_field_choices)
 
 change_type_choices = [
     (None, ''),
-    ('New', 'New'),
-    ('Chg', 'Change'),
-    ('Del', 'Delete'),
+    (constant.CHANGE_TYPE_NEW, 'New'),
+    (constant.CHANGE_TYPE_CHANGE, 'Change'),
+    (constant.CHANGE_TYPE_DELETE, 'Delete'),
 ]
 
 table_name_choices = [

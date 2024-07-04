@@ -9,6 +9,8 @@ such as:
 * multi relation and create new instance (RecrefFormsetHandler)
 """
 
+from __future__ import annotations
+
 import logging
 from abc import ABC
 from typing import Type, Iterable, Optional
@@ -55,8 +57,7 @@ class SingleRecrefHandler:
         recref = next(recref_adapter.find_recref_records(self.rel_type), None)
         return recref
 
-    def upsert_recref_if_field_exist(self, form: forms.BaseForm, parent, username,
-                                     ):
+    def upsert_recref_if_field_exist(self, form: forms.BaseForm, parent, username) -> Recref | None:
         if not (target_id := form.cleaned_data.get(self.form_field_name)):
             log.debug(f'value of form_field_name not found [{self.form_field_name=}] ')
             return
@@ -72,7 +73,8 @@ class SingleRecrefHandler:
             org_recref=self._find_recref_by_parent(parent, recref_adapter),
             username=username,
         )
-        recref.save()
+        if recref:
+            recref.save()
         return recref
 
 

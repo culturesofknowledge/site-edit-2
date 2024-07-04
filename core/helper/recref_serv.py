@@ -54,7 +54,8 @@ def upsert_recref_by_target_id(target_id,
                                username=None,
                                org_recref=None, ) -> Optional[Recref]:
     if not (target_instance := find_target_fn(target_id)):
-        log.warning(f"create recref fail, target_instance not found -- {target_id} ")
+        log.warning(f"create recref fail, target_instance not found "
+                    f"-- target_id[{target_id}] parent[{parent_instance}] ")
         return None
 
     return upsert_recref(
