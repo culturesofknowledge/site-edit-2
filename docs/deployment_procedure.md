@@ -131,6 +131,9 @@ pg_dump --host 172.17.0.1 --port 15432 -d ouls --password  --username postgres -
 
 # copy audit data to new db by sql
 psql --host localhost --port 25432 -d postgres --password  --username postgres  < old_audit_data.sql
+
+# fix audit sequence
+SELECT setval('cofk_union_audit_literal_audit_id_seq', (select max(audit_id) from  cofk_union_audit_literal) + 100, true);
 ```
 
 
