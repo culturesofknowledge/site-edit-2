@@ -12,7 +12,7 @@
     <tbody>
 
     {% for r in search_results %}
-        <tr>
+        <tr class="selectable_entry">
 
             <td>{{ r.change_timestamp|date:"d M Y H:i" }} by {{ r.change_user }}</td>
 
