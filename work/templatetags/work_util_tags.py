@@ -3,13 +3,14 @@ import re
 from django import template
 from django.utils.safestring import mark_safe
 
+from core.helper import data_serv
+from core.helper.data_serv import link_pattern
 from work import work_serv
 from work.models import CofkUnionWork
 from work.work_serv import DisplayableWork
 
 register = template.Library()
 
-link_pattern = re.compile(r'(xxxCofkLinkStartxxx)(xxxCofkHrefStartxxx)(.*?)(xxxCofkHrefEndxxx)(.*?)(xxxCofkLinkEndxxx)')
 img_pattern = re.compile(r'(xxxCofkImageIDStartxxx)(.*?)(xxxCofkImageIDEndxxx)')
 
 
@@ -45,16 +46,16 @@ def more_info(work: DisplayableWork):
 
 @register.filter
 def display_resources(values: str):
-    resources = re.findall(link_pattern, values)
-    html = ''
+    resources = list(data_serv.decode_multi_url_content(values))
 
+    html = ''
     if len(resources) > 1:
         html = '<ul>'
-        for link in resources:
-            html += f'<li><a href="{link[2]}" target="_blank">{link[4]}</a></li>'
+        for link, text in resources:
+            html += f'<li><a href="{link}" target="_blank">{text}</a></li>'
         html += '</ul>'
     elif len(resources) == 1:
-        html = f'<a href="{resources[0][2]}" target="_blank">{resources[0][4]}</a>'
+        html = f'<a href="{resources[0][0]}" target="_blank">{resources[0][1]}</a>'
 
     return mark_safe(html)
 
