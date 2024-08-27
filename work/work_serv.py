@@ -8,6 +8,7 @@ from django.utils.safestring import mark_safe
 
 from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, \
     REL_TYPE_MENTION
+from core.helper import data_serv
 from location import location_serv
 from person import person_serv
 from work.models import CofkUnionWork
@@ -174,33 +175,23 @@ class DisplayableWork(CofkUnionWork):
 
     @property
     def related_works(self) -> str:
-        start = 'xxxCofkLinkStartxxx'
-        end = 'xxxCofkLinkEndxxx'
-        start_href = 'xxxCofkHrefStartxxx'
-        end_href = 'xxxCofkHrefEndxxx'
-        works = ''
-
-        if to_works := self.work_to_set.all():
-            works += ", ".join([
-                f'{start}{start_href}{reverse("work:overview_form", args=[t.work_from.iwork_id])}{end_href}{t.work_from.description}{end}'
-                for t in to_works])
-
-        return works
+        links = [
+            data_serv.endcode_url_content(
+                reverse("work:overview_form", args=[t.work_from.iwork_id]),
+                t.work_from.description,
+            ) for t in (self.work_to_set.all() or [])
+        ]
+        return ', '.join(links)
 
     @property
     def related_resources(self) -> str:
-        start = 'xxxCofkLinkStartxxx'
-        end = 'xxxCofkLinkEndxxx'
-        start_href = 'xxxCofkHrefStartxxx'
-        end_href = 'xxxCofkHrefEndxxx'
-        resources = ''
-
-        if linked_resources := self.cofkworkresourcemap_set.all():
-            resources += ", ".join(
-                [f'{start}{start_href}{r.resource.resource_url}{end_href}{r.resource.resource_name}{end}' for r in
-                 linked_resources])
-
-        return resources
+        links = [
+            data_serv.endcode_url_content(
+                r.resource.resource_url,
+                r.resource.resource_name,
+            ) for r in (self.cofkworkresourcemap_set.all() or [])
+        ]
+        return ', '.join(links)
 
     @property
     def other_details(self) -> str:
