@@ -45,7 +45,7 @@ def more_info(work: DisplayableWork):
 
 
 @register.filter
-def display_resources(values: str):
+def display_resources(values: str) -> str:
     resources = list(data_serv.decode_multi_url_content(values))
 
     html = ''
