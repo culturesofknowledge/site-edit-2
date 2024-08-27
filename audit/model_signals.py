@@ -24,6 +24,20 @@ log = logging.getLogger(__name__)
 
 
 def handle_non_triggered_record(sender: ModelBase, instance: models.Model, is_create: bool = True):
+    """
+    Some records like CofkUnionLanguageOfWork, will not create audit record when created by DB trigger.
+    This function will create audit record for such records.
+
+    Parameters
+    ----------
+    sender
+    instance
+    is_create
+
+    Returns
+    -------
+
+    """
     def _to_column_value(names):
         return ', '.join(sorted(names))
 
@@ -33,8 +47,6 @@ def handle_non_triggered_record(sender: ModelBase, instance: models.Model, is_cr
     }:
         return
 
-    if isinstance(instance, CofkUnionLanguageOfWork):
-        cur_lang_names = {l.language_code.language_name for l in instance.work.language_set.all()}
 
     # parent_instance
     if isinstance(instance, CofkUnionLanguageOfWork):
@@ -54,6 +66,12 @@ def handle_non_triggered_record(sender: ModelBase, instance: models.Model, is_cr
         key_value_integer=key_value_integer,
     ).first()
 
+    _languages = []
+    if isinstance(instance, CofkUnionLanguageOfWork):
+        _languages = instance.work.language_set.all()
+    elif isinstance(instance, CofkUnionLanguageOfManifestation):
+        _languages = instance.manifestation.language_set.all()
+    cur_lang_names = {l.language_code.language_name for l in _languages}
     new_column_value = _to_column_value(cur_lang_names)
     if org_audit:
         # update existing audit for language change
