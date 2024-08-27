@@ -1,6 +1,8 @@
 from django.db import models
+from django.urls import reverse
 
 from core import constant
+from core.helper import data_serv
 from location.models import CofkUnionLocation
 from manifestation.models import CofkUnionManifestation
 from person import person_serv
@@ -58,7 +60,10 @@ class WorkAuditAdapter(AuditRecrefAdapter):
         return self.instance.iwork_id
 
     def key_decode(self, is_expand_details=False):
-        return self.instance.description
+        return data_serv.endcode_url_content(
+            reverse("work:overview_form", args=[self.instance.iwork_id]),
+            self.instance.description
+        )
 
 
 class ManifAuditAdapter(AuditRecrefAdapter):

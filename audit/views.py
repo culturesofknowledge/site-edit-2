@@ -1,6 +1,10 @@
+import logging
+import re
 from typing import Iterable
 
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 
 from audit import forms
 from audit.forms import AuditSearchFieldset
@@ -10,6 +14,9 @@ from core import constant
 from core.helper import renderer_serv, query_serv
 from core.helper.renderer_serv import RendererFactory
 from core.helper.view_serv import DefaultSearchView
+from work.templatetags import work_util_tags
+
+log = logging.getLogger(__name__)
 
 
 class AuditSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearchView):
@@ -45,6 +52,10 @@ class AuditSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearch
     @property
     def table_search_results_renderer_factory(self) -> RendererFactory:
         def record_modifier(record: CofkUnionAuditLiteral):
+            record.key_decode = display_resources_safe(record.key_decode)
+            record.new_column_value = display_resources_safe(record.new_column_value)
+            record.old_column_value = display_resources_safe(record.old_column_value)
+
             record.record_display_key = create_display_key(record)
             return record
 
@@ -64,6 +75,27 @@ class AuditSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearch
             return row
 
         return map(_update, records)
+
+
+def display_resources_safe(value: str) -> str:
+    if value and 'xxxCofkLinkStartxxx' in value:
+        try:
+            resources = work_util_tags.display_resources(value)
+            resources = replace_old_url(resources)
+            resources = mark_safe(resources)
+            return resources
+        except Exception as e:
+            log.debug(str(e))
+
+    return value
+
+
+def replace_old_url(value: str) -> str:
+    results = re.findall(r'(https?://.+?/interface/union.php\?iwork_id=(\d+))', value)
+    if results:
+        for url, iwork_id in results:
+            value = value.replace(url, reverse("work:overview_form", args=[iwork_id]))
+    return value
 
 
 def create_display_key(record: CofkUnionAuditLiteral) -> str:
