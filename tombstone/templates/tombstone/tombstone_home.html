@@ -1,0 +1,28 @@
+{% extends "core/emlo_logined.html" %}
+{% load static %}
+
+{% block content %}
+
+    <h1>Tombstone</h1>
+    <h5>Tools that help you to find similar Works</h5>
+
+    {% for cluster in work_clusters %}
+        <h3> {{ forloop.counter }}. Number of Works: {{ cluster.works|length }},
+            Distance: {{ cluster.distance|floatformat:4 }}</h3>
+        <table class="mb-8" id="results_table">
+            <tbody>
+            {% for w in cluster.works %}
+                <tr>
+                    <td class="w-24"> {{ w.iwork_id }} </td>
+                    <td>
+                        <a href="{% url 'work:overview_form' w.iwork_id %}">
+                            {{ w.description }}
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endfor %}
+
+{% endblock %}

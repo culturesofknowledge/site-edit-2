@@ -41,6 +41,7 @@ urlpatterns = [
     path('lang/', include('core.lang_urls')),
     path('user/', include('core.user_urls')),
     path('misc/', include('core.misc_urls')),
+    path('tombstone/', include('tombstone.urls')),
 
     path("__reload__/", include("django_browser_reload.urls")),
 ]

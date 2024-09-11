@@ -32,6 +32,13 @@ dependencies = [
 
     'pylint~=3.0',
     'pylint-django~=2.5',
+
+
+    # Tomdstone
+    'scikit-learn~=1.5',
+    'pandas~=2.2',
+    'matplotlib~=3.9',
+
 ]
 
 
