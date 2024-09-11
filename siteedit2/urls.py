@@ -41,6 +41,8 @@ urlpatterns = [
     path('lang/', include('core.lang_urls')),
     path('user/', include('core.user_urls')),
     path('misc/', include('core.misc_urls')),
+
+    path("__reload__/", include("django_browser_reload.urls")),
 ]
 
 for url_path, file_path in [

@@ -36,6 +36,7 @@ cd $DJANGODIR
 
 python3 manage.py compilescss
 python3 manage.py collectstatic -c --no-input
+python3 manage.py tailwind build
 
 
 echo "Making migrations"

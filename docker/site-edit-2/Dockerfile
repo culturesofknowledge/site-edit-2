@@ -5,7 +5,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 WORKDIR /code
 RUN apt-get update \
-    && apt-get -y install libpq-dev gcc build-essential
+    && apt-get -y install libpq-dev gcc build-essential npm nodejs
 COPY . /code/
 RUN mkdir /emlo_home
 RUN pip install --upgrade pip setuptools wheel

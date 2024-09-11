@@ -7,7 +7,8 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
-    'asgiref==3.5.2',
+    'django-tailwind[reload]~=3.8',
+    'asgiref~=3.8',
     'Django==4.0.6',
     'django-q2==1.6.1',
     'openpyxl==3.0.10',
