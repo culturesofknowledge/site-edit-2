@@ -4,12 +4,10 @@ import numpy as np
 from django.core.management import BaseCommand
 from scipy.cluster.hierarchy import linkage, dendrogram
 
+from tombstone.features.dataset import work_features
 from tombstone.services import tombstone
 from tombstone.services.kmean_cluster import yield_all_cluster
 from tombstone.services.linkage_cluster import yield_cluster_indexes, ClusterTreeMaker
-from tombstone.services.tombstone_features import prepare_work_raw_df, create_features
-
-# from core.management.commands.exporter import InstFrontendCsv
 
 log = logging.getLogger(__name__)
 
@@ -48,9 +46,9 @@ def main43():
     n_inputs = None
     k = 100
 
-    work_raw_df = prepare_work_raw_df(n=n_inputs)
+    work_raw_df = work_features.prepare_raw_df(n=n_inputs)
     X_ids = work_raw_df.index
-    X = create_features(work_raw_df)
+    X = work_features.create_features(work_raw_df)
     total_items = 0
     for group_ids in yield_all_cluster(X, X_ids):
         n_items = group_ids.shape[0]
@@ -64,9 +62,9 @@ def main39__main_kmean():
     n_inputs = None
     k = 100
 
-    work_raw_df = prepare_work_raw_df(n=n_inputs)
+    work_raw_df = work_features.prepare_raw_df(n=n_inputs)
     X_ids = work_raw_df.index
-    X = create_features(work_raw_df)
+    X = work_features.create_features(work_raw_df)
     total_items = 0
     for group_ids in yield_all_cluster(X, X_ids):
         n_items = group_ids.shape[0]
@@ -94,9 +92,9 @@ def main38__try_linkage():
     n_inputs = 5000
     score_threshold = 1.1
 
-    work_raw_df = prepare_work_raw_df(n=n_inputs)
+    work_raw_df = work_features.prepare_raw_df(n=n_inputs)
     X_ids = work_raw_df.index.to_numpy()
-    X = create_features(work_raw_df)
+    X = work_features.create_features(work_raw_df)
 
     log.info('Clustering')
     Z = linkage(X.toarray(), 'ward')
