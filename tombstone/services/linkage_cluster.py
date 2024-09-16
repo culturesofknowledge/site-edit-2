@@ -97,8 +97,8 @@ class ClusterTreeMaker:
         return self.nodes
 
 
-def cal_nodes(X: np.ndarray):
+def cal_nodes(X: np.ndarray, method='single'):
     log.info('Clustering')
-    Z = linkage(X, 'ward')
+    Z = linkage(X, method=method)
     nodes = ClusterTreeMaker().make_tree(Z, X.shape[0]).values()
     return nodes

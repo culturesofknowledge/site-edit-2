@@ -16,10 +16,14 @@ def create_random_str(size=100, seed=42):
     return ''.join(random.choices(s, k=size))
 
 
-def get_str_or_random(record, field_name, max_len=None):
+def get_str_or_random(record: dict | object, field_name, max_len=None):
     default_str_len = max_len or 100
     default_value = create_random_str(size=default_str_len)
-    val = getattr(record, field_name, default_value) or default_value
+    if isinstance(record, dict):
+        val = record.get(field_name, default_value)
+    else:
+        val = getattr(record, field_name, default_value)
+    val = val or default_value
     if max_len:
         val = val[:max_len]
     return val
@@ -35,11 +39,15 @@ def get_float_or_random(record, field_name, scale=1):
         val = default_value
     return val
 
-def create_text_pipeline(n_output_features=10):
-    return Pipeline([
+
+def create_text_pipeline(n_output_features=None):
+    steps = [
         ('tfidf', TfidfVectorizer()),
-        ('pca', PCA(n_components=n_output_features)),
-    ])
+    ]
+    if n_output_features:
+        steps.append(('pca', PCA(n_components=n_output_features)))
+
+    return Pipeline(steps)
 
 
 def build_raw_df(field_extractors, index, works):

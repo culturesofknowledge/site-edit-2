@@ -8,19 +8,20 @@ from tombstone.features import feature_utils
 
 log = logging.getLogger(__name__)
 
+FIELD_EXTRACTORS = {
+    'description': lambda r: feature_utils.get_str_or_random(r, 'description', 200),
+    'abstract': lambda r: feature_utils.get_str_or_random(r, 'abstract', 200),
+    'authors_as_marked': lambda r: feature_utils.get_str_or_random(r, 'authors_as_marked', 100),
+    'addressees_as_marked': lambda r: feature_utils.get_str_or_random(r, 'addressees_as_marked', 100),
+    'origin_as_marked': lambda r: feature_utils.get_str_or_random(r, 'origin_as_marked', 50),
+    'keywords': lambda r: feature_utils.get_str_or_random(r, 'keywords', 100),
+    'incipit': lambda r: feature_utils.get_str_or_random(r, 'incipit', 100),
+    'accession_code': lambda r: feature_utils.get_str_or_random(r, 'accession_code', 80),
+}
 
-def prepare_raw_df(records: Iterable) -> pd.DataFrame:
-    field_extractors = {
-        'description': lambda r: feature_utils.get_str_or_random(r, 'description', 200),
-        'abstract': lambda r: feature_utils.get_str_or_random(r, 'abstract', 200),
-        'authors_as_marked': lambda r: feature_utils.get_str_or_random(r, 'authors_as_marked', 100),
-        'addressees_as_marked': lambda r: feature_utils.get_str_or_random(r, 'addressees_as_marked', 100),
-        'origin_as_marked': lambda r: feature_utils.get_str_or_random(r, 'origin_as_marked', 50),
-        'keywords': lambda r: feature_utils.get_str_or_random(r, 'keywords', 100),
-        'incipit': lambda r: feature_utils.get_str_or_random(r, 'incipit', 100),
-        'accession_code': lambda r: feature_utils.get_str_or_random(r, 'accession_code', 80),
-    }
-    record_df = feature_utils.build_raw_df(field_extractors, [r.iwork_id for r in records], records)
+
+def prepare_raw_df(records: Iterable[dict]) -> pd.DataFrame:
+    record_df = feature_utils.build_raw_df(FIELD_EXTRACTORS, [r['iwork_id'] for r in records], records)
     return record_df
 
 
