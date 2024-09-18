@@ -7,30 +7,21 @@ from sklearn.cluster import KMeans
 log = logging.getLogger(__name__)
 
 
-def yield_all_cluster(X, X_ids, seed=42, target_group_size=800, min_k=4, max_k=100):
-    cluster_fn = functools.partial(create_cluster, seed=seed, target_group_size=target_group_size, min_k=min_k,
-                                   max_k=max_k)
-
-    for lv1_indexes in cluster_fn(X):
-        lv1_ids = X_ids[lv1_indexes]
-        log.info(f'running lv2 clustering for {len(lv1_ids)}')
-        for lv2_indexes in cluster_fn(X[lv1_indexes]):
-            lv2_ids = lv1_ids[lv2_indexes]
-            log.info(f'yielding {len(lv2_indexes)}')
-            yield lv2_ids
-
-
-def yield_all_cluster2(X, X_ids, seed=42, target_group_size=1000, max_k=100):
+def yield_all_cluster(X, X_ids, seed=42, target_group_size=1000, max_k=100, max_depth=5):
     cluster_fn = functools.partial(create_cluster, seed=seed, target_group_size=target_group_size,
                                    max_k=max_k)
 
-    todo_list = [(X, X_ids)]
+    todo_list = [(X, X_ids, 0)]
     while todo_list:
-        cur_X, cur_X_ids = todo_list.pop()
+        cur_X, cur_X_ids, depth = todo_list.pop()
+        if depth >= max_depth:
+            yield cur_X_ids
+            continue
+
         for indexes in cluster_fn(cur_X):
             ids = cur_X_ids[indexes]
             if len(ids) > target_group_size:
-                todo_list.append((cur_X[indexes], ids))
+                todo_list.append((cur_X[indexes], ids, depth + 1))
             else:
                 yield ids
 
@@ -65,9 +56,8 @@ def create_cluster(X, seed=42, target_group_size=800, max_k=100):
     log.info('Clustering fitting')
     kmeans = KMeans(n_clusters=k, random_state=seed)
     kmeans.fit(X)
-
-    log.info('Predict')
-    labels = kmeans.predict(X)
-
+    labels = kmeans.labels_
     for label in range(k):
-        yield labels == label
+        label_matched = labels == label
+        log.info(f'cluster {label} size: {label_matched.sum()}')
+        yield label_matched

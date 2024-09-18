@@ -48,7 +48,7 @@ def find_similar_clusters(features, feature_ids,
     assert features.shape[0] == feature_ids.shape[0]
     total_items = features.shape[0]
     clusters = []
-    group_ids_list = kmean_cluster.yield_all_cluster2(features, feature_ids, target_group_size=target_group_size)
+    group_ids_list = kmean_cluster.yield_all_cluster(features, feature_ids, target_group_size=target_group_size)
     group_ids_list = (ids for ids in group_ids_list if len(ids) > 1)
     for sub_group_ids in group_ids_list:
         log.debug(f'running linkage clustering for {len(sub_group_ids)}')
