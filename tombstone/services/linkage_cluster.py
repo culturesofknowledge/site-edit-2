@@ -41,11 +41,13 @@ class ClusterNode:
 
     def find_all_leafs_indexes(self):
         leafs = []
-        for node in [self.left, self.right]:
+        nodes = [self.left, self.right]
+        while nodes:
+            node = nodes.pop()
             if isinstance(node, int):
                 leafs.append(node)
             else:
-                leafs.extend(node.find_all_leafs_indexes())
+                nodes.extend([node.left, node.right])
 
         assert len(leafs) == self.count
         return np.array(leafs)
