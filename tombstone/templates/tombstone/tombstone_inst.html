@@ -1,0 +1,31 @@
+{% extends "tombstone/tombstone_basic.html" %}
+{% load static %}
+
+{% block content_result %}
+    <h2>Person</h2>
+
+    {% for cluster in clusters %}
+        {% include "tombstone/component/cluster_header.html" with forloop=forloop cluster=cluster %}
+
+        <table class="mb-8" id="results_table">
+            <tbody>
+            {% for r in cluster.records %}
+                <tr>
+                    <td class="w-24"> {{ r.institution_id }} </td>
+                    <td>
+                        <a href="{% url  'institution:full_form' r.institution_id %}">
+                            {{ r.institution_name|default:'' }}
+                        </a>
+                    </td>
+                    <td> {{ r.institution_synonyms|default:'' }} </td>
+                    <td> {{ r.institution_city|default:'' }} </td>
+                    <td> {{ r.institution_country|default:'' }} </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endfor %}
+
+
+
+{% endblock %}

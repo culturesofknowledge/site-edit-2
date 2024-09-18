@@ -5,9 +5,10 @@ import logging
 from django.shortcuts import render
 from django.urls import reverse
 
+from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from person.models import CofkUnionPerson
-from tombstone.features.dataset import work_features, location_features, person_features
+from tombstone.features.dataset import work_features, location_features, person_features, inst_features
 from tombstone.services import tombstone
 from tombstone.services.tombstone import IdsCluster
 from work.models import CofkUnionWork
@@ -56,6 +57,20 @@ def home(request):
     return render(request, 'tombstone/tombstone_basic.html')
 
 
+def render_tombstone_cluster(request, raw_df, create_features, create_id_records_dict, template_name,
+                             score_threshold=0.1, cluster_factory=WebCluster, merge_page_url=None):
+    log.info('Preprocessing data')
+    clusters = find_clusters(raw_df,
+                             create_features,
+                             score_threshold=score_threshold)
+    clusters = build_display_clusters(clusters, cluster_factory, create_id_records_dict)
+    return render(request, template_name,
+                  {
+                      'clusters': clusters,
+                      'merge_page_url': merge_page_url,
+                  })
+
+
 def similar_work(request):
     def _create_id_records_dict(ids):
         return {r.iwork_id: r for r in CofkUnionWork.objects.filter(iwork_id__in=ids)}
@@ -83,23 +98,27 @@ def similar_person(request):
 
     score_threshold = 0.002
     records = CofkUnionPerson.objects.all().values(
-        *(['iperson_id', 'date_of_birth', 'date_of_death', 'foaf_name', 'skos_altlabel',
-           'skos_hiddenlabel', 'person_aliases', ]))
+        *('iperson_id', 'date_of_birth', 'date_of_death', 'foaf_name', 'skos_altlabel',
+           'skos_hiddenlabel', 'person_aliases',))
     raw_df = person_features.prepare_raw_df(records)
     return render_tombstone_cluster(request, raw_df, person_features.create_features, _create_id_records_dict,
                                     'tombstone/tombstone_person.html', merge_page_url=reverse('person:merge'),
                                     score_threshold=score_threshold, )
 
 
-def render_tombstone_cluster(request, raw_df, create_features, create_id_records_dict, template_name,
-                             score_threshold=0.1, cluster_factory=WebCluster, merge_page_url=None):
-    log.info('Preprocessing data')
-    clusters = find_clusters(raw_df,
-                             create_features,
-                             score_threshold=score_threshold)
-    clusters = build_display_clusters(clusters, cluster_factory, create_id_records_dict)
-    return render(request, template_name,
-                  {
-                      'clusters': clusters,
-                      'merge_page_url': merge_page_url,
-                  })
+def similar_inst(request):
+    def _create_id_records_dict(ids):
+        return {r.institution_id: r for r in CofkUnionInstitution.objects.filter(institution_id__in=ids)}
+
+    records = CofkUnionInstitution.objects.all().values(
+        *(
+            'institution_id',
+            'institution_name',
+            'institution_synonyms',
+            'institution_city',
+            'institution_country',
+        ),
+    )
+    raw_df = inst_features.prepare_raw_df(records)
+    return render_tombstone_cluster(request, raw_df, inst_features.create_features, _create_id_records_dict,
+                                    'tombstone/tombstone_inst.html', merge_page_url=reverse('institution:merge'))
