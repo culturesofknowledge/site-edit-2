@@ -1,7 +1,9 @@
 import datetime
+import logging
 
 from django.apps import AppConfig
 
+log = logging.getLogger(__name__)
 
 class CoreConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
@@ -11,7 +13,14 @@ class CoreConfig(AppConfig):
         from django_q.models import Schedule
 
         from core.helper.exporter_serv import RUN_EXPORTER_FUNC
-        if not Schedule.objects.filter(func=RUN_EXPORTER_FUNC).count():
+        try:
+            schedule_job_size = Schedule.objects.filter(func=RUN_EXPORTER_FUNC).count()
+        except Exception as e:
+            log.error('Skip running schedule job, Error when checking schedule job size')
+            log.exception(e)
+            return
+
+        if not schedule_job_size:
             from django_q.tasks import schedule
             schedule(
                 RUN_EXPORTER_FUNC,
