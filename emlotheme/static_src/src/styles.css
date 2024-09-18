@@ -5,3 +5,7 @@
 input {
     height: 38px;
 }
+
+select {
+    height: 38px;
+}
