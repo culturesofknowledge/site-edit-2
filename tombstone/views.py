@@ -31,6 +31,20 @@ class LocationWebCluster(WebCluster):
         return [r.location_id for r in self.records]
 
 
+@dataclasses.dataclass
+class PersonWebCluster(WebCluster):
+    @property
+    def merge_ids(self):
+        return [r.iperson_id for r in self.records]
+
+
+@dataclasses.dataclass
+class InstWebCluster(WebCluster):
+    @property
+    def merge_ids(self):
+        return [r.institution_id for r in self.records]
+
+
 def find_clusters(raw_df, feature_maker,
                   n_top_clusters=N_TOP_CLUSTERS,
                   score_threshold=0.5):
@@ -89,7 +103,9 @@ def similar_location(request):
         *(list(location_features.FIELD_EXTRACTORS.keys()) + ['location_id']))
     raw_df = location_features.prepare_raw_df(records)
     return render_tombstone_cluster(request, raw_df, location_features.create_features, _create_id_records_dict,
-                                    'tombstone/tombstone_location.html', merge_page_url=reverse('location:merge'))
+                                    'tombstone/tombstone_location.html',
+                                    merge_page_url=reverse('location:merge'),
+                                    cluster_factory=LocationWebCluster)
 
 
 def similar_person(request):
@@ -99,11 +115,12 @@ def similar_person(request):
     score_threshold = 0.002
     records = CofkUnionPerson.objects.all().values(
         *('iperson_id', 'date_of_birth', 'date_of_death', 'foaf_name', 'skos_altlabel',
-           'skos_hiddenlabel', 'person_aliases',))
+          'skos_hiddenlabel', 'person_aliases',))
     raw_df = person_features.prepare_raw_df(records)
     return render_tombstone_cluster(request, raw_df, person_features.create_features, _create_id_records_dict,
                                     'tombstone/tombstone_person.html', merge_page_url=reverse('person:merge'),
-                                    score_threshold=score_threshold, )
+                                    score_threshold=score_threshold,
+                                    cluster_factory=PersonWebCluster)
 
 
 def similar_inst(request):
@@ -121,4 +138,6 @@ def similar_inst(request):
     )
     raw_df = inst_features.prepare_raw_df(records)
     return render_tombstone_cluster(request, raw_df, inst_features.create_features, _create_id_records_dict,
-                                    'tombstone/tombstone_inst.html', merge_page_url=reverse('institution:merge'))
+                                    'tombstone/tombstone_inst.html',
+                                    merge_page_url=reverse('institution:merge'),
+                                    cluster_factory=InstWebCluster)
