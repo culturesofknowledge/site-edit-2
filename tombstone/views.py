@@ -1,16 +1,22 @@
 import dataclasses
 import itertools
+import json
 import logging
+import typing
 
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.urls import reverse
+from django.views.decorators.http import require_POST
 
+from core.helper.model_serv import ModelLike
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from person.models import CofkUnionPerson
-from tombstone.features.dataset import work_features, location_features, person_features, inst_features
-from tombstone.services import tombstone
+from tombstone.features.dataset import work_features, location_features, person_features
+from tombstone.models import TombstoneRequest
+from tombstone.services import tombstone, tombstone_schedule
 from tombstone.services.tombstone import IdsCluster
+from tombstone.services.tombstone_schedule import inst_status_handler
 from work.models import CofkUnionWork
 
 log = logging.getLogger(__name__)
@@ -20,7 +26,7 @@ N_TOP_CLUSTERS = 100
 
 @dataclasses.dataclass
 class WebCluster:
-    records: list
+    records: list[ModelLike]
     distance: float
 
 
@@ -45,6 +51,9 @@ class InstWebCluster(WebCluster):
         return [r.institution_id for r in self.records]
 
 
+WebClusterLike = typing.TypeVar('WebClusterLike', bound=WebCluster)
+
+
 def find_clusters(raw_df, feature_maker,
                   n_top_clusters=N_TOP_CLUSTERS,
                   score_threshold=0.5):
@@ -56,6 +65,7 @@ def find_clusters(raw_df, feature_maker,
 
 
 def build_display_clusters(clusters: list[IdsCluster], cluster_factory, create_id_records_dict):
+    clusters = list(clusters)
     id_record_dict = create_id_records_dict(itertools.chain.from_iterable(cluster.ids for cluster in clusters))
     clusters = [
         cluster_factory(
@@ -78,10 +88,17 @@ def render_tombstone_cluster(request, raw_df, create_features, create_id_records
                              create_features,
                              score_threshold=score_threshold)
     clusters = build_display_clusters(clusters, cluster_factory, create_id_records_dict)
+    return render_cluster_results(request, template_name, clusters, merge_page_url)
+
+
+def render_cluster_results(request, template_name, clusters: list[WebClusterLike], merge_page_url=None,
+                           is_running=False, last_update_at=None):
     return render(request, template_name,
                   {
                       'clusters': clusters,
                       'merge_page_url': merge_page_url,
+                      'is_running': is_running,
+                      'last_update_at': last_update_at,
                   })
 
 
@@ -127,17 +144,33 @@ def similar_inst(request):
     def _create_id_records_dict(ids):
         return {r.institution_id: r for r in CofkUnionInstitution.objects.filter(institution_id__in=ids)}
 
-    records = CofkUnionInstitution.objects.all().values(
-        *(
-            'institution_id',
-            'institution_name',
-            'institution_synonyms',
-            'institution_city',
-            'institution_country',
-        ),
-    )
-    raw_df = inst_features.prepare_raw_df(records)
-    return render_tombstone_cluster(request, raw_df, inst_features.create_features, _create_id_records_dict,
-                                    'tombstone/tombstone_inst.html',
-                                    merge_page_url=reverse('institution:merge'),
-                                    cluster_factory=InstWebCluster)
+    record = TombstoneRequest.objects.filter(model_name=CofkUnionInstitution.__name__).first()
+    clusters = []
+    last_update_at = None
+    if record and record.result_jsonl:
+        clusters = record.result_jsonl.split('\n')
+        clusters = (json.loads(cluster) for cluster in clusters)
+        clusters = (IdsCluster(ids=cluster['ids'], distance=cluster['distance']) for cluster in clusters)
+        clusters = build_display_clusters(clusters, InstWebCluster, _create_id_records_dict)
+        last_update_at = record.change_timestamp
+
+    return render_cluster_results(request, 'tombstone/tombstone_inst.html',
+                                  clusters,
+                                  merge_page_url=reverse('institution:merge'),
+                                  is_running=inst_status_handler.is_pending_or_running(),
+                                  last_update_at=last_update_at)
+
+
+@require_POST
+def trigger_inst_clustering(request):
+    task = TombstoneRequest.objects.filter(model_name=CofkUnionInstitution.__name__).first()
+    if not task:
+        task = TombstoneRequest(model_name=CofkUnionInstitution.__name__)
+        task.update_current_user_timestamp(request.user.username)
+    task.sql = str(CofkUnionInstitution.objects.filter().query)
+    task.save()
+    inst_status_handler.mark_pending()
+    if not tombstone_schedule.status_handler.is_pending_or_running():
+        tombstone_schedule.status_handler.mark_pending()
+
+    return redirect('tombstone:inst')

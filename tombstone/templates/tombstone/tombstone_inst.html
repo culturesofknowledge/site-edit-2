@@ -2,7 +2,23 @@
 {% load static %}
 
 {% block content_result %}
-    <h2>Person</h2>
+    <h2>Repositories</h2>
+
+
+    {% if is_running %}
+        <h3>Running...</h3>
+    {% else %}
+        <form action="{% url 'tombstone:trigger_inst' %}" method="post">
+            {% csrf_token %}
+            <input type="submit" value="Start">
+        </form>
+    {% endif %}
+
+
+
+    {% if last_update_at %}
+        <p>Last update: {{ last_update_at }}</p>
+    {% endif %}
 
     {% for cluster in clusters %}
         {% include "tombstone/component/cluster_header.html" with forloop=forloop cluster=cluster %}

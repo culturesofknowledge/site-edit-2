@@ -11,4 +11,5 @@ urlpatterns = [
     path('location', views.similar_location, name='location'),
     path('person', views.similar_person, name='person'),
     path('inst', views.similar_inst, name='inst'),
+    path('trigger_inst', views.trigger_inst_clustering, name='trigger_inst'),
 ]
