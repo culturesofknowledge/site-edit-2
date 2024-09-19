@@ -2,7 +2,7 @@ import functools
 import logging
 
 import numpy as np
-from sklearn.cluster import KMeans
+from sklearn.cluster import MiniBatchKMeans
 
 log = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ def create_cluster(X, seed=42, target_group_size=800, max_k=100):
     log.info(f'X shape: {X.shape}')
 
     log.info('Clustering fitting')
-    kmeans = KMeans(n_clusters=k, random_state=seed)
+    kmeans = MiniBatchKMeans(n_clusters=k, random_state=seed, batch_size=target_group_size)
     kmeans.fit(X)
     labels = kmeans.labels_
     for label in range(k):
