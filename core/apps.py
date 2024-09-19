@@ -1,9 +1,13 @@
 import datetime
+import functools
 import logging
 
 from django.apps import AppConfig
 
+from core.helper import django_q_serv
+
 log = logging.getLogger(__name__)
+
 
 class CoreConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
@@ -11,25 +15,11 @@ class CoreConfig(AppConfig):
 
     def ready(self):
         from django_q.models import Schedule
-
         from core.helper.exporter_serv import RUN_EXPORTER_FUNC
-        try:
-            schedule_job_size = Schedule.objects.filter(func=RUN_EXPORTER_FUNC).count()
-        except Exception as e:
-            log.error('Skip running schedule job, Error when checking schedule job size')
-            log.exception(e)
-            return
+        from django_q.tasks import schedule
 
-        if not schedule_job_size:
-            from django_q.tasks import schedule
-            schedule(
-                RUN_EXPORTER_FUNC,
-                schedule_type=Schedule.DAILY,
-                # schedule_type=Schedule.MINUTES,
-                # minutes=1,
-                q_options={'timeout': 24 * 60 * 60},
-
-                next_run=(datetime.datetime.now() + datetime.timedelta(days=1)).replace(hour=0, minute=0,
-                                                                                        second=0, microsecond=0),
-                # next_run=datetime.datetime.now(),
-            )
+        schedule_fn = functools.partial(schedule, schedule_type=Schedule.DAILY,
+                                        q_options={'timeout': 24 * 60 * 60},
+                                        next_run=(datetime.datetime.now() + datetime.timedelta(days=1)).replace(
+                                            hour=0, minute=0, second=0, microsecond=0))
+        django_q_serv.init_schedule(RUN_EXPORTER_FUNC, schedule_fn)
