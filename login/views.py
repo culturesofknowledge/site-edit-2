@@ -8,7 +8,7 @@ from core.helper import exporter_serv
 @login_required
 def dashboard(request):
     return render(request, 'login/dashboard.html', {
-        'is_exporting': exporter_serv.is_exporter_pending(),
+        'is_exporting': exporter_serv.status_handler.is_pending(),
     })
 
 @login_required
