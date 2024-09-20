@@ -43,7 +43,6 @@ def get_multi_str_or_random(record: dict | object, field_names: list[str], max_l
     vals = filter(None, vals)
     vals = ' '.join(vals)
     vals = vals or default_value
-    print(f'mixed_field: {vals}')
     return vals
 
 

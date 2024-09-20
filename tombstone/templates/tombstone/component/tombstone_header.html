@@ -1,0 +1,12 @@
+{% if is_running %}
+    <h3>Looking for simliar records in process, please come back later...</h3>
+{% else %}
+    <form action="{% url trigger_url %}" method="post">
+        {% csrf_token %}
+        <input type="submit" value="Start">
+    </form>
+{% endif %}
+
+{% if last_update_at %}
+    <p>Last update: {{ last_update_at }}</p>
+{% endif %}
