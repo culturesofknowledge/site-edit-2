@@ -6,10 +6,16 @@ from core.helper import task_serv
 from core.helper.model_serv import default_current_timestamp
 from core.helper.task_serv import FileBaseTaskStatusHandler
 from institution.models import CofkUnionInstitution
-from tombstone.features.dataset import inst_features
+from location.models import CofkUnionLocation
+from person.models import CofkUnionPerson
+from tombstone.features.dataset import inst_features, person_features, location_features, work_features
 from tombstone.models import TombstoneRequest
+from tombstone.services import tombstone
+from work.models import CofkUnionWork
 
 log = logging.getLogger(__name__)
+
+N_TOP_CLUSTERS = 100
 
 status_handler = FileBaseTaskStatusHandler(name='tombstone_clustering_flag')
 
@@ -18,33 +24,40 @@ location_status_handler = FileBaseTaskStatusHandler(name='tombstone_location_fla
 person_status_handler = FileBaseTaskStatusHandler(name='tombstone_person_flag')
 inst_status_handler = FileBaseTaskStatusHandler(name='tombstone_inst_flag')
 
+INST_FIELDS = (
+    'institution_id',
+    'institution_name',
+    'institution_synonyms',
+    'institution_city',
+    'institution_country',
+    'pk',
+)
+PERSON_FIELDS = (
+    'iperson_id', 'date_of_birth', 'date_of_death',
+    'foaf_name', 'skos_altlabel',
+    'skos_hiddenlabel', 'person_aliases', 'pk',
+)
+LOCATION_FIELDS = list(location_features.FIELD_EXTRACTORS.keys()) + ['location_id', 'pk']
+WORK_FIELDS = list(work_features.FIELD_EXTRACTORS.keys()) + ['iwork_id', 'pk']
+
 
 def create_clusters(raw_df, create_features, score_threshold=0.5):
-    from tombstone.views import find_clusters  # KTODO to be migrated to tombstone.services.tombstone
     log.info('Preprocessing data')
-    clusters = find_clusters(raw_df,
-                             create_features,
-                             score_threshold=score_threshold)
+    feature_ids = raw_df.index.to_numpy()
+    features = create_features(raw_df)
+    clusters = tombstone.find_similar_clusters(features, feature_ids,
+                                               score_threshold=score_threshold)[:N_TOP_CLUSTERS]
     return clusters
 
 
-def run_inst_clustering():
-
-    tasks = TombstoneRequest.objects.filter(model_name=CofkUnionInstitution.__name__).all()
+def run_clustering(model_class, fields, prepare_raw_df, create_features, score_threshold=0.5):
+    tasks = TombstoneRequest.objects.filter(model_name=model_class.__name__).all()
     for task in tasks:
-        keys = (
-            'institution_id',
-            'institution_name',
-            'institution_synonyms',
-            'institution_city',
-            'institution_country',
-        )
-        records = [{k: getattr(r, k, None) for k in keys}
-                   for r in CofkUnionInstitution.objects.raw(task.sql)]
-        raw_df = inst_features.prepare_raw_df(records)
+        records = [{k: getattr(r, k, None) for k in fields}
+                   for r in model_class.objects.raw(task.sql)]
+        raw_df = prepare_raw_df(records)
 
-        clusters = create_clusters(raw_df, inst_features.create_features)
-
+        clusters = create_clusters(raw_df, create_features, score_threshold=score_threshold)
         json_strs = [cluster_result_to_json_str(c) for c in clusters]
         result_jsonl = '\n'.join(json_strs)
 
@@ -54,20 +67,48 @@ def run_inst_clustering():
         task.save()
 
 
+def run_inst_clustering():
+    run_clustering(CofkUnionInstitution, INST_FIELDS,
+                   inst_features.prepare_raw_df,
+                   inst_features.create_features,
+                     )
+
+
+def run_person_clustering():
+    run_clustering(CofkUnionPerson, PERSON_FIELDS,
+                   person_features.prepare_raw_df,
+                   person_features.create_features,
+                   score_threshold=0.002)
+
+
+def run_location_clustering():
+    run_clustering(CofkUnionLocation, LOCATION_FIELDS,
+                   location_features.prepare_raw_df,
+                   location_features.create_features)
+
+
+def run_work_clustering():
+    run_clustering(CofkUnionWork, WORK_FIELDS,
+                   work_features.prepare_raw_df,
+                   work_features.create_features,
+                   score_threshold=0.002)
+
+
 def cluster_result_to_json_str(cluster):
     obj = {'ids': [int(i) for i in cluster.ids], 'distance': float(cluster.distance)}
     json_str = json.dumps(obj)
     return json_str
 
 
-def run_tombstone_clustering():
-    log.info('Tombstone clustering triggered')
-    print(RUN_TOMBSTONE_CLUSTERING_FN)
-
+def run_all_clustering():
     def run_task_fn():
+        task_serv.run_task(run_work_clustering, work_status_handler)
+        task_serv.run_task(run_person_clustering, person_status_handler)
+        task_serv.run_task(run_location_clustering, location_status_handler)
         task_serv.run_task(run_inst_clustering, inst_status_handler)
 
+    log.debug('Checking for clustering tasks')
     task_serv.run_task(run_task_fn, status_handler)
 
 
-RUN_TOMBSTONE_CLUSTERING_FN = inspect_utils.get_fn_path(run_tombstone_clustering)
+RUN_TOMBSTONE_CLUSTERING_FN = inspect_utils.get_fn_path(run_all_clustering)

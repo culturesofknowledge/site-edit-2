@@ -4,6 +4,8 @@
 {% block content_result %}
     <h2>Location</h2>
 
+    {% include "tombstone/component/tombstone_header.html" with trigger_url='tombstone:trigger_location' %}
+
     {% for cluster in clusters %}
         {% include "tombstone/component/cluster_header.html" with forloop=forloop cluster=cluster %}
 
