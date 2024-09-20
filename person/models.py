@@ -134,6 +134,9 @@ class CofkUnionPerson(models.Model, RecordTracker):
         permissions = [
             ('export_file', 'Export csv/excel from search results'),
         ]
+        indexes = [
+            models.Index(fields=['iperson_id']),
+        ]
 
 
 class CofkPersonLocationMap(Recref):
