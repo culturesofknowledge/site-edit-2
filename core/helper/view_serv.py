@@ -441,11 +441,8 @@ class BasicSearchView(ListView):
         tombstone_setting = self.tombstone_setting
         if tombstone_setting and not tombstone_setting.status_handler.is_pending_or_running():
             queryset = tombstone_setting.queryset_modifier(self.get_queryset())
-            sql, params = tombstone.create_sql_params_by_queryset(queryset)
-            log.info(f'tombstone sql: {sql}')
-            tombstone.trigger_clustering(tombstone_setting.model_name, sql,
+            tombstone.trigger_clustering(tombstone_setting.model_name, queryset,
                                          tombstone_setting.status_handler,
-                                         sql_params=params,
                                          username=request.user.username)
 
         return super().get(request, *args, **kwargs)

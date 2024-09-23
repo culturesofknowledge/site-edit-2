@@ -66,10 +66,12 @@ def find_similar_clusters(features, feature_ids,
     return clusters
 
 
-def trigger_clustering(model_name, sql, status_handler, sql_params=None, username=None):
+def trigger_clustering(model_name, queryset, status_handler, username=None):
     """
     Create task for tombstone background job to run clustering.
     """
+
+    sql, sql_params = queryset.order_by().query.sql_with_params()
 
     task = TombstoneRequest.objects.filter(model_name=model_name).first()
     if not task:
@@ -83,8 +85,3 @@ def trigger_clustering(model_name, sql, status_handler, sql_params=None, usernam
     status_handler.mark_pending()
     if not tombstone_schedule.status_handler.is_pending_or_running():
         tombstone_schedule.status_handler.mark_pending()
-
-
-def create_sql_params_by_queryset(queryset):
-    sql, params = queryset.order_by().query.sql_with_params()
-    return sql, params
