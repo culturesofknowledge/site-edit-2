@@ -4,8 +4,11 @@
 
 input {
     height: 38px;
+    font-size: 0.85rem;
 }
 
 select {
     height: 38px;
+    padding: 0 0.5rem;
+    font-size: 0.85rem;
 }
