@@ -1,5 +1,6 @@
 import json
 import logging
+import pickle
 
 from cllib import inspect_utils
 from core.helper import task_serv
@@ -53,8 +54,12 @@ def create_clusters(raw_df, create_features, score_threshold=0.5):
 def run_clustering(model_class, fields, prepare_raw_df, create_features, score_threshold=0.5):
     tasks = TombstoneRequest.objects.filter(model_name=model_class.__name__).all()
     for task in tasks:
+        params = None
+        if task.sql_params:
+            params = pickle.loads(task.sql_params)
+        records = model_class.objects.raw(task.sql, params)
         records = [{k: getattr(r, k, None) for k in fields}
-                   for r in model_class.objects.raw(task.sql)]
+                   for r in records]
         raw_df = prepare_raw_df(records)
 
         clusters = create_clusters(raw_df, create_features, score_threshold=score_threshold)

@@ -13,7 +13,7 @@ from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from person.models import CofkUnionPerson
 from tombstone.models import TombstoneRequest
-from tombstone.services import tombstone_schedule
+from tombstone.services import tombstone_schedule, tombstone
 from tombstone.services.tombstone import IdsCluster
 from work.models import CofkUnionWork
 
@@ -88,20 +88,6 @@ def load_cluster_results(_create_id_records_dict, cluster_factory, model_name):
     return clusters, last_update_at
 
 
-def trigger_clustering(request, model_name, queryset, status_handler, redirect_to):
-    task = TombstoneRequest.objects.filter(model_name=model_name).first()
-    if not task:
-        task = TombstoneRequest(model_name=model_name)
-        task.update_current_user_timestamp(request.user.username)
-    task.sql = str(queryset.query)
-    task.save()
-    status_handler.mark_pending()
-    if not tombstone_schedule.status_handler.is_pending_or_running():
-        tombstone_schedule.status_handler.mark_pending()
-
-    return redirect(redirect_to)
-
-
 def home(request):
     return render(request, 'tombstone/tombstone_basic.html')
 
@@ -122,7 +108,7 @@ def similar_location(request):
         return {r.location_id: r for r in CofkUnionLocation.objects.filter(location_id__in=ids)}
 
     clusters, last_update_at = load_cluster_results(_create_id_records_dict, LocationWebCluster,
-                                                     CofkUnionLocation.__name__)
+                                                    CofkUnionLocation.__name__)
     return render_cluster_results(request, clusters, 'tombstone/tombstone_location.html',
                                   merge_page_url=(reverse('location:merge')),
                                   is_running=tombstone_schedule.location_status_handler.is_pending_or_running(),
@@ -155,35 +141,42 @@ def similar_inst(request):
 
 @require_POST
 def trigger_work_clustering(request):
-    return trigger_clustering(request,
-                              CofkUnionWork.__name__,
-                              CofkUnionWork.objects.filter().values(*tombstone_schedule.WORK_FIELDS),
-                              tombstone_schedule.work_status_handler,
-                              'tombstone:work')
+    queryset = CofkUnionWork.objects.filter().values(*tombstone_schedule.WORK_FIELDS)
+    sql, params = tombstone.create_sql_params_by_queryset(queryset)
+    tombstone.trigger_clustering(CofkUnionWork.__name__, sql, tombstone_schedule.work_status_handler,
+                                 sql_params=params,
+                                 username=request.user.username)
+    return redirect('tombstone:work')
 
 
 @require_POST
 def trigger_location_clustering(request):
-    return trigger_clustering(request,
-                              CofkUnionLocation.__name__,
-                              CofkUnionLocation.objects.filter().values(*tombstone_schedule.LOCATION_FIELDS),
-                              tombstone_schedule.location_status_handler,
-                              'tombstone:location')
+    queryset = CofkUnionLocation.objects.filter().values(*tombstone_schedule.LOCATION_FIELDS)
+    sql, params = tombstone.create_sql_params_by_queryset(queryset)
+    tombstone.trigger_clustering(CofkUnionLocation.__name__, sql,
+                                 tombstone_schedule.location_status_handler,
+                                 sql_params=params,
+                                 username=request.user.username)
+    return redirect('tombstone:location')
 
 
 @require_POST
 def trigger_person_clustering(request):
-    return trigger_clustering(request,
-                              CofkUnionPerson.__name__,
-                              CofkUnionPerson.objects.filter().values(*tombstone_schedule.PERSON_FIELDS),
-                              tombstone_schedule.person_status_handler,
-                              'tombstone:person')
+    queryset = CofkUnionPerson.objects.filter().values(*tombstone_schedule.PERSON_FIELDS)
+    sql, params = tombstone.create_sql_params_by_queryset(queryset)
+    tombstone.trigger_clustering(CofkUnionPerson.__name__, sql,
+                                 tombstone_schedule.person_status_handler,
+                                 sql_params=params,
+                                 username=request.user.username)
+    return redirect('tombstone:person')
 
 
 @require_POST
 def trigger_inst_clustering(request):
-    return trigger_clustering(request,
-                              CofkUnionInstitution.__name__,
-                              CofkUnionInstitution.objects.filter().values(*tombstone_schedule.INST_FIELDS),
-                              tombstone_schedule.inst_status_handler,
-                              'tombstone:inst')
+    queryset = CofkUnionInstitution.objects.filter().values(*tombstone_schedule.INST_FIELDS)
+    sql, params = tombstone.create_sql_params_by_queryset(queryset)
+    tombstone.trigger_clustering(CofkUnionInstitution.__name__, sql,
+                                 tombstone_schedule.inst_status_handler,
+                                 sql_params=params,
+                                 username=request.user.username)
+    return redirect('tombstone:inst')

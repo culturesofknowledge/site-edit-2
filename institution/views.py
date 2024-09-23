@@ -17,13 +17,14 @@ from core.helper.recref_handler import ImageRecrefHandler, TargetResourceFormset
 from core.helper.renderer_serv import RendererFactory
 from core.helper.view_components import HeaderValues, DownloadCsvHandler
 from core.helper.view_serv import CommonInitFormViewTemplate, DefaultSearchView, MergeChoiceViews, MergeActionViews, \
-    MergeConfirmViews
+    MergeConfirmViews, TombstoneSetting
 from core.models import Recref
 from institution import inst_serv, models
 from institution.forms import InstitutionForm, GeneralSearchFieldset
 from institution.models import CofkUnionInstitution
 from institution.recref_adapter import InstResourceRecrefAdapter, InstImageRecrefAdapter
 from institution.view_components import InstFormDescriptor
+from tombstone.services import tombstone_schedule
 
 if TYPE_CHECKING:
     from core.helper.view_serv import MergeChoiceContext
@@ -116,6 +117,17 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
         return (lambda: view_serv.create_export_file_name('inst', 'csv'),
                 lambda: DownloadCsvHandler(InstCsvHeaderValues()).create_csv_file,
                 constant.PM_EXPORT_FILE_INST)
+
+    @property
+    def tombstone_setting(self) -> TombstoneSetting | None:
+        def queryset_modifier(queryset):
+            return queryset.values(*tombstone_schedule.INST_FIELDS)
+
+        return TombstoneSetting(
+            model_name=CofkUnionInstitution.__name__,
+            queryset_modifier=queryset_modifier,
+            status_handler=tombstone_schedule.inst_status_handler,
+        )
 
 
 class InstInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitFormViewTemplate):

@@ -7,6 +7,7 @@ from core.helper.model_serv import RecordTracker
 class TombstoneRequest(models.Model, RecordTracker):
     tombstone_req_id = models.AutoField(primary_key=True)
     sql = models.TextField(blank=True, null=True)
+    sql_params = models.BinaryField(blank=True, null=True)
     result_jsonl = models.TextField(blank=True, null=True)
     status = models.SmallIntegerField(default=0)
     model_name = models.CharField(max_length=100)

@@ -6,9 +6,9 @@
         <div class="row">
             <h1> {{ title }} </h1>
             {% if add_entry_url %}
-            <div class="margin-left margin-top">
-                <a href="{{ add_entry_url }}" class="btn" target="_blank">Add +</a>
-            </div>
+                <div class="margin-left margin-top">
+                    <a href="{{ add_entry_url }}" class="btn" target="_blank">Add +</a>
+                </div>
             {% endif %}
         </div>
     </div>
@@ -102,6 +102,24 @@
                                     Merge
                                 </button>
                             {% endif %}
+
+                            {% if tombstone_setting %}
+                                {% if tombstone_setting.status_handler.is_pending_or_running %}
+                                    <button class="search-form-btn cursor-not-allowed bg-gray-500" disabled>
+                                        Tombstone in progress
+                                    </button>
+
+                                {% else %}
+                                    <button class="search-form-btn" type="submit" name="__form_action"
+                                            value="tombstone">
+                                        Tombstone
+                                    </button>
+
+                                {% endif %}
+
+                            {% endif %}
+
+
                         </div>
                         {# Only display search rendering selection for work #}
                         {% if entity|first in 'work' %}
