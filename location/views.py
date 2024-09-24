@@ -288,6 +288,9 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
     def tombstone_setting(self) -> TombstoneSetting | None:
+        if not self.has_perms(constant.PM_TOMBSTONE_LOCATION):
+            return None
+
         def queryset_modifier(queryset):
             return queryset.values(*tombstone_schedule.LOCATION_FIELDS)
 
@@ -295,6 +298,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
             model_name=CofkUnionLocation.__name__,
             queryset_modifier=queryset_modifier,
             status_handler=tombstone_schedule.location_status_handler,
+            permission=[constant.PM_TOMBSTONE_LOCATION],
         )
 
     @property

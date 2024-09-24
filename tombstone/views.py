@@ -4,10 +4,12 @@ import json
 import logging
 import typing
 
+from django.contrib.auth.decorators import permission_required
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
+from core import constant
 from core.helper.model_serv import ModelLike
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
@@ -92,6 +94,7 @@ def home(request):
     return render(request, 'tombstone/tombstone_basic.html')
 
 
+@permission_required(constant.PM_TOMBSTONE_WORK)
 def similar_work(request):
     def _create_id_records_dict(ids):
         return {r.iwork_id: r for r in CofkUnionWork.objects.filter(iwork_id__in=ids)}
@@ -103,6 +106,7 @@ def similar_work(request):
                                   last_update_at=last_update_at)
 
 
+@permission_required(constant.PM_TOMBSTONE_LOCATION)
 def similar_location(request):
     def _create_id_records_dict(ids):
         return {r.location_id: r for r in CofkUnionLocation.objects.filter(location_id__in=ids)}
@@ -115,6 +119,7 @@ def similar_location(request):
                                   last_update_at=last_update_at)
 
 
+@permission_required(constant.PM_TOMBSTONE_PERSON)
 def similar_person(request):
     def _create_id_records_dict(ids):
         return {r.iperson_id: r for r in CofkUnionPerson.objects.filter(iperson_id__in=ids)}
@@ -127,6 +132,8 @@ def similar_person(request):
                                   last_update_at=last_update_at)
 
 
+
+@permission_required(constant.PM_TOMBSTONE_INST)
 def similar_inst(request):
     def _create_id_records_dict(ids):
         return {r.institution_id: r for r in CofkUnionInstitution.objects.filter(institution_id__in=ids)}
@@ -140,6 +147,7 @@ def similar_inst(request):
 
 
 @require_POST
+@permission_required(constant.PM_TOMBSTONE_WORK)
 def trigger_work_clustering(request):
     queryset = CofkUnionWork.objects.filter().values(*tombstone_schedule.WORK_FIELDS)
     tombstone.trigger_clustering(CofkUnionWork.__name__, queryset,
@@ -149,6 +157,7 @@ def trigger_work_clustering(request):
 
 
 @require_POST
+@permission_required(constant.PM_TOMBSTONE_LOCATION)
 def trigger_location_clustering(request):
     queryset = CofkUnionLocation.objects.filter().values(*tombstone_schedule.LOCATION_FIELDS)
     tombstone.trigger_clustering(CofkUnionLocation.__name__, queryset,
@@ -158,6 +167,7 @@ def trigger_location_clustering(request):
 
 
 @require_POST
+@permission_required(constant.PM_TOMBSTONE_PERSON)
 def trigger_person_clustering(request):
     queryset = CofkUnionPerson.objects.filter().values(*tombstone_schedule.PERSON_FIELDS)
     tombstone.trigger_clustering(CofkUnionPerson.__name__, queryset,
@@ -167,6 +177,7 @@ def trigger_person_clustering(request):
 
 
 @require_POST
+@permission_required(constant.PM_TOMBSTONE_INST)
 def trigger_inst_clustering(request):
     queryset = CofkUnionInstitution.objects.filter().values(*tombstone_schedule.INST_FIELDS)
     tombstone.trigger_clustering(CofkUnionInstitution.__name__, queryset,

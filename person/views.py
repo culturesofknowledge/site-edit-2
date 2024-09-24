@@ -420,6 +420,9 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
     def tombstone_setting(self) -> TombstoneSetting | None:
+        if not self.has_perms(constant.PM_TOMBSTONE_PERSON):
+            return None
+
         def queryset_modifier(queryset):
             return queryset.values(*tombstone_schedule.PERSON_FIELDS)
 
@@ -427,6 +430,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             model_name=CofkUnionPerson.__name__,
             queryset_modifier=queryset_modifier,
             status_handler=tombstone_schedule.person_status_handler,
+            permissions=[constant.PM_TOMBSTONE_PERSON],
         )
 
 

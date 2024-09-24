@@ -120,6 +120,9 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
 
     @property
     def tombstone_setting(self) -> TombstoneSetting | None:
+        if not self.has_perms(constant.PM_TOMBSTONE_INST):
+            return None
+
         def queryset_modifier(queryset):
             return queryset.values(*tombstone_schedule.INST_FIELDS)
 
@@ -127,6 +130,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
             model_name=CofkUnionInstitution.__name__,
             queryset_modifier=queryset_modifier,
             status_handler=tombstone_schedule.inst_status_handler,
+            permissions=[constant.PM_TOMBSTONE_INST],
         )
 
 

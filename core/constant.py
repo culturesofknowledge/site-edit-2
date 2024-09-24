@@ -114,6 +114,11 @@ PM_EXPORT_FILE_PERSON = 'person.export_file'
 PM_EXPORT_FILE_LOCATION = 'location.export_file'
 PM_EXPORT_FILE_INST = 'institution.export_file'
 
+PM_TOMBSTONE_WORK = 'work.tombstone'
+PM_TOMBSTONE_PERSON = 'person.tombstone'
+PM_TOMBSTONE_LOCATION = 'location.tombstone'
+PM_TOMBSTONE_INST = 'institution.tombstone'
+
 PM_TRIGGER_EXPORTER = 'core.trigger_exporter'
 
 ROLE_REVIEWER = 'reviewer'

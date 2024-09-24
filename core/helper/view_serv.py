@@ -73,6 +73,7 @@ class TombstoneSetting:
     model_name: str
     queryset_modifier: Callable[[QuerySet], QuerySet]
     status_handler: Any
+    permissions: list[str] | str | None = None
 
 
 class BasicSearchView(ListView):
@@ -439,6 +440,10 @@ class BasicSearchView(ListView):
 
     def resp_tombstone(self, request, *args, **kwargs):
         tombstone_setting = self.tombstone_setting
+
+        if tombstone_setting.permissions and (user := request.user):
+            perm_serv.validate_permission_denied(user, tombstone_setting.permissions)
+
         if tombstone_setting and not tombstone_setting.status_handler.is_pending_or_running():
             queryset = tombstone_setting.queryset_modifier(self.get_queryset())
             tombstone.trigger_clustering(tombstone_setting.model_name, queryset,

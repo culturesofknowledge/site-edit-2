@@ -1084,6 +1084,9 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def tombstone_setting(self) -> TombstoneSetting | None:
+        if not self.has_perms(constant.PM_TOMBSTONE_WORK):
+            return None
+
         def queryset_modifier(queryset):
             return queryset.values(*tombstone_schedule.WORK_FIELDS)
 
@@ -1091,6 +1094,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             model_name=CofkUnionWork.__name__,
             queryset_modifier=queryset_modifier,
             status_handler=tombstone_schedule.work_status_handler,
+            permissions=[constant.PM_TOMBSTONE_WORK],
         )
 
     @property
