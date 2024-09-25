@@ -84,7 +84,7 @@ def run_work_clustering():
                    work_features.REQUIRED_FIELDS,
                    work_features.prepare_raw_df,
                    work_features.create_features,
-                   score_threshold=0.002)
+                   score_threshold=0.1)
 
 
 def cluster_result_to_json_str(cluster):
