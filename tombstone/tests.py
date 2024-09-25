@@ -1,11 +1,13 @@
 # Create your tests here.
 import datetime
+from typing import Callable
 
 import numpy as np
 import pandas as pd
 from django.test import TestCase
 
 from tombstone.features.dataset import inst_features, work_features, person_features, location_features
+from tombstone.services import tombstone
 
 records_inst = [
     {'institution_id': 1, 'institution_name': 'Apple', 'institution_synonyms': 'syn1',
@@ -59,16 +61,50 @@ def assert_create_features(records, prepare_raw_df, create_features):
     assert features.shape[0] == len(records_inst)
 
 
-class TestInstFeatures(TestCase):
-    def test_prepare_raw(self):
-        raw_df = inst_features.prepare_raw_df(records_inst)
+class ClusteringTestingTools:
+    def __init__(self, records: list[dict], prepare_raw_df: Callable, create_features: Callable):
+        self.records = records
+        self.prepare_raw_df = prepare_raw_df
+        self.create_features = create_features
+
+    def _to_py_ids(self, cluster_ids):
+        return {int(i) for i in cluster_ids}
+
+    def test_create_clusters(self, first_cluster_ids):
+        raw_df = self.prepare_raw_df(records_inst)
+        clusters = tombstone.create_clusters(raw_df, self.create_features)
+        assert self._to_py_ids(clusters[0].ids) == set(first_cluster_ids)
+
+    def test_create_features(self):
+        raw_df = self.prepare_raw_df(self.records)
+        features = self.create_features(raw_df)
+        assert isinstance(features, np.ndarray)
+        assert features.shape[0] == len(records_inst)
+
+    def assert_prepare_raw(self, raw_df, n_col, id_field):
         assert isinstance(raw_df, pd.DataFrame)
-        assert raw_df.shape == (len(records_inst), 3)
-        assert raw_df.index.tolist() == [1, 2, 3, 4]
+        assert raw_df.shape == (len(records_inst), n_col)
+        assert raw_df.index.tolist() == [int(r[id_field]) for r in records_inst]
+
+
+class TestInstClustering(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.testing_tools = ClusteringTestingTools(records_inst, inst_features.prepare_raw_df,
+                                                   inst_features.create_features)
+
+    def test_prepare_raw(self):
+        raw_df = self.testing_tools.prepare_raw_df(records_inst)
+        self.testing_tools.assert_prepare_raw(raw_df, 3, 'institution_id')
         assert raw_df.loc[1, 'mixed_field'] == 'Apple syn1'
 
     def test_create_features(self):
-        assert_create_features(records_inst, inst_features.prepare_raw_df, inst_features.create_features)
+        self.testing_tools.test_create_features()
+
+    def test_create_clusters(self):
+        self.testing_tools.test_create_clusters({1, 2})
 
 
 class TestWorkFeatures(TestCase):
