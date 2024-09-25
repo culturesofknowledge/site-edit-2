@@ -26,15 +26,6 @@ person_status_handler = FileBaseTaskStatusHandler(name='tombstone_person_flag')
 inst_status_handler = FileBaseTaskStatusHandler(name='tombstone_inst_flag')
 
 
-def create_clusters(raw_df, create_features, score_threshold=0.5):
-    log.info('Preprocessing data')
-    feature_ids = raw_df.index.to_numpy()
-    features = create_features(raw_df)
-    clusters = tombstone.find_similar_clusters(features, feature_ids,
-                                               score_threshold=score_threshold)[:N_TOP_CLUSTERS]
-    return clusters
-
-
 def run_clustering(model_class, fields, prepare_raw_df, create_features, score_threshold=0.5):
     tasks = TombstoneRequest.objects.filter(model_name=model_class.__name__).all()
     for task in tasks:
@@ -46,7 +37,8 @@ def run_clustering(model_class, fields, prepare_raw_df, create_features, score_t
                    for r in records]
         raw_df = prepare_raw_df(records)
 
-        clusters = create_clusters(raw_df, create_features, score_threshold=score_threshold)
+        clusters = tombstone.create_clusters(raw_df, create_features, score_threshold=score_threshold,
+                                             n_top_clusters=N_TOP_CLUSTERS)
         json_strs = [cluster_result_to_json_str(c) for c in clusters]
         result_jsonl = '\n'.join(json_strs)
 

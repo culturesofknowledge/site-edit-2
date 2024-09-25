@@ -13,6 +13,7 @@ from location.models import CofkUnionLocation
 from tombstone.features.dataset import location_features
 from tombstone.models import TombstoneRequest
 from tombstone.services import linkage_cluster, kmean_cluster, tombstone_schedule
+from tombstone.services.tombstone_schedule import log
 
 log = logging.getLogger(__name__)
 
@@ -63,6 +64,19 @@ def find_similar_clusters(features, feature_ids,
             log.debug(f'cluster: {len(cluster.indexes):>5} {cluster.distance:.3f} {cluster_group_ids[:5]}...')
             clusters.append(IdsCluster(ids=cluster_group_ids, distance=cluster.distance))
     clusters = sorted(clusters, key=lambda c: c.distance)
+    return clusters
+
+
+def create_clusters(raw_df, create_features, score_threshold=0.5, n_top_clusters=None) -> list[IdsCluster]:
+    log.info(f'Preprocessing data {raw_df.shape}')
+    feature_ids = raw_df.index.to_numpy()
+    features = create_features(raw_df)
+
+    log.info(f'Running clustering {features.shape}')
+    clusters = find_similar_clusters(features, feature_ids, score_threshold=score_threshold)
+    if n_top_clusters:
+        clusters = clusters[:n_top_clusters]
+
     return clusters
 
 
