@@ -31,6 +31,7 @@ from location.recref_adapter import LocationCommentRecrefAdapter, LocationResour
     LocationImageRecrefAdapter
 from location.subqueries import create_sql_count_work_by_location
 from location.view_components import LocationFormDescriptor
+from tombstone.features.dataset import location_features
 from tombstone.services import tombstone_schedule
 
 log = logging.getLogger(__name__)
@@ -292,7 +293,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
             return None
 
         def queryset_modifier(queryset):
-            return queryset.values(*tombstone_schedule.LOCATION_FIELDS)
+            return queryset.values(*location_features.REQUIRED_FIELDS)
 
         return TombstoneSetting(
             model_name=CofkUnionLocation.__name__,

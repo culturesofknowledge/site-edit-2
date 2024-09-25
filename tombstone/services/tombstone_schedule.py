@@ -25,22 +25,6 @@ location_status_handler = FileBaseTaskStatusHandler(name='tombstone_location_fla
 person_status_handler = FileBaseTaskStatusHandler(name='tombstone_person_flag')
 inst_status_handler = FileBaseTaskStatusHandler(name='tombstone_inst_flag')
 
-INST_FIELDS = (
-    'institution_id',
-    'institution_name',
-    'institution_synonyms',
-    'institution_city',
-    'institution_country',
-    'pk',
-)
-PERSON_FIELDS = (
-    'iperson_id', 'date_of_birth', 'date_of_death',
-    'foaf_name', 'skos_altlabel',
-    'skos_hiddenlabel', 'person_aliases', 'pk',
-)
-LOCATION_FIELDS = list(location_features.FIELD_EXTRACTORS.keys()) + ['location_id', 'pk']
-WORK_FIELDS = list(work_features.FIELD_EXTRACTORS.keys()) + ['iwork_id', 'pk']
-
 
 def create_clusters(raw_df, create_features, score_threshold=0.5):
     log.info('Preprocessing data')
@@ -73,27 +57,31 @@ def run_clustering(model_class, fields, prepare_raw_df, create_features, score_t
 
 
 def run_inst_clustering():
-    run_clustering(CofkUnionInstitution, INST_FIELDS,
+    run_clustering(CofkUnionInstitution,
+                   inst_features.REQUIRED_FIELDS,
                    inst_features.prepare_raw_df,
                    inst_features.create_features,
-                     )
+                   )
 
 
 def run_person_clustering():
-    run_clustering(CofkUnionPerson, PERSON_FIELDS,
+    run_clustering(CofkUnionPerson,
+                   person_features.REQUIRED_FIELDS,
                    person_features.prepare_raw_df,
                    person_features.create_features,
                    score_threshold=0.002)
 
 
 def run_location_clustering():
-    run_clustering(CofkUnionLocation, LOCATION_FIELDS,
+    run_clustering(CofkUnionLocation,
+                   location_features.REQUIRED_FIELDS,
                    location_features.prepare_raw_df,
                    location_features.create_features)
 
 
 def run_work_clustering():
-    run_clustering(CofkUnionWork, WORK_FIELDS,
+    run_clustering(CofkUnionWork,
+                   work_features.REQUIRED_FIELDS,
                    work_features.prepare_raw_df,
                    work_features.create_features,
                    score_threshold=0.002)

@@ -37,6 +37,7 @@ from person.recref_adapter import PersonCommentRecrefAdapter, PersonResourceRecr
     ActivePersonRecrefAdapter, PassivePersonRecrefAdapter, PersonImageRecrefAdapter, PersonLocRecrefAdapter
 from person.subqueries import create_sql_count_work_by_person
 from person.view_components import PersonFormDescriptor
+from tombstone.features.dataset import person_features
 from tombstone.services import tombstone_schedule
 from work.forms import AuthorRelationChoices, AddresseeRelationChoices
 
@@ -424,7 +425,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             return None
 
         def queryset_modifier(queryset):
-            return queryset.values(*tombstone_schedule.PERSON_FIELDS)
+            return queryset.values(*person_features.REQUIRED_FIELDS)
 
         return TombstoneSetting(
             model_name=CofkUnionPerson.__name__,

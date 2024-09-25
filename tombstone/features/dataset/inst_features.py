@@ -19,6 +19,15 @@ FIELD_EXTRACTORS = {
     'institution_country': lambda r: feature_utils.get_str_or_random(r, 'institution_country', 50),
 }
 
+REQUIRED_FIELDS = (
+    'institution_id',
+    'institution_name',
+    'institution_synonyms',
+    'institution_city',
+    'institution_country',
+    'pk',
+)
+
 
 def prepare_raw_df(records: Iterable[dict]) -> pd.DataFrame:
     record_df = feature_utils.build_raw_df(FIELD_EXTRACTORS, [r['institution_id'] for r in records], records)

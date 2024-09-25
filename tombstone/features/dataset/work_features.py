@@ -8,6 +8,18 @@ from tombstone.features import feature_utils
 
 log = logging.getLogger(__name__)
 
+REQUIRED_FIELDS = [
+    'iwork_id', 'pk',
+    'description',
+    'abstract',
+    'authors_as_marked',
+    'addressees_as_marked',
+    'origin_as_marked',
+    'keywords',
+    'incipit',
+    'accession_code',
+]
+
 FIELD_EXTRACTORS = {
     'description': lambda r: feature_utils.get_str_or_random(r, 'description', 200),
     'abstract': lambda r: feature_utils.get_str_or_random(r, 'abstract', 200),

@@ -44,6 +44,7 @@ from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, \
     CofkUnionLanguageOfManifestation, CofkManifImageMap
 from person import person_serv
 from person.models import CofkUnionPerson
+from tombstone.features.dataset import work_features
 from tombstone.services import tombstone_schedule
 from work import work_serv, subqueries
 from work.forms import WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
@@ -1088,7 +1089,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             return None
 
         def queryset_modifier(queryset):
-            return queryset.values(*tombstone_schedule.WORK_FIELDS)
+            return queryset.values(*work_features.REQUIRED_FIELDS)
 
         return TombstoneSetting(
             model_name=CofkUnionWork.__name__,

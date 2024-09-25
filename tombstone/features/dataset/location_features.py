@@ -10,11 +10,16 @@ from tombstone.features import feature_utils
 
 log = logging.getLogger(__name__)
 
+
 FIELD_EXTRACTORS = {
     'location_name': lambda r: feature_utils.get_str_or_random(r, 'location_name', 200),
     'latitude': lambda r: feature_utils.get_float_or_random(r, 'latitude', 50),
     'longitude': lambda r: feature_utils.get_float_or_random(r, 'longitude', 50),
 }
+
+REQUIRED_FIELDS = [
+    'location_id', 'pk',
+] + list(FIELD_EXTRACTORS.keys())
 
 
 def prepare_raw_df(records: Iterable[dict]) -> pd.DataFrame:

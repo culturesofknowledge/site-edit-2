@@ -14,6 +14,7 @@ from core.helper.model_serv import ModelLike
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from person.models import CofkUnionPerson
+from tombstone.features.dataset import inst_features, person_features, location_features, work_features
 from tombstone.models import TombstoneRequest
 from tombstone.services import tombstone_schedule, tombstone
 from tombstone.services.tombstone import IdsCluster
@@ -149,7 +150,7 @@ def similar_inst(request):
 @require_POST
 @permission_required(constant.PM_TOMBSTONE_WORK)
 def trigger_work_clustering(request):
-    queryset = CofkUnionWork.objects.filter().values(*tombstone_schedule.WORK_FIELDS)
+    queryset = CofkUnionWork.objects.filter().values(*work_features.REQUIRED_FIELDS)
     tombstone.trigger_clustering(CofkUnionWork.__name__, queryset,
                                  tombstone_schedule.work_status_handler,
                                  username=request.user.username)
@@ -159,7 +160,7 @@ def trigger_work_clustering(request):
 @require_POST
 @permission_required(constant.PM_TOMBSTONE_LOCATION)
 def trigger_location_clustering(request):
-    queryset = CofkUnionLocation.objects.filter().values(*tombstone_schedule.LOCATION_FIELDS)
+    queryset = CofkUnionLocation.objects.filter().values(*location_features.REQUIRED_FIELDS)
     tombstone.trigger_clustering(CofkUnionLocation.__name__, queryset,
                                  tombstone_schedule.location_status_handler,
                                  username=request.user.username)
@@ -169,7 +170,7 @@ def trigger_location_clustering(request):
 @require_POST
 @permission_required(constant.PM_TOMBSTONE_PERSON)
 def trigger_person_clustering(request):
-    queryset = CofkUnionPerson.objects.filter().values(*tombstone_schedule.PERSON_FIELDS)
+    queryset = CofkUnionPerson.objects.filter().values(*person_features.REQUIRED_FIELDS)
     tombstone.trigger_clustering(CofkUnionPerson.__name__, queryset,
                                  tombstone_schedule.person_status_handler,
                                  username=request.user.username)
@@ -179,7 +180,7 @@ def trigger_person_clustering(request):
 @require_POST
 @permission_required(constant.PM_TOMBSTONE_INST)
 def trigger_inst_clustering(request):
-    queryset = CofkUnionInstitution.objects.filter().values(*tombstone_schedule.INST_FIELDS)
+    queryset = CofkUnionInstitution.objects.filter().values(*inst_features.REQUIRED_FIELDS)
     tombstone.trigger_clustering(CofkUnionInstitution.__name__, queryset,
                                  tombstone_schedule.inst_status_handler,
                                  username=request.user.username)

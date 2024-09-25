@@ -24,6 +24,7 @@ from institution.forms import InstitutionForm, GeneralSearchFieldset
 from institution.models import CofkUnionInstitution
 from institution.recref_adapter import InstResourceRecrefAdapter, InstImageRecrefAdapter
 from institution.view_components import InstFormDescriptor
+from tombstone.features.dataset import inst_features
 from tombstone.services import tombstone_schedule
 
 if TYPE_CHECKING:
@@ -124,7 +125,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
             return None
 
         def queryset_modifier(queryset):
-            return queryset.values(*tombstone_schedule.INST_FIELDS)
+            return queryset.values(*inst_features.REQUIRED_FIELDS)
 
         return TombstoneSetting(
             model_name=CofkUnionInstitution.__name__,

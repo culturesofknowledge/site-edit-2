@@ -10,6 +10,8 @@ from tombstone.features import feature_utils
 
 log = logging.getLogger(__name__)
 
+
+
 FIELD_EXTRACTORS = {
     'mixed_field': lambda r: feature_utils.get_multi_str_or_random(r, [
         'foaf_name',
@@ -20,6 +22,12 @@ FIELD_EXTRACTORS = {
     'date_of_birth': lambda r: feature_utils.get_date_float_or_random(r, 'date_of_birth'),
     'date_of_death': lambda r: feature_utils.get_date_float_or_random(r, 'date_of_death'),
 }
+
+REQUIRED_FIELDS = (
+    'iperson_id', 'date_of_birth', 'date_of_death',
+    'foaf_name', 'skos_altlabel',
+    'skos_hiddenlabel', 'person_aliases', 'pk',
+)
 
 
 def prepare_raw_df(records: Iterable[dict]) -> pd.DataFrame:
