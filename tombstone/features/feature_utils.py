@@ -87,3 +87,7 @@ def build_raw_df(field_extractors, index, works):
         } for r in works
     ], index=index)
     return record_df
+
+
+def get_pca_n_components(n_components, n_rows):
+    return min(n_components, n_rows) - 1
