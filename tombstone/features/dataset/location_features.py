@@ -31,7 +31,7 @@ def create_features(raw_df: pd.DataFrame):
     float_scaler = RobustScaler()
     preprocessor = ColumnTransformer(
         transformers=[
-            ('location_name', feature_utils.create_text_pipeline(None), 'location_name'),
+            ('location_name', feature_utils.create_text_pipeline(), 'location_name'),
             ('latitude', float_scaler, ['latitude']),
             ('longitude', float_scaler, ['longitude']),
         ]
