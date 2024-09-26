@@ -299,7 +299,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
             model_name=CofkUnionLocation.__name__,
             queryset_modifier=queryset_modifier,
             status_handler=tombstone_schedule.location_status_handler,
-            permission=[constant.PM_TOMBSTONE_LOCATION],
+            permissions=[constant.PM_TOMBSTONE_LOCATION],
         )
 
     @property
