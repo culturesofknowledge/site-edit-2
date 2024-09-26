@@ -102,6 +102,10 @@ STATICFILES_FINDERS = [
     'sass_processor.finders.CssFinder',
 ]
 
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "../emlotheme/static_src"),
+]
+
 SASS_PROCESSOR_INCLUDE_DIRS = [
 ]
 
@@ -285,7 +289,6 @@ EXPORT_ROOT_URL = 'http://localhost:8020'
 # Test
 SELENIUM_CHROME_LOCAL_DRIVER = False
 SELENIUM_CHROME_HEADLESS = False
-
 
 # ------------------ Tailwind settings ------------------
 TAILWIND_APP_NAME = 'emlotheme'
