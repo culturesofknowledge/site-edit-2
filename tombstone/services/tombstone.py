@@ -99,3 +99,11 @@ def trigger_clustering(model_name, queryset, status_handler, username=None):
     status_handler.mark_pending()
     if not tombstone_schedule.status_handler.is_pending_or_running():
         tombstone_schedule.status_handler.mark_pending()
+
+
+def reset_all_status_handler():
+    tombstone_schedule.status_handler.reset()
+    tombstone_schedule.person_status_handler.reset()
+    tombstone_schedule.inst_status_handler.reset()
+    tombstone_schedule.location_status_handler.reset()
+    tombstone_schedule.work_status_handler.reset()

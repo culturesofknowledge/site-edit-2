@@ -44,6 +44,10 @@ class FileBaseTaskStatusHandler:
     def mark_done(self):
         self.path.write_text(self.ST_DONE)
 
+    def reset(self):
+        if self.path.is_file():
+            self.path.unlink()
+
 
 def run_task(run_task_fn: Callable[[], None],
              status_handler: FileBaseTaskStatusHandler):
