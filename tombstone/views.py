@@ -91,6 +91,7 @@ def load_cluster_results(_create_id_records_dict, cluster_factory, model_name):
     return clusters, last_update_at
 
 
+@permission_required(constant.PM_TOMBSTONE_WORK)
 def home(request):
     return render(request, 'tombstone/tombstone_basic.html')
 
@@ -131,7 +132,6 @@ def similar_person(request):
                                   merge_page_url=(reverse('person:merge')),
                                   is_running=tombstone_schedule.person_status_handler.is_pending_or_running(),
                                   last_update_at=last_update_at)
-
 
 
 @permission_required(constant.PM_TOMBSTONE_INST)
