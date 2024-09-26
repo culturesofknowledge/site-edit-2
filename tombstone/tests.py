@@ -24,7 +24,7 @@ records_work = [
     {'iwork_id': 1, 'description': 'Apple', 'abstract': 'abs1', 'authors_as_marked': 'auth1',
      'addressees_as_marked': 'addr1', 'origin_as_marked': 'origin1', 'keywords': 'key1',
      'incipit': 'inci1', 'accession_code': 'acc1'},
-    {'iwork_id': 2, 'description': 'Store', 'abstract': 'abs2', 'authors_as_marked': 'auth2',
+    {'iwork_id': 2, 'description': 'Sun', 'abstract': 'abs2', 'authors_as_marked': 'auth2',
      'addressees_as_marked': 'addr2', 'origin_as_marked': 'origin2', 'keywords': 'key2',
      'incipit': 'inci2', 'accession_code': 'acc2'},
     {'iwork_id': 3, 'description': 'Store', 'abstract': 'abs3', 'authors_as_marked': 'auth3',
@@ -71,7 +71,7 @@ class ClusteringTestingTools:
         return {int(i) for i in cluster_ids}
 
     def test_create_clusters(self, first_cluster_ids):
-        raw_df = self.prepare_raw_df(records_inst)
+        raw_df = self.prepare_raw_df(self.records)
         clusters = tombstone.create_clusters(raw_df, self.create_features)
         assert self._to_py_ids(clusters[0].ids) == set(first_cluster_ids)
 
@@ -79,12 +79,12 @@ class ClusteringTestingTools:
         raw_df = self.prepare_raw_df(self.records)
         features = self.create_features(raw_df)
         assert isinstance(features, np.ndarray)
-        assert features.shape[0] == len(records_inst)
+        assert features.shape[0] == len(self.records)
 
     def assert_prepare_raw(self, raw_df, n_col, id_field):
         assert isinstance(raw_df, pd.DataFrame)
-        assert raw_df.shape == (len(records_inst), n_col)
-        assert raw_df.index.tolist() == [int(r[id_field]) for r in records_inst]
+        assert raw_df.shape == (len(self.records), n_col)
+        assert raw_df.index.tolist() == [int(r[id_field]) for r in self.records]
 
 
 class TestInstClustering(TestCase):
@@ -107,37 +107,62 @@ class TestInstClustering(TestCase):
         self.testing_tools.test_create_clusters({1, 2})
 
 
-class TestWorkFeatures(TestCase):
+class TestWorkClustering(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.testing_tools = ClusteringTestingTools(records_work, work_features.prepare_raw_df,
+                                                   work_features.create_features)
+
     def test_prepare_raw(self):
-        raw_df = work_features.prepare_raw_df(records_work)
-        assert isinstance(raw_df, pd.DataFrame)
-        assert raw_df.shape == (len(records_inst), 1)
-        assert raw_df.index.tolist() == [1, 2, 3, 4]
+        raw_df = self.testing_tools.prepare_raw_df(records_work)
+        self.testing_tools.assert_prepare_raw(raw_df, 1, 'iwork_id')
         assert raw_df.loc[1, 'mixed_field'] == 'Apple abs1 auth1 addr1 origin1 key1 inci1 acc1'
 
     def test_create_features(self):
-        assert_create_features(records_work, work_features.prepare_raw_df, work_features.create_features)
+        self.testing_tools.test_create_features()
+
+    def test_create_clusters(self):
+        self.testing_tools.test_create_clusters({1, 4})
 
 
-class TestPersonFeatures(TestCase):
+class TestPersonClustering(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.testing_tools = ClusteringTestingTools(records_person, person_features.prepare_raw_df,
+                                                   person_features.create_features)
+
     def test_prepare_raw(self):
-        raw_df = person_features.prepare_raw_df(records_person)
-        assert isinstance(raw_df, pd.DataFrame)
-        assert raw_df.shape == (len(records_person), 3)
-        assert raw_df.index.tolist() == [1, 2, 3, 4]
+        raw_df = self.testing_tools.prepare_raw_df(records_person)
+        self.testing_tools.assert_prepare_raw(raw_df, 3, 'iperson_id')
         assert raw_df.loc[1, 'mixed_field'] == 'Apple alt1'
 
     def test_create_features(self):
-        assert_create_features(records_person, person_features.prepare_raw_df, person_features.create_features)
+        self.testing_tools.test_create_features()
+
+    def test_create_clusters(self):
+        self.testing_tools.test_create_clusters({3, 4})
 
 
-class TestLocationFeatures(TestCase):
+class TestLocationClustering(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.testing_tools = ClusteringTestingTools(records_location,
+                                                   location_features.prepare_raw_df,
+                                                   location_features.create_features)
+
     def test_prepare_raw(self):
-        raw_df = location_features.prepare_raw_df(records_location)
-        assert isinstance(raw_df, pd.DataFrame)
-        assert raw_df.shape == (len(records_location), 3)
-        assert raw_df.index.tolist() == [1, 2, 3, 4]
+        raw_df = self.testing_tools.prepare_raw_df(records_location)
+        self.testing_tools.assert_prepare_raw(raw_df, 3, 'location_id')
         assert raw_df.loc[1, 'location_name'] == 'Apple'
 
     def test_create_features(self):
-        assert_create_features(records_location, location_features.prepare_raw_df, location_features.create_features)
+        self.testing_tools.test_create_features()
+
+    def test_create_clusters(self):
+        self.testing_tools.test_create_clusters({2, 3})
