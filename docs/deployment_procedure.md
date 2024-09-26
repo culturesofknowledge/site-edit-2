@@ -33,7 +33,7 @@ vi .env
 
 
 # run docker 
-docker-compose -f docker-compose.yml -f docker-compose-gunweb.yml up -d --build db gunicorn_web nginx django-q
+docker compose -f docker-compose.yml -f docker-compose-gunweb.yml up -d --build db gunicorn_web nginx django-q
 # -d for run in background 
 # --build to build docker every time 
 
