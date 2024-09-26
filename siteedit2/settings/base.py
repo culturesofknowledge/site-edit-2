@@ -290,6 +290,7 @@ EXPORT_ROOT_URL = 'http://localhost:8020'
 SELENIUM_CHROME_LOCAL_DRIVER = False
 SELENIUM_CHROME_HEADLESS = False
 
+
 # ------------------ Tailwind settings ------------------
 TAILWIND_APP_NAME = 'emlotheme'
 
