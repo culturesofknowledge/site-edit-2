@@ -34,6 +34,8 @@ test -d $RUNDIR || mkdir -p $RUNDIR
 
 cd $DJANGODIR
 
+python3 manage.py tailwind install
+python3 manage.py tailwind build
 python3 manage.py compilescss
 python3 manage.py collectstatic -c --no-input
 

@@ -1,0 +1,39 @@
+{% extends "core/emlo_logined.html" %}
+{% load static %}
+
+{% block content %}
+
+    <h1>Tombstone</h1>
+    <p>
+    <div>Tools that help you to find similar records</div>
+    <div>Distance is score of similarity, lower distnace means more similar</div>
+    </p>
+    <p>
+    <div>
+        User can reduce dataset scope by search records and push tombstone button in the search page.
+    </div>
+    <div>
+        Smaller dataset can improve the speed and accuracy of tombstone results.
+    </div>
+    </p>
+
+
+    <div class="row flex space-x-2 ml-4 mb-8">
+        <a href="{% url 'tombstone:work' %}">
+            <button>Work</button>
+        </a>
+        <a href="{% url 'tombstone:location' %}">
+            <button>Location</button>
+        </a>
+        <a href="{% url 'tombstone:person' %}">
+            <button>People</button>
+        </a>
+        <a href="{% url 'tombstone:inst' %}">
+            <button>Repositories</button>
+        </a>
+    </div>
+
+
+    {% block content_result %} {% endblock %}
+
+{% endblock %}

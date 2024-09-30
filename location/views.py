@@ -21,7 +21,7 @@ from core.helper.renderer_serv import RendererFactory
 from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_serv import BasicSearchView, CommonInitFormViewTemplate, MergeChoiceViews, MergeChoiceContext, \
-    MergeActionViews, MergeConfirmViews, DeleteConfirmView
+    MergeActionViews, MergeConfirmViews, DeleteConfirmView, TombstoneSetting
 from core.models import Recref
 from location import location_serv
 from location.forms import LocationForm, GeneralSearchFieldset
@@ -31,6 +31,8 @@ from location.recref_adapter import LocationCommentRecrefAdapter, LocationResour
     LocationImageRecrefAdapter
 from location.subqueries import create_sql_count_work_by_location
 from location.view_components import LocationFormDescriptor
+from tombstone.features.dataset import location_features
+from tombstone.services import tombstone_schedule
 
 log = logging.getLogger(__name__)
 FormOrFormSet = Union[BaseForm, BaseFormSet]
@@ -46,7 +48,7 @@ def create_queryset_by_queries(model_class: Type[models.Model], queries: Iterabl
     }
 
     queryset = query_serv.update_queryset(queryset, model_class, queries=queries, annotate=annotate,
-                                           sort_by=sort_by)
+                                          sort_by=sort_by)
     return queryset
 
 
@@ -284,6 +286,21 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
         return (lambda: view_serv.create_export_file_name('location', 'csv'),
                 lambda: DownloadCsvHandler(LocationCsvHeaderValues()).create_csv_file,
                 constant.PM_EXPORT_FILE_LOCATION,)
+
+    @property
+    def tombstone_setting(self) -> TombstoneSetting | None:
+        if not self.has_perms(constant.PM_TOMBSTONE_LOCATION):
+            return None
+
+        def queryset_modifier(queryset):
+            return queryset.values(*location_features.REQUIRED_FIELDS)
+
+        return TombstoneSetting(
+            model_name=CofkUnionLocation.__name__,
+            queryset_modifier=queryset_modifier,
+            status_handler=tombstone_schedule.location_status_handler,
+            permissions=[constant.PM_TOMBSTONE_LOCATION],
+        )
 
     @property
     def app_name(self) -> str:

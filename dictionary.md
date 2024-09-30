@@ -1,19 +1,18 @@
 | Short  | Description             |
 |--------|-------------------------|
-| serv   | Service                 |
-| vname  | View name               |
-| seq    | Sequence                |
-| recref | Record Reference        |
-| jqe    | Jquery Element          |
 | ele    | Html Element            |
-| ps_loc | Person Location         |
-| pub    | Publication             |
-| org    | Organisations           |
-| pson   | Person                  |
-| inst   | Institution/Repository  |
-| rel    | Relation / Relationship |
-| upsert | update or insert        |
-| manif  | Manifestation           |
-| lang   | language                |
-| toc    | Table of content        |
 | gunweb | gunicorn web server     |
+| inst   | Institution/Repository  |
+| jqe    | Jquery Element          |
+| lang   | language                |
+| manif  | Manifestation           |
+| org    | Organisations           |
+| perm   | Permission              |
+| pson   | Person                  |
+| pub    | Publication             |
+| recref | Record Reference        |
+| rel    | Relation / Relationship |
+| seq    | Sequence                |
+| serv   | Service                 |
+| toc    | Table of content        |
+| upsert | update or insert        |

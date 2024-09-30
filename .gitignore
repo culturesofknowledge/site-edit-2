@@ -56,3 +56,7 @@ static/core/scss/
 core/static/core/scss/main.css
 core/management/commands/playground.py
 upload/
+
+
+# tailwind
+emlotheme/static/css/dist/styles.css

@@ -55,7 +55,14 @@ INSTALLED_APPS = [
     'person',
     'publication',
     'audit',
-    'list'
+    'list',
+    'tombstone',
+
+    # Tailwind settings
+    'tailwind',
+    'emlotheme',
+    'django_browser_reload',
+
 ]
 
 MIDDLEWARE = [
@@ -66,6 +73,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'django_browser_reload.middleware.BrowserReloadMiddleware',
 ]
 
 ROOT_URLCONF = 'siteedit2.urls'
@@ -91,6 +100,10 @@ STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
     'sass_processor.finders.CssFinder',
+]
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "../emlotheme/static_src"),
 ]
 
 SASS_PROCESSOR_INCLUDE_DIRS = [
@@ -276,3 +289,11 @@ EXPORT_ROOT_URL = 'http://localhost:8020'
 # Test
 SELENIUM_CHROME_LOCAL_DRIVER = False
 SELENIUM_CHROME_HEADLESS = False
+
+
+# ------------------ Tailwind settings ------------------
+TAILWIND_APP_NAME = 'emlotheme'
+
+INTERNAL_IPS = [
+    '127.0.0.1',
+]

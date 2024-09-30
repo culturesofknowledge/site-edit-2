@@ -133,6 +133,10 @@ class CofkUnionPerson(models.Model, RecordTracker):
         db_table = 'cofk_union_person'
         permissions = [
             ('export_file', 'Export csv/excel from search results'),
+            ('tombstone', 'Allow use tombstone feature to find similar records'),
+        ]
+        indexes = [
+            models.Index(fields=['iperson_id']),
         ]
 
 

@@ -33,7 +33,7 @@ from core.helper.recref_serv import create_recref_if_field_exist
 from core.helper.renderer_serv import RendererFactory
 from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
-from core.helper.view_serv import DefaultSearchView
+from core.helper.view_serv import DefaultSearchView, TombstoneSetting
 from core.models import Recref, CofkLookupCatalogue
 from institution import inst_serv
 from location import location_serv
@@ -44,6 +44,8 @@ from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, \
     CofkUnionLanguageOfManifestation, CofkManifImageMap
 from person import person_serv
 from person.models import CofkUnionPerson
+from tombstone.features.dataset import work_features
+from tombstone.services import tombstone_schedule
 from work import work_serv, subqueries
 from work.forms import WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \
@@ -1080,6 +1082,21 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                 lambda: DownloadCsvHandler(WorkCsvHeaderValues()).create_csv_file,
                 constant.PM_EXPORT_FILE_WORK,
                 )
+
+    @property
+    def tombstone_setting(self) -> TombstoneSetting | None:
+        if not self.has_perms(constant.PM_TOMBSTONE_WORK):
+            return None
+
+        def queryset_modifier(queryset):
+            return queryset.values(*work_features.REQUIRED_FIELDS)
+
+        return TombstoneSetting(
+            model_name=CofkUnionWork.__name__,
+            queryset_modifier=queryset_modifier,
+            status_handler=tombstone_schedule.work_status_handler,
+            permissions=[constant.PM_TOMBSTONE_WORK],
+        )
 
     @property
     def excel_export_setting(self) -> tuple[Callable[[], str], Callable[[Iterable, str], Any], str] | None:

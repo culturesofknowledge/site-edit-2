@@ -25,7 +25,7 @@ from core.helper.renderer_serv import RendererFactory
 from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_serv import CommonInitFormViewTemplate, BasicSearchView, MergeChoiceViews, MergeActionViews, \
-    MergeConfirmViews, DeleteConfirmView
+    MergeConfirmViews, DeleteConfirmView, TombstoneSetting
 from core.models import Recref
 from person import person_serv
 from person.forms import PersonForm, GeneralSearchFieldset, PersonOtherRecrefForm, search_gender_choices, \
@@ -37,6 +37,8 @@ from person.recref_adapter import PersonCommentRecrefAdapter, PersonResourceRecr
     ActivePersonRecrefAdapter, PassivePersonRecrefAdapter, PersonImageRecrefAdapter, PersonLocRecrefAdapter
 from person.subqueries import create_sql_count_work_by_person
 from person.view_components import PersonFormDescriptor
+from tombstone.features.dataset import person_features
+from tombstone.services import tombstone_schedule
 from work.forms import AuthorRelationChoices, AddresseeRelationChoices
 
 if TYPE_CHECKING:
@@ -416,6 +418,22 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         return (lambda: view_serv.create_export_file_name('person', 'csv'),
                 lambda: DownloadCsvHandler(PersonCsvHeaderValues()).create_csv_file,
                 constant.PM_EXPORT_FILE_PERSON,)
+
+    @property
+    def tombstone_setting(self) -> TombstoneSetting | None:
+        if not self.has_perms(constant.PM_TOMBSTONE_PERSON):
+            return None
+
+        def queryset_modifier(queryset):
+            return queryset.values(*person_features.REQUIRED_FIELDS)
+
+        return TombstoneSetting(
+            model_name=CofkUnionPerson.__name__,
+            queryset_modifier=queryset_modifier,
+            status_handler=tombstone_schedule.person_status_handler,
+            permissions=[constant.PM_TOMBSTONE_PERSON],
+        )
+
 
     @property
     def app_name(self) -> str:

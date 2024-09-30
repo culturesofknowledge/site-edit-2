@@ -35,6 +35,7 @@ from core.helper.renderer_serv import DemoCompactSearchResultsRenderer, \
 from core.helper.url_serv import VNAME_FULL_FORM, VNAME_SEARCH
 from core.helper.view_components import DownloadCsvHandler
 from core.models import CofkUnionResource, CofkUnionComment, CofkUserSavedQuery, CofkUserSavedQuerySelection
+from tombstone.services import tombstone
 from work.models import CofkUnionWork
 
 if TYPE_CHECKING:
@@ -65,6 +66,14 @@ def create_export_file_name(name, suffix):
                                 date_serv.date_to_simple_date_str(datetime.utcnow()),
                                 str_utils.create_random_str(10),
                                 suffix)
+
+
+@dataclasses.dataclass
+class TombstoneSetting:
+    model_name: str
+    queryset_modifier: Callable[[QuerySet], QuerySet]
+    status_handler: Any
+    permissions: list[str] | str | None = None
 
 
 class BasicSearchView(ListView):
@@ -233,6 +242,11 @@ class BasicSearchView(ListView):
         return None
 
     @property
+    def tombstone_setting(self) -> TombstoneSetting | None:
+        """ overrider this to enable tombstone """
+        return None
+
+    @property
     def merge_page_vname(self) -> str | None:
         return None
 
@@ -337,6 +351,7 @@ class BasicSearchView(ListView):
                         'paginate_by': self.paginate_by,
                         'can_export_csv': self.csv_export_setting is not None,
                         'can_export_excel': self.excel_export_setting is not None,
+                        'tombstone_setting': self.tombstone_setting,
                         })
 
         if self.merge_page_vname:
@@ -423,6 +438,20 @@ class BasicSearchView(ListView):
     def resp_download_excel(self, request, *args, **kwargs):
         return self.resp_download_by_export_setting(request, self.excel_export_setting, *args, **kwargs)
 
+    def resp_tombstone(self, request, *args, **kwargs):
+        tombstone_setting = self.tombstone_setting
+
+        if tombstone_setting.permissions and (user := request.user):
+            perm_serv.validate_permission_denied(user, tombstone_setting.permissions)
+
+        if tombstone_setting and not tombstone_setting.status_handler.is_pending_or_running():
+            queryset = tombstone_setting.queryset_modifier(self.get_queryset())
+            tombstone.trigger_clustering(tombstone_setting.model_name, queryset,
+                                         tombstone_setting.status_handler,
+                                         username=request.user.username)
+
+        return super().get(request, *args, **kwargs)
+
     @django_utils.log_request_time
     def get(self, request, *args, **kwargs):
         if to_user_messages := request.GET.get('to_user_messages'):
@@ -431,7 +460,8 @@ class BasicSearchView(ListView):
         simple_form_action_map = {
             'download_csv': self.resp_download_csv,
             'download_excel': self.resp_download_excel,
-            'save_query': self.save_query
+            'save_query': self.save_query,
+            'tombstone': self.resp_tombstone,
         }
 
         # simple routing with __form_action

@@ -7,7 +7,8 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
-    'asgiref==3.5.2',
+    'django-tailwind[reload]~=3.8',
+    'asgiref~=3.8',
     'Django==4.0.6',
     'django-q2==1.6.1',
     'openpyxl==3.0.10',
@@ -31,6 +32,13 @@ dependencies = [
 
     'pylint~=3.0',
     'pylint-django~=2.5',
+
+
+    # Tomdstone
+    'scikit-learn~=1.5',
+    'pandas~=2.2',
+    'matplotlib~=3.9',
+
 ]
 
 

@@ -1,4 +1,5 @@
 {% load static %}
+{% load static tailwind_tags %}
 {% load sass_tags %}
 <!DOCTYPE html>
 <html lang="en">
@@ -13,6 +14,8 @@
 
     <!-- feature icon -->
     <script src="https://unpkg.com/feather-icons"></script>
+
+    {% tailwind_css %}
 
     {% block head %}
     {% endblock %}
