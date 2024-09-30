@@ -37,7 +37,11 @@ docker compose -f docker-compose.yml -f docker-compose-gunweb.yml up -d --build 
 # -d for run in background 
 # --build to build docker every time 
 
-# wait few second, use curl or browser to test server is up
+
+# wait few second, or use following command to check if server is ready
+docker logs site-edit-2-gunicorn_web-1
+
+# use curl or browser to test server is up
 curl -L http://<ip>:8010/
 
 # create account for testing
