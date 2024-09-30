@@ -16,8 +16,6 @@ from work.models import CofkUnionWork
 
 log = logging.getLogger(__name__)
 
-N_TOP_CLUSTERS = 100
-
 status_handler = FileBaseTaskStatusHandler(name='tombstone_clustering_flag')
 
 work_status_handler = FileBaseTaskStatusHandler(name='tombstone_work_flag')
@@ -26,7 +24,8 @@ person_status_handler = FileBaseTaskStatusHandler(name='tombstone_person_flag')
 inst_status_handler = FileBaseTaskStatusHandler(name='tombstone_inst_flag')
 
 
-def run_clustering(model_class, fields, prepare_raw_df, create_features, score_threshold=0.5):
+def run_clustering(model_class, fields, prepare_raw_df, create_features, score_threshold=0.5,
+                   n_top_clusters=100):
     tasks = TombstoneRequest.objects.filter(model_name=model_class.__name__).all()
     for task in tasks:
         params = None
@@ -38,7 +37,7 @@ def run_clustering(model_class, fields, prepare_raw_df, create_features, score_t
         raw_df = prepare_raw_df(records)
 
         clusters = tombstone.create_clusters(raw_df, create_features, score_threshold=score_threshold,
-                                             n_top_clusters=N_TOP_CLUSTERS)
+                                             n_top_clusters=n_top_clusters)
         json_strs = [cluster_result_to_json_str(c) for c in clusters]
         result_jsonl = '\n'.join(json_strs)
 
@@ -61,7 +60,8 @@ def run_person_clustering():
                    person_features.REQUIRED_FIELDS,
                    person_features.prepare_raw_df,
                    person_features.create_features,
-                   score_threshold=0.002)
+                   score_threshold=0.002,
+                   n_top_clusters=200)
 
 
 def run_location_clustering():
@@ -76,7 +76,8 @@ def run_work_clustering():
                    work_features.REQUIRED_FIELDS,
                    work_features.prepare_raw_df,
                    work_features.create_features,
-                   score_threshold=0.1)
+                   score_threshold=0.1,
+                   n_top_clusters=200)
 
 
 def cluster_result_to_json_str(cluster):

@@ -39,7 +39,7 @@ def create_features(raw_df: pd.DataFrame):
     float_scaler = RobustScaler()
     preprocessor = ColumnTransformer(
         transformers=[
-            ('mixed_field', feature_utils.create_text_pipeline(max_features=10000), 'mixed_field'),
+            ('mixed_field', feature_utils.create_text_pipeline(max_features=40000), 'mixed_field'),
             ('date_of_birth', float_scaler, ['date_of_birth']),
             ('date_of_death', float_scaler, ['date_of_death']),
         ]
