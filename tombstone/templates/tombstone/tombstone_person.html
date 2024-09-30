@@ -18,7 +18,6 @@
                         <a href="{% url 'person:full_form' r.iperson_id %}"> {{ r.foaf_name }} </a>
                     </td>
                     <td> {{ r.skos_hiddenlabel|default:'' }} </td>
-                    <td> {{ r.person_aliases|default:'' }} </td>
                     <td class="w-24"> {{ r.date_of_birth|default:'' }} </td>
                     <td class="w-24"> {{ r.date_of_death|default:'' }} </td>
                 </tr>
