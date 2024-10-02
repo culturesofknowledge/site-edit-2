@@ -27,6 +27,8 @@ def add_permission_to_group(role_name, new_permissions):
 
     for perm_code in new_permissions:
         permission = perm_serv.get_perm_by_full_name(perm_code)
+        if permission is None:
+            raise ValueError(f"Permission {perm_code} not found")
         group.permissions.add(permission)
 
 

@@ -1,0 +1,31 @@
+{% extends "clonefinder/clonefinder_basic.html" %}
+{% load static %}
+
+{% block content_result %}
+    <h2>Location</h2>
+
+    {% include "clonefinder/component/clonefinder_header.html" with trigger_url='clonefinder:trigger_location' %}
+
+    {% for cluster in clusters %}
+        {% include "clonefinder/component/cluster_header.html" with forloop=forloop cluster=cluster %}
+
+        <table class="mb-8" id="results_table">
+            <tbody>
+            {% for r in cluster.records %}
+                <tr>
+                    <td class="w-24"> {{ r.location_id }} </td>
+                    <td>
+                        <a href="{% url 'location:full_form' r.location_id %}"> {{ r.location_name }} </a>
+                    </td>
+                    <td> {{ r.location_synonyms }} </td>
+                    <td> {{ r.latitude }} </td>
+                    <td> {{ r.longitude }} </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endfor %}
+
+
+
+{% endblock %}

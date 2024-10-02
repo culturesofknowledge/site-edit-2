@@ -24,6 +24,7 @@ from django.views.generic import ListView
 import core.constant as core_constant
 from cllib import inspect_utils, str_utils
 from cllib_django import django_utils, email_utils, query_utils
+from clonefinder.services import clonefinder
 from core import constant
 from core.form_label_maps import field_label_map
 from core.helper import general_model_serv, recref_serv, model_serv, \
@@ -35,7 +36,6 @@ from core.helper.renderer_serv import DemoCompactSearchResultsRenderer, \
 from core.helper.url_serv import VNAME_FULL_FORM, VNAME_SEARCH
 from core.helper.view_components import DownloadCsvHandler
 from core.models import CofkUnionResource, CofkUnionComment, CofkUserSavedQuery, CofkUserSavedQuerySelection
-from tombstone.services import tombstone
 from work.models import CofkUnionWork
 
 if TYPE_CHECKING:
@@ -69,7 +69,7 @@ def create_export_file_name(name, suffix):
 
 
 @dataclasses.dataclass
-class TombstoneSetting:
+class ClonefinderSetting:
     model_name: str
     queryset_modifier: Callable[[QuerySet], QuerySet]
     status_handler: Any
@@ -242,8 +242,8 @@ class BasicSearchView(ListView):
         return None
 
     @property
-    def tombstone_setting(self) -> TombstoneSetting | None:
-        """ overrider this to enable tombstone """
+    def clonefinder_setting(self) -> ClonefinderSetting | None:
+        """ overrider this to enable clonefinder """
         return None
 
     @property
@@ -351,7 +351,7 @@ class BasicSearchView(ListView):
                         'paginate_by': self.paginate_by,
                         'can_export_csv': self.csv_export_setting is not None,
                         'can_export_excel': self.excel_export_setting is not None,
-                        'tombstone_setting': self.tombstone_setting,
+                        'clonefinder_setting': self.clonefinder_setting,
                         })
 
         if self.merge_page_vname:
@@ -438,16 +438,16 @@ class BasicSearchView(ListView):
     def resp_download_excel(self, request, *args, **kwargs):
         return self.resp_download_by_export_setting(request, self.excel_export_setting, *args, **kwargs)
 
-    def resp_tombstone(self, request, *args, **kwargs):
-        tombstone_setting = self.tombstone_setting
+    def resp_clonefinder(self, request, *args, **kwargs):
+        clonefinder_setting = self.clonefinder_setting
 
-        if tombstone_setting.permissions and (user := request.user):
-            perm_serv.validate_permission_denied(user, tombstone_setting.permissions)
+        if clonefinder_setting.permissions and (user := request.user):
+            perm_serv.validate_permission_denied(user, clonefinder_setting.permissions)
 
-        if tombstone_setting and not tombstone_setting.status_handler.is_pending_or_running():
-            queryset = tombstone_setting.queryset_modifier(self.get_queryset())
-            tombstone.trigger_clustering(tombstone_setting.model_name, queryset,
-                                         tombstone_setting.status_handler,
+        if clonefinder_setting and not clonefinder_setting.status_handler.is_pending_or_running():
+            queryset = clonefinder_setting.queryset_modifier(self.get_queryset())
+            clonefinder.trigger_clustering(clonefinder_setting.model_name, queryset,
+                                         clonefinder_setting.status_handler,
                                          username=request.user.username)
 
         return super().get(request, *args, **kwargs)
@@ -461,7 +461,7 @@ class BasicSearchView(ListView):
             'download_csv': self.resp_download_csv,
             'download_excel': self.resp_download_excel,
             'save_query': self.save_query,
-            'tombstone': self.resp_tombstone,
+            'clonefinder': self.resp_clonefinder,
         }
 
         # simple routing with __form_action

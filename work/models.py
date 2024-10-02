@@ -74,7 +74,7 @@ class CofkUnionWork(models.Model, RecordTracker):
         db_table = 'cofk_union_work'
         permissions = [
             ('export_file', 'Export csv/excel from search results'),
-            ('tombstone', 'Allow use tombstone feature to find similar records'),
+            ('clonefinder', 'Allow use clonefinder feature to find similar records'),
         ]
         indexes = [
             models.Index(fields=['iwork_id']),

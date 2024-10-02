@@ -1,0 +1,39 @@
+{% extends "core/emlo_logined.html" %}
+{% load static %}
+
+{% block content %}
+
+    <h1>Clonefinder</h1>
+    <p>
+    <div>Tools that help you to find similar records</div>
+    <div>Distance is score of similarity, lower distnace means more similar</div>
+    </p>
+    <p>
+    <div>
+        User can reduce dataset scope by search records and push clonefinder button in the search page.
+    </div>
+    <div>
+        Smaller dataset can improve the speed and accuracy of clonefinder results.
+    </div>
+    </p>
+
+
+    <div class="row flex space-x-2 ml-4 mb-8">
+        <a href="{% url 'clonefinder:work' %}">
+            <button>Work</button>
+        </a>
+        <a href="{% url 'clonefinder:location' %}">
+            <button>Location</button>
+        </a>
+        <a href="{% url 'clonefinder:person' %}">
+            <button>People</button>
+        </a>
+        <a href="{% url 'clonefinder:inst' %}">
+            <button>Repositories</button>
+        </a>
+    </div>
+
+
+    {% block content_result %} {% endblock %}
+
+{% endblock %}

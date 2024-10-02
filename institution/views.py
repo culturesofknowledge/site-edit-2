@@ -8,6 +8,8 @@ from django.db.models import Lookup
 from django.forms import ModelForm
 from django.shortcuts import render, redirect, get_object_or_404
 
+from clonefinder.features.dataset import inst_features
+from clonefinder.services import clonefinder_schedule
 from core import constant
 from core.export_data import cell_values, download_csv_serv
 from core.helper import renderer_serv, query_serv, view_serv, perm_serv
@@ -17,15 +19,13 @@ from core.helper.recref_handler import ImageRecrefHandler, TargetResourceFormset
 from core.helper.renderer_serv import RendererFactory
 from core.helper.view_components import HeaderValues, DownloadCsvHandler
 from core.helper.view_serv import CommonInitFormViewTemplate, DefaultSearchView, MergeChoiceViews, MergeActionViews, \
-    MergeConfirmViews, TombstoneSetting
+    MergeConfirmViews, ClonefinderSetting
 from core.models import Recref
 from institution import inst_serv, models
 from institution.forms import InstitutionForm, GeneralSearchFieldset
 from institution.models import CofkUnionInstitution
 from institution.recref_adapter import InstResourceRecrefAdapter, InstImageRecrefAdapter
 from institution.view_components import InstFormDescriptor
-from tombstone.features.dataset import inst_features
-from tombstone.services import tombstone_schedule
 
 if TYPE_CHECKING:
     from core.helper.view_serv import MergeChoiceContext
@@ -120,18 +120,18 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
                 constant.PM_EXPORT_FILE_INST)
 
     @property
-    def tombstone_setting(self) -> TombstoneSetting | None:
-        if not self.has_perms(constant.PM_TOMBSTONE_INST):
+    def clonefinder_setting(self) -> ClonefinderSetting | None:
+        if not self.has_perms(constant.PM_CLONEFINDER_INST):
             return None
 
         def queryset_modifier(queryset):
             return queryset.values(*inst_features.REQUIRED_FIELDS)
 
-        return TombstoneSetting(
+        return ClonefinderSetting(
             model_name=CofkUnionInstitution.__name__,
             queryset_modifier=queryset_modifier,
-            status_handler=tombstone_schedule.inst_status_handler,
-            permissions=[constant.PM_TOMBSTONE_INST],
+            status_handler=clonefinder_schedule.inst_status_handler,
+            permissions=[constant.PM_CLONEFINDER_INST],
         )
 
 

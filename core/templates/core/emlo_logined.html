@@ -43,11 +43,11 @@
             </li>
 
             <li class="menu-item">
-                {% if constant.PM_TOMBSTONE|can_show_for_perm:perms %}
+                {% if constant.PM_CLONEFINDER_WORK|can_show_for_perm:perms %}
                 <a href="#">Tools</a>
                 <ul class='unstyled-list no-margin menu-subitem'>
-                    <a href="{% url 'tombstone:home' %}">
-                        <li>Tombstone</li>
+                    <a href="{% url 'clonefinder:home' %}">
+                        <li>Clonefinder</li>
                     </a>
                 </ul>
                 {% endif %}

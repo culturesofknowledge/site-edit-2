@@ -103,16 +103,16 @@
                                 </button>
                             {% endif %}
 
-                            {% if tombstone_setting %}
-                                {% if tombstone_setting.status_handler.is_pending_or_running %}
+                            {% if clonefinder_setting %}
+                                {% if clonefinder_setting.status_handler.is_pending_or_running %}
                                     <button class="search-form-btn cursor-not-allowed bg-gray-500" disabled>
-                                        Tombstone in progress
+                                        Clonefinder in progress
                                     </button>
 
                                 {% else %}
                                     <button class="search-form-btn" type="submit" name="__form_action"
-                                            value="tombstone">
-                                        Tombstone
+                                            value="clonefinder">
+                                        Clonefinder
                                     </button>
 
                                 {% endif %}
