@@ -106,13 +106,13 @@
                             {% if clonefinder_setting %}
                                 {% if clonefinder_setting.status_handler.is_pending_or_running %}
                                     <button class="search-form-btn cursor-not-allowed bg-gray-500" disabled>
-                                        Clonefinder in progress
+                                        Reconciliation in progress
                                     </button>
 
                                 {% else %}
                                     <button class="search-form-btn" type="submit" name="__form_action"
                                             value="clonefinder">
-                                        Clonefinder
+                                        Reconciliation
                                     </button>
 
                                 {% endif %}

@@ -16,3 +16,7 @@ export DJANGO_SETTINGS_MODULE='siteedit2.settings.local_dev'
 $EMLO_VENV_PATH/bin/python3 $EMLO_CODE_HOME/manage.py runserver 0.0.0.0:8020
 ```
 
+
+
+# Naming
+* `Reconciliation` is a display name of `clonefinder`
