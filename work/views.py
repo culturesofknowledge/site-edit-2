@@ -12,6 +12,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.views import View
 
+from clonefinder.features.dataset import work_features
+from clonefinder.services import clonefinder_schedule
 from core import constant
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_WORK_IS_REPLY_TO, \
     REL_TYPE_WORK_MATCHES, REL_TYPE_COMMENT_DATE, REL_TYPE_WAS_SENT_FROM, REL_TYPE_COMMENT_ORIGIN, \
@@ -33,7 +35,7 @@ from core.helper.recref_serv import create_recref_if_field_exist
 from core.helper.renderer_serv import RendererFactory
 from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
-from core.helper.view_serv import DefaultSearchView, TombstoneSetting
+from core.helper.view_serv import DefaultSearchView, ClonefinderSetting
 from core.models import Recref, CofkLookupCatalogue
 from institution import inst_serv
 from location import location_serv
@@ -44,8 +46,6 @@ from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, \
     CofkUnionLanguageOfManifestation, CofkManifImageMap
 from person import person_serv
 from person.models import CofkUnionPerson
-from tombstone.features.dataset import work_features
-from tombstone.services import tombstone_schedule
 from work import work_serv, subqueries
 from work.forms import WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
     AuthorRelationChoices, AddresseeRelationChoices, PlacesForm, DatesForm, CorrForm, ManifForm, \
@@ -1084,18 +1084,18 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                 )
 
     @property
-    def tombstone_setting(self) -> TombstoneSetting | None:
-        if not self.has_perms(constant.PM_TOMBSTONE_WORK):
+    def clonefinder_setting(self) -> ClonefinderSetting | None:
+        if not self.has_perms(constant.PM_CLONEFINDER_WORK):
             return None
 
         def queryset_modifier(queryset):
             return queryset.values(*work_features.REQUIRED_FIELDS)
 
-        return TombstoneSetting(
+        return ClonefinderSetting(
             model_name=CofkUnionWork.__name__,
             queryset_modifier=queryset_modifier,
-            status_handler=tombstone_schedule.work_status_handler,
-            permissions=[constant.PM_TOMBSTONE_WORK],
+            status_handler=clonefinder_schedule.work_status_handler,
+            permissions=[constant.PM_CLONEFINDER_WORK],
         )
 
     @property

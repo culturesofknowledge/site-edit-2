@@ -1,0 +1,11 @@
+<div class="row flex ml-1">
+    {% include "clonefinder/component/cluster_title.html" with forloop=forloop cluster=cluster %}
+    {% if merge_page_url %}
+        <form action="{{ merge_page_url }}">
+            {% for r in cluster.merge_ids %}
+                <input type="hidden" name="__merge_id" value="{{ r }}"/>
+            {% endfor %}
+            <button type="submit" class="btn mt-1 ml-4">Merge</button>
+        </form>
+    {% endif %}
+</div>

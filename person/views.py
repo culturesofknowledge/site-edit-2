@@ -11,6 +11,8 @@ from django.forms import BaseForm
 from django.shortcuts import render, redirect, get_object_or_404
 
 from cllib_django import query_utils
+from clonefinder.features.dataset import person_features
+from clonefinder.services import clonefinder_schedule
 from core import constant
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_BORN_IN_LOCATION, REL_TYPE_DIED_AT_LOCATION, \
     TRUE_CHAR, REL_TYPE_MENTION
@@ -25,7 +27,7 @@ from core.helper.renderer_serv import RendererFactory
 from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_serv import CommonInitFormViewTemplate, BasicSearchView, MergeChoiceViews, MergeActionViews, \
-    MergeConfirmViews, DeleteConfirmView, TombstoneSetting
+    MergeConfirmViews, DeleteConfirmView, ClonefinderSetting
 from core.models import Recref
 from person import person_serv
 from person.forms import PersonForm, GeneralSearchFieldset, PersonOtherRecrefForm, search_gender_choices, \
@@ -37,8 +39,6 @@ from person.recref_adapter import PersonCommentRecrefAdapter, PersonResourceRecr
     ActivePersonRecrefAdapter, PassivePersonRecrefAdapter, PersonImageRecrefAdapter, PersonLocRecrefAdapter
 from person.subqueries import create_sql_count_work_by_person
 from person.view_components import PersonFormDescriptor
-from tombstone.features.dataset import person_features
-from tombstone.services import tombstone_schedule
 from work.forms import AuthorRelationChoices, AddresseeRelationChoices
 
 if TYPE_CHECKING:
@@ -420,18 +420,18 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
                 constant.PM_EXPORT_FILE_PERSON,)
 
     @property
-    def tombstone_setting(self) -> TombstoneSetting | None:
-        if not self.has_perms(constant.PM_TOMBSTONE_PERSON):
+    def clonefinder_setting(self) -> ClonefinderSetting | None:
+        if not self.has_perms(constant.PM_CLONEFINDER_PERSON):
             return None
 
         def queryset_modifier(queryset):
             return queryset.values(*person_features.REQUIRED_FIELDS)
 
-        return TombstoneSetting(
+        return ClonefinderSetting(
             model_name=CofkUnionPerson.__name__,
             queryset_modifier=queryset_modifier,
-            status_handler=tombstone_schedule.person_status_handler,
-            permissions=[constant.PM_TOMBSTONE_PERSON],
+            status_handler=clonefinder_schedule.person_status_handler,
+            permissions=[constant.PM_CLONEFINDER_PERSON],
         )
 
 

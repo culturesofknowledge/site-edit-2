@@ -1,0 +1,27 @@
+{% extends "clonefinder/clonefinder_basic.html" %}
+{% load static %}
+
+{% block content_result %}
+    <h2>Work</h2>
+
+    {% include "clonefinder/component/clonefinder_header.html" with trigger_url='clonefinder:trigger_work' %}
+
+    {% for cluster in clusters %}
+
+        {% include "clonefinder/component/cluster_title.html" with forloop=forloop cluster=cluster %}
+
+        <table class="mb-8" id="results_table">
+            <tbody>
+            {% for w in cluster.records %}
+                <tr>
+                    <td class="w-24"> {{ w.iwork_id }} </td>
+                    <td>
+                        <a href="{% url 'work:overview_form' w.iwork_id %}"> {{ w.description }} </a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endfor %}
+
+{% endblock %}

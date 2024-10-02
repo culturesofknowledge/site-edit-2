@@ -56,7 +56,7 @@ INSTALLED_APPS = [
     'publication',
     'audit',
     'list',
-    'tombstone',
+    'clonefinder',
 
     # Tailwind settings
     'tailwind',

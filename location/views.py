@@ -9,6 +9,8 @@ from django.db.models import Q, Lookup
 from django.forms import BaseForm, BaseFormSet
 from django.shortcuts import render, get_object_or_404, redirect
 
+from clonefinder.features.dataset import location_features
+from clonefinder.services import clonefinder_schedule
 from core import constant
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM
 from core.export_data import download_csv_serv, cell_values
@@ -21,7 +23,7 @@ from core.helper.renderer_serv import RendererFactory
 from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_serv import BasicSearchView, CommonInitFormViewTemplate, MergeChoiceViews, MergeChoiceContext, \
-    MergeActionViews, MergeConfirmViews, DeleteConfirmView, TombstoneSetting
+    MergeActionViews, MergeConfirmViews, DeleteConfirmView, ClonefinderSetting
 from core.models import Recref
 from location import location_serv
 from location.forms import LocationForm, GeneralSearchFieldset
@@ -31,8 +33,6 @@ from location.recref_adapter import LocationCommentRecrefAdapter, LocationResour
     LocationImageRecrefAdapter
 from location.subqueries import create_sql_count_work_by_location
 from location.view_components import LocationFormDescriptor
-from tombstone.features.dataset import location_features
-from tombstone.services import tombstone_schedule
 
 log = logging.getLogger(__name__)
 FormOrFormSet = Union[BaseForm, BaseFormSet]
@@ -288,18 +288,18 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
                 constant.PM_EXPORT_FILE_LOCATION,)
 
     @property
-    def tombstone_setting(self) -> TombstoneSetting | None:
-        if not self.has_perms(constant.PM_TOMBSTONE_LOCATION):
+    def clonefinder_setting(self) -> ClonefinderSetting | None:
+        if not self.has_perms(constant.PM_CLONEFINDER_LOCATION):
             return None
 
         def queryset_modifier(queryset):
             return queryset.values(*location_features.REQUIRED_FIELDS)
 
-        return TombstoneSetting(
+        return ClonefinderSetting(
             model_name=CofkUnionLocation.__name__,
             queryset_modifier=queryset_modifier,
-            status_handler=tombstone_schedule.location_status_handler,
-            permissions=[constant.PM_TOMBSTONE_LOCATION],
+            status_handler=clonefinder_schedule.location_status_handler,
+            permissions=[constant.PM_CLONEFINDER_LOCATION],
         )
 
     @property
