@@ -12,7 +12,6 @@ import numpy as np
 from clonefinder.features.dataset import location_features
 from clonefinder.models import ClonefinderRequest
 from clonefinder.services import linkage_cluster, kmean_cluster, clonefinder_schedule
-from clonefinder.services.clonefinder_schedule import log
 from location.models import CofkUnionLocation
 
 log = logging.getLogger(__name__)

@@ -5,7 +5,7 @@ from typing import Iterable
 from django.forms import BaseForm, BaseFormSet
 
 from core.helper.recref_handler import ImageRecrefHandler, RecrefFormsetHandler, MultiRecrefHandler
-from core.helper.view_serv import log, any_invalid_with_log
+from core.helper.view_serv import any_invalid_with_log
 
 log = logging.getLogger(__name__)
 
