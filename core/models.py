@@ -278,3 +278,24 @@ class CofkUserSavedQuerySelection(models.Model):
 
     class Meta:
         db_table = 'cofk_user_saved_query_selection'
+
+
+
+class MergeHistory(models.Model, RecordTracker):
+    merge_history_id = models.AutoField(primary_key=True)
+
+    new_id = models.IntegerField()
+    new_name = models.TextField()
+
+    org_id = models.IntegerField()
+    org_name = models.TextField()
+
+    model_class_name = models.CharField(max_length=100)
+
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
+    creation_user = models.CharField(max_length=50)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
+    change_user = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = 'merge_history'
