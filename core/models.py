@@ -290,7 +290,7 @@ class MergeHistory(models.Model, RecordTracker):
     org_id = models.IntegerField()
     org_name = models.TextField()
 
-    model_class_name = models.CharField(max_length=100)
+    model_class_name = models.CharField(max_length=200)
 
     creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
@@ -299,3 +299,6 @@ class MergeHistory(models.Model, RecordTracker):
 
     class Meta:
         db_table = 'merge_history'
+        indexes = [
+            models.Index(fields=['model_class_name', 'new_id']),
+        ]
