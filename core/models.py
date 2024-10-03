@@ -285,9 +285,11 @@ class MergeHistory(models.Model, RecordTracker):
     merge_history_id = models.AutoField(primary_key=True)
 
     new_id = models.CharField(max_length=250)
+    new_display_id = models.CharField(max_length=250)
     new_name = models.TextField()
 
     old_id = models.CharField(max_length=250)
+    old_display_id = models.CharField(max_length=250)
     old_name = models.TextField()
 
     model_class_name = models.CharField(max_length=200)
