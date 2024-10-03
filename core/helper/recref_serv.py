@@ -218,11 +218,11 @@ def find_relationship_type(relationship_code: str) -> CofkUnionRelationshipType 
     return None
 
 
-def get_left_right_rel_obj(recref: Recref)-> tuple[Model, Model]:
+def get_left_right_rel_obj(recref: Recref) -> tuple[Model, Model]:
     bounded_members = set(get_bounded_members(recref.__class__)[:2])
     bounded_member_classes = {f.field.related_model.__name__ for f in bounded_members}
     left_right_class_names = ((l, r) for rel_type, l, r in recref_left_right_list
-                         if recref.relationship_type == rel_type)
+                              if recref.relationship_type == rel_type)
     left_right_class_names = (_ for _ in left_right_class_names if set(_) == bounded_member_classes)
     left_right_class_names: tuple[str, str] = next(left_right_class_names, None)
 
@@ -258,3 +258,10 @@ def get_recref_rel_desc(recref: Recref,
         log.warning(f'rel_type not found [{recref.__class__.__name__}][{recref.relationship_type}]')
         return recref.relationship_type if default_raw_value else ''
     return rel_type.desc_left_to_right if is_left else rel_type.desc_right_to_left
+
+
+def find_all_recref_by_models(model_list):
+    for model in model_list:
+        for bounded_data in find_bounded_data_list_by_related_model(model):
+            records = find_recref_list_by_bounded_data(bounded_data, model)
+            yield from records

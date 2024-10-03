@@ -1,5 +1,4 @@
 import dataclasses
-import itertools
 import logging
 import urllib
 from collections import defaultdict
@@ -12,7 +11,7 @@ from urllib.parse import urljoin
 from django import template
 from django.conf import settings
 from django.db import models
-from django.db.models import Q, ForeignKey, QuerySet, Lookup
+from django.db.models import Q, QuerySet, Lookup
 from django.db.models.query_utils import DeferredAttribute
 from django.forms import ModelForm
 from django.http import HttpResponseNotFound
@@ -28,7 +27,7 @@ from clonefinder.services import clonefinder
 from core import constant
 from core.form_label_maps import field_label_map
 from core.helper import general_model_serv, recref_serv, model_serv, \
-    url_serv, date_serv, perm_serv, media_serv, query_serv
+    url_serv, date_serv, perm_serv, media_serv, query_serv, merge_serv
 from core.helper.form_serv import build_search_components
 from core.helper.model_serv import ModelLike, RecordTracker
 from core.helper.renderer_serv import DemoCompactSearchResultsRenderer, \
@@ -702,12 +701,6 @@ class MergeChoiceViews(View):
         return (MergeChoiceViews.create_merge_choice_context(m) for m in records)
 
 
-def find_all_recref_by_models(model_list):
-    for model in model_list:
-        for bounded_data in recref_serv.find_bounded_data_list_by_related_model(model):
-            records = recref_serv.find_recref_list_by_bounded_data(bounded_data, model)
-            yield from records
-
 
 def get_recref_ref_name(related_field, recref) -> str:
     related_model = related_field.get_object(recref)
@@ -738,17 +731,6 @@ def find_work_by_recref_list(recref_list: Iterable['Recref']):
             yield work
 
 
-def find_related_collect_field(target_model_class: Type[ModelLike]) -> Iterable[tuple[Type[ModelLike], ForeignKey]]:
-    def _is_target_field(f):
-        return isinstance(f, ForeignKey) and inspect_utils.issubclass_safe(f.related_model, target_model_class)
-
-    _models = django_utils.all_model_classes()
-    _models = (m for m in _models if m.__name__.startswith('CofkCollect'))
-    _models = itertools.chain.from_iterable(
-        ((m, f) for f in m._meta.fields if _is_target_field(f))
-        for m in _models)
-    return _models
-
 
 class MergeConfirmViews(View):
 
@@ -770,52 +752,6 @@ class MergeActionViews(View):
     def target_model_class(self) -> Type[ModelLike]:
         raise NotImplementedError()
 
-    @staticmethod
-    def merge(selected_model: ModelLike, other_models: list[ModelLike], username=None):
-        if selected_model and len(other_models) == 0:
-            msg = f'invalid selected_model[{selected_model}], empty other_models[{len(other_models)}] '
-            log.warning(msg)
-            return ValueError(msg)
-
-        log.info('merge type[{}] selected[{}] other[{}]'.format(
-            selected_model.__class__.__name__,
-            selected_model.pk,
-            [m.pk for m in other_models]
-        ))
-
-        recref_list: Iterable[Recref] = find_all_recref_by_models(other_models)
-        recref_list = list(recref_list)
-        for recref in recref_list:
-            parent_field, _ = recref_serv.get_parent_related_field_by_recref(recref, selected_model)
-
-            # update related_field on recref
-            related_field_name = parent_field.field.name
-            log.debug(f'change related record. recref[{recref.pk}] related_name[{related_field_name}] '
-                      f'from[{getattr(recref, related_field_name).pk}] to[{selected_model.pk}]')
-            setattr(recref, related_field_name, selected_model)
-            if username:
-                recref.update_current_user_timestamp(username)
-            recref.save()
-
-        # change ForeignKey value to master's id in cofk_collect
-        for model_class, foreign_field in find_related_collect_field(selected_model.__class__):
-            new_id = foreign_field.target_field.value_from_object(selected_model)
-            old_ids = [foreign_field.target_field.value_from_object(o) for o in other_models]
-            outdated_records = model_class.objects.filter(**{
-                f'{foreign_field.attname}__in': old_ids
-            })
-            log.info('update [{}.{}] with old_ids[{}] to new_id[{}], total[{}]'.format(
-                model_class.__name__, foreign_field.attname,
-                old_ids, new_id, outdated_records.count()
-            ))
-            outdated_records.update(**{foreign_field.attname: new_id})
-
-        # remove other_models
-        for m in other_models:
-            log.info(f'remove [{m.__class__.__name__}] pk[{m.pk}]')
-            m.delete()
-
-        return recref_list
 
     @staticmethod
     def get_id_field():
@@ -835,7 +771,7 @@ class MergeActionViews(View):
             return redirect(url)
 
         try:
-            recref_list = self.merge(selected_model, other_models, username=request.user.username)
+            recref_list = merge_serv.merge(selected_model, other_models, username=request.user.username)
         except ValueError:
             return HttpResponseNotFound()
 
