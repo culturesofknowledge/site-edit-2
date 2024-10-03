@@ -772,7 +772,8 @@ class MergeActionViews(View):
 
         try:
             recref_list = merge_serv.merge(selected_model, other_models, username=request.user.username)
-        except ValueError:
+        except ValueError as e:
+            log.debug(f'error when merge [{e}]', exc_info=e)
             return HttpResponseNotFound()
 
         # prepare results context
