@@ -287,8 +287,8 @@ class MergeHistory(models.Model, RecordTracker):
     new_id = models.IntegerField()
     new_name = models.TextField()
 
-    org_id = models.IntegerField()
-    org_name = models.TextField()
+    old_id = models.IntegerField()
+    old_name = models.TextField()
 
     model_class_name = models.CharField(max_length=200)
 
