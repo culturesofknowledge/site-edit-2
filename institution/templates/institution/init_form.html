@@ -104,6 +104,9 @@
                     {% include "core/component/image_formset.html" with img_handler=img_handler %}
                 {% endif %}
 
+                {% include "core/component/tombstone_fieldset.html" with merge_histories=merge_histories %}
+
+
                 {% include "core/component/actionbox_form.html" with save_perm=constant.PM_CHANGE_INST %}
                 {% include "core/component/close_if_save_success.html" with is_save_success=is_save_success %}
 

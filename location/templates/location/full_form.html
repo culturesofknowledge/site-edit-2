@@ -48,6 +48,9 @@
                 <!-- Images section -->
                 {% include "core/component/image_formset.html" with img_handler=img_handler %}
 
+
+                {% include "core/component/tombstone_fieldset.html" with merge_histories=merge_histories %}
+
                 {% url 'location:delete' loc_form.instance.location_id as del_url %}
                 {% include "core/component/del_confirm_fieldset.html" with del_url=del_url name='location' %}
 

@@ -13,7 +13,7 @@ from django.utils.http import urlencode
 
 from core.form_label_maps import field_label_map
 from core.helper import model_serv
-from core.helper.model_serv import RecordTracker
+from core.helper.model_serv import RecordTracker, ModelLike
 from core.helper.url_serv import VNAME_SEARCH
 
 SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID = 'iso_639_language_codes_id_seq'
@@ -279,6 +279,10 @@ class CofkUserSavedQuerySelection(models.Model):
     class Meta:
         db_table = 'cofk_user_saved_query_selection'
 
+class MergeHistoryQuerySet(models.QuerySet):
+
+    def get_by_new_model(self, new_model: ModelLike):
+        return self.filter(new_id=str(new_model.pk), model_class_name=new_model.__class__.__name__)
 
 
 class MergeHistory(models.Model, RecordTracker):
@@ -298,6 +302,8 @@ class MergeHistory(models.Model, RecordTracker):
     creation_user = models.CharField(max_length=50)
     change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     change_user = models.CharField(max_length=50)
+
+    objects = MergeHistoryQuerySet.as_manager()
 
     class Meta:
         db_table = 'merge_history'

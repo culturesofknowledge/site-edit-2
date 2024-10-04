@@ -28,7 +28,7 @@ from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_serv import CommonInitFormViewTemplate, BasicSearchView, MergeChoiceViews, MergeActionViews, \
     MergeConfirmViews, DeleteConfirmView, ClonefinderSetting
-from core.models import Recref
+from core.models import Recref, MergeHistory
 from person import person_serv
 from person.forms import PersonForm, GeneralSearchFieldset, PersonOtherRecrefForm, search_gender_choices, \
     search_person_or_group
@@ -228,6 +228,9 @@ class PersonFFH(FullFormHandler):
             | PersonFormDescriptor(self.person).create_context()
             | create_context_is_org_form(self.person.is_organisation)
             | view_serv.create_is_save_success_context(is_save_success)
+            | {
+                'merge_histories': MergeHistory.objects.get_by_new_model(self.person),
+            }
         )
         return context
 
