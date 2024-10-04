@@ -6,14 +6,14 @@ from django.db.models import ForeignKey
 
 from cllib import inspect_utils
 from cllib_django import django_utils
-from core.helper import recref_serv
+from core.helper import recref_serv, general_model_serv
 from core.helper.model_serv import ModelLike
+from core.models import MergeHistory
 
 if TYPE_CHECKING:
     from core.models import Recref
 
 log = logging.getLogger(__name__)
-
 
 
 def find_related_collect_field(target_model_class: Type[ModelLike]) -> Iterable[tuple[Type[ModelLike], ForeignKey]]:
@@ -47,8 +47,9 @@ def merge(selected_model: ModelLike, other_models: list[ModelLike], username=Non
 
         # update related_field on recref
         related_field_name = parent_field.field.name
-        log.debug(f'change related record. [{recref.__class__.__name__}] recref[{recref.pk}] related_name[{related_field_name}] '
-                  f'from[{getattr(recref, related_field_name).pk}] to[{selected_model.pk}]')
+        log.debug(f'change related record. [{recref.__class__.__name__}] recref[{recref.pk}]'
+                  f' related_name[{related_field_name}]'
+                  f' from[{getattr(recref, related_field_name).pk}] to[{selected_model.pk}]')
         setattr(recref, related_field_name, selected_model)
         if username:
             recref.update_current_user_timestamp(username)
@@ -66,6 +67,20 @@ def merge(selected_model: ModelLike, other_models: list[ModelLike], username=Non
             old_ids, new_id, outdated_records.count()
         ))
         outdated_records.update(**{foreign_field.attname: new_id})
+
+    # add merge history
+    for old_model in other_models:
+        merge_history = MergeHistory.objects.create(
+            new_id=str(selected_model.pk),
+            new_name=general_model_serv.get_display_name(selected_model),
+            new_display_id=general_model_serv.get_display_id(selected_model),
+            old_id=str(old_model.pk),
+            old_name=general_model_serv.get_display_name(old_model),
+            old_display_id=general_model_serv.get_display_id(old_model),
+            model_class_name=selected_model.__class__.__name__,
+        )
+        merge_history.update_current_user_timestamp(username)
+        merge_history.save()
 
     # remove other_models
     for m in other_models:
