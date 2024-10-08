@@ -10,7 +10,6 @@ from core.helper import model_serv, test_serv, query_serv
 from core.helper.test_serv import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
     CommentM2MTester, CommonSearchTests, MergeTests
 from person.models import CofkUnionPerson, CofkPersonResourceMap
-from person.recref_adapter import PersonResourceRecrefAdapter
 from person.views import PersonMergeChoiceView, PersonSearchView
 
 
@@ -159,7 +158,6 @@ class PersonQueryTests(TestCase):
 
 
 class PersonMergeTests(MergeTests):
-    ResourceRecrefAdapter = PersonResourceRecrefAdapter
     RecrefResourceMap = CofkPersonResourceMap
     ChoiceView = PersonMergeChoiceView
     app_name = 'person'

@@ -22,8 +22,8 @@ import location.fixtures
 import person.fixtures
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_IS_RELATED_TO
 from core.helper import model_serv, recref_serv, url_serv, webdriver_actions
-from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.model_serv import ModelLike
+from core.helper.recref_serv import RecrefLike
 from core.helper.view_serv import BasicSearchView
 from core.models import CofkLookupCatalogue, CofkUnionComment, CofkUnionResource
 from location.models import CofkUnionLocation
@@ -33,7 +33,6 @@ from work.fixtures import work_dict_a
 from work.models import CofkUnionWork
 
 if TYPE_CHECKING:
-    from core.helper.common_recref_adapter import TargetResourceRecrefAdapter
     from core.models import Recref
     from django.views import View
 
@@ -433,18 +432,28 @@ def create_empty_lookup_cat() -> CofkLookupCatalogue:
     return cat
 
 
-def add_comments_by_msgs(msgs: Iterable[str], parent, recref_form_adapter_class: Type[RecrefFormAdapter]):
-    for comment_msg in msgs:
-        _comment = CofkUnionComment(comment=comment_msg)
-        _comment.save()
-        recref_form_adapter_class(parent).upsert_recref(REL_TYPE_COMMENT_REFERS_TO, parent, _comment).save()
+def create_recref_list(parent, models, rel_type):
+    recref_list = []
+    for model in models:
+        model.save()
+        recref = recref_serv.find_bounded_data_by_pair_model(parent, model).fill_recref(model, parent)
+        recref.relationship_type = rel_type
+        recref.save()
+        recref_list.append(recref)
+    return recref_list
 
 
-def add_resources_by_msgs(msgs: Iterable[str], parent, recref_form_adapter_class: Type[RecrefFormAdapter]):
-    for comment_msg in msgs:
-        r = CofkUnionResource(resource_name=comment_msg, resource_url=comment_msg)
-        r.save()
-        recref_form_adapter_class(parent).upsert_recref(REL_TYPE_IS_RELATED_TO, parent, r).save()
+def add_comments_by_msgs(msgs: Iterable[str], parent) -> list[RecrefLike]:
+
+    models = (CofkUnionComment(comment=comment_msg) for comment_msg in msgs)
+    recref_list = create_recref_list(parent, models, REL_TYPE_COMMENT_REFERS_TO)
+    return recref_list
+
+
+def add_resources_by_msgs(msgs: Iterable[str], parent) -> list[RecrefLike]:
+    models = (CofkUnionResource(resource_name=msg, resource_url=msg) for msg in msgs)
+    recref_list = create_recref_list(parent, models, REL_TYPE_IS_RELATED_TO)
+    return recref_list
 
 
 def cnt_recref(recref_class, instance: ModelLike):
@@ -467,7 +476,6 @@ class LoginTestCase(TestCase):
 
 
 class MergeTests(LoginTestCase):
-    ResourceRecrefAdapter: Type['TargetResourceRecrefAdapter'] = None
     RecrefResourceMap: Type['Recref'] = None
     ChoiceView: Type['View'] = None
     app_name: str = None
@@ -488,7 +496,7 @@ class MergeTests(LoginTestCase):
             m.save()
 
         for m in objs:
-            add_resources_by_msgs(self.resource_msg_list, m, self.ResourceRecrefAdapter)
+            add_resources_by_msgs(self.resource_msg_list, m)
 
         return objs
 
