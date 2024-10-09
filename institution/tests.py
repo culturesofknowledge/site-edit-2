@@ -1,5 +1,5 @@
 import institution.fixtures
-from core.helper.test_serv import MergeTests
+from core.helper.testcase_merge import MergeTests
 from institution.models import CofkInstitutionResourceMap
 from institution.views import InstMergeChoiceView
 

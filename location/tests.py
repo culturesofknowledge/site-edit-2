@@ -8,7 +8,8 @@ import location.fixtures
 from cllib import path_utils
 from core.helper import model_serv, test_serv
 from core.helper.test_serv import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
-    CommentM2MTester, CommonSearchTests, MergeTests
+    CommentM2MTester, CommonSearchTests
+from core.helper.testcase_merge import MergeTests
 from core.helper.view_components import DownloadCsvHandler
 from location.models import CofkUnionLocation, CofkLocationResourceMap
 from location.views import LocationMergeChoiceView, LocationCsvHeaderValues

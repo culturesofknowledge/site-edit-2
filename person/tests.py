@@ -8,7 +8,8 @@ from cllib import selenium_utils
 from core import constant
 from core.helper import model_serv, test_serv, query_serv
 from core.helper.test_serv import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
-    CommentM2MTester, CommonSearchTests, MergeTests
+    CommentM2MTester, CommonSearchTests
+from core.helper.testcase_merge import MergeTests
 from person.models import CofkUnionPerson, CofkPersonResourceMap
 from person.views import PersonMergeChoiceView, PersonSearchView
 
