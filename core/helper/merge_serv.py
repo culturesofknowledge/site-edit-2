@@ -80,7 +80,8 @@ def merge(selected_model: ModelLike, other_models: list[ModelLike], username=Non
             old_display_id=general_model_serv.get_display_id(old_model),
             model_class_name=selected_model.__class__.__name__,
         )
-        merge_history.update_current_user_timestamp(username)
+        if username:
+            merge_history.update_current_user_timestamp(username)
         merge_history.save()
 
     # remove other_models
