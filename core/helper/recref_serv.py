@@ -104,6 +104,20 @@ class RecrefBoundedData:
     def pair_related_models(self) -> Iterable[Type['ModelLike']]:
         return (m.field.related_model for m in self.pair)
 
+    def fill_recref(self, model_a, model_b, recref=None) -> Recref:
+        if recref is None:
+            recref = self.recref_class()
+
+        models = [model_a, model_b]
+        for field in self.pair:
+            for model in list(models):
+                if field.field.related_model == model.__class__:
+                    setattr(recref, field.field.name, model)
+                    models.remove(model)
+                    break
+
+        return recref
+
 
 def get_bounded_members(recref_class: Type[RecrefLike]) -> list[ForwardManyToOneDescriptor]:
     bounded_members = recref_class.__dict__.items()
@@ -138,9 +152,24 @@ def find_all_recref_bounded_data(models: Iterable[Type['ModelLike']] = None) -> 
         yield bounded_data
 
 
-def find_bounded_data_list_by_related_model(model) -> Iterable[RecrefBoundedData]:
+def find_bounded_data_list_by_related_model(model: ModelLike | Type[ModelLike]) -> Iterable[RecrefBoundedData]:
+    if isinstance(model, Model):
+        model = model.__class__
     return (r for r in find_all_recref_bounded_data()
-            if model.__class__ in set(r.pair_related_models))
+            if model in set(r.pair_related_models))
+
+
+def find_bounded_data_by_pair_model(model_a: ModelLike | Type[ModelLike],
+                                    model_b: ModelLike | Type[ModelLike]) -> RecrefBoundedData:
+    bounded_data_list = list(find_bounded_data_list_by_related_model(model_a))
+    if isinstance(model_b, Model):
+        model_b = model_b.__class__
+
+    bounded_data_list = [r for r in bounded_data_list if model_b in set(r.pair_related_models)]
+    if len(bounded_data_list) != 1:
+        raise ValueError(f'bounded_data not found [{model_a}][{model_b}] --- {bounded_data_list}')
+
+    return bounded_data_list[0]
 
 
 def get_parent_related_field(field_a: 'ForwardManyToOneDescriptor',
