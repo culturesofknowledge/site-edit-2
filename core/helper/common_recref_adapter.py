@@ -22,6 +22,7 @@ class RecrefFormAdapter:
     * parent is work
     * target is location
 
+    this class used to a component of some recref_handler e.g RecrefFormsetHandler
     """
 
     @classmethod

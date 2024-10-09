@@ -55,6 +55,7 @@ def merge(selected_model: ModelLike, other_models: list[ModelLike], username=Non
             recref.update_current_user_timestamp(username)
         recref.save()
 
+    # TODO no longer needed update cofk_collect if Emlo Collector removed
     # change ForeignKey value to master's id in cofk_collect
     for model_class, foreign_field in find_related_collect_field(selected_model.__class__):
         new_id = foreign_field.target_field.value_from_object(selected_model)

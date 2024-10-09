@@ -32,9 +32,11 @@ def convert_to_recref_form_dict(record_dict: dict, target_id_name: str,
     return record_dict
 
 
-def upsert_recref(rel_type, parent_instance, target_instance,
-                  create_recref_fn,
-                  set_parent_target_instance_fn,
+def upsert_recref(rel_type: str,
+                  parent_instance: ModelLike,
+                  target_instance: ModelLike,
+                  create_recref_fn: Callable,
+                  set_parent_target_instance_fn: Callable[[Recref, ModelLike, ModelLike], []],
                   username=None,
                   org_recref=None,
                   ) -> Recref:
@@ -46,11 +48,12 @@ def upsert_recref(rel_type, parent_instance, target_instance,
     return recref
 
 
-def upsert_recref_by_target_id(target_id,
-                               find_target_fn,
-                               rel_type, parent_instance,
-                               create_recref_fn,
-                               set_parent_target_instance_fn,
+def upsert_recref_by_target_id(target_id: Any,
+                               find_target_fn: Callable[[Any], ModelLike],
+                               rel_type: str,
+                               parent_instance: ModelLike,
+                               create_recref_fn: Callable,
+                               set_parent_target_instance_fn: Callable[[Recref, ModelLike, ModelLike], []],
                                username=None,
                                org_recref=None, ) -> Optional[Recref]:
     if not (target_instance := find_target_fn(target_id)):
