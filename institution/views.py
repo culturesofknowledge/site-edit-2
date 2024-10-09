@@ -20,7 +20,7 @@ from core.helper.renderer_serv import RendererFactory
 from core.helper.view_components import HeaderValues, DownloadCsvHandler
 from core.helper.view_serv import CommonInitFormViewTemplate, DefaultSearchView, MergeChoiceViews, MergeActionViews, \
     MergeConfirmViews, ClonefinderSetting
-from core.models import Recref
+from core.models import Recref, MergeHistory
 from institution import inst_serv, models
 from institution.forms import InstitutionForm, GeneralSearchFieldset
 from institution.models import CofkUnionInstitution
@@ -168,6 +168,9 @@ def full_form(request, pk):
                        | res_handler.create_context()
                        | InstFormDescriptor(inst).create_context()
                        | view_serv.create_is_save_success_context(is_save_success)
+                       | {
+                           'merge_histories': MergeHistory.objects.get_by_new_model(inst),
+                       }
                        ))
 
     is_save_success = False

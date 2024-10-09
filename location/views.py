@@ -24,7 +24,7 @@ from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_serv import BasicSearchView, CommonInitFormViewTemplate, MergeChoiceViews, MergeChoiceContext, \
     MergeActionViews, MergeConfirmViews, DeleteConfirmView, ClonefinderSetting
-from core.models import Recref
+from core.models import Recref, MergeHistory
 from location import location_serv
 from location.forms import LocationForm, GeneralSearchFieldset
 from location.location_serv import DisplayableLocation
@@ -135,6 +135,9 @@ class LocationFFH(FullFormHandler):
                 'loc_id': self.location_id,
             } | LocationFormDescriptor(self.loc).create_context()
             | view_serv.create_is_save_success_context(is_save_success)
+            | {
+                'merge_histories': MergeHistory.objects.get_by_new_model(self.loc),
+            }
         )
         return context
 
