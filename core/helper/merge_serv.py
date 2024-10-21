@@ -84,9 +84,4 @@ def merge(selected_model: ModelLike, other_models: list[ModelLike], username=Non
             merge_history.update_current_user_timestamp(username)
         merge_history.save()
 
-    # remove other_models
-    for m in other_models:
-        log.info(f'remove [{m.__class__.__name__}] pk[{m.pk}]')
-        m.delete()
-
     return recref_list
