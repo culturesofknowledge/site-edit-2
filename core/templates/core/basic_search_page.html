@@ -67,8 +67,8 @@
                     {% include 'core/component/pagination.html' %}
 
                     <!-- search function toolbar (e.g. download output, compact, expanded)  -->
-                    <aside class="margin-bottom row">
-                        <div class="col col--1of2">
+                    <aside class="margin-bottom flex flex-col">
+                        <div class="flex flex-row flex-wrap">
                             {% if paginator.count %}
                                 <button id="fieldset-toggle-btn" class="search-form-btn" type="button">
                                     Toggle <span data-feather="search" aria-hidden="true"></span>
@@ -123,7 +123,7 @@
                         </div>
                         {# Only display search rendering selection for work #}
                         {% if entity|first in 'work' %}
-                            <div class="col col--1of2">
+                            <div>
                                 <h3 class="sr-only">Layout</h3>
                                 <div class="align-right">
                                     <input type="radio" id="display-as-grid" value="grid"
