@@ -8,6 +8,8 @@
 import functools
 
 from django.db import models
+from django.db.models import OuterRef, CharField
+from django.db.models.functions import Cast
 from django.urls import reverse, resolve
 from django.utils.http import urlencode
 
@@ -279,10 +281,16 @@ class CofkUserSavedQuerySelection(models.Model):
     class Meta:
         db_table = 'cofk_user_saved_query_selection'
 
+
 class MergeHistoryQuerySet(models.QuerySet):
 
     def get_by_new_model(self, new_model: ModelLike):
         return self.filter(new_id=str(new_model.pk), model_class_name=new_model.__class__.__name__)
+
+    def subquery_new_id(self, model_class_name):
+        return (self.filter(old_id=Cast(OuterRef('pk'), output_field=CharField()),
+                            model_class_name=model_class_name)
+                .values('new_id')[:1])
 
 
 class MergeHistory(models.Model, RecordTracker):
