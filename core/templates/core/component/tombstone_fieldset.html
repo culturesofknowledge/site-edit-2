@@ -19,7 +19,9 @@
                 {% for merge_history in merge_histories %}
                     <tr>
                         <td class="w-24">{{ merge_history.old_display_id }}</td>
-                        <td>{{ merge_history.old_name }}</td>
+                        <td>
+                            <a href="{% url view_name merge_history.old_display_id %}" >{{ merge_history.old_name }}</a>
+                        </td>
                         <td class="w-40">{{ merge_history.creation_timestamp }}</td>
                     </tr>
                 {% endfor %}
