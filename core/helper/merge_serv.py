@@ -84,4 +84,12 @@ def merge(selected_model: ModelLike, other_models: list[ModelLike], username=Non
             merge_history.update_current_user_timestamp(username)
         merge_history.save()
 
+    # assign merge_master to other_models
+    for old_model in other_models:
+        old_model.merged_master = selected_model
+        if username:
+            old_model.update_current_user_timestamp(username)
+    selected_model.__class__.objects.bulk_update(other_models, ['merged_master'])
+
+
     return recref_list
