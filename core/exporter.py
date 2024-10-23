@@ -11,24 +11,23 @@ from typing import Iterable, Callable
 
 import requests
 from django.db import models
-from django.db.models import Count, Q
+from django.db.models import Count, Q, F
 from django.utils.html import strip_tags
 from urllib3.exceptions import InsecureRequestWarning
 
-import person.subqueries
-import person.views
 from cllib import thread_utils
 from core import constant
 from core.constant import REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE_MENTION
 from core.helper import query_serv, recref_serv, date_serv, query_cache_serv, model_serv, media_serv
 from core.helper.view_components import HeaderValues, DownloadCsvHandler
-from core.models import CofkUnionImage, CofkUnionRelationshipType, CofkUnionComment, CofkUnionResource, MergeHistory
+from core.models import CofkUnionImage, CofkUnionRelationshipType, CofkUnionComment, CofkUnionResource
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from location.subqueries import create_sql_count_work_by_location
 from manifestation.models import CofkUnionManifestation
 from person import person_serv
 from person.models import CofkUnionPerson
+from person.views import create_queryset_by_queries
 from work import work_serv
 from work.models import CofkUnionWork
 from work.work_serv import DisplayableWork
@@ -205,6 +204,7 @@ class InstFrontendCsv(HeaderValues):
             'longitude',
             'document_count',
             'published',
+            'merged_master_id',
         ]
 
     def obj_to_values(self, obj) -> Iterable:
@@ -241,6 +241,7 @@ class LocationFrontendCsv(HeaderValues):
             'recd_count',
             'mentioned_count',
             'published',
+            'merged_master_id',
         ]
 
     def obj_to_values(self, obj) -> Iterable:
@@ -389,6 +390,7 @@ class PersonFrontendCsv(HeaderValues):
             'recd_count',
             'mentioned_count',
             'published',
+            'merged_master_id',
         ]
 
     def obj_to_values(self, obj) -> Iterable:
@@ -398,7 +400,8 @@ class PersonFrontendCsv(HeaderValues):
                           'sent_count': lambda o: o.sent,
                           'recd_count': lambda o: o.recd,
                           'mentioned_count': lambda o: o.mentioned,
-                          'published': always_published
+                          'published': always_published,
+                          'merged_master_id': lambda o: o.merged_master_int,
                       } | creation_change_user_settings()
         return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
 
@@ -669,28 +672,6 @@ class RelationshipFrontendCsv(HeaderValues):
         return [value_dict.get(k) for k in self.get_header_list()]
 
 
-class MergeHistoryFrontendCsv(HeaderValues):
-    def get_header_list(self) -> list[str]:
-        return [
-            'merge_history_id',
-            'new_id',
-            'new_display_id',
-            'new_name',
-            'old_id',
-            'old_display_id',
-            'old_name',
-            'model_class_name',
-            'creation_timestamp',
-            'creation_user',
-            'change_timestamp',
-            'change_user',
-        ]
-
-    def obj_to_values(self, obj) -> Iterable:
-        convert_map = creation_change_user_settings()
-        return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
-
-
 def create_location_queryset():
     queryset = CofkUnionLocation.objects
     annotate = {
@@ -759,7 +740,9 @@ def export_all(output_dir: str = '.', skip_url_check=False):
          LocationFrontendCsv, CofkUnionLocation),
         (lambda: CofkUnionManifestation.objects.iterator(),
          ManifFrontendCsv, CofkUnionManifestation),
-        (lambda: person.views.create_queryset_by_queries(CofkUnionPerson, ).iterator(),
+        (lambda: create_queryset_by_queries(CofkUnionPerson).annotate(
+            merged_master_int=F('merged_master__iperson_id'),
+        ).iterator(),
          PersonFrontendCsv, CofkUnionPerson),
         (lambda: CofkUnionRelationshipType.objects.iterator(),
          RelTypeFrontendCsv, CofkUnionRelationshipType),
@@ -770,9 +753,6 @@ def export_all(output_dir: str = '.', skip_url_check=False):
             ImageFrontendCsv, CofkUnionImage,
             skip_url_check=skip_url_check,
         ),
-        (lambda: MergeHistory.objects.iterator(),
-         MergeHistoryFrontendCsv,
-         MergeHistory),
 
         # relationship csv must be last, because it uses data from other csvs
         (find_all_recrefs,
