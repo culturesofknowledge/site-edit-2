@@ -1,6 +1,13 @@
 {% extends "person/init_form.html" %}
 {% load static %}
 
+{% block after_form_descriptor %}
+    {% if person_form.instance.merged_master %}
+        {% url 'person:full_form' person_form.instance.merged_master.iperson_id as master_url %}
+        {% include "core/component/tombstone_warning.html" with url=master_url name=person_form.instance.merged_master.foaf_name %}
+    {% endif %}
+{% endblock %}
+
 {% block more_section_content %}
     {% include "core/component/close_if_save_success.html" with is_save_success=is_save_success %}
     <script src="/static/core/js/recref_service.js"></script>
@@ -88,7 +95,7 @@
 
     {% include "core/component/image_formset.html" with img_handler=img_handler %}
 
-    {% include "core/component/tombstone_fieldset.html" with merge_histories=merge_histories %}
+    {% include "core/component/tombstone_fieldset.html" with merge_histories=merge_histories view_name='person:full_form' %}
 
     {% url 'person:delete' person_form.instance.iperson_id as del_url %}
     {% include "core/component/del_confirm_fieldset.html" with del_url=del_url name='person or organisation' %}

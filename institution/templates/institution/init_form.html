@@ -31,6 +31,13 @@
                 {% csrf_token %}
 
                 {% include "core/component/form_descriptor.html" with descriptor=form_descriptor %}
+
+                {% if inst_form.instance.merged_master %}
+                    {% url 'institution:full_form' inst_form.instance.merged_master.institution_id as master_url %}
+                    {% include "core/component/tombstone_warning.html" with url=master_url name=inst_form.instance.merged_master.institution_name %}
+                {% endif %}
+
+
                 <fieldset>
                     <legend id="header_inst" class="toc-item">Institution</legend>
                     <div class="margin-bottom">
@@ -104,7 +111,7 @@
                     {% include "core/component/image_formset.html" with img_handler=img_handler %}
                 {% endif %}
 
-                {% include "core/component/tombstone_fieldset.html" with merge_histories=merge_histories %}
+                {% include "core/component/tombstone_fieldset.html" with merge_histories=merge_histories view_name='institution:full_form' %}
 
 
                 {% include "core/component/actionbox_form.html" with save_perm=constant.PM_CHANGE_INST %}
