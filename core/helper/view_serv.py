@@ -446,8 +446,8 @@ class BasicSearchView(ListView):
         if clonefinder_setting and not clonefinder_setting.status_handler.is_pending_or_running():
             queryset = clonefinder_setting.queryset_modifier(self.get_queryset())
             clonefinder.trigger_clustering(clonefinder_setting.model_name, queryset,
-                                         clonefinder_setting.status_handler,
-                                         username=request.user.username)
+                                           clonefinder_setting.status_handler,
+                                           username=request.user.username)
 
         return super().get(request, *args, **kwargs)
 
@@ -701,7 +701,6 @@ class MergeChoiceViews(View):
         return (MergeChoiceViews.create_merge_choice_context(m) for m in records)
 
 
-
 def get_recref_ref_name(related_field, recref) -> str:
     related_model = related_field.get_object(recref)
     if isinstance(related_model, CofkUnionComment):
@@ -731,7 +730,6 @@ def find_work_by_recref_list(recref_list: Iterable['Recref']):
             yield work
 
 
-
 class MergeConfirmViews(View):
 
     @property
@@ -751,7 +749,6 @@ class MergeActionViews(View):
     @property
     def target_model_class(self) -> Type[ModelLike]:
         raise NotImplementedError()
-
 
     @staticmethod
     def get_id_field():
@@ -875,3 +872,14 @@ class DeleteConfirmView(View):
         msg = f'"{obj_name}" deleted successfully'
         msg = urllib.parse.quote(msg)
         return redirect(f'{url}?to_user_messages={msg}')
+
+
+def create_tombstone_query(field, value):
+    def is_merged_master_id_null(is_null):
+        return Q(**{f'merged_master_id__isnull': is_null})
+
+    if value == 'live':
+        return is_merged_master_id_null(True)
+    elif value == 'dead':
+        return is_merged_master_id_null(False)
+    return Q()

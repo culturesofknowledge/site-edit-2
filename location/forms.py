@@ -114,3 +114,6 @@ class GeneralSearchFieldset(form_serv.BasicSearchFieldset):
 
     images = SearchCharField()
     images_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
+
+    tombstone = form_serv.TombstoneSelect()
+

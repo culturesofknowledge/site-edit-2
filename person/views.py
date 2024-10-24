@@ -299,6 +299,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
                 'death_year_to': lambda _, v: LessThanOrEqual(F('date_of_death_year'), v),
                 'flourished_year_from': lambda _, v: GreaterThanOrEqual(F('flourished_year'), v),
                 'flourished_year_to': lambda _, v: LessThanOrEqual(F('flourished2_year'), v),
+                'tombstone': view_serv.create_tombstone_query,
                 } | query_serv.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
                                                        'change_timestamp')
 
@@ -408,11 +409,10 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
     @property
     def query_fieldset_list(self) -> Iterable:
         default_values = {
-            # 'foaf_name_lookup': 'starts_with',
+            'tombstone': 'live',
         }
-        request_data = default_values | self.request_data.dict()
-
-        return [GeneralSearchFieldset(request_data)]
+        data = default_values | self.request_data.dict()
+        return [GeneralSearchFieldset(data)]
 
     @property
     def csv_export_setting(self):

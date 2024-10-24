@@ -541,3 +541,14 @@ class YesEmptyCheckboxField(forms.CharField):
     def clean(self, value):
         new_value = super().clean(value)
         return 'Y' if new_value == 'True' else ''
+
+
+class TombstoneSelect(SearchCharField):
+    def __init__(self):
+        super().__init__(required=False,
+                         widget=forms.Select(choices=[
+                             ('all', 'All'),
+                             ('live', 'Live'),
+                             ('dead', 'Dead'),
+                         ]),
+                         initial='live')

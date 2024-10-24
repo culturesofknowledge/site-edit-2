@@ -206,13 +206,19 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
     def search_field_fn_maps(self) -> dict[str, Lookup]:
-        return query_serv.create_from_to_datetime('change_timestamp_from',
-                                                  'change_timestamp_to',
-                                                  'change_timestamp')
+        return {
+            'tombstone': view_serv.create_tombstone_query,
+        } | query_serv.create_from_to_datetime('change_timestamp_from',
+                                               'change_timestamp_to',
+                                               'change_timestamp')
 
     @property
     def query_fieldset_list(self) -> Iterable:
-        return [GeneralSearchFieldset(self.request_data)]
+        default_values = {
+            'tombstone': 'live',
+        }
+        data = default_values | self.request_data.dict()
+        return [GeneralSearchFieldset(data)]
 
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
