@@ -49,6 +49,8 @@
 
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.iperson_id field_lookup=form.iperson_id_lookup %}
 
+    {% include "core/component/common_field_layout.html" with field=form.tombstone %}
+
     <script>
         var roles_autocomplete = [{% for role in form.role_category_names %}"{{ role|safe }}", {% endfor %}];
 

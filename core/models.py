@@ -8,12 +8,14 @@
 import functools
 
 from django.db import models
+from django.db.models import OuterRef, CharField
+from django.db.models.functions import Cast
 from django.urls import reverse, resolve
 from django.utils.http import urlencode
 
 from core.form_label_maps import field_label_map
 from core.helper import model_serv
-from core.helper.model_serv import RecordTracker
+from core.helper.model_serv import RecordTracker, ModelLike
 from core.helper.url_serv import VNAME_SEARCH
 
 SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID = 'iso_639_language_codes_id_seq'
@@ -278,3 +280,41 @@ class CofkUserSavedQuerySelection(models.Model):
 
     class Meta:
         db_table = 'cofk_user_saved_query_selection'
+
+
+class MergeHistoryQuerySet(models.QuerySet):
+
+    def get_by_new_model(self, new_model: ModelLike):
+        return self.filter(new_id=str(new_model.pk), model_class_name=new_model.__class__.__name__)
+
+    def subquery_new_id(self, model_class_name):
+        return (self.filter(old_id=Cast(OuterRef('pk'), output_field=CharField()),
+                            model_class_name=model_class_name)
+                .values('new_id')[:1])
+
+
+class MergeHistory(models.Model, RecordTracker):
+    merge_history_id = models.AutoField(primary_key=True)
+
+    new_id = models.CharField(max_length=250)
+    new_display_id = models.CharField(max_length=250)
+    new_name = models.TextField()
+
+    old_id = models.CharField(max_length=250)
+    old_display_id = models.CharField(max_length=250)
+    old_name = models.TextField()
+
+    model_class_name = models.CharField(max_length=200)
+
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
+    creation_user = models.CharField(max_length=50)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
+    change_user = models.CharField(max_length=50)
+
+    objects = MergeHistoryQuerySet.as_manager()
+
+    class Meta:
+        db_table = 'merge_history'
+        indexes = [
+            models.Index(fields=['model_class_name', 'new_id']),
+        ]

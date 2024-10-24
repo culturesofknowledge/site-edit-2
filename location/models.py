@@ -28,6 +28,8 @@ class CofkUnionLocation(models.Model, RecordTracker):
     resources = models.ManyToManyField('core.CofkUnionResource', through='CofkLocationResourceMap')
     images = models.ManyToManyField('core.CofkUnionImage', through='CofkLocationImageMap')
     works = models.ManyToManyField('work.CofkUnionWork', through='work.CofkWorkLocationMap')
+    merged_master = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null=True,
+                                      related_name='merged_sources')
 
     def __str__(self):
         return self.location_name

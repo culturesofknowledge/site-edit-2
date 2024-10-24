@@ -28,6 +28,12 @@
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 {% include "core/component/form_descriptor.html" with descriptor=form_descriptor %}
+
+                {% if loc_form.instance.merged_master %}
+                    {% url 'location:full_form' loc_form.instance.merged_master.location_id as master_url %}
+                    {% include "core/component/tombstone_warning.html" with url=master_url name=loc_form.instance.merged_master.location_name %}
+                {% endif %}
+
                 <fieldset>
                     <legend id="header_init_{{ forloop.counter0 }}" class="toc-item">
                         {{ loc_form.form_title__ }}
@@ -47,6 +53,9 @@
 
                 <!-- Images section -->
                 {% include "core/component/image_formset.html" with img_handler=img_handler %}
+
+
+                {% include "core/component/tombstone_fieldset.html" with merge_histories=merge_histories view_name='location:full_form' %}
 
                 {% url 'location:delete' loc_form.instance.location_id as del_url %}
                 {% include "core/component/del_confirm_fieldset.html" with del_url=del_url name='location' %}

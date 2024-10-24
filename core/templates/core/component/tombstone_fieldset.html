@@ -1,0 +1,35 @@
+{% if merge_histories %}
+    <fieldset>
+        <legend id="header_tombstone" class="toc-item">Tombstone</legend>
+        <p>
+            This record has been merged with other records. The following are history of the merges.
+        </p>
+
+        <div class="max-h-60 overflow-y-auto">
+
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Date</th>
+                </tr>
+
+                <tbody>
+                {% for merge_history in merge_histories %}
+                    <tr>
+                        <td class="w-24">{{ merge_history.old_display_id }}</td>
+                        <td>
+                            <a href="{% url view_name merge_history.old_display_id %}" >{{ merge_history.old_name }}</a>
+                        </td>
+                        <td class="w-40">{{ merge_history.creation_timestamp }}</td>
+                    </tr>
+                {% endfor %}
+
+                </tbody>
+            </table>
+        </div>
+
+
+    </fieldset>
+{% endif %}

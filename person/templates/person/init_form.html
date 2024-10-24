@@ -53,6 +53,8 @@
                 {% csrf_token %}
                 {% include "core/component/form_descriptor.html" with descriptor=form_descriptor %}
 
+                {% block after_form_descriptor %} {% endblock %}
+
                 <fieldset>
                     <legend id="header_person" class="toc-item">Core fields and editors' notes</legend>
                     <div class="margin-bottom">

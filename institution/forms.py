@@ -58,3 +58,4 @@ class GeneralSearchFieldset(form_serv.BasicSearchFieldset):
     institution_id = SearchIntField(min_value=1, label=field_label_map['institution']['institution_id'],
                                     help_text='The unique ID for the record within this database.')
     institution_id_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
+    tombstone = form_serv.TombstoneSelect()

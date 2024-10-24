@@ -4,8 +4,13 @@
     clear: both;
 }
 
+#hidden_columns {
+    display: flex;
+}
+
 #hidden_columns span {
-    display: inline-block;
+    display: flex;
+    align-items: center;
     font-size: $typescale-5a;
     border: 1px solid $black;
     padding: .5em;
