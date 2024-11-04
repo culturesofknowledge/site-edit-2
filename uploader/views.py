@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+from pathlib import Path
 from typing import Iterable
 
 from django.conf import settings
@@ -83,7 +84,13 @@ class AddUploadView(TemplateView):
             upload.upload_name = filename + ' ' + str(upload.upload_timestamp)
             upload.save()
 
-            size = os.path.getsize(settings.MEDIA_ROOT + upload.upload_file.name) >> 10
+            size = 0
+
+            try:
+                file_path = Path(settings.MEDIA_ROOT).joinpath(upload.upload_file.name).as_posix()
+                size = os.path.getsize(file_path) >> 10
+            except FileNotFoundError:
+                report['errors'] = "File not found"
 
             if size > settings.UPLOAD_ASYNCHRONOUS_FILESIZE_LIMIT:
                 task = AsyncTask('core.helper.uploader_serv.handle_upload', upload, True, filename)

@@ -1,6 +1,7 @@
 import logging
 import os
 import time
+from pathlib import Path
 from zipfile import BadZipFile
 
 from django.conf import settings
@@ -40,10 +41,12 @@ def handle_upload(upload: CofkCollectUpload, email_results: bool = False, file_n
     report = {
         'file': upload.upload_file.name,
         'time': upload.upload_timestamp,
-        'size': os.path.getsize(settings.MEDIA_ROOT + upload.upload_file.name) >> 10,
         'upload_id': upload.upload_id, }
 
     try:
+        file_path = Path(settings.MEDIA_ROOT).joinpath(upload.upload_file.name).as_posix()
+        report['size'] = os.path.getsize(file_path) >> 10
+
         cuef = CofkUploadExcelFile(upload, file)
 
         elapsed = round(time.time() - start)
