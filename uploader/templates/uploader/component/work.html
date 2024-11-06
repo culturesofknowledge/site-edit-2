@@ -168,6 +168,21 @@
 </tr>
 {% endif %}
 
+{% if work.places_mentioned.all %}
+<tr>
+    <td class="header">{{ work.places_mentioned.all|pluralize:"Place,Places" }} mentioned</td>
+    <td>
+
+        {% include "uploader/component/list_place.html" with places=work.places_mentioned.all %}
+
+        {% if work.place_mentioned_as_marked %}
+        As marked: {{ work.place_mentioned_as_marked }}<br/>
+        {% endif %}
+
+    </td>
+</tr>
+{% endif %}
+
 {% if work.manifestations.all %}
 <tr>
     <td class="header">Repositories and versions</td>
