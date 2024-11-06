@@ -18,6 +18,91 @@
         <td class="header">Location name</td>
         <td>{{ location.location_name }}</td>
     </tr>
+
+    {% if location.element_1_eg_room %}
+    <tr>
+        <td class="header">Room</td>
+        <td>{{ location.element_1_eg_room }}</td>
+    </tr>
+    {% endif %}
+
+    {% if location.element_2_eg_building %}
+    <tr>
+        <td class="header">Building</td>
+        <td>{{ location.element_2_eg_building }}</td>
+    </tr>
+    {% endif %}
+
+    {% if location.element_3_eg_parish %}
+    <tr>
+        <td class="header">Parish</td>
+        <td>{{ location.element_3_eg_parish }}</td>
+    </tr>
+    {% endif %}
+
+    {% if location.element_4_eg_city %}
+    <tr>
+        <td class="header">City</td>
+        <td>{{ location.element_4_eg_city }}</td>
+    </tr>
+    {% endif %}
+
+    {% if location.element_5_eg_county %}
+    <tr>
+        <td class="header">County</td>
+        <td>{{ location.element_5_eg_county }}</td>
+    </tr>
+    {% endif %}
+
+    {% if location.element_6_eg_country %}
+    <tr>
+        <td class="header">Country</td>
+        <td>{{ location.element_6_eg_country }}</td>
+    </tr>
+    {% endif %}
+
+    {% if location.element_7_eg_empire %}
+    <tr>
+        <td class="header">Empire</td>
+        <td>{{ location.element_7_eg_empire }}</td>
+    </tr>
+    {% endif %}
+
+    {% if location.notes_on_place %}
+    <tr>
+        <td class="header">Notes on place</td>
+        <td>{{ location.notes_on_place }}</td>
+    </tr>
+    {% endif %}
+
+    {% if location.editors_notes %}
+    <tr>
+        <td class="header">Editors' notes</td>
+        <td>{{ location.editors_notes }}</td>
+    </tr>
+    {% endif %}
+
+    {% if location.location_synonyms %}
+    <tr>
+        <td class="header">Synonyms</td>
+        <td>{{ location.location_synonyms }}</td>
+    </tr>
+    {% endif %}
+
+    {% if location.latitude %}
+    <tr>
+        <td class="header">Latitude</td>
+        <td>{{ location.latitude }}</td>
+    </tr>
+    {% endif %}
+
+    {% if location.longitude %}
+    <tr>
+        <td class="header">Longitude</td>
+        <td>{{ location.longitude }}</td>
+    </tr>
+    {% endif %}
+
 </table>
 
 {% endfor %}
