@@ -146,7 +146,14 @@
 </tr>
 {% endif %}
 
-{% if work.people_mentioned.all %}
+{% comment %}
+It is possible throught EMLO Collect to put in a note on people mentioned,
+yet not actually add any people mentioned.
+
+The same does not apply to notes on places mentioned, which is not used at all
+{% endcomment %}
+
+{% if work.people_mentioned.all or work.notes_on_people_mentioned %}
 <tr>
     <td class="header">{{ work.people_mentioned.all|pluralize:"Person,People" }} mentioned</td>
     <td>
