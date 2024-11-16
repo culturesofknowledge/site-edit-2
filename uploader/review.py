@@ -12,8 +12,10 @@ from django.urls import reverse
 from cllib_django import email_utils
 from core.constant import REL_TYPE_STORED_IN, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, \
     REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_IS_RELATED_TO, \
-    REL_TYPE_MENTION, REL_TYPE_DEALS_WITH
-from core.models import CofkUnionResource, CofkLookupCatalogue
+    REL_TYPE_MENTION, REL_TYPE_DEALS_WITH, REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_COMMENT_DATE, \
+    REL_TYPE_COMMENT_ORIGIN, REL_TYPE_COMMENT_DESTINATION, REL_TYPE_COMMENT_PERSON_MENTIONED, \
+    REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_MENTION_PLACE
+from core.models import CofkUnionResource, CofkLookupCatalogue, CofkUnionComment
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from manifestation import manif_serv
@@ -21,7 +23,7 @@ from manifestation.models import CofkUnionManifestation, CofkManifInstMap
 from person.models import CofkUnionPerson, create_person_id
 from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectPerson, CofkCollectLocation
 from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, CofkWorkResourceMap, \
-    CofkUnionLanguageOfWork, CofkWorkSubjectMap
+    CofkUnionLanguageOfWork, CofkWorkSubjectMap, CofkWorkCommentMap
 
 log = logging.getLogger(__name__)
 
@@ -74,6 +76,31 @@ def link_location_to_work(entities: QuerySet, relationship_type: str, union_work
 
     return location_maps
 
+def link_comments_to_work(collect_work: CofkCollectWork, union_work: CofkUnionWork, username: str)\
+        -> List[CofkWorkCommentMap]:
+    comment_maps = []
+
+    work_comment_map = [(collect_work.notes_on_date_of_work, REL_TYPE_COMMENT_DATE),
+                        (collect_work.notes_on_authors, REL_TYPE_COMMENT_AUTHOR),
+                        (collect_work.notes_on_addressees, REL_TYPE_COMMENT_ADDRESSEE),
+                        (collect_work.notes_on_origin, REL_TYPE_COMMENT_ORIGIN),
+                        (collect_work.notes_on_destination, REL_TYPE_COMMENT_DESTINATION),
+                        (collect_work.notes_on_people_mentioned, REL_TYPE_COMMENT_PERSON_MENTIONED),
+                        (collect_work.notes_on_letter, REL_TYPE_COMMENT_REFERS_TO)]
+
+    for work_comment in work_comment_map:
+        if work_comment[0]:
+            union_comment = CofkUnionComment(comment=work_comment[0])
+            union_comment.update_current_user_timestamp(username)
+            union_comment.save()
+
+            cwcm = CofkWorkCommentMap(comment=union_comment, work=union_work,
+                                      relationship_type=work_comment[1])
+            cwcm.update_current_user_timestamp(username)
+            comment_maps.append(cwcm)
+
+    return comment_maps
+
 
 def bulk_create(objects: List[Type[models.Model]]):
     if objects:
@@ -104,6 +131,10 @@ def get_collect_locations(locations: QuerySet, collect_locations: List[CofkColle
 
 
 def create_union_people_and_locations(collect_works, username: str):
+    """
+    This function iterates over related people and locations and creates new
+    Union entities if they do not already exist.
+    """
     collect_people = []
     collect_locations = []
 
@@ -114,6 +145,7 @@ def create_union_people_and_locations(collect_works, username: str):
 
         collect_locations.extend(get_collect_locations(collect_work.destination.all(), collect_locations))
         collect_locations.extend(get_collect_locations(collect_work.origin.all(), collect_locations))
+        collect_locations.extend(get_collect_locations(collect_work.places_mentioned.all(), collect_locations))
 
     for person in collect_people:
         union_iperson = CofkUnionPerson(foaf_name=person.primary_name)
@@ -177,6 +209,10 @@ def accept_works(context: dict, upload: CofkCollectUpload, request=None, email_a
         union_work = create_union_work(union_work_dict, collect_work, username)
         union_works.append(union_work)
 
+        # Link comments
+        comment_maps = link_comments_to_work(collect_work=collect_work, union_work=union_work, username=username)
+        add_rel_maps(rel_maps, comment_maps)
+
         # Link people
         people_maps = link_person_to_work(entities=collect_work.authors, relationship_type=REL_TYPE_CREATED,
                                           union_work=union_work, username=username)
@@ -207,6 +243,10 @@ def accept_works(context: dict, upload: CofkCollectUpload, request=None, email_a
                                          union_work=union_work, username=username)
         loc_maps += link_location_to_work(entities=collect_work.origin, relationship_type=REL_TYPE_WAS_SENT_FROM,
                                           union_work=union_work, username=username)
+        loc_maps += link_location_to_work(entities=collect_work.places_mentioned,
+                                          relationship_type=REL_TYPE_MENTION_PLACE,
+                                          union_work=union_work, username=username)
+
         add_rel_maps(rel_maps, loc_maps)
 
         union_maps = []
