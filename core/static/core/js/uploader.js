@@ -1,4 +1,13 @@
-function actionWork(action, work_id)   {
+function actionWork(btn)   {
+    $('#accept_all').prop('disabled', true);
+    $('#accept_all').addClass('btn-disabled');
+    $('#reject_all').prop('disabled', true);
+    $('#reject_all').addClass('btn-disabled');
+
+    let action = btn.name.split('_')[0];
+    let work_id = btn.name.split('_')[1];
+
+    $('#review').hide(400);
     $('#confirm').show(400);
     $('#action').val(action);
     $('#work_id').val(work_id);
@@ -12,4 +21,13 @@ function actionWork(action, work_id)   {
     else {
         $('#confirm_title').text(action + ' the following ' + work_count + ' works?');
     }
+}
+
+function cancelActionWork() {
+    $('#confirm').hide(400);
+    $('#review').show(400);
+    $('#accept_all').prop('disabled', false);
+    $('#accept_all').removeClass('btn-disabled');
+    $('#reject_all').prop('disabled', false);
+    $('#reject_all').removeClass('btn-disabled');
 }
