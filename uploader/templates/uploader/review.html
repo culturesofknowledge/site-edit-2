@@ -13,10 +13,10 @@
         <button type="button" class="btn inline_btn" onclick="location.href='/upload'">Back</button>
 
         Accept entire contribution
-        <button class="btn inline_btn" name="accept_all" onclick="actionWork('accept', 'all');">Accept all</button>
+        <button class="btn inline_btn" id="accept_all" name="accept_all" onclick="actionWork(this);">Accept all</button>
 
         Reject entire contribution
-        <button class="btn inline_btn" name="reject_all" onclick="actionWork('reject', 'all');">Reject all</button>
+        <button class="btn inline_btn" id="reject_all" name="reject_all" onclick="actionWork(this);" disabled>Reject all</button>
     </div>
     <em>Note: confirmation will be required before Accept/Reject of entire contribution.</em>
 </div>
@@ -25,16 +25,18 @@
 
 {% include "uploader/component/confirm.html" %}
 
-{% include "uploader/component/works.html" %}
+<div id="review">
+    {% include "uploader/component/works.html" %}
 
-{% if people %}
-{% include "uploader/component/people.html" %}
-{% endif %}
+    {% if people %}
+    {% include "uploader/component/people.html" %}
+    {% endif %}
 
-{% if places %}
-{% include "uploader/component/places.html" %}
-{% endif %}
+    {% if places %}
+    {% include "uploader/component/places.html" %}
+    {% endif %}
 
+</div>
 <!--
 {% for institution in institutions %}
 

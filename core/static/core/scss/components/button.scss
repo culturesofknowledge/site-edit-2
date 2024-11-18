@@ -33,3 +33,15 @@
     color: $white;
   }
 }
+
+.btn-disabled {
+    background-color: gray;
+    pointer-events: none;
+
+    &:hover, &:focus, &:active {
+        background-color: inherit;
+        border-color: inherit;
+        color: inherit;
+}
+
+}
