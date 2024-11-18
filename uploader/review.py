@@ -5,7 +5,7 @@ from typing import List, Type
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import FieldDoesNotExist
-from django.db import IntegrityError, models
+from django.db import IntegrityError, models, transaction
 from django.db.models import QuerySet
 from django.urls import reverse
 
@@ -187,10 +187,6 @@ def accept_works(context: dict, upload: CofkCollectUpload, request=None, email_a
                 log.exception(e)
         return msg
 
-    union_works = []
-    union_manifs = []
-    union_resources = []
-    rel_maps = {}
     username = context['username']
 
     union_work_dict = {'accession_code': context['accession_code'] if 'accession_code' in context else None}
@@ -198,6 +194,23 @@ def accept_works(context: dict, upload: CofkCollectUpload, request=None, email_a
     if 'catalogue_code' in context and context['catalogue_code'] != '':
         union_work_dict['original_catalogue'] = CofkLookupCatalogue.objects \
             .filter(catalogue_code=context['catalogue_code']).first()
+
+    try:
+        # Wrap the creation of union objects inside a Django transaction to ensure
+        # that if an exception is raised, the whole transaction is rolled back
+        with transaction.atomic():
+            create_works(collect_works, username, union_work_dict, upload, request)
+
+    except Exception as e:
+        log.error(f'Upload {upload} failed.')
+        log.exception(e)
+
+
+def create_works(collect_works, username, union_work_dict, upload, request):
+    union_works = []
+    union_manifs = []
+    union_resources = []
+    rel_maps = {}
 
     # Create new union people and locations at this stage to avoid
     # cache problems later
