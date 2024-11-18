@@ -42,7 +42,7 @@ class DisplayableCollectWork(CofkCollectWork):
 
     @property
     def display_date(self) -> str | None:
-        if self.date_of_work_std_is_range == 0:
+        if not self.date_of_work2_std:
             return self.date_of_work_std
         elif self.date_of_work_std and self.date_of_work2_std:
             return f'{self.date_of_work_std} to {self.date_of_work2_std}'
