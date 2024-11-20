@@ -184,7 +184,7 @@ def accept_works(context: dict, upload: CofkCollectUpload, request=None, email_a
         msg = f'No works in the upload "{upload.upload_name}" can be accepted (was the page refreshed?).'
         if request:
             messages.error(request, msg)
-        else:
+        elif email_addresses:
             try:
                 email_utils.send_email(email_addresses,
                                        subject='EMLO Works Accepted Result',
