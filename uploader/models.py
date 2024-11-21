@@ -365,7 +365,7 @@ class CofkCollectWork(models.Model):
     mentioned_uncertain = models.SmallIntegerField(default=0)
     notes_on_destination = models.TextField(blank=True, null=True)
     notes_on_origin = models.TextField(blank=True, null=True)
-    notes_on_place_mentioned = models.TextField(blank=True, null=True)
+    notes_on_place_mentioned = models.TextField(blank=True, null=True) # this field does not appear to be used
     place_mentioned_as_marked = models.TextField(blank=True, null=True)
     place_mentioned_inferred = models.SmallIntegerField(default=0)
     place_mentioned_uncertain = models.SmallIntegerField(default=0)

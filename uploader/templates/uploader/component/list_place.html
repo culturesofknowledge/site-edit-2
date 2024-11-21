@@ -1,0 +1,28 @@
+{% if places|length > 1 %}
+<ul>
+{% endif %}
+
+    {% for place in places %}
+        {% if places|length > 1 %}
+        <li>
+        {% endif %}
+
+        {% if place.iperson.union_iperson %}
+            <u>{{ place.location.union_location.location_name }}</u>
+        {% else %}
+            <u>{{ place.location.location_name }} (collect)</u>
+        {% endif %}
+
+        {% if places|length > 1 %}
+        </li>
+        {% else %}
+    <br/>
+    {% endif %}
+
+    {% endfor %}
+{% if places|length > 1 %}
+</ul>
+
+{% else %}
+<br/>
+{% endif %}
