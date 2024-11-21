@@ -47,10 +47,10 @@
         <td class="header">Status and possible actions</td>
         <td><strong>{{ work.upload_status }}</strong> (Collect ID: {{ work.iwork_id }})<br/>
             {% if work.upload_status_id == 1 %}
-            <button name="accept_work" class="btn inline_btn" onclick="actionWork('accept', {{ work.iwork_id }});">
+            <button name="accept_{{ work.iwork_id }}" class="btn inline_btn" onclick="actionWork(this);">
                 Accept
             </button>
-            <button name="reject_work" class="btn inline_btn" onclick="actionWork('reject', {{ work.iwork_id }});">
+            <button name="reject_{{ work.iwork_id }}" class="btn inline_btn" onclick="actionWork(this);">
                 Reject
             </button>
             <br/>

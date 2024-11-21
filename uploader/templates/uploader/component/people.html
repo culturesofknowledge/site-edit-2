@@ -18,30 +18,63 @@
         <td class="header">Primary name</td>
         <td>{{ person.primary_name }}</td>
     </tr>
+
     {% if person.gender %}
     <tr>
         <td class="header">Gender</td>
         <td>{{ person.gender }}</td>
     </tr>
     {% endif %}
+
     {% if person.roles_or_titles %}
     <tr>
         <td class="header">Roles or titles</td>
         <td>{{ person.roles_or_titles }}</td>
     </tr>
     {% endif %}
+
     {% if person.date_of_birth_year %}
     <tr>
         <td class="header">Date of birth</td>
         <td>{{ person.date_of_birth_year }}</td>
     </tr>
     {% endif %}
+
     {% if person.date_of_death_year %}
     <tr>
         <td class="header">Date of death</td>
         <td>{{ person.date_of_death_year }}</td>
     </tr>
     {% endif %}
+
+    {% if person.flourished_year %}
+    <tr>
+        <td class="header">Flourished from</td>
+        <td>{{ person.flourished_year }}</td>
+    </tr>
+    {% endif %}
+
+    {% if person.flourished2_year %}
+    <tr>
+        <td class="header">Flourished to</td>
+        <td>{{ person.flourished2_year }}</td>
+    </tr>
+    {% endif %}
+
+    {% if person.notes_on_person %}
+    <tr>
+        <td class="header">Notes on person</td>
+        <td>{{ person.notes_on_person }}</td>
+    </tr>
+    {% endif %}
+
+    {% if person.editors_notes %}
+    <tr>
+        <td class="header">Editors' notes</td>
+        <td>{{ person.editors_notes }}</td>
+    </tr>
+    {% endif %}
+
 </table>
 
 {% endfor %}
