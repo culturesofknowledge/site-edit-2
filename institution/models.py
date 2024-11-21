@@ -24,6 +24,8 @@ class CofkUnionInstitution(models.Model, RecordTracker):
     longitude = models.CharField(max_length=20, blank=True, null=True)
     resources = models.ManyToManyField(to='core.CofkUnionResource', through='CofkInstitutionResourceMap')
     images = models.ManyToManyField(to='core.CofkUnionImage', through='CofkInstitutionImageMap')
+    merged_master = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null=True,
+                                      related_name='merged_sources')
 
     class Meta:
         db_table = 'cofk_union_institution'

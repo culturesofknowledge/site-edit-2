@@ -32,9 +32,11 @@ def convert_to_recref_form_dict(record_dict: dict, target_id_name: str,
     return record_dict
 
 
-def upsert_recref(rel_type, parent_instance, target_instance,
-                  create_recref_fn,
-                  set_parent_target_instance_fn,
+def upsert_recref(rel_type: str,
+                  parent_instance: ModelLike,
+                  target_instance: ModelLike,
+                  create_recref_fn: Callable,
+                  set_parent_target_instance_fn: Callable[[Recref, ModelLike, ModelLike], []],
                   username=None,
                   org_recref=None,
                   ) -> Recref:
@@ -46,11 +48,12 @@ def upsert_recref(rel_type, parent_instance, target_instance,
     return recref
 
 
-def upsert_recref_by_target_id(target_id,
-                               find_target_fn,
-                               rel_type, parent_instance,
-                               create_recref_fn,
-                               set_parent_target_instance_fn,
+def upsert_recref_by_target_id(target_id: Any,
+                               find_target_fn: Callable[[Any], ModelLike],
+                               rel_type: str,
+                               parent_instance: ModelLike,
+                               create_recref_fn: Callable,
+                               set_parent_target_instance_fn: Callable[[Recref, ModelLike, ModelLike], []],
                                username=None,
                                org_recref=None, ) -> Optional[Recref]:
     if not (target_instance := find_target_fn(target_id)):
@@ -101,6 +104,20 @@ class RecrefBoundedData:
     def pair_related_models(self) -> Iterable[Type['ModelLike']]:
         return (m.field.related_model for m in self.pair)
 
+    def fill_recref(self, model_a, model_b, recref=None) -> Recref:
+        if recref is None:
+            recref = self.recref_class()
+
+        models = [model_a, model_b]
+        for field in self.pair:
+            for model in list(models):
+                if field.field.related_model == model.__class__:
+                    setattr(recref, field.field.name, model)
+                    models.remove(model)
+                    break
+
+        return recref
+
 
 def get_bounded_members(recref_class: Type[RecrefLike]) -> list[ForwardManyToOneDescriptor]:
     bounded_members = recref_class.__dict__.items()
@@ -135,9 +152,24 @@ def find_all_recref_bounded_data(models: Iterable[Type['ModelLike']] = None) -> 
         yield bounded_data
 
 
-def find_bounded_data_list_by_related_model(model) -> Iterable[RecrefBoundedData]:
+def find_bounded_data_list_by_related_model(model: ModelLike | Type[ModelLike]) -> Iterable[RecrefBoundedData]:
+    if isinstance(model, Model):
+        model = model.__class__
     return (r for r in find_all_recref_bounded_data()
-            if model.__class__ in set(r.pair_related_models))
+            if model in set(r.pair_related_models))
+
+
+def find_bounded_data_by_pair_model(model_a: ModelLike | Type[ModelLike],
+                                    model_b: ModelLike | Type[ModelLike]) -> RecrefBoundedData:
+    bounded_data_list = list(find_bounded_data_list_by_related_model(model_a))
+    if isinstance(model_b, Model):
+        model_b = model_b.__class__
+
+    bounded_data_list = [r for r in bounded_data_list if model_b in set(r.pair_related_models)]
+    if len(bounded_data_list) != 1:
+        raise ValueError(f'bounded_data not found [{model_a}][{model_b}] --- {bounded_data_list}')
+
+    return bounded_data_list[0]
 
 
 def get_parent_related_field(field_a: 'ForwardManyToOneDescriptor',
@@ -218,11 +250,11 @@ def find_relationship_type(relationship_code: str) -> CofkUnionRelationshipType 
     return None
 
 
-def get_left_right_rel_obj(recref: Recref)-> tuple[Model, Model]:
+def get_left_right_rel_obj(recref: Recref) -> tuple[Model, Model]:
     bounded_members = set(get_bounded_members(recref.__class__)[:2])
     bounded_member_classes = {f.field.related_model.__name__ for f in bounded_members}
     left_right_class_names = ((l, r) for rel_type, l, r in recref_left_right_list
-                         if recref.relationship_type == rel_type)
+                              if recref.relationship_type == rel_type)
     left_right_class_names = (_ for _ in left_right_class_names if set(_) == bounded_member_classes)
     left_right_class_names: tuple[str, str] = next(left_right_class_names, None)
 
@@ -258,3 +290,10 @@ def get_recref_rel_desc(recref: Recref,
         log.warning(f'rel_type not found [{recref.__class__.__name__}][{recref.relationship_type}]')
         return recref.relationship_type if default_raw_value else ''
     return rel_type.desc_left_to_right if is_left else rel_type.desc_right_to_left
+
+
+def find_all_recref_by_models(model_list):
+    for model in model_list:
+        for bounded_data in find_bounded_data_list_by_related_model(model):
+            records = find_recref_list_by_bounded_data(bounded_data, model)
+            yield from records

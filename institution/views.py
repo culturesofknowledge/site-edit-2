@@ -20,7 +20,7 @@ from core.helper.renderer_serv import RendererFactory
 from core.helper.view_components import HeaderValues, DownloadCsvHandler
 from core.helper.view_serv import CommonInitFormViewTemplate, DefaultSearchView, MergeChoiceViews, MergeActionViews, \
     MergeConfirmViews, ClonefinderSetting
-from core.models import Recref
+from core.models import Recref, MergeHistory
 from institution import inst_serv, models
 from institution.forms import InstitutionForm, GeneralSearchFieldset
 from institution.models import CofkUnionInstitution
@@ -37,9 +37,11 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
 
     @property
     def search_field_fn_maps(self) -> dict[str, Lookup]:
-        return query_serv.create_from_to_datetime('change_timestamp_from',
-                                                  'change_timestamp_to',
-                                                  'change_timestamp')
+        return {
+            'tombstone': view_serv.create_tombstone_query,
+        } | query_serv.create_from_to_datetime('change_timestamp_from',
+                                               'change_timestamp_to',
+                                               'change_timestamp')
 
     @property
     def entity(self) -> str:
@@ -109,7 +111,11 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
 
     @property
     def query_fieldset_list(self) -> Iterable:
-        return [GeneralSearchFieldset(self.request_data.dict())]
+        default_values = {
+            'tombstone': 'live',
+        }
+        data = default_values | self.request_data.dict()
+        return [GeneralSearchFieldset(data)]
 
     @property
     def csv_export_setting(self):
@@ -168,6 +174,9 @@ def full_form(request, pk):
                        | res_handler.create_context()
                        | InstFormDescriptor(inst).create_context()
                        | view_serv.create_is_save_success_context(is_save_success)
+                       | {
+                           'merge_histories': MergeHistory.objects.get_by_new_model(inst),
+                       }
                        ))
 
     is_save_success = False

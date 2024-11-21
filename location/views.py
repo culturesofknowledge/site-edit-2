@@ -24,7 +24,7 @@ from core.helper.view_components import DownloadCsvHandler, HeaderValues
 from core.helper.view_handler import FullFormHandler
 from core.helper.view_serv import BasicSearchView, CommonInitFormViewTemplate, MergeChoiceViews, MergeChoiceContext, \
     MergeActionViews, MergeConfirmViews, DeleteConfirmView, ClonefinderSetting
-from core.models import Recref
+from core.models import Recref, MergeHistory
 from location import location_serv
 from location.forms import LocationForm, GeneralSearchFieldset
 from location.location_serv import DisplayableLocation
@@ -135,6 +135,9 @@ class LocationFFH(FullFormHandler):
                 'loc_id': self.location_id,
             } | LocationFormDescriptor(self.loc).create_context()
             | view_serv.create_is_save_success_context(is_save_success)
+            | {
+                'merge_histories': MergeHistory.objects.get_by_new_model(self.loc),
+            }
         )
         return context
 
@@ -203,13 +206,19 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
     def search_field_fn_maps(self) -> dict[str, Lookup]:
-        return query_serv.create_from_to_datetime('change_timestamp_from',
-                                                  'change_timestamp_to',
-                                                  'change_timestamp')
+        return {
+            'tombstone': view_serv.create_tombstone_query,
+        } | query_serv.create_from_to_datetime('change_timestamp_from',
+                                               'change_timestamp_to',
+                                               'change_timestamp')
 
     @property
     def query_fieldset_list(self) -> Iterable:
-        return [GeneralSearchFieldset(self.request_data)]
+        default_values = {
+            'tombstone': 'live',
+        }
+        data = default_values | self.request_data.dict()
+        return [GeneralSearchFieldset(data)]
 
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:

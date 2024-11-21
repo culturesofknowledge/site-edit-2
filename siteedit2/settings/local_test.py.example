@@ -1,0 +1,35 @@
+# pylint: disable=unused-wildcard-import,wildcard-import
+# pylint: disable=wrong-import-position,line-too-long
+import os
+
+os.environ['POSTGRES_NAME'] = 'postgres'
+os.environ['POSTGRES_USER'] = 'postgres'
+os.environ['POSTGRES_PASSWORD'] = 'postgres'
+os.environ['POSTGRES_HOST'] = 'localhost'
+
+from .base import *  # noqa
+
+DEBUG = True
+
+MEDIA_ROOT = '/tmp/site-edit-2/media/'
+
+DATABASES['default']['NAME'] = 'postgres'
+DATABASES['default']['USER'] = 'postgres'
+DATABASES['default']['PASSWORD'] = 'postgres'
+DATABASES['default']['HOST'] = 'localhost'
+DATABASES['default']['PORT'] = '25432'
+
+STATIC_ROOT = '/static'
+
+# Email
+EMAIL_FROM_EMAIL = "Excited User <mailgun@sandbox61ae9192ffb449aeabb0edf1c3a16ed5.mailgun.org>"
+
+# Testing
+TEST_WEB_HOST = '172.17.0.1'
+SELENIUM_HOST_PORT = 'localhost:4444'
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+
+SECRET_KEY = 'aklasjdOI@J)(!J)(DJ!@()DJ)(JSIODJAOIF*)!N)@(!N)(EJ90sjd9a0sjd90asj9d0j09JDS90J)(Ad82)*@8dJ)*WDj)J@()JD(!J@)(DJ!)(@D*#*DJ@#)(DJ)(@!#DJ)(JS)IDJ()9jd09qajd90ajs9dq802j1'
+SELENIUM_CHROME_LOCAL_DRIVER = True
+SELENIUM_CHROME_HEADLESS = True

@@ -8,14 +8,13 @@ import location.fixtures
 from cllib import path_utils
 from core.helper import model_serv, test_serv
 from core.helper.test_serv import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
-    CommentM2MTester, CommonSearchTests, MergeTests
+    CommentM2MTester, CommonSearchTests
+from core.helper.testcase_merge import MergeTests
 from core.helper.view_components import DownloadCsvHandler
 from location.models import CofkUnionLocation, CofkLocationResourceMap
-from location.recref_adapter import LocationResourceRecrefAdapter
 from location.views import LocationMergeChoiceView, LocationCsvHeaderValues
 
 if TYPE_CHECKING:
-    from core.helper.common_recref_adapter import TargetResourceRecrefAdapter
     from core.models import Recref
 
 
@@ -94,7 +93,6 @@ class LocationCommonSearchTests(EmloSeleniumTestCase, CommonSearchTests):
 
 
 class LocationMergeTests(MergeTests):
-    ResourceRecrefAdapter: Type['TargetResourceRecrefAdapter'] = LocationResourceRecrefAdapter
     RecrefResourceMap: Type['Recref'] = CofkLocationResourceMap
     ChoiceView = LocationMergeChoiceView
     app_name = 'location'
