@@ -28,6 +28,17 @@ def get_recref_display_name(work: CofkUnionWork) -> str:
                          month=work.date_of_work_std_month,
                          day=work.date_of_work_std_day)
         work_date_str = work_date.strftime('%-d %b %Y')
+
+    elif all((work.date_of_work_std_year,
+              work.date_of_work_std_month,)):
+        work_date = date(year=work.date_of_work_std_year,
+                         month=work.date_of_work_std_month,
+                         day=1)
+        work_date_str = work_date.strftime('%b %Y')
+
+    elif work.date_of_work_std_year:
+        work_date_str = str(work.date_of_work_std_year)
+
     else:
         work_date_str = 'Unknown date'
 
