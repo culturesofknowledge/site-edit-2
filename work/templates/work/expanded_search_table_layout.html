@@ -82,7 +82,7 @@
 
             {% include 'work/component/manif_display_td.html' with work=r %}
 
-            <td>
+            <td class="display-point">
                 {% if r.related_works %}
                     Matches:
                     {{ r.related_works|display_resources }}
