@@ -48,14 +48,10 @@ def more_info(work: DisplayableWork):
 def display_resources(values: str) -> str:
     resources = list(data_serv.decode_multi_url_content(values))
 
-    html = ''
-    if len(resources) > 1:
-        html = '<ul>'
-        for link, text in resources:
-            html += f'<li><a href="{link}" target="_blank">{text}</a></li>'
-        html += '</ul>'
-    elif len(resources) == 1:
-        html = f'<a href="{resources[0][0]}" target="_blank">{resources[0][1]}</a>'
+    html = '<ul>'
+    for link, text in resources:
+        html += f'<li><a href="{link}" target="_blank">{text}</a></li>'
+    html += '</ul>'
 
     return mark_safe(html)
 

@@ -123,7 +123,8 @@ def create_queries_by_lookup_field(request_data: dict,
 
 
 def lookup_icontains_wildcard(field, value):
-    field = F(field)
+    if not isinstance(field, F):
+        field = F(field)
     if isinstance(value, str) and '%' in value:
         return lookups.IRegex(field, re.escape(value).replace('%', '.*'))
     else:
