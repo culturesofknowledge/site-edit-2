@@ -43,20 +43,24 @@
                     <p>As marked: {{ r.date_of_work_as_marked }}</p>
                 {% endif %}
             </td>
-            <td>
-                {% if r.creators_for_display %}
-                    {{ r.creators_for_display|linebreaksbr }}
-                {% endif %}
+            <td class="display-point">
+                <ul>
+                    {% for m in r.creators_for_display %}
+                        <li> {{ m }} </li>
+                    {% endfor %}
+                </ul>
             </td>
             <td>
                 {% if r.places_from_for_display %}
                     {{ r.places_from_for_display|linebreaksbr }}
                 {% endif %}
             </td>
-            <td>
-                {% if r.addressees_for_display %}
-                    {{ r.addressees_for_display|linebreaksbr }}
-                {% endif %}
+            <td class="display-point">
+                <ul>
+                    {% for m in r.addressees_for_display %}
+                        <li> {{ m }} </li>
+                    {% endfor %}
+                </ul>
             </td>
             <td>
                 {% if r.places_to_for_display %}

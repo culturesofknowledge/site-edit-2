@@ -115,11 +115,11 @@ class DisplayableWork(CofkUnionWork):
 
     @property
     def creators_for_display(self):
-        return self.queryable_people(REL_TYPE_CREATED)
+        return [p.to_string(is_details=False) for p in self.find_persons_by_rel_type(REL_TYPE_CREATED)]
 
     @property
     def addressees_for_display(self):
-        return self.queryable_people(REL_TYPE_WAS_ADDRESSED_TO)
+        return [p.to_string(is_details=False) for p in self.find_persons_by_rel_type(REL_TYPE_WAS_ADDRESSED_TO)]
 
     @property
     def places_from_for_display(self) -> str:
