@@ -172,6 +172,10 @@ tr.selectable_entry:not(.selected):hover {
   input, select {
     width: 80px;
   }
+
+  input.ad-year {
+    width: 110px;
+  }
 }
 
 .row-from-to {
@@ -197,6 +201,7 @@ tr.selectable_entry:not(.selected):hover {
 
   & > .grid-item {
     background-color: #f2f2f2;
+
     & > .name {
       font-size: $typescale-4;
     }
@@ -302,6 +307,7 @@ tr.selectable_entry:not(.selected):hover {
     }
   }
 }
+
 .sub-form-desc .desc-id {
   padding: 3px;
   font-size: 1em;
