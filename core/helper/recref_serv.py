@@ -220,20 +220,20 @@ def find_relationship_type(relationship_code: str) -> CofkUnionRelationshipType 
 
 def get_left_right_rel_obj(recref: Recref)-> tuple[Model, Model]:
     bounded_members = set(get_bounded_members(recref.__class__)[:2])
-    bounded_member_classes = {f.field.related_model.__name__ for f in bounded_members}
-    left_right_class_names = ((l, r) for rel_type, l, r in recref_left_right_list
+    bounded_member_fields = {f.field.name for f in bounded_members}
+    left_right_field = ((l, r) for rel_type, l, r in recref_left_right_list
                          if recref.relationship_type == rel_type)
-    left_right_class_names = (_ for _ in left_right_class_names if set(_) == bounded_member_classes)
-    left_right_class_names: tuple[str, str] = next(left_right_class_names, None)
+    left_right_field = (p for p in left_right_field if set(p) == bounded_member_fields)
+    left_right_field: tuple[str, str] = next(left_right_field, None)
 
     # define left_col, right_col
-    if left_right_class_names is None:
+    if left_right_field is None:
         log.warning(f'left, right column not found, {recref}')
         left_col, right_col = bounded_members
     else:
         col_a, col_b = bounded_members
-        left_class_name, _ = left_right_class_names
-        if col_a.field.related_model.__name__ == left_class_name:
+        left_field_name, _ = left_right_field
+        if col_a.field.name == left_field_name:
             left_col, right_col = col_a, col_b
         else:
             left_col, right_col = col_b, col_a
@@ -250,7 +250,6 @@ def get_recref_rel_desc(recref: Recref,
     if isinstance(left_model, Model):
         is_left = left_rel_obj == left_model
     else:
-        left_model = left_model.__class__
         is_left = isinstance(left_rel_obj, left_model)
 
     rel_type = find_relationship_type(recref.relationship_type)
