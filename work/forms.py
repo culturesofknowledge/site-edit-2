@@ -421,17 +421,20 @@ class CompactSearchFieldset(BasicSearchFieldset):
 
     date_of_work_std_year = SearchIntField(min_value=1000, max_value=1850,
                                            label=field_label_map['work']['date_of_work_std_year'],
-                                           help_text=year_help_text)
+                                           help_text=year_help_text,
+                                           widget_kwargs={'placeholder': 'Year'})
     date_of_work_std_year_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
     date_of_work_std_month = SearchIntField(min_value=1, max_value=12,
                                             label=field_label_map['work']['date_of_work_std_month'],
-                                            help_text=month_help_text)
+                                            help_text=month_help_text,
+                                            widget_kwargs={'placeholder': 'Month'})
     date_of_work_std_month_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
     date_of_work_std_day = SearchIntField(min_value=1, max_value=31,
                                           label=field_label_map['work']['date_of_work_std_day'],
-                                          help_text=day_help_text)
+                                          help_text=day_help_text,
+                                          widget_kwargs={'placeholder': 'Day'})
     date_of_work_std_day_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
     date_of_work_std_from = forms.DateField(required=False,
