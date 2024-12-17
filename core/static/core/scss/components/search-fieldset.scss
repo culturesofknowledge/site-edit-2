@@ -27,3 +27,18 @@
         background-color: $faint-grey;
     }
 }
+
+.ymdele.advanced_search {
+    flex-basis: 50%;
+    max-width: 50%;
+}
+
+.ymdele.search_input {
+    flex-basis: 33.33%;
+    max-width: 33.33%;
+}
+
+.advanced-mode .ymdele.search_input {
+    flex-basis: 50%;
+    max-width: 50%;
+}
