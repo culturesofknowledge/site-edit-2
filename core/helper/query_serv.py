@@ -2,6 +2,7 @@ import logging
 import re
 from typing import Callable, Iterable, Any, Literal
 
+import more_itertools
 from django.db.models import F, QuerySet
 from django.db.models import Q, lookups
 from django.db.models.base import ModelBase
@@ -123,7 +124,8 @@ def create_queries_by_lookup_field(request_data: dict,
 
 
 def lookup_icontains_wildcard(field, value):
-    field = F(field)
+    if not isinstance(field, F):
+        field = F(field)
     if isinstance(value, str) and '%' in value:
         return lookups.IRegex(field, re.escape(value).replace('%', '.*'))
     else:
@@ -288,3 +290,16 @@ def extract_sub_query(query: Query | QuerySet) -> Query:
 
 def lookup_fn_true_false(lookup_fn, field_name, value):
     return Q(**{field_name: data_serv.check_test_general_true(value)})
+
+
+def find_by_batch_ids_fn(query_fn, ids, batch_size=10000):
+    for batch_ids in more_itertools.sliced(list(ids), batch_size):
+        for r in query_fn(batch_ids):
+            yield r
+
+
+def find_ids_by_batch_ids_fn(query_fn, org_ids, batch_size=10000):
+    new_ids = set(
+        find_by_batch_ids_fn(query_fn, org_ids, batch_size=batch_size)
+    )
+    return new_ids

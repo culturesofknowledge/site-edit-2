@@ -18,7 +18,7 @@ class LocationForm(ModelForm):
     element_1_eg_room = CharField(required=False, label='1. Room, e.g. Porters\' lodge')
     element_2_eg_building = CharField(required=False, label='2. Building, e.g. New College')
     element_3_eg_parish = CharField(required=False, label='3. Parish, district, or street, e.g. Holywell Street')
-    element_4_eg_city = CharField(required=False, label='4. City, town, or village, e.g. Oxford')
+    element_4_eg_city = CharField(required=True, label='4. City, town, or village, e.g. Oxford')
     element_5_eg_county = CharField(required=False, label='5. County, e.g. Oxfordshire')
     element_6_eg_country = CharField(required=False, label='6. Country, e.g. England')
     element_7_eg_empire = CharField(required=False, label='7. Larger political entity, e.g. United Kingdom')

@@ -6,9 +6,9 @@
         <div class="row">
             <h1> {{ title }} </h1>
             {% if add_entry_url %}
-            <div class="margin-left margin-top">
-                <a href="{{ add_entry_url }}" class="btn" target="_blank">Add +</a>
-            </div>
+                <div class="margin-left margin-top">
+                    <a href="{{ add_entry_url }}" class="btn" target="_blank">Add +</a>
+                </div>
             {% endif %}
         </div>
     </div>
@@ -38,32 +38,35 @@
             </aside>
 
             <div id="query-result" class="col col--3of4">
-                {% if paginator.count == 0 %}
-                    <button id="fieldset-toggle-btn" class="search-form-btn" type="button">
-                        Toggle <span data-feather="search" aria-hidden="true"></span>
-                    </button>
-                    <h2>No results</h2>
-                {% else %}
 
-                    <!-- Number of results -->
-                    <div class="col">
-                        <div class="result_count">
-                            <h2>{{ page_obj|get_results_on_page }} out
-                                of {{ paginator.count | floatformat:'g' }} {{ paginator.count|pluralize:entity }}</h2>
-                        </div>
+                <!-- Number of results -->
+                <div class="col">
+                    <div class="result_count">
 
-                        <!-- Show search criteria -->
-                        {% if simplified_query %}
-                            {% include "core/component/simplified_query.html" with simpliefied_query=simplified_query %}
+                        {% if paginator.count > 0 %}
+                        <h2>
+                            {{ page_obj|get_results_on_page }} out
+                            of {{ paginator.count | floatformat:'g' }} {{ paginator.count|pluralize:entity }}
+                        </h2>
                         {% endif %}
 
                     </div>
 
-                    <!-- Search components (e.g. sort by, records per page) -->
-                    {{ search_components }}
+                    <!-- Show search criteria -->
+                    {% if simplified_query %}
+                        {% include "core/component/simplified_query.html" with simpliefied_query=simplified_query %}
+                    {% endif %}
 
+                </div>
+
+                <!-- Search components (e.g. sort by, records per page) -->
+                {{ search_components }}
+
+                {% if paginator.count == 0 %}
+                    <h2>No results</h2>
+
+                {% else %}
                     <!-- Upper pagination -->
-
                     {% include 'core/component/pagination.html' %}
 
                     <!-- search function toolbar (e.g. download output, compact, expanded)  -->
@@ -140,7 +143,6 @@
                     {{ results_renderer | safe }}
 
                     <!-- Lower pagination -->
-
                     {% include 'core/component/pagination.html' %}
 
                 {% endif %}

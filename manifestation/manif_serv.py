@@ -1,11 +1,23 @@
 from typing import Union
 
+from django.urls import reverse
+
 from core.helper import model_serv, query_cache_serv
 from manifestation.models import CofkUnionManifestation
 
 
+def get_form_url(manif: CofkUnionManifestation):
+    try:
+        return reverse('work:manif_update', kwargs={
+            'iwork_id': manif.work.iwork_id,
+            'manif_id': manif.manifestation_id,
+        })
+    except:
+        return ''
+
+
 def get_recref_display_name(manif: CofkUnionManifestation):
-    return manif and manif.manifestation_id
+    return manif and (manif.id_number_or_shelfmark or manif.manifestation_id)
 
 
 def get_recref_target_id(manif: CofkUnionManifestation):

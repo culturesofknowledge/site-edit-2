@@ -28,6 +28,17 @@ def get_recref_display_name(work: CofkUnionWork) -> str:
                          month=work.date_of_work_std_month,
                          day=work.date_of_work_std_day)
         work_date_str = work_date.strftime('%-d %b %Y')
+
+    elif all((work.date_of_work_std_year,
+              work.date_of_work_std_month,)):
+        work_date = date(year=work.date_of_work_std_year,
+                         month=work.date_of_work_std_month,
+                         day=1)
+        work_date_str = work_date.strftime('%b %Y')
+
+    elif work.date_of_work_std_year:
+        work_date_str = str(work.date_of_work_std_year)
+
     else:
         work_date_str = 'Unknown date'
 
@@ -115,11 +126,11 @@ class DisplayableWork(CofkUnionWork):
 
     @property
     def creators_for_display(self):
-        return self.queryable_people(REL_TYPE_CREATED)
+        return [p.to_string(is_details=False) for p in self.find_persons_by_rel_type(REL_TYPE_CREATED)]
 
     @property
     def addressees_for_display(self):
-        return self.queryable_people(REL_TYPE_WAS_ADDRESSED_TO)
+        return [p.to_string(is_details=False) for p in self.find_persons_by_rel_type(REL_TYPE_WAS_ADDRESSED_TO)]
 
     @property
     def places_from_for_display(self) -> str:
