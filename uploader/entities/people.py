@@ -76,4 +76,4 @@ class CofkPeople(CofkEntity, ABC):
                     self.people.append(CofkCollectPerson(**person))
 
     def person_exists_by_name(self, name: str) -> bool:
-        return len([p for p in self.people if p.primary_name.lower() == name.lower() and p.union_iperson is None]) > 0
+        return len([p for p in self.people if p.primary_name and p.primary_name.lower() == name.lower() and p.union_iperson is None]) > 0
