@@ -73,7 +73,6 @@ class AddUploadView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         form = CofkCollectUploadForm(request.POST, request.FILES)
-        report = {}
 
         if form.is_valid() and 'upload_file' in request.FILES:
             filename = request.FILES['upload_file'].name
@@ -104,14 +103,14 @@ class AddUploadView(TemplateView):
                                     'size': size
                                     }
             else:
-                report = kwargs['report'] = handle_upload(upload)
+                kwargs['report'] = handle_upload(upload)
 
                 # If workbook upload is successful redirect to review view
-                if 'total_errors' not in report:
-                    return redirect(reverse('uploader:upload_review', args=[report["upload_id"]]))
+                if 'total_errors' not in kwargs['report']:
+                    return redirect(reverse('uploader:upload_review', args=[kwargs['report']["upload_id"]]))
 
         else:
-            report['errors'] = 'Form invalid'
+            kwargs['report']['errors'] = 'Form invalid'
 
         return self.get(self, request, *args, **kwargs)
 
