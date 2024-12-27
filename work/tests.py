@@ -147,7 +147,7 @@ class WorkFormTests(EmloSeleniumTestCase):
         ]
         test_serv.run_recref_test_by_test_cases(self, test_cases)
 
-    def test_detes__create(self):
+    def test_dates__create(self):
         self.goto_vname('work:dates_form')
 
         # fill form
