@@ -69,12 +69,16 @@ class CofkEntity:
                     if 'primary_name' == str_field[0]:
                         for value in entity[str_field[0]].split(SEPARATOR):
                             if len(value) > str_field[1]:
-                                self.add_error(f'A value in the field {str_field[0]} is longer than the limit of'
-                                               f' {str_field[1]} characters.')
+                                val_len = len(value)
+                                self.add_error(f'A value in the field {str_field[0]} is {val_len} '
+                                               f'characters, which is longer than the limit of '
+                                               f'{str_field[1]} characters.')
                     else:
                         if len(entity[str_field[0]]) > str_field[1]:
-                            self.add_error(f'A value in the field {str_field[0]} is longer than the limit of'
-                                           f' {str_field[1]} characters.')
+                            val_len = len(entity[str_field[0]])
+                            self.add_error(f'A value in the field {str_field[0]} is {val_len} '
+                                           f'characters, which is longer than the limit of '
+                                           f'{str_field[1]} characters.')
                 else:
                     entity[str_field] = str(entity[str_field]).strip()
 
@@ -82,36 +86,35 @@ class CofkEntity:
         if 'ids' in self.fields:
             for id_field in [t for t in self.fields['ids'] if t in entity]:
                 if isinstance(entity[id_field], int) and entity[id_field] < 1:
-                    self.add_error(f'Column {id_field} in {self.sheet.name} sheet is not a valid positive integer.')
-                    # self.ids.append(entity[id_field])
+                    self.add_error(f'Column {id_field} in {self.sheet.name} sheet is not'
+                                   f' a valid positive integer (value: {entity[id_field]}).')
                 elif isinstance(entity[id_field], str):
                     for int_value in [i for i in entity[id_field].split(SEPARATOR) if i != '']:
                         try:
                             if int(int_value) < 0:
                                 self.add_error(f'Column {id_field} in {self.sheet.name}'
-                                               f' sheet contains a non-valid value.')
-                            # self.ids.append(int(int_value))
-                        except ValueError as ve:
+                                               f' sheet contains an invalid value (value: {int_value}).')
+                        except ValueError:
                             self.add_error(f'Column {id_field} in {self.sheet.name}'
-                                           f' sheet contains a non-valid value.')
+                                           f' sheet contains an invalid value (value: {int_value}).')
 
         if 'ints' in self.fields:
             for int_value in [t for t in self.fields['ints'] if t in entity and not isinstance(t, int)]:
                 try:
                     entity[int_value] = int(entity[int_value])
-                except ValueError as ve:
-                    self.add_error(f'Column {int_value} in {self.sheet.name} sheet is not a valid integer.')
+                except ValueError:
+                    self.add_error(f'Column {int_value} in {self.sheet.name} sheet is not'
+                                   f' a valid integer (value: {entity[int_value]}).')
 
         if 'bools' in self.fields:
             for bool_value in [t for t in self.fields['bools'] if t in entity]:
                 try:
                     if int(entity[bool_value]) not in [0, 1]:
                         self.add_error(f'Column {bool_value} in {self.sheet.name} sheet'
-                                       f' is not a boolean value of either 0 or 1.')
-                except ValueError as ve:
-
+                                       f' is not a boolean value of either 0 or 1 (value: {entity[bool_value]}).')
+                except ValueError:
                     self.add_error(f'Column {bool_value} in {self.sheet.name}'
-                                   f' sheet is not a boolean value of either 0 or 1.')
+                                   f' sheet is not a boolean value of either 0 or 1 (value: {entity[bool_value]}).')
 
         if 'combos' in self.fields:
             for combo in self.fields['combos']:
@@ -208,7 +211,7 @@ class CofkEntity:
         elif ids is None:
             return [{ids_key: None, names_key: name} for name in names]
         elif len(names) < len(ids):
-            return [{ids_key: _id, names_key: names[ix]} for ix, _id in enumerate(ids)]
+            return [{ids_key: _id, names_key: names[ix] if ix < len(names) else None} for ix, _id in enumerate(ids)]
         elif len(names) > len(ids):
             return [{ids_key: ids[ix] if ix < len(ids) else None, names_key: name} for ix, name in
                     enumerate(names)]
@@ -225,15 +228,15 @@ class CofkEntity:
 
     def check_year(self, year_field: str, year: int):
         if isinstance(year, int) and not MAX_YEAR >= year >= MIN_YEAR:
-            self.add_error(f'{year_field}: is {year} but must be between {MIN_YEAR} and {MAX_YEAR}')
+            self.add_error(f'{year_field}: is {year} but must be between {MIN_YEAR} and {MAX_YEAR}.')
 
     def check_month(self, month_field: str, month: int):
         if isinstance(month, int) and not 1 <= month <= 12:
-            self.add_error(f'{month_field}: is {month} but must be between 1 and 12')
+            self.add_error(f'{month_field}: is {month} but must be between 1 and 12.')
 
     def check_date(self, date_field: str, date: int):
         if date > 31:
-            self.add_error(f'{date_field}: is {date} but can not be greater than 31')
+            self.add_error(f'{date_field}: is {date} but can not be greater than 31.')
 
         # If month is April, June, September or November then day must be not more than 30
         '''elif month in [4, 6, 9, 11] and field > 30:

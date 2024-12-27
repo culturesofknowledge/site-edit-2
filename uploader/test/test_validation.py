@@ -25,21 +25,21 @@ class TestValidation(TestCase):
         work = CofkEntity(self.new_upload, MockEntity('Work'))
 
         work.check_data_types({'date_of_work2_std_year': 's1945'})
-        msg = 'Column date_of_work2_std_year in Work sheet is not a valid integer.'
+        msg = 'Column date_of_work2_std_year in Work sheet is not a valid integer (value: s1945).'
         self.assertEqual(work.errors[1][0].message, msg)
 
     def test_year_limit(self):
         work = CofkEntity(self.new_upload, MockEntity('Work'))
 
         work.check_data_types({'date_of_work2_std_year': '1945'})
-        msg = f'date_of_work2_std_year: is 1945 but must be between {MIN_YEAR} and {MAX_YEAR}'
+        msg = f'date_of_work2_std_year: is 1945 but must be between {MIN_YEAR} and {MAX_YEAR}.'
         self.assertEqual(work.errors[1][0].message, msg)
 
     def test_bool(self):
         work = CofkEntity(self.new_upload, MockEntity('Work'))
         work.check_data_types({'date_of_work_std_is_range': '1945'})
 
-        msg = 'Column date_of_work_std_is_range in Work sheet is not a boolean value of either 0 or 1.'
+        msg = 'Column date_of_work_std_is_range in Work sheet is not a boolean value of either 0 or 1 (value: 1945).'
         self.assertEqual(work.errors[1][0].message, msg)
 
     def test_bool_success(self):
@@ -53,7 +53,7 @@ class TestValidation(TestCase):
         work = CofkEntity(self.new_upload, MockEntity('Work'))
         work.check_data_types({'author_ids': '1;2;s', 'author_names': 'a;b'})
 
-        msg = 'Column author_ids in Work sheet contains a non-valid value.'
+        msg = 'Column author_ids in Work sheet contains an invalid value (value: s).'
         msg_2 = 'Column author_names has fewer names than there are ids in author_ids.'
         self.assertEqual(work.errors[1][0].message, msg)
         self.assertEqual(work.errors[1][1].message, msg_2)
@@ -68,14 +68,14 @@ class TestValidation(TestCase):
         work = CofkEntity(self.new_upload, MockEntity('People'))
         work.check_data_types({'primary_name': '1' * 201})
 
-        msg = 'A value in the field primary_name is longer than the limit of 200 characters.'
+        msg = 'A value in the field primary_name is 201 characters, which is longer than the limit of 200 characters.'
         self.assertEqual(work.errors[1][0].message, msg)
 
     def test_date_field(self):
         work = CofkEntity(self.new_upload, MockEntity('Work'))
         work.check_data_types({'date_of_work2_std_day': 41,})
 
-        msg = 'date_of_work2_std_day: is 41 but can not be greater than 31'
+        msg = 'date_of_work2_std_day: is 41 but can not be greater than 31.'
         self.assertEqual(work.errors[1][0].message, msg)
 
     def test_date_range(self):
