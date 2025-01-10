@@ -83,9 +83,9 @@ class TestPeople(UploadIncludedTestCase):
 
         cuef = CofkUploadExcelFile(self.new_upload, filename)
 
-        self.assertIn('Column author_ids in Work sheet contains a non-valid value.',
+        self.assertIn('Column author_ids in Work sheet contains an invalid value (value: x).',
                       cuef.errors['work']['errors'][0]['errors'])
-        self.assertIn('Column iperson_id in People sheet contains a non-valid value.',
+        self.assertIn('Column iperson_id in People sheet contains an invalid value (value: x).',
                       cuef.errors['people']['errors'][0]['errors'])
 
     def test_extra_person(self):

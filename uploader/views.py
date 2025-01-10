@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+from pathlib import Path
 from typing import Iterable
 
 from django.conf import settings
@@ -67,11 +68,11 @@ class AddUploadView(TemplateView):
 
         # Form to create new upload
         context['form'] = self.form
+        context['size_limit'] = settings.UPLOAD_ASYNCHRONOUS_FILESIZE_LIMIT
         return context
 
     def post(self, request, *args, **kwargs):
         form = CofkCollectUploadForm(request.POST, request.FILES)
-        report = {}
 
         if form.is_valid() and 'upload_file' in request.FILES:
             filename = request.FILES['upload_file'].name
@@ -83,9 +84,16 @@ class AddUploadView(TemplateView):
             upload.upload_name = filename + ' ' + str(upload.upload_timestamp)
             upload.save()
 
-            size = os.path.getsize(settings.MEDIA_ROOT + upload.upload_file.name) >> 10
+            size = 0
 
-            if size > settings.UPLOAD_ASYNCHRONOUS_FILESIZE_LIMIT:
+            try:
+                file_path = Path(settings.MEDIA_ROOT).joinpath(upload.upload_file.name).as_posix()
+                size = os.path.getsize(file_path) >> 10
+            except FileNotFoundError:
+                kwargs['report']['errors'] = "File not found"
+                return self.get(self, request, *args, **kwargs)
+
+            if settings.UPLOAD_ASYNCHRONOUS_FILESIZE_LIMIT == 0 or size > settings.UPLOAD_ASYNCHRONOUS_FILESIZE_LIMIT:
                 task = AsyncTask('core.helper.uploader_serv.handle_upload', upload, True, filename)
                 task.run()
 
@@ -95,14 +103,14 @@ class AddUploadView(TemplateView):
                                     'size': size
                                     }
             else:
-                report = kwargs['report'] = handle_upload(upload)
+                kwargs['report'] = handle_upload(upload)
 
                 # If workbook upload is successful redirect to review view
-                if 'total_errors' not in report:
-                    return redirect(reverse('uploader:upload_review', args=[report["upload_id"]]))
+                if 'total_errors' not in kwargs['report']:
+                    return redirect(reverse('uploader:upload_review', args=[kwargs['report']["upload_id"]]))
 
         else:
-            report['errors'] = 'Form invalid'
+            kwargs['report']['errors'] = 'Form invalid'
 
         return self.get(self, request, *args, **kwargs)
 

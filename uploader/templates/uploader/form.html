@@ -39,8 +39,13 @@ If there are any issues with the upload they will be listed below.</p>
 
                 {% if report.async %}
                 <p class="fw-700 search-result__date">
-                    <small>As this file is 1 mb or larger it will be processed separately, and you will be
-                        notified by email when it has finished.</small>
+                    <small>{% if size_limit > 0 %}
+                    As this file is {{ size_limit }} or larger it will be processed asynchronously,
+                        and you will be notified by email when it has finished.
+                    {% else %}
+                    This file will be processed asynchronously, and you will be
+                        notified by email when it has finished.
+                    {% endif %}</small>
                 </p>
                 {% endif %}
 

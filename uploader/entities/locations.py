@@ -61,5 +61,5 @@ class CofkLocations(CofkEntity, ABC):
                     self.locations.append(CofkCollectLocation(**location))
 
     def location_exists_by_name(self, name: str) -> bool:
-        loc = [p for p in self.locations if p.location_name.lower() == name.lower() and p.union_location is None]
+        loc = [p for p in self.locations if p.location_name and p.location_name.lower() == name.lower() and p.union_location is None]
         return len(loc) > 0

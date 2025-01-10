@@ -257,7 +257,8 @@ DEFAULT_IMG_LICENCE_URL = 'http://cofk2.bodleian.ox.ac.uk/culturesofknowledge/li
 EMAIL_FROM_EMAIL = "Excited User <mailgun@<your mailgun messages url>>"
 
 # Limit for file size, in kbs. Files larger than this will be queued.
-UPLOAD_ASYNCHRONOUS_FILESIZE_LIMIT = 1000
+# 0 means no limit. All files are asynchronously processed
+UPLOAD_ASYNCHRONOUS_FILESIZE_LIMIT = 0
 UPLOAD_ROOT_URL = 'http://localhost:8000'
 
 EMLO_SEQ_VAL_INIT = {

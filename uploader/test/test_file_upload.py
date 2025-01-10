@@ -4,6 +4,9 @@ import zipfile
 
 from openpyxl.workbook import Workbook
 
+from institution.models import CofkUnionInstitution
+from location.models import CofkUnionLocation
+from person.models import CofkUnionPerson
 from uploader.constants import MANDATORY_SHEETS
 from uploader.models import CofkCollectWork, CofkCollectAuthorOfWork, \
     CofkCollectAddresseeOfWork, CofkCollectOriginOfWork, CofkCollectDestinationOfWork, CofkCollectManifestation
@@ -116,13 +119,109 @@ class TestFileUpload(UploadIncludedTestCase):
         filename = self.create_excel_file(data)
 
         msg = 'The value in column "language_id", "aaj" is not a valid ISO639 language.'
-        msg_2 = 'Column date_of_work2_std_year in Work sheet is not a valid integer.'
-        msg_3 = 'There is no location with the id 1 in the Union catalogue.'
-        msg_4 = 'There is no repository with the id 2 in the Union catalogue.'
+        msg_2 = 'Column date_of_work2_std_year in Work sheet is not a valid integer (value: sss).'
+        msg_3 = 'Column addressees_uncertain in Work sheet is not a boolean value of either 0 or 1 (value: s1).'
+        msg_4 = 'There is no location with the id 1 in the Union catalogue.'
+        msg_5 = 'There is no repository with the id 2 in the Union catalogue.'
         cuef = CofkUploadExcelFile(self.new_upload, filename)
 
         self.assertEqual(cuef.errors['work']['total'], 7)
         self.assertIn(msg, cuef.errors['work']['errors'][0]['errors'])
         self.assertIn(msg_2, cuef.errors['work']['errors'][0]['errors'])
-        self.assertIn(msg_3, cuef.errors['locations']['errors'][0]['errors'])
-        self.assertIn(msg_4, cuef.errors['manifestations']['errors'][0]['errors'])
+        self.assertIn(msg_3, cuef.errors['work']['errors'][0]['errors'])
+        self.assertIn(msg_4, cuef.errors['locations']['errors'][0]['errors'])
+        self.assertIn(msg_5, cuef.errors['manifestations']['errors'][0]['errors'])
+
+    def test_mismatching_people(self):
+        """
+        This test tries to import a work and a people sheet that has one name,
+        but two ids neither of which exists in the Union catalogue. The test insures
+        that the data is properly parsed and processed from the spreadsheet.
+        """
+        data = {'Work': [[1, "test", "J", 1660, 1, 1, 'sss', 1, 2, 1, 1, 1, 1, "test", "newton", 15257, "test", 1, 1,
+                          "test", "Wren", 22859, "test", 1, "s1", "test", "Burford", 1, "test", 1, 1, "Carisbrooke",
+                          782, "test", 1, 1, "test", "", "fra;aaj", '', '', '', '', '', '', "test", "test", "test",
+                          "Baskerville", 885, "test", "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/",
+                          "Early Modern Letters Online test"]],
+                'Places': [['Burford', 1],
+                           ['Carisbrooke', 782]],
+                'People': [["Baskerville", 885],
+                           ["newton", 15257],
+                           ["Wren", 22859],
+                           ["I. et J. Beeckman", "903506;908149"]],
+                'Manifestation': [[1, 1, "ALS", 2, "Bodleian", "test", "test", '', '', '', '', ''],
+                                  [2, 1, '', '', '', '', '', "P", "test", "test", '', '']],
+                'Repositories': [['Bodleian', 2]]
+                }
+
+        filename = self.create_excel_file(data)
+
+        cuef = CofkUploadExcelFile(self.new_upload, filename)
+
+        msg = 'There is no person with the id 903506 in the Union catalogue.'
+        msg2 = 'There is no person with the id 908149 in the Union catalogue.'
+
+        self.assertIn(msg, cuef.errors['people']['errors'][0]['errors'])
+        self.assertIn(msg2, cuef.errors['people']['errors'][0]['errors'])
+
+
+    def test_mismatching_people_one_exists(self):
+        """
+        This test replicates the above test except that one of the ids exists in the Union catalogue.
+        """
+        CofkUnionPerson.objects.create(iperson_id=903506, foaf_name='I. et J. Beeckman')
+
+        data = {'Work': [[1, "test", "J", 1660, 1, 1, 'sss', 1, 2, 1, 1, 1, 1, "test", "newton", 15257, "test", 1, 1,
+                          "test", "Wren", 22859, "test", 1, "s1", "test", "Burford", 1, "test", 1, 1, "Carisbrooke",
+                          782, "test", 1, 1, "test", "", "fra;aaj", '', '', '', '', '', '', "test", "test", "test",
+                          "Baskerville", 885, "test", "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/",
+                          "Early Modern Letters Online test"]],
+                'Places': [['Burford', 1],
+                           ['Carisbrooke', 782]],
+                'People': [["Baskerville", 885],
+                           ["newton", 15257],
+                           ["Wren", 22859],
+                           ["I. et J. Beeckman", "903506;908149"]],
+                'Manifestation': [[1, 1, "ALS", 2, "Bodleian", "test", "test", '', '', '', '', ''],
+                                  [2, 1, '', '', '', '', '', "P", "test", "test", '', '']],
+                'Repositories': [['Bodleian', 2]]
+                }
+
+        filename = self.create_excel_file(data)
+
+        cuef = CofkUploadExcelFile(self.new_upload, filename)
+
+        msg = 'There is no person with the id 908149 in the Union catalogue.'
+        msg2 = 'There is no person with the id 903506 in the Union catalogue.'
+
+        self.assertIn(msg, cuef.errors['people']['errors'][0]['errors'])
+        self.assertNotIn(msg2, cuef.errors['work']['errors'][0]['errors'])
+
+    def test_location_created(self):
+        """
+        This test is similar to the above two tests except that it tests the creation of two locations.
+        """
+        CofkUnionLocation.objects.create(location_id=1, location_name='Burford')
+        CofkUnionInstitution.objects.create(institution_id=2, institution_name='Bodleian')
+
+        data = {
+            'Work': [[1, "test", "J", 1660, 1, 1, 'sss', 1, 2, 1, 1, 1, 1, "test", "newton", 15257, "test", 1, 1,
+                      "test", "Wren", 22859, "test", 1, "s1", "test", "Burford", 1, "test", 1, 1, "Carisbrooke",
+                      782, "test", 1, 1, "test", "", "fra;aaj", '', '', '', '', '', '', "test", "test", "test",
+                      "Baskerville", 885, "test", "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/",
+                      "Early Modern Letters Online test"]],
+            'Places': [['Burford', 1],
+                       ['Carisbrooke', 782]],
+            'Manifestation': [[1, 1, "ALS", 2, "Bodleian", "test", "test", '', '', '', '', ''],
+                              [2, 1, '', '', '', '', '', "P", "test", "test", '', '']],
+            'Repositories': [['Bodleian', 2]]
+            }
+
+        filename = self.create_excel_file(data)
+
+        msg = 'There is no location with the id 1 in the Union catalogue.'
+        msg_2 = 'There is no repository with the id 2 in the Union catalogue.'
+        cuef = CofkUploadExcelFile(self.new_upload, filename)
+
+        self.assertNotIn(msg, cuef.errors['work']['errors'][0]['errors'])
+        self.assertNotIn(msg_2, cuef.errors['work']['errors'][0]['errors'])
