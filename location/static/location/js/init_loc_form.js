@@ -25,3 +25,20 @@ function set_location_name() {
     document.getElementById('id_location_name')
         .setAttribute('value', full_loc_name);
 }
+
+
+function setup_important_label() {
+    const selector_list = ['label[for=id_element_4_eg_city]']
+
+    const important_ele = document.createElement('span');
+    important_ele.classList.add('important-tag');
+    important_ele.innerHTML = '&#127775; Mandatory';
+    important_ele.style.marginLeft = '5px';
+
+    for (const selector of selector_list) {
+        for ( const label of document.querySelectorAll(selector)) {
+            label.innerHTML += important_ele.outerHTML;
+        }
+    }
+
+}

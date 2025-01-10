@@ -78,6 +78,6 @@ def can_show_for_perm(perm, perms):
 
 
 @register.filter
-def resource_url_to_link(value):
-    value = re.sub(r'(https?://\S+)\s+\((.+?)\)', r'<a href="\1" target="_blank">\2</a>', value)
+def render_display_link(value):
+    value = re.sub(r'__@_\[(.+?)\](.+?)_@__', r'<a href="\1" target="_blank">\2</a>', value)
     return mark_safe(value)

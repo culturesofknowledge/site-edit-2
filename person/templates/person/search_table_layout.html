@@ -131,7 +131,7 @@
             </td>
 
             <td>
-                {{ r.other_details_for_display|linebreaksbr|resource_url_to_link }}
+                {{ r.other_details_for_display|linebreaksbr|render_display_link }}
             </td>
             <td>
                 {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r %}

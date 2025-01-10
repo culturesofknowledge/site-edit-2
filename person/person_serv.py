@@ -5,6 +5,7 @@ from django.urls import reverse
 
 from core.helper import recref_serv
 from location import location_serv
+from manifestation import manif_serv
 from person.models import CofkUnionPerson
 
 log = logging.getLogger(__name__)
@@ -16,6 +17,23 @@ def get_recref_display_name(person: CofkUnionPerson):
 
 def get_display_name(person: CofkUnionPerson):
     return get_recref_display_name(person)
+
+
+def get_display_name_for_other_details(person: CofkUnionPerson):
+    if not person:
+        return person
+
+    name = person.foaf_name
+    if not person.is_organisation:
+        if person.date_of_birth_year and not person.date_of_death_year:
+            name += f', b.{person.date_of_birth_year}'
+        elif person.date_of_birth_year and person.date_of_death_year:
+            name += f', {person.date_of_birth_year}-{person.date_of_death_year}'
+    else:
+        if person.date_of_birth_year:
+            name += f', formed {person.date_of_birth_year}'
+
+    return name
 
 
 def get_recref_target_id(person: CofkUnionPerson):
@@ -62,34 +80,52 @@ def get_display_dict_other_details(person: CofkUnionPerson, new_line='\n') -> st
     query_name_map = [
         # person's active relationships
         (lambda: person.active_relationships.all(),
-         lambda mm: get_recref_display_name(mm.related),
-         lambda mm: mm.person,),
+         lambda mm: get_display_name_for_other_details(mm.related),
+         lambda mm: mm.person,
+         lambda mm: get_form_url(mm.related.iperson_id)),
 
         # person's passive relationships
         (lambda: person.passive_relationships.all(),
-         lambda mm: get_recref_display_name(mm.person),
-         lambda mm: mm.related,),
+         lambda mm: get_display_name_for_other_details(mm.person),
+         lambda mm: mm.related,
+         lambda mm: get_form_url(mm.person.iperson_id)),
 
         # locations
         (lambda: person.cofkpersonlocationmap_set.all(),
          lambda mm: location_serv.get_recref_display_name(mm.location),
-         lambda mm: CofkUnionPerson,),
+         lambda mm: CofkUnionPerson,
+         lambda mm: location_serv.get_form_url(mm.location.location_id),
+         ),
+
+        # manifs
+        (lambda: person.cofkmanifpersonmap_set.all(),
+         lambda mm: manif_serv.get_recref_display_name(mm.manifestation),
+         lambda mm: CofkUnionPerson,
+         lambda mm: manif_serv.get_form_url(mm.manifestation),
+         ),
 
         # comments
         (lambda: person.cofkpersoncommentmap_set.all(),
          lambda mm: mm.comment.comment,
-         lambda mm: CofkUnionPerson,),
+         lambda mm: CofkUnionPerson,
+         None,),
     ]
 
     result_map = collections.defaultdict(list)
-    for query_fn, name_fn, left_obj_fn in query_name_map:
+    for query_fn, name_fn, left_obj_fn, url_fn in query_name_map:
         for mmap in query_fn():
             display_name = recref_serv.get_recref_rel_desc(mmap, left_obj_fn(mmap),
                                                            default_raw_value=True)
-            result_map[display_name].append(name_fn(mmap))
+            display_str = name_fn(mmap)
+            if mmap.from_date and mmap.from_date.year:
+                display_str = f'From {mmap.from_date.year}: {display_str}'
+
+            if url_fn:
+                display_str = encode_display_link(url_fn(mmap), display_str)
+            result_map[display_name].append(display_str)
 
     # add resources
-    if _resources := [f'{r.resource_url} ({r.resource_name})' for r in person.resources.all()]:
+    if _resources := [encode_display_link(r.resource_url, r.resource_name) for r in person.resources.all()]:
         result_map['Related resources'] = _resources
 
     title_value_list = []
@@ -99,6 +135,10 @@ def get_display_dict_other_details(person: CofkUnionPerson, new_line='\n') -> st
         title_value_list.append(f'* {title}{new_line}' + f'{new_line}'.join(values))
 
     return f'{new_line + new_line}'.join(title_value_list)
+
+
+def encode_display_link(url, text):
+    return f'__@_[{url}]{text}_@__'
 
 
 class DisplayablePerson(CofkUnionPerson):

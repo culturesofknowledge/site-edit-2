@@ -116,9 +116,10 @@ class SearchCharField(forms.CharField):
 
 class SearchIntField(forms.IntegerField):
 
-    def __init__(self, *args, required=False, **kwargs):
+    def __init__(self, *args, required=False, widget_kwargs=None, **kwargs):
+        widget_kwargs = widget_kwargs or {}
         super().__init__(*args, required=required, **kwargs)
-        self.widget.attrs.update({'class': 'searchfield'})
+        self.widget.attrs.update({'class': 'searchfield'} | widget_kwargs)
 
 
 class IntLookupChoices(TextChoices):
