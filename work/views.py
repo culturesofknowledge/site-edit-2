@@ -132,7 +132,7 @@ class BasicWorkFFH(FullFormHandler):
         else:
             self.work = None
 
-        self.safe_work = self.work or CofkUnionWork()
+        self.safe_work = self.work or CofkUnionWork(init_seq_id=False)
 
         self.common_work_form = CommonWorkForm(request_data, initial={
             'catalogue': self.safe_work.original_catalogue_id,
@@ -158,6 +158,7 @@ class BasicWorkFFH(FullFormHandler):
     def save_work(self, request, work: CofkUnionWork):
         # ----- save work
         if not work.work_id:
+            work.init_seq_id()
             work.work_id = work_serv.create_work_id(work.iwork_id)
 
         # handle catalogue

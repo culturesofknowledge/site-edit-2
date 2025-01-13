@@ -5,7 +5,6 @@
 #   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
 #   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
-import functools
 
 from django.db import models
 from django.urls import reverse, resolve
@@ -150,16 +149,26 @@ class Iso639LanguageCode(models.Model):
     code_639_3 = models.CharField(max_length=3, primary_key=True)
     code_639_1 = models.CharField(max_length=2)
     language_name = models.CharField(max_length=100)
-    language_id = models.IntegerField(
-        default=functools.partial(model_serv.next_seq_safe, SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID),
-        unique=True,
-    )
+    language_id = models.IntegerField(unique=True)
 
     def __str__(self):
         return self.language_name
 
     class Meta:
         db_table = 'iso_639_language_codes'
+
+    def __init__(self, *args, init_seq_id=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        if init_seq_id:
+            self.init_seq_id()
+
+    def init_seq_id(self):
+        if self.language_id is None:
+            self.language_id = model_serv.next_seq_safe(SEQ_NAME_ISO_LANGUAGE__LANGUAGE_ID)
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        self.init_seq_id()
+        super().save(force_insert, force_update, using, update_fields)
 
 
 class CofkUnionFavouriteLanguage(models.Model):
