@@ -41,6 +41,7 @@ urlpatterns = [
     path('lang/', include('core.lang_urls')),
     path('user/', include('core.user_urls')),
     path('misc/', include('core.misc_urls')),
+    path('suggestions/', include('suggestions.urls')),
 ]
 
 for url_path, file_path in [

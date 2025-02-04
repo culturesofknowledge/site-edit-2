@@ -1,0 +1,83 @@
+{% extends "core/emlo_logined.html" %}
+{% load cl_filters %}
+{% load static %}
+{% block content %}
+
+<!-- https://feathericons.com -->
+
+<h1>Suggestions</h1>
+
+{% include "core/component/messages.html" %}
+
+{% include 'core/component/pagination.html' %}
+
+<h5> {{ message }} </h5>
+
+<script>
+  function confirm_delete(orderno){
+      var r = confirm("Sure you want to delete?");
+      if (r == true) {
+          window.location.href=orderno;
+      }}
+</script>
+
+<div class="button-row right">
+  {% csrf_token %}
+  <h3 class="inline">Add new </h3>
+  <a class="margin-left btn" href="{% url 'suggestions:suggestion_person' %}" title="Person" target="_self" tabindex="1"><span
+  data-feather="user" class="feather-small" aria-hidden="true"></span>Person</a><br>
+
+  <a class="margin-left btn" href="{% url 'suggestions:suggestion_location' %}" title="Location" target="_self" tabindex="1"><span
+  data-feather="map-pin" class="feather-small" aria-hidden="true"></span>Location</a><br>
+
+  <a class="margin-left btn" href="{% url 'suggestions:suggestion_publication' %}" title="Publication" target="_self" tabindex="1"><span
+  data-feather="paperclip" class="feather-small" aria-hidden="true"></span>Publication</a><br>
+    
+  <a class="margin-left btn" href="{% url 'suggestions:suggestion_institution' %}" title="Institution" target="_self" tabindex="1"><span
+  data-feather="home" class="feather-small" aria-hidden="true"></span>Institution</a><br>
+</div>
+
+<hr>
+<h3> List of your existing suggestions </h3>
+
+{% if query_results %}
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Id</th>
+        <th>Type</th>
+        <th>Content</th>
+        <th>Author</th>
+        <th>Created</th>
+        <th>Updated</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for suggestion in query_results %}
+        <tr>
+          <td><a href="/suggestions/{{ suggestion.suggestion_id }}">{{ suggestion.suggestion_id }}</a></td>
+          <td>{{ suggestion.suggestion_type }}</td>
+          <td><pre>{{ suggestion.suggestion_suggestion }}</pre></td>
+          <td>{{ suggestion.suggestion_author }}</td>
+          <td>{{ suggestion.suggestion_created_at }}</td>
+          <td>{{ suggestion.suggestion_updated_at }}</td>
+          <td>{{ suggestion.suggestion_status }}</td>
+          
+          <td> 
+            <form action="/suggestions/edit/{{suggestion.suggestion_id}}" method="get"> {% csrf_token %} <input type="submit" value="Edit", name="edit"> </form>
+            <form onclick="return confirm('Are you sure you want to delete this?')" action="/suggestions/delete/{{suggestion.suggestion_id}}" method="post"> {% csrf_token %} <input type="submit" value="Delete", name="delete"> </form>
+           </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p>No suggestions found.</p>
+{% endif %}
+
+
+{% include 'core/component/pagination.html' %}
+
+{% endblock %}

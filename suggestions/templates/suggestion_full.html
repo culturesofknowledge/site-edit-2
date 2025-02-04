@@ -1,0 +1,17 @@
+{% extends "core/emlo_logined.html" %}
+{% load cl_filters %}
+{% block content %}
+
+<h1> Suggest a new {{ type }}: </h1>
+{% include "core/component/messages.html" %}
+
+{{ message }}
+
+<form action="" method="post"> 
+  {% csrf_token %}
+  {{ form }}  
+  <input type="submit" value="Submit", name="submit" class="btn btn-primary"> 
+</form>
+<a href="{% url 'suggestions:suggestion_home' %}" class="btn btn-secondary">Cancel</a>
+
+{% endblock %}
