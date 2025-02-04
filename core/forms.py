@@ -8,6 +8,7 @@ from core.helper import widgets_serv
 from core.helper.form_serv import CommonTextareaField, ZeroOneCheckboxField
 from core.models import CofkUnionComment, CofkUnionResource, CofkUnionImage, CofkLookupCatalogue, CofkUnionRoleCategory, \
     CofkUnionSubject, CofkUnionOrgType
+from login.models import CofkUser
 from manifestation.models import CofkUnionManifestation
 from person import person_serv
 from work import work_serv
@@ -162,6 +163,14 @@ class CatalogueForm(ModelForm):
     catalogue_name = forms.CharField(label="Description")
     catalogue_code = forms.CharField(label="Code")
     publish_status = form_serv.ZeroOneCheckboxField(required=False, label='Publish', initial='1', )
+    owner = forms.ModelChoiceField(
+        label="Owner",
+        queryset=CofkUser.objects.all(),
+        widget=forms.Select(attrs={
+            'class': 'form-control'
+        }),
+        empty_label="Select Owner"  # placeholder
+    )
 
     class Meta:
         model = CofkLookupCatalogue

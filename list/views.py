@@ -1,6 +1,7 @@
 import logging
 
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count
 from django.views.generic import ListView
 
@@ -9,6 +10,8 @@ from core.forms import CatalogueForm, RoleForm, SubjectForm, OrgTypeForm
 from core.helper import perm_serv
 from core.models import CofkLookupCatalogue, CofkUnionRoleCategory, CofkUnionSubject, CofkUnionOrgType, \
     CofkUserSavedQuery
+
+from login.utils import get_contributing_editors
 
 log = logging.getLogger(__name__)
 
@@ -49,9 +52,9 @@ class CofkListView(ListView):
             list_obj = self.get_obj_by_id()
 
             if list_obj:
-                for attr in self.updated_fields:
-                    setattr(list_obj, attr, self.request.POST[attr] if attr in self.request.POST else 0)
-                list_obj.save()
+                form = self.form(request.POST, instance=list_obj)
+                if form.is_valid():
+                    form.save()
 
                 messages.success(request, f'Successfully updated {self.list_type}'
                                           f' "{getattr(list_obj, self.updated_fields[0])}" ({list_obj.pk})')
@@ -108,7 +111,7 @@ class CofkListView(ListView):
         raise NotImplementedError
 
 
-class RoleListView(CofkListView):
+class RoleListView(LoginRequiredMixin, CofkListView):
     model = CofkUnionRoleCategory
     template_name = 'list/roles.html'
 
@@ -133,7 +136,7 @@ class RoleListView(CofkListView):
         return constant.PM_CHANGE_ROLECAT
 
 
-class CatalogueListView(CofkListView):
+class CatalogueListView(LoginRequiredMixin, CofkListView):
     model = CofkLookupCatalogue
     template_name = 'list/catalogue.html'
 
@@ -147,7 +150,7 @@ class CatalogueListView(CofkListView):
 
     @property
     def updated_fields(self):
-        return ['catalogue_name', 'publish_status']
+        return ['catalogue_name', 'publish_status', 'owner']
 
     @property
     def list_type(self):
@@ -157,8 +160,14 @@ class CatalogueListView(CofkListView):
     def save_perm(self):
         return constant.PM_CHANGE_LOOKUPCAT
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user_list'] = get_contributing_editors()
 
-class SubjectListView(CofkListView):
+        return context
+
+
+class SubjectListView(LoginRequiredMixin, CofkListView):
     model = CofkUnionSubject
     template_name = 'list/subjects.html'
 
@@ -183,7 +192,7 @@ class SubjectListView(CofkListView):
         return constant.PM_CHANGE_SUBJECT
 
 
-class OrgTypeListView(CofkListView):
+class OrgTypeListView(LoginRequiredMixin, CofkListView):
     model = CofkUnionOrgType
     template_name = 'list/orgtypes.html'
 

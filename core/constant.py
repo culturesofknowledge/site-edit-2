@@ -116,12 +116,15 @@ PM_EXPORT_FILE_INST = 'institution.export_file'
 
 PM_TRIGGER_EXPORTER = 'core.trigger_exporter'
 
-ROLE_REVIEWER = 'reviewer'
 ROLE_VIEWER = 'cofkviewer'
 ROLE_EDITOR = 'cofkeditor'
 ROLE_SUPER = 'super'
+ROLE_CONTRIBUTING_EDITOR = 'contributing_editor'
 
 # Audit
 CHANGE_TYPE_NEW = 'New'
 CHANGE_TYPE_CHANGE = 'Chg'
 CHANGE_TYPE_DELETE = 'Del'
+
+# Cache Ids
+CACHE_GROUP_MAP_ID = 'group_name_id_map'

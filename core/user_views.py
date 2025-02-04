@@ -20,7 +20,7 @@ class UserFormDescriptor(FormDescriptor):
 
     @property
     def name(self):
-        return f'{self.obj.surname} {self.obj.forename}'
+        return f'{self.obj}'
 
     @property
     def model_name(self):
