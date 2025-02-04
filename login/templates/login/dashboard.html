@@ -69,7 +69,16 @@
 
     </ul>
 
-    {% if constant.PM_TRIGGER_EXPORTER|can_show_for_perm:perms %}
+    <p>You can also provide suggestions:</p>
+
+    <ul class="main_menu">
+        <li>
+            <a href="{% url 'suggestions:suggestion_home' %}" title="Make a suggestion" target="_self" tabindex="1"><span
+                    data-feather="clipboard" class="feather-large" aria-hidden="true"></span>Suggestions</a>
+        </li>
+    </ul>
+
+        {% if constant.PM_TRIGGER_EXPORTER|can_show_for_perm:perms %}
         <div class="margin-top-xl">
             <h2>Export</h2>
             {% if is_exporting %}

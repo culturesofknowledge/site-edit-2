@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'audit',
     'list',
     'clonefinder',
+    'suggestions',
 
     # Tailwind settings
     'tailwind',

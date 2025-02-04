@@ -42,6 +42,7 @@ urlpatterns = [
     path('user/', include('core.user_urls')),
     path('misc/', include('core.misc_urls')),
     path('reconciliation/', include('clonefinder.urls')),
+    path('suggestions/', include('suggestions.urls')),
 
     path("__reload__/", include("django_browser_reload.urls")),
 ]

@@ -1,0 +1,54 @@
+{% extends "core/emlo_logined.html" %}
+{% load cl_filters %}
+{% block content %}
+
+<style>
+    .myDiv {
+      background-color: #F8F8F0;
+    }
+</style>
+
+<h3> Displaying the suggestion {{ record.suggestion_id}} </h3>
+
+<div style="display: table">
+    <div style="display: table-row;">
+        <div style="display: table-cell;">ID :</div>
+        <div style="display: table-cell;"><a href="/suggestions/{{ record.suggestion_id }}">{{ record.suggestion_id }}</a></div>
+    </div>
+    <div class="myDiv" style="display: table-row;">
+        <div style="display: table-cell;">Type:</div>
+        <div style="display: table-cell;">{{ record.suggestion_type }}</div>
+    </div>
+    <div style="display: table-row;">
+        <div style="display: table-cell;">Author:</div>
+        <div style="display: table-cell;">{{ record.suggestion_author }}</div>
+    </div>
+    <div class="myDiv" style="display: table-row;">
+        <div style="display: table-cell;">Is suggestion new?:</div>
+        <div style="display: table-cell;">{{ record.suggestion_new }}</div>
+    </div>
+    <div style="display: table-row;">
+        <div style="display: table-cell;">Status:</div>
+        <div style="display: table-cell;">{{ record.suggestion_status }}</div>
+    </div>
+    <div class="myDiv" style="display: table-row;">
+        <div style="display: table-cell;">Created:</div>
+        <div style="display: table-cell;">{{ record.suggestion_created_at }}</div>
+    </div>
+    <div style="display: table-row;">
+        <div style="display: table-cell;">Updated:</div>
+        <div style="display: table-cell;">{{ record.suggestion_updated_at }}</div>
+    </div>
+    <div class="myDiv" style="display: table-row;">
+        <div style="display: table-cell;">Related record:</div>
+        <div style="display: table-cell;">{{ record.suggestion_related_record }}</div>
+    </div>
+    <div style="display: table-row;">
+        <div style="display: table-cell;">Content:</div>
+        <div style="display: table-cell;"><pre>{{ record.suggestion_suggestion }}</pre></div>
+    </div>
+</div>
+
+<a href="{% url 'suggestions:suggestion_home' %}" class="btn btn-secondary">Back to Suggestions</a>
+
+{% endblock %}
