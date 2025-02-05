@@ -67,8 +67,8 @@
         <tr> <th width="250px">ID</th> <td><a href="/suggestions/{{ suggestion.suggestion_id }}">{{suggestion.suggestion_id}}</a></td> </tr>
         <tr> <th>Record</th>         <td>
             {{suggestion.suggestion_type}},
-            Related record = {{suggestion.suggestion_related_record}},
-            {% if suggestion.suggestion_new %} New Record {% endif %} 
+            Related record = {{suggestion.suggestion_related_record}}
+            {% if suggestion.suggestion_new %}, New Record {% endif %} 
         </td> </tr>
         <tr> <th>Contributor</th>    <td>{{suggestion.suggestion_author}}</td> </tr>
         <tr> <th>Date Last Updated</th><td>{{suggestion.suggestion_updated_at}}</td> </tr>
