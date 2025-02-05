@@ -1,12 +1,12 @@
 from django.urls import path
-from .views import suggestion_home, suggestion_person, suggestion_publication
+from .views import suggestion_person, suggestion_publication
 from .views import suggestion_institution, suggestion_location
 from .views import suggestion_edit, suggestion_delete, suggestion_show
 from .views import suggestion_all
 
 app_name = 'suggestions'
 urlpatterns = [
-    path('',            suggestion_home,        name='suggestion_home'),
+    path('',            suggestion_all,         name='suggestion_all'),
     path('all',         suggestion_all,         name='suggestion_all'),
     path('person',      suggestion_person,      name='suggestion_person'),
     path('location',    suggestion_location,    name='suggestion_location'),

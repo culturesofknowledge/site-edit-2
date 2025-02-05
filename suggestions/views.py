@@ -3,16 +3,16 @@ from functools import reduce
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
 from django.db.models import Q
 
 from .models import CofkSuggestions
 from .forms import SuggestionForm, SuggestionFilterForm
 from . import texts
 
-template_base = "suggestion.html" # Home page listing all suggestions for user
+template_base = "suggestion_listAll.html" # Home page listing all suggestions for user
 template_full = "suggestion_full.html" # Page for making a suggestion
 template_unique = "suggestion_unique.html" # Page to display a single record
-template_listAll = "suggestion_listAll.html" # Page to list all suggestions for user
 message_noupdate = "Form was not updated. Please try again."
 
 # For query ordering, look at :
@@ -32,44 +32,12 @@ def save_fill_context(request, context, edit=False):
         cus.suggestion_updated_at = time.strftime('%Y-%m-%d %H:%M:%S')
         cus.suggestion_created_at = context['date_creation']
         cus.suggestion_status = "Updated"
-        cus.suggestion_related_record = CofkSuggestions.objects.create(
-            type=cus.suggestion_type,
-            new_record=True,
-            suggestion="New person suggestion.",
-            author=cus.suggestion_author,
-            content_type=content_type,
-            object_id=[cus.suggestion_id] # ("http://suggestion/sugestion_id"),
-        )
     cus.save() # Save the suggestion to the database
-    time.sleep(1) # Sleep to allow the database to update
-
-    if cus.suggestion_new:
-        # Due to the foreign key, there will have to be two saves for every new record.
-        # Link to the new record
-        cus.suggestion_related_record = CofkSuggestions.objects.create(
-            type=cus.suggestion_type,
-            new_record=True,
-            suggestion="New person suggestion.",
-            author=cus.suggestion_author,
-            content_type=content_type,
-            object_id=[cus.suggestion_id] # ("http://suggestion/sugestion_id"),
-        )
-        cus.save()
-        time.sleep(1) # Sleep to allow the database to update
-
+    time.sleep(2) # Sleep to allow the database to update
 
     context['message'] = "Thank you for your suggestion!"
     context['query_results'] = CofkSuggestions.objects.all().filter(suggestion_author=request.user).order_by('suggestion_id')
     return context
-
-# The basic view for making a suggestion
-def suggestion_home(request):
-    if request.method != 'GET': # Should be called only on a GET
-        return HttpResponse(f"Error: Invalid request method: {request.method}")
-    context = { 'form': SuggestionForm() } # Make a clean initialisaiton
-    context['query_results'] = CofkSuggestions.objects.all().filter(suggestion_author=request.user)
-    context['message'] = ""
-    return render(request, template_base, context)
 
 # Suggest a person
 def suggestion_person(request):
@@ -82,6 +50,7 @@ def suggestion_person(request):
         if request.POST.get('suggestion_text') != texts.person_txt:
             # There was something changed in the form
             context = save_fill_context(request, context)
+            context['form'] = SuggestionFilterForm()
             return render(request, template_base, context)
         else:
             # The form was not changed. Go back to the form.
@@ -100,6 +69,7 @@ def suggestion_location(request):
     elif request.method == 'POST':
         if request.POST.get('suggestion_text') != texts.location_txt:
             context = save_fill_context(request, context)
+            context['form'] = SuggestionFilterForm()
             return render(request, template_base, context)
         else:
             context['message'] = message_noupdate
@@ -117,6 +87,7 @@ def suggestion_publication(request):
     elif request.method == 'POST':
         if request.POST.get('suggestion_text') != texts.publication_txt:
             context = save_fill_context(request, context)
+            context['form'] = SuggestionFilterForm()
             return render(request, template_base, context)
         else:
             context['message'] = message_noupdate
@@ -134,6 +105,7 @@ def suggestion_institution(request):
     elif request.method == 'POST':
         if request.POST.get('suggestion_text') != texts.institution_txt:
             context = save_fill_context(request, context)
+            context['form'] = SuggestionFilterForm()
             return render(request, template_base, context)
         else:
             context['message'] = message_noupdate
@@ -152,6 +124,7 @@ def suggestion_delete(request, suggestion_id):
     CofkSuggestions.objects.all().filter(suggestion_id=suggestion_id).delete()
     time.sleep(2) # Sleep for 2 seconds to allow the database to update
     context['message'] = f"Suggestion {suggestion_id} was successfully deleted."
+    context['form'] = SuggestionFilterForm()
     return render(request, template_base, context)
 
 def suggestion_edit(request, suggestion_id):
@@ -171,6 +144,7 @@ def suggestion_edit(request, suggestion_id):
         if request.POST.get('suggestion_text') != initial_save:
             context['suggestion_new'] = False
             context = save_fill_context(request, context)
+            context['form'] = SuggestionFilterForm()
             return render(request, template_base, context)
         else:
             context['message'] = "Suggestion was not updated. Please try again."
@@ -188,7 +162,7 @@ def suggestion_show(request, suggestion_id):
     return render(request, template_unique, context)
 
 def suggestion_all(request):
-    # Show all the suggestions matching filters
+    # Show all the suggestions matching the requested filters
     if request.method != 'GET': # Should be called only on a GET
         return HttpResponse(f"Error: Invalid request method: {request.method}")
     f_form = SuggestionFilterForm(data=request.GET)
@@ -196,28 +170,32 @@ def suggestion_all(request):
     types = ["Person", "Institution", "Location", "Publication"]
     nr_type = True # New Record
     er_type = True # Existing record
+
+    # First set up the full query
+    # Special query - Limit data to only the current user
+    query_null = Q()
+    query_s = Q(suggestion_author=request.user.username)
+    query_r = query_null
+    query_t = query_null
+
+    # Remove the unwanted fields
     for field in f_form:
-        if not field.value():
+        if field.value():
             if field.name.title() in types:
-                types.remove(field.name.title())
+                query_t = query_t | Q(suggestion_type=field.name.title())
             elif field.name == "showNew":
-                nr_type = False
+                query_r = query_r | Q(suggestion_new=True)
             elif field.name == "showExisting":
-                er_type = False
+                query_r = query_r | ~Q(suggestion_new=True)
             else:
                 print(f"Unknown search type : {field.name}")
-    query = []
-    if nr_type:
-        query.append(Q(suggestion_new=True))
-    if er_type:
-        query.append(~Q(suggestion_new=True))
-    for type in types:
-        query.append(Q(suggestion_type=type))
-    # Special query - Limit data to only the current user
-    query_s = Q(suggestion_author=request.user.username)
-    # Combined query OR of everything, AND-ed with user
-    combined_q = reduce(lambda x, y: x | y, query) & query_s
+
+    combined_q = query_s
+    if query_r != query_null:
+        combined_q = combined_q & query_r
+    if query_t != query_null:
+        combined_q = combined_q & query_t
     # Now we have the filtering query, actually use it
     context = { 'form': f_form }
     context['query_results'] = CofkSuggestions.objects.filter(combined_q)
-    return render(request, template_listAll, context)
+    return render(request, template_base, context)

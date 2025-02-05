@@ -26,7 +26,7 @@ class CofkSuggestions(models.Model):
         related_name='suggestion_relation'
     )
     object_id = models.PositiveIntegerField(null=True, blank=True)
-    suggestion_related_record = GenericForeignKey('content_type', 'object_id')    
+    suggestion_related_record = GenericForeignKey('content_type', 'suggestion_id')
 
     class Meta:
         db_table = 'cofk_union_suggestions'
