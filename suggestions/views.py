@@ -1,7 +1,9 @@
 import time
+from functools import reduce
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import Q
 
 from .models import CofkSuggestions
 from .forms import SuggestionForm, SuggestionFilterForm
@@ -189,12 +191,33 @@ def suggestion_all(request):
     # Show all the suggestions matching filters
     if request.method != 'GET': # Should be called only on a GET
         return HttpResponse(f"Error: Invalid request method: {request.method}")
-    context = { 'form': SuggestionFilterForm() }
-    print(request.GET)
-
-    # filter_clauses = [Q(filter=request.GET[filter])
-    #                   for filter in filter1_list
-    #                   if request.GET.get(filter)]
-    # print(f"filter_clauses: {filter_clauses}")
-    context['query_results'] = CofkSuggestions.objects.all().filter(suggestion_author=request.user).order_by('suggestion_id')
+    f_form = SuggestionFilterForm(data=request.GET)
+    # Filtering the URL
+    types = ["Person", "Institution", "Location", "Publication"]
+    nr_type = True # New Record
+    er_type = True # Existing record
+    for field in f_form:
+        if not field.value():
+            if field.name.title() in types:
+                types.remove(field.name.title())
+            elif field.name == "showNew":
+                nr_type = False
+            elif field.name == "showExisting":
+                er_type = False
+            else:
+                print(f"Unknown search type : {field.name}")
+    query = []
+    if nr_type:
+        query.append(Q(suggestion_new=True))
+    if er_type:
+        query.append(~Q(suggestion_new=True))
+    for type in types:
+        query.append(Q(suggestion_type=type))
+    # Special query - Limit data to only the current user
+    query_s = Q(suggestion_author=request.user.username)
+    # Combined query OR of everything, AND-ed with user
+    combined_q = reduce(lambda x, y: x | y, query) & query_s
+    # Now we have the filtering query, actually use it
+    context = { 'form': f_form }
+    context['query_results'] = CofkSuggestions.objects.filter(combined_q)
     return render(request, template_listAll, context)

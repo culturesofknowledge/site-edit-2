@@ -2,12 +2,6 @@
 {% load cl_filters %}
 {% load static %}
 {% block content %}
-
-<!-- The following page could also help here 
-     https://stackoverflow.com/questions/1107737/numeric-for-loop-in-django-templates -->
-
-<style>
-</style>
 <script>
     function confirm_delete(orderno){
         var r = confirm("Sure you want to delete?");
@@ -15,13 +9,13 @@
             window.location.href=orderno;
         }}
 </script>
+
 <h1>Suggestions</h1>
 
 <div class="button-row right">
-    {% csrf_token %}
     <h3 class="inline">Add new </h3>
     <a class="margin-left btn" href="{% url 'suggestions:suggestion_person' %}" title="Person" target="_self" tabindex="1"><span
-    data-feather="user" class="feather-small" aria-hidden="true"></span>Person</a><br>
+        data-feather="user" class="feather-small" aria-hidden="true"></span>Person</a><br>
   
     <a class="margin-left btn" href="{% url 'suggestions:suggestion_location' %}" title="Location" target="_self" tabindex="1"><span
     data-feather="map-pin" class="feather-small" aria-hidden="true"></span>Location</a><br>
@@ -31,55 +25,57 @@
       
     <a class="margin-left btn" href="{% url 'suggestions:suggestion_institution' %}" title="Institution" target="_self" tabindex="1"><span
     data-feather="home" class="feather-small" aria-hidden="true"></span>Institution</a><br>
-  </div>
+</div>
   
-  <hr>
-  {% csrf_token %}
+<hr>
 
-
-<form action="/suggestions/all" method="get"> {% csrf_token %}
-    <h5> Suggestion types : 
+<h5> Suggestion filters :
+<form method="GET" action="{% url 'suggestions:suggestion_all' %}" id="f_filter">
+    {% csrf_token %}
+    <div class="margin-right" >
         {% for field in form %}
-<input type="checkbox" name={{field.name}} class="elcheckbox"
-        value={{field.value}} id=id1_{{field.name}} 
-        {% if field.value == 1 %} checked {% endif %}
-        />
-    <label for=id1_{{field.name}}>{{field.label}}</label>
+            <input type="checkbox" name={{field.name}} value=True class="checkbox"
+            id=id1_{{field.name}} {% if field.value %} checked {% endif %} />
+            <label for=id1_{{field.name}}>{{field.label}}</label>
         {% endfor %}
+    </div>
+    <div class="button-row-suggestion right">
+        <input type="submit" value="submit" name="f_filter" class=""margin-left btn" type="text"/>
+    </div>
 </form>
-  <hr>
-  
+</h5>
+
+<hr>
 
 {% for suggestion in query_results %}
 <table class="suggestion" rules="cols">
-  <tbody>
-      <tr> <th colspan="2"> 
-        Suggestion {{ forloop.counter }} of {{ query_results | length }}
-         ({{suggestion.suggestion_type}})
-        <div class="button-row-suggestion right">
-            {{ suggestion.suggestion_status }}
-        <form onclick="return confirm('Are you sure you want to delete this?')"
-            action="/suggestions/delete/{{suggestion.suggestion_id}}" method="post"> {% csrf_token %}
-            <input type="submit" value="Delete", name="delete" class="margin-left btn"> </form>
-        <form action="/suggestions/edit/{{suggestion.suggestion_id}}" method="get"> {% csrf_token %}
-            <input type="submit" value="Edit", name="edit" class="margin-left btn" type="text"> </form>
-        <form action="." method="post"> {% csrf_token %}
-            <input type="submit" value="Resolve", name="resolve" class="margin-left btn" type="text"> </form>
-                </div>
-    </th></tr>
-      <tr> <th width="250px">ID</th> <td><a href="/suggestions/{{ suggestion.suggestion_id }}">{{suggestion.suggestion_id}}</a></td> </tr>
-      <tr> <th>Record</th>         <td>
-        {{suggestion.suggestion_type}}
-        {{suggestion.suggestion_related_record}}
-        {% if suggestion.suggestion_new %} New Record {% endif %} 
+    <tbody>
+        <tr> <th colspan="2"> 
+            Suggestion {{ forloop.counter }} of {{ query_results | length }}
+            ({{suggestion.suggestion_type}})
+            <div class="button-row-suggestion right button-row">
+                {{ suggestion.suggestion_status }}
+                <form onclick="return confirm('Are you sure you want to delete this?')"
+                    action="/suggestions/delete/{{suggestion.suggestion_id}}" method="post">
+                    <input type="submit" value="Delete", name="delete" class="margin-left btn"> </form>
+                <form action="/suggestions/edit/{{suggestion.suggestion_id}}" method="get">
+                    <input type="submit" value="Edit", name="edit" class="margin-left btn" type="text"> </form>
+                <form action="." method="post">
+                    <input type="submit" value="Resolve", name="resolve" class="margin-left btn" type="text"> </form>
+            </div>
+        </th></tr>
+        <tr> <th width="250px">ID</th> <td><a href="/suggestions/{{ suggestion.suggestion_id }}">{{suggestion.suggestion_id}}</a></td> </tr>
+        <tr> <th>Record</th>         <td>
+            {{suggestion.suggestion_type}},
+            Related record = {{suggestion.suggestion_related_record}},
+            {% if suggestion.suggestion_new %} New Record {% endif %} 
         </td> </tr>
-      <tr> <th>Contributor</th>    <td>{{suggestion.suggestion_author}}</td> </tr>
-      <tr> <th>Date Last Updated</th><td>{{suggestion.suggestion_updated_at}}</td> </tr>
-      <tr> <th>Content</th>        <td><pre>{{suggestion.suggestion_suggestion}}</pre></td> </tr>
-  </tbody>
+        <tr> <th>Contributor</th>    <td>{{suggestion.suggestion_author}}</td> </tr>
+        <tr> <th>Date Last Updated</th><td>{{suggestion.suggestion_updated_at}}</td> </tr>
+        <tr> <th>Content</th>        <td><pre>{{suggestion.suggestion_suggestion}}</pre></td> </tr>
+    </tbody>
 </table>
 <br>
 {% endfor %}
-
 
 {% endblock %}
