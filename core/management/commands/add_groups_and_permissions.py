@@ -24,6 +24,7 @@ class Command(BaseCommand):
                 constant.PM_CHANGE_INST,
                 constant.PM_CHANGE_ROLECAT,
                 constant.PM_CHANGE_LOOKUPCAT,
+                constant.PM_VIEW_LOOKUPCAT,
                 constant.PM_CHANGE_SUBJECT,
                 constant.PM_CHANGE_ORGTYPE,
                 constant.PM_CHANGE_COLLECTWORK,
@@ -41,6 +42,7 @@ class Command(BaseCommand):
         ]
         group_permissions_dict[constant.ROLE_CONTRIBUTING_EDITOR] = [
             constant.PM_CHANGE_WORK,
+            constant.PM_VIEW_LOOKUPCAT
         ]
 
         # add permissions to groups

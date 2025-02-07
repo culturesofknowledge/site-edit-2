@@ -1,7 +1,7 @@
 import logging
 
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db.models import Count
 from django.views.generic import ListView
 
@@ -136,7 +136,8 @@ class RoleListView(LoginRequiredMixin, CofkListView):
         return constant.PM_CHANGE_ROLECAT
 
 
-class CatalogueListView(LoginRequiredMixin, CofkListView):
+class CatalogueListView(PermissionRequiredMixin, LoginRequiredMixin, CofkListView):
+    permission_required = constant.PM_CHANGE_LOOKUPCAT
     model = CofkLookupCatalogue
     template_name = 'list/catalogue.html'
 
@@ -159,6 +160,12 @@ class CatalogueListView(LoginRequiredMixin, CofkListView):
     @property
     def save_perm(self):
         return constant.PM_CHANGE_LOOKUPCAT
+
+    def get_queryset(self):
+        if self.request.user.has_perm(constant.PM_CHANGE_USER):
+            return CofkLookupCatalogue.objects.all()
+        else:
+           return CofkLookupCatalogue.objects.filter(owner=self.request.user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

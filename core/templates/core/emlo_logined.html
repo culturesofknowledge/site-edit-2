@@ -22,9 +22,11 @@
                     <a href="{% url 'list:roles' %}">
                         <li>Roles</li>
                     </a>
+                    {%  if constant.PM_VIEW_LOOKUPCAT in perms %}
                     <a href="{% url 'list:catalogues' %}">
                         <li>Catalogues</li>
                     </a>
+                    {% endif %}
                     <a href="{% url 'list:subjects' %}">
                         <li>Subjects</li>
                     </a>
