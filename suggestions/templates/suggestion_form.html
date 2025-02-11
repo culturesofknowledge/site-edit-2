@@ -2,9 +2,9 @@
 {% load cl_filters %}
 {% block content %}
 
-<h1> Suggest a new {{ type }}: </h1>
+{% include "core/component/alert.html" %}
 
-{% include 'suggestion_message.html' %}
+<h1> Suggest a new {{ type }}: </h1>
 
 <form action="" method="post"> 
   {% csrf_token %}

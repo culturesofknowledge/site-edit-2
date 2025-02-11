@@ -11,9 +11,9 @@ from .models import CofkSuggestions
 from .forms import SuggestionForm, SuggestionFilterForm
 from . import texts
 
-template_base = "suggestion_listAll.html" # Home page listing all suggestions for user
-template_full = "suggestion_full.html" # Page for making a suggestion
-template_unique = "suggestion_unique.html" # Page to display a single record
+template_list = "suggestion_list.html" # Home page listing all suggestions for user
+template_form = "suggestion_form.html" # Page for making a suggestion
+template_view = "suggestion_view.html" # Page to display a single record
 message_noupdate = "Form was not updated. Please try again."
 
 # For query ordering, look at :
@@ -48,7 +48,7 @@ def suggestion_person(request):
     context['type'] = "Person"
     context['form'].fields['suggestion_text'].initial = texts.person_txt
     if request.method == 'GET': # The form for submitting
-        return render(request, template_full, context)
+        return render(request, template_form, context)
     elif request.method == 'POST': # Back to the base form after submitting
         if request.POST.get('suggestion_text') != texts.person_txt:
             # There was something changed in the form
@@ -58,7 +58,7 @@ def suggestion_person(request):
         else:
             # The form was not changed. Go back to the form.
             messages.warning(request, message_noupdate)
-            return render(request, template_full, context)
+            return render(request, template_form, context)
     else:
         return HttpResponse(f"Error: Invalid request method: {request.method}")
 
@@ -68,7 +68,7 @@ def suggestion_location(request):
     context['type'] = "Location"
     context['form'].fields['suggestion_text'].initial = texts.location_txt
     if request.method == 'GET':
-        return render(request, template_full, context)
+        return render(request, template_form, context)
     elif request.method == 'POST':
         if request.POST.get('suggestion_text') != texts.location_txt:
             context = save_fill_context(request, context)
@@ -76,7 +76,7 @@ def suggestion_location(request):
             return redirect("suggestions:suggestion_all")
         else:
             messages.warning(request, message_noupdate)
-            return render(request, template_full, context)
+            return render(request, template_form, context)
     else:
         return HttpResponse(f"Error: Invalid request method: {request.method}")
 
@@ -86,7 +86,7 @@ def suggestion_publication(request):
     context['type'] = "Publication"
     context['form'].fields['suggestion_text'].initial = texts.publication_txt
     if request.method == 'GET':
-        return render(request, template_full, context)
+        return render(request, template_form, context)
     elif request.method == 'POST':
         if request.POST.get('suggestion_text') != texts.publication_txt:
             context = save_fill_context(request, context)
@@ -94,7 +94,7 @@ def suggestion_publication(request):
             return redirect("suggestions:suggestion_all")
         else:
             messages.success(request, message_noupdate)
-            return render(request, template_full, context)
+            return render(request, template_form, context)
     else:
         return HttpResponse(f"Error: Invalid request method: {request.method}")
 
@@ -104,7 +104,7 @@ def suggestion_institution(request):
     context['type'] = "Institution"
     context['form'].fields['suggestion_text'].initial = texts.institution_txt
     if request.method == 'GET':
-        return render(request, template_full, context)
+        return render(request, template_form, context)
     elif request.method == 'POST':
         if request.POST.get('suggestion_text') != texts.institution_txt:
             context = save_fill_context(request, context)
@@ -112,7 +112,7 @@ def suggestion_institution(request):
             return redirect("suggestions:suggestion_all")
         else:
             messages.warning(request, message_noupdate)
-            return render(request, template_full, context)
+            return render(request, template_form, context)
     else:
         return HttpResponse(f"Error: Invalid request method: {request.method}")
 
@@ -140,7 +140,7 @@ def suggestion_edit(request, suggestion_id):
     context['author'] = record.suggestion_author
     context['date_creation'] = record.suggestion_created_at
     if request.method == 'GET':
-        return render(request, template_full, context)
+        return render(request, template_form, context)
     elif request.method == 'POST':
         if request.POST.get('suggestion_text') != initial_save:
             context = save_fill_context(request, context, edit=True)
@@ -148,7 +148,7 @@ def suggestion_edit(request, suggestion_id):
             return redirect("suggestions:suggestion_all")
         else:
             messages.warning(request, f"The suggestion was not updated. No change in form.")
-            return render(request, template_full, context)
+            return render(request, template_form, context)
     else:
         return HttpResponse(f"Error: Invalid request method: {request.method}")
 
@@ -159,7 +159,7 @@ def suggestion_show(request, suggestion_id):
     context = { 'form': SuggestionForm() }
     record = CofkSuggestions.objects.get(pk=suggestion_id)
     context['record'] = record
-    return render(request, template_unique, context)
+    return render(request, template_view, context)
 
 def suggestion_all(request):
     # Show all the suggestions matching the requested filters
@@ -198,4 +198,4 @@ def suggestion_all(request):
     # Now we have the filtering query, actually use it
     context = {'form' : f_form}
     context['query_results'] = CofkSuggestions.objects.filter(combined_q).order_by('-suggestion_id')
-    return render(request, template_base, context)
+    return render(request, template_list, context)
