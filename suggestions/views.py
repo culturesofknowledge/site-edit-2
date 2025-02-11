@@ -25,19 +25,20 @@ def save_fill_context(request, context, edit=False):
         suggestion = CofkSuggestions()
         suggestion.suggestion_type = context['type']
         suggestion.suggestion_author = request.user
+        context['message'] = "Thank you for your suggestion!"
         if context.get('record_id', None):
             suggestion.suggestion_new = False
         else:
             suggestion.suggestion_new = True
     else:
         suggestion = CofkSuggestions.objects.get(pk=context['suggestion_id'])
+        context['message'] = f"Thank you for your update to suggestion {context['suggestion_id']}"
         # suggestion.suggestion_author = context['author']
         # suggestion.suggestion_updated_at = time.strftime('%Y-%m-%d %H:%M:%S')
     # content_type = ContentType.objects.get_for_model(CofkSuggestions)
     suggestion.suggestion_suggestion = request.POST.get('suggestion_text')
     suggestion.save() # Save the suggestion to the database
 
-    context['message'] = "Thank you for your suggestion!"
     # context['query_results'] = CofkSuggestions.objects.all().filter(suggestion_author=request.user).order_by('suggestion_id')
     return context
 
@@ -124,9 +125,8 @@ def suggestion_delete(request, suggestion_id):
     context['prefill'] = ""
     context['query_results'] = CofkSuggestions.objects.all().filter(suggestion_author=request.user)
     CofkSuggestions.objects.all().filter(suggestion_id=suggestion_id).delete()
-    context['message'] = f"Suggestion {suggestion_id} was successfully deleted."
-    context['form'] = SuggestionFilterForm()
-    return render(request, template_base, context)
+    messages.success(request, f"Suggestion {suggestion_id} was successfully deleted.")
+    return redirect("suggestions:suggestion_all")
 
 def suggestion_edit(request, suggestion_id):
     # Edit the suggestion with the given unique ID
@@ -144,8 +144,8 @@ def suggestion_edit(request, suggestion_id):
     elif request.method == 'POST':
         if request.POST.get('suggestion_text') != initial_save:
             context = save_fill_context(request, context, edit=True)
-            context['form'] = SuggestionFilterForm()
-            return render(request, template_base, context)
+            messages.success(request, context['message'])
+            return redirect("suggestions:suggestion_all")
         else:
             context['message'] = "Suggestion was not updated. Please try again."
             return render(request, template_full, context)
