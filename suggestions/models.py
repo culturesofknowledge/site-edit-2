@@ -30,3 +30,7 @@ class CofkSuggestions(models.Model):
 
     class Meta:
         db_table = 'cofk_union_suggestions'
+
+    @property
+    def is_updated(self):
+        return self.suggestion_updated_at > self.suggestion_created_at

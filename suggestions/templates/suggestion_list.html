@@ -60,7 +60,12 @@
 
         </td> </tr>
         <tr> <th>Contributor</th>    <td>{{suggestion.suggestion_author}}</td> </tr>
-        <tr> <th>Date Last Updated</th><td>{{suggestion.suggestion_updated_at}}</td> </tr>
+        <tr> <th>Date Suggested</th>
+            <td>{{suggestion.suggestion_created_at}}
+                {% if suggestion.is_updated %}
+                  (last updated on {{suggestion.suggestion_updated_at}})
+                {%  endif %}
+            </td> </tr>
         <tr> <th>Content</th>        <td><pre>{{suggestion.suggestion_suggestion}}</pre></td> </tr>
     </tbody>
 </table>
