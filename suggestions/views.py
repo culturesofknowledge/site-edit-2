@@ -147,7 +147,7 @@ def suggestion_edit(request, suggestion_id):
             messages.success(request, context['message'])
             return redirect("suggestions:suggestion_all")
         else:
-            context['message'] = "Suggestion was not updated. Please try again."
+            messages.warning(request, f"The suggestion was not updated. No change in form.")
             return render(request, template_full, context)
     else:
         return HttpResponse(f"Error: Invalid request method: {request.method}")

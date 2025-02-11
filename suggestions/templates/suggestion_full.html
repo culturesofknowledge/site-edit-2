@@ -3,9 +3,8 @@
 {% block content %}
 
 <h1> Suggest a new {{ type }}: </h1>
-{% include "core/component/messages.html" %}
 
-{{ message }}
+{% include 'suggestion_message.html' %}
 
 <form action="" method="post"> 
   {% csrf_token %}
