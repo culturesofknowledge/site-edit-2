@@ -57,7 +57,7 @@ def suggestion_person(request):
             return redirect("suggestions:suggestion_all")
         else:
             # The form was not changed. Go back to the form.
-            context['message'] = message_noupdate
+            messages.warning(request, message_noupdate)
             return render(request, template_full, context)
     else:
         return HttpResponse(f"Error: Invalid request method: {request.method}")
@@ -75,7 +75,7 @@ def suggestion_location(request):
             messages.success(request, context['message'])
             return redirect("suggestions:suggestion_all")
         else:
-            context['message'] = message_noupdate
+            messages.warning(request, message_noupdate)
             return render(request, template_full, context)
     else:
         return HttpResponse(f"Error: Invalid request method: {request.method}")
@@ -90,10 +90,10 @@ def suggestion_publication(request):
     elif request.method == 'POST':
         if request.POST.get('suggestion_text') != texts.publication_txt:
             context = save_fill_context(request, context)
-            messages.success(request, context['message'])
+            messages.warning(request, context['message'])
             return redirect("suggestions:suggestion_all")
         else:
-            context['message'] = message_noupdate
+            messages.success(request, message_noupdate)
             return render(request, template_full, context)
     else:
         return HttpResponse(f"Error: Invalid request method: {request.method}")
@@ -111,7 +111,7 @@ def suggestion_institution(request):
             messages.success(request, context['message'])
             return redirect("suggestions:suggestion_all")
         else:
-            context['message'] = message_noupdate
+            messages.warning(request, message_noupdate)
             return render(request, template_full, context)
     else:
         return HttpResponse(f"Error: Invalid request method: {request.method}")
