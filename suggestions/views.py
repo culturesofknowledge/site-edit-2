@@ -5,6 +5,7 @@ from django.http import HttpResponse
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.db.models import Q
+from django.contrib import messages
 
 from .models import CofkSuggestions
 from .forms import SuggestionForm, SuggestionFilterForm
@@ -51,7 +52,7 @@ def suggestion_person(request):
         if request.POST.get('suggestion_text') != texts.person_txt:
             # There was something changed in the form
             context = save_fill_context(request, context)
-            context['form'] = SuggestionFilterForm()
+            messages.success(request, context['message'])
             return redirect("suggestions:suggestion_all")
         else:
             # The form was not changed. Go back to the form.
@@ -70,8 +71,8 @@ def suggestion_location(request):
     elif request.method == 'POST':
         if request.POST.get('suggestion_text') != texts.location_txt:
             context = save_fill_context(request, context)
-            context['form'] = SuggestionFilterForm()
-            return render(request, template_base, context)
+            messages.success(request, context['message'])
+            return redirect("suggestions:suggestion_all")
         else:
             context['message'] = message_noupdate
             return render(request, template_full, context)
@@ -88,8 +89,8 @@ def suggestion_publication(request):
     elif request.method == 'POST':
         if request.POST.get('suggestion_text') != texts.publication_txt:
             context = save_fill_context(request, context)
-            context['form'] = SuggestionFilterForm()
-            return render(request, template_base, context)
+            messages.success(request, context['message'])
+            return redirect("suggestions:suggestion_all")
         else:
             context['message'] = message_noupdate
             return render(request, template_full, context)
@@ -106,8 +107,8 @@ def suggestion_institution(request):
     elif request.method == 'POST':
         if request.POST.get('suggestion_text') != texts.institution_txt:
             context = save_fill_context(request, context)
-            context['form'] = SuggestionFilterForm()
-            return render(request, template_base, context)
+            messages.success(request, context['message'])
+            return redirect("suggestions:suggestion_all")
         else:
             context['message'] = message_noupdate
             return render(request, template_full, context)
@@ -195,6 +196,6 @@ def suggestion_all(request):
     if query_t != query_null:
         combined_q = combined_q & query_t
     # Now we have the filtering query, actually use it
-    context = { 'form': f_form }
+    context = {'form' : f_form}
     context['query_results'] = CofkSuggestions.objects.filter(combined_q).order_by('-suggestion_id')
     return render(request, template_base, context)
