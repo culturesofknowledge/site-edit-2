@@ -9,7 +9,7 @@ class CofkSuggestions(models.Model):
     suggestion_suggestion = models.TextField()
     # suggestion_relation = models.CharField(max_length=200, default="None")
     # suggestion_related_record = models.ForeignKey('CofkRecords', on_delete=models.CASCADE, null=True, blank=True)
-    suggestion_status = models.CharField(max_length=256, default="Pending")
+    suggestion_status = models.CharField(max_length=256, default="New")
 
     # Automatic fields
     suggestion_created_at = models.DateTimeField(auto_now_add=True)
