@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+import datetime
 
 class CofkSuggestions(models.Model):
     suggestion_id = models.AutoField(primary_key=True)
@@ -33,4 +34,7 @@ class CofkSuggestions(models.Model):
 
     @property
     def is_updated(self):
-        return self.suggestion_updated_at > self.suggestion_created_at
+        # Updated date-time is always a few microseconds ahead of created date-time
+        created = self.suggestion_created_at + datetime.timedelta(seconds=1)
+        updated = self.suggestion_updated_at
+        return updated > created
