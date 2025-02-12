@@ -4,7 +4,11 @@
 
 {% include "core/component/alert.html" %}
 
-<h1> Suggest a new {{ type }}: </h1>
+{% if request.resolver_match.url_name == "suggestion_edit" %}
+  <h1> Editing suggestion type {{ sug_inst.suggestion_type }}, id={{ sug_inst.suggestion_id }}: </h1>
+{% else %}
+  <h1> Suggest a new {{ sug_inst.suggestion_type }}: </h1>
+{% endif %}
 
 <form action="" method="post"> 
   {% csrf_token %}

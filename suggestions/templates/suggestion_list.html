@@ -66,7 +66,14 @@
                   (last updated on {{suggestion.suggestion_updated_at}})
                 {%  endif %}
             </td> </tr>
-        <tr> <th>Content</th>        <td><pre>{{suggestion.suggestion_suggestion}}</pre></td> </tr>
+        <tr> <th>Content</th>        <td><dl>
+            {% for k,v in suggestion.parsed_suggestion.items %}
+                {% if v != ' ' %}
+                  <dt>{{k}}</dt> <dd>{{v}}</dd>
+                {% endif %}
+            {% endfor %}
+
+        </dl></td> </tr>
     </tbody>
 </table>
 <br>

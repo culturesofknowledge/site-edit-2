@@ -21,9 +21,8 @@ message_noupdate = "Form was not updated. Please try again."
 
 # Common function to save the suggestion and fill in the context
 def save_fill_context(request, context, edit=False):
+    suggestion = context['sug_inst']
     if not edit:
-        suggestion = CofkSuggestions()
-        suggestion.suggestion_type = context['type']
         suggestion.suggestion_author = request.user
         context['message'] = "Thank you for your suggestion!"
         if context.get('record_id', None):
@@ -31,8 +30,7 @@ def save_fill_context(request, context, edit=False):
         else:
             suggestion.suggestion_new = True
     else:
-        suggestion = CofkSuggestions.objects.get(pk=context['suggestion_id'])
-        context['message'] = f"Thank you for your update to suggestion {context['suggestion_id']}"
+        context['message'] = f"Thank you for your update to suggestion {suggestion.suggestion_id}"
         # suggestion.suggestion_author = context['author']
         # suggestion.suggestion_updated_at = time.strftime('%Y-%m-%d %H:%M:%S')
     # content_type = ContentType.objects.get_for_model(CofkSuggestions)
@@ -44,13 +42,16 @@ def save_fill_context(request, context, edit=False):
 
 # Suggest a person
 def suggestion_person(request):
+    sug = CofkSuggestions()
+    sug.suggestion_type = "Person"
+    initial_suggestion_txt = sug.new_suggestion_text()
     context = { 'form': SuggestionForm() }
-    context['type'] = "Person"
-    context['form'].fields['suggestion_text'].initial = texts.person_txt
+    context['sug_inst'] = sug
+    context['form'].fields['suggestion_text'].initial = initial_suggestion_txt
     if request.method == 'GET': # The form for submitting
         return render(request, template_form, context)
     elif request.method == 'POST': # Back to the base form after submitting
-        if request.POST.get('suggestion_text') != texts.person_txt:
+        if request.POST.get('suggestion_text') != initial_suggestion_txt:
             # There was something changed in the form
             context = save_fill_context(request, context)
             messages.success(request, context['message'])
@@ -64,9 +65,12 @@ def suggestion_person(request):
 
 # Suggest a place
 def suggestion_location(request):
+    sug = CofkSuggestions()
+    sug.suggestion_type = "Location"
+    initial_suggestion_txt = sug.new_suggestion_text()
     context = { 'form': SuggestionForm() }
-    context['type'] = "Location"
-    context['form'].fields['suggestion_text'].initial = texts.location_txt
+    context['sug_inst'] = sug
+    context['form'].fields['suggestion_text'].initial = initial_suggestion_txt
     if request.method == 'GET':
         return render(request, template_form, context)
     elif request.method == 'POST':
@@ -82,9 +86,12 @@ def suggestion_location(request):
 
 # Suggest a publication
 def suggestion_publication(request):
+    sug = CofkSuggestions()
+    sug.suggestion_type = "Publication"
+    initial_suggestion_txt = sug.new_suggestion_text()
     context = { 'form': SuggestionForm() }
-    context['type'] = "Publication"
-    context['form'].fields['suggestion_text'].initial = texts.publication_txt
+    context['sug_inst'] = sug
+    context['form'].fields['suggestion_text'].initial = initial_suggestion_txt
     if request.method == 'GET':
         return render(request, template_form, context)
     elif request.method == 'POST':
@@ -100,9 +107,12 @@ def suggestion_publication(request):
 
 # Suggest an institution
 def suggestion_institution(request):
+    sug = CofkSuggestions()
+    sug.suggestion_type = "Institution"
+    initial_suggestion_txt = sug.new_suggestion_text()
     context = { 'form': SuggestionForm() }
-    context['type'] = "Institution"
-    context['form'].fields['suggestion_text'].initial = texts.institution_txt
+    context['sug_inst'] = sug
+    context['form'].fields['suggestion_text'].initial = initial_suggestion_txt
     if request.method == 'GET':
         return render(request, template_form, context)
     elif request.method == 'POST':
@@ -130,19 +140,15 @@ def suggestion_delete(request, suggestion_id):
 
 def suggestion_edit(request, suggestion_id):
     # Edit the suggestion with the given unique ID
+    sug = CofkSuggestions.objects.get(pk=suggestion_id)
     context = { 'form': SuggestionForm() }
-    # record should be a list of just one record
-    record = CofkSuggestions.objects.get(pk=suggestion_id)
-    context['type'] = record.suggestion_type
-    initial_save = record.suggestion_suggestion
-    context['form'].fields['suggestion_text'].initial = initial_save
-    context['suggestion_id'] = suggestion_id
-    context['author'] = record.suggestion_author
-    context['date_creation'] = record.suggestion_created_at
+    initial_suggestion_txt = sug.suggestion_suggestion
+    context['sug_inst'] = sug
+    context['form'].fields['suggestion_text'].initial = initial_suggestion_txt
     if request.method == 'GET':
         return render(request, template_form, context)
     elif request.method == 'POST':
-        if request.POST.get('suggestion_text') != initial_save:
+        if request.POST.get('suggestion_text') != initial_suggestion_txt:
             context = save_fill_context(request, context, edit=True)
             messages.success(request, context['message'])
             return redirect("suggestions:suggestion_all")
@@ -172,11 +178,11 @@ def suggestion_all(request):
     er_type = True # Existing record
 
     # First set up the full query
-    # Special query - Limit data to only the current user
     query_null = Q()
+    # Special query - Limit data to only the current user
     query_s = Q(suggestion_author=request.user.username)
-    query_r = query_null
-    query_t = query_null
+    query_r = query_null # Type of record
+    query_t = query_null # New or existing record
 
     # Remove the unwanted fields
     for field in f_form:

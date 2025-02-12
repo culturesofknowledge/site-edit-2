@@ -38,3 +38,60 @@ class CofkSuggestions(models.Model):
         created = self.suggestion_created_at + datetime.timedelta(seconds=1)
         updated = self.suggestion_updated_at
         return updated > created
+    
+    def fields(self):
+        match self.suggestion_type:
+            case "Person":
+                return ("Primary Name",
+                        "Alternative names",
+                        "Gender",
+                        "Roles / titles",
+                        "Date of birth",
+                        "Date of death",
+                        "Date when flourished")
+            case "Location":
+                return ("Full name of location",
+                        "Alternative names of location",
+                        "Room",
+                        "Building",
+                        "Parish / District / Street",
+                        "City / town / Village",
+                        "County",
+                        "Country",
+                        "Larger political entity")
+            case "Institution":
+                return("Institution Name",
+                        "Alternative institution name",
+                        "City",
+                        "Country")
+            case "Publication":
+                return("Publication details",
+                        "Abbreviation")
+
+    def new_suggestion_text(self):
+        return ":\n\n".join(self.fields())
+
+    @property
+    def parsed_suggestion(self):
+        keys = self.fields()
+        key1 = ""
+        key2 = ""
+        text_key = ""
+        parsed_txt = {}
+        for line in self.suggestion_suggestion.split("\n"):
+            keyword = False
+            for key in keys:
+                if line.startswith(key):
+                    if key1 == "":
+                        key1 = key
+                    else:
+                        key1 = key2
+                    key2 = key
+                    parsed_txt[key1] = text_key
+                    text_key = line.split(key)[1].strip().lstrip(":")
+                    keyword = True
+                    break
+            if not keyword:
+                text_key = text_key + " " + line.strip()
+        parsed_txt[key2] = text_key
+        return parsed_txt
