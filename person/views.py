@@ -76,8 +76,8 @@ class PersonInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitForm
         initial = {}
         if is_org_form:
             initial['is_organisation'] = TRUE_CHAR
-        from_suggestion = request and request.GET.get('from_suggestion', None)
-        if from_suggestion:
+        if request and request.GET.get('from_suggestion', ''):
+            from_suggestion = request.GET.get('from_suggestion')
             sug_values = PersonSuggestion(from_suggestion).initial_form_values()
             if sug_values:
                 initial.update(sug_values)

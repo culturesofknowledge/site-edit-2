@@ -3,6 +3,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 import datetime
 
+
 class CofkSuggestions(models.Model):
     suggestion_id = models.AutoField(primary_key=True)
     suggestion_new = models.BooleanField(default=True)
@@ -38,7 +39,7 @@ class CofkSuggestions(models.Model):
         created = self.suggestion_created_at + datetime.timedelta(seconds=1)
         updated = self.suggestion_updated_at
         return updated > created
-    
+
     def fields(self):
         match self.suggestion_type:
             case "Person":
@@ -87,11 +88,11 @@ class CofkSuggestions(models.Model):
                     else:
                         key1 = key2
                     key2 = key
-                    suggestion_hash[key1] = text_key
+                    suggestion_hash[key1] = text_key.strip()
                     text_key = line.split(key)[1].strip().lstrip(":")
                     keyword = True
                     break
             if not keyword:
                 text_key = text_key + " " + line.strip()
-        suggestion_hash[key2] = text_key
+        suggestion_hash[key2] = text_key.strip()
         return suggestion_hash
