@@ -44,8 +44,7 @@ class PersonSuggestion:
                             if dt.year:
                                 form_values[f"{form_field}_year"] = dt.year
                             if dt.month:
-                                # print(f"{dt.month} = {dt.strftime("%b")}")
-                                form_values[f"{form_field}_month"] = dt.strftime("%b")
+                                form_values[f"{form_field}_month"] = (dt.month, dt.strftime("%b"))
                             if dt.day:
                                 form_values[f"{form_field}_day"] = dt.day
                         except ParserError:
