@@ -38,6 +38,7 @@ from person.recref_adapter import PersonCommentRecrefAdapter, PersonResourceRecr
 from person.subqueries import create_sql_count_work_by_person
 from person.view_components import PersonFormDescriptor
 from work.forms import AuthorRelationChoices, AddresseeRelationChoices
+from person.person_suggestion import PersonSuggestion
 
 if TYPE_CHECKING:
     from core.helper.view_serv import MergeChoiceContext
@@ -72,11 +73,15 @@ class PersonInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitForm
 
     def get(self, request, *args, **kwargs):
         is_org_form = request and request.GET.get('person_form_type') == 'org'
+        from_suggestion = request and request.GET.get('from_suggestion', None)
+        sug_values = {}
+        if from_suggestion:
+            sug_values = PersonSuggestion(from_suggestion).initial_form_values()
+        initial = {}
         if is_org_form:
-            initial = {'is_organisation': TRUE_CHAR, }
-        else:
-            initial = {}
-
+            initial['is_organisation'] = TRUE_CHAR
+        if sug_values:
+            initial.update(sug_values)
         form = self.form_factory(initial=initial)
         return self.resp_form_page(request, form)
 

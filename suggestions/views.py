@@ -19,6 +19,7 @@ message_noupdate = "Form was not updated. Please try again."
 # For query ordering, look at :
 # https://docs.djangoproject.com/en/dev/ref/models/querysets/#order-by
 
+
 # Common function to save the suggestion and fill in the context
 def save_fill_context(request, context, edit=False):
     suggestion = context['sug_inst']
@@ -40,6 +41,7 @@ def save_fill_context(request, context, edit=False):
     # context['query_results'] = CofkSuggestions.objects.all().filter(suggestion_author=request.user).order_by('suggestion_id')
     return context
 
+
 # Suggest a person
 def suggestion_person(request):
     sug = CofkSuggestions()
@@ -48,9 +50,11 @@ def suggestion_person(request):
     context = { 'form': SuggestionForm() }
     context['sug_inst'] = sug
     context['form'].fields['suggestion_text'].initial = initial_suggestion_txt
-    if request.method == 'GET': # The form for submitting
+    # The form for submitting
+    if request.method == 'GET':
         return render(request, template_form, context)
-    elif request.method == 'POST': # Back to the base form after submitting
+    # Save submitted person form
+    elif request.method == 'POST':
         if request.POST.get('suggestion_text') != initial_suggestion_txt:
             # There was something changed in the form
             context = save_fill_context(request, context)
@@ -62,6 +66,7 @@ def suggestion_person(request):
             return render(request, template_form, context)
     else:
         return HttpResponse(f"Error: Invalid request method: {request.method}")
+
 
 # Suggest a place
 def suggestion_location(request):
@@ -84,6 +89,7 @@ def suggestion_location(request):
     else:
         return HttpResponse(f"Error: Invalid request method: {request.method}")
 
+
 # Suggest a publication
 def suggestion_publication(request):
     sug = CofkSuggestions()
@@ -104,6 +110,7 @@ def suggestion_publication(request):
             return render(request, template_form, context)
     else:
         return HttpResponse(f"Error: Invalid request method: {request.method}")
+
 
 # Suggest an institution
 def suggestion_institution(request):
@@ -126,6 +133,7 @@ def suggestion_institution(request):
     else:
         return HttpResponse(f"Error: Invalid request method: {request.method}")
 
+
 def suggestion_delete(request, suggestion_id):
     # Delete just the suggestion with the given unique ID
     if request.method != 'POST': # Should be called only on a POST
@@ -137,6 +145,7 @@ def suggestion_delete(request, suggestion_id):
     CofkSuggestions.objects.all().filter(suggestion_id=suggestion_id).delete()
     messages.success(request, f"Suggestion {suggestion_id} was successfully deleted.")
     return redirect("suggestions:suggestion_all")
+
 
 def suggestion_edit(request, suggestion_id):
     # Edit the suggestion with the given unique ID
@@ -158,6 +167,7 @@ def suggestion_edit(request, suggestion_id):
     else:
         return HttpResponse(f"Error: Invalid request method: {request.method}")
 
+
 def suggestion_show(request, suggestion_id):
     # Show the suggestion with the given unique ID
     if request.method != 'GET': # Should be called only on a GET
@@ -166,6 +176,7 @@ def suggestion_show(request, suggestion_id):
     record = CofkSuggestions.objects.get(pk=suggestion_id)
     context['record'] = record
     return render(request, template_view, context)
+
 
 def suggestion_all(request):
     # Show all the suggestions matching the requested filters

@@ -77,7 +77,7 @@ class CofkSuggestions(models.Model):
         key1 = ""
         key2 = ""
         text_key = ""
-        parsed_txt = {}
+        suggestion_hash = {}
         for line in self.suggestion_suggestion.split("\n"):
             keyword = False
             for key in keys:
@@ -87,11 +87,11 @@ class CofkSuggestions(models.Model):
                     else:
                         key1 = key2
                     key2 = key
-                    parsed_txt[key1] = text_key
+                    suggestion_hash[key1] = text_key
                     text_key = line.split(key)[1].strip().lstrip(":")
                     keyword = True
                     break
             if not keyword:
                 text_key = text_key + " " + line.strip()
-        parsed_txt[key2] = text_key
-        return parsed_txt
+        suggestion_hash[key2] = text_key
+        return suggestion_hash
