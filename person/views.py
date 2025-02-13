@@ -73,15 +73,14 @@ class PersonInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitForm
 
     def get(self, request, *args, **kwargs):
         is_org_form = request and request.GET.get('person_form_type') == 'org'
-        from_suggestion = request and request.GET.get('from_suggestion', None)
-        sug_values = {}
-        if from_suggestion:
-            sug_values = PersonSuggestion(from_suggestion).initial_form_values()
         initial = {}
         if is_org_form:
             initial['is_organisation'] = TRUE_CHAR
-        if sug_values:
-            initial.update(sug_values)
+        from_suggestion = request and request.GET.get('from_suggestion', None)
+        if from_suggestion:
+            sug_values = PersonSuggestion(from_suggestion).initial_form_values()
+            if sug_values:
+                initial.update(sug_values)
         form = self.form_factory(initial=initial)
         return self.resp_form_page(request, form)
 
