@@ -1,0 +1,13 @@
+<div class="button-row-suggestion right button-row">
+    <form onclick="return confirm('Are you sure you want to delete this?')"
+      action="{% url 'suggestions:suggestion_delete' suggestion_id=suggestion_id %}" method="post">
+      {% csrf_token %}
+      <input type="submit" value="Delete", name="delete" class="margin-left btn"> </form>
+    {% if record.suggestion_status != "Resolved" %}
+      <form action="{% url 'suggestions:suggestion_edit' suggestion_id=suggestion_id %}" method="get">
+        <input type="submit" value="Edit", name="edit" class="margin-left btn" type="text"> </form>
+      <form action="{% url suggestion_type|add:':init_form'|lower %}" method="get">
+        <input value={{suggestion_id}} name="from_suggestion" type="hidden">
+        <input type="submit" value="Resolve" class="margin-left btn" type="text"> </form>
+    {% endif %}
+</div>
