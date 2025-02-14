@@ -20,7 +20,10 @@ class CofkSuggestions(models.Model):
     suggestion_resolved_at = models.DateTimeField(null=True, blank=True)
     suggestion_author = models.CharField(max_length=256, default="Anonymous")
 
-    # Relation fields for ForeignKey-like feature
+    # Default = -1 means there is no related record for this suggestion
+    suggestion_related_record_int = models.IntegerField()
+
+    # Relation fields for ForeignKey-like feature. No idea how to use this though
     content_type = models.ForeignKey(
         ContentType,
         on_delete=models.SET_NULL,
