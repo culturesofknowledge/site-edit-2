@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 import datetime
+from person import person_suggestion_fields
 
 
 class CofkSuggestions(models.Model):
@@ -43,13 +44,7 @@ class CofkSuggestions(models.Model):
     def fields(self):
         match self.suggestion_type:
             case "Person":
-                return ("Primary Name",
-                        "Alternative names",
-                        "Gender",
-                        "Roles / titles",
-                        "Date of birth",
-                        "Date of death",
-                        "Date when flourished")
+                return person_suggestion_fields.PersonSuggestionFields().suggestion_fields()
             case "Location":
                 return ("Full name of location",
                         "Alternative names of location",

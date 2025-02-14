@@ -1,23 +1,13 @@
 from person.models import CofkUnionPerson
-from suggestions.models import CofkSuggestions
 import dateutil.parser
 from dateutil.parser import ParserError
 from django.core.exceptions import ObjectDoesNotExist
+from suggestions.models import CofkSuggestions
+from person.person_suggestion_fields import PersonSuggestionFields
 
 class PersonSuggestion:
     def __init__(self, suggestion_id):
         self.suggestion_id = suggestion_id
-
-    def suggestion_fields_map(self):
-        return {
-            'Primary Name': 'foaf_name',
-            'Gender': 'gender',
-            'Alternative names': 'skos_altlabel',
-            'Roles / titles': 'person_aliases',
-            "Date of birth": 'date_of_birth',
-            "Date of death": 'date_of_death',
-            "Date when flourished": 'flourished'
-        }
 
     def initial_form_values(self):
         form_values = {}
@@ -26,9 +16,9 @@ class PersonSuggestion:
         except ObjectDoesNotExist:
             return form_values
         parsed_suggestion = sug.parsed_suggestion
-        for field in sug.fields():
-            form_field = self.suggestion_fields_map().get(field, None)
-            sug_value = parsed_suggestion.get(field, None)
+        for field,sug_value in parsed_suggestion.items():
+            form_field = PersonSuggestionFields().suggestion_fields_dict().get(field, None)
+            # sug_value = parsed_suggestion.get(field, None)
             if form_field and sug_value:
                 match field:
                     case 'Primary Name' | 'Alternative names' | 'Roles / titles':
