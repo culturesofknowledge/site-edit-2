@@ -38,9 +38,15 @@ def save_fill_context(request, context, edit=False):
     suggestion.suggestion_suggestion = request.POST.get('suggestion_text')
     suggestion.save() # Save the suggestion to the database
 
-    # context['query_results'] = CofkSuggestions.objects.all().filter(suggestion_author=request.user).order_by('suggestion_id')
     return context
 
+def save_with_related_info(suggestion_id, related_id):
+    sug = CofkSuggestions.objects.get(pk=suggestion_id)
+    sug.suggestion_related_record_int = related_id
+    sug.suggestion_status = "Resolved"
+    sug.save()
+    print(f"In Suggestion save related info : {suggestion_id} : {related_id}")
+    return
 
 # Suggest a person
 def suggestion_person(request):
