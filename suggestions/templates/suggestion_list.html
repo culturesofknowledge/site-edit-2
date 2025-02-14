@@ -29,7 +29,7 @@
         <tr> <th colspan="2">
             Suggestion {{ forloop.counter }} of {{ query_results | length }}
             ({{suggestion.suggestion_type}})
-            {% include "component/suggestion_buttons.html" with suggestion_id=suggestion.suggestion_id suggestion_type=suggestion.suggestion_type %}
+            {% include "component/suggestion_buttons.html" with suggestion_id=suggestion.suggestion_id suggestion_type=suggestion.suggestion_type suggestion_status=suggestion.suggestion_status %}
         </th></tr>
         <tr> <th style="width: 200px">Record</th>
             <td>
@@ -37,18 +37,23 @@
                 {% include template %}
             {% endwith %}
             id: <a href="/suggestions/{{ suggestion.suggestion_id }}">{{suggestion.suggestion_id}}</a> |
-            {% if suggestion.suggestion_new %}
+            {% if suggestion.suggestion_new == "New" %}
                 New {{suggestion.suggestion_type}}
             {% else %}
-                Existing Record
+                Existing Record ({{suggestion.suggestion_type}})
             {% endif %}
             {% if suggestion.suggestion_related_record %}
                 <span data-feather="link-2" class="feather-small" aria-hidden="true"></span>
                 {{suggestion.suggestion_related_record}}
             {% endif %}
+            {% if suggestion.suggestion_related_record_int %}
+                <span data-feather="link-2" class="feather-small" aria-hidden="true"></span>
+                <a href="{% url suggestion.suggestion_type|lower|add:':full_form' suggestion.suggestion_related_record_int %}">{{suggestion.suggestion_related_record_int}}</a>
+            {% endif %}
 
         </td> </tr>
         <tr> <th>Contributor</th>    <td>{{suggestion.suggestion_author}}</td> </tr>
+        <tr> <th>Status</th>    <td>{{suggestion.suggestion_status}}</td> </tr>
         <tr> <th>Date Suggested</th>
             <td>{{suggestion.suggestion_created_at}}
                 {% if suggestion.is_updated %}
