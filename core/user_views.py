@@ -83,11 +83,15 @@ class UserSearchView(LoginRequiredMixin, DefaultSearchView):
     def add_entry_url(self) -> str | None:
         return reverse('user:init_form')
 
+    @property
+    def add_entry_url_permission(self) -> str | None:
+        return constant.PM_CHANGE_USER
+
     def get_queryset(self):
         model_class = CofkUser
         request_data = self.request_data.dict()
         if not request_data:
-            return model_class.objects.none()
+            return model_class.objects.all()
 
         queries = []
         queries.extend(

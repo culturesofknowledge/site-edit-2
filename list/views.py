@@ -65,7 +65,7 @@ class CofkListView(ListView):
             if list_form.is_valid():
                 list_obj = list_form.save()
                 messages.success(request, f'Successfully created new {self.list_type}'
-                                          f' "{getattr(list_obj, self.updated_fields[0])}" ({list_obj.pk})')
+                                          f' "{getattr(list_obj, self.updated_fields[0])}"')
 
             else:
                 errors = list_form.errors.as_data()
@@ -111,7 +111,8 @@ class CofkListView(ListView):
         raise NotImplementedError
 
 
-class RoleListView(LoginRequiredMixin, CofkListView):
+class RoleListView(PermissionRequiredMixin, LoginRequiredMixin, CofkListView):
+    permission_required = constant.PM_CHANGE_ROLECAT
     model = CofkUnionRoleCategory
     template_name = 'list/roles.html'
 
@@ -139,7 +140,7 @@ class RoleListView(LoginRequiredMixin, CofkListView):
 class CatalogueListView(PermissionRequiredMixin, LoginRequiredMixin, CofkListView):
     permission_required = constant.PM_CHANGE_LOOKUPCAT
     model = CofkLookupCatalogue
-    template_name = 'list/catalogue.html'
+    template_name = 'catalogue/init_form.html'
 
     @property
     def form(self):
@@ -163,9 +164,11 @@ class CatalogueListView(PermissionRequiredMixin, LoginRequiredMixin, CofkListVie
 
     def get_queryset(self):
         if self.request.user.has_perm(constant.PM_CHANGE_USER):
-            return CofkLookupCatalogue.objects.all()
+            return self.model.objects \
+                .annotate(**{f'{self.count}_count': Count(self.count)}).order_by(self.updated_fields[0]).all()
         else:
-           return CofkLookupCatalogue.objects.filter(owner=self.request.user)
+            return self.model.objects \
+                .annotate(**{f'{self.count}_count': Count(self.count)}).order_by(self.updated_fields[0]).filter(owner=self.request.user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -174,7 +177,8 @@ class CatalogueListView(PermissionRequiredMixin, LoginRequiredMixin, CofkListVie
         return context
 
 
-class SubjectListView(LoginRequiredMixin, CofkListView):
+class SubjectListView(PermissionRequiredMixin, LoginRequiredMixin, CofkListView):
+    permission_required = constant.PM_CHANGE_SUBJECT
     model = CofkUnionSubject
     template_name = 'list/subjects.html'
 
@@ -199,7 +203,8 @@ class SubjectListView(LoginRequiredMixin, CofkListView):
         return constant.PM_CHANGE_SUBJECT
 
 
-class OrgTypeListView(LoginRequiredMixin, CofkListView):
+class OrgTypeListView(PermissionRequiredMixin, LoginRequiredMixin, CofkListView):
+    permission_required = constant.PM_CHANGE_ORGTYPE
     model = CofkUnionOrgType
     template_name = 'list/orgtypes.html'
 

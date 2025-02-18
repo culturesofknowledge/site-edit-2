@@ -14,3 +14,6 @@ def get_users_by_groups(group_names: list):
 
 def get_contributing_editors():
     return get_users_by_groups([constant.ROLE_CONTRIBUTING_EDITOR, constant.ROLE_SUPER])
+
+def is_user_editor_or_supervisor(user):
+    return user.groups.filter(name__in=[constant.ROLE_EDITOR, constant.ROLE_SUPER]).exists()

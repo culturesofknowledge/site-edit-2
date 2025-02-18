@@ -1,4 +1,4 @@
-from django.db.models import OuterRef, Case, When, Value
+from django.db.models import OuterRef, Case, When, Value, BooleanField, Exists
 
 from cllib_django import query_utils
 from core.models import CofkLookupDocumentType
@@ -68,5 +68,12 @@ def create_joined_manif_ann_field():
         ])
     ).values_list('manif_detail', flat=True)
     return subquery
+
+def is_owner_of_catalogue(user):
+    return Case(
+        When(original_catalogue__owner=user, then=Value(True)),
+        default=Value(False),
+        output_field=BooleanField(),
+    )
 
 

@@ -28,6 +28,7 @@ class Command(BaseCommand):
                 constant.PM_CHANGE_SUBJECT,
                 constant.PM_CHANGE_ORGTYPE,
                 constant.PM_CHANGE_COLLECTWORK,
+                constant.PM_CHANGE_LANGUAGE
             ],
         }
         group_permissions_dict[constant.ROLE_SUPER] = group_permissions_dict[constant.ROLE_EDITOR] + [
