@@ -22,7 +22,7 @@ class CofkSuggestions(models.Model):
     suggestion_author = models.CharField(max_length=256, default="Anonymous")
 
     # Default = -1 means there is no related record for this suggestion
-    suggestion_related_record_int = models.IntegerField()
+    suggestion_related_record_int = models.IntegerField(null=True)
 
     # Relation fields for ForeignKey-like feature. No idea how to use this though
     # To be removed?
@@ -51,15 +51,7 @@ class CofkSuggestions(models.Model):
             case "Person":
                 return sug_utils.suggestion_fields(person_suggestion_fields.suggestion_fields_map())
             case "Location":
-                return ("Full name of location",
-                        "Alternative names of location",
-                        "Room",
-                        "Building",
-                        "Parish / District / Street",
-                        "City / town / Village",
-                        "County",
-                        "Country",
-                        "Larger political entity")
+                return sug_utils.suggestion_fields(location_suggestion_fields.suggestion_fields_map())
             case "Institution":
                 return("Institution Name",
                         "Alternative institution name",

@@ -1,4 +1,4 @@
-def suggestion_fields_map(self):
+def suggestion_fields_map():
     return (
         ('Primary Name', 'foaf_name'),
         ('Gender', 'gender'),

@@ -31,6 +31,8 @@ from location.recref_adapter import LocationCommentRecrefAdapter, LocationResour
     LocationImageRecrefAdapter
 from location.subqueries import create_sql_count_work_by_location
 from location.view_components import LocationFormDescriptor
+from location.location_suggestion import LocationSuggestion
+from suggestions import views as sug_view
 
 log = logging.getLogger(__name__)
 FormOrFormSet = Union[BaseForm, BaseFormSet]
@@ -57,11 +59,27 @@ class LocationInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitFo
         return render(request, 'location/init_form.html', {'loc_form': form})
 
     def resp_after_saved(self, request, form, new_instance):
+        suggestion_id = request.GET.get('from_suggestion', None)
+        if suggestion_id:
+            sug_view.save_with_related_info(suggestion_id, new_instance.location_id)
         return redirect('location:full_form', new_instance.location_id)
 
     @property
     def form_factory(self) -> Callable[..., BaseForm]:
         return LocationForm
+
+    def get(self, request, *args, **kwargs):
+        is_org_form = request and request.GET.get('person_form_type') == 'org'
+        initial = {}
+        if is_org_form:
+            initial['is_organisation'] = TRUE_CHAR
+        if request and request.GET.get('from_suggestion', ''):
+            from_suggestion = request.GET.get('from_suggestion')
+            sug_values = LocationSuggestion(from_suggestion).initial_form_values()
+            if sug_values:
+                initial.update(sug_values)
+        form = self.form_factory(initial=initial)
+        return self.resp_form_page(request, form)
 
 
 class LocationQuickInitView(LocationInitView):
