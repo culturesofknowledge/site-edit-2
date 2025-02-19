@@ -2,9 +2,10 @@ from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 import datetime
-from person import person_suggestion_fields
-from location import location_suggestion_fields
 from suggestions import utils as sug_utils
+from person      import person_suggestion_fields
+from location    import location_suggestion_fields
+from institution import institution_suggestion_fields
 
 class CofkSuggestions(models.Model):
     suggestion_id = models.AutoField(primary_key=True)
@@ -53,10 +54,7 @@ class CofkSuggestions(models.Model):
             case "Location":
                 return sug_utils.suggestion_fields(location_suggestion_fields.suggestion_fields_map())
             case "Institution":
-                return("Institution Name",
-                        "Alternative institution name",
-                        "City",
-                        "Country")
+                return sug_utils.suggestion_fields(institution_suggestion_fields.suggestion_fields_map())
             case "Publication":
                 return("Publication details",
                         "Abbreviation")
