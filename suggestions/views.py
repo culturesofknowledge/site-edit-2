@@ -9,7 +9,6 @@ from django.contrib import messages
 
 from .models import CofkSuggestions
 from .forms import SuggestionForm, SuggestionFilterForm
-from . import texts
 
 template_list = "suggestion_list.html" # Home page listing all suggestions for user
 template_form = "suggestion_form.html" # Page for making a suggestion
@@ -85,7 +84,7 @@ def suggestion_location(request):
     if request.method == 'GET':
         return render(request, template_form, context)
     elif request.method == 'POST':
-        if request.POST.get('suggestion_text') != texts.location_txt:
+        if request.POST.get('suggestion_text') != initial_suggestion_txt:
             context = save_fill_context(request, context)
             messages.success(request, context['message'])
             return redirect("suggestions:suggestion_all")
@@ -107,7 +106,7 @@ def suggestion_publication(request):
     if request.method == 'GET':
         return render(request, template_form, context)
     elif request.method == 'POST':
-        if request.POST.get('suggestion_text') != texts.publication_txt:
+        if request.POST.get('suggestion_text') != initial_suggestion_txt:
             context = save_fill_context(request, context)
             messages.warning(request, context['message'])
             return redirect("suggestions:suggestion_all")
@@ -129,7 +128,7 @@ def suggestion_institution(request):
     if request.method == 'GET':
         return render(request, template_form, context)
     elif request.method == 'POST':
-        if request.POST.get('suggestion_text') != texts.institution_txt:
+        if request.POST.get('suggestion_text') != initial_suggestion_txt:
             context = save_fill_context(request, context)
             messages.success(request, context['message'])
             return redirect("suggestions:suggestion_all")

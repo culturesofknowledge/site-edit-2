@@ -60,7 +60,7 @@ class CofkSuggestions(models.Model):
                 return sug_utils.suggestion_fields(publication_suggestion_fields.suggestion_fields_map())
 
     def new_suggestion_text(self):
-        return ":\n\n".join(self.fields())
+        return ":\n\n".join(self.fields()) + ":"
 
     @property
     def parsed_suggestion(self):
