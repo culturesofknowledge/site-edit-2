@@ -6,6 +6,7 @@ from suggestions import utils as sug_utils
 from person      import person_suggestion_fields
 from location    import location_suggestion_fields
 from institution import institution_suggestion_fields
+from publication import publication_suggestion_fields
 
 class CofkSuggestions(models.Model):
     suggestion_id = models.AutoField(primary_key=True)
@@ -56,8 +57,7 @@ class CofkSuggestions(models.Model):
             case "Institution":
                 return sug_utils.suggestion_fields(institution_suggestion_fields.suggestion_fields_map())
             case "Publication":
-                return("Publication details",
-                        "Abbreviation")
+                return sug_utils.suggestion_fields(publication_suggestion_fields.suggestion_fields_map())
 
     def new_suggestion_text(self):
         return ":\n\n".join(self.fields())
