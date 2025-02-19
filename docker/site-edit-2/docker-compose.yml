@@ -1,5 +1,3 @@
-version: "3.3"
-
 services:
 
   db:
@@ -26,7 +24,7 @@ services:
       - .env
     depends_on:
       - db
-    command: python manage.py runserver 0.0.0.0:8000
+    entrypoint: /code/docker/site-edit-2/entrypoint.sh
 
   django-q:
     build:
@@ -43,4 +41,5 @@ services:
 
 volumes:
   data:
+  old_data:
   emlo_home:
