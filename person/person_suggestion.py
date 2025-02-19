@@ -13,6 +13,9 @@ class PersonSuggestion:
         form_values = {}
         try:
             sug = CofkSuggestions.objects.get(pk=self.suggestion_id)
+            if sug.suggestion_status == "Resolved":
+                log.debug(f"{sug.suggestion_type} suggestion id {sug.suggestion_id} is already in status {sug.suggestion_status}")
+                return form_values
         except ObjectDoesNotExist:
             return form_values
         parsed_suggestion = sug.parsed_suggestion
