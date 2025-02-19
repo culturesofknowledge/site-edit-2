@@ -1,9 +1,12 @@
-from person.models import CofkUnionPerson
 import dateutil.parser
+import logging
 from dateutil.parser import ParserError
 from django.core.exceptions import ObjectDoesNotExist
 from suggestions.models import CofkSuggestions
-from person.person_suggestion_fields import PersonSuggestionFields
+from suggestions import utils as sug_utils
+from person import person_suggestion_fields
+
+log = logging.getLogger(__name__)
 
 class PersonSuggestion:
     def __init__(self, suggestion_id):
@@ -20,8 +23,7 @@ class PersonSuggestion:
             return form_values
         parsed_suggestion = sug.parsed_suggestion
         for field,sug_value in parsed_suggestion.items():
-            form_field = PersonSuggestionFields().suggestion_fields_dict().get(field, None)
-            # sug_value = parsed_suggestion.get(field, None)
+            form_field = sug_utils.suggestion_fields_dict(person_suggestion_fields.suggestion_fields_map()).get(field, None)
             if form_field and sug_value:
                 match field:
                     case 'Primary Name' | 'Alternative names' | 'Roles / titles':

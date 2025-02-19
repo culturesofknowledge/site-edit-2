@@ -3,7 +3,8 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 import datetime
 from person import person_suggestion_fields
-
+from location import location_suggestion_fields
+from suggestions import utils as sug_utils
 
 class CofkSuggestions(models.Model):
     suggestion_id = models.AutoField(primary_key=True)
@@ -24,6 +25,7 @@ class CofkSuggestions(models.Model):
     suggestion_related_record_int = models.IntegerField()
 
     # Relation fields for ForeignKey-like feature. No idea how to use this though
+    # To be removed?
     content_type = models.ForeignKey(
         ContentType,
         on_delete=models.SET_NULL,
@@ -47,7 +49,7 @@ class CofkSuggestions(models.Model):
     def fields(self):
         match self.suggestion_type:
             case "Person":
-                return person_suggestion_fields.PersonSuggestionFields().suggestion_fields()
+                return sug_utils.suggestion_fields(person_suggestion_fields.suggestion_fields_map())
             case "Location":
                 return ("Full name of location",
                         "Alternative names of location",
