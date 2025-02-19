@@ -69,7 +69,7 @@ class LocationInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitFo
         return LocationForm
 
     def get(self, request, *args, **kwargs):
-        is_org_form = request and request.GET.get('person_form_type') == 'org'
+        is_org_form = request and request.GET.get('location_form_type') == 'org'
         initial = {}
         if is_org_form:
             initial['is_organisation'] = TRUE_CHAR
