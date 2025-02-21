@@ -2,35 +2,19 @@
 {% load cl_filters %}
 {% block content %}
 
-<h1> Suggestion ID: {{ record.suggestion_id}} </h1>
+
 
 <table class="suggestion" rules="cols">
-  <tbody>
-    <tr> <th style="width: 200px">Record</th>
-      <td>
-      {% with "component/suggestion_type_"|add:record.suggestion_type|add:".html"|lower as template %}
-        {% include template %}
-      {% endwith %}
-      {% if record.suggestion_new %}
-        New {{record.suggestion_type}}
-      {% else %}
-        Existing {{record.suggestion_type}}
-      {% endif %}
-      {% if record.suggestion_related_record %}
-        <span data-feather="link-2" class="feather-small" aria-hidden="true"></span>
-        {{record.suggestion_related_record}}
-      {% endif %}
-    </td> </tr>
-    <tr> <th>Contributor</th>  <td>{{record.suggestion_author}}</td> </tr>
-    <tr> <th>Date Created at</th><td>{{record.suggestion_created_at}}</td> </tr>
-    <tr> <th>Date Last Updated</th><td>{{record.suggestion_updated_at}}</td> </tr>
-    <tr> <th>Content</th>    <td><pre>{{record.suggestion_suggestion}}</pre></td> </tr>
-    <tr> <th style="width: 200px">Status</th>
-      <td>
-      {{ record.suggestion_status }}
-      {% include "component/suggestion_buttons.html" with suggestion_id=record.suggestion_id suggestion_type=record.suggestion_type %}
-      </td>
+  <thead>
+    <tr>
+        <th colspan="2">
+            <h1> Suggestion ID: {{ record.suggestion_id}} </h1>
+            {% include "component/suggestion_buttons.html" with record=record %}
+        </th>
     </tr>
+  </thead>
+  <tbody>
+    {% include "component/record_info_body.html" %}
   </tbody>
 </table>
     <br/>

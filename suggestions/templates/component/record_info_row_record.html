@@ -1,0 +1,17 @@
+{% with "component/suggestion_type_"|add:record.suggestion_type|add:".html"|lower as template %}
+    {% include template %}
+{% endwith %}
+id: <a href="/suggestions/{{ record.suggestion_id }}">{{record.suggestion_id}}</a> |
+{% if record.suggestion_new == True %}
+    New {{record.suggestion_type}}
+{% else %}
+    Existing Record ({{record.suggestion_type}})
+{% endif %}
+{% if record.suggestion_related_record %}
+    <span data-feather="link-2" class="feather-small" aria-hidden="true"></span>
+    {{record.suggestion_related_record}}
+{% endif %}
+{% if record.suggestion_related_record_int %}
+    <span data-feather="link-2" class="feather-small" aria-hidden="true"></span>
+    <a href="{% url record.suggestion_type|lower|add:':full_form' record.suggestion_related_record_int %}">{{record.suggestion_related_record_int}}</a>
+{% endif %}

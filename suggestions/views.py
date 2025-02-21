@@ -44,7 +44,6 @@ def save_with_related_info(suggestion_id, related_id):
     sug.suggestion_related_record_int = related_id
     sug.suggestion_status = "Resolved"
     sug.save()
-    print(f"In Suggestion save related info : {suggestion_id} : {related_id}")
     return
 
 # Suggest a person

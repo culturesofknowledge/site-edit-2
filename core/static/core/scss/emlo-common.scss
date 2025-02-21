@@ -470,6 +470,15 @@ $del-red: #800000;
   padding-right: 10px;
 }
 
+table.suggestion thead tr th {
+  background-color: lightgray;
+  font-weight: bold;
+}
+
+table.suggestion tbody tr th {
+  width: 30%;
+}
+
 .suggestion-buttons {
   margin-bottom: 20px;
 }
