@@ -71,7 +71,7 @@ def create_compact_renderer(
 
 def create_table_search_results_renderer(template_path,
                                          record_modifier=None,
-                                         records_name='search_results', ):
+                                         records_name='search_results', context_data=None):
     def _renderer_by_record(records):
         if record_modifier:
             records = [record_modifier(record) for record in records]
@@ -79,6 +79,7 @@ def create_table_search_results_renderer(template_path,
             context = {
                 records_name: records
             }
+            context.update(context_data or {})
             return render_to_string(template_path, context)
 
         return _render

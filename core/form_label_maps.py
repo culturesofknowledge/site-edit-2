@@ -144,6 +144,17 @@ field_label_map = {
         'notes_on_letter': 'Notes on letter',
         'resources': 'Related resources',
         'upload_id': 'Upload ID'
+    },
+    'catalogue': {
+        'catalogue_code': 'Code',
+        'catalogue_name': 'Name',
+        'publish_status': 'Status',
+        'owner': 'Owner',
+        'editors_notes': "Editors' notes",
+        'catalogue_id': 'ID',
+    },
+    'image': {
+        'image_url': 'Image URL',
     }
 
 }

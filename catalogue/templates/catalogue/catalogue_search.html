@@ -1,0 +1,62 @@
+{% load cl_filters %}
+{% load static %}
+
+<p>If any works are associated with a catalogue the number of works is displayed that links to search
+        results for all works in that catalogue.</p>
+<table id="results_table">
+    <colgroup>
+        <col style="min-width: 100px">
+        <col>
+        <col>
+        <col>
+        <col>
+    </colgroup>
+    <thead>
+    <tr></tr>
+    <tr>
+        <th>Code</th>
+        <th>Name</th>
+        <th>Works</th>
+        <th>Published</th>
+        <th>Owner</th>
+    </tr>
+    </thead>
+    <tbody>
+
+    {% for r in search_results %}
+        <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}"
+            entry_id="{{ r.catalogue_id }}" target="_blank">
+            <td>
+                <form method="post">
+                {{ r.catalogue_code }}<br/>
+                    <input type="hidden" name="catalogue_id" value={{ r.catalogue_id }}>
+                    {% if can_edit %}
+                    <button type="submit" class="open-link-btn" url="{% url 'catalogue:full_form' r.catalogue_id %}" name="edit">Edit</button>
+                    {% endif %}
+                </form>
+            </td>
+
+            <td>
+                {{ r.catalogue_name }}
+            </td>
+
+            <td>
+                <a href="{% url 'work:search' %}?&original_catalogue_lookup=equals&original_catalogue={{ r.catalogue_name|urlencode }}" target="_blank">{{ r.work_count }}</a>
+            </td>
+
+            <td>
+                <input type="checkbox" name="publish_status" class="elcheckbox"
+                       value="{{ r.publish_status }}" id="id_publish_status_{{ r.catalogue_id }}"
+                       {% if r.publish_status == 1 %} checked{% endif %}>
+                <label for="id_publish_status_{{ c.catalogue_id }}"></label>
+            </td>
+
+            <td>
+                {{ r.owner }}
+            </td>
+
+        </tr>
+    {% endfor %}
+    </tbody>
+
+</table>

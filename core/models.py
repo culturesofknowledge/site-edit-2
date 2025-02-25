@@ -187,6 +187,10 @@ class CofkLookupCatalogue(models.Model):
     catalogue_name = models.CharField(unique=True, max_length=500)
     is_in_union = models.IntegerField()
     publish_status = models.SmallIntegerField()
+    owner = models.ForeignKey(
+        'login.CofkUser',  # Reference to the CofkUser model
+        on_delete=models.SET_NULL, related_name='catalogues', null=True, blank=True
+    )
 
     class Meta:
         db_table = 'cofk_lookup_catalogue'
