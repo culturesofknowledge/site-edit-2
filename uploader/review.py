@@ -52,7 +52,7 @@ def create_union_work(union_work_dict: dict, collect_work: CofkCollectWork, user
     if not collect_work.date_of_work_std_is_range and collect_work.date_of_work2_std_year:
         union_work_dict['date_of_work_std_is_range'] = 1
 
-    union_work = CofkUnionWork(**union_work_dict)
+    union_work = CofkUnionWork(**union_work_dict, init_seq_id=True)
     union_work.update_current_user_timestamp(username)
 
     return union_work

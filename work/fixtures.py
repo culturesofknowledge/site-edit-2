@@ -11,6 +11,7 @@ work_dict_a = dict(
     date_of_work_std_month=11,
     date_of_work_std_day=22,
     date_of_work_as_marked='work_dict_a.date_of_work_as_marked',
+    iwork_id=90000001,
 )
 
 work_dict_b = dict(
@@ -19,6 +20,7 @@ work_dict_b = dict(
     origin_as_marked='origin_as_marked value',
     abstract='abstract value',
     keywords='keywords value',
+    iwork_id=90000002,
 )
 
 

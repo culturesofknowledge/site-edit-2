@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'publication',
     'audit',
     'list',
+    'catalogue',
     'suggestions'
 ]
 

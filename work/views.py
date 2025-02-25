@@ -12,6 +12,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.views import View
 
+from catalogue.utils import get_user_catalogues
 from core import constant
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_WORK_IS_REPLY_TO, \
     REL_TYPE_WORK_MATCHES, REL_TYPE_COMMENT_DATE, REL_TYPE_WAS_SENT_FROM, REL_TYPE_COMMENT_ORIGIN, \
@@ -38,6 +39,7 @@ from core.models import Recref, CofkLookupCatalogue
 from institution import inst_serv
 from location import location_serv
 from location.models import CofkUnionLocation
+from login import utils
 from manifestation import manif_serv
 from manifestation.manif_serv import create_manif_id
 from manifestation.models import CofkUnionManifestation, CofkManifCommentMap, \
@@ -132,14 +134,14 @@ class BasicWorkFFH(FullFormHandler):
         else:
             self.work = None
 
-        self.safe_work = self.work or CofkUnionWork()
+        self.safe_work = self.work or CofkUnionWork(init_seq_id=False)
 
         self.common_work_form = CommonWorkForm(request_data, initial={
             'catalogue': self.safe_work.original_catalogue_id,
             'work_to_be_deleted': self.safe_work.work_to_be_deleted,
         })
-        catalogue_list = [('', None)] + [(c.catalogue_name, c.catalogue_code) for c in
-                                         CofkLookupCatalogue.objects.all().order_by('catalogue_name')]
+
+        catalogue_list = [('', None)] + [(c.catalogue_name, c.catalogue_code) for c in get_user_catalogues(request)]
         self.common_work_form.fields['catalogue_list'].widget.choices = catalogue_list
         self.common_work_form.fields['catalogue'].widget.choices = [(i[1], i[0]) for i in catalogue_list]
 
@@ -158,6 +160,7 @@ class BasicWorkFFH(FullFormHandler):
     def save_work(self, request, work: CofkUnionWork):
         # ----- save work
         if not work.work_id:
+            work.init_seq_id()
             work.work_id = work_serv.create_work_id(work.iwork_id)
 
         # handle catalogue
@@ -1018,7 +1021,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                     'flags': lookup_fn_flags,
                 })
         )
-        return create_queryset_by_queries(DisplayableWork, queries, sort_by=sort_by)
+        return create_queryset_by_queries(DisplayableWork, queries, sort_by=sort_by, user=self.request.user)
 
     @property
     def simplified_query(self) -> list[str]:
@@ -1046,12 +1049,14 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def table_search_results_renderer_factory(self) -> RendererFactory:
-        return renderer_serv.create_table_search_results_renderer('work/expanded_search_table_layout.html')
+        return renderer_serv.create_table_search_results_renderer('work/expanded_search_table_layout.html',
+                                                                  context_data=self.get_context())
 
     @property
     def compact_search_results_renderer_factory(self) -> RendererFactory:
         # Compact search results for works are also table formatted
-        return renderer_serv.create_table_search_results_renderer('work/compact_search_table_layout.html')
+        return renderer_serv.create_table_search_results_renderer('work/compact_search_table_layout.html',
+                                                                  context_data=self.get_context())
 
     @property
     def return_quick_init_vname(self) -> str:
@@ -1096,6 +1101,10 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def app_name(self) -> str:
         return 'work'
+
+    def get_context(self, **kwargs):
+        context = {'user_is_editor_or_supervisor': utils.is_user_editor_or_supervisor(self.request.user)}
+        return context
 
 
 class WorkCommentFormsetHandler(RecrefFormsetHandler):
@@ -1205,7 +1214,7 @@ class WorkCsvHeaderValues(HeaderValues):
 
 
 def create_queryset_by_queries(model_class: Type[Model], queries: Iterable[Q] = None,
-                               sort_by=None):
+                               sort_by=None, user=None):
     # some fields in annotate for sorting and filtering, it could be different with frontend display
     annotate = {
         'addressees_searchable': subqueries.create_joined_person_ann_field([REL_TYPE_WAS_ADDRESSED_TO]),
@@ -1235,6 +1244,7 @@ def create_queryset_by_queries(model_class: Type[Model], queries: Iterable[Q] = 
             ]
         ),
         'manifestations_searchable': subqueries.create_joined_manif_ann_field(),
+        'is_owner_of_catalogue': subqueries.is_owner_of_catalogue(user)
     }
 
     queryset = model_class.objects.filter()
