@@ -13,6 +13,12 @@
             {% include "core/component/common_section_search_menu.html" %}
             {% include "core/component/common_section_new_menu.html" %}
 
+            {%  if constant.PM_VIEW_SUGGESTIONS in perms %}
+            <li class="menu-item">
+                    <a href="{% url 'suggestions:suggestion_all' %}" title="Make a suggestion" target="_self" >Suggestions</a>
+            </li>
+            {% endif %}
+
             {% if constant.PM_VIEW_LOOKUPCAT in perms %}
                 <li class="menu-item">
                     <a href="">Lists</a>

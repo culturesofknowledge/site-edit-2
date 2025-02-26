@@ -21,10 +21,12 @@ class CofkSuggestions(models.Model):
     suggestion_created_at = models.DateTimeField(auto_now_add=True)
     suggestion_updated_at = models.DateTimeField(auto_now=True)
     suggestion_resolved_at = models.DateTimeField(null=True, blank=True)
-    suggestion_author = models.CharField(max_length=256, default="Anonymous")
+    suggestion_author = models.ForeignKey('login.CofkUser',  on_delete=models.SET_NULL,
+                     related_name='suggestions', null=True, blank=True
+    )
 
     # Default = -1 means there is no related record for this suggestion
-    suggestion_related_record_int = models.IntegerField(null=True)
+    suggestion_related_record_int = models.IntegerField(null=True, blank=True, default=-1)
 
     # Relation fields for ForeignKey-like feature. No idea how to use this though
     # To be removed?

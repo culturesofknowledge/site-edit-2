@@ -28,7 +28,9 @@ class Command(BaseCommand):
                 constant.PM_CHANGE_SUBJECT,
                 constant.PM_CHANGE_ORGTYPE,
                 constant.PM_CHANGE_COLLECTWORK,
-                constant.PM_CHANGE_LANGUAGE
+                constant.PM_CHANGE_LANGUAGE,
+                constant.PM_ADD_SUGGESTIONS,
+                constant.PM_VIEW_SUGGESTIONS,
             ],
         }
         group_permissions_dict[constant.ROLE_SUPER] = group_permissions_dict[constant.ROLE_EDITOR] + [
@@ -43,7 +45,9 @@ class Command(BaseCommand):
         ]
         group_permissions_dict[constant.ROLE_CONTRIBUTING_EDITOR] = [
             constant.PM_CHANGE_WORK,
-            constant.PM_VIEW_LOOKUPCAT
+            constant.PM_VIEW_LOOKUPCAT,
+            constant.PM_VIEW_SUGGESTIONS,
+            constant.PM_CHANGE_SUGGESTIONS,
         ]
 
         # add permissions to groups
