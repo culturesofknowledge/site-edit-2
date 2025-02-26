@@ -7,10 +7,6 @@ id: <a href="/suggestions/{{ record.suggestion_id }}">{{record.suggestion_id}}</
 {% else %}
     Existing Record ({{record.suggestion_type}})
 {% endif %}
-{% if record.suggestion_related_record %}
-    <span data-feather="link-2" class="feather-small" aria-hidden="true"></span>
-    {{record.suggestion_related_record}}
-{% endif %}
 {% if record.suggestion_related_record_int %}
     <span data-feather="link-2" class="feather-small" aria-hidden="true"></span>
     <a href="{% url record.suggestion_type|lower|add:':full_form' record.suggestion_related_record_int %}">{{record.suggestion_related_record_int}}</a>

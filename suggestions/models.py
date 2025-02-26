@@ -13,8 +13,6 @@ class CofkSuggestions(models.Model):
     suggestion_new = models.BooleanField(default=True)
     suggestion_type = models.CharField(max_length=200)
     suggestion_suggestion = models.TextField()
-    # suggestion_relation = models.CharField(max_length=200, default="None")
-    # suggestion_related_record = models.ForeignKey('CofkRecords', on_delete=models.CASCADE, null=True, blank=True)
     suggestion_status = models.CharField(max_length=256, default="New")
 
     # Automatic fields
@@ -27,18 +25,6 @@ class CofkSuggestions(models.Model):
 
     # Default = -1 means there is no related record for this suggestion
     suggestion_related_record_int = models.IntegerField(null=True, blank=True, default=-1)
-
-    # Relation fields for ForeignKey-like feature. No idea how to use this though
-    # To be removed?
-    content_type = models.ForeignKey(
-        ContentType,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='suggestion_relation'
-    )
-    object_id = models.PositiveIntegerField(null=True, blank=True)
-    suggestion_related_record = GenericForeignKey('content_type', 'suggestion_id')
 
     class Meta:
         db_table = 'cofk_union_suggestions'
