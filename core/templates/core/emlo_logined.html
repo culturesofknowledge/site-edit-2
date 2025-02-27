@@ -10,37 +10,52 @@
                 <a href="/"><img src="{% static 'core/img/cofk_logo_inverted.png' %}" id="logo"></a>
             </li>
 
-            {% include "core/component/common_section_menu_item.html" with search_vname='work:search' init_vname='work:init_form' section_name='Work' singular='work' save_perm=constant.PM_CHANGE_WORK %}
-            {% include "core/component/common_section_menu_item.html" with search_vname='person:search' init_vname='person:init_form' section_name='People' singular='person' save_perm=constant.PM_CHANGE_PERSON %}
-            {% include "core/component/common_section_menu_item.html" with search_vname='location:search' init_vname='location:init_form' section_name='Locations' singular='location' save_perm=constant.PM_CHANGE_LOCATION %}
-            {% include "core/component/common_section_menu_item.html" with search_vname='institution:search' init_vname='institution:init_form' section_name='Repositories' singular='repository' save_perm=constant.PM_CHANGE_INST %}
-            {% include "core/component/common_section_menu_item.html" with search_vname='publication:search' init_vname='publication:init_form' section_name='Publications' singular='publication' save_perm=constant.PM_CHANGE_PUBLICATION %}
+            {% include "core/component/common_section_search_menu.html" %}
+            {% include "core/component/common_section_new_menu.html" %}
 
+            {%  if constant.PM_VIEW_SUGGESTIONS in perms %}
             <li class="menu-item">
-                <a href="">Lists</a>
-                <ul class='unstyled-list no-margin menu-subitem'>
-                    <a href="{% url 'list:roles' %}">
-                        <li>Roles</li>
-                    </a>
-                    <a href="{% url 'list:catalogues' %}">
-                        <li>Catalogues</li>
-                    </a>
-                    <a href="{% url 'list:subjects' %}">
-                        <li>Subjects</li>
-                    </a>
-                    <a href="{% url 'list:orgtypes' %}">
-                        <li>Org. types</li>
-                    </a>
-                    <a href="{% url 'lang:search' %}">
-                        <li>Language</li>
-                    </a>
-                    {% if constant.PM_CHANGE_USER|can_show_for_perm:perms %}
-                    <a href="{% url 'user:search' %}">
-                        <li>User</li>
-                    </a>
-                    {% endif %}
-                </ul>
+                    <a href="{% url 'suggestions:suggestion_all' %}" title="Make a suggestion" target="_self" >Suggestions</a>
             </li>
+            {% endif %}
+
+            {% if constant.PM_VIEW_LOOKUPCAT in perms %}
+                <li class="menu-item">
+                    <a href="">Lists</a>
+                    <ul class='unstyled-list no-margin menu-subitem'>
+                        {%  if constant.PM_CHANGE_ROLECAT in perms %}
+                        <a href="{% url 'list:roles' %}">
+                            <li>Roles</li>
+                        </a>
+                        {% endif %}
+                        {%  if constant.PM_VIEW_LOOKUPCAT in perms %}
+                        <a href="{% url 'catalogue:search' %}">
+                            <li>Catalogues</li>
+                        </a>
+                        {% endif %}
+                        {%  if constant.PM_CHANGE_SUBJECT in perms %}
+                        <a href="{% url 'list:subjects' %}">
+                            <li>Subjects</li>
+                        </a>
+                        {% endif %}
+                        {%  if constant.PM_CHANGE_ORGTYPE in perms %}
+                        <a href="{% url 'list:orgtypes' %}">
+                            <li>Org. types</li>
+                        </a>
+                        {% endif %}
+                        {%  if constant.PM_CHANGE_ROLECAT in perms %}
+                        <a href="{% url 'lang:search' %}">
+                            <li>Language</li>
+                        </a>
+                        {% endif %}
+                        {% if constant.PM_CHANGE_USER|can_show_for_perm:perms %}
+                        <a href="{% url 'user:search' %}">
+                            <li>User</li>
+                        </a>
+                        {% endif %}
+                    </ul>
+                </li>
+            {% endif %}
         </ul>
         <ul class="no-margin">
             {% if constant.PM_CHANGE_COLLECTWORK|can_show_for_perm:perms %}
@@ -65,7 +80,7 @@
                 </li>
             {% endif %}
             <li class="menu-item">
-                <a href="#!">{{ request.user.username }}</a>
+                <a href="#!">{{ request.user }}</a>
                 <ul class='unstyled-list no-margin menu-subitem' style="left: -100px;">
                     {% if request.user.has_saved_queries %}
                         <a href="{% url 'list:savedqueries' %}">
