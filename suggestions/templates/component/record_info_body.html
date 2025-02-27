@@ -1,0 +1,30 @@
+<tr>
+    <th>Record</th>
+    <td>{% include "component/record_info_row_record.html" %}</td>
+</tr>
+<tr>
+    <th>Contributor</th>
+    <td>{{record.suggestion_author}}</td>
+</tr>
+<tr>
+    <th>Date Suggested</th>
+    <td>{{record.suggestion_created_at}}
+        {% if record.is_updated %}
+          (last updated on {{record.suggestion_updated_at}})
+        {%  endif %}
+    </td>
+</tr>
+<tr>
+    <th>Status</th>
+    <td>{{record.suggestion_status}}</td>
+</tr>
+<tr>
+    <th>Content</th>
+    <td><dl>
+        {% for k,v in record.parsed_suggestion.items %}
+            {% if v != ' ' %}
+              <dt>{{k}}</dt> <dd>{{v}}</dd>
+            {% endif %}
+        {% endfor %}
+    </dl></td>
+</tr>

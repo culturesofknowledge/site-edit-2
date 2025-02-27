@@ -81,6 +81,16 @@
     </ul>
 
     {% endif %}
+    {%  if constant.PM_VIEW_SUGGESTIONS in perms %}
+    <p>You can also provide suggestions:</p>
+
+    <ul class="main_menu">
+        <li>
+            <a href="{% url 'suggestions:suggestion_all' %}" title="Make a suggestion" target="_self" tabindex="1"><span
+                    data-feather="clipboard" class="feather-large" aria-hidden="true"></span>Suggestions</a>
+        </li>
+    </ul>
+    {% endif %}
 
     {% if constant.PM_TRIGGER_EXPORTER|can_show_for_perm:perms %}
         <div class="margin-top-xl">

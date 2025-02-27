@@ -1,0 +1,42 @@
+{% extends "core/emlo_logined.html" %}
+{% load cl_filters %}
+{% load static %}
+{% block head %}
+    <script>
+        function confirm_delete(orderno){
+        var r = confirm("Sure you want to delete?");
+        if (r == true) {
+            window.location.href=orderno;
+        }}
+    </script>
+{% endblock %}
+{% block content %}
+{% include "core/component/alert.html" %}
+
+<h1>Suggestions</h1>
+
+{% include "component/suggest_new_buttons.html" %}
+  
+<hr>
+
+{% include "component/suggestion_filters.html" %}
+
+<hr>
+
+{% for record in query_results %}
+<table class="suggestion" rules="cols">
+    <thead>
+        <tr>
+            <th colspan="2">
+                {% include "component/record_info_header.html" %}
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        {% include "component/record_info_body.html" %}
+    </tbody>
+</table>
+<br>
+{% endfor %}
+
+{% endblock %}

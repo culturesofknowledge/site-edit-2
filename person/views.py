@@ -37,7 +37,9 @@ from person.recref_adapter import PersonCommentRecrefAdapter, PersonResourceRecr
     ActivePersonRecrefAdapter, PassivePersonRecrefAdapter, PersonImageRecrefAdapter, PersonLocRecrefAdapter
 from person.subqueries import create_sql_count_work_by_person
 from person.view_components import PersonFormDescriptor
+from person.person_suggestion import PersonSuggestion
 from work.forms import AuthorRelationChoices, AddresseeRelationChoices
+from suggestions import views as sug_view
 
 if TYPE_CHECKING:
     from core.helper.view_serv import MergeChoiceContext
@@ -60,6 +62,9 @@ class PersonInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitForm
         } | create_context_is_org_form(form.initial.get('is_organisation')))
 
     def resp_after_saved(self, request, form, new_instance):
+        suggestion_id = request.GET.get('from_suggestion', None)
+        if suggestion_id:
+            sug_view.save_with_related_info(suggestion_id, new_instance.iperson_id)
         return redirect('person:full_form', new_instance.iperson_id)
 
     @property
@@ -72,11 +77,14 @@ class PersonInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitForm
 
     def get(self, request, *args, **kwargs):
         is_org_form = request and request.GET.get('person_form_type') == 'org'
+        initial = {}
         if is_org_form:
-            initial = {'is_organisation': TRUE_CHAR, }
-        else:
-            initial = {}
-
+            initial['is_organisation'] = TRUE_CHAR
+        if request and request.GET.get('from_suggestion', ''):
+            from_suggestion = request.GET.get('from_suggestion')
+            sug_values = PersonSuggestion(from_suggestion).initial_form_values()
+            if sug_values:
+                initial.update(sug_values)
         form = self.form_factory(initial=initial)
         return self.resp_form_page(request, form)
 
@@ -124,7 +132,7 @@ class PersonFFH(FullFormHandler):
                 | self.death_loc_handler.create_init_dict(self.person)
         )
         self.person_form = PersonForm(request_data or None, instance=self.person, initial=initial_dict)
-        self.person_form.base_fields['organisation_type'].reload_choices()
+        self.person_form.fields['organisation_type'].reload_choices()
 
         self.org_handler = MultiRecrefAdapterHandler(
             request_data, name='organisation',
