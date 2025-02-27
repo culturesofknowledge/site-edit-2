@@ -24,7 +24,7 @@ class CofkSuggestions(models.Model):
     )
 
     # Default = -1 means there is no related record for this suggestion
-    suggestion_related_record_int = models.IntegerField(null=True, blank=True, default=-1)
+    suggestion_related_record_int = models.IntegerField(null=True, blank=True)
 
     class Meta:
         db_table = 'cofk_union_suggestions'
