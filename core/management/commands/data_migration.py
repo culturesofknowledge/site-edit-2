@@ -11,7 +11,7 @@ import django.db.utils
 import psycopg2
 import psycopg2.errors
 from django.contrib.auth.models import Group
-from django.core.management import BaseCommand
+from django.core.management import BaseCommand, call_command
 from django.db import connection as cur_conn
 from django.db.models import Model, fields
 from django.db.models.fields.related_descriptors import ForwardManyToOneDescriptor
@@ -400,48 +400,13 @@ def _val_handler_person__organisation_type(row: dict, conn) -> dict:
 def migrate_groups_and_permissions(conn):
     start_sec = time.time()
 
-    group_permissions_dict = {
-        # 'cofkviewer': [],
-        # 'reviewer': [],
-        constant.ROLE_EDITOR: [
-            constant.PM_CHANGE_WORK,
-            constant.PM_CHANGE_PERSON,
-            constant.PM_CHANGE_PUBLICATION,
-            constant.PM_CHANGE_LOCATION,
-            constant.PM_CHANGE_INST,
-            constant.PM_CHANGE_ROLECAT,
-            constant.PM_CHANGE_LOOKUPCAT,
-            constant.PM_CHANGE_SUBJECT,
-            constant.PM_CHANGE_ORGTYPE,
-            constant.PM_CHANGE_COLLECTWORK,
-        ],
-    }
-    group_permissions_dict[constant.ROLE_SUPER] = group_permissions_dict[constant.ROLE_EDITOR] + [
-        constant.PM_CHANGE_USER,
-        constant.PM_CHANGE_COMMENT,
-        constant.PM_VIEW_AUDIT,
-        constant.PM_EXPORT_FILE_WORK,
-        constant.PM_EXPORT_FILE_PERSON,
-        constant.PM_EXPORT_FILE_LOCATION,
-        constant.PM_EXPORT_FILE_INST,
-        constant.PM_TRIGGER_EXPORTER,
-    ]
-
     # fill group records
     old_id_groups = {}
     for r in find_rows_by_db_table(conn, 'cofk_roles'):
         old_id_groups[r['role_id']] = Group.objects.get_or_create(name=r['role_code'])[0]
 
-    # add permissions to groups
-    for group_name, permission_codes in group_permissions_dict.items():
-        group = Group.objects.get(name=group_name)
-
-        for permission_code in permission_codes:
-            permission = perm_serv.get_perm_by_full_name(permission_code)
-            if permission:
-                group.permissions.add(permission)
-            else:
-                print(f'permission not found: {permission_code}')
+    # add permissions to groups by invoking the command
+    call_command('add_groups_and_permissions')
 
     # add users to groups
     for r in find_rows_by_db_table(conn, 'cofk_user_roles'):

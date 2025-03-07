@@ -5,13 +5,15 @@
     <div class="col col--1of3 align-center">
         <div class="row">
             <h1> {{ title }} </h1>
-            {% if add_entry_url %}
+            {% if add_entry_url and add_entry_url_permission in perms%}
                 <div class="margin-left margin-top">
                     <a href="{{ add_entry_url }}" class="btn" target="_blank">Add +</a>
                 </div>
             {% endif %}
         </div>
     </div>
+
+    {% include "core/component/messages.html" %}
 
     <div id="user_messages">
         {% for to_user_msg in to_user_messages %}
@@ -28,6 +30,7 @@
         <div class="row">
 
             <!-- Query fieldsets -->
+        {% if query_fieldset_list %}
             <aside id="query-fieldset" class="col col--1of4">
                 <h3 class="sr-only">Search</h3>
                 {% for query_fieldset in query_fieldset_list %}
@@ -36,6 +39,7 @@
 
                 {% include "core/component/actionbox_search.html" %}
             </aside>
+        {% endif %}
 
             <div id="query-result" class="col col--3of4">
 
@@ -59,8 +63,10 @@
 
                 </div>
 
+                {% if query_fieldset_list %}
                 <!-- Search components (e.g. sort by, records per page) -->
                 {{ search_components }}
+                {% endif %}
 
                 {% if paginator.count == 0 %}
                     <h2>No results</h2>
@@ -72,7 +78,7 @@
                     <!-- search function toolbar (e.g. download output, compact, expanded)  -->
                     <aside class="margin-bottom row">
                         <div class="col col--1of2">
-                            {% if paginator.count %}
+                            {% if query_fieldset_list and paginator.count %}
                                 <button id="fieldset-toggle-btn" class="search-form-btn" type="button">
                                     Toggle <span data-feather="search" aria-hidden="true"></span>
                                 </button>

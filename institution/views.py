@@ -24,6 +24,8 @@ from institution.forms import InstitutionForm, GeneralSearchFieldset
 from institution.models import CofkUnionInstitution
 from institution.recref_adapter import InstResourceRecrefAdapter, InstImageRecrefAdapter
 from institution.view_components import InstFormDescriptor
+from institution.institution_suggestion import InstitutionSuggestion
+from suggestions import views as sug_view
 
 if TYPE_CHECKING:
     from core.helper.view_serv import MergeChoiceContext
@@ -125,11 +127,28 @@ class InstInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitFormVi
         return render(request, 'institution/init_form.html', {'inst_form': form})
 
     def resp_after_saved(self, request, form, new_instance):
+        suggestion_id = request.GET.get('from_suggestion', None)
+        if suggestion_id:
+            sug_view.save_with_related_info(suggestion_id, new_instance.institution_id)
         return redirect('institution:full_form', new_instance.institution_id)
 
     @property
     def form_factory(self) -> Callable[..., ModelForm]:
         return InstitutionForm
+
+    def get(self, request, *args, **kwargs):
+        is_org_form = request and request.GET.get('institution_form_type') == 'org'
+        initial = {}
+        if is_org_form:
+            initial['is_organisation'] = TRUE_CHAR
+        if request and request.GET.get('from_suggestion', ''):
+            from_suggestion = request.GET.get('from_suggestion')
+            sug_values = InstitutionSuggestion(from_suggestion).initial_form_values()
+            if sug_values:
+                initial.update(sug_values)
+        form = self.form_factory(initial=initial)
+        return self.resp_form_page(request, form)
+
 
 
 @login_required

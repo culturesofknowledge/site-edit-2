@@ -21,6 +21,9 @@
             {{ form.catalogue_name.label_tag }}
             {{ form.catalogue_name }}
 
+            {{ form.owner.label_tag }}
+            {{ form.owner }}
+
             <input type="hidden" name="is_in_union" value="1">
 
             <input type="submit" class="btn" value="Add" name="add">
@@ -37,8 +40,8 @@
 
     {% for c in object_list %}
         <fieldset class="lookup_fieldset">
-            <legend>{{ c.catalogue_name }} ({{ c.catalogue_id }})</legend>
-            <form method="post" class="edit_forms">
+            <legend>{{ c.catalogue_name }}</legend>
+            <form method="post" name="form_catalogue_{{ c.catalogue_id }}" class="edit_forms">
                 {% csrf_token %}
 
                 <label >Code:&nbsp;</label>{{ c.catalogue_code }}<br/>
@@ -53,6 +56,16 @@
                        value="{{ c.publish_status }}" id="id_publish_status_{{ c.catalogue_id }}"
                        {% if c.publish_status == 1 %} checked{% endif %}>
                 <label for="id_publish_status_{{ c.catalogue_id }}">Publish:</label><br/>
+
+                <label for="id_owner_{{ c.catalogue_id }}">Owner:</label>
+                <select name="owner" id="id_owner_{{ c.catalogue_id }}" required>
+                    <option value="" {% if not c.owner %}selected{% endif %}>Select Owner</option>
+                    {% for user in user_list %}
+                        <option value="{{ user.username }}" {% if c.owner and user.username == c.owner.username %}selected="selected"{% endif %}>
+                            {{ user }}
+                        </option>
+                    {% endfor %}
+                </select>
 
                 <input type="hidden" name="is_in_union" value="1">
                 <input type="hidden" name="catalogue_id" value="{{ c.catalogue_id }}">

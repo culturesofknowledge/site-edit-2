@@ -1,0 +1,20 @@
+<div class="button-row-suggestion right button-row">
+    {%  if record.suggestion_author == request.user or constant.PM_CHANGE_USER in perms%}
+    <form onclick="return confirm('Are you sure you want to delete this?')"
+      action="{% url 'suggestions:suggestion_delete' suggestion_id=record.suggestion_id %}" method="post">
+      {% csrf_token %}
+      <input type="submit" value="Delete", name="delete" class="margin-left btn">
+    </form>
+    {% endif %}
+    {% if record.suggestion_status != "Resolved" %}
+      <form action="{% url 'suggestions:suggestion_edit' suggestion_id=record.suggestion_id %}" method="get">
+        <input type="submit" value="Edit", name="edit" class="margin-left btn" type="text">
+      </form>
+      {%  if not record.suggestion_author == request.user or constant.PM_CHANGE_USER in perms%}
+      <form action="{% url record.suggestion_type|add:':init_form'|lower %}" method="get">
+        <input value={{record.suggestion_id}} name="from_suggestion" type="hidden">
+        <input type="submit" value="Resolve" class="margin-left btn" type="text">
+      </form>
+      {% endif %}
+    {% endif %}
+</div>

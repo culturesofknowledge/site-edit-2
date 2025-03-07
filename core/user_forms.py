@@ -24,7 +24,6 @@ class UserForm(ModelForm):
             'forename',
             'surname',
             'is_active',
-            'is_staff',
             'groups',
         )
 
@@ -36,7 +35,7 @@ class UserForm(ModelForm):
             (group_name_id_map[name], label)
             for name, label in [
             (constant.ROLE_EDITOR, 'Can edit Union and Bodleian card index catalgoues'),
-            (constant.ROLE_REVIEWER, 'Informed of new uploads from data collection tool'),
+            (constant.ROLE_CONTRIBUTING_EDITOR, 'Contributing Editor'),
             (constant.ROLE_VIEWER, 'Read-only access'),
             (constant.ROLE_SUPER, '*Supervisor*'),
         ])
@@ -65,6 +64,3 @@ class UserSearchFieldset(BasicSearchFieldset):
         label=field_label_map['user']['email'],
         help_text='The user\'s email address.')
     email_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
-    is_staff = SearchCharField(
-        help_text="Is the user a staff member? Staff members have access to the system's administrative functions.",
-        widget=forms.Select(choices=form_serv.none_zero_one_choices))

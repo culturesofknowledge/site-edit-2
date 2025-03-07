@@ -55,13 +55,13 @@ class DumpFullFormHandler(FullFormHandler):
         )
         self.person_form = DumpPersonForm(
             data={'foaf_name': 'old person'},
-            instance=CofkUnionPerson(foaf_name='old person'),
+            instance=CofkUnionPerson(foaf_name='old person', init_seq_id=True),
         )
 
 
 class DumpComplexFullFormHandler(FullFormHandler):
     def load_data(self, pk, *args, request_data=None, request=None, **kwargs):
-        self.person = CofkUnionPerson(foaf_name='old person')
+        self.person = CofkUnionPerson(foaf_name='old person', init_seq_id=True)
         self.location_form = DumpLocationForm(
             data={'location_name': 'old'},
             instance=CofkUnionLocation(location_name='old'),

@@ -1,6 +1,7 @@
 import logging
 
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db.models import Count
 from django.views.generic import ListView
 
@@ -9,6 +10,8 @@ from core.forms import CatalogueForm, RoleForm, SubjectForm, OrgTypeForm
 from core.helper import perm_serv
 from core.models import CofkLookupCatalogue, CofkUnionRoleCategory, CofkUnionSubject, CofkUnionOrgType, \
     CofkUserSavedQuery
+
+from login.utils import get_contributing_editors
 
 log = logging.getLogger(__name__)
 
@@ -49,9 +52,9 @@ class CofkListView(ListView):
             list_obj = self.get_obj_by_id()
 
             if list_obj:
-                for attr in self.updated_fields:
-                    setattr(list_obj, attr, self.request.POST[attr] if attr in self.request.POST else 0)
-                list_obj.save()
+                form = self.form(request.POST, instance=list_obj)
+                if form.is_valid():
+                    form.save()
 
                 messages.success(request, f'Successfully updated {self.list_type}'
                                           f' "{getattr(list_obj, self.updated_fields[0])}" ({list_obj.pk})')
@@ -62,7 +65,7 @@ class CofkListView(ListView):
             if list_form.is_valid():
                 list_obj = list_form.save()
                 messages.success(request, f'Successfully created new {self.list_type}'
-                                          f' "{getattr(list_obj, self.updated_fields[0])}" ({list_obj.pk})')
+                                          f' "{getattr(list_obj, self.updated_fields[0])}"')
 
             else:
                 errors = list_form.errors.as_data()
@@ -108,7 +111,8 @@ class CofkListView(ListView):
         raise NotImplementedError
 
 
-class RoleListView(CofkListView):
+class RoleListView(PermissionRequiredMixin, LoginRequiredMixin, CofkListView):
+    permission_required = constant.PM_CHANGE_ROLECAT
     model = CofkUnionRoleCategory
     template_name = 'list/roles.html'
 
@@ -133,9 +137,10 @@ class RoleListView(CofkListView):
         return constant.PM_CHANGE_ROLECAT
 
 
-class CatalogueListView(CofkListView):
+class CatalogueListView(PermissionRequiredMixin, LoginRequiredMixin, CofkListView):
+    permission_required = constant.PM_CHANGE_LOOKUPCAT
     model = CofkLookupCatalogue
-    template_name = 'list/catalogue.html'
+    template_name = 'catalogue/init_form.html'
 
     @property
     def form(self):
@@ -147,7 +152,7 @@ class CatalogueListView(CofkListView):
 
     @property
     def updated_fields(self):
-        return ['catalogue_name', 'publish_status']
+        return ['catalogue_name', 'publish_status', 'owner']
 
     @property
     def list_type(self):
@@ -157,8 +162,23 @@ class CatalogueListView(CofkListView):
     def save_perm(self):
         return constant.PM_CHANGE_LOOKUPCAT
 
+    def get_queryset(self):
+        if self.request.user.has_perm(constant.PM_CHANGE_USER):
+            return self.model.objects \
+                .annotate(**{f'{self.count}_count': Count(self.count)}).order_by(self.updated_fields[0]).all()
+        else:
+            return self.model.objects \
+                .annotate(**{f'{self.count}_count': Count(self.count)}).order_by(self.updated_fields[0]).filter(owner=self.request.user)
 
-class SubjectListView(CofkListView):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user_list'] = get_contributing_editors()
+
+        return context
+
+
+class SubjectListView(PermissionRequiredMixin, LoginRequiredMixin, CofkListView):
+    permission_required = constant.PM_CHANGE_SUBJECT
     model = CofkUnionSubject
     template_name = 'list/subjects.html'
 
@@ -183,7 +203,8 @@ class SubjectListView(CofkListView):
         return constant.PM_CHANGE_SUBJECT
 
 
-class OrgTypeListView(CofkListView):
+class OrgTypeListView(PermissionRequiredMixin, LoginRequiredMixin, CofkListView):
+    permission_required = constant.PM_CHANGE_ORGTYPE
     model = CofkUnionOrgType
     template_name = 'list/orgtypes.html'
 

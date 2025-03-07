@@ -1,0 +1,47 @@
+{% extends "core/emlo_common_form.html" %}
+{% load static %}
+
+{% block content %}
+    <h1>Update Catalogue</h1>
+
+    {% include "core/component/messages.html" %}
+
+    <p>A catalogue can only be deleted if it has no works associated with it, in
+        which case a delete button is displayed alongside the save button.</p>
+
+        <fieldset class="lookup_fieldset">
+        <form method="post" class="edit_forms">
+            {% csrf_token %}
+
+            {{ form.catalogue_code.label_tag }}
+            {{ form.catalogue_code }}
+
+            {{ form.catalogue_name.label_tag }}
+            {{ form.catalogue_name }}
+
+            <input type="checkbox" name="publish_status" class="elcheckbox"
+                   value="{{ form.publish_status.value }}" id="id_publish_status"
+                   {% if form.publish_status.value == 1 %} checked{% endif %}>
+            <label for="id_publish_status">Publish:</label><br/>
+
+
+            {{ form.owner.label_tag }}
+            {{ form.owner }}
+
+            <input type="hidden" name="is_in_union" value="1">
+            <input type="hidden" name="catalogue_id" value="{{ c.catalogue_id }}">
+
+            {% if form.work_count > 0 %}
+                <label>Number of works:&nbsp;</label>{{ c.work_count }}<br/>
+                <input type="submit" class="btn" value="Save" name="save">
+                {% else %}
+                <input type="submit" class="btn inline_btn" value="Save" name="save">
+                <input type="submit" class="btn inline_btn" value="Delete" name="delete">
+
+            {% endif %}
+        </form>
+    </fieldset>
+
+    {% include 'list/confirm_delete.html' %}
+
+{% endblock %}

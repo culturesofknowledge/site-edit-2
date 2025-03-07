@@ -1,0 +1,28 @@
+{% extends "core/emlo_common_form.html" %}
+{% load static %}
+
+{% block content %}
+    <h1>Add new catalogue</h1>
+
+    {% include "core/component/messages.html" %}
+
+        <fieldset class="lookup_fieldset">
+        <form method="post">
+            {% csrf_token %}
+
+            {{ form.catalogue_code.label_tag }}
+            {{ form.catalogue_code }}
+
+            {{ form.catalogue_name.label_tag }}
+            {{ form.catalogue_name }}
+
+            {{ form.owner.label_tag }}
+            {{ form.owner }}
+
+            <input type="hidden" name="is_in_union" value="1">
+
+            <input type="submit" class="btn" value="Add" name="add">
+        </form>
+    </fieldset>
+
+{% endblock %}

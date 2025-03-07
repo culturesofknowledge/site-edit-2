@@ -22,7 +22,9 @@ class TestWorkExcelHeaderValues(TestCase):
     def test_obj_to_values(self):
         fixture_default_lookup_catalogue()
         hv = WorkExcelHeaderValues()
-        values = hv.obj_to_values(DisplayableWork(fixture_work_simple_a()))
+        work = DisplayableWork()
+        work.save()
+        values = hv.obj_to_values(work)
 
         self.assertGreater(len(values), 0)
 

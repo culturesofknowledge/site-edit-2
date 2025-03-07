@@ -2,6 +2,7 @@ from django.contrib.auth.models import Group
 
 from cllib_django.query_utils import load_cache  # noqa
 from core.models import CofkLookupCatalogue, CofkLookupDocumentType
+from core import constant
 from login.models import CofkUser
 
 ck_all_union_relationship_types = 'all_union_relationship_types'
@@ -47,6 +48,6 @@ def create_lookup_doc_desc_map():
 
 def create_group_name_id_map() -> dict[dict, int]:
     return load_cache(
-        'group_name_id_map',
+        constant.CACHE_GROUP_MAP_ID,
         lambda: dict(Group.objects.values_list('name', 'id').all())
     )

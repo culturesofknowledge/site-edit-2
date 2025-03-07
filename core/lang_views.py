@@ -1,10 +1,11 @@
 from typing import Iterable
 
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 
+from core import constant
 from core.helper import renderer_serv, query_serv
 from core.helper.renderer_serv import RendererFactory
 from core.helper.view_serv import DefaultSearchView
@@ -19,7 +20,8 @@ def lookup_fn_is_favorite(lookup, field, value):
         return Q(cofkunionfavouritelanguage__isnull=(value != '1'))
 
 
-class LanguageSearchView(LoginRequiredMixin, DefaultSearchView):
+class LanguageSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearchView):
+    permission_required = constant.PM_CHANGE_LANGUAGE
 
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:

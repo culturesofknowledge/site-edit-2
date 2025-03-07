@@ -1,0 +1,14 @@
+<div class="suggestion-buttons button-row right">
+    <h3 class="inline">Suggest new </h3>
+    <a class="margin-left btn" href="{% url 'suggestions:suggestion_person' %}" title="Person" target="_self" tabindex="1">
+        {% include "component/suggestion_type_person.html" %} Person</a><br>
+
+    <a class="margin-left btn" href="{% url 'suggestions:suggestion_location' %}" title="Location" target="_self" tabindex="1">
+        {% include "component/suggestion_type_location.html" %}Location</a><br>
+
+    <a class="margin-left btn" href="{% url 'suggestions:suggestion_publication' %}" title="Publication" target="_self" tabindex="1">
+        {% include "component/suggestion_type_publication.html" %} Publication</a><br>
+
+    <a class="margin-left btn" href="{% url 'suggestions:suggestion_institution' %}" title="Institution" target="_self" tabindex="1">
+        {% include "component/suggestion_type_institution.html" %} Institution</a><br>
+</div>

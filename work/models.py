@@ -1,4 +1,3 @@
-import functools
 from typing import Iterable, Union
 
 from django.db import models
@@ -55,10 +54,7 @@ class CofkUnionWork(models.Model, RecordTracker):
                                            related_name='work')
     accession_code = models.CharField(max_length=1000, blank=True, null=True)
     work_to_be_deleted = models.SmallIntegerField(default=0)
-    iwork_id = models.IntegerField(
-        default=functools.partial(model_serv.next_seq_safe, SEQ_NAME_COFKUNIONWORK__IWORK_ID),
-        unique=True,
-    )
+    iwork_id = models.IntegerField(unique=True, )
     editors_notes = models.TextField(blank=True, null=True)
     edit_status = models.CharField(max_length=3, default='')
     relevant_to_cofk = models.CharField(max_length=3, default='Y')
@@ -127,6 +123,20 @@ class CofkUnionWork(models.Model, RecordTracker):
     @property
     def destination_location(self) -> Union['CofkUnionLocation', None]:
         return next(self.find_locations_by_rel_type(REL_TYPE_WAS_SENT_TO), None)
+
+    def __init__(self, *args, init_seq_id=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        if init_seq_id:
+            self.init_seq_id()
+
+    def init_seq_id(self):
+        if self.iwork_id is None:
+            self.iwork_id = model_serv.next_seq_safe(SEQ_NAME_COFKUNIONWORK__IWORK_ID)
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        self.init_seq_id()
+        super().save(force_insert, force_update, using, update_fields)
+
 
 
 class CofkWorkCommentMap(Recref):

@@ -256,6 +256,18 @@ class BasicSearchView(ListView):
         """
         return None
 
+    @property
+    def add_entry_url_permission(self) -> str | None:
+        """
+        Add button will be shown if the user has the permission to add entry
+
+        Returns
+        -------
+            url to add entry
+
+        """
+        return None
+
     def get_queryset(self):
         raise NotImplementedError('missing get_queryset')
 
@@ -347,6 +359,7 @@ class BasicSearchView(ListView):
 
         if self.add_entry_url:
             context['add_entry_url'] = self.add_entry_url
+            context['add_entry_url_permission'] = self.add_entry_url_permission
 
         return context
 

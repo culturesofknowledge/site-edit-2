@@ -1,0 +1,25 @@
+{% extends "core/emlo_logined.html" %}
+{% load cl_filters %}
+{% block content %}
+
+
+
+<table class="suggestion" rules="cols">
+  <thead>
+    <tr>
+        <th colspan="2">
+            <h1> Suggestion ID: {{ record.suggestion_id}} </h1>
+            {% include "component/suggestion_buttons.html" with record=record %}
+        </th>
+    </tr>
+  </thead>
+  <tbody>
+    {% include "component/record_info_body.html" %}
+  </tbody>
+</table>
+    <br/>
+<div>
+  <a href="{% url 'suggestions:suggestion_all' %}" class="btn btn-secondary">Back to Suggestions</a>
+</div>
+
+{% endblock %}

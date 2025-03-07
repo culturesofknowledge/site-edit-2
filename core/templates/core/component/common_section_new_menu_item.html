@@ -1,0 +1,7 @@
+{% load cl_filters %}
+
+    {% if save_perm|can_show_for_perm:perms %}
+        <a href='{% url url_name %}'>
+            <li>{{ section_name }}</li>
+        </a>
+    {% endif %}

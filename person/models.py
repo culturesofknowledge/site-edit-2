@@ -1,5 +1,3 @@
-import functools
-
 from django.db import models
 from django.utils.safestring import mark_safe
 
@@ -37,10 +35,7 @@ class CofkUnionPerson(models.Model, RecordTracker):
     date_of_death_approx = models.SmallIntegerField(default=0)
     gender = models.CharField(max_length=1)
     is_organisation = models.CharField(max_length=1)
-    iperson_id = models.IntegerField(
-        default=functools.partial(model_serv.next_seq_safe, SEQ_NAME_COFKUNIONPERSION__IPERSON_ID),
-        unique=True,
-    )
+    iperson_id = models.IntegerField(unique=True, )
     creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
     change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
@@ -135,6 +130,19 @@ class CofkUnionPerson(models.Model, RecordTracker):
             ('export_file', 'Export csv/excel from search results'),
         ]
 
+    def __init__(self, *args, init_seq_id=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        if init_seq_id:
+            self.init_seq_id()
+
+    def init_seq_id(self):
+        if self.iperson_id is None:
+            self.iperson_id = model_serv.next_seq_safe(SEQ_NAME_COFKUNIONPERSION__IPERSON_ID)
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        self.init_seq_id()
+        super().save(force_insert, force_update, using, update_fields)
+
 
 class CofkPersonLocationMap(Recref):
     person = models.ForeignKey(CofkUnionPerson, on_delete=models.CASCADE)
@@ -209,5 +217,3 @@ class CofkPersonRoleMap(Recref):
 
 def create_person_id(iperson_id) -> str:
     return f'cofk_union_person-iperson_id:{iperson_id}'
-
-

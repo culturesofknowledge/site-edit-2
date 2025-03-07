@@ -1,0 +1,9 @@
+{% extends "core/component/search_fieldset/fieldset.html" %}
+
+{% block fields %}
+
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.code field_lookup=form.code_lookup %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.name field_lookup=form.name_lookup %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.status field_lookup=form.status_lookup %}
+
+{% endblock %}
