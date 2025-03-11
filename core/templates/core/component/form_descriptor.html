@@ -2,6 +2,10 @@
     <div class="form-descriptor">
         <div class="desc-name">
             <h3> {{ descriptor.model_name }}: {{ descriptor.name }}</h3>
+            <hr>
+            {% include "core/component/actionbox_form.html" with save_perm=constant.PM_CHANGE_WORK %}
+            {% include "core/component/close_if_save_success.html" with is_save_success=is_save_success %}
+            <hr>
         </div>
     </div>
     <div class="margin-bottom sub-form-desc">

@@ -1,7 +1,7 @@
 <!-- remember import recref_service.js -->
 
 {% with fid=id_field.id_for_label %}
-    <div class="margin-bottom recref_main" recref_type="{{ recref_type }}">
+    <div class="multi_rel_recref_container margin-bottom" recref_type="{{ recref_type }}">
         <label>{{ label }}</label>
         <div>
             <input id="{{ fid }}_name" type="text" class="recref_text" readonly

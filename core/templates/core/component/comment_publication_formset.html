@@ -4,19 +4,17 @@
 {{ comment_formset.management_form }}
 
 {% with header_id=header_id|default:'header_comment' %}
-    <fieldset>
-        <legend
-                id="{{ header_id }}"
-                class="{{ header_class|default:'toc-item' }}"
-        >
-            {% if comment_title %}
+    <div id="{{ header_id }}" class="header {{ header_class|default:'toc-item' }}">
+        <h2>{% if comment_title %}
                 {{ comment_title }}
             {% else %}
                 Notes
-            {% endif %}
-        </legend>
+            {% endif %}</h2>
+    </div>
+    <fieldset>
+
         {% for form in comment_formset|reverse_list %}
-            <div class="form-note-root">
+            <div class="multi_rel_recref_container">
                 <label id="{{ header_id }}_{{ forloop.counter0 }}" class="toc-sub-item">
                     {% if forloop.first %}
                         New note
@@ -29,8 +27,8 @@
 
                 {% include "core/component/common_delete_checkbox.html" with show_cond=form.comment_id.value field=form.is_delete %}
                 {{ form.record_tracker_label }}
-                <div class="ref-publication-row" textbox_id="{{ form.comment.id_for_label }}"></div>
             </div>
+            <div class="ref-publication-row multi_rel_recref_container" textbox_id="{{ form.comment.id_for_label }}"></div>
         {% endfor %}
     </fieldset>
 {% endwith %}

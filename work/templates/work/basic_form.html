@@ -29,7 +29,9 @@
                 {% csrf_token %}
                 {% include "core/component/form_descriptor.html" with descriptor=form_descriptor %}
 
+                <div class="multi_rel_recref_container">
                 <label>Original catalogue:</label>
+                <div>
                 {% if common_work_form %}
                     <div class="catalogue-div">
                         {% include "core/component/selectfilter.html" with select_field=common_work_form.catalogue  datalist_field=common_work_form.catalogue_list %}
@@ -37,6 +39,8 @@
 
                     {% include "core/component/common_checkbox.html" with field=common_work_form.work_to_be_deleted name='Work marked for deletion' is_normal_size=True %}
                 {% endif %}
+                </div>
+                </div>
 
                 <div class="row-no-margin">
                     {% include "work/component/tab_link.html" with name='Correspondents' vname='work:corr_form' iwork_id=iwork_id %}
@@ -60,9 +64,6 @@
                     {% endblock %}
                 </div>
 
-
-                {% include "core/component/actionbox_form.html" with save_perm=constant.PM_CHANGE_WORK %}
-                {% include "core/component/close_if_save_success.html" with is_save_success=is_save_success %}
 
             </form>
 

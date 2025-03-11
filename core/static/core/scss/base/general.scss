@@ -164,7 +164,7 @@ input[readonly] {
 
 label {
   display: inline-block;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.045em;
 }
 
@@ -210,7 +210,7 @@ input[type="radio"] {
     line-height: 1;
   }
 
-  + label::after {
+  + label::before {
     content: '\a0';
     display: inline-block;
     margin: 0 $space-xxs 0 0;
@@ -222,13 +222,14 @@ input[type="radio"] {
     margin-left: $space-xxs;
     position: relative;
     top: 4px;
-  }
-
-  + label.control::after {
-    all: unset;
+    vertical-align: middle;
   }
 
   + label.control::before {
+    all: unset;
+  }
+
+  + label.control::after {
     content: '\a0';
     display: inline-block;
     margin: 0 $space-xxs 0 0;
@@ -240,23 +241,24 @@ input[type="radio"] {
     margin-left: $space-xxs;
     position: relative;
     top: 4px;
+    vertical-align: middle;
   }
 
   &:checked + label {
     color: $midnight;
 
-    &::after {
+    &::before {
       content: '\a0';
       background: $midnight;
       border: 1px solid $white;
       box-shadow: inset 0 0 0 1px $white, 0 0 0 1px $midnight;
     }
 
-    &.control::after {
+    &.control::before {
       all: unset;
     }
 
-    &.control::before {
+    &.control::after {
       content: '\a0';
       background: $midnight;
       border: 1px solid $white;

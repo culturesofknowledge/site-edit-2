@@ -250,6 +250,12 @@ class PlacesFFH(BasicWorkFFH):
         )
 
 
+    def create_context(self, is_save_success=False):
+        context : dict = super().create_context(is_save_success=is_save_success)
+        context.update({'work_category':'Places'})
+        return context
+
+
 class DatesFFH(BasicWorkFFH):
     def __init__(self, pk, *args, request_data=None, request=None, **kwargs):
         super().__init__(pk, 'work/dates_form.html', *args, request_data=request_data, request=request, **kwargs)
@@ -276,6 +282,10 @@ class DatesFFH(BasicWorkFFH):
         work = self.save_work(request, self.dates_form.instance)
         self.save_all_recref_formset(work, request)
 
+    def create_context(self, is_save_success=False):
+        context : dict = super().create_context(is_save_success=is_save_success)
+        context.update({'work_category':'Dates'})
+        return context
 
 class CorrFFH(BasicWorkFFH):
 
@@ -366,6 +376,12 @@ class CorrFFH(BasicWorkFFH):
         self.maintain_all_recref_records(request, work)
 
 
+    def create_context(self, is_save_success=False):
+        context : dict = super().create_context(is_save_success=is_save_success)
+        context.update({'work_category':'Correspondents'})
+        return context
+
+
 class ManifFFH(BasicWorkFFH):
     def load_data(self, iwork_id, *args,
                   manif_id=None, request_data=None, request=None, **kwargs):
@@ -453,6 +469,7 @@ class ManifFFH(BasicWorkFFH):
 
     def create_context(self, is_save_success=False):
         context = super().create_context(is_save_success=is_save_success)
+        context['work_category'] = 'Manifestation'
         if self.manif:
             context['manif_id'] = self.manif.manifestation_id
 
@@ -541,6 +558,10 @@ class ResourcesFFH(BasicWorkFFH):
         self.save_work(request, self.work)
         self.save_all_recref_formset(self.work, request)
 
+    def create_context(self, is_save_success=False):
+        context : dict = super().create_context(is_save_success=is_save_success)
+        context.update({'work_category':'Resources'})
+        return context
 
 class DetailsFFH(BasicWorkFFH):
     def __init__(self, pk, *args, request_data=None, request=None, **kwargs):
@@ -600,6 +621,7 @@ class DetailsFFH(BasicWorkFFH):
     def create_context(self, is_save_success=False):
         context: dict = super().create_context(is_save_success=is_save_success)
         context.update(self.subject_handler.create_context())
+        context['work_category'] = 'Other Details'
         return context
 
     def has_changed(self, request):
@@ -721,6 +743,7 @@ class ManifView(BasicWorkFormView):
         return redirect(url)
 
 
+
 class CorrView(BasicWorkFormView):
 
     @staticmethod
@@ -730,6 +753,7 @@ class CorrView(BasicWorkFormView):
     @property
     def cur_vname(self):
         return 'work:corr_form'
+
 
 
 class DatesView(BasicWorkFormView):
@@ -742,6 +766,7 @@ class DatesView(BasicWorkFormView):
         return 'work:dates_form'
 
 
+
 class PlacesView(BasicWorkFormView):
     @staticmethod
     def create_fhandler(request, *args, iwork_id=None, **kwargs):
@@ -750,6 +775,7 @@ class PlacesView(BasicWorkFormView):
     @property
     def cur_vname(self):
         return 'work:places_form'
+
 
 
 class ResourcesView(BasicWorkFormView):
@@ -762,6 +788,7 @@ class ResourcesView(BasicWorkFormView):
         return 'work:resources_form'
 
 
+
 class DetailsView(BasicWorkFormView):
 
     @staticmethod
@@ -771,6 +798,7 @@ class DetailsView(BasicWorkFormView):
     @property
     def cur_vname(self):
         return 'work:details_form'
+
 
 
 def get_overview_persons_names_by_rel_type(work: CofkUnionWork, rel_type):
@@ -904,6 +932,7 @@ def overview_view(request, iwork_id):
                                    work.work_to_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
         manif_set=list(map(to_overview_manif, work.manif_set.iterator())),
         original_calendar_display=date_serv.decode_calendar(work.original_calendar),
+        work_category='Overview'
     )
 
     context.update(WorkFormDescriptor(work).create_context())

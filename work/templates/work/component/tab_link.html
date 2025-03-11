@@ -1,4 +1,4 @@
-<a class="tab-link" href="{% if iwork_id %}
+<a class="tab-link {% if work_category == name %}active{% endif %}" href="{% if iwork_id %}
              {% url vname iwork_id %}
          {% else %}
              {% url vname %}
