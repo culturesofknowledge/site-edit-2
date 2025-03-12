@@ -116,6 +116,10 @@ tr.selectable_entry:not(.selected):hover {
   }
 }
 
+.button-row button {
+    margin-right: 8px;
+}
+
 .inline-from-to {
   display: flex;
   flex-wrap: wrap;
@@ -162,8 +166,8 @@ tr.selectable_entry:not(.selected):hover {
 }
 
 .row-no-margin {
-  @extend .row;
-  margin: 0;
+  display: flex;
+  border-bottom: 2px solid #ccc;
 }
 
 .row-date-fields {
@@ -194,7 +198,7 @@ tr.selectable_entry:not(.selected):hover {
 
 .multi_rel_recref_container {
   display: grid;
-  grid-template-columns: 35fr 65fr;
+  grid-template-columns: 25fr 75fr;
   grid-row-gap: 8px;
   width: 100%;
   font-size: $typescale-7;
@@ -205,6 +209,10 @@ tr.selectable_entry:not(.selected):hover {
     & > .name {
       font-size: $typescale-4;
     }
+  }
+
+  & > label, span{
+    font-size: 1.44em;
   }
 
 }
@@ -276,13 +284,13 @@ tr.selectable_entry:not(.selected):hover {
 
 .form-col-left {
   @extend .col;
-  max-width: 310px;
+  max-width: 25%;
 }
 
 .form-col-right {
   @extend .col;
   @extend .col--2of3;
-  min-width: 700px;
+  min-width: 75%;
 
   line-height: 1.4;
 
@@ -297,7 +305,7 @@ tr.selectable_entry:not(.selected):hover {
   .form-descriptor {
     position: -webkit-sticky;
     position: sticky;
-    top: 55px;
+    top: 100px;
     background-color: white;
     padding: 0.2em;
     z-index: 99;
@@ -370,15 +378,27 @@ tr.selectable_entry:not(.selected):hover {
 }
 
 .tab-link {
-  padding: $space-xs;
-  background-color: black;
-  color: white;
+  display: inline-block;
+  padding: 10px 20px;
+  text-decoration: none;
+  color: #555;
+  border: 1px solid transparent;
+  border-bottom: none;
+  margin-right: 5px;
+}
 
-  &:hover {
-    transition: 0.3s;
-    opacity: 0.8;
-    color: white;
-  }
+.tab-link:hover {
+  background-color: #f1f1f1;
+  color: #000;
+  cursor: pointer;
+}
+
+.tab-link.active {
+  font-weight: bold;
+  color: #000;
+  border: 1px solid #ccc;
+  border-bottom: 2px solid #868281;
+  background-color: #fff;
 }
 
 // for lang_section
@@ -489,3 +509,28 @@ table.suggestion tbody tr th {
 input.btn-text-width {
   padding: 0px 5px;
 }
+
+h2, h3 {
+  margin: 0;
+  font-size: 1.5em;
+  color: #333;
+}
+
+.multi-rel-recref-container {
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.info-message {
+    color: #555;
+    font-size: 0.9em;
+    background-color: #eef4ff;
+    padding: 10px;
+    border-left: 3px solid #007bff;
+}
+
+
+

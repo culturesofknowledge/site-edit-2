@@ -166,6 +166,7 @@ label {
   display: inline-block;
   font-weight: 500;
   letter-spacing: 0.045em;
+  font-size: 1.1em;
 }
 
 input, select, textarea {
@@ -192,12 +193,13 @@ input[type="submit"] {
 
 
 button {
-  padding: $space-xs $space-sm;
+  padding: calc(.5 * 1rem) calc(.75 * 1rem);
   cursor: pointer;
-  border: 1px solid $black;
-  background-color: $black;
-  color: $white;
-  font-family: $sans-serif;
+  border: 1px solid #24201e;
+  border-radius: calc(.25 * 1rem);
+  background-color: white;
+  color: black;
+  font-family: sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.045em;
 }
