@@ -743,7 +743,6 @@ class ManifView(BasicWorkFormView):
         return redirect(url)
 
 
-
 class CorrView(BasicWorkFormView):
 
     @staticmethod
@@ -753,7 +752,6 @@ class CorrView(BasicWorkFormView):
     @property
     def cur_vname(self):
         return 'work:corr_form'
-
 
 
 class DatesView(BasicWorkFormView):
@@ -766,7 +764,6 @@ class DatesView(BasicWorkFormView):
         return 'work:dates_form'
 
 
-
 class PlacesView(BasicWorkFormView):
     @staticmethod
     def create_fhandler(request, *args, iwork_id=None, **kwargs):
@@ -775,7 +772,6 @@ class PlacesView(BasicWorkFormView):
     @property
     def cur_vname(self):
         return 'work:places_form'
-
 
 
 class ResourcesView(BasicWorkFormView):
@@ -788,7 +784,6 @@ class ResourcesView(BasicWorkFormView):
         return 'work:resources_form'
 
 
-
 class DetailsView(BasicWorkFormView):
 
     @staticmethod
@@ -798,7 +793,6 @@ class DetailsView(BasicWorkFormView):
     @property
     def cur_vname(self):
         return 'work:details_form'
-
 
 
 def get_overview_persons_names_by_rel_type(work: CofkUnionWork, rel_type):
