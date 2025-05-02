@@ -5,6 +5,7 @@ from django.utils.safestring import mark_safe
 
 from core.helper import data_serv
 from core.helper.data_serv import link_pattern
+from core import constant
 from work import work_serv
 from work.models import CofkUnionWork
 from work.work_serv import DisplayableWork
@@ -68,3 +69,12 @@ def render_queryable_images(values: str):
         html += f'<a href="{img[1]}" target="_blank"><img src="{img[1]}" class="search_result_img"></a>'
 
     return mark_safe(html)
+
+@register.filter
+def format_group_name(group_name):
+    """Convert group name to display name"""
+    for role, display_name in constant.ROLE_DISPLAY_NAMES:
+        if group_name == role:
+            return display_name
+    return group_name
+

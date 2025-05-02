@@ -7,6 +7,7 @@
         <th>Username</th>
         <th>Email</th>
         <th>Name</th>
+        <th>User Roles</th>
         <th>Failed Logins</th>
         <th>Previous Login</th>
         <th>Login Time</th>
@@ -25,6 +26,12 @@
             </td>
             <td>{{ r.email }}</td>
             <td>{{ r.forename }} {{ r.surname }}</td>
+            <td>
+                {% for group in r.groups.all %}
+                    {{ group.name|format_group_name }}{% if not forloop.last %}<br>{% endif %}
+                {% endfor %}
+
+            </td>
             <td>{{ r.failed_logins }}</td>
             <td>{{ r.prev_login|default_if_none:'' }}</td>
             <td>{{ r.login_time|default_if_none:'' }}</td>
