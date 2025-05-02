@@ -52,8 +52,11 @@
                 {% url 'location:delete' loc_form.instance.location_id as del_url %}
                 {% include "core/component/del_confirm_fieldset.html" with del_url=del_url name='location' %}
 
+                <div class="bg-white sticky-bottom">
+                <hr>
                 {% include "core/component/actionbox_form.html" with save_perm=constant.PM_CHANGE_LOCATION %}
                 {% include "core/component/close_if_save_success.html" with is_save_success=is_save_success %}
+                </div>
 
             </form>
         </div>

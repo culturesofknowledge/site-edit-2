@@ -149,8 +149,10 @@
                 {% block more_section_content %}
                 {% endblock %}
 
-
+                <div class="bg-white sticky-bottom">
+                <hr>
                 {% include "core/component/actionbox_form.html" with save_perm=constant.PM_CHANGE_PERSON %}
+                </div>
 
             </form>
 
