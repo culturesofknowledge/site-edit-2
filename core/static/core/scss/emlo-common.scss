@@ -344,6 +344,7 @@ tr.selectable_entry:not(.selected):hover {
 
 
 .selectfilter-root {
+  position: relative;
 
   .sf-select {
     border: 1px solid;
@@ -353,6 +354,13 @@ tr.selectable_entry:not(.selected):hover {
 
   .sf-input {
     margin-bottom: 0;
+  }
+
+  .sf-search-div {
+      position: absolute;
+      width: 100%;
+      z-index: 1000;
+      background-color: white;
   }
 
   .sf-list {
