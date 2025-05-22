@@ -174,6 +174,7 @@ def upload_review(request, upload_id, **kwargs):
 
             return redirect(reverse('uploader:upload_list'))
         elif request.POST['action'] == 'reject':
+            context['action'] = 'reject'
             reject_works(context, upload, request)
 
     return render(request, template_url, context)

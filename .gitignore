@@ -16,6 +16,7 @@ dist/*
 .idea
 # vim swap files
 .*.swp
+.vscode
 
 # Unit test / coverage reports
 htmlcov/*
@@ -52,7 +53,7 @@ siteedit2/settings/local_test.py
 siteedit2/settings/gunweb.py
 # */migrations
 
-static/core/scss/
+static
 core/static/core/scss/main.css
 core/management/commands/playground.py
 upload/

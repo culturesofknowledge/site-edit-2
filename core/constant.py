@@ -100,9 +100,14 @@ PM_CHANGE_LOCATION = 'location.change_cofkunionlocation'
 PM_CHANGE_INST = 'institution.change_cofkunioninstitution'
 PM_CHANGE_ROLECAT = 'core.change_cofkunionrolecategory'
 PM_CHANGE_LOOKUPCAT = 'core.change_cofklookupcatalogue'
+PM_VIEW_LOOKUPCAT = 'core.view_cofklookupcatalogue'
 PM_CHANGE_SUBJECT = 'core.change_cofkunionsubject'
 PM_CHANGE_ORGTYPE = 'core.change_cofkunionorgtype'
 PM_CHANGE_COLLECTWORK = 'uploader.change_cofkcollectwork'
+PM_CHANGE_LANGUAGE = 'core.change_iso639languagecode'
+PM_CHANGE_SUGGESTIONS = 'suggestions.change_cofksuggestions'
+PM_VIEW_SUGGESTIONS = 'suggestions.view_cofksuggestions'
+PM_ADD_SUGGESTIONS = 'suggestions.add_cofksuggestions'
 
 PM_CHANGE_USER = 'login.change_cofkuser'
 PM_CHANGE_COMMENT = 'core.change_cofkunioncomment'
@@ -116,12 +121,23 @@ PM_EXPORT_FILE_INST = 'institution.export_file'
 
 PM_TRIGGER_EXPORTER = 'core.trigger_exporter'
 
-ROLE_REVIEWER = 'reviewer'
 ROLE_VIEWER = 'cofkviewer'
 ROLE_EDITOR = 'cofkeditor'
 ROLE_SUPER = 'super'
+ROLE_CONTRIBUTING_EDITOR = 'contributing_editor'
+
+ROLE_DISPLAY_NAMES = [
+    (ROLE_EDITOR, 'Can edit Union and Bodleian card index catalgoues'),
+    (ROLE_CONTRIBUTING_EDITOR, 'Contributing Editor'),
+    (ROLE_VIEWER, 'Read-only access'),
+    (ROLE_SUPER, 'Supervisor'),
+]
+
 
 # Audit
 CHANGE_TYPE_NEW = 'New'
 CHANGE_TYPE_CHANGE = 'Chg'
 CHANGE_TYPE_DELETE = 'Del'
+
+# Cache Ids
+CACHE_GROUP_MAP_ID = 'group_name_id_map'

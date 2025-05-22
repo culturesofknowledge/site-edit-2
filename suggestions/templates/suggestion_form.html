@@ -1,0 +1,20 @@
+{% extends "core/emlo_logined.html" %}
+{% load cl_filters %}
+{% block content %}
+
+{% include "core/component/alert.html" %}
+
+{% if request.resolver_match.url_name == "suggestion_edit" %}
+  <h1> Editing suggestion type {{ sug_inst.suggestion_type }}, id={{ sug_inst.suggestion_id }}: </h1>
+{% else %}
+  <h1> Suggest a new {{ sug_inst.suggestion_type }}: </h1>
+{% endif %}
+
+<form action="" method="post"> 
+  {% csrf_token %}
+  {{ form }}  
+  <input type="submit" value="Submit", name="submit" class="btn btn-primary"> 
+</form>
+<a href="{% url 'suggestions:suggestion_all' %}" class="btn btn-secondary">Cancel</a>
+
+{% endblock %}

@@ -102,7 +102,11 @@
                 {{ r.other_details }}
             </td>
             <td>
-                {% include 'core/component/search_table_layout/link_record.html' with id=r.iwork_id view='work:full_form' %}
+                {% if user_is_editor_or_supervisor or r.is_owner_of_catalogue %}
+                    {% include 'core/component/search_table_layout/link_record.html' with id=r.iwork_id view='work:full_form' %}
+                {% else %}
+                    {{ r.iwork_id }}
+                {% endif %}
             </td>
             <td>
                 {{ r.change_timestamp|date:"d M Y H:i" }} by {{ r.change_user }}<br/>

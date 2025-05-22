@@ -1,0 +1,11 @@
+<div class="button-row margin-right" >
+    <h5 class="padding-right"> Suggestion filters </h5>
+    <form method="GET" action="{% url 'suggestions:suggestion_all' %}" id="f_filter">
+        {% for field in form %}
+            <input type="checkbox" name={{field.name}} value=True class="checkbox"
+            id=id1_{{field.name}} {% if field.value %} checked {% endif %} />
+            <label for=id1_{{field.name}}>{{field.label}}</label>
+        {% endfor %}
+        <input class="btn-text-width inline_btn" type="submit" class=""margin-left btn" type="text"/>
+    </form>
+</div>

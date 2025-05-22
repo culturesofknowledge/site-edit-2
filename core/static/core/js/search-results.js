@@ -1,4 +1,10 @@
-if (localStorage.getItem('fieldset-toggle') === 'false') {
+
+let num_records = $('#num_records').val();
+
+// If there are records and the fieldset has been toggled to be closed, keep it closed.
+// otherwise, if there are no results, we have to show the search bar to allow the user to search again.
+
+if (num_records > 0 && localStorage.getItem('fieldset-toggle') === 'false') {
     $('#query-fieldset').toggle();
     $('#query-result').toggleClass('col--3of4');
 }

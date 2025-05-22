@@ -4,7 +4,7 @@ from typing import Callable, Iterable, Type, Any, NoReturn, TYPE_CHECKING
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.db import models
+from django.db import models, transaction
 from django.db.models import F, Q, OuterRef
 from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual, Exact, Lookup
 from django.forms import BaseForm
@@ -37,7 +37,9 @@ from person.recref_adapter import PersonCommentRecrefAdapter, PersonResourceRecr
     ActivePersonRecrefAdapter, PassivePersonRecrefAdapter, PersonImageRecrefAdapter, PersonLocRecrefAdapter
 from person.subqueries import create_sql_count_work_by_person
 from person.view_components import PersonFormDescriptor
+from person.person_suggestion import PersonSuggestion
 from work.forms import AuthorRelationChoices, AddresseeRelationChoices
+from suggestions import views as sug_view
 
 if TYPE_CHECKING:
     from core.helper.view_serv import MergeChoiceContext
@@ -60,6 +62,9 @@ class PersonInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitForm
         } | create_context_is_org_form(form.initial.get('is_organisation')))
 
     def resp_after_saved(self, request, form, new_instance):
+        suggestion_id = request.GET.get('from_suggestion', None)
+        if suggestion_id:
+            sug_view.save_with_related_info(suggestion_id, new_instance.iperson_id)
         return redirect('person:full_form', new_instance.iperson_id)
 
     @property
@@ -67,16 +72,24 @@ class PersonInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitForm
         return PersonForm
 
     def on_form_changed(self, request, form) -> NoReturn:
-        form.instance.person_id = create_person_id(form.instance.iperson_id)
+        with transaction.atomic():
+            # Save first to get iperson_id
+            instance = form.save(commit=False)
+            instance.init_seq_id()
+            instance.person_id = create_person_id(instance.iperson_id)
+            form.instance = instance
         return super().on_form_changed(request, form)
 
     def get(self, request, *args, **kwargs):
         is_org_form = request and request.GET.get('person_form_type') == 'org'
+        initial = {}
         if is_org_form:
-            initial = {'is_organisation': TRUE_CHAR, }
-        else:
-            initial = {}
-
+            initial['is_organisation'] = TRUE_CHAR
+        if request and request.GET.get('from_suggestion', ''):
+            from_suggestion = request.GET.get('from_suggestion')
+            sug_values = PersonSuggestion(from_suggestion).initial_form_values()
+            if sug_values:
+                initial.update(sug_values)
         form = self.form_factory(initial=initial)
         return self.resp_form_page(request, form)
 
@@ -124,7 +137,7 @@ class PersonFFH(FullFormHandler):
                 | self.death_loc_handler.create_init_dict(self.person)
         )
         self.person_form = PersonForm(request_data or None, instance=self.person, initial=initial_dict)
-        self.person_form.base_fields['organisation_type'].reload_choices()
+        self.person_form.fields['organisation_type'].reload_choices()
 
         self.org_handler = MultiRecrefAdapterHandler(
             request_data, name='organisation',

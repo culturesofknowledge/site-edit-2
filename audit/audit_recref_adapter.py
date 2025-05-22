@@ -67,6 +67,10 @@ class WorkAuditAdapter(AuditRecrefAdapter):
 
 
 class ManifAuditAdapter(AuditRecrefAdapter):
+
+    def key_value_integer(self):
+        return None
+
     def key_decode(self, is_expand_details=False):
         self.instance: CofkUnionManifestation
 

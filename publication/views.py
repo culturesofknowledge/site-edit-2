@@ -14,6 +14,8 @@ from core.helper.renderer_serv import RendererFactory
 from core.helper.view_serv import CommonInitFormViewTemplate, DefaultSearchView, DeleteConfirmView
 from publication.forms import PublicationForm, GeneralSearchFieldset
 from publication.models import CofkUnionPublication
+from publication.publication_suggestion import PublicationSuggestion
+from suggestions import views as sug_view
 
 
 class PubSearchView(LoginRequiredMixin, DefaultSearchView):
@@ -73,12 +75,27 @@ class PubInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitFormVie
         return render(request, 'publication/init_form.html', {'pub_form': form})
 
     def resp_after_saved(self, request, form, new_instance):
+        suggestion_id = request.GET.get('from_suggestion', None)
+        if suggestion_id:
+            sug_view.save_with_related_info(suggestion_id, new_instance.publication_id)
         return redirect('publication:search')
 
     @property
     def form_factory(self) -> Callable[..., ModelForm]:
         return PublicationForm
 
+    def get(self, request, *args, **kwargs):
+        is_org_form = request and request.GET.get('publication_form_type') == 'org'
+        initial = {}
+        if is_org_form:
+            initial['is_organisation'] = TRUE_CHAR
+        if request and request.GET.get('from_suggestion', ''):
+            from_suggestion = request.GET.get('from_suggestion')
+            sug_values = PublicationSuggestion(from_suggestion).initial_form_values()
+            if sug_values:
+                initial.update(sug_values)
+        form = self.form_factory(initial=initial)
+        return self.resp_form_page(request, form)
 
 @login_required
 def full_form(request, pk):

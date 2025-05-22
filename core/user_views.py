@@ -20,7 +20,7 @@ class UserFormDescriptor(FormDescriptor):
 
     @property
     def name(self):
-        return f'{self.obj.surname} {self.obj.forename}'
+        return f'{self.obj}'
 
     @property
     def model_name(self):
@@ -83,11 +83,15 @@ class UserSearchView(LoginRequiredMixin, DefaultSearchView):
     def add_entry_url(self) -> str | None:
         return reverse('user:init_form')
 
+    @property
+    def add_entry_url_permission(self) -> str | None:
+        return constant.PM_CHANGE_USER
+
     def get_queryset(self):
         model_class = CofkUser
         request_data = self.request_data.dict()
         if not request_data:
-            return model_class.objects.none()
+            return model_class.objects.all()
 
         queries = []
         queries.extend(
@@ -100,7 +104,7 @@ class UserSearchView(LoginRequiredMixin, DefaultSearchView):
         queryset = model_class.objects.filter()
         queryset = query_serv.update_queryset(queryset, model_class, queries=queries,
                                               sort_by=self.get_sort_by())
-        return queryset
+        return queryset.prefetch_related('groups')
 
     @property
     def table_search_results_renderer_factory(self) -> RendererFactory:

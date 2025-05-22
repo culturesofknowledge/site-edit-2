@@ -26,5 +26,8 @@ class CofkUser(AbstractBaseUser, PermissionsMixin):
     def has_saved_queries(self):
         return CofkUserSavedQuery.objects.filter(username=self.username).exists()
 
+    def __str__(self):
+        return f"{self.forename} {self.surname}"
+
     class Meta:
         db_table = 'cofk_user'

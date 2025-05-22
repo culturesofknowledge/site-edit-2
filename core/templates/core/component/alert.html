@@ -1,0 +1,28 @@
+<script>
+  $( window ).on( "load", function() {
+    var close = document.getElementsByClassName('closebtn');
+    var i;
+    for (i = 0; i < close.length; i++) {
+      close[i].onclick = function(){
+        var div = this.parentElement;
+        div.style.opacity = "0";
+        setTimeout(function(){ div.style.display = "none"; }, 600);
+      }
+    }
+  });
+</script>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert success">
+            <span class="closebtn">&times;</span>
+            <strong>Success! </strong>{{message}}
+        </div>
+    {% endfor %}
+{% endif %}
+{% if message %}
+    <div class="alert success">
+        <span class="closebtn">&times;</span>
+        <strong>Success! </strong>{{message}}
+    </div>
+{% endif %}
