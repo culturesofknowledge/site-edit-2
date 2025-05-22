@@ -104,7 +104,7 @@ class UserSearchView(LoginRequiredMixin, DefaultSearchView):
         queryset = model_class.objects.filter()
         queryset = query_serv.update_queryset(queryset, model_class, queries=queries,
                                               sort_by=self.get_sort_by())
-        return queryset
+        return queryset.prefetch_related('groups')
 
     @property
     def table_search_results_renderer_factory(self) -> RendererFactory:

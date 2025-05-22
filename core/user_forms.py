@@ -33,12 +33,7 @@ class UserForm(ModelForm):
         self.fields['groups'].widget = widgets_serv.EmloCheckboxSelectMultiple()
         self.fields['groups'].choices = (
             (group_name_id_map[name], label)
-            for name, label in [
-            (constant.ROLE_EDITOR, 'Can edit Union and Bodleian card index catalgoues'),
-            (constant.ROLE_CONTRIBUTING_EDITOR, 'Contributing Editor'),
-            (constant.ROLE_VIEWER, 'Read-only access'),
-            (constant.ROLE_SUPER, '*Supervisor*'),
-        ])
+            for name, label in constant.ROLE_DISPLAY_NAMES)
 
 
 class UserSearchFieldset(BasicSearchFieldset):
