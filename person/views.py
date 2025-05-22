@@ -4,7 +4,7 @@ from typing import Callable, Iterable, Type, Any, NoReturn, TYPE_CHECKING
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.db import models
+from django.db import models, transaction
 from django.db.models import F, Q, OuterRef
 from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual, Exact, Lookup
 from django.forms import BaseForm
@@ -72,7 +72,12 @@ class PersonInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitForm
         return PersonForm
 
     def on_form_changed(self, request, form) -> NoReturn:
-        form.instance.person_id = create_person_id(form.instance.iperson_id)
+        with transaction.atomic():
+            # Save first to get iperson_id
+            instance = form.save(commit=False)
+            instance.init_seq_id()
+            instance.person_id = create_person_id(instance.iperson_id)
+            form.instance = instance
         return super().on_form_changed(request, form)
 
     def get(self, request, *args, **kwargs):
