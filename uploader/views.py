@@ -1,7 +1,5 @@
 import logging
-import os
 import re
-from pathlib import Path
 from typing import Iterable
 
 from django.conf import settings
@@ -22,7 +20,7 @@ from core.form_label_maps import field_label_map
 from core.helper.query_serv import create_from_to_datetime, create_queries_by_field_fn_maps, \
     create_queries_by_lookup_field
 from core.helper.renderer_serv import create_table_search_results_renderer, RendererFactory
-from core.helper.uploader_serv import handle_upload
+from core.helper.uploader_serv import handle_upload, file_path_and_size
 from core.helper.view_serv import DefaultSearchView
 from core.models import CofkLookupCatalogue, CofkLookupDocumentType
 from uploader.forms import CofkCollectUploadForm, GeneralSearchFieldset
@@ -87,8 +85,7 @@ class AddUploadView(TemplateView):
             size = 0
 
             try:
-                file_path = Path(settings.MEDIA_ROOT).joinpath(upload.upload_file.name).as_posix()
-                size = os.path.getsize(file_path) >> 10
+                file_path, size = file_path_and_size(upload)
             except FileNotFoundError:
                 kwargs['report']['errors'] = "File not found"
                 return self.get(self, request, *args, **kwargs)
