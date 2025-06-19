@@ -10,6 +10,7 @@ class CofkUnionLocation(models.Model, RecordTracker):
     location_name = models.CharField(max_length=500)
     latitude = models.CharField(max_length=20, blank=True, null=True)
     longitude = models.CharField(max_length=20, blank=True, null=True)
+    is_tombstone = models.BooleanField(default=False, help_text="Mark as tombstone instead of deleting")
     creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     creation_user = models.CharField(max_length=50)
     change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)

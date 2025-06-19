@@ -11,6 +11,7 @@ class CofkUnionInstitution(models.Model, RecordTracker):
     institution_synonyms = models.TextField(blank=True, null=False, default='')
     institution_city = models.TextField()
     institution_city_synonyms = models.TextField(blank=True, null=False, default='')
+    is_tombstone = models.BooleanField(default=False, help_text="Mark as tombstone instead of deleting")
     institution_country = models.TextField()
     institution_country_synonyms = models.TextField(blank=True, null=False, default='')
     creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)

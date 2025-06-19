@@ -20,6 +20,7 @@
         <th>6. E.g. country</th>
         <th>7. E.g. empire</th>
         <th>Images</th>
+        <th>Tombstone</th>
         <th>Last edit</th>
     </tr>
     </thead>
@@ -87,6 +88,13 @@
             <td> {{ r.element_6_eg_country }} </td>
             <td> {{ r.element_7_eg_empire }} </td>
             <td></td>
+            <td>
+                {% if r.is_tombstone %}
+                    <span class="tombstone-marker">Yes</span>
+                {% else %}
+                    No
+                {% endif %}
+            </td>
             <td>
                 {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r %}
             </td>

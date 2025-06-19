@@ -273,8 +273,13 @@ class BasicSearchView(ListView):
 
     def create_queryset_by_queries(self, model_class: Type[models.Model],
                                    queries: Iterable[Q],
-                                   sort_by: str | None = None) -> 'QuerySet':
+                                   sort_by: str | None = None,
+                                   include_tombstone: bool = False) -> 'QuerySet':
         queryset = model_class.objects.all()
+
+        # Filter tombstone records unless specifically requested
+        if not include_tombstone and hasattr(model_class, 'is_tombstone'):
+            queryset = queryset.filter(Q(is_tombstone=False) | Q(is_tombstone__isnull=True))
 
         if queries:
             queryset = queryset.filter(query_utils.all_queries_match(queries))
@@ -734,6 +739,11 @@ def find_related_collect_field(target_model_class: Type[ModelLike]) -> Iterable[
 
 
 class MergeConfirmViews(View):
+    """Confirm view for merging records. 
+
+    When confirmed, the merge process will combine all data from the selected records into the target record.
+    The duplicate records will be marked as tombstones instead of being deleted.
+    """
 
     @property
     def target_model_class(self) -> Type[ModelLike]:
@@ -793,10 +803,13 @@ class MergeActionViews(View):
             ))
             outdated_records.update(**{foreign_field.attname: new_id})
 
-        # remove other_models
+        # mark other_models as tombstones
         for m in other_models:
-            log.info(f'remove [{m.__class__.__name__}] pk[{m.pk}]')
-            m.delete()
+            log.info(f'marking [{m.__class__.__name__}] pk[{m.pk}] as tombstone')
+            m.is_tombstone = True
+            if username:
+                m.update_current_user_timestamp(username)
+            m.save()
 
         return recref_list
 

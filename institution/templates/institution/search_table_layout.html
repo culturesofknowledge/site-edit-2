@@ -12,6 +12,7 @@
         <th>Related resources</th>
         <th>Editors' notes</th>
         <th>Images</th>
+        <th>Tombstone</th>
         <th>Change timestamp</th>
     </tr>
     </thead>
@@ -56,6 +57,13 @@
             </td>
             <td>
                 {% include "core/component/search_table_layout/img_result.html" with images=r.images %}
+            </td>
+            <td>
+                {% if r.is_tombstone %}
+                    <span class="tombstone-marker">Yes</span>
+                {% else %}
+                    No
+                {% endif %}
             </td>
             <td>
                 {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r %}

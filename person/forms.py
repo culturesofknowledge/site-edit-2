@@ -314,6 +314,9 @@ class GeneralSearchFieldset(BasicSearchFieldset):
                                 help_text='The unique ID for the record within this database.')
     iperson_id_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
+    include_tombstone = YesEmptyCheckboxField(label='Include tombstone records',
+                                           help_text='Check to include records marked as tombstones in search results.')
+
 
 class PersonOtherRelationChoices(TextChoices):
     UNSPECIFIED_RELATIONSHIP_WITH = constant.REL_TYPE_UNSPECIFIED_RELATIONSHIP_WITH, 'Unspecified relationship'
