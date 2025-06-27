@@ -404,7 +404,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         )
 
         # Check if tombstone records should be included
-        include_tombstone = request_data.get('include_tombstone') == 'on'
+        include_tombstone = request_data.get('include_tombstone') in ['on', 'Y']
 
         return create_queryset_by_queries(SearchResultPerson, queries, sort_by=sort_by, include_tombstone=include_tombstone)
 
