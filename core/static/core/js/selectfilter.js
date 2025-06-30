@@ -1,4 +1,25 @@
 var emlojs = emlojs || {};
+
+document.addEventListener('DOMContentLoaded', function() {
+    // add the document-wide click handler
+    document.addEventListener('click', function(event) {
+        const selectfilterRoots = document.querySelectorAll('.selectfilter-root');
+
+        selectfilterRoots.forEach(root => {
+            const searchDiv = root.querySelector('.sf-search-div');
+            if (!root.contains(event.target)) {
+                searchDiv.style.display = 'none';
+            }
+        });
+    });
+
+    document.querySelectorAll('.sf-select').forEach(select => {
+        select.addEventListener('click', function(e) {
+            e.stopPropagation(); // prevent event bubbling
+        });
+    });
+});
+
 emlojs.selectfilter_service = {
 
     find_root_ele: function (ele) {

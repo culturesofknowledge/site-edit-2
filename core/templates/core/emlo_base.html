@@ -20,10 +20,17 @@
 </head>
 <body>
 
-<header class="bg-midnight sticky page-header">
-    <div class="col">
-        {% block header %}
-        {% endblock %}
+<header class="bg-midnight sticky page-header site-header">
+    <div class="header-container">
+        <div class="brand-logo">
+            <a href="/">
+                <img src="/static/core/img/cofk_logo_inverted.png" id="logo" alt="Logo">
+            </a>
+        </div>
+        <div class="col_header">
+            {% block header %}
+            {% endblock %}
+        </div>
     </div>
 </header>
 
