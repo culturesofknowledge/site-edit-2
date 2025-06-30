@@ -15,8 +15,7 @@ $(() => {
     $('.ref-publication-row').each((idx, e)=>{
         let target_div = $(e)
         target_div.append( $('<span>Refer publication:</span>') )
-        target_div.append( $('<button class="btn inline_btn create_pub"> Create</button>') )
-        target_div.append( $('<button class="btn inline_btn copy_pub"> Copy</button>') )
+        target_div.append( $('<div><button class="btn inline_btn create_pub"> Create</button><button class="btn inline_btn copy_pub"> Copy</button></div>') )
 
     });
     $('.create_pub').mousedown(create_fn_open_ref_pub('/publication/quick_init'));

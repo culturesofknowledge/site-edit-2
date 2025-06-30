@@ -15,3 +15,27 @@
 .page-header__heading {
   margin: 0;
 }
+
+.header-container {
+    display: flex;
+    gap: 15px;
+}
+
+.header {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    background-color: #f4f4f4;
+    padding: 10px;
+    border-left: 4px solid #868281;
+}
+
+.col_header {
+    flex: 0 1 auto;
+    padding: 0 1.5vw;
+    flex-basis: 100%;
+    max-width: 100%;
+}
+
+.site-header {
+    padding: 10px 20px;
+}

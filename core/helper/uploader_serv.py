@@ -1,6 +1,7 @@
 import logging
 import os
 import time
+from pathlib import Path
 from zipfile import BadZipFile
 
 from django.conf import settings
@@ -14,6 +15,18 @@ from uploader.spreadsheet import CofkUploadExcelFile
 from uploader.validation import CofkExcelFileError
 
 log = logging.getLogger(__name__)
+
+def file_path_and_size(upload: CofkCollectUpload) -> tuple[str, int]:
+    """
+    Returns the file path and size in kilobytes for the given upload.
+    Raises FileNotFoundError if the file does not exist.
+    """
+    file_path = Path(settings.MEDIA_ROOT).joinpath(upload.upload_file.name).as_posix()
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File {file_path} does not exist.")
+
+    size = os.path.getsize(file_path) >> 10  # Convert bytes to kilobytes
+    return file_path, size
 
 
 def handle_upload(upload: CofkCollectUpload, email_results: bool = False, file_name: str = None) -> dict:
@@ -36,11 +49,19 @@ def handle_upload(upload: CofkCollectUpload, email_results: bool = False, file_n
 
     log.info(f'User: {upload.upload_username} uploaded file: "{file}" ({upload})')
 
+    try:
+        file_path, size = file_path_and_size(upload)
+    except FileNotFoundError as fnfe:
+        report['total_errors'] = 1
+        report['errors'] = {'file': {'total': 1, 'error': [str(fnfe)]}}
+        log.error(fnfe)
+        return report
+
     cuef = None
     report = {
         'file': upload.upload_file.name,
         'time': upload.upload_timestamp,
-        'size': os.path.getsize(settings.MEDIA_ROOT + upload.upload_file.name) >> 10,
+        'size': size,
         'upload_id': upload.upload_id, }
 
     try:
