@@ -203,112 +203,69 @@ button {
   text-transform: uppercase;
   letter-spacing: 0.045em;
 }
+// Define reusable spacing variables
+$checkbox-size: 1rem;
+$checkbox-gap: 0.5rem;
+$border-color: #666;
+$checked-color: #000;
+$background-color: #fff;
 
-// Base styles for both checkbox and radio
+// Hide the native checkbox/radio
 input[type="checkbox"],
 input[type="radio"] {
   display: none;
 
   + label {
-    line-height: 1;
-    cursor: pointer;
-    user-select: none;
     display: inline-flex;
     align-items: center;
-    margin-bottom: $space-xs;
-  }
-
-  + label::before {
-    content: '';
-    display: inline-block;
-    margin: 0 $space-sm 0 0;
-    width: $space-sm;
-    height: $space-sm;
-    line-height: 1.25;
-    transition: all 0.25s ease;
-    border: 2px solid $black-85;
-    position: relative;
-    vertical-align: middle;
-    background-color: $white;
-  }
-
-  + label.control::before {
-    all: unset;
-  }
-
-  + label.control::after {
-    content: '';
-    display: inline-block;
-    margin: 0 $space-sm 0 0;
-    width: $space-sm;
-    height: $space-sm;
-    line-height: 1.25;
-    transition: all 0.25s ease;
-    border: 2px solid $black-85;
-    position: relative;
-    vertical-align: middle;
-    background-color: $white;
-  }
-
-  &:checked + label {
-    color: $black;
+    cursor: pointer;
+    user-select: none;
+    gap: $checkbox-gap; // 🟢 This adds space between box and label text
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
 
     &::before {
-      border-color: $black;
-    }
-
-    &.control::before {
-      all: unset;
-    }
-
-    &.control::after {
-      border-color: $black;
+      content: '';
+      display: inline-block;
+      width: $checkbox-size;
+      height: $checkbox-size;
+      border: 2px solid $border-color;
+      border-radius: 3px; // Square by default
+      background-color: $background-color;
+      transition: all 0.25s ease;
     }
   }
 
-  &:focus + label::before,
-  &:hover + label::before {
-    border-color: $black;
-  }
-}
-
-// Specific styles for checkbox
-input[type="checkbox"] {
-  + label::before,
-  + label.control::after {
-    border-radius: 3px;
-  }
-
-  &:checked + label::before,
-  &:checked + label.control::after {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24' stroke='black' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
-    background-size: 95%;
-    background-position: center;
+  &:checked + label::before {
+    background-color: $checked-color;
     background-repeat: no-repeat;
-    background-color: transparent;
-    box-shadow: none;
+    background-position: center;
+    background-size: 75%;
+  }
+
+  &:hover + label::before,
+  &:focus + label::before {
+    border-color: $checked-color;
   }
 }
 
-// Specific styles for radio button
+// 🟦 Checkbox specific style (square with checkmark)
+input[type="checkbox"] {
+  &:checked + label::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24' stroke='white' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+  }
+}
+
+// 🟠 Radio button style (circle with dot)
 input[type="radio"] {
-  + label::before,
-  + label.control::after {
+  + label::before {
     border-radius: 50%;
   }
 
-  &:checked + label::before,
-  &:checked + label.control::after {
-    background-image: none;
-    background-color: $black;
-    border-color: $black;
-    box-shadow: inset 0 0 0 2px $white;
+  &:checked + label::before {
+    background-color: $checked-color;
+    box-shadow: inset 0 0 0 4px $background-color;
   }
-}
-
-// Additional radio button label styling
-input[type="radio"] + label {
-  margin-right: $space-xs;
 }
 
 ::placeholder {
