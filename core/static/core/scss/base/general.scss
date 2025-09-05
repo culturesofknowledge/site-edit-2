@@ -203,79 +203,68 @@ button {
   text-transform: uppercase;
   letter-spacing: 0.045em;
 }
+// Define reusable spacing variables
+$checkbox-size: 1rem;
+$checkbox-gap: 0.5rem;
+$border-color: #666;
+$checked-color: #000;
+$background-color: #fff;
 
+// Hide the native checkbox/radio
 input[type="checkbox"],
 input[type="radio"] {
   display: none;
 
   + label {
-    line-height: 1;
-  }
-
-  + label::before {
-    content: '\a0';
-    display: inline-block;
-    margin: 0 $space-xxs 0 0;
-    width: $space-sm;
-    height: $space-sm;
-    line-height: 1.25;
-    transition: all 0.35s;
-    border: 1px solid $black;
-    margin-left: $space-xxs;
-    position: relative;
-    top: 4px;
-    vertical-align: middle;
-  }
-
-  + label.control::before {
-    all: unset;
-  }
-
-  + label.control::after {
-    content: '\a0';
-    display: inline-block;
-    margin: 0 $space-xxs 0 0;
-    width: $space-sm;
-    height: $space-sm;
-    line-height: 1.25;
-    transition: all 0.35s;
-    border: 1px solid $black;
-    margin-left: $space-xxs;
-    position: relative;
-    top: 4px;
-    vertical-align: middle;
-  }
-
-  &:checked + label {
-    color: $midnight;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    gap: $checkbox-gap; // 🟢 This adds space between box and label text
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
 
     &::before {
-      content: '\a0';
-      background: $midnight;
-      border: 1px solid $white;
-      box-shadow: inset 0 0 0 1px $white, 0 0 0 1px $midnight;
+      content: '';
+      display: inline-block;
+      width: $checkbox-size;
+      height: $checkbox-size;
+      border: 2px solid $border-color;
+      border-radius: 3px; // Square by default
+      background-color: $background-color;
+      transition: all 0.25s ease;
     }
+  }
 
-    &.control::before {
-      all: unset;
-    }
+  &:checked + label::before {
+    background-color: $checked-color;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 75%;
+  }
 
-    &.control::after {
-      content: '\a0';
-      background: $midnight;
-      border: 1px solid $white;
-      box-shadow: inset 0 0 0 1px $white, 0 0 0 1px $midnight;
-    }
-
+  &:hover + label::before,
+  &:focus + label::before {
+    border-color: $checked-color;
   }
 }
 
-input[type="radio"] + label {
-  display: inline-block;
-  margin: 0 $space-xs $space-xs 0;
+// 🟦 Checkbox specific style (square with checkmark)
+input[type="checkbox"] {
+  &:checked + label::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24' stroke='white' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+  }
+}
 
-  &::after {
+// 🟠 Radio button style (circle with dot)
+input[type="radio"] {
+  + label::before {
     border-radius: 50%;
+  }
+
+  &:checked + label::before {
+    background-color: $checked-color;
+    box-shadow: inset 0 0 0 4px $background-color;
   }
 }
 
