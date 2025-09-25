@@ -17,7 +17,10 @@
 
     <div id="user_messages">
         {% for to_user_msg in to_user_messages %}
-            <h1>{{ to_user_msg }}</h1>
+            <div class="alert info">
+                <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+                {{ to_user_msg }}
+            </div>
         {% endfor %}
     </div>
 
@@ -37,7 +40,10 @@
                     {{ query_fieldset }}
                 {% endfor %}
 
-                {% include "core/component/actionbox_search.html" %}
+                <div class="bg-white sticky-bottom">
+                <hr>
+                    {% include "core/component/actionbox_search.html" %}
+                </div>
             </aside>
         {% endif %}
 
