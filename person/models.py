@@ -12,6 +12,7 @@ class CofkUnionPerson(models.Model, RecordTracker):
     person_id = models.CharField(primary_key=True, max_length=100)
     foaf_name = models.CharField(max_length=200)
     skos_altlabel = models.TextField(blank=True, null=True)  # Synonyms
+    is_tombstone = models.BooleanField(default=False, help_text="Mark as tombstone instead of deleting")
 
     """
     'Other versions of name'

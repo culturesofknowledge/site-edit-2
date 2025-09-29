@@ -114,3 +114,6 @@ class GeneralSearchFieldset(form_serv.BasicSearchFieldset):
 
     images = SearchCharField()
     images_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
+
+    include_tombstone = form_serv.YesEmptyCheckboxField(label='Include tombstone records',
+                                           help_text='Check to include records marked as tombstones in search results.')

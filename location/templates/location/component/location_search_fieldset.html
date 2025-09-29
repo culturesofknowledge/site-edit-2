@@ -49,6 +49,9 @@
     <!-- Last changed by-->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.change_user field_lookup=form.change_user_lookup %}
 
+    <!-- Tombstone -->
+    {% include "core/component/search_fieldset/zero_one_checkbox.html" with field=form.include_tombstone %}
+
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.institution_id field_lookup=form.institution_id_lookup %}
 
 {% endblock %}
