@@ -65,16 +65,6 @@ def add_classes(value, arg):
     return value.as_widget(attrs={'class': ' '.join(css_classes)})
 
 
-@register.filter(name='add_attr')
-def add_attr(value, arg):
-    if not arg:
-        return value
-    attr_name, attr_value = arg.split('=')
-    attrs = value.field.widget.attrs.copy()
-    attrs[attr_name] = attr_value
-    return value.as_widget(attrs=attrs)
-
-
 @register.simple_tag
 def url_replace(request, field, value):
     d = request.GET.copy()

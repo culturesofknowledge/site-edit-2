@@ -402,11 +402,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
                 search_fields_fn_maps=search_field_fn_maps,
             )
         )
-
-        # Check if tombstone records should be included
-        include_tombstone = request_data.get('include_tombstone') in ['on', 'Y']
-
-        return create_queryset_by_queries(SearchResultPerson, queries, sort_by=sort_by, include_tombstone=include_tombstone)
+        return create_queryset_by_queries(SearchResultPerson, queries, sort_by=sort_by)
 
     @property
     def table_search_results_renderer_factory(self) -> RendererFactory:
@@ -459,7 +455,6 @@ class PersonCsvHeaderValues(HeaderValues):
             "Further reading",
             "Images",
             "Other details",
-            "Tombstone",
             "Change timestamp",
             "Change user",
         ]
@@ -483,7 +478,6 @@ class PersonCsvHeaderValues(HeaderValues):
             obj.further_reading,
             download_csv_serv.join_image_lines(obj.images.iterator()),
             obj.other_details_for_display(),
-            "Yes" if obj.is_tombstone else "No",
             cell_values.simple_datetime(obj.change_timestamp),
             obj.change_user,
         ]
@@ -588,13 +582,8 @@ def get_target_or_related_id(recref: CofkPersonPersonMap):
     return recref.related_id
 
 
-def create_queryset_by_queries(model_class: Type[models.Model], queries: Iterable[Q] = None, sort_by=None, include_tombstone=False):
+def create_queryset_by_queries(model_class: Type[models.Model], queries: Iterable[Q] = None, sort_by=None):
     queryset = model_class.objects
-
-    # Filter tombstone records unless specifically requested
-    if not include_tombstone and hasattr(model_class, 'is_tombstone'):
-        queryset = queryset.filter(Q(is_tombstone=False) | Q(is_tombstone__isnull=True))
-
     annotate = {
         'sent': create_sql_count_work_by_person(AuthorRelationChoices.values),
         'recd': create_sql_count_work_by_person(AddresseeRelationChoices.values),

@@ -39,13 +39,8 @@ FormOrFormSet = Union[BaseForm, BaseFormSet]
 
 
 def create_queryset_by_queries(model_class: Type[models.Model], queries: Iterable[Q],
-                               sort_by=None, include_tombstone=False):
+                               sort_by=None):
     queryset = model_class.objects
-
-    # Filter tombstone records unless specifically requested
-    if not include_tombstone and hasattr(model_class, 'is_tombstone'):
-        queryset = queryset.filter(Q(is_tombstone=False) | Q(is_tombstone__isnull=True))
-
     annotate = {
         'sent': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_FROM]),
         'recd': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_TO]),
@@ -275,10 +270,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
             query_serv.create_queries_by_lookup_field(request_data, self.search_fields, search_fields_maps)
         )
 
-        # Check if tombstone records should be included
-        include_tombstone = request_data.get('include_tombstone') == 'on'
-
-        return create_queryset_by_queries(DisplayableLocation, queries, sort_by=sort_by, include_tombstone=include_tombstone)
+        return create_queryset_by_queries(DisplayableLocation, queries, sort_by=sort_by)
 
     @property
     def entity(self) -> str:
@@ -337,7 +329,6 @@ class LocationCsvHeaderValues(HeaderValues):
             "Element 6 eg country",
             "Element 7 eg empire",
             "Images",
-            "Tombstone",
             "Change user",
             "Change timestamp",
         ]
@@ -363,7 +354,6 @@ class LocationCsvHeaderValues(HeaderValues):
             obj.element_6_eg_country,
             obj.element_7_eg_empire,
             download_csv_serv.join_image_lines(obj.images.iterator()),
-            "Yes" if obj.is_tombstone else "No",
             obj.change_user,
             cell_values.simple_datetime(obj.change_timestamp),
         )

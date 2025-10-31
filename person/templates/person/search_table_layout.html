@@ -20,7 +20,6 @@
         <col>
         <col>
         <col>
-        <col>
     </colgroup>
     <thead>
     <tr></tr>
@@ -41,7 +40,6 @@
         <th>Further reading</th>
         <th>Images</th>
         <th>Other details</th>
-        <th>Tombstone</th>
         <th>Last edited by</th>
     </tr>
     </thead>
@@ -134,13 +132,6 @@
 
             <td>
                 {{ r.other_details_for_display|linebreaksbr|render_display_link }}
-            </td>
-            <td>
-                {% if r.is_tombstone %}
-                    <span class="tombstone-marker">Yes</span>
-                {% else %}
-                    No
-                {% endif %}
             </td>
             <td>
                 {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r %}

@@ -97,11 +97,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
         queries.extend(
             query_serv.create_queries_by_lookup_field(request_data, self.search_fields, self.search_field_combines)
         )
-
-        # Check if tombstone records should be included
-        include_tombstone = request_data.get('include_tombstone') == 'on'
-
-        return self.create_queryset_by_queries(CofkUnionInstitution, queries, sort_by=sort_by, include_tombstone=include_tombstone).distinct()
+        return self.create_queryset_by_queries(CofkUnionInstitution, queries, sort_by=sort_by).distinct()
 
     @property
     def compact_search_results_renderer_factory(self) -> RendererFactory:
@@ -267,7 +263,6 @@ class InstCsvHeaderValues(HeaderValues):
             "Related resources",
             "Editors' notes",
             "Images",
-            "Tombstone",
             "Change timestamp",
             "Change user"
         ]
@@ -284,7 +279,6 @@ class InstCsvHeaderValues(HeaderValues):
             cell_values.resource_str_by_list(obj.resources.iterator()),
             obj.editors_notes,
             download_csv_serv.join_image_lines(obj.images.iterator()),
-            "Yes" if obj.is_tombstone else "No",
             cell_values.simple_datetime(obj.change_timestamp),
             obj.change_user,
         ]
