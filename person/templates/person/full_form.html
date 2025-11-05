@@ -6,8 +6,8 @@
     <script src="/static/core/js/recref_service.js"></script>
     <fieldset id="header_known_loc">
         <legend id="header_geo_locations" class="toc-item">Known geographical locations</legend>
-        {% include "core/component/recref.html" with recref_type='location' id_field=person_form.birth_place label='Birthplace (or place of formation for organisations):' %}
-        {% include "core/component/recref.html" with recref_type='location' id_field=person_form.death_place label='Place of death (or of cessation if an organisation):' %}
+        {% include "core/component/recref.html" with recref_type='location' id_field=person_form.birth_place label='Birthplace (or place of formation for organizations):' %}
+        {% include "core/component/recref.html" with recref_type='location' id_field=person_form.death_place label='Place of death (or of cessation if an organization):' %}
 
 
         <h3>Other locations:</h3>
@@ -16,8 +16,8 @@
 
     </fieldset>
     <fieldset id="header_organisations">
-        <legend id="header_organisations" class="toc-item">Organisations to which belonged</legend>
-        {% include "core/component/create_update_recref.html" with recref_type='organisation' recref_formset=recref_organisation.update_formset new_form=recref_organisation.new_form add_label='Add organisation:' %}
+        <legend id="header_organisations" class="toc-item">Organizations to which belonged</legend>
+        {% include "core/component/create_update_recref.html" with recref_type='organisation' recref_formset=recref_organisation.update_formset new_form=recref_organisation.new_form add_label='Add organization:' %}
     </fieldset>
 
 
@@ -27,7 +27,7 @@
             {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_member.update_formset new_form=recref_member.new_form add_label='Add member:' %}
         {% else %}
             <span>
-            This record refers to a person not an organisation. Members can only be entered for organisations.
+            This record refers to a person not an organization. Members can only be entered for organizations.
         </span>
         {% endif %}
     </fieldset>
@@ -89,7 +89,7 @@
     {% include "core/component/image_formset.html" with img_handler=img_handler %}
 
     {% url 'person:delete' person_form.instance.iperson_id as del_url %}
-    {% include "core/component/del_confirm_fieldset.html" with del_url=del_url name='person or organisation' %}
+    {% include "core/component/del_confirm_fieldset.html" with del_url=del_url name='person or organization' %}
 
 
     <script>

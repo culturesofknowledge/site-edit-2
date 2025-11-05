@@ -3,12 +3,12 @@
 
 {% block content %}
 
-    <h1> Welcome to EMLO Edit </h1>
+    <h1> Welcome to EMLO-edit </h1>
     <br>
-    <p>Early Modern Letters Online is a union catalogue that stores metadata, i.e. data about letters. The EMLO database
+    <p><i>Early Modern Letters Online</i> is a union catalogue that stores metadata, i.e. data, about letters. The EMLO database
         has the capacity to include letter metadata for a wide range of fields. </p>
-    <p>EMLO Edit interface deals with letters, referred to as a work. Each work is associated with the following
-        entities</p>
+    <p>EMLO’s editorial interface deals with letters, referred to as a 'works'. Each work is associated with the following
+        entities:</p>
     <ul class="main_menu">
         <li>
             <a href="{% url 'work:search' %}">
@@ -33,7 +33,7 @@
     </ul>
 
     {% if constant.PM_VIEW_LOOKUPCAT in perms %}
-    <p>In addition to the above main entities the following supportive entities can be edited:</p>
+    <p>In addition, the following entities may also be edited:</p>
 
     <ul class="main_menu">
         {%  if constant.PM_CHANGE_ROLECAT in perms %}
@@ -56,8 +56,8 @@
         {% endif %}
         {%  if constant.PM_CHANGE_ORGTYPE in perms %}
         <li>
-            <a href="{% url 'list:orgtypes' %}" title="Add or edit organisation types" target="_self"
-               tabindex="1"><span data-feather="clipboard" class="feather-large" aria-hidden="true"></span>Organisation
+            <a href="{% url 'list:orgtypes' %}" title="Add or edit organization types" target="_self"
+               tabindex="1"><span data-feather="clipboard" class="feather-large" aria-hidden="true"></span>Organization
                 types</a>
         </li>
         {% endif %}
@@ -82,7 +82,7 @@
 
     {% endif %}
     {%  if constant.PM_VIEW_SUGGESTIONS in perms %}
-    <p>You can also provide suggestions:</p>
+    <p>Users may also provide suggestions for records to be added to EMLO:</p>
 
     <ul class="main_menu">
         <li>
