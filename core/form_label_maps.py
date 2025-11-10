@@ -18,12 +18,12 @@ field_label_map = {
         'institution_country': 'Country',
         'resources': 'Related resources',
         'editors_notes': "Editors' notes",
-        'institution_id': 'Repository id',
+        'institution_id': 'Repository ID',
         'images': 'Images',
     },
     'location': common_fields | {
         'location_name': 'Name',
-        'location_id': 'Location id',
+        'location_id': 'Location ID',
         'editors_notes': 'Editors\' notes',
         'sent': 'Sent',
         'recd': 'Received',
@@ -32,7 +32,7 @@ field_label_map = {
         'resources': 'Related resources',
         'latitude': 'Latitude',
         'longitude': 'Longitude',
-        'publication_id': 'Publication id',
+        'publication_id': 'Publication ID',
         'element_1_eg_room': '1. E.g. room',
         'element_2_eg_building': '2. E.g. building',
         'element_3_eg_parish': '3. E.g. parish',
@@ -70,7 +70,7 @@ field_label_map = {
     'publication': common_fields | {
         'publication_details': 'Publication details',
         'abbrev': 'Abbreviation',
-        'publication_id': 'Publication id'},
+        'publication_id': 'Publication ID'},
     'work': common_fields | {
         'description': 'Description',
         'date_of_work_as_marked': 'Date of work as marked',

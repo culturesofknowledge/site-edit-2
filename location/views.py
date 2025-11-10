@@ -312,7 +312,7 @@ class LocationCsvHeaderValues(HeaderValues):
     def get_header_list(self) -> list[str]:
         return [
             "Location name",
-            "Location id",
+            "Location ID",
             "Editors notes",
             "Sent",
             "Recd",
