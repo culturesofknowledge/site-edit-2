@@ -5,7 +5,7 @@ from typing import Iterable, Any, Type
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import F, Q, Model
+from django.db.models import F, Q, Model, QuerySet
 from django.db.models.lookups import Exact, Lookup
 from django.forms import BaseForm
 from django.shortcuts import render, get_object_or_404, redirect
@@ -1010,12 +1010,18 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                                                  convert_fn=date_serv.search_datestr_to_db_datestr, )
 
     def get_queryset(self):
+        """Get queryset for work search with standard prefetching"""
         if not self.request_data:
             return CofkUnionWork.objects.none()
 
-        return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
+        # Use standard prefetching for normal web views
+        return self.get_queryset_by_request_data(
+            self.request_data,
+            sort_by=self.get_sort_by(),
+            prefetch_level='standard'
+        )
 
-    def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:
+    def get_queryset_by_request_data(self, request_data, sort_by=None, prefetch_level='standard') -> Iterable:
         queries = query_serv.create_queries_by_field_fn_maps(request_data, self.search_field_fn_maps)
 
         search_fields_maps = {
@@ -1044,7 +1050,43 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                     'flags': lookup_fn_flags,
                 })
         )
-        return create_queryset_by_queries(DisplayableWork, queries, sort_by=sort_by, user=self.request.user)
+
+        # Determine which expensive annotated fields are actually needed for this query
+        annotated_candidates = {
+            'addressees_searchable',
+            'creators_searchable',
+            'mentioned_searchable',
+            'sender_or_recipient',
+            'places_from_searchable',
+            'places_to_searchable',
+            'origin_or_destination',
+            'manifestations_searchable',
+        }
+        needed_annotations: set[str] = set()
+
+        # Include fields used in sorting
+        if sort_by:
+            for s in sort_by:
+                field = s[1:] if s.startswith('-') else s
+                if field in annotated_candidates:
+                    needed_annotations.add(field)
+
+        # Include fields explicitly filtered in the request
+        for field in annotated_candidates:
+            if request_data.get(field):
+                needed_annotations.add(field)
+            else:
+                lookup_val = request_data.get(f'{field}_lookup')
+                if lookup_val in query_serv.nullable_lookup_keys:
+                    needed_annotations.add(field)
+
+        return create_queryset_by_queries(
+            DisplayableWork,
+            queries,
+            sort_by=sort_by,
+            user=self.request.user,
+            annotated_fields=needed_annotations,
+        )
 
     @property
     def simplified_query(self) -> list[str]:
@@ -1104,20 +1146,40 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         if not self.has_perms(constant.PM_EXPORT_FILE_WORK):
             return None
 
+        # For CSV exports, we need to use full prefetching to ensure all data is available
+        def create_optimized_csv():
+            # Get the queryset directly with the appropriate prefetch level
+            export_qs = self.get_queryset_by_request_data(
+                self.request_data,
+                sort_by=self.get_sort_by(),
+                prefetch_level='full'
+            )
+            return DownloadCsvHandler(WorkCsvHeaderValues()).create_csv_file(export_qs)
+
         return (lambda: view_serv.create_export_file_name('work', 'csv'),
-                lambda: DownloadCsvHandler(WorkCsvHeaderValues()).create_csv_file,
+                create_optimized_csv,
                 constant.PM_EXPORT_FILE_WORK,
                 )
 
     @property
     def excel_export_setting(self) -> tuple[Callable[[], str], Callable[[Iterable, str], Any], str] | None:
-        """ overrider this to enable download csv """
+        """Enable Excel export with optimized querying for better performance"""
 
         if not self.has_perms(constant.PM_EXPORT_FILE_WORK):
             return None
 
+        # For Excel exports, we need to use full prefetching to ensure all data is available
+        def create_optimized_excel():
+            # Get the queryset directly with the appropriate prefetch level
+            export_qs = self.get_queryset_by_request_data(
+                self.request_data,
+                sort_by=self.get_sort_by(),
+                prefetch_level='full'
+            )
+            return excel_maker.create_work_excel(export_qs)
+
         return (lambda: view_serv.create_export_file_name('work', 'xlsx'),
-                lambda: excel_maker.create_work_excel,
+                create_optimized_excel,
                 constant.PM_EXPORT_FILE_WORK,
                 )
 
@@ -1237,9 +1299,9 @@ class WorkCsvHeaderValues(HeaderValues):
 
 
 def create_queryset_by_queries(model_class: Type[Model], queries: Iterable[Q] = None,
-                               sort_by=None, user=None):
+                               sort_by=None, user=None, annotated_fields: set[str] | None = None):
     # some fields in annotate for sorting and filtering, it could be different with frontend display
-    annotate = {
+    annotate_all = {
         'addressees_searchable': subqueries.create_joined_person_ann_field([REL_TYPE_WAS_ADDRESSED_TO]),
         'creators_searchable': subqueries.create_joined_person_ann_field([REL_TYPE_CREATED]),
         'mentioned_searchable': subqueries.create_joined_person_ann_field([REL_TYPE_MENTION]),
@@ -1267,8 +1329,18 @@ def create_queryset_by_queries(model_class: Type[Model], queries: Iterable[Q] = 
             ]
         ),
         'manifestations_searchable': subqueries.create_joined_manif_ann_field(),
-        'is_owner_of_catalogue': subqueries.is_owner_of_catalogue(user)
     }
+
+    # Always include this lightweight annotation used by the template to check ownership
+    annotate: dict = {'is_owner_of_catalogue': subqueries.is_owner_of_catalogue(user)}
+
+    # If a subset of annotations is specified, include only those; otherwise include all heavy ones
+    if annotated_fields:
+        for name in annotated_fields:
+            if name in annotate_all:
+                annotate[name] = annotate_all[name]
+    else:
+        annotate.update(annotate_all)
 
     queryset = model_class.objects.filter()
     queryset = query_serv.update_queryset(queryset, model_class, queries=queries,

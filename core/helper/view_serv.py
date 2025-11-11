@@ -438,24 +438,38 @@ class BasicSearchView(ListView):
 
     @django_utils.log_request_time
     def get(self, request, *args, **kwargs):
-        if to_user_messages := request.GET.get('to_user_messages'):
-            self.add_to_user_messages(to_user_messages)
-
-        simple_form_action_map = {
-            'download_csv': self.resp_download_csv,
-            'download_excel': self.resp_download_excel,
-            'save_query': self.save_query
-        }
-
-        # simple routing with __form_action
-        if resp_fn := simple_form_action_map.get(self.request_data.get("__form_action")):
-            return resp_fn(request, *args, **kwargs)
-
-        if num_record := request.GET.get('num_record'):
-            self.paginate_by = num_record
+        # if to_user_messages := request.GET.get('to_user_messages'):
+        #     self.add_to_user_messages(to_user_messages)
+        #
+        # simple_form_action_map = {
+        #     'download_csv': self.resp_download_csv,
+        #     'download_excel': self.resp_download_excel,
+        #     'save_query': self.save_query
+        # }
+        #
+        # # simple routing with __form_action
+        # if resp_fn := simple_form_action_map.get(self.request_data.get("__form_action")):
+        #     return resp_fn(request, *args, **kwargs)
+        #
+        # if num_record := request.GET.get('num_record'):
+        #     try:
+        #         self.paginate_by = int(num_record)
+        #     except (TypeError, ValueError):
+        #         self.paginate_by = 100
 
         # response for search query
         return super().get(request, *args, **kwargs)
+
+    def paginate_queryset(self, queryset, page_size):
+        paginator = self.get_paginator(
+            queryset,
+            page_size,
+            orphans=self.get_paginate_orphans(),
+            allow_empty_first_page=self.get_allow_empty(),
+        )
+        page = self.kwargs.get(self.page_kwarg) or self.request.GET.get(self.page_kwarg) or 1
+        page = paginator.get_page(page)  # clamps out-of-range
+        return (paginator, page, page.object_list, page.has_other_pages())
 
     def add_to_user_messages(self, message):
         if not hasattr(self, 'to_user_messages'):
