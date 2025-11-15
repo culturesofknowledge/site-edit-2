@@ -1,8 +1,8 @@
 {% load cl_filters work_util_tags %}
 <td class="display-point">
     <ul>
-        {% for m in r.manifestations_for_display %}
+        {% for m in work.manifestations_for_display %}
             <li> {{ m|render_queryable_manif }} </li>
         {% endfor %}
     </ul>
-</td>
+ </td>

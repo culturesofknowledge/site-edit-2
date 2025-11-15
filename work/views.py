@@ -1014,14 +1014,21 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         if not self.request_data:
             return CofkUnionWork.objects.none()
 
-        # Use standard prefetching for normal web views
+        # Detect which layout is requested to avoid loading unrelated records
+        # Compact layout value defined in core.constant.SEARCH_LAYOUT_GRID
+        display_style = self.request_data.get('display-style')
+        prefetch_profile = 'compact' if display_style == constant.SEARCH_LAYOUT_GRID else 'expanded'
+
+        # Use standard prefetching for normal web views, with layout-aware profile
         return self.get_queryset_by_request_data(
             self.request_data,
             sort_by=self.get_sort_by(),
-            prefetch_level='standard'
+            prefetch_level='standard',
+            prefetch_profile=prefetch_profile,
         )
 
-    def get_queryset_by_request_data(self, request_data, sort_by=None, prefetch_level='standard') -> Iterable:
+    def get_queryset_by_request_data(self, request_data, sort_by=None, prefetch_level='standard',
+                                     prefetch_profile: str = 'expanded') -> Iterable:
         queries = query_serv.create_queries_by_field_fn_maps(request_data, self.search_field_fn_maps)
 
         search_fields_maps = {
@@ -1080,12 +1087,19 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                 if lookup_val in query_serv.nullable_lookup_keys:
                     needed_annotations.add(field)
 
+        # Ensure annotations required by the selected layout are present
+        if (prefetch_profile or 'expanded').lower() == 'compact':
+            # Compact layout tooltip relies on these two annotated fields
+            needed_annotations.update({'creators_searchable', 'addressees_searchable'})
+
         return create_queryset_by_queries(
             DisplayableWork,
             queries,
             sort_by=sort_by,
             user=self.request.user,
             annotated_fields=needed_annotations,
+            prefetch_level=prefetch_level,
+            prefetch_profile=prefetch_profile,
         )
 
     @property
@@ -1299,7 +1313,9 @@ class WorkCsvHeaderValues(HeaderValues):
 
 
 def create_queryset_by_queries(model_class: Type[Model], queries: Iterable[Q] = None,
-                               sort_by=None, user=None, annotated_fields: set[str] | None = None):
+                               sort_by=None, user=None, annotated_fields: set[str] | None = None,
+                               prefetch_level: str = 'standard',
+                               prefetch_profile: str = 'expanded'):
     # some fields in annotate for sorting and filtering, it could be different with frontend display
     annotate_all = {
         'addressees_searchable': subqueries.create_joined_person_ann_field([REL_TYPE_WAS_ADDRESSED_TO]),
@@ -1343,23 +1359,68 @@ def create_queryset_by_queries(model_class: Type[Model], queries: Iterable[Q] = 
         annotate.update(annotate_all)
 
     queryset = model_class.objects.filter()
-    queryset = query_serv.update_queryset(queryset, model_class, queries=queries,
-                                          sort_by=sort_by,
-                                          annotate=annotate
-                                          )
-    queryset = queryset.prefetch_related('cofkworkpersonmap_set__person',
-                                         'cofkworklocationmap_set__location',
-                                         'cofkworkresourcemap_set__resource',
-                                         'cofkworkcommentmap_set__comment',
-                                         'work_to_set__work_from',
-                                         'work_from_set__work_to',
-                                         'language_set__language_code',
-                                         'subjects',
-                                         'manif_set',
-                                         'manif_set__images',
-                                         'manif_set__cofkmanifinstmap_set__inst',
-                                         'manif_set__manif_from_set__manif_to',
-                                         'manif_set__manif_to_set__manif_from',
-                                         ).select_related('original_catalogue')
+    queryset = query_serv.update_queryset(
+        queryset,
+        model_class,
+        queries=queries,
+        sort_by=sort_by,
+        annotate=annotate,
+    )
+
+    # Apply prefetching strategy based on the level requested.
+    # minimal: only select lightweight, avoid prefetch_related to keep memory/queries low
+    # standard: current default set tuned for server-rendered tables
+    # eager: alias to standard for now (hook for future extension)
+    level = (prefetch_level or 'standard').lower()
+    profile = (prefetch_profile or 'expanded').lower()
+    if level == 'minimal':
+        queryset = queryset.select_related('original_catalogue')
+    elif level == 'standard':
+        # Standard prefetching: avoid very deep relationship chains that can explode query/load
+        if profile == 'compact':
+            # Only fetch relations that compact layout actually renders
+            queryset = queryset.prefetch_related(
+                'manif_set',
+                'manif_set__images',
+                'cofkworkresourcemap_set__resource',
+                'subjects',
+            ).select_related('original_catalogue')
+        else:
+            # Expanded layout needs broader related data for table columns
+            # Trim expensive but unused relations for the expanded table to reduce latency
+            queryset = queryset.prefetch_related(
+                'cofkworkpersonmap_set__person',
+                'cofkworklocationmap_set__location',
+                'cofkworkresourcemap_set__resource',
+                # Comments are used by DisplayableWork.other_details via general_comments
+                'cofkworkcommentmap_set__comment',
+                # Removed reply relations and language_set to cut prefetch cost
+                # Keep only the relation required by templates: Matches column uses work_to_set -> work_from
+                'work_to_set__work_from',
+                # 'work_from_set__work_to',
+                # Languages are displayed via DisplayableWork.other_details -> language_of_work
+                'language_set__language_code',
+                'subjects',
+                'manif_set',
+                'manif_set__images',
+                'manif_set__cofkmanifinstmap_set__inst',
+            ).select_related('original_catalogue')
+    else:
+        # Eager prefetching: include deeper chains when explicitly requested
+        queryset = queryset.prefetch_related(
+            'cofkworkpersonmap_set__person',
+            'cofkworklocationmap_set__location',
+            'cofkworkresourcemap_set__resource',
+            'cofkworkcommentmap_set__comment',
+            'work_to_set__work_from',
+            'work_from_set__work_to',
+            'language_set__language_code',
+            'subjects',
+            'manif_set',
+            'manif_set__images',
+            'manif_set__cofkmanifinstmap_set__inst',
+            'manif_set__manif_from_set__manif_to',
+            'manif_set__manif_to_set__manif_from',
+        ).select_related('original_catalogue')
 
     return queryset
