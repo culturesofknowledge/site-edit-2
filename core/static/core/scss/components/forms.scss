@@ -1,0 +1,125 @@
+// Form styles
+
+.form-group {
+  margin-bottom: $space-sm;
+}
+
+label {
+  margin-bottom: $space-xxs;
+  font-weight: 700;
+  color: $dark-grey;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="search"],
+select,
+textarea {
+  width: 100%;
+  padding: $space-xs;
+  border: 1px solid $light-grey;
+  font-size: $typescale-5a;
+  color: $black;
+  background-color: $white;
+  transition: all 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: $gold;
+    box-shadow: 0 0 0 2px rgba($gold, 0.2);
+  }
+
+  &:disabled {
+    background-color: $faint-grey;
+    cursor: not-allowed;
+  }
+
+  &.error {
+    border-color: $darkred;
+  }
+}
+
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23172854' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right $space-xs center;
+  background-size: 16px;
+  padding-right: $space-lg;
+}
+
+textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.checkbox-group,
+.radio-group {
+  margin-bottom: $space-xs;
+
+  label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-weight: normal;
+    margin-bottom: $space-xxs;
+
+    input {
+      margin-right: $space-xs;
+    }
+  }
+}
+
+.form-hint {
+  display: block;
+  margin-top: $space-xxs;
+  font-size: $typescale-6;
+  color: $mid-grey;
+}
+
+.form-error {
+  display: block;
+  margin-top: $space-xxs;
+  font-size: $typescale-6;
+  color: $darkred;
+}
+
+// Special form layout for search forms
+.search-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-xs;
+
+  .search_input {
+    position: relative;
+
+    input {
+      padding-left: $space-md;
+    }
+
+    &:before {
+      content: '';
+      position: absolute;
+      left: $space-xs;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%238B94A9' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'%3E%3C/line%3E%3C/svg%3E");
+      background-size: contain;
+      background-repeat: no-repeat;
+    }
+  }
+
+  .search-fieldset {
+    label {
+      font-weight: 700;
+    }
+  }
+}
+
