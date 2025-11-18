@@ -12,10 +12,17 @@ can be found [here](https://github.com/culturesofknowledge/emlo-project/wiki/Lis
 The previous development approach was based on a modular, decoupled (almost) services like approach we are now
 going for a more monolithic style approach.
 
-Dependencies (see `requirements.txt`):
-* Postgres
-* Django 4.0.4
+Dependencies (see `pyproject.toml` and `requirements.txt`):
+* Postgres 14
+* Django 4.0.6
 * django-sass-processor -- https://github.com/jrief/django-sass-processor
+
+How to run local development environment with docker
+------------------------------------
+```shell
+export EMLO_CODE_HOME=/path/to/emlo-site-edit-2/docker/site-edit-2/
+docker-compose -f $EMLO_CODE_HOME/docker-compose.yml up
+```
 
 How to run all unitest with docker 
 ------------------------------------
@@ -45,7 +52,9 @@ python3 manage.py createsuperuser
 
 How to run export tool
 ----------------------------------
-after runnning following command, all csv files will be generated in current folder or source code folder if you run in docker
+After running the following command, all csv files will be generated in current folder or source code folder,
+if you run in docker
+
 ```shell
 python3 manage.py exporter
 ```
@@ -54,6 +63,16 @@ python3 manage.py exporter
 # site-edit-2_web_1 is the name of docker container, could be different in your environment
 docker exec -it site-edit-2_web_1 python3 /code/manage.py exporter
 ```
+
+
+# Configuration
+
+The configuration files are in the `siteedit2/settings` folder. The `base.py` file holds the common settings.
+Values are overridden in `gunweb.py`.
+
+The configuration variable `UPLOAD_ASYNCHRONOUS_FILESIZE_LIMIT` controls the cutoff size in kilobytes for
+asynchronous uploads. Giving it the value `0` means that all uploads are handled asynchronously. This is the
+safer option. It means that all feedback arrives through email.
 
 
 # Changes to database schema

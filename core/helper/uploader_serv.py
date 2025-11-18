@@ -38,7 +38,7 @@ def handle_upload(upload: CofkCollectUpload, email_results: bool = False, file_n
         file = default_storage.open(upload.upload_file.name, 'rb')
     except OSError as oe:
         report['total_errors'] = 1
-        report['errors'] = {'file': {'total': 1, 'error': [oe]}}
+        report['errors'] = {'file': {'total': 1, 'errors': [oe]}}
         log.error(report['errors'])
         return report
     except Exception as e:
@@ -53,7 +53,7 @@ def handle_upload(upload: CofkCollectUpload, email_results: bool = False, file_n
         file_path, size = file_path_and_size(upload)
     except FileNotFoundError as fnfe:
         report['total_errors'] = 1
-        report['errors'] = {'file': {'total': 1, 'error': [str(fnfe)]}}
+        report['errors'] = {'file': {'total': 1, 'errors': [str(fnfe)]}}
         log.error(fnfe)
         return report
 
@@ -79,15 +79,15 @@ def handle_upload(upload: CofkCollectUpload, email_results: bool = False, file_n
     except CofkExcelFileError as cmce:
         errors = [str(cmce)]
         report['total_errors'] = len(errors)
-        report['errors'] = {'file': {'total': len(errors), 'error': errors}}
+        report['errors'] = {'file': {'total': len(errors), 'errors': errors}}
         log.error(cmce.msg)
     except (FileNotFoundError, BadZipFile, OSError) as e:
         report['total_errors'] = 1
-        report['errors'] = {'file': {'total': 1, 'error': ['Could not read the file.']}}
+        report['errors'] = {'file': {'total': 1, 'errors': ['Could not read the file.']}}
         log.error(e)
     except ValueError as ve:
         report['total_errors'] = 1
-        report['errors'] = {'file': {'total': 1, 'error': [ve]}}
+        report['errors'] = {'file': {'total': 1, 'errors': [ve]}}
         log.error(ve)
         log.exception(ve)
     except Exception as e:
@@ -109,6 +109,7 @@ def handle_upload(upload: CofkCollectUpload, email_results: bool = False, file_n
         upload.save()
 
     if email_results:
+        log.info('Sending email results to uploader')
         upload_time = upload.upload_timestamp.strftime('%m/%d/%Y %H:%M:%S').split(' ')
         content = f'The file "{file_name}" you uploaded on {upload_time[0]} at {upload_time[1]} has been processed.\n'
 
@@ -128,12 +129,18 @@ def handle_upload(upload: CofkCollectUpload, email_results: bool = False, file_n
                     content += f'\n{sheet} sheet had {sheet_errors} errors\n'
 
                     if 'errors' in report['errors'][sheet]:
-                        for row in report['errors'][sheet]['errors']:
-                            row_number = row['row']
-                            content += f'\tRow {row_number}:\n'
+                        # Handle validation errors (with row numbers)
+                        if isinstance(report['errors'][sheet]['errors'], list) and len(report['errors'][sheet]['errors']) > 0 and isinstance(report['errors'][sheet]['errors'][0], dict) and 'row' in report['errors'][sheet]['errors'][0]:
+                            for row in report['errors'][sheet]['errors']:
+                                row_number = row['row']
+                                content += f'\tRow {row_number}:\n'
 
-                            for error in row['errors']:
-                                content += f'\t\t— {error}\n'
+                                for error in row['errors']:
+                                    content += f'\t\t— {error}\n'
+                        else:
+                            # Handle simple error messages (file-level errors)
+                            for error in report['errors'][sheet]['errors']:
+                                content += f'\t— {error}\n'
         else:
             url = settings.UPLOAD_ROOT_URL + reverse('uploader:upload_review', args=[report["upload_id"]])
             content += f'\nYou can review the upload here: {url}'
