@@ -17,3 +17,10 @@
     width: 64px;
     margin-right: 1em;
 }
+
+/* Slightly smaller icon size for dashboard tiles */
+.feather-tile {
+    height: 40px;
+    width: 40px;
+    margin-right: 0; /* spacing handled by gap on link */
+}

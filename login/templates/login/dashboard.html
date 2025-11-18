@@ -12,23 +12,23 @@
     <ul class="main_menu">
         <li>
             <a href="{% url 'work:search' %}">
-                <span data-feather="file" class="feather-large" aria-hidden="true"></span>Works</a>
+                <span data-feather="file" class="feather-tile" aria-hidden="true"></span>Work</a>
         </li>
         <li>
             <a href="{% url 'person:search' %}">
-                <span data-feather="user" class="feather-large" aria-hidden="true"></span>People</a>
+                <span data-feather="user" class="feather-tile" aria-hidden="true"></span>Person</a>
         </li>
         <li>
-            <a href="{% url 'location:search' %}"><span data-feather="map" class="feather-large"
-                                                        aria-hidden="true"></span>Locations</a>
+            <a href="{% url 'location:search' %}"><span data-feather="map-pin" class="feather-tile"
+                                                        aria-hidden="true"></span>Location</a>
         </li>
         <li>
-            <a href="{% url 'institution:search' %}"><span data-feather="package" class="feather-large"
-                                                           aria-hidden="true"></span>Repositories</a>
+            <a href="{% url 'institution:search' %}"><span data-feather="package" class="feather-tile"
+                                                           aria-hidden="true"></span>Repository</a>
         </li>
         <li>
-            <a href="{% url 'publication:search' %}"><span data-feather="edit" class="feather-large"
-                                                           aria-hidden="true"></span>Publications</a>
+            <a href="{% url 'publication:search' %}"><span data-feather="book" class="feather-tile"
+                                                           aria-hidden="true"></span>Publication</a>
         </li>
     </ul>
 
@@ -38,41 +38,36 @@
     <ul class="main_menu">
         {%  if constant.PM_CHANGE_ROLECAT in perms %}
         <li>
-            <a href="{% url 'list:roles' %}" title="Add or edit roles" target="_self" tabindex="1"><span
-                    data-feather="clipboard" class="feather-large" aria-hidden="true"></span>Roles</a>
+            <a href="{% url 'list:roles' %}" title="Add or edit roles" target="_self" tabindex="1">Roles</a>
         </li>
         {% endif %}
         {%  if constant.PM_CHANGE_SUBJECT in perms %}
         <li>
-            <a href="{% url 'list:subjects' %}" title="Add or edit subjects" target="_self" tabindex="1"><span
-                    data-feather="clipboard" class="feather-large" aria-hidden="true"></span>Subjects</a>
+            <a href="{% url 'list:subjects' %}" title="Add or edit subjects" target="_self" tabindex="1">Subjects</a>
         </li>
         {% endif %}
         {%  if constant.PM_VIEW_LOOKUPCAT in perms %}
         <li>
-            <a href="{% url 'catalogue:search' %}" title="Add or edit catalogues" target="_self" tabindex="1"><span
-                    data-feather="clipboard" class="feather-large" aria-hidden="true"></span>Catalogues</a>
+            <a href="{% url 'catalogue:search' %}" title="Add or edit catalogues" target="_self" tabindex="1">Catalogues</a>
         </li>
         {% endif %}
         {%  if constant.PM_CHANGE_ORGTYPE in perms %}
         <li>
             <a href="{% url 'list:orgtypes' %}" title="Add or edit organization types" target="_self"
-               tabindex="1"><span data-feather="clipboard" class="feather-large" aria-hidden="true"></span>Organization
-                types</a>
+               tabindex="1">Org. types</a>
         </li>
         {% endif %}
         {%  if constant.PM_CHANGE_ROLECAT in perms %}
         <li>
             <a href="{% url 'lang:search' %}" title="Add or edit language" target="_self" tabindex="1">
-                <span data-feather="clipboard" class="feather-large" aria-hidden="true"></span>
                 Languages
             </a>
         </li>
         {% endif %}
-        {% if constant.PM_CHANGE_USER|can_show_for_perm:perms %}
+        {# Use direct membership check to avoid any template parser quirks with filters in if-tag #}
+        {% if constant.PM_CHANGE_USER in perms %}
             <li>
                 <a href="{% url 'user:search' %}" title="Search user" target="_self" tabindex="1">
-                    <span data-feather="clipboard" class="feather-large" aria-hidden="true"></span>
                     User
                 </a>
             </li>
@@ -87,12 +82,12 @@
     <ul class="main_menu">
         <li>
             <a href="{% url 'suggestions:suggestion_all' %}" title="Make a suggestion" target="_self" tabindex="1"><span
-                    data-feather="clipboard" class="feather-large" aria-hidden="true"></span>Suggestions</a>
+                    data-feather="clipboard" class="feather-tile" aria-hidden="true"></span>Suggestions</a>
         </li>
     </ul>
     {% endif %}
 
-    {% if constant.PM_TRIGGER_EXPORTER|can_show_for_perm:perms %}
+    {% if constant.PM_TRIGGER_EXPORTER in perms %}
         <div class="margin-top-xl">
             <h2>Export</h2>
             {% if is_exporting %}
