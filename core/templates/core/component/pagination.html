@@ -1,30 +1,62 @@
 {% load cl_filters %}
 
-{% if page_obj.paginator.num_pages > 1 %}
+{% if page_obj.paginator.num_pages > 1 or page_obj.has_other_pages %}
 
 <div class="row row--centered pagination">
     <ul>
-        {% if page_obj.has_previous %}
-            <a href="?{% url_replace request 'page' 1 %}">&laquo; first</a>
-            <a href="?{% url_replace request 'page' page_obj.previous_page_number %}">previous</a>
-        {% endif %}
-
-        {% for i in page_obj|get_elided_page_range %}
-        {% if page_obj.number == i %}
-            <li class="active-page page-item"><span class="page-link">{{ i }} <span class="sr-only">(current)</span></span>
-            </li>
-        {% else %}
-            {% if i == page_obj.paginator.ELLIPSIS %}
-                <li class="page-item">{{ i }}</li>
-            {% else %}
-                <li class="page-item"><a class="page-link" href="?{% url_replace request 'page' i %}">{{ i }}</a></li>
+        {# Check if using keyset pagination (has cursor attributes) #}
+        {% if page_obj.prev_cursor or page_obj.next_cursor %}
+            {# Keyset pagination navigation #}
+            {% if page_obj.has_previous %}
+                <a href="?{% url_replace request 'page' page_obj.previous_page_number %}">&laquo; first</a>
+                <a href="?{% url_replace request 'page' page_obj.previous_page_number %}">previous</a>
             {% endif %}
-        {% endif %}
-        {% endfor %}
 
-        {% if page_obj.has_next %}
-            <a href="?{% url_replace request 'page' page_obj.next_page_number %}">next</a>
-            <a href="?{% url_replace request 'page' page_obj.paginator.num_pages %}">last &raquo;</a>
+            <li class="active-page page-item">
+                <span class="page-link">Page {{ page_obj.number }} <span class="sr-only">(current)</span></span>
+            </li>
+
+            {% if page_obj.has_next %}
+                <a href="?{% url_replace request 'page' page_obj.next_page_number %}">next</a>
+                <a href="?{% url_replace request 'page' page_obj.paginator.num_pages %}">last &raquo;</a>
+            {% endif %}
+
+            {# Direct page jump #}
+            <span style="margin-left: 1em;">
+                <form method="get" style="display: inline-block;">
+                    {% for key, value in request.GET.items %}
+                        {% if key != 'page' and key != 'cursor' and key != 'direction' %}
+                            <input type="hidden" name="{{ key }}" value="{{ value }}">
+                        {% endif %}
+                    {% endfor %}
+                    Go to page: <input type="number" name="page" min="1" max="{{ page_obj.paginator.num_pages }}" style="width: 60px;" placeholder="{{ page_obj.number }}">
+                    <button type="submit">Go</button>
+                </form>
+            </span>
+        {% else %}
+            {# Traditional page number pagination #}
+            {% if page_obj.has_previous %}
+                <a href="?{% url_replace request 'page' 1 %}">&laquo; first</a>
+                <a href="?{% url_replace request 'page' page_obj.previous_page_number %}">previous</a>
+            {% endif %}
+
+            {% for i in page_obj|get_elided_page_range %}
+            {% if page_obj.number == i %}
+                <li class="active-page page-item"><span class="page-link">{{ i }} <span class="sr-only">(current)</span></span>
+                </li>
+            {% else %}
+                {% if i == page_obj.paginator.ELLIPSIS %}
+                    <li class="page-item">{{ i }}</li>
+                {% else %}
+                    <a class="page-link" href="?{% url_replace request 'page' i %}"><li class="page-item">{{ i }}</li></a>
+                {% endif %}
+            {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a href="?{% url_replace request 'page' page_obj.next_page_number %}">next</a>
+                <a href="?{% url_replace request 'page' page_obj.paginator.num_pages %}">last &raquo;</a>
+            {% endif %}
         {% endif %}
     </ul>
 </div>

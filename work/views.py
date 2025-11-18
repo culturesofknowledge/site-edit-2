@@ -951,6 +951,10 @@ def return_quick_init(request, pk):
 
 class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
+    # Enable keyset pagination for better performance with large work datasets
+    use_keyset_pagination = True
+    keyset_sort_field = 'iwork_id'  # Primary key is indexed and unique
+
     @property
     def entity(self) -> str:
         return 'work,works'
@@ -1044,7 +1048,50 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                     'flags': lookup_fn_flags,
                 })
         )
-        return create_queryset_by_queries(DisplayableWork, queries, sort_by=sort_by, user=self.request.user)
+
+        # Determine which annotations are actually needed for this request to reduce query overhead
+        annotatable_fields = {
+            'addressees_searchable',
+            'creators_searchable',
+            'mentioned_searchable',
+            'sender_or_recipient',
+            'places_from_searchable',
+            'places_to_searchable',
+            'origin_or_destination',
+            'manifestations_searchable',
+            'is_owner_of_catalogue',
+        }
+
+        annotate_keys_needed: set[str] = set()
+
+        # Include annotations if the corresponding search field has a non-empty value
+        for key in annotatable_fields:
+            if request_data.get(key):
+                annotate_keys_needed.add(key)
+
+        # Also include annotations used in sorting
+        sort_by_list = sort_by or self.get_sort_by()
+        for s in sort_by_list:
+            field_name = s.lstrip('-')
+            if field_name in annotatable_fields:
+                annotate_keys_needed.add(field_name)
+
+        # Ownership flag is referenced in templates to show/hide edit buttons
+        annotate_keys_needed.add('is_owner_of_catalogue')
+
+        # Ensure deterministic ordering by appending iwork_id as a tie-breaker
+        augmented_sort_by = list(sort_by_list)
+        if not any(f.lstrip('-') == 'iwork_id' for f in augmented_sort_by):
+            primary_desc = augmented_sort_by and augmented_sort_by[0].startswith('-')
+            augmented_sort_by.append('-iwork_id' if primary_desc else 'iwork_id')
+
+        return create_queryset_by_queries(
+            DisplayableWork,
+            queries,
+            sort_by=augmented_sort_by,
+            user=self.request.user,
+            annotate_keys=annotate_keys_needed,
+        )
 
     @property
     def simplified_query(self) -> list[str]:
@@ -1236,8 +1283,13 @@ class WorkCsvHeaderValues(HeaderValues):
         return values
 
 
-def create_queryset_by_queries(model_class: Type[Model], queries: Iterable[Q] = None,
-                               sort_by=None, user=None):
+def create_queryset_by_queries(
+    model_class: Type[Model],
+    queries: Iterable[Q] = None,
+    sort_by=None,
+    user=None,
+    annotate_keys: set[str] | None = None,
+):
     # some fields in annotate for sorting and filtering, it could be different with frontend display
     annotate = {
         'addressees_searchable': subqueries.create_joined_person_ann_field([REL_TYPE_WAS_ADDRESSED_TO]),
@@ -1270,11 +1322,18 @@ def create_queryset_by_queries(model_class: Type[Model], queries: Iterable[Q] = 
         'is_owner_of_catalogue': subqueries.is_owner_of_catalogue(user)
     }
 
+    # If a subset of annotations is requested, reduce the annotate dict to only those keys
+    if annotate_keys is not None:
+        annotate = {k: v for k, v in annotate.items() if k in annotate_keys}
+
     queryset = model_class.objects.filter()
-    queryset = query_serv.update_queryset(queryset, model_class, queries=queries,
-                                          sort_by=sort_by,
-                                          annotate=annotate
-                                          )
+    queryset = query_serv.update_queryset(
+        queryset,
+        model_class,
+        queries=queries,
+        sort_by=sort_by,
+        annotate=annotate,
+    )
     queryset = queryset.prefetch_related('cofkworkpersonmap_set__person',
                                          'cofkworklocationmap_set__location',
                                          'cofkworkresourcemap_set__resource',

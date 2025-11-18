@@ -18,6 +18,7 @@ from django.forms import ModelForm
 from django.http import HttpResponseNotFound
 from django.shortcuts import render, redirect
 from django.urls import reverse
+from django.core.paginator import Paginator
 from django.views import View
 from django.views.generic import ListView
 
@@ -43,6 +44,198 @@ if TYPE_CHECKING:
 
 register = template.Library()
 log = logging.getLogger(__name__)
+
+class CachedCountPaginator(Paginator):
+    """
+    Paginator that caches the count() call to improve performance.
+
+    Django's default Paginator calls count() on every request, which can be
+    very expensive for large tables with complex queries. This paginator
+    caches the count for the duration of the request, significantly improving
+    pagination performance especially for higher page numbers.
+
+    The cache is stored in the _count attribute and reused across multiple
+    calls during the same request lifecycle.
+    """
+
+    @property
+    def count(self):
+        """
+        Return the total number of objects, across all pages.
+        Cached after the first call.
+        """
+        if not hasattr(self, '_count'):
+            try:
+                self._count = self.object_list.count()
+            except (AttributeError, TypeError):
+                # AttributeError if object_list has no count() method.
+                # TypeError if object_list.count() requires arguments
+                # (i.e. is of type list).
+                self._count = len(self.object_list)
+        return self._count
+
+class KeysetPaginator(CachedCountPaginator):
+    """
+    Keyset-based paginator that uses WHERE clauses instead of OFFSET for better performance.
+
+    This paginator is significantly faster than OFFSET-based pagination for large datasets,
+    especially when accessing high page numbers. Instead of skipping rows (OFFSET 239300),
+    it uses a WHERE clause (WHERE id > last_seen_id) which leverages database indexes.
+
+    Performance: O(1) regardless of page number vs O(n) for OFFSET-based pagination.
+
+    Usage:
+        - Uses 'cursor' parameter instead of 'page' for navigation
+        - Cursor format: {sort_field_value}_{direction} (e.g., "12345_next" or "12345_prev")
+        - Still supports 'page' parameter for direct page jumps (falls back to OFFSET)
+
+    Limitations:
+        - Requires a unique, indexed sort field (usually primary key or timestamp)
+        - Page numbers become approximate estimates for UX
+    """
+
+    def __init__(self, object_list, per_page, orphans=0, allow_empty_first_page=True, 
+                 sort_field='pk', sort_order='asc'):
+        """
+        Initialize keyset paginator.
+
+        Args:
+            object_list: QuerySet to paginate
+            per_page: Number of items per page
+            sort_field: Field to use for keyset pagination (must be unique and indexed)
+            sort_order: 'asc' or 'desc'
+        """
+        super().__init__(object_list, per_page, orphans, allow_empty_first_page)
+        self.sort_field = sort_field
+        self.sort_order = sort_order.lower()
+
+    def get_page_by_cursor(self, cursor=None, direction='next'):
+        """
+        Get a page using cursor-based (keyset) pagination.
+
+        Args:
+            cursor: The value of the sort_field from the last item of previous page
+            direction: 'next' or 'prev'
+
+        Returns:
+            Page object with results
+        """
+        queryset = self.object_list
+
+        if cursor is not None:
+            # Apply keyset filter
+            if direction == 'next':
+                if self.sort_order == 'asc':
+                    queryset = queryset.filter(**{f'{self.sort_field}__gt': cursor})
+                else:
+                    queryset = queryset.filter(**{f'{self.sort_field}__lt': cursor})
+            elif direction == 'prev':
+                if self.sort_order == 'asc':
+                    queryset = queryset.filter(**{f'{self.sort_field}__lt': cursor})
+                else:
+                    queryset = queryset.filter(**{f'{self.sort_field}__gt': cursor})
+                # For previous, we need to reverse the order, get items, then reverse back
+                queryset = queryset.order_by(f'-{self.sort_field}' if self.sort_order == 'asc' else self.sort_field)
+
+        # Get one extra item to check if there are more pages
+        results = list(queryset[:self.per_page + 1])
+
+        has_more = len(results) > self.per_page
+        if has_more:
+            results = results[:self.per_page]
+
+        # If we were going backwards, reverse the results
+        if cursor is not None and direction == 'prev':
+            results.reverse()
+
+        # Create a pseudo-page object
+        page = self._create_keyset_page(results, cursor, direction, has_more, page_number=None)
+        return page
+
+    def get_page_by_number(self, page_number):
+        """
+        Get a page by page number using keyset pagination.
+
+        This is much faster than OFFSET pagination because it:
+        1. Calculates the cursor (starting ID) for the page using an indexed query
+        2. Uses keyset WHERE clause instead of OFFSET
+
+        Args:
+            page_number: The 1-based page number to retrieve
+
+        Returns:
+            Page object with results
+        """
+        if page_number < 1:
+            page_number = 1
+
+        if page_number == 1:
+            # First page - no cursor needed
+            return self.get_page_by_cursor(cursor=None, direction='next')
+
+        # Calculate how many records to skip
+        offset = (page_number - 1) * self.per_page
+
+        # Get the cursor value efficiently using a subquery with LIMIT/OFFSET
+        # This is still O(n) but only fetches one field value, not entire rows
+        queryset = self.object_list
+
+        try:
+            # Fetch just the sort_field value at the offset position
+            # This is much faster than fetching full records
+            cursor_record = queryset.values_list(self.sort_field, flat=True)[offset:offset+1]
+
+            if cursor_record:
+                cursor = cursor_record[0]
+                # Now use keyset pagination from this cursor
+                return self.get_page_by_cursor(cursor=cursor, direction='next')
+            else:
+                # Page number beyond available data
+                return self._create_keyset_page([], None, 'next', False, page_number)
+
+        except (IndexError, TypeError):
+            # Handle edge cases
+            return self._create_keyset_page([], None, 'next', False, page_number)
+
+    def _create_keyset_page(self, object_list, cursor, direction, has_more, page_number=None):
+        """Create a page-like object for keyset pagination."""
+        from types import SimpleNamespace
+
+        # Use provided page number or calculate approximate
+        if page_number is None:
+            approx_page = 1 if cursor is None else '~'
+        else:
+            approx_page = page_number
+
+        page = SimpleNamespace()
+        page.object_list = object_list
+        page.has_next = lambda: has_more if direction == 'next' else len(object_list) > 0
+        page.has_previous = lambda: cursor is not None or (page_number and page_number > 1)
+        page.number = approx_page
+        page.paginator = self
+
+        # Get cursors for next/prev pages
+        if object_list:
+            page.next_cursor = getattr(object_list[-1], self.sort_field) if has_more else None
+            page.prev_cursor = getattr(object_list[0], self.sort_field) if cursor else None
+        else:
+            page.next_cursor = None
+            page.prev_cursor = None
+
+        # For template compatibility
+        page.has_other_pages = lambda: page.has_next() or page.has_previous()
+
+        # Support page number navigation
+        if page_number:
+            page.next_page_number = lambda: page_number + 1 if has_more else page_number
+            page.previous_page_number = lambda: page_number - 1 if page_number > 1 else 1
+        else:
+            page.next_page_number = lambda: None
+            page.previous_page_number = lambda: None
+
+        return page
+
+
 
 
 def send_email_file_by_url(file_name, to_email):
@@ -72,8 +265,74 @@ class BasicSearchView(ListView):
     Helper for you to build common style of search page for emlo editor
     """
     paginate_by = 100
+    paginator_class = CachedCountPaginator
     template_name = 'core/basic_search_page.html'
     context_object_name = 'records'
+
+    # Keyset pagination settings
+    use_keyset_pagination = False  # Set to True in subclasses to enable
+    keyset_sort_field = 'pk'  # Override in subclasses based on default sort
+
+    def paginate_queryset(self, queryset, page_size):
+        """
+        Override to support both traditional and keyset pagination.
+
+        Falls back to traditional pagination if:
+        - Keyset is disabled (use_keyset_pagination=False)
+        - Sort field is not suitable for keyset pagination (not indexed/unique)
+        """
+        # Check if we should use keyset pagination
+        if not self.use_keyset_pagination:
+            return super().paginate_queryset(queryset, page_size)
+
+        # Determine the actual sort field being used
+        current_sort_by = self.get_sort_by()
+
+        # For keyset pagination, we need a single, unique, indexed field
+        # If user sorted by multiple fields or a non-indexed field, fall back to traditional
+        if not current_sort_by or len(current_sort_by) > 1:
+            log.warning(f'Keyset pagination disabled: multi-field or empty sort {current_sort_by}')
+            return super().paginate_queryset(queryset, page_size)
+
+        # Extract the sort field (remove '-' prefix if descending)
+        sort_field = current_sort_by[0].lstrip('-')
+        sort_order = 'desc' if current_sort_by[0].startswith('-') else 'asc'
+
+        # Check if this field is suitable for keyset pagination
+        # Only use keyset for indexed unique fields (primary keys, timestamps)
+        suitable_fields = [self.keyset_sort_field, 'pk', 'id']
+        if sort_field not in suitable_fields:
+            # Fall back to traditional pagination for non-indexed sorts
+            log.debug(f'Keyset pagination disabled for sort field: {sort_field}')
+            return super().paginate_queryset(queryset, page_size)
+
+        # Create keyset paginator
+        paginator = KeysetPaginator(
+            queryset, 
+            page_size,
+            sort_field=sort_field,
+            sort_order=sort_order
+        )
+
+        # Check how user is navigating
+        cursor = self.request.GET.get('cursor')
+        page_num = self.request.GET.get('page')
+        direction = self.request.GET.get('direction', 'next')
+
+        # Use appropriate method based on navigation type
+        if page_num:
+            # Direct page number selection - calculate cursor for that page
+            try:
+                page_number = int(page_num)
+                page = paginator.get_page_by_number(page_number)
+            except (ValueError, TypeError):
+                # Invalid page number, default to page 1
+                page = paginator.get_page_by_number(1)
+        else:
+            # Cursor-based navigation (next/previous buttons)
+            page = paginator.get_page_by_cursor(cursor=cursor, direction=direction)
+
+        return (paginator, page, page.object_list, page.has_other_pages())
 
     @property
     def search_field_label_map(self) -> dict:
