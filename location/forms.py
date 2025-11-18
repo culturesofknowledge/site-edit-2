@@ -64,11 +64,19 @@ class GeneralSearchFieldset(form_serv.BasicSearchFieldset):
     sent_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
     recd = SearchIntField(label=field_label_map['location']['recd'],
-                            help_text='Number of letters sent to this destination.')
+                            help_text="Number of letters sent to this destination. You can search on these ‘number’ "
+                                      "fields using ‘Advanced Search’, e.g. you could enter something like ‘Received "
+                                      "greater than 100’ to identify a place to which many letters were sent, but "
+                                      "please note that these will be slower searches than those on place name or "
+                                      "latitude/longitude.")
     recd_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
     all_works = SearchIntField(label=field_label_map['location']['all_works'],
-                                 help_text='Total number of letters sent to and from this place.')
+                                 help_text="Total number of letters sent to and from this place. You can search on "
+                                           "these ‘number’ fields using ‘Advanced Search’, e.g. you could enter "
+                                           "something like ‘Sent and received greater than 100’ to identify a place "
+                                           "from and to which many letters were sent, but please note that these will "
+                                           "be slower searches than those on place name or latitude/longitude.")
     all_works_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
     researchers_notes = SearchCharField(label=field_label_map['location']['researchers_notes'],
