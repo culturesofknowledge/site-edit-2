@@ -68,6 +68,30 @@ tr.selectable_entry:not(.selected):hover {
   }
 }
 
+// Header top bar typography — align with Dashboard Tile Design
+// Make top-level menu text larger, bold, and use the same serif font
+nav.flex-space-between {
+  .menu-item {
+    // allow taller text without clipping
+    height: auto;
+  }
+
+  // only target the top-level anchors in the header
+  .menu-item > a {
+    font-family: $serif;
+    font-size: $typescale-3; // match tile size
+    font-weight: 700; // make bold as requested
+    line-height: 1.2;
+  }
+
+  .menu-item > a > ul > a{
+    font-family: $serif;
+    font-size: $typescale-3; // match tile size
+    font-weight: 700; // make bold as requested
+    line-height: 1.2;
+  }
+}
+
 
 .selectable_mode_btn.selectable_mode_on {
   background-color: $gold;
