@@ -48,11 +48,12 @@ tr.selectable_entry:not(.selected):hover {
 .menu-subitem {
   position: absolute;
   left: 5px;
-  top: 1.2em;
+  top: 1.5em;
   z-index: 100;
   width: 9.5em;
   background-color: $midnight;
   display: none;
+  border: 1px solid white;
 }
 
 .menu-item:hover .menu-subitem {
@@ -79,14 +80,14 @@ nav.flex-space-between {
   // only target the top-level anchors in the header
   .menu-item > a {
     font-family: $serif;
-    font-size: $typescale-3; // match tile size
+    font-size: $typescale-5; // match tile size
     font-weight: 700; // make bold as requested
     line-height: 1.2;
   }
 
-  .menu-item > a > ul > a{
+  .menu-item > ul > a{
     font-family: $serif;
-    font-size: $typescale-3; // match tile size
+    font-size: $typescale-5a; // match tile size
     font-weight: 700; // make bold as requested
     line-height: 1.2;
   }
