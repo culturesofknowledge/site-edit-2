@@ -93,6 +93,15 @@ nav.flex-space-between {
   }
 }
 
+// Suggestion buttons — uniform tile width without inline styles
+.suggestion-buttons {
+  a.suggest-tile {
+    display: inline-block;
+    width: 8rem;
+    text-align: center;
+  }
+}
+
 
 .selectable_mode_btn.selectable_mode_on {
   background-color: $gold;
@@ -135,6 +144,7 @@ nav.flex-space-between {
 
 .button-row {
   display: flex;
+  align-items: center;
 
   button {
     margin-right: 20px;
@@ -562,6 +572,43 @@ h2, h3 {
     background-color: #eef4ff;
     padding: 10px;
     border-left: 3px solid #007bff;
+}
+
+
+
+// Suggestion filter styling: add left/right padding and improve spacing/legibility
+#f_filter {
+  // Lay out the checkboxes nicely in a row that wraps
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+// Space the checkbox a touch from the preceding text and align pairs nicely
+#f_filter input.checkbox {
+  margin-left: 0.25rem; // ~4px
+  // Ensure there is a visible gap before the adjacent label
+  margin-right: 0.4rem !important; // slightly larger and with priority to win over resets
+}
+
+// Make the labels next to the checkboxes look like compact pills with padding
+#f_filter input.checkbox + label {
+  //display: inline-block;
+  padding: 0.2rem 0.8rem;
+  // top right bottom left
+  margin: 0.2rem 0.8rem 0.2rem 0.2rem; // left margin adds space even if checkbox margin is overridden
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+// Subtle hover/active states for better UX
+#f_filter input.checkbox + label:hover {
+  background-color: #f1f3f5;
+}
+
+#f_filter input.checkbox:checked + label {
+  background-color: #eef4ff;
+  border-color: #c6d8ff;
 }
 
 

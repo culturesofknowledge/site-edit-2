@@ -6,6 +6,9 @@
             id=id1_{{field.name}} {% if field.value %} checked {% endif %} />
             <label for=id1_{{field.name}}>{{field.label}}</label>
         {% endfor %}
-        <input class="btn-text-width inline_btn" type="submit" class=""margin-left btn" type="text"/>
+        <div class="actionbox">
+            <button type="submit" class="sticky-btn inline_btn "> Search</button>
+        </div>
+{#        <input class="btn-text-width inline_btn" type="submit"/>#}
     </form>
 </div>
