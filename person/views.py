@@ -318,12 +318,12 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
     def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
             ('names_and_titles', 'Name',),
-            ('date_of_birth', 'Born',),
-            ('date_of_death', 'Died',),
-            ('flourished', 'Flourished',),
+            ('date_of_birth', 'Born year',),
+            ('date_of_death', 'Died year',),
+            ('flourished', 'Flourished year',),
             ('gender', 'Gender',),
-            ('is_organisation', 'Person or group?',),
-            ('organisation_type', 'Type of group',),
+            ('is_organisation', 'Person or group',),
+            ('organisation_type', 'Organisation type',),
             ('sent', 'Sent',),
             ('recd', 'Rec\'d',),
             ('all_works', 'Sent or Rec\'d',),
@@ -333,8 +333,8 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             ('images', 'Images',),
             # Other details is a collection of various relationships that is difficult to generate in db query
             # ('other_details', 'Other details',),
-            ('change_timestamp', 'Change Timestamp',),
-            ('change_user', 'Change user',),
+            ('change_timestamp', 'Last edit',),
+            ('change_user', 'Last edited by',),
             ('iperson_id', 'Person or Group ID',),
         ]
 
