@@ -2,6 +2,9 @@
     /*max-width: 900px;*/
     font-size: 14px;
     clear: both;
+    // tighten the fieldset spacing specifically for this component
+    padding: $space-xs;
+    margin-bottom: $space-sm;
 }
 
 #search-components label {
@@ -9,11 +12,45 @@
 }
 
 .search-control {
-    background-color: $faint-grey;
-    border-radius: $space-sm;
-    padding: $space-sm;
-    height: 100%;
+    // Remove grey background and extra padding to reduce visual weight/space
+    background-color: transparent;
+    border-radius: 0;
+    padding: 0;
+    height: auto;
     width: 100%;
+    margin-bottom: $space-xs; // tighter vertical rhythm between components
+}
+
+.search-control > label {
+  width: 6em;
+}
+
+// Compact, inline layout for label + select rows inside this fieldset
+#search-components .sc-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: nowrap;
+}
+
+// Reduce default bottom margins within the search components area
+#search-components label {
+    margin-right: 0.25rem;
+    margin-bottom: 0;
+}
+
+#search-components select {
+    width: auto;
+    max-width: none;
+    white-space: nowrap;
+    margin-bottom: 0;
+}
+
+// Helper mirror element used by JS to measure option text width
+#search-components .select-mirror {
+    position: absolute;
+    visibility: hidden;
+    white-space: nowrap;
 }
 
 .display-point {
