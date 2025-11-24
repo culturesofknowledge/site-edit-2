@@ -57,9 +57,9 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
             ('resources', 'Related resources',),
             ('editors_notes', 'Editors\' notes',),
             ('images', 'Images',),
+            ('change_timestamp', 'Last edit',),
+            ('change_user', 'Last edited by',),
             ('institution_id', 'Repository ID',),
-            ('change_timestamp', 'Change timestamp',),
-            ('change_user', 'Change user',),
         ]
 
     @property
