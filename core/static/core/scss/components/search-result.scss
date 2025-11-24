@@ -92,12 +92,6 @@ td.text-heavy {
 
 .simplified_query ul {
     margin: unset;
-    padding-right: 1em;
-    display: grid;
-    grid-auto-flow: column;
-    grid-gap: 0;
-    grid-template-rows: 30px 40px;
-    grid-column-gap: 1.5em;
 }
 
 .simplified_query ul li, span {
