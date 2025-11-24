@@ -397,7 +397,7 @@ class BasicSearchView(ListView):
                     if lookup_key.startswith('not'):
                         lookup_key = 'does ' + lookup_key
 
-                    simplified_query.append(f'{label_name} {lookup_key} "{field_val}".')
+                    simplified_query.append(f'{label_name} {lookup_key} \'{field_val}\'')
 
         if self.search_field_fn_maps:
             _from = self.request_data['change_timestamp_from'] if 'change_timestamp_from' in self.request_data else None
