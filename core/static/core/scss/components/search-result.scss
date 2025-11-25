@@ -105,3 +105,41 @@ td.text-heavy {
 .result_count h2 {
     line-height: unset;
 }
+
+#results_table {
+  /* Size behavior: allow table to be wider than the viewport/container */
+  min-width: 100%;               /* ensure at least full width */
+  width: max-content;            /* expand to fit columns so wrapper can scroll */
+  max-width: none;               /* do not clamp the intrinsic width */
+
+  /* Table visuals */
+  border-collapse: collapse;
+  /* Keep auto layout for natural column sizing */
+}
+
+#results_table th,
+#results_table td {
+  /* Provide sensible bounds across all result tables */
+  min-width: 5em;   /* 80px -> 5em (scales with font size) */
+  max-width: 17.5em; /* 280px -> 17.5em */
+  vertical-align: top;
+
+  /* Robust text wrapping to avoid layout blowouts */
+  white-space: normal;           /* allow wrapping */
+  word-break: break-word;        /* fallback for long tokens */
+  overflow-wrap: anywhere;       /* modern browsers */
+  hyphens: auto;                 /* nicer long-word breaks where supported */
+}
+
+/* Slightly narrower utility columns where content is typically short */
+#results_table td:nth-child(7),  /* flags / icons column */
+#results_table td:nth-child(8),  /* images */
+#results_table td:nth-child(13) { /* ID */
+  max-width: 8.75em; /* 140px -> 8.75em */
+}
+
+/* Allow multi-item lists inside cells to wrap nicely without extra spacing */
+#results_table td.display-point ul {
+  margin: 0;
+  padding-left: calc(.75 * 1rem);
+}
