@@ -128,7 +128,7 @@ ROLE_SUPER = 'super'
 ROLE_CONTRIBUTING_EDITOR = 'contributing_editor'
 
 ROLE_DISPLAY_NAMES = [
-    (ROLE_EDITOR, 'Can edit Union and Bodleian card index catalgoues'),
+    (ROLE_EDITOR, 'Can edit Union and Bodleian card index catalogues'),
     (ROLE_CONTRIBUTING_EDITOR, 'Contributing Editor'),
     (ROLE_VIEWER, 'Read-only access'),
     (ROLE_SUPER, 'Supervisor'),
