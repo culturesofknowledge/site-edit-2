@@ -29,5 +29,5 @@ class GeneralSearchFieldset(form_serv.BasicSearchFieldset):
     abbrev = SearchCharField(label=field_label_map['publication']['abbrev'])
     abbrev_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
-    publication_id = SearchIntField()
+    publication_id = SearchIntField(label=field_label_map['publication']['publication_id'])
     publication_id_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)

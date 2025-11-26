@@ -199,7 +199,7 @@ changed_field_choices = [
     ('printed_edition_details', 'Printed Edition Details'),
     ('ps', 'Ps'),
     ('publication_details', 'Publication Details'),
-    ('publication_id', 'Publication Id'),
+    ('publication_id', 'Publication ID'),
     ('recd', 'Recd'),
     ('relevant_to_cofk', 'Relevant To Cofk'),
     ('resource_details', 'Resource Details'),

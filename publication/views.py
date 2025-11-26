@@ -42,8 +42,8 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
         return [
             ('publication_details', 'Publication details',),
             ('abbrev', 'Abbreviation',),
-            ('change_user', 'Last edited by',),
             ('change_timestamp', 'Last edit',),
+            ('change_user', 'Last edited by',),
             ('publication_id', 'Publication ID',),
         ]
 
