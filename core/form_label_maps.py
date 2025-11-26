@@ -64,7 +64,7 @@ field_label_map = {
         'element_7_eg_empire': '7. E.g. empire',
 
         'images': 'Images',
-        'iperson_id': 'Person or Group ID',
+        'iperson_id': 'Person or group ID',
         'other_details': 'Other details',
     },
     'publication': common_fields | {
