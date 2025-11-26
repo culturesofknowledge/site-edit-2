@@ -10,7 +10,8 @@ from location.models import CofkUnionLocation
 class LocationForm(ModelForm):
     form_title__ = 'Core fields and editors\' notes'
 
-    location_id = IntegerField(required=False, widget=HiddenInput())
+    location_id = IntegerField(required=False, widget=HiddenInput(),
+                               label=field_label_map['location']['location_id'])
     location_name = CharField(required=False,
                               widget=forms.TextInput(attrs=dict(readonly=True)),
                               label='Full name of location')
@@ -49,7 +50,8 @@ class GeneralSearchFieldset(form_serv.BasicSearchFieldset):
                                         ' any alternative names for a location.')
     location_name_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
-    location_id = SearchIntField(help_text='The unique ID for the record within this database.')
+    location_id = SearchIntField(help_text='The unique ID for the record within this database.',
+                                 label=field_label_map['location']['location_id'])
     location_id_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
     editors_notes = SearchCharField(label=field_label_map['location']['editors_notes'],
