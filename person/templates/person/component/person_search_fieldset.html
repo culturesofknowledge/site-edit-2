@@ -5,6 +5,8 @@
     <!-- Name -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.names_and_titles field_lookup=form.names_and_titles_lookup %}
 
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.iperson_id field_lookup=form.iperson_id_lookup %}
+
     {% include "core/component/search_fieldset/from_to_year.html" with title='Born' from_field=form.birth_year_from to_field=form.birth_year_to field_info=form.birth_year_info %}
     {% include "core/component/search_fieldset/from_to_year.html" with title='Died' from_field=form.death_year_from to_field=form.death_year_to field_info=form.death_year_info %}
     {% include "core/component/search_fieldset/from_to_year.html" with title='Flourished' from_field=form.flourished_year_from to_field=form.flourished_year_to field_info=form.flourished_info %}
@@ -46,8 +48,6 @@
 
     <!-- Last changed by-->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.change_user field_lookup=form.change_user_lookup %}
-
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.iperson_id field_lookup=form.iperson_id_lookup %}
 
     <script>
         var roles_autocomplete = [{% for role in form.role_category_names %}"{{ role|safe }}", {% endfor %}];

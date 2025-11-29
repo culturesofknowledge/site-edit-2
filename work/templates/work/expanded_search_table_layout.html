@@ -10,6 +10,7 @@
     <tr></tr>
     <tr>
         <th>Editors' notes</th>
+        <th>Work ID</th>
         <th>Date for ordering</th>
         <th>Author/Sender</th>
         <th>Origin</th>
@@ -21,7 +22,6 @@
         <th>Related resources</th>
         <th>Subjects</th>
         <th>Other details</th>
-        <th>ID</th>
         <th>Last edit</th>
     </tr>
     </thead>
@@ -34,6 +34,13 @@
             <td>
                 {% if r.editors_notes %}
                     {{ r.editors_notes|linebreaksbr }}
+                {% endif %}
+            </td>
+            <td>
+                {% if user_is_editor_or_supervisor or r.is_owner_of_catalogue %}
+                    {% include 'core/component/search_table_layout/link_record.html' with id=r.iwork_id view='work:full_form' %}
+                {% else %}
+                    {{ r.iwork_id }}
                 {% endif %}
             </td>
             <td>
@@ -100,13 +107,6 @@
             </td>
             <td>
                 {{ r.other_details }}
-            </td>
-            <td>
-                {% if user_is_editor_or_supervisor or r.is_owner_of_catalogue %}
-                    {% include 'core/component/search_table_layout/link_record.html' with id=r.iwork_id view='work:full_form' %}
-                {% else %}
-                    {{ r.iwork_id }}
-                {% endif %}
             </td>
             <td>
                 {{ r.change_timestamp|date:"d M Y H:i" }} by {{ r.change_user }}<br/>
