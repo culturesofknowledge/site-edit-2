@@ -351,15 +351,14 @@ class WorkAddresseeRecrefForm(WorkPersonMRRForm):
     relationship_types = AddresseeRelationChoices
 
 
-description_help_text = "This is in the style 'DD Mon YYYY: Author/Sender (place) to" \
+description_help_text = "This is in the style 'dd Mon yyyy: Author/Sender (place) to" \
                         " Addressee (place)', e.g. 8 Mar 1693: Bulkeley, Sir Richard" \
                         " (Dunlaven, County Wicklow) to Lister, Martin (Old Palace Yard, Westminster)."
-year_help_text = "Year in which work was created." \
-                 " (Use 'is blank' option in Advanced Search to find works without year.)"
-month_help_text = "Month (1-12) in which work was created. (Use 'is blank' option to find works without month.)"
-day_help_text = "Day on which work was created. (Use 'is blank' option to find works without day.)"
+year_help_text = "Year work was created. (Use 'is blank' option in Advanced Search to find works without year.)"
+month_help_text = "Month work was created. (Use 'is blank' option to find works without month.)"
+day_help_text = "Day work was created. (Use 'is blank' option to find works without day.)"
 date_of_work_help_text = "To find works from a specified period, enter dates 'from' and 'to' as YYYY or" \
-                         " DD/MM/YYYY. Either end of the date-range may be left blank, e.g. <ul><li>From 1633'" \
+                         " dd/mm/yyyy. Either end of the date-range may be left blank, e.g. <ul><li>From 1633'" \
                          " to find works dated from 1st January 1633 onwards</li><li>'To 1634' to find works dated up" \
                          " to 31st December 1634</li></ul>"
 sender_recipient_help_text = "Enter part or all of the name of either the author/sender or the" \
@@ -367,9 +366,9 @@ sender_recipient_help_text = "Enter part or all of the name of either the author
 origin_destination_help_text = "The place to or from which a letter was sent, in standard modern format."
 places_from_searchable = 'The place from which a letter was sent, in standard modern format.'
 places_to_searchable = 'The place to which a letter was sent, in standard modern format.'
-flags_help_text = "May contain the words 'Date of work', 'Author/sender', 'Addressee', 'Origin' " \
+flags_help_text = "May contain the words 'Date of work', 'Author/sender', 'Addressee/recipient', 'Origin' " \
                   "and/or 'Destination', followed by 'INFERRED', 'UNCERTAIN' or, in the case of date," \
-                  " 'APPROXIMATE'. E.g. Author/sender INFERRED."
+                  " 'APPROXIMATE'. E.g. 'Author/sender INFERRED'."
 date_as_marked_help_text = "This field could contain the actual words marked within the " \
                            "letter, such as 'ipsis Kalendis Decembribus C I. I. CCVI', or" \
                            " a modern researcher's notation such as 'n.d.'"
@@ -382,11 +381,11 @@ manif_help_text = 'The Manifestations field contains a very brief summary of all
                   'Also, if entering multiple search terms, you need to separate them ' \
                   'using the wildcard % (percent-sign).</i>'
 img_help_text = 'Contains filenames of any scanned images of manifestations.'
-abstr_help_text = 'Contains a summary of the contents of the work'
+abstr_help_text = 'This field contains a summary of the contents of the letter.'
 keywords_help_text = 'This field contains keywords, plus a list of places and works mentioned within a work.'
 acc_help_text = 'Typically contains the name of the researcher who contributed the data.'
 del_help_text = "Yes or No. If 'Yes', the record is marked for deletion."
-id_help_text = 'The unique ID for the record within the current CofK database.'
+id_help_text = 'The unique ID for the record within the current EMLO database.'
 change_help_text = 'Username of the person who last changed the record.'
 
 work_to_be_deleted_choices = [(0, 'No'), (1, 'Yes')]
@@ -407,7 +406,8 @@ class CompactSearchFieldset(BasicSearchFieldset):
     description = SearchCharField(help_text=description_help_text)
     description_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
-    editors_notes = SearchCharField(label=field_label_map['work']['editors_notes'])
+    editors_notes = SearchCharField(label=field_label_map['work']['editors_notes'],
+                                    help_text='Notes for internal use, intended to hold temporary queries etc.')
     editors_notes_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     sender_or_recipient = SearchCharField(help_text=sender_recipient_help_text)

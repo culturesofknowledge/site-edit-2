@@ -510,7 +510,8 @@ class BasicSearchFieldset(forms.Form):
                                             widget=widgets_serv.SearchDateTimeInput(attrs={'class': 'searchfield'}))
     change_timestamp_to = forms.DateField(required=False,
                                           widget=widgets_serv.SearchDateTimeInput(attrs={'class': 'searchfield'}))
-    change_timestamp_info = datetime_search_info
+    change_timestamp_info = "Enter as dd/mm/yyyy hh:mm or dd/mm/yyyy (please note: dd/mm/yyyy counts as the very " \
+                       "start of a day)."
 
 
 class EmloLineboxField(CommonTextareaField):
