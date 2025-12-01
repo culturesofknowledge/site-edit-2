@@ -22,7 +22,7 @@
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_std_day field_lookup=form.date_of_work_std_day_lookup %}
 
     <!-- Year range -->
-    {% include "core/component/search_fieldset/from_to_year.html" with title='Date for ordering (in original calendar)' from_field=form.date_of_work_std_from to_field=form.date_of_work_std_to field_info=form.date_of_work_std_info %}
+    {% include "core/component/search_fieldset/from_to_year.html" with title='Date for ordering' from_field=form.date_of_work_std_from to_field=form.date_of_work_std_to field_info=form.date_of_work_std_info %}
 
     <!-- Sender/recipient -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.sender_or_recipient field_lookup=form.sender_or_recipient_lookup %}
@@ -36,8 +36,11 @@
     <!-- Notes on authors/senders -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.notes_on_authors field_lookup=form.notes_on_authors_lookup %}
 
-    <!-- Addressee -->
+    <!-- Addressee/Recipient -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.addressees_searchable field_lookup=form.addressees_searchable_lookup %}
+
+    <!-- Notes on addressees/recipients -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.notes_on_addressees field_lookup=form.notes_on_addressees_lookup %}
 
     <!-- Origin (standardised) -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.places_from_searchable field_lookup=form.places_from_searchable_lookup %}

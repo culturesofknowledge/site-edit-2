@@ -968,12 +968,12 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             ('date_of_work_std_year', 'Year',),
             ('date_of_work_std_month', 'Month',),
             ('date_of_work_std_day', 'Day',),
-            ('date_of_work_std', 'Date for ordering (in original calendar)',),
+            ('date_of_work_std', 'Date for ordering',),
             ('creators_searchable', 'Author/sender',),
-            ('places_from_searchable', 'Origin (standardised)',),
+            ('places_from_searchable', 'Origin (standardized)',),
             ('origin_as_marked', 'Origin as marked',),
-            ('addressees_searchable', 'Addressee',),
-            ('places_to_searchable', 'Destination (standardised)',),
+            ('addressees_searchable', 'Addressee/Recipient',),
+            ('places_to_searchable', 'Destination (standardized)',),
             # ('flags', 'Flags',),
             ('manifestations_searchable', 'Manifestations',),
             ('language_of_work', 'Language of work',),
@@ -1043,6 +1043,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                 search_fields_maps=search_fields_maps,
                 search_fields_fn_maps={
                     'notes_on_authors': create_lookup_fn_by_comment([REL_TYPE_COMMENT_AUTHOR]),
+                    'notes_on_addressees': create_lookup_fn_by_comment([REL_TYPE_COMMENT_ADDRESSEE]),
                     'related_resources': create_lookup_fn_by_resource([REL_TYPE_IS_RELATED_TO]),
                     'general_notes': create_lookup_fn_by_comment([REL_TYPE_COMMENT_REFERS_TO]),
                     'flags': lookup_fn_flags,
@@ -1109,11 +1110,11 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             _to = self.request_data['date_of_work_std_to'] if 'date_of_work_std_to' in self.request_data else None
 
             if _to and _from:
-                simplified_query.append(f'Date for ordering (in original calendar) between {_from} and {_to}.')
+                simplified_query.append(f'Date for ordering between {_from} and {_to}.')
             elif _to:
-                simplified_query.append(f'Date for ordering (in original calendar) before {_to}.')
+                simplified_query.append(f'Date for ordering before {_to}.')
             elif _from:
-                simplified_query.append(f'Date for ordering (in original calendar) after {_from}.')
+                simplified_query.append(f'Date for ordering after {_from}.')
 
         return simplified_query
 
