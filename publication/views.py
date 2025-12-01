@@ -41,10 +41,10 @@ class PubSearchView(LoginRequiredMixin, DefaultSearchView):
     def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
             ('publication_details', 'Publication details',),
+            ('publication_id', 'Publication ID',),
             ('abbrev', 'Abbreviation',),
             ('change_timestamp', 'Last edit',),
             ('change_user', 'Last edited by',),
-            ('publication_id', 'Publication ID',),
         ]
 
     @property
