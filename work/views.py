@@ -963,6 +963,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
             ('description', 'Description',),
+            ('iwork_id', 'Work ID',),
             ('editors_notes', 'Editors\' notes',),
             ('date_of_work_as_marked', 'Date of work as marked',),
             ('date_of_work_std_year', 'Year',),
@@ -974,13 +975,13 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             ('origin_as_marked', 'Origin as marked',),
             ('addressees_searchable', 'Addressee/Recipient',),
             ('places_to_searchable', 'Destination (standardized)',),
+            ('destination_as_marked', 'Destination as marked',),
             # ('flags', 'Flags',),
             ('manifestations_searchable', 'Manifestations',),
             ('language_of_work', 'Language of work',),
             ('original_catalogue', 'Original catalogue',),
             ('accession_code', 'Source of record',),
-            ('work_to_be_deleted', 'Record to be deleted',),
-            ('iwork_id', 'Work ID',),
+            ('work_to_be_deleted', 'Work to be deleted',),
             ('change_timestamp', 'Last edit',),
             ('change_user', 'Last edited by',),
             # ('related_resources', 'Related resources',),
