@@ -2,8 +2,8 @@
     <thead>
     <tr></tr>
     <tr>
-        <th>ID</th>
         <th>Publication Details</th>
+        <th>Publication ID</th>
         <th>Abbrev</th>
         <th>Last edit</th>
     </tr>
@@ -14,10 +14,10 @@
         <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}" entry_id="{{ r.publication_id }}">
 
             <td>
-                {% include 'core/component/search_table_layout/link_record.html' with id=r.publication_id view='publication:full_form' %}
+                {{ r.publication_details }}
             </td>
             <td>
-                {{ r.publication_details }}
+                {% include 'core/component/search_table_layout/link_record.html' with id=r.publication_id view='publication:full_form' %}
             </td>
             <td>
                 {{ r.abbrev }}
