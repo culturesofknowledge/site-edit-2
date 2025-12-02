@@ -17,13 +17,13 @@
                 {{ r.publication_details }}
             </td>
             <td>
-                {% include 'core/component/search_table_layout/link_record.html' with id=r.publication_id view='publication:full_form' %}
+                {% include 'core/component/search_table_layout/link_record.html' with id=r.publication_id view='publication:full_form' only %}
             </td>
             <td>
                 {{ r.abbrev }}
             </td>
             <td>
-                {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r %}
+                {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r only %}
             </td>
         </tr>
     {% endfor %}

@@ -1,14 +1,15 @@
 import logging
 from datetime import date
 from typing import Any, List
+import re
 
-from django.db.models import Q
+from django.db.models import Q, F
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
 from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, \
     REL_TYPE_MENTION
-from core.helper import data_serv
+from core.helper import data_serv,query_serv
 from location import location_serv
 from person import person_serv
 from work.models import CofkUnionWork
@@ -360,3 +361,20 @@ def is_hidden_work(work: CofkUnionWork, cached_catalogue_status: dict[Any, int] 
     return (work.work_to_be_deleted or
             not is_catalogue_published or
             work.date_of_work_std == HIDDEN_DATE_STD)
+
+def lookup_manifestations_searchable(lookup_fn, field_name: str, value: str) -> Q:
+    """
+    Allow combining document type and repository (and more terms) using % as an ordered wildcard separator.
+    Example: 'Draft%Royal Society' will require manifestations_searchable to contain 'Draft' followed later by
+    'Royal Society'. If no % present, fall back to the default lookup function (icontains with wildcard support).
+    """
+    # When '%' is present, build a case-insensitive regex that preserves order between segments
+    if isinstance(value, str) and '%' in value:
+        segments = [seg.strip() for seg in value.split('%') if seg.strip()]
+        # Escape regex meta in each segment and join with '.*' to enforce ordering
+        pattern = '.*'.join(re.escape(seg) for seg in segments)
+        # Use IRegex on the annotated/display field
+        return query_serv.lookups.IRegex(F(field_name), pattern)
+
+    # Otherwise, delegate to the standard lookup function (supports contains/equals/etc.)
+    return query_serv.run_lookup_fn(lookup_fn, field_name, value)

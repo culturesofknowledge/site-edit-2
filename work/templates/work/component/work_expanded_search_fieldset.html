@@ -147,19 +147,19 @@
     <script>
 
       var manif_autocomplete = [{% for mtype in form.manif_type %}
-      { label: "{{ mtype }}", category: "Document type" },
+      { label: "{{ mtype|escapejs }}", category: "Document type" },
       {% endfor %}
 
       {% for inst in form.institution_names %}
-      { label: "{{ inst }}", category: "Repository" },
+      { label: "{{ inst|escapejs }}", category: "Repository" },
       {% endfor %}];
 
     var subjects_autocomplete = [{% for subject in form.subject_names %}
-      '{{ subject }}',
+      '{{ subject|escapejs }}',
       {% endfor %}];
 
      var catalogs_autocomplete = [{% for catalog in form.catalog_names %}
-      "{{ catalog|safe }}",
+      "{{ catalog|escapejs }}",
       {% endfor %}];
 
     </script>

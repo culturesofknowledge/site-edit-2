@@ -981,7 +981,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             ('language_of_work', 'Language of work',),
             ('original_catalogue', 'Original catalogue',),
             ('accession_code', 'Source of record',),
-            ('work_to_be_deleted', 'Work to be deleted',),
+            ('work_to_be_deleted', 'Record to be deleted',),
             ('change_timestamp', 'Last edit',),
             ('change_user', 'Last edited by',),
             # ('related_resources', 'Related resources',),
@@ -1048,6 +1048,8 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                     'related_resources': create_lookup_fn_by_resource([REL_TYPE_IS_RELATED_TO]),
                     'general_notes': create_lookup_fn_by_comment([REL_TYPE_COMMENT_REFERS_TO]),
                     'flags': lookup_fn_flags,
+                    # Support combined search such as "Draft%Royal Society" on manifestations summary
+                    'manifestations_searchable': work_serv.lookup_manifestations_searchable,
                 })
         )
 
