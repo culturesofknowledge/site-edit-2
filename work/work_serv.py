@@ -137,7 +137,14 @@ class DisplayableWork(CofkUnionWork):
     def places_from_for_display(self) -> str:
         origin = ''
         if self.origin_location:
+            # Base location name
             origin = str(self.origin_location)
+            # Append alternative names in brackets on same line if present
+            alt = getattr(self.origin_location, 'location_synonyms', None)
+            if alt:
+                alt = '. '.join([s.strip() for s in str(alt).splitlines() if s.strip()])
+                if alt:
+                    origin += f' ({alt})'
 
         if self.origin_as_marked:
             origin += f'\n\nAs marked: {self.origin_as_marked}'
@@ -148,7 +155,14 @@ class DisplayableWork(CofkUnionWork):
     def places_to_for_display(self) -> str:
         destination = ''
         if self.destination_location:
+            # Base location name
             destination = str(self.destination_location)
+            # Append alternative names in brackets on same line if present
+            alt = getattr(self.destination_location, 'location_synonyms', None)
+            if alt:
+                alt = '. '.join([s.strip() for s in str(alt).splitlines() if s.strip()])
+                if alt:
+                    destination += f' ({alt})'
 
         if self.destination_as_marked:
             destination += f'\n\nAs marked: {self.destination_as_marked}'

@@ -1308,6 +1308,7 @@ def create_queryset_by_queries(
             [REL_TYPE_WAS_SENT_FROM],
             [
                 'cofkworklocationmap__location__location_name',
+                'cofkworklocationmap__location__location_synonyms',
                 'origin_as_marked',
             ]
         ),
@@ -1315,6 +1316,7 @@ def create_queryset_by_queries(
             [REL_TYPE_WAS_SENT_TO],
             [
                 'cofkworklocationmap__location__location_name',
+                'cofkworklocationmap__location__location_synonyms',
                 'destination_as_marked',
             ]
         ),
@@ -1322,6 +1324,7 @@ def create_queryset_by_queries(
             [REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM],
             [
                 'cofkworklocationmap__location__location_name',
+                'cofkworklocationmap__location__location_synonyms',
                 'origin_as_marked',
                 'destination_as_marked',
             ]

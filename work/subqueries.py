@@ -35,15 +35,19 @@ def create_joined_person_ann_field(relationship_types):
 
 
 def create_joined_location_ann_field(relationship_types, target_fields: list[str]):
+    """
+    Build a subquery that aggregates related locations' searchable text for a work.
+
+    The list of target_fields is concatenated (preserving order) to form the
+    searchable value. Callers must pass fully-qualified field paths they want
+    included, e.g. 'cofkworklocationmap__location__location_name',
+    'cofkworklocationmap__location__location_synonyms', 'origin_as_marked', etc.
+    """
     subquery = CofkUnionWork.objects.filter(
         cofkworklocationmap__work_id=OuterRef('pk'),
         cofkworklocationmap__relationship_type__in=relationship_types,
     ).annotate(**{
-        'location_detail': query_utils.join_values_for_search([
-            'cofkworklocationmap__location__location_name',
-            'origin_as_marked',
-            'destination_as_marked',
-        ])
+        'location_detail': query_utils.join_values_for_search(target_fields),
     }).values_list('location_detail', flat=True)
     return subquery
 
