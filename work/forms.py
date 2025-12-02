@@ -395,12 +395,25 @@ class CompactSearchFieldset(BasicSearchFieldset):
     title = 'Compact Search'
     template_name = 'work/component/work_compact_search_fieldset.html'
 
-    institution_names = CofkUnionInstitution.objects \
-        .order_by('institution_name').values_list('institution_name', flat=True).distinct()
+    # Keep static: document type list is a constant, safe to evaluate at import time
     manif_type = [t[1] for t in manif_type_choices]
-    subject_names = CofkUnionSubject.objects.order_by('subject_desc').values_list('subject_desc', flat=True).distinct()
-    catalog_names = CofkLookupCatalogue.objects \
-        .order_by('catalogue_name').values_list('catalogue_name', flat=True).distinct()
+
+    # Make dynamic: these lists should reflect newly added data without server restarts
+    @property
+    def institution_names(self):
+        return CofkUnionInstitution.objects.order_by('institution_name') \
+            .values_list('institution_name', flat=True).distinct()
+
+    @property
+    def subject_names(self):
+        return CofkUnionSubject.objects.order_by('subject_desc') \
+            .values_list('subject_desc', flat=True).distinct()
+
+    # Make catalogue names dynamic to reflect newly added catalogues
+    @property
+    def catalog_names(self):
+        return CofkLookupCatalogue.objects.order_by('catalogue_name') \
+            .values_list('catalogue_name', flat=True).distinct()
 
     # Fields shared with both search forms
     description = SearchCharField(help_text=description_help_text)
