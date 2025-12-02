@@ -1309,7 +1309,6 @@ def create_queryset_by_queries(
             [
                 'cofkworklocationmap__location__location_name',
                 'cofkworklocationmap__location__location_synonyms',
-                'origin_as_marked',
             ]
         ),
         'places_to_searchable': subqueries.create_joined_location_ann_field(
@@ -1317,7 +1316,6 @@ def create_queryset_by_queries(
             [
                 'cofkworklocationmap__location__location_name',
                 'cofkworklocationmap__location__location_synonyms',
-                'destination_as_marked',
             ]
         ),
         'origin_or_destination': subqueries.create_joined_location_ann_field(
@@ -1325,8 +1323,6 @@ def create_queryset_by_queries(
             [
                 'cofkworklocationmap__location__location_name',
                 'cofkworklocationmap__location__location_synonyms',
-                'origin_as_marked',
-                'destination_as_marked',
             ]
         ),
         'manifestations_searchable': subqueries.create_joined_manif_ann_field(),
