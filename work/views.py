@@ -1036,6 +1036,10 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             'images': [
                 'manif_set__images__image_filename',
             ],
+            # Subjects search should target the related subject description field
+            'subjects': [
+                'subjects__subject_desc',
+            ],
         }
 
         queries.extend(
