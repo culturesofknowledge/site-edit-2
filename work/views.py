@@ -1010,9 +1010,12 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                 [REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
         } | query_serv.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
                                                'change_timestamp') \
-            | query_serv.create_from_to_datetime('date_of_work_std_from', 'date_of_work_std_to',
-                                                 'date_of_work_std',
-                                                 convert_fn=date_serv.search_datestr_to_db_datestr, )
+            | query_serv.create_from_to_date_with_bounds(
+                'date_of_work_std_from', 'date_of_work_std_to',
+                'date_of_work_std',
+                start_convert_fn=date_serv.search_datestr_to_db_datestr,
+                end_convert_fn=date_serv.search_datestr_to_db_datestr_end,
+            )
 
     def get_queryset(self):
         if not self.request_data:
@@ -1117,11 +1120,15 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             _to = self.request_data['date_of_work_std_to'] if 'date_of_work_std_to' in self.request_data else None
 
             if _to and _from:
-                simplified_query.append(f'Date for ordering between {_from} and {_to}.')
+                disp_from = date_serv.normalize_search_display_start(_from)
+                disp_to = date_serv.normalize_search_display_end(_to)
+                simplified_query.append(f'Date for ordering between {disp_from} and {disp_to}.')
             elif _to:
-                simplified_query.append(f'Date for ordering before {_to}.')
+                disp_to = date_serv.normalize_search_display_end(_to)
+                simplified_query.append(f'Date for ordering before {disp_to}.')
             elif _from:
-                simplified_query.append(f'Date for ordering after {_from}.')
+                disp_from = date_serv.normalize_search_display_start(_from)
+                simplified_query.append(f'Date for ordering after {disp_from}.')
 
         return simplified_query
 

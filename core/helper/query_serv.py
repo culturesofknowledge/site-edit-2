@@ -194,6 +194,9 @@ def get_lookup_conn_type_by_lookup_key(lookup_key) -> Literal[Q.OR, Q.AND]:
 
 def create_from_to_datetime(from_field_name: str, to_field_name: str,
                             db_field_name: str, convert_fn: Callable = None) -> dict:
+    """
+    Build from/to lookup functions for a date or datetime field using a single converter.
+    """
     if convert_fn is None:
         convert_fn = date_serv.str_to_search_datetime
 
@@ -202,6 +205,23 @@ def create_from_to_datetime(from_field_name: str, to_field_name: str,
             F(db_field_name), convert_fn(v)),
         to_field_name: lambda _, v: LessThanOrEqual(
             F(db_field_name), convert_fn(v)),
+    }
+
+
+def create_from_to_date_with_bounds(from_field_name: str, to_field_name: str,
+                                    db_field_name: str,
+                                    start_convert_fn: Callable[[str], str],
+                                    end_convert_fn: Callable[[str], str]) -> dict:
+    """
+    Build from/to lookup functions for a DATE field allowing different conversions
+    for the start (from) and end (to) inputs.
+
+    start_convert_fn: converts input to DB 'YYYY-MM-DD' at the beginning of the period
+    end_convert_fn: converts input to DB 'YYYY-MM-DD' at the end of the period
+    """
+    return {
+        from_field_name: lambda _, v: GreaterThanOrEqual(F(db_field_name), start_convert_fn(v)),
+        to_field_name: lambda _, v: LessThanOrEqual(F(db_field_name), end_convert_fn(v)),
     }
 
 
