@@ -344,6 +344,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             'roles': ['roles__role_category_desc'],
             'images': ['images__image_filename'],
             'organisation_type': ['organisation_type__org_type_desc'],
+            'researchers_notes': ['comments__comment'],
         }
 
     @property

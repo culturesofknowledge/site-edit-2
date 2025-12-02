@@ -314,6 +314,11 @@ class GeneralSearchFieldset(BasicSearchFieldset):
                                 help_text='The unique ID for the record within this database.')
     iperson_id_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
+    # Researchers' notes (via comments on person)
+    researchers_notes = SearchCharField(label=field_label_map['person']['researchers_notes'],
+                                        help_text='Comments destined for front-end display.')
+    researchers_notes_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
+
 
 class PersonOtherRelationChoices(TextChoices):
     UNSPECIFIED_RELATIONSHIP_WITH = constant.REL_TYPE_UNSPECIFIED_RELATIONSHIP_WITH, 'Unspecified relationship'

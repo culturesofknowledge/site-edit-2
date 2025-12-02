@@ -49,6 +49,7 @@ field_label_map = {
         'all_works': 'Sent and received',
         'organisation_type': 'Organisation type',
         'editors_notes': 'Editors\' notes',
+        'researchers_notes': 'Researchers\' notes',
         'resources': 'Related resources',
         'mentioned': 'Mentioned',
         'roles': 'Professional roles',
