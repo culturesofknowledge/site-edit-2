@@ -30,14 +30,14 @@ class CofkPeople(CofkEntity, ABC):
 
             for per_dict in self.clean_lists(persons, 'iperson_id', 'primary_name'):
                 if 'iperson_id' in per_dict and per_dict['iperson_id'] is not None:
-                    _id = per_dict['iperson_id']
-                    name = per_dict['primary_name'] if 'primary_name' in per_dict else None
-
                     try:
-                        int(_id)
-                    except ValueError:
-                        self.add_error(f'Iperson_id "{_id}" is not a number')
+                        _id = int(per_dict['iperson_id'])
+                        per_dict['iperson_id'] = _id  # Update dict with integer value
+                    except (ValueError, TypeError):
+                        self.add_error(f'Iperson_id "{per_dict["iperson_id"]}" is not a number')
                         continue
+
+                    name = per_dict['primary_name'] if 'primary_name' in per_dict else None
 
                     """
                     A row in a people sheet can contain any number of semi colon separated people.

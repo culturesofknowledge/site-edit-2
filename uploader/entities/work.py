@@ -103,11 +103,18 @@ class CofkWork(CofkEntity):
                 return people[0]
             elif len(people) > 1:
                 self.add_error('Ambiguity in submitted people.')
-        elif person := [p for p in self.people if
-                        p.union_iperson is not None and p.union_iperson.iperson_id == person_id]:
-            return person[0]
-        elif person := [p for p in self.people if p.iperson_id == person_id]:
-            return person[0]
+        else:
+            try:
+                person_id_int = int(person_id)
+            except (ValueError, TypeError):
+                self.add_error(f'Invalid person_id format: {person_id}')
+                return None
+                
+            if person := [p for p in self.people if
+                            p.union_iperson is not None and p.union_iperson.iperson_id == person_id_int]:
+                return person[0]
+            elif person := [p for p in self.people if p.iperson_id == person_id_int]:
+                return person[0]
 
     def get_location(self, location_id: str, location_name: str = None) -> CofkCollectLocation:
         if location_id is None or location_id == '':
