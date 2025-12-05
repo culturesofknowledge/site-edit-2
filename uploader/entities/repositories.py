@@ -27,7 +27,13 @@ class CofkRepositories(CofkEntity, ABC):
             self.check_data_types(inst_dict)
 
             if 'institution_id' in inst_dict:
-                inst_id = inst_dict['institution_id']
+                try:
+                    inst_id = int(inst_dict['institution_id'])
+                    inst_dict['institution_id'] = inst_id  # Update dict with integer value
+                except (ValueError, TypeError):
+                    self.add_error(f'Invalid institution_id format: {inst_dict["institution_id"]}')
+                    continue
+                    
                 if inst_id not in self.ids:
                     inst_dict['union_institution'] = CofkUnionInstitution.objects.filter(
                         institution_id=inst_id).first()
