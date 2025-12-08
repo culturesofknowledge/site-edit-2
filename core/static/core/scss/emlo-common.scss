@@ -48,11 +48,12 @@ tr.selectable_entry:not(.selected):hover {
 .menu-subitem {
   position: absolute;
   left: 5px;
-  top: 1.2em;
+  top: 1.5em;
   z-index: 100;
   width: 9.5em;
   background-color: $midnight;
   display: none;
+  border: 1px solid white;
 }
 
 .menu-item:hover .menu-subitem {
@@ -65,6 +66,39 @@ tr.selectable_entry:not(.selected):hover {
   &:hover {
     background-color: $gold;
     color: black;
+  }
+}
+
+// Header top bar typography — align with Dashboard Tile Design
+// Make top-level menu text larger, bold, and use the same serif font
+nav.flex-space-between {
+  .menu-item {
+    // allow taller text without clipping
+    height: auto;
+  }
+
+  // only target the top-level anchors in the header
+  .menu-item > a {
+    font-family: $serif;
+    font-size: $typescale-5; // match tile size
+    font-weight: 700; // make bold as requested
+    line-height: 1.2;
+  }
+
+  .menu-item > ul > a{
+    font-family: $serif;
+    font-size: $typescale-5a; // match tile size
+    font-weight: 700; // make bold as requested
+    line-height: 1.2;
+  }
+}
+
+// Suggestion buttons — uniform tile width without inline styles
+.suggestion-buttons {
+  a.suggest-tile {
+    display: inline-block;
+    width: 8rem;
+    text-align: center;
   }
 }
 
@@ -110,6 +144,7 @@ tr.selectable_entry:not(.selected):hover {
 
 .button-row {
   display: flex;
+  align-items: center;
 
   button {
     margin-right: 20px;
@@ -167,7 +202,6 @@ tr.selectable_entry:not(.selected):hover {
 
 .row-no-margin {
   display: flex;
-  border-bottom: 2px solid #ccc;
 }
 
 .row-date-fields {
@@ -538,6 +572,43 @@ h2, h3 {
     background-color: #eef4ff;
     padding: 10px;
     border-left: 3px solid #007bff;
+}
+
+
+
+// Suggestion filter styling: add left/right padding and improve spacing/legibility
+#f_filter {
+  // Lay out the checkboxes nicely in a row that wraps
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+// Space the checkbox a touch from the preceding text and align pairs nicely
+#f_filter input.checkbox {
+  margin-left: 0.25rem; // ~4px
+  // Ensure there is a visible gap before the adjacent label
+  margin-right: 0.4rem !important; // slightly larger and with priority to win over resets
+}
+
+// Make the labels next to the checkboxes look like compact pills with padding
+#f_filter input.checkbox + label {
+  //display: inline-block;
+  padding: 0.2rem 0.8rem;
+  // top right bottom left
+  margin: 0.2rem 0.8rem 0.2rem 0.2rem; // left margin adds space even if checkbox margin is overridden
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+// Subtle hover/active states for better UX
+#f_filter input.checkbox + label:hover {
+  background-color: #f1f3f5;
+}
+
+#f_filter input.checkbox:checked + label {
+  background-color: #eef4ff;
+  border-color: #c6d8ff;
 }
 
 

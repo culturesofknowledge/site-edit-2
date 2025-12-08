@@ -1,17 +1,17 @@
 {% extends "core/emlo_logined.html" %}
 {% load cl_filters %}
 {% block content %}
-    <h1>Organisation Types List</h1>
+    <h1>Organization Types List</h1>
 
     {% include "core/component/messages.html" %}
 
-    <p>An organisation type can only be deleted if no organisations are associated with it, in
+    <p>An organization type can only be deleted if no organizations are associated with it, in
         which case a delete button is displayed alongside the save button.</p>
-    <p>If any organisations are of that type the number of such organisations is displayed that links to search
-        results for all organisations of that type.</p>
+    <p>If any organizations are of that type the number of such organizations is displayed that links to search
+        results for all organizations of that type.</p>
 
         <fieldset class="lookup_fieldset">
-        <legend>Add new organisation type</legend>
+        <legend>Add new organization type</legend>
         <form method="post">
             {% csrf_token %}
 
@@ -24,7 +24,7 @@
 
     {% if paginator.count > 20 %}
     <div class="result_count">
-        <h2>{{ page_obj|get_results_on_page }} out of {{ paginator.count | floatformat:'g' }} organisation types</h2>
+        <h2>{{ page_obj|get_results_on_page }} out of {{ paginator.count | floatformat:'g' }} organization types</h2>
     </div>
     {% endif %}
 
@@ -46,7 +46,7 @@
                 <input type="hidden" name="org_type_id" value="{{ c.pk }}">
 
                 {% if c.person_count > 0 %}
-                <label>Number of organisations:&nbsp;</label><a href="{% url 'person:search' %}?&organisation_type_lookup=equals&organisation_type={{ c.org_type_desc|urlencode }}" target="_blank">{{ c.person_count }}</a><br/>
+                <label>Number of organizations:&nbsp;</label><a href="{% url 'person:search' %}?&organisation_type_lookup=equals&organisation_type={{ c.org_type_desc|urlencode }}" target="_blank">{{ c.person_count }}</a><br/>
                 <input type="submit" class="btn" value="Save" name="save">
                 {% else %}
                 <input type="submit" class="btn inline_btn" value="Save" name="save">

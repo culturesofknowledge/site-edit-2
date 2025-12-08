@@ -2,10 +2,10 @@
     <thead>
     <tr></tr>
     <tr>
-        <th>ID</th>
-        <th>Details</th>
+        <th>Publication Details</th>
+        <th>Publication ID</th>
         <th>Abbrev</th>
-        <th>Change timestamp</th>
+        <th>Last edit</th>
     </tr>
     </thead>
     <tbody>
@@ -14,16 +14,16 @@
         <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}" entry_id="{{ r.publication_id }}">
 
             <td>
-                {% include 'core/component/search_table_layout/link_record.html' with id=r.publication_id view='publication:full_form' %}
+                {{ r.publication_details }}
             </td>
             <td>
-                {{ r.publication_details }}
+                {% include 'core/component/search_table_layout/link_record.html' with id=r.publication_id view='publication:full_form' only %}
             </td>
             <td>
                 {{ r.abbrev }}
             </td>
             <td>
-                {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r %}
+                {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r only %}
             </td>
         </tr>
     {% endfor %}

@@ -248,17 +248,17 @@ class GeneralSearchFieldset(BasicSearchFieldset):
                                        help_text="Primary name normally in 'surname, forename' format, followed by "
                                                  "alternative names and titles or roles/professions. Roles and professions "
                                                  "may have been entered as free text and/or as a list of standard categories "
-                                                 "(see below):")
+                                                 "(see below, 'Professional roles'):")
     names_and_titles_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     birth_year_from = form_serv.create_year_field(_class='searchfield')
     birth_year_to = form_serv.create_year_field(_class='searchfield')
-    birth_year_info = 'Can be entered in YYYY format. (In the case of organisations, ' \
+    birth_year_info = 'Can be entered in YYYY format. (In the case of organizations, ' \
                       'this field may hold the date of formation.)'
 
     death_year_from = form_serv.create_year_field(_class='searchfield')
     death_year_to = form_serv.create_year_field(_class='searchfield')
-    death_year_info = 'Can be entered in YYYY format. (In the case of organisations, ' \
+    death_year_info = 'Can be entered in YYYY format. (In the case of organizations, ' \
                       'this field may hold the date of dissolution.)'
 
     flourished_year_from = form_serv.create_year_field(_class='searchfield')
@@ -269,7 +269,7 @@ class GeneralSearchFieldset(BasicSearchFieldset):
 
     person_or_group = SearchCharField(widget=forms.Select(choices=search_person_or_group),
                                       help_text="Person for individual people; "
-                                                "Group if correspondent is an organisation or group.")
+                                                "Group if correspondent is an organization or group.")
 
     organisation_type = SearchCharField()
     organisation_type_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
@@ -281,38 +281,43 @@ class GeneralSearchFieldset(BasicSearchFieldset):
     sent_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
     recd = SearchIntField(label=field_label_map['person']['recd'],
-                          help_text='Number of letters sent to this addressee.')
+                          help_text="Number of letters to this addressee/recipient. You can search on these 'number' fields using 'Advanced Search', e.g. you could enter something like 'Received greater than 100' to identify people who received many letters.")
     recd_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
     all_works = SearchIntField(label=field_label_map['person']['all_works'],
-                               help_text='Total of letters to and from this person/organisation.')
+                               help_text="Number of letters from and to this person. You can search on these 'number' fields using 'Advanced Search', e.g. you could enter something like 'Sent and received greater than 100' to identify people with a large correspondence.")
     all_works_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
-    mentioned = SearchIntField(help_text='Number of letters in which this person/organisation was mentioned.')
+    mentioned = SearchIntField(help_text="Number of letters in which this person was mentioned. You can search on these 'number' fields using 'Advanced Search', e.g. you could enter something like 'Mentioned greater than 100' to identify people who were mentioned in many letters.")
     mentioned_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
     roles = SearchCharField(label=field_label_map['person']['roles'],
-                            help_text='Also known as Professional categories.')
+                            help_text='Also known as professional categories.')
     roles_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     editors_notes = SearchCharField(label=field_label_map['person']['editors_notes'],
                                     help_text='Notes for internal use, intended to hold temporary queries etc.')
     editors_notes_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
-    further_reading = SearchCharField()
+    further_reading = SearchCharField(help_text='Bibliographical information.')
     further_reading_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     images = SearchCharField()
     images_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     other_details = SearchCharField(help_text='Summary of any other information about the person or group, '
-                                              'including membership of organisations, known geographical '
+                                              'including membership of organizations, known geographical '
                                               'locations, researchers\' notes and related resources.')
     other_details_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     iperson_id = SearchIntField(label=field_label_map['person']['iperson_id'],
                                 help_text='The unique ID for the record within this database.')
     iperson_id_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
+
+    # Researchers' notes (via comments on person)
+    researchers_notes = SearchCharField(label=field_label_map['person']['researchers_notes'],
+                                        help_text='Comments destined for front-end display.')
+    researchers_notes_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
 
 class PersonOtherRelationChoices(TextChoices):

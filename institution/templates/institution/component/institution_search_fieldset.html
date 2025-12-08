@@ -5,6 +5,8 @@
     <!-- Institution name -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.institution_name field_lookup=form.institution_name_lookup %}
 
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.institution_id field_lookup=form.institution_id_lookup %}
+
     <!-- Institution city -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.institution_city field_lookup=form.institution_city_lookup %}
 
@@ -25,7 +27,5 @@
 
     <!-- Last changed by-->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.change_user field_lookup=form.change_user_lookup %}
-
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.institution_id field_lookup=form.institution_id_lookup %}
 
 {% endblock %}

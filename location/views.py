@@ -248,8 +248,8 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
             ('element_6_eg_country', '6. E.g.country',),
             ('element_7_eg_empire', '7. E.g.empire',),
             ('images', 'Images',),
-            ('change_user', 'Last changed by',),
             ('change_timestamp', 'Last edit',),
+            ('change_user', 'Last edited by',),
         ]
 
     def get_queryset(self):
@@ -312,7 +312,7 @@ class LocationCsvHeaderValues(HeaderValues):
     def get_header_list(self) -> list[str]:
         return [
             "Location name",
-            "Location id",
+            "Location ID",
             "Editors notes",
             "Sent",
             "Recd",

@@ -47,6 +47,87 @@ def search_datestr_to_db_datestr(date_str: str) -> str:
     return f'{year}-{month}-{day}'
 
 
+def search_datestr_to_db_datestr_end(date_str: str) -> str:
+    """
+    Convert a search date string to a DB date string, but if only a year or month/year
+    are provided, use the last day of the period (31/12 for year-only, last day of month for mm/yyyy).
+
+    Examples
+    --------
+    >>> search_datestr_to_db_datestr_end('2020')
+    '2020-12-31'
+    >>> search_datestr_to_db_datestr_end('02/2020')
+    '2020-02-29'
+    >>> search_datestr_to_db_datestr_end('15/03/2020')
+    '2020-03-15'
+    """
+
+    if not date_str:
+        return date_str
+
+    parts = date_str.split('/')
+    # Year only
+    if len(parts) == 1:
+        year = int(parts[0])
+        return f'{year:04d}-12-31'
+    # Month/Year
+    if len(parts) == 2:
+        month = int(parts[0])
+        year = int(parts[1])
+        # compute last day of month by rolling to next month day 1 then subtracting a day
+        if month == 12:
+            next_month = datetime.date(year + 1, 1, 1)
+        else:
+            next_month = datetime.date(year, month + 1, 1)
+        last_day = next_month - datetime.timedelta(days=1)
+        return last_day.strftime('%Y-%m-%d')
+
+    # Full date provided: keep as-is but convert order
+    day, month, year = parts[:3]
+    return f'{int(year):04d}-{int(month):02d}-{int(day):02d}'
+
+
+def normalize_search_display_start(date_str: str) -> str:
+    """
+    Normalize a search input string for displaying the start of a range.
+    Year-only -> 01/01/YYYY; MM/YYYY -> 01/MM/YYYY; DD/MM/YYYY -> unchanged.
+    """
+    if not date_str:
+        return date_str
+    parts = date_str.split('/')
+    if len(parts) == 1:
+        return f'01/01/{parts[0]}'
+    if len(parts) == 2:
+        return f'01/{parts[0].zfill(2)}/{parts[1]}'
+    # Ensure zero-padded
+    d, m, y = parts[:3]
+    return f'{int(d):02d}/{int(m):02d}/{y}'
+
+
+def normalize_search_display_end(date_str: str) -> str:
+    """
+    Normalize a search input string for displaying the end of a range.
+    Year-only -> 31/12/YYYY; MM/YYYY -> <last-day>/MM/YYYY; DD/MM/YYYY -> unchanged.
+    """
+    if not date_str:
+        return date_str
+    parts = date_str.split('/')
+    if len(parts) == 1:
+        return f'31/12/{parts[0]}'
+    if len(parts) == 2:
+        month = int(parts[0])
+        year = int(parts[1])
+        if month == 12:
+            next_month = datetime.date(year + 1, 1, 1)
+        else:
+            next_month = datetime.date(year, month + 1, 1)
+        last_day = (next_month - datetime.timedelta(days=1)).day
+        return f'{last_day:02d}/{month:02d}/{year}'
+    # Full date provided
+    d, m, y = parts[:3]
+    return f'{int(d):02d}/{int(m):02d}/{y}'
+
+
 def str_to_std_datetime(datetime_str):
     return datetime.datetime.strptime(datetime_str, constant.STD_DATE_FORMAT)
 

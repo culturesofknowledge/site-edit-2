@@ -10,12 +10,12 @@
     <tr></tr>
     <tr>
         <th>Description</th>
+        <th>Work ID</th>
         <th>Date for ordering</th>
         <th>&nbsp;</th>
         <th>Images</th>
         <th>Manifestations</th>
         <th>Related resources</th>
-        <th>ID</th>
         <th>Last edit</th>
     </tr>
     </thead>
@@ -27,6 +27,9 @@
             <td>
                 {% include 'work/component/moreinfo.html' with work=r %}
                 {{ r.description }}
+            </td>
+            <td>
+                {% include 'core/component/search_table_layout/link_record.html' with id=r.iwork_id view='work:full_form' %}
             </td>
             <td>
                 {{ r.date_for_ordering }}
@@ -54,9 +57,6 @@
                 {% if r.related_resources %}
                     {{ r.related_resources|display_resources }}
                 {% endif %}
-            </td>
-            <td>
-                {% include 'core/component/search_table_layout/link_record.html' with id=r.iwork_id view='work:full_form' %}
             </td>
             <td>
                 {{ r.change_timestamp|date:"d M Y H:i" }} by {{ r.change_user }}<br/>

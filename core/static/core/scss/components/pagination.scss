@@ -28,6 +28,9 @@
     min-width: 50px;
     border: 1px solid $black;
     transition: all .15s ease-in-out;
+    // add small gaps so when pagination wraps to multiple rows there is
+    // visible spacing between rows and items (helps on half-screen windows)
+    margin: 0 .4em .4em 0;
 
     &:hover {
         border-color: $white;

@@ -2,8 +2,8 @@
     <thead>
     <tr></tr>
     <tr>
-        <th>ID</th>
         <th>Name</th>
+        <th>Repository ID</th>
         <th>Alternative repository names</th>
         <th>City</th>
         <th>Alternative city names</th>
@@ -20,10 +20,10 @@
     {% for r in search_results %}
         <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}" entry_id="{{ r.institution_id }}">
             <td>
-                {% include 'core/component/search_table_layout/link_record.html' with id=r.institution_id view='institution:full_form' %}
+                {{ r.institution_name }}
             </td>
             <td>
-                {{ r.institution_name }}
+                {% include 'core/component/search_table_layout/link_record.html' with id=r.institution_id view='institution:full_form' %}
             </td>
             <td>
                 {% if r.institution_synonyms %}

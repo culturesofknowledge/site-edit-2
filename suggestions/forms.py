@@ -14,7 +14,7 @@ class SuggestionForm(forms.Form):
 class SuggestionFilterForm(forms.Form):
     person       = forms.BooleanField(required=True, initial=True, label="Person")
     location     = forms.BooleanField(required=True, initial=True, label="Location")
-    publication  = forms.BooleanField(required=True, initial=True, label="Institution")
+    publication  = forms.BooleanField(required=True, initial=True, label="Repository")
     institution  = forms.BooleanField(required=True, initial=True, label="Publication")
     showNew      = forms.BooleanField(required=True, initial=True, label="Show New")
     showExisting = forms.BooleanField(required=True, initial=True, label="Show Existing")

@@ -293,6 +293,10 @@ def full_form(request, iperson_id):
 
 class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
+    # Enable keyset pagination for better performance with large person datasets
+    use_keyset_pagination = True
+    keyset_sort_field = 'iperson_id'  # Primary key is indexed and unique
+
     @property
     def entity(self) -> str:
         return 'person,people'
@@ -313,13 +317,14 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
-            ('names_and_titles', 'Name',),
+            ('names_and_titles', 'Name and titles/roles',),
+            ('iperson_id', 'Person or group ID',),
             ('date_of_birth', 'Born',),
-            ('date_of_death', 'Died',),
+            ('date_of_death', 'Died ',),
             ('flourished', 'Flourished',),
             ('gender', 'Gender',),
-            ('is_organisation', 'Person or group?',),
-            ('organisation_type', 'Type of group',),
+            ('is_organisation', 'Person or group',),
+            ('organisation_type', 'Organisation type',),
             ('sent', 'Sent',),
             ('recd', 'Rec\'d',),
             ('all_works', 'Sent or Rec\'d',),
@@ -329,9 +334,8 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             ('images', 'Images',),
             # Other details is a collection of various relationships that is difficult to generate in db query
             # ('other_details', 'Other details',),
-            ('change_timestamp', 'Change Timestamp',),
-            ('change_user', 'Change user',),
-            ('iperson_id', 'Person or Group ID',),
+            ('change_timestamp', 'Last edit',),
+            ('change_user', 'Last edited by',),
         ]
 
     @property
@@ -340,6 +344,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             'roles': ['roles__role_category_desc'],
             'images': ['images__image_filename'],
             'organisation_type': ['organisation_type__org_type_desc'],
+            'researchers_notes': ['comments__comment'],
         }
 
     @property

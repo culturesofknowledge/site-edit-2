@@ -1,5 +1,9 @@
 
 $( function() {
+// Clean up any previously created ARIA live regions from jQuery UI that may have accumulated
+try {
+  $("div.ui-helper-hidden-accessible[role='status']").remove();
+} catch(e) {}
 $.widget( "custom.catcomplete", $.ui.autocomplete, {
   _create: function() {
     this._super();
@@ -23,48 +27,57 @@ $.widget( "custom.catcomplete", $.ui.autocomplete, {
 });
 
 
-$( "#id_manifestations_searchable" ).catcomplete({
-  delay: 0,
-  source: function( request, response ) {
-    var matcher = new RegExp( $.ui.autocomplete.escapeRegex( request.term ), "i" );
-    response( $.grep( manif_autocomplete, function( value ) {
-      value = value.label || value.value || value;
-      return matcher.test( value ) || matcher.test( normalize( value ) );
-    }) );
-  },
-  minLength: 0,
-  appendTo: '#query-fieldset'
+var $manif = $( "#id_manifestations_searchable" );
+if ( $manif.length && !$manif.data("ui-autocomplete") ) {
+  $manif.catcomplete({
+    delay: 0,
+    source: function( request, response ) {
+      var matcher = new RegExp( $.ui.autocomplete.escapeRegex( request.term ), "i" );
+      response( $.grep( manif_autocomplete, function( value ) {
+        value = value.label || value.value || value;
+        return matcher.test( value ) || matcher.test( normalize( value ) );
+      }) );
+    },
+    minLength: 0,
+    appendTo: '#query-fieldset'
+  });
+}
+
+var $subjects = $( "#id_subjects" );
+if ( $subjects.length && !$subjects.data("ui-autocomplete") ) {
+  $subjects.autocomplete({
+    source: subjects_autocomplete,
+    minLength: 0,
+    appendTo: '#query-fieldset'
+  });
+}
+
+var $catalog = $( "#id_original_catalogue" );
+if ( $catalog.length && !$catalog.data("ui-autocomplete") ) {
+  $catalog.autocomplete({
+    source: function( request, response ) {
+      var matcher = new RegExp( $.ui.autocomplete.escapeRegex( request.term ), "i" );
+      response( $.grep( catalogs_autocomplete, function( value ) {
+        value = value.label || value.value || value;
+        return matcher.test( value ) || matcher.test( normalize( value ) );
+      }) );
+    },
+    minLength: 0,
+    appendTo: '#query-fieldset'
+  });
+}
+
+// Search all values on select (ensure single binding)
+$catalog.off('click.autocompleteAll').on("click.autocompleteAll", function() {
+  $(this).autocomplete('search', '');
 });
 
-$( "#id_subjects" ).autocomplete({
-  source: subjects_autocomplete,
-  minLength: 0,
-  appendTo: '#query-fieldset'
+$manif.off('click.autocompleteAll').on("click.autocompleteAll", function() {
+  $(this).catcomplete('search', '');
 });
 
-$( "#id_original_catalogue" ).autocomplete({
-  source: function( request, response ) {
-    var matcher = new RegExp( $.ui.autocomplete.escapeRegex( request.term ), "i" );
-    response( $.grep( catalogs_autocomplete, function( value ) {
-      value = value.label || value.value || value;
-      return matcher.test( value ) || matcher.test( normalize( value ) );
-    }) );
-  },
-  minLength: 0,
-  appendTo: '#query-fieldset'
-});
-
-// Search all values on select
-$( "#id_original_catalogue" ).on("click", function()    {
-    $(this).autocomplete('search', '');
-});
-
-$( "#id_manifestations_searchable" ).on("click", function()    {
-    $(this).catcomplete('search', '');
-});
-
-$( "#id_subjects" ).on("click", function()    {
-    $(this).autocomplete('search', '');
+$subjects.off('click.autocompleteAll').on("click.autocompleteAll", function() {
+  $(this).autocomplete('search', '');
 });
 
 } );

@@ -6,6 +6,9 @@
     <!-- Description -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.description field_lookup=form.description_lookup %}
 
+    <!-- Work ID -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.iwork_id field_lookup=form.iwork_id_lookup %}
+
     <!-- Date as marked -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_as_marked field_lookup=form.date_of_work_as_marked_lookup %}
 
@@ -19,7 +22,7 @@
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.date_of_work_std_day field_lookup=form.date_of_work_std_day_lookup %}
 
     <!-- Year range -->
-    {% include "core/component/search_fieldset/from_to_year.html" with title='Date for ordering (in original calendar)' from_field=form.date_of_work_std_from to_field=form.date_of_work_std_to field_info=form.date_of_work_std_info %}
+    {% include "core/component/search_fieldset/from_to_year.html" with title='Date for ordering' from_field=form.date_of_work_std_from to_field=form.date_of_work_std_to field_info=form.date_of_work_std_info %}
 
     <!-- Sender/recipient -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.sender_or_recipient field_lookup=form.sender_or_recipient_lookup %}
@@ -33,8 +36,11 @@
     <!-- Notes on authors/senders -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.notes_on_authors field_lookup=form.notes_on_authors_lookup %}
 
-    <!-- Addressee -->
+    <!-- Addressee/Recipient -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.addressees_searchable field_lookup=form.addressees_searchable_lookup %}
+
+    <!-- Notes on addressees/recipients -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.notes_on_addressees field_lookup=form.notes_on_addressees_lookup %}
 
     <!-- Origin (standardised) -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.places_from_searchable field_lookup=form.places_from_searchable_lookup %}
@@ -76,9 +82,6 @@
         This is a zero/one checkbox -->
     {% include "core/component/search_fieldset/zero_one_checkbox.html" with field=form.work_to_be_deleted %}
 
-    <!-- Work ID -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.iwork_id field_lookup=form.iwork_id_lookup %}
-
     <!-- Last edit -->
     {% include "core/component/search_fieldset/from_to_year.html" with title='Last edit' from_field=form.change_timestamp_from to_field=form.change_timestamp_to field_info=form.change_timestamp_info %}
 
@@ -88,19 +91,19 @@
     <script>
 
       var manif_autocomplete = [{% for mtype in form.manif_type %}
-      { label: "{{ mtype }}", category: "Document type" },
+      { label: "{{ mtype|escapejs }}", category: "Document type" },
       {% endfor %}
 
       {% for inst in form.institution_names %}
-      { label: "{{ inst }}", category: "Repository" },
+      { label: "{{ inst|escapejs }}", category: "Repository" },
       {% endfor %}];
 
     var subjects_autocomplete = [{% for subject in form.subject_names %}
-      '{{ subject }}',
+      '{{ subject|escapejs }}',
       {% endfor %}];
 
      var catalogs_autocomplete = [{% for catalog in form.catalog_names %}
-      "{{ catalog|safe }}",
+      "{{ catalog|escapejs }}",
       {% endfor %}];
 
     </script>

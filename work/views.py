@@ -951,6 +951,10 @@ def return_quick_init(request, pk):
 
 class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
+    # Enable keyset pagination for better performance with large work datasets
+    use_keyset_pagination = True
+    keyset_sort_field = 'iwork_id'  # Primary key is indexed and unique
+
     @property
     def entity(self) -> str:
         return 'work,works'
@@ -958,28 +962,29 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
-            ('addressees_searchable', 'Addressee',),
-            ('creators_searchable', 'Author/sender',),
-            ('date_of_work_std', 'Date for ordering (in original calendar)',),
-            ('date_of_work_as_marked', 'Date of work as marked',),
-            ('date_of_work_std_day', 'Day',),
             ('description', 'Description',),
-            ('places_to_searchable', 'Destination (standardised)',),
-            ('editors_notes', 'Editors\' notes',),
-            # ('flags', 'Flags',),
-            ('language_of_work', 'Language of work',),
-            ('change_user', 'Last changed by',),
-            ('change_timestamp', 'Last edit',),
-            ('manifestations_searchable', 'Manifestations',),
-            ('date_of_work_std_month', 'Month',),
-            ('places_from_searchable', 'Origin (standardised)',),
-            ('origin_as_marked', 'Origin as marked',),
-            ('original_catalogue', 'Original catalogue',),
-            ('work_to_be_deleted', 'Record to be deleted',),
-            # ('related_resources', 'Related resources',),
-            ('accession_code', 'Source of record',),
             ('iwork_id', 'Work ID',),
+            ('editors_notes', 'Editors\' notes',),
+            ('date_of_work_as_marked', 'Date of work as marked',),
             ('date_of_work_std_year', 'Year',),
+            ('date_of_work_std_month', 'Month',),
+            ('date_of_work_std_day', 'Day',),
+            ('date_of_work_std', 'Date for ordering',),
+            ('creators_searchable', 'Author/sender',),
+            ('places_from_searchable', 'Origin (standardized)',),
+            ('origin_as_marked', 'Origin as marked',),
+            ('addressees_searchable', 'Addressee/Recipient',),
+            ('places_to_searchable', 'Destination (standardized)',),
+            ('destination_as_marked', 'Destination as marked',),
+            # ('flags', 'Flags',),
+            ('manifestations_searchable', 'Manifestations',),
+            ('language_of_work', 'Language of work',),
+            ('original_catalogue', 'Original catalogue',),
+            ('accession_code', 'Source of record',),
+            ('work_to_be_deleted', 'Record to be deleted',),
+            ('change_timestamp', 'Last edit',),
+            ('change_user', 'Last edited by',),
+            # ('related_resources', 'Related resources',),
         ]
 
     @property
@@ -1005,9 +1010,12 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                 [REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
         } | query_serv.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
                                                'change_timestamp') \
-            | query_serv.create_from_to_datetime('date_of_work_std_from', 'date_of_work_std_to',
-                                                 'date_of_work_std',
-                                                 convert_fn=date_serv.search_datestr_to_db_datestr, )
+            | query_serv.create_from_to_date_with_bounds(
+                'date_of_work_std_from', 'date_of_work_std_to',
+                'date_of_work_std',
+                start_convert_fn=date_serv.search_datestr_to_db_datestr,
+                end_convert_fn=date_serv.search_datestr_to_db_datestr_end,
+            )
 
     def get_queryset(self):
         if not self.request_data:
@@ -1031,6 +1039,10 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             'images': [
                 'manif_set__images__image_filename',
             ],
+            # Subjects search should target the related subject description field
+            'subjects': [
+                'subjects__subject_desc',
+            ],
         }
 
         queries.extend(
@@ -1039,12 +1051,58 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                 search_fields_maps=search_fields_maps,
                 search_fields_fn_maps={
                     'notes_on_authors': create_lookup_fn_by_comment([REL_TYPE_COMMENT_AUTHOR]),
+                    'notes_on_addressees': create_lookup_fn_by_comment([REL_TYPE_COMMENT_ADDRESSEE]),
                     'related_resources': create_lookup_fn_by_resource([REL_TYPE_IS_RELATED_TO]),
                     'general_notes': create_lookup_fn_by_comment([REL_TYPE_COMMENT_REFERS_TO]),
                     'flags': lookup_fn_flags,
+                    # Support combined search such as "Draft%Royal Society" on manifestations summary
+                    'manifestations_searchable': work_serv.lookup_manifestations_searchable,
                 })
         )
-        return create_queryset_by_queries(DisplayableWork, queries, sort_by=sort_by, user=self.request.user)
+
+        # Determine which annotations are actually needed for this request to reduce query overhead
+        annotatable_fields = {
+            'addressees_searchable',
+            'creators_searchable',
+            'mentioned_searchable',
+            'sender_or_recipient',
+            'places_from_searchable',
+            'places_to_searchable',
+            'origin_or_destination',
+            'manifestations_searchable',
+            'is_owner_of_catalogue',
+        }
+
+        annotate_keys_needed: set[str] = set()
+
+        # Include annotations if the corresponding search field has a non-empty value
+        for key in annotatable_fields:
+            if request_data.get(key):
+                annotate_keys_needed.add(key)
+
+        # Also include annotations used in sorting
+        sort_by_list = sort_by or self.get_sort_by()
+        for s in sort_by_list:
+            field_name = s.lstrip('-')
+            if field_name in annotatable_fields:
+                annotate_keys_needed.add(field_name)
+
+        # Ownership flag is referenced in templates to show/hide edit buttons
+        annotate_keys_needed.add('is_owner_of_catalogue')
+
+        # Ensure deterministic ordering by appending iwork_id as a tie-breaker
+        augmented_sort_by = list(sort_by_list)
+        if not any(f.lstrip('-') == 'iwork_id' for f in augmented_sort_by):
+            primary_desc = augmented_sort_by and augmented_sort_by[0].startswith('-')
+            augmented_sort_by.append('-iwork_id' if primary_desc else 'iwork_id')
+
+        return create_queryset_by_queries(
+            DisplayableWork,
+            queries,
+            sort_by=augmented_sort_by,
+            user=self.request.user,
+            annotate_keys=annotate_keys_needed,
+        )
 
     @property
     def simplified_query(self) -> list[str]:
@@ -1062,11 +1120,15 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             _to = self.request_data['date_of_work_std_to'] if 'date_of_work_std_to' in self.request_data else None
 
             if _to and _from:
-                simplified_query.append(f'Date for ordering (in original calendar) between {_from} and {_to}.')
+                disp_from = date_serv.normalize_search_display_start(_from)
+                disp_to = date_serv.normalize_search_display_end(_to)
+                simplified_query.append(f'Date for ordering between {disp_from} and {disp_to}.')
             elif _to:
-                simplified_query.append(f'Date for ordering (in original calendar) before {_to}.')
+                disp_to = date_serv.normalize_search_display_end(_to)
+                simplified_query.append(f'Date for ordering before {disp_to}.')
             elif _from:
-                simplified_query.append(f'Date for ordering (in original calendar) after {_from}.')
+                disp_from = date_serv.normalize_search_display_start(_from)
+                simplified_query.append(f'Date for ordering after {disp_from}.')
 
         return simplified_query
 
@@ -1236,8 +1298,13 @@ class WorkCsvHeaderValues(HeaderValues):
         return values
 
 
-def create_queryset_by_queries(model_class: Type[Model], queries: Iterable[Q] = None,
-                               sort_by=None, user=None):
+def create_queryset_by_queries(
+    model_class: Type[Model],
+    queries: Iterable[Q] = None,
+    sort_by=None,
+    user=None,
+    annotate_keys: set[str] | None = None,
+):
     # some fields in annotate for sorting and filtering, it could be different with frontend display
     annotate = {
         'addressees_searchable': subqueries.create_joined_person_ann_field([REL_TYPE_WAS_ADDRESSED_TO]),
@@ -1248,33 +1315,39 @@ def create_queryset_by_queries(model_class: Type[Model], queries: Iterable[Q] = 
             [REL_TYPE_WAS_SENT_FROM],
             [
                 'cofkworklocationmap__location__location_name',
-                'origin_as_marked',
+                'cofkworklocationmap__location__location_synonyms',
             ]
         ),
         'places_to_searchable': subqueries.create_joined_location_ann_field(
             [REL_TYPE_WAS_SENT_TO],
             [
                 'cofkworklocationmap__location__location_name',
-                'destination_as_marked',
+                'cofkworklocationmap__location__location_synonyms',
             ]
         ),
         'origin_or_destination': subqueries.create_joined_location_ann_field(
             [REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM],
             [
                 'cofkworklocationmap__location__location_name',
-                'origin_as_marked',
-                'destination_as_marked',
+                'cofkworklocationmap__location__location_synonyms',
             ]
         ),
         'manifestations_searchable': subqueries.create_joined_manif_ann_field(),
         'is_owner_of_catalogue': subqueries.is_owner_of_catalogue(user)
     }
 
+    # If a subset of annotations is requested, reduce the annotate dict to only those keys
+    if annotate_keys is not None:
+        annotate = {k: v for k, v in annotate.items() if k in annotate_keys}
+
     queryset = model_class.objects.filter()
-    queryset = query_serv.update_queryset(queryset, model_class, queries=queries,
-                                          sort_by=sort_by,
-                                          annotate=annotate
-                                          )
+    queryset = query_serv.update_queryset(
+        queryset,
+        model_class,
+        queries=queries,
+        sort_by=sort_by,
+        annotate=annotate,
+    )
     queryset = queryset.prefetch_related('cofkworkpersonmap_set__person',
                                          'cofkworklocationmap_set__location',
                                          'cofkworkresourcemap_set__resource',

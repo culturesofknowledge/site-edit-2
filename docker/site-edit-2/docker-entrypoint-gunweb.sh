@@ -63,6 +63,8 @@ gunicorn ${DJANGO_WSGI_MODULE}:application \
         --workers ${GUN_NUM_WORKERS:-4} \
         --user=$USER --group=$GROUP \
         --bind=$GUN_BIND \
+        --timeout 300 \
+        --keep-alive 65 \
         --log-level=debug \
         --log-file=-
 
