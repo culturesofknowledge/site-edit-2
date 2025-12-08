@@ -341,6 +341,16 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
     @property
     def search_field_combines(self) -> dict[str: list[str]]:
         return {
+            # Map the UI field to individual fields so matches occur within a single
+            # source field only, avoiding cross-boundary false positives.
+            # This fixes cases where the end of the primary name and the start of a
+            # role/synonym could be matched together by a single substring.
+            'names_and_titles': [
+                'foaf_name',       # primary display name
+                'skos_altlabel',   # synonyms / alternative names
+                'person_aliases',  # titles/roles free text
+                'rolenames',       # aggregated role category descriptions (annotation)
+            ],
             'roles': ['roles__role_category_desc'],
             'images': ['images__image_filename'],
             'organisation_type': ['organisation_type__org_type_desc'],
