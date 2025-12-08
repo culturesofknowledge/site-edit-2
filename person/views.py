@@ -305,10 +305,6 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
     def search_field_fn_maps(self) -> dict[str, Lookup]:
         return {'gender': lambda f, v: Exact(F(f), '' if v == 'U' else v),
                 'person_or_group': lambda _, v: Exact(F('is_organisation'), 'Y' if v == 'G' else ''),
-                'birth_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_birth_year'), v),
-                'birth_year_to': lambda _, v: LessThanOrEqual(F('date_of_birth_year'), v),
-                'death_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_death_year'), v),
-                'death_year_to': lambda _, v: LessThanOrEqual(F('date_of_death_year'), v),
                 'flourished_year_from': lambda _, v: GreaterThanOrEqual(F('flourished_year'), v),
                 'flourished_year_to': lambda _, v: LessThanOrEqual(F('flourished2_year'), v),
                 } | query_serv.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
@@ -404,6 +400,19 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
     def get_queryset_by_request_data(self, request_data, sort_by=None):
         queries = query_serv.create_queries_by_field_fn_maps(request_data, self.search_field_fn_maps)
+
+        # Apply corrected overlap logic for birth and death year filters (moved to service)
+        birth_q = query_serv.build_year_overlap_q_from_request(
+            'date_of_birth', 'birth_year_from', 'birth_year_to', request_data
+        )
+        if birth_q is not None:
+            queries.append(birth_q)
+
+        death_q = query_serv.build_year_overlap_q_from_request(
+            'date_of_death', 'death_year_from', 'death_year_to', request_data
+        )
+        if death_q is not None:
+            queries.append(death_q)
 
         search_field_fn_maps = {
             'other_details': lookup_other_details,
