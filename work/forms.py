@@ -107,6 +107,42 @@ class DatesForm(forms.ModelForm):
             'original_calendar',
         )
 
+    def __init__(self, *args, **kwargs):
+        """
+        Align the split year/month/day fields with the normalized
+        'Dates for ordering (original calendar)' when displaying the form.
+
+        Scenario: Some historical records have inconsistent values between
+        the split fields (date_of_work_std_year/month/day) and the combined
+        string field (date_of_work_std). For read (GET) views, prefer the
+        authoritative combined string to populate the split fields so that
+        users see consistent values.
+        """
+        super().__init__(*args, **kwargs)
+
+        # Only adjust on unbound forms (GET). Do not override user input.
+        if self.is_bound:
+            return
+
+        instance: CofkUnionWork | None = getattr(self, 'instance', None)
+        std = getattr(instance, 'date_of_work_std', None) if instance else None
+        if std and std != DEFAULT_EMPTY_DATE_STR:
+            try:
+                # Expecting YYYY-MM-DD
+                y_str, m_str, d_str = std.split('-')[:3]
+                y = int(y_str)
+                m = int(m_str)
+                d = int(d_str)
+            except Exception:
+                # If unexpected format, do nothing.
+                return
+
+            # Populate the initial values for the split fields from the
+            # combined string so the edit form reflects the ordering date.
+            self.initial['date_of_work_std_year'] = y
+            self.initial['date_of_work_std_month'] = m
+            self.initial['date_of_work_std_day'] = d
+
 
 class PlacesForm(forms.ModelForm):
     origin_as_marked = CharField(required=False)
