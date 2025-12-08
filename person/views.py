@@ -305,8 +305,6 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
     def search_field_fn_maps(self) -> dict[str, Lookup]:
         return {'gender': lambda f, v: Exact(F(f), '' if v == 'U' else v),
                 'person_or_group': lambda _, v: Exact(F('is_organisation'), 'Y' if v == 'G' else ''),
-                'flourished_year_from': lambda _, v: GreaterThanOrEqual(F('flourished_year'), v),
-                'flourished_year_to': lambda _, v: LessThanOrEqual(F('flourished2_year'), v),
                 } | query_serv.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
                                                        'change_timestamp')
 
@@ -413,6 +411,13 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
         )
         if death_q is not None:
             queries.append(death_q)
+
+        # Apply same overlap logic for flourished year filters
+        flourished_q = query_serv.build_year_overlap_q_from_request(
+            'flourished', 'flourished_year_from', 'flourished_year_to', request_data
+        )
+        if flourished_q is not None:
+            queries.append(flourished_q)
 
         search_field_fn_maps = {
             'other_details': lookup_other_details,
