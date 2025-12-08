@@ -10,6 +10,7 @@ from django.utils.safestring import mark_safe
 from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, \
     REL_TYPE_MENTION
 from core.helper import data_serv,query_serv
+from core.constant import DEFAULT_MONTH, DEFAULT_DAY, DEFAULT_EMPTY_DATE_STR
 from location import location_serv
 from person import person_serv
 from work.models import CofkUnionWork
@@ -113,17 +114,18 @@ class DisplayableWork(CofkUnionWork):
 
     @property
     def date_for_ordering(self):
-        date_list = []
-        if self.date_of_work_std_year:
-            date_list.append(str(self.date_of_work_std_year))
+        # Prefer the normalized standard date string if present and not the default empty sentinel
+        if self.date_of_work_std and self.date_of_work_std != DEFAULT_EMPTY_DATE_STR:
+            return self.date_of_work_std
 
-        if self.date_of_work_std_month:
-            date_list.append(str(self.date_of_work_std_month))
+        # Otherwise, construct a full YYYY-MM-DD using defaults for missing month/day
+        if not self.date_of_work_std_year:
+            return ''
 
-        if self.date_of_work_std_day:
-            date_list.append(str(self.date_of_work_std_day))
-
-        return '-'.join(date_list)
+        year = int(self.date_of_work_std_year)
+        month = int(self.date_of_work_std_month or DEFAULT_MONTH)
+        day = int(self.date_of_work_std_day or DEFAULT_DAY)
+        return f"{year:04d}-{month:02d}-{day:02d}"
 
     @property
     def creators_for_display(self):
