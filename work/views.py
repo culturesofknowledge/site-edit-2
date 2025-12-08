@@ -1052,7 +1052,11 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                 search_fields_fn_maps={
                     'notes_on_authors': create_lookup_fn_by_comment([REL_TYPE_COMMENT_AUTHOR]),
                     'notes_on_addressees': create_lookup_fn_by_comment([REL_TYPE_COMMENT_ADDRESSEE]),
-                    'related_resources': create_lookup_fn_by_resource([REL_TYPE_IS_RELATED_TO]),
+                    # Related resources search in Works must only target the resource title/brief description
+                    # and exclude 'Further details of resource'. Therefore, search only on 'resource_name'.
+                    'related_resources': create_recref_lookup_fn([REL_TYPE_IS_RELATED_TO],
+                                                                 'cofkworkresourcemap__resource',
+                                                                 ['resource_name']),
                     'general_notes': create_lookup_fn_by_comment([REL_TYPE_COMMENT_REFERS_TO]),
                     'flags': lookup_fn_flags,
                     # Support combined search such as "Draft%Royal Society" on manifestations summary
