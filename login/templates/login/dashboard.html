@@ -12,23 +12,20 @@
     <ul class="main_menu">
         <li>
             <a href="{% url 'work:search' %}">
-                <span data-feather="file" class="feather-tile" aria-hidden="true"></span>Work</a>
+                Work</a>
         </li>
         <li>
             <a href="{% url 'person:search' %}">
-                <span data-feather="user" class="feather-tile" aria-hidden="true"></span>Person</a>
+                Person</a>
         </li>
         <li>
-            <a href="{% url 'location:search' %}"><span data-feather="map-pin" class="feather-tile"
-                                                        aria-hidden="true"></span>Location</a>
+            <a href="{% url 'location:search' %}">Location</a>
         </li>
         <li>
-            <a href="{% url 'institution:search' %}"><span data-feather="package" class="feather-tile"
-                                                           aria-hidden="true"></span>Repository</a>
+            <a href="{% url 'institution:search' %}">Repository</a>
         </li>
         <li>
-            <a href="{% url 'publication:search' %}"><span data-feather="book" class="feather-tile"
-                                                           aria-hidden="true"></span>Publication</a>
+            <a href="{% url 'publication:search' %}">Publication</a>
         </li>
     </ul>
 
@@ -81,8 +78,8 @@
 
     <ul class="main_menu">
         <li>
-            <a href="{% url 'suggestions:suggestion_all' %}" title="Make a suggestion" target="_self" tabindex="1"><span
-                    data-feather="clipboard" class="feather-tile" aria-hidden="true"></span>Suggestions</a>
+            <a href="{% url 'suggestions:suggestion_all' %}" title="Make a suggestion" target="_self" tabindex="1">
+                Suggestions</a>
         </li>
     </ul>
     {% endif %}
