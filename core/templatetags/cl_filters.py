@@ -3,6 +3,7 @@ import re
 from django import template
 from django.core.paginator import Page
 from django.utils.safestring import mark_safe
+from django.utils.html import escape
 
 from core.constant import ENTITIES
 
@@ -81,3 +82,27 @@ def can_show_for_perm(perm, perms):
 def render_display_link(value):
     value = re.sub(r'__@_\[(.+?)\](.+?)_@__', r'<a href="\1" target="_blank">\2</a>', value)
     return mark_safe(value)
+
+
+@register.filter
+def bulleted(value):
+    """Render a string (or list/tuple) as an HTML bullet-pointed list.
+
+    - If value is a string, it will be split on newlines and semicolons.
+    - Empty items are ignored.
+    - Output is marked safe as it is escaped per item.
+    """
+    if not value:
+        return ''
+
+    if isinstance(value, (list, tuple)):
+        items = [str(v) for v in value]
+    else:
+        items = re.split(r'[;\r\n]+', str(value))
+
+    items = [i.strip() for i in items if i and i.strip()]
+    if not items:
+        return ''
+
+    lis = ''.join(f'<li>{escape(i)}</li>' for i in items)
+    return mark_safe(f'<ul class="bullet-list">{lis}</ul>')

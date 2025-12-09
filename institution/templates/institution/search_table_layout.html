@@ -1,3 +1,4 @@
+{% load cl_filters %}
 <table id="results_table">
     <thead>
     <tr></tr>
@@ -27,7 +28,7 @@
             </td>
             <td>
                 {% if r.institution_synonyms %}
-                {{ r.institution_synonyms }}
+                {{ r.institution_synonyms|bulleted }}
                 {% endif %}
             </td>
             <td>
