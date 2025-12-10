@@ -7,6 +7,41 @@
     margin-bottom: $space-sm;
 }
 
+// Layout wrapper to place search components on the left and hidden columns on the right
+.search-components-layout {
+    display: flex;
+    align-items: flex-start;
+    //gap: $space-unit;
+}
+
+.search-components-layout > #search-components {
+    // 35% of the horizontal space
+    flex: 0 0 35%;
+    max-width: 35%;
+}
+
+.search-components-layout > #hidden-columns-fieldset {
+    // 65% of the horizontal space
+    flex: 0 0 65%;
+    max-width: 65%;
+}
+
+@media (max-width: 900px) {
+    .search-components-layout {
+        flex-direction: column;
+    }
+    .search-components-layout > #hidden-columns-fieldset {
+        width: 100%;
+        max-width: none;
+        flex: 1 1 auto;
+    }
+    .search-components-layout > #search-components {
+        width: 100%;
+        max-width: none;
+        flex: 1 1 auto;
+    }
+}
+
 #search-components label {
     font-size: 14px;
 }
@@ -61,4 +96,45 @@
 }
 .display-point li {
     margin-bottom: 0.5em;
+}
+
+// Hidden columns side panel styles
+#hidden-columns-fieldset {
+    padding: $space-xs $space-sm;
+}
+
+#hidden-columns-fieldset.is-hidden {
+    display: none;
+}
+
+#hidden-columns-fieldset legend {
+    //font-size: 0.95rem;
+    padding: 0 $space-xs;
+}
+
+.hidden-columns-empty-label {
+    margin: 0 0 $space-xs 0;
+    color: rgba(0, 0, 0, 0.55);
+    font-style: italic;
+}
+
+.hidden-columns-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-xs $space-sm;
+}
+
+.hidden-columns-list > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.hidden-columns-list > span:hover {
+    background-color: rgba(0,0,0,0.04);
 }
