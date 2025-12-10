@@ -42,3 +42,17 @@
     flex-basis: 50%;
     max-width: 50%;
 }
+
+.fieldset-container{
+  height: 65vh;                 /* match viewport height and adapt on resize */
+  max-height: 65vh;
+  width: 100%;
+  overflow: auto;                /* both vertical and horizontal scrolling inside */
+  -webkit-overflow-scrolling: touch; /* smooth scrolling on iOS */
+  overscroll-behavior: contain;  /* prevent scroll chaining to the page */
+  border: 1px solid $light-grey;
+}
+
+.fieldset-container > fieldset {
+  border: none;
+}

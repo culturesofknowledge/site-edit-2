@@ -117,11 +117,16 @@ td.text-heavy {
   /* Keep auto layout for natural column sizing */
 }
 
+#results_table th {
+  top: 0px;
+  background-color: $light-grey;
+}
+
 #results_table th,
 #results_table td {
   /* Provide sensible bounds across all result tables */
   min-width: 5em;   /* 80px -> 5em (scales with font size) */
-  max-width: 17.5em; /* 280px -> 17.5em */
+  max-width: 12em; /* 280px -> 17.5em */
   vertical-align: top;
 
   /* Robust text wrapping to avoid layout blowouts */
@@ -142,4 +147,24 @@ td.text-heavy {
 #results_table td.display-point ul {
   margin: 0;
   padding-left: calc(.75 * 1rem);
+}
+
+/* Let heavy text cells wrap to avoid overly wide columns */
+//#results_table td.text-heavy {
+//  white-space: normal;
+//  word-break: break-word;
+//  overflow-wrap: anywhere;
+//  hyphens: auto;
+//}
+
+/* New scroll container placed above/wrapping the table. This holds the scrollbars
+   so the page itself doesn't move. The table element remains unchanged. */
+.results-scroll {
+  height: 70vh;                 /* match viewport height and adapt on resize */
+  max-height: 70vh;
+  width: 100%;
+  overflow: auto;                /* both vertical and horizontal scrolling inside */
+  -webkit-overflow-scrolling: touch; /* smooth scrolling on iOS */
+  overscroll-behavior: contain;  /* prevent scroll chaining to the page */
+  border: 1px solid $light-grey;
 }

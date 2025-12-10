@@ -33,9 +33,11 @@
             function updateHiddenColumnsVisibility() {
                 var list = document.getElementById('hidden_columns');
                 var emptyLabel = document.getElementById('hidden-columns-empty-label');
+                var fieldset = document.getElementById('hidden-columns-fieldset');
                 if (!list || !emptyLabel) return;
                 var isEmpty = list.children.length === 0;
                 emptyLabel.style.display = isEmpty ? '' : 'none';
+                fieldset.style.display = isEmpty ? 'none' : '';
             }
 
             function initObserver() {
