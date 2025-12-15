@@ -5,27 +5,26 @@
 
     <h1> Welcome to EMLO-edit </h1>
     <br>
-    <p><i>Early Modern Letters Online</i> is a union catalogue that stores metadata, i.e. data, about letters. The EMLO database
-        has the capacity to include letter metadata for a wide range of fields. </p>
-    <p>EMLO’s editorial interface deals with letters, referred to as a 'works'. Each work is associated with the following
-        entities:</p>
+    <p><i>Early Modern Letters Online</i> is a union catalogue that stores metadata, i.e. data, about letters.
+        The EMLO database has the capacity to include letter metadata for a wide range of fields. </p>
+    <p>EMLO’s editorial interface deals with letters, referred to as 'works', and includes records for the following categories:</p>
     <ul class="main_menu">
         <li>
             <a href="{% url 'work:search' %}">
-                Work</a>
+                Works</a>
         </li>
         <li>
             <a href="{% url 'person:search' %}">
-                Person</a>
+                People</a>
         </li>
         <li>
-            <a href="{% url 'location:search' %}">Location</a>
+            <a href="{% url 'location:search' %}">Locations</a>
         </li>
         <li>
-            <a href="{% url 'institution:search' %}">Repository</a>
+            <a href="{% url 'institution:search' %}">Repositories</a>
         </li>
         <li>
-            <a href="{% url 'publication:search' %}">Publication</a>
+            <a href="{% url 'publication:search' %}">Publications</a>
         </li>
     </ul>
 
@@ -65,7 +64,7 @@
         {% if constant.PM_CHANGE_USER in perms %}
             <li>
                 <a href="{% url 'user:search' %}" title="Search user" target="_self" tabindex="1">
-                    User
+                    Users
                 </a>
             </li>
         {% endif %}
