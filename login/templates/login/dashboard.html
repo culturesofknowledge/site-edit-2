@@ -23,9 +23,11 @@
         <li>
             <a href="{% url 'institution:search' %}">Repositories</a>
         </li>
+        {%  if constant.PM_CHANGE_PUBLICATION in perms %}
         <li>
             <a href="{% url 'publication:search' %}">Publications</a>
         </li>
+        {% endif %}
     </ul>
 
     {% if constant.PM_VIEW_LOOKUPCAT in perms %}
