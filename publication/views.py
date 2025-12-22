@@ -111,7 +111,7 @@ def full_form(request, pk):
 
     is_save_success = False
     if request.POST:
-        perm_serv.validate_permission_denied(request.user, constant.PM_CHANGE_PUBLICATION)
+        perm_serv.validate_permission_denied(request.user, [constant.PM_CHANGE_PUBLICATION])
         if not pub_form.is_valid():
             return _render_form()
 

@@ -174,7 +174,7 @@ def full_form(request, pk):
 
     is_save_success = False
     if request.POST:
-        perm_serv.validate_permission_denied(request.user, constant.PM_CHANGE_INST)
+        perm_serv.validate_permission_denied(request.user, [constant.PM_CHANGE_INST])
 
         if view_serv.any_invalid_with_log([
             inst_form,

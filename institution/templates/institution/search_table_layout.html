@@ -25,7 +25,7 @@
                 {{ r.institution_name }}
             </td>
             <td>
-                {% include 'core/component/search_table_layout/link_record.html' with id=r.institution_id view='institution:full_form' %}
+                {% include 'core/component/search_table_layout/link_record.html' with id=r.institution_id view='institution:full_form' edit_perm=constant.PM_CHANGE_INST %}
             </td>
             <td>
                 {% if r.institution_synonyms %}

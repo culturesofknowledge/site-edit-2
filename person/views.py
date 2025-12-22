@@ -253,7 +253,7 @@ def full_form(request, iperson_id):
     # handle form submit
     is_save_success = False
     if request.POST:
-        perm_serv.validate_permission_denied(request.user, constant.PM_CHANGE_PERSON)
+        perm_serv.validate_permission_denied(request.user, [constant.PM_CHANGE_PERSON])
 
         # ----- validate
         if fhandler.is_invalid():

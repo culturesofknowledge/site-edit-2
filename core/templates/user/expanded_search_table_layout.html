@@ -23,7 +23,7 @@
             entry_id="{{ r.pk }}">
 
             <td>
-                {% include 'core/component/search_table_layout/link_record.html' with id=r.pk view='user:full_form' %}
+                {% include 'core/component/search_table_layout/link_record.html' with id=r.pk view='user:full_form' edit_perm=constant.PM_CHANGE_USER %}
             </td>
             <td>{{ r.email }}</td>
             <td>{{ r.forename }} {{ r.surname }}</td>

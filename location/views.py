@@ -164,7 +164,7 @@ def full_form(request, location_id):
 
     is_save_success = False
     if request.method == 'POST':
-        perm_serv.validate_permission_denied(request.user, constant.PM_CHANGE_LOCATION)
+        perm_serv.validate_permission_denied(request.user, [constant.PM_CHANGE_LOCATION])
 
         if fhandler.is_invalid():
             return fhandler.render_form(request)

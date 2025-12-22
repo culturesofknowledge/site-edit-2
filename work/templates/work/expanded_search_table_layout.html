@@ -39,7 +39,7 @@
             </td>
             <td>
                 {% if user_is_editor_or_supervisor or r.is_owner_of_catalogue %}
-                    {% include 'core/component/search_table_layout/link_record.html' with id=r.iwork_id view='work:full_form' %}
+                    {% include 'core/component/search_table_layout/link_record.html' with id=r.iwork_id view='work:full_form' edit_perm=constant.PM_CHANGE_WORK %}
                 {% else %}
                     {{ r.iwork_id }}
                 {% endif %}
