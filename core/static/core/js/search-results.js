@@ -151,7 +151,7 @@ $('.searchcontrol').each((i, searchcontrol) => {
         // Every time a search control is changed, that change is persisted
         let element_name = $(e.target).attr('name');
         localStorage.setItem(`${entity}_${element_name}`, $(e.target).val());
-        //submit_page();
+        submit_page();
 
     });
 
