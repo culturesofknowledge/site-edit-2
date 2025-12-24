@@ -54,6 +54,11 @@ tr.selectable_entry:not(.selected):hover {
   background-color: $midnight;
   display: none;
   border: 1px solid white;
+
+  &.menu-subitem-right {
+    left: auto;
+    right: 0;
+  }
 }
 
 .menu-item:hover .menu-subitem {

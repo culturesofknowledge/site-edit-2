@@ -44,7 +44,7 @@
                             <li>Language</li>
                         </a>
                         {% endif %}
-                        {% if constant.PM_CHANGE_USER|can_show_for_perm:perms %}
+                        {% if constant.PM_CHANGE_USER in perms %}
                         <a href="{% url 'user:search' %}">
                             <li>User</li>
                         </a>
@@ -54,7 +54,7 @@
             {% endif %}
         </ul>
         <ul class="no-margin">
-            {% if constant.PM_CHANGE_COLLECTWORK|can_show_for_perm:perms %}
+            {% if constant.PM_CHANGE_COLLECTWORK in perms %}
                 <li class="menu-item">
                     <a href="">Uploads</a>
                     <ul class='unstyled-list no-margin menu-subitem'>
@@ -70,14 +70,14 @@
                     </ul>
                 </li>
             {% endif %}
-            {% if constant.PM_VIEW_AUDIT|can_show_for_perm:perms %}
+            {% if constant.PM_VIEW_AUDIT in perms %}
                 <li class="menu-item">
                     <a href="{% url 'audit:search' %}">Audit</a>
                 </li>
             {% endif %}
             <li class="menu-item">
                 <a href="#!">{{ request.user }}</a>
-                <ul class='unstyled-list no-margin menu-subitem' style="left: -100px;">
+                <ul class="unstyled-list no-margin menu-subitem menu-subitem-right">
                     {% if request.user.has_saved_queries %}
                         <a href="{% url 'list:savedqueries' %}">
                             <li>Saved queries</li>
