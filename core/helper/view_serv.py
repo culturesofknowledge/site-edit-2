@@ -599,9 +599,13 @@ class BasicSearchView(ListView):
 
         query_fieldset_list = self.query_fieldset_list if is_compact_layout else self.expanded_query_fieldset_list
 
+        search_components = search_components_factory(default_search_components_dict |
+                                                      self.request_data.dict())
+        search_components.entity = self.entity
+        search_components.is_compact_layout = is_compact_layout
+
         context.update({'query_fieldset_list': query_fieldset_list,
-                        'search_components': search_components_factory(default_search_components_dict |
-                                                                       self.request_data.dict()),
+                        'search_components': search_components,
                         'entity': self.entity or '',
                         'title': self.entity.split(',')[1].title() if self.entity else 'Title',
                         'results_renderer': results_renderer_factory(self.get_search_results_context(context),

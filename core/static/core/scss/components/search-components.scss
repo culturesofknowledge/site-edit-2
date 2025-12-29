@@ -15,16 +15,16 @@
 }
 
 .search-components-layout > #search-components {
-    // 35% of the horizontal space
-    flex: 0 0 35%;
-    max-width: 35%;
+    // 40% of the horizontal space
+    flex: 0 0 40%;
+    min-width: 25em;
     border: none;
 }
 
 .search-components-layout > #hidden-columns-fieldset {
-    // 65% of the horizontal space
-    flex: 0 0 65%;
-    max-width: 65%;
+    // 60% of the horizontal space
+    flex: 0 0 60%;
+    max-width: 60%;
     border: none;
 }
 

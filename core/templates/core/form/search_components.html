@@ -20,6 +20,36 @@
             {{ form.num_record.label_tag }}
             <span class="sc-input">{{ form.num_record }}</span>
         </div>
+
+        {# Only display search rendering selection for work #}
+        {% if form.entity|first in 'work' %}
+            <div class="search-control sc-row">
+                <label class="sc-label">Layout: </label>
+
+                <input type="radio" id="display-as-grid" value="grid"
+                       name="display-style"
+                       class="searchcontrol"
+                        {% if form.is_compact_layout %}
+                       checked
+                        {% endif %}
+                />
+                <label for="display-as-grid" style="width: auto; margin-right: 10px;">
+                    Compact
+                </label>
+
+                <input type="radio" id="display-as-list" value="table"
+                       name="display-style"
+                       class="searchcontrol"
+                        {% if not form.is_compact_layout %}
+                       checked
+                        {% endif %}
+                />
+                <label for="display-as-list" style="width: auto;">
+                    Expanded
+                </label>
+            </div>
+        {% endif %}
+
         {{ form.page }}
     </fieldset>
 
