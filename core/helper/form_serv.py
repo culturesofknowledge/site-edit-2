@@ -126,8 +126,10 @@ class IntLookupChoices(TextChoices):
     EQUALS = 'equals', 'equals',
     NOT_EQUAL_TO = 'not_equal_to', 'is not equal to',
 
-    LESS_THAN = 'less_than', 'is less than or equal to'
-    GREATER_THAN = 'greater_than', 'is greater than or equal to'
+    LESS_THAN = 'less_than', 'is less than'
+    LESS_THAN_OR_EQUAL = 'less_than_equal', 'is less than or equal to'
+    GREATER_THAN = 'greater_than', 'is greater than'
+    GREATER_THAN_OR_EQUAL = 'greater_than_equal', 'is greater than or equal to'
 
     IS_BLANK = 'is_null', 'is blank',
     NOT_BLANK = 'not_null', 'is not blank',

@@ -146,7 +146,9 @@ choices_lookup_map = {
     'not_blank': cond_not(is_blank),
     'not_null': cond_not(is_null),
     'less_than': lookups.LessThan,
+    'less_than_equal': lookups.LessThanOrEqual,
     'greater_than': lookups.GreaterThan,
+    'greater_than_equal': lookups.GreaterThanOrEqual,
     None: lookups.IExact,
     '': lookups.IExact,
 }
