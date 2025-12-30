@@ -51,7 +51,7 @@ class CofkUploadExcelFile:
         self.upload = upload
         self.filename = filename
         self.total_errors = 0
-        self.sheets: dict[str: CofkSheet] = {}
+        self.sheets: dict[str, CofkSheet] = {}
         self.missing: List[str] = []
 
         self.wb = load_workbook(filename=filename, data_only=True, read_only=True)
@@ -162,7 +162,7 @@ class CofkUploadExcelFile:
 
     def check_sheets(self):
         # Verify all required sheets are present
-        difference = list(set(MANDATORY_SHEETS.keys()) - set([n for n in self.wb.sheetnames]))
+        difference = list(set(MANDATORY_SHEETS.keys()) - set(self.wb.sheetnames))
 
         if difference:
             if len(difference) == 1:
