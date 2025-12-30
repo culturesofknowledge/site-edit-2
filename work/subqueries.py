@@ -1,4 +1,5 @@
-from django.db.models import OuterRef, Case, When, Value, BooleanField, Exists
+from django.db.models import OuterRef, Case, When, Value, BooleanField, Exists, TextField, Q, F
+from django.db.models.functions import Cast, Concat, Coalesce
 
 from cllib_django import query_utils
 from core.models import CofkLookupDocumentType
@@ -21,15 +22,27 @@ def create_joined_person_ann_field(relationship_types):
                              default=Value('')),
         '_birth_range': Case(When(cofkworkpersonmap__person__date_of_birth_is_range=1, then=Value(' or before')),
                              default=Value('')),
+        '_birth_year': Cast('cofkworkpersonmap__person__date_of_birth_year', TextField()),
+        '_death_year': Cast('cofkworkpersonmap__person__date_of_death_year', TextField()),
+        '_birth_str': Concat(F('_birth_year'), F('_birth_range'), output_field=TextField()),
+        '_death_str': Concat(F('_death_year'), F('_death_range'), output_field=TextField()),
+        '_year_detail': Case(
+            When(Q(cofkworkpersonmap__person__date_of_birth_year__isnull=False) &
+                 Q(cofkworkpersonmap__person__date_of_death_year__isnull=False),
+                 then=Concat(F('_birth_str'), Value('-'), F('_death_str'), output_field=TextField())),
+            When(cofkworkpersonmap__person__date_of_birth_year__isnull=False,
+                 then=Concat(Value('b. '), F('_birth_str'), output_field=TextField())),
+            When(cofkworkpersonmap__person__date_of_death_year__isnull=False,
+                 then=Concat(Value('d. '), F('_death_str'), output_field=TextField())),
+            default=Value(''),
+            output_field=TextField(),
+        ),
         'person_detail': query_utils.join_values_for_search([
             'cofkworkpersonmap__person__foaf_name',
-            'cofkworkpersonmap__person__date_of_birth_year',
-            '_birth_range',
-            'cofkworkpersonmap__person__date_of_death_year',
-            '_death_range',
+            '_year_detail',
             'cofkworkpersonmap__person__skos_altlabel',
             'cofkworkpersonmap__person__person_aliases',
-        ]),
+        ], delimiter=', ', agg_delimiter=' '),
     }).values_list('person_detail', flat=True)
     return subquery
 
@@ -47,7 +60,7 @@ def create_joined_location_ann_field(relationship_types, target_fields: list[str
         cofkworklocationmap__work_id=OuterRef('pk'),
         cofkworklocationmap__relationship_type__in=relationship_types,
     ).annotate(**{
-        'location_detail': query_utils.join_values_for_search(target_fields),
+        'location_detail': query_utils.join_values_for_search(target_fields, delimiter=' ', agg_delimiter=' '),
     }).values_list('location_detail', flat=True)
     return subquery
 
@@ -69,7 +82,7 @@ def create_joined_manif_ann_field():
             'manif_set__manifestation_excipit',
             'manif_set__manif_from_set__manif_to__id_number_or_shelfmark',
             'manif_set__manif_to_set__manif_from__id_number_or_shelfmark',
-        ])
+        ], delimiter=' ', agg_delimiter=' ')
     ).values_list('manif_detail', flat=True)
     return subquery
 
