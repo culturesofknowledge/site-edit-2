@@ -41,12 +41,12 @@
                         {% endif %}
                         {%  if constant.PM_CHANGE_ROLECAT in perms %}
                         <a href="{% url 'lang:search' %}">
-                            <li>Language</li>
+                            <li>Languages</li>
                         </a>
                         {% endif %}
                         {% if constant.PM_CHANGE_USER in perms %}
                         <a href="{% url 'user:search' %}">
-                            <li>User</li>
+                            <li>Users</li>
                         </a>
                         {% endif %}
                     </ul>
