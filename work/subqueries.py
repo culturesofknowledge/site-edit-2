@@ -1,9 +1,30 @@
+from django.contrib.postgres.aggregates import StringAgg
 from django.db.models import OuterRef, Case, When, Value, BooleanField, Exists, TextField, Q, F
 from django.db.models.functions import Cast, Concat, Coalesce
 
-from cllib_django import query_utils
 from core.models import CofkLookupDocumentType
 from work.models import CofkUnionWork
+
+
+def _concat_safe(items, delimiter: str = None):
+    if delimiter:
+        new_items = []
+        for i, item in enumerate(items):
+            new_items.append(item)
+            if i < len(items) - 1:
+                new_items.append(Value(delimiter))
+        items = new_items
+
+    return Concat(
+        *[Cast(f, TextField()) for f in items]
+    )
+
+
+def _join_values_for_search(fields, delimiter: str = None, agg_delimiter: str = ''):
+    if isinstance(fields, list):
+        fields = _concat_safe(fields, delimiter=delimiter)
+
+    return StringAgg(fields, agg_delimiter, default=Value(''), output_field=TextField())
 
 
 def create_joined_person_ann_field(relationship_types):
@@ -37,7 +58,7 @@ def create_joined_person_ann_field(relationship_types):
             default=Value(''),
             output_field=TextField(),
         ),
-        'person_detail': query_utils.join_values_for_search([
+        'person_detail': _join_values_for_search([
             'cofkworkpersonmap__person__foaf_name',
             '_year_detail',
             'cofkworkpersonmap__person__skos_altlabel',
@@ -60,7 +81,7 @@ def create_joined_location_ann_field(relationship_types, target_fields: list[str
         cofkworklocationmap__work_id=OuterRef('pk'),
         cofkworklocationmap__relationship_type__in=relationship_types,
     ).annotate(**{
-        'location_detail': query_utils.join_values_for_search(target_fields, delimiter=' ', agg_delimiter=' '),
+        'location_detail': _join_values_for_search(target_fields, delimiter=' ', agg_delimiter=' '),
     }).values_list('location_detail', flat=True)
     return subquery
 
@@ -72,7 +93,7 @@ def create_joined_manif_ann_field():
         _doctype_desc=(CofkLookupDocumentType.objects
                        .filter(document_type_code=OuterRef('manif_set__manifestation_type'))
                        .values_list('document_type_desc', flat=True)),
-        manif_detail=query_utils.join_values_for_search([
+        manif_detail=_join_values_for_search([
             '_doctype_desc',
             'manif_set__postage_marks',
             'manif_set__cofkmanifinstmap_set__inst__institution_name',
