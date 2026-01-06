@@ -138,10 +138,21 @@ class DatesForm(forms.ModelForm):
                 return
 
             # Populate the initial values for the split fields from the
-            # combined string so the edit form reflects the ordering date.
-            self.initial['date_of_work_std_year'] = y
-            self.initial['date_of_work_std_month'] = m
-            self.initial['date_of_work_std_day'] = d
+            # combined string so the edit form reflects the ordering date,
+            # but ONLY if the split fields are currently empty.
+            if self.initial.get('date_of_work_std_year') is None:
+                self.initial['date_of_work_std_year'] = y
+            if self.initial.get('date_of_work_std_month') is None:
+                self.initial['date_of_work_std_month'] = m
+            if self.initial.get('date_of_work_std_day') is None:
+                self.initial['date_of_work_std_day'] = d
+
+            if self.initial.get('date_of_work2_std_year') is None:
+                self.initial['date_of_work2_std_year'] = y
+            if self.initial.get('date_of_work2_std_month') is None:
+                self.initial['date_of_work2_std_month'] = m
+            if self.initial.get('date_of_work2_std_day') is None:
+                self.initial['date_of_work2_std_day'] = d
 
 
 class PlacesForm(forms.ModelForm):
