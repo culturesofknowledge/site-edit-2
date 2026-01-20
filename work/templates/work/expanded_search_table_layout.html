@@ -34,7 +34,9 @@
 
             <td>
                 {% if r.editors_notes %}
-                    {{ r.editors_notes|linebreaksbr }}
+                    <div class="text-wrap-wrapper">
+                    {{ r.editors_notes|break_ambiguous|linebreaksbr }}
+                    </div>
                 {% endif %}
             </td>
             <td>

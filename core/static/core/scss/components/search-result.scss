@@ -75,7 +75,8 @@ tr.odd {
 
 td.text-heavy {
     min-width: 150px;
-    word-break: break-word;
+    word-break: normal;
+    overflow-wrap: anywhere;
 }
 
 .simplified_query_container {
@@ -132,9 +133,17 @@ td.text-heavy {
 
   /* Robust text wrapping to avoid layout blowouts */
   white-space: normal;           /* allow wrapping */
-  word-break: break-word;        /* fallback for long tokens */
-  overflow-wrap: anywhere;       /* modern browsers */
+  word-break: normal;            /* reset word-break to avoid breaking normal words */
+  overflow-wrap: anywhere;       /* modern browsers, allows breaking long tokens only if necessary */
+  word-wrap: break-word;         /* traditional/Safari support, similar to overflow-wrap */
   hyphens: auto;                 /* nicer long-word breaks where supported */
+  
+  /* Safari specific fix for table-cells: sometimes they need a little help 
+     to respect wrapping when they have long unbreakable strings */
+  & > div {
+     overflow-wrap: anywhere;
+     word-wrap: break-word;
+  }
 }
 
 /* Slightly narrower utility columns where content is typically short */

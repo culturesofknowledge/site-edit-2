@@ -106,3 +106,27 @@ def bulleted(value):
 
     lis = ''.join(f'<li>{escape(i)}</li>' for i in items)
     return mark_safe(f'<ul class="bullet-list">{lis}</ul>')
+
+
+@register.filter
+def break_ambiguous(value):
+    """
+    Inserts a <wbr> tag after '/', ',', '.', '=' and '&' characters to
+    provide potential break points for long URLs or strings in narrow columns.
+    """
+    if not isinstance(value, str):
+        return value
+
+    # We escape first to be safe, then replace.
+    # We use <wbr> (Word Break Opportunity) instead of Unicode zero-width space
+    # \u200b because \u200b can be treated as an invalid character when
+    # copying URLs or when browsers interpret them. <wbr> is purely visual.
+    value = escape(str(value))
+    for char in ['/', ',', '.', '=']:
+        value = value.replace(char, char + '<wbr>')
+    
+    # We must replace '&amp;' which was produced by escape() 
+    # if we want to allow breaks after ampersands in the original text.
+    value = value.replace('&amp;', '&amp;<wbr>')
+    
+    return mark_safe(value)

@@ -27,7 +27,9 @@
 
             <td>
                 {% include 'work/component/moreinfo.html' with work=r %}
-                {{ r.description }}
+                <div class="text-wrap-wrapper">
+                {{ r.description|break_ambiguous }}
+                </div>
             </td>
             <td>
                 {% include 'core/component/search_table_layout/link_record.html' with id=r.iwork_id view='work:full_form' edit_perm=constant.PM_CHANGE_WORK %}
