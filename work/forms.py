@@ -408,8 +408,8 @@ date_of_work_help_text = "To find works from a specified period, enter dates 'fr
                          " dd/mm/yyyy. Either end of the date-range may be left blank, e.g. <ul><li>From 1633'" \
                          " to find works dated from 1st January 1633 onwards</li><li>'To 1634' to find works dated up" \
                          " to 31st December 1634</li></ul>"
-sender_recipient_help_text = "Enter part or all of the name of either the author/sender or the" \
-                             " addressee to find all letters either to or from a particular person."
+sender_recipient_help_text = "Enter part or all of the name of either the author/sender or the addressee/recipient " \
+                              "to find all letters either to or from a particular person."
 origin_destination_help_text = "The place to or from which a letter was sent, in standard modern format."
 places_from_searchable = 'The place from which a letter was sent, in standard modern format.'
 places_to_searchable = 'The place to which a letter was sent, in standard modern format.'
