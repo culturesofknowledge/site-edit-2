@@ -973,7 +973,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             ('creators_searchable', 'Author/sender',),
             ('places_from_searchable', 'Origin (standardized)',),
             ('origin_as_marked', 'Origin as marked',),
-            ('addressees_searchable', 'Addressee/Recipient',),
+            ('addressees_searchable', 'Addressee/recipient',),
             ('places_to_searchable', 'Destination (standardized)',),
             ('destination_as_marked', 'Destination as marked',),
             # ('flags', 'Flags',),

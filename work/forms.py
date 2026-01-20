@@ -512,7 +512,7 @@ class CompactSearchFieldset(BasicSearchFieldset):
     addressees_searchable = SearchCharField(label=field_label_map['work']['addressees_searchable'])
     addressees_searchable_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
-    # Notes on addressees/recipients (beneath Addressee/Recipient)
+    # Notes on addressees/recipients (beneath Addressee/recipient)
     notes_on_addressees = SearchCharField(label=field_label_map['work']['notes_on_addressees'])
     notes_on_addressees_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 

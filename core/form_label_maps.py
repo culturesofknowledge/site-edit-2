@@ -82,7 +82,7 @@ field_label_map = {
         'origin_or_destination': 'Origin or destination',
         'creators_searchable': 'Author/sender',
         'notes_on_authors': 'Notes on authors/senders',
-        'addressees_searchable': 'Addressee/Recipient',
+        'addressees_searchable': 'Addressee/recipient',
         'notes_on_addressees': 'Notes on addressees/recipients',
         'places_from_searchable': 'Origin (standardized)',
         'editors_notes': "Editors' notes",
