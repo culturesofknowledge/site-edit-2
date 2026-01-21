@@ -1061,6 +1061,13 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                     'flags': lookup_fn_flags,
                     # Support combined search such as "Draft%Royal Society" on manifestations summary
                     'manifestations_searchable': work_serv.lookup_manifestations_searchable,
+                    'creators_searchable': lambda f, n, v: work_serv.lookup_person_searchable(f, n, v, [REL_TYPE_CREATED]),
+                    'addressees_searchable': lambda f, n, v: work_serv.lookup_person_searchable(f, n, v, [REL_TYPE_WAS_ADDRESSED_TO]),
+                    'mentioned_searchable': lambda f, n, v: work_serv.lookup_person_searchable(f, n, v, [REL_TYPE_MENTION]),
+                    'sender_or_recipient': lambda f, n, v: work_serv.lookup_person_searchable(f, n, v, [REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO]),
+                    'places_from_searchable': lambda f, n, v: work_serv.lookup_location_searchable(f, n, v, [REL_TYPE_WAS_SENT_FROM]),
+                    'places_to_searchable': lambda f, n, v: work_serv.lookup_location_searchable(f, n, v, [REL_TYPE_WAS_SENT_TO]),
+                    'origin_or_destination': lambda f, n, v: work_serv.lookup_location_searchable(f, n, v, [REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
                 })
         )
 
@@ -1074,7 +1081,6 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             'places_to_searchable',
             'origin_or_destination',
             'manifestations_searchable',
-            'is_owner_of_catalogue',
         }
 
         annotate_keys_needed: set[str] = set()

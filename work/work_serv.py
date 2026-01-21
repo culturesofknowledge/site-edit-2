@@ -372,13 +372,113 @@ def lookup_manifestations_searchable(lookup_fn, field_name: str, value: str) -> 
     Example: 'Draft%Royal Society' will require manifestations_searchable to contain 'Draft' followed later by
     'Royal Society'. If no % present, fall back to the default lookup function (icontains with wildcard support).
     """
-    # When '%' is present, build a case-insensitive regex that preserves order between segments
-    if isinstance(value, str) and '%' in value:
-        segments = [seg.strip() for seg in value.split('%') if seg.strip()]
-        # Escape regex meta in each segment and join with '.*' to enforce ordering
-        pattern = '.*'.join(re.escape(seg) for seg in segments)
-        # Use IRegex on the annotated/display field
-        return query_serv.lookups.IRegex(F(field_name), pattern)
+    if not isinstance(value, str):
+        return query_serv.run_lookup_fn(lookup_fn, field_name, value)
 
-    # Otherwise, delegate to the standard lookup function (supports contains/equals/etc.)
-    return query_serv.run_lookup_fn(lookup_fn, field_name, value)
+    # Use Exists-based optimization for both combined and simple search terms
+    # to avoid expensive IRegex on the large aggregated field.
+    segments = [seg.strip() for seg in value.split('%') if seg.strip()]
+    if not segments:
+        return query_serv.run_lookup_fn(lookup_fn, field_name, value)
+
+    from manifestation.models import CofkUnionManifestation
+    from core.models import CofkLookupDocumentType
+    from django.db.models import Exists, OuterRef
+
+    manif_fields = [
+        'postage_marks',
+        'cofkmanifinstmap_set__inst__institution_name',
+        'id_number_or_shelfmark',
+        'printed_edition_details',
+        'manifestation_incipit',
+        'manifestation_excipit',
+        'manif_from_set__manif_to__id_number_or_shelfmark',
+        'manif_to_set__manif_from__id_number_or_shelfmark',
+    ]
+
+    pre_filter_q = Q()
+    for segment in segments:
+        # Check manifestation fields
+        manif_q = Q()
+        for field in manif_fields:
+            manif_q |= Q(**{f'{field}__icontains': segment})
+
+        # Also check document type description
+        manif_q |= Q(manifestation_type__in=CofkLookupDocumentType.objects.filter(
+            document_type_desc__icontains=segment
+        ).values_list('document_type_code', flat=True))
+
+        pre_filter_q &= Exists(CofkUnionManifestation.objects.filter(manif_q, work_id=OuterRef('pk')))
+
+    return pre_filter_q
+
+
+def lookup_person_searchable(lookup_fn, field_name: str, value: str, rel_types: List[str]) -> Q:
+    if not isinstance(value, str):
+        return query_serv.run_lookup_fn(lookup_fn, field_name, value)
+
+    segments = [seg.strip() for seg in value.split('%') if seg.strip()]
+    if not segments:
+        return query_serv.run_lookup_fn(lookup_fn, field_name, value)
+
+    from person.models import CofkUnionPerson
+    from work.models import CofkWorkPersonMap
+    from django.db.models import Exists, OuterRef
+
+    person_fields = [
+        'person__foaf_name',
+        'person__skos_altlabel',
+        'person__person_aliases',
+    ]
+
+    pre_filter_q = Q()
+    for segment in segments:
+        person_q = Q()
+        for field in person_fields:
+            person_q |= Q(**{f'{field}__icontains': segment})
+
+        # Check year detail (constructed in StringAgg)
+        # Year detail is: b. {birth} | d. {death} | {birth}-{death}
+        # We can approximate this by checking birth and death years directly
+        person_q |= Q(person__date_of_birth_year__icontains=segment)
+        person_q |= Q(person__date_of_death_year__icontains=segment)
+
+        pre_filter_q &= Exists(CofkWorkPersonMap.objects.filter(
+            person_q,
+            work_id=OuterRef('pk'),
+            relationship_type__in=rel_types
+        ))
+
+    return pre_filter_q
+
+
+def lookup_location_searchable(lookup_fn, field_name: str, value: str, rel_types: List[str]) -> Q:
+    if not isinstance(value, str):
+        return query_serv.run_lookup_fn(lookup_fn, field_name, value)
+
+    segments = [seg.strip() for seg in value.split('%') if seg.strip()]
+    if not segments:
+        return query_serv.run_lookup_fn(lookup_fn, field_name, value)
+
+    from location.models import CofkUnionLocation
+    from work.models import CofkWorkLocationMap
+    from django.db.models import Exists, OuterRef
+
+    location_fields = [
+        'location__location_name',
+        'location__location_synonyms',
+    ]
+
+    pre_filter_q = Q()
+    for segment in segments:
+        loc_q = Q()
+        for field in location_fields:
+            loc_q |= Q(**{f'{field}__icontains': segment})
+
+        pre_filter_q &= Exists(CofkWorkLocationMap.objects.filter(
+            loc_q,
+            work_id=OuterRef('pk'),
+            relationship_type__in=rel_types
+        ))
+
+    return pre_filter_q
