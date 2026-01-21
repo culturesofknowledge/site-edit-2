@@ -46,7 +46,7 @@ build-backend = "setuptools.build_meta"
 
 
 [project.scripts]
-
+tweaker = "tweaker.__main__:main"
 
 [tool.setuptools.packages.find]
 exclude = [
