@@ -86,7 +86,10 @@
                     <a href="{% url 'login:change-password' %}">
                         <li>Change password</li>
                     </a>
-                    <a href="{% url 'login:logout' %}">
+                    <form action="{% url 'login:logout' %}" method="post" id="logout-form" style="display: none;">
+                        {% csrf_token %}
+                    </form>
+                    <a href="javascript:void(0)" onclick="document.getElementById('logout-form').submit();">
                         <li>Logout</li>
                     </a>
                 </ul>

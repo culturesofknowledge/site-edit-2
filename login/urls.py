@@ -1,4 +1,4 @@
-from django.contrib.auth.views import logout_then_login, PasswordChangeView
+from django.contrib.auth.views import LogoutView, PasswordChangeView
 from django.urls import path
 
 from . import views
@@ -11,5 +11,5 @@ urlpatterns = [
     path('change-password', PasswordChangeView.as_view(template_name='login/change-password.html',
                                       success_url='password-changed'), name='change-password'),
     path('password-changed', password_changed, name='password-changed'),
-    path('logout', logout_then_login, name='logout'),
+    path('logout', LogoutView.as_view(next_page='login:gate'), name='logout'),
 ]

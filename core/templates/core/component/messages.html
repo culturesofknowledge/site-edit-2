@@ -1,9 +1,10 @@
 {% if messages %}
     <div class="messages">
-        <ul class="banner-message">
-            {% for message in messages %}
-                <li{% if message.tags %} class="banner-message--{{ message.tags }}" {% else %} class="banner-message--info" {% endif %}>{{ message|safe }}</li>
-            {% endfor %}
-        </ul>
+        {% for message in messages %}
+            <div class="alert {% if message.tags %}{{ message.tags }}{% else %}info{% endif %}">
+                <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+                {{ message|safe }}
+            </div>
+        {% endfor %}
     </div>
 {% endif %}
