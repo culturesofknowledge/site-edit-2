@@ -2,14 +2,17 @@
 """
 Database tweaker for EMLO/CofK database operations.
 Synced with site-edit-2 Django models.
+Uses SQLAlchemy Core for database operations.
 """
-import sys
 import csv
 from datetime import datetime
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, List, Any
 
-import psycopg2
-import psycopg2.extras
+from sqlalchemy import (
+    create_engine, MetaData, Table, select, insert, update, delete, text, func
+)
+from sqlalchemy.engine import Engine, Connection
+from sqlalchemy.exc import SQLAlchemyError
 
 # Import relationship type constants from core
 from core.constant import (
@@ -43,6 +46,7 @@ from core.constant import (
 class DatabaseTweaker:
     """
     Database tweaker for CofK/EMLO PostgreSQL database operations.
+    Uses SQLAlchemy Core for database operations.
 
     Uses mapping tables instead of generic relationship table:
     - cofk_work_comment_map, cofk_work_resource_map, cofk_work_person_map,
@@ -74,19 +78,20 @@ class DatabaseTweaker:
     def tweaker_from_connection(cls, dbname: str, host: str, port: str,
                                  user: str, password: str, debug: bool = False):
         """Create a tweaker with explicit connection parameters."""
-        postgres_connection = (
-            f"dbname='{dbname}' host='{host}' port='{port}' "
-            f"user='{user}' password='{password}'"
-        )
-        return cls(postgres_connection, debug)
+        url = f"postgresql://{user}:{password}@{host}:{port}/{dbname}"
+        return cls(url, debug)
 
-    def __init__(self, connection: Optional[str] = None, debug: bool = False):
+    def __init__(self, connection_url: Optional[str] = None, debug: bool = False):
         self.debug = False
         self.set_debug(debug)
 
-        self.connection = self.cursor = None
-        if connection:
-            self.connect_to_postgres(connection)
+        self.engine: Optional[Engine] = None
+        self.connection: Optional[Connection] = None
+        self.metadata: Optional[MetaData] = None
+        self._tables: Dict[str, Table] = {}
+
+        if connection_url:
+            self.connect(connection_url)
 
         self._reset_audit()
         self.user = "cofkbot"
@@ -103,24 +108,59 @@ class DatabaseTweaker:
         if debug:
             print("Debug ON - printing SQL")
 
-    def connect_to_postgres(self, connection: str):
+    def connect(self, connection_url: str):
+        """Connect to the database using SQLAlchemy."""
         try:
-            self.connection = psycopg2.connect(connection)
-        except psycopg2.Error as e:
-            print(f"ERROR: Unable to connect to the database: {e}")
-            sys.exit(1)
-        else:
+            self.engine = create_engine(
+                connection_url,
+                echo=self.debug,
+                pool_pre_ping=True
+            )
+            self.connection = self.engine.connect()
+            self.metadata = MetaData()
+            self._tables = {}
             if self.debug:
                 print("Connected to database...")
-            self.cursor = self.connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        except SQLAlchemyError as e:
+            print(f"ERROR: Unable to connect to the database: {e}")
+            raise
 
-    # Alias for backwards compatibility
+    # Backwards compatibility alias
+    def connect_to_postgres(self, connection: str):
+        """Legacy method - converts psycopg2 connection string to SQLAlchemy URL."""
+        # Parse the old format: "dbname='x' host='y' port='z' user='u' password='p'"
+        parts = {}
+        for part in connection.split("' "):
+            if '=' in part:
+                key, value = part.split('=', 1)
+                parts[key.strip()] = value.strip().strip("'")
+
+        url = (f"postgresql://{parts.get('user', '')}:{parts.get('password', '')}"
+               f"@{parts.get('host', 'localhost')}:{parts.get('port', '5432')}"
+               f"/{parts.get('dbname', '')}")
+        self.connect(url)
+
     connect_to_postres = connect_to_postgres
 
     def close(self):
+        """Close the database connection."""
         if self.connection:
             self.connection.close()
-        self.connection = self.cursor = None
+        if self.engine:
+            self.engine.dispose()
+        self.connection = None
+        self.engine = None
+        self.metadata = None
+        self._tables = {}
+
+    def _get_table(self, table_name: str) -> Table:
+        """Get or reflect a table from the database."""
+        if table_name not in self._tables:
+            self._tables[table_name] = Table(
+                table_name, self.metadata,
+                autoload_with=self.engine
+            )
+        return self._tables[table_name]
 
     # ==================== CSV Utilities ====================
 
@@ -135,244 +175,146 @@ class DatabaseTweaker:
 
     # ==================== GET Methods ====================
 
-    def get_work_from_iwork_id(self, iwork_id: int):
+    def _get_one(self, table_name: str, **conditions) -> Optional[Dict]:
+        """Generic method to get a single row from a table."""
         self.check_database_connection()
-        command = "SELECT * FROM cofk_union_work WHERE iwork_id=%s"
-        command = self.cursor.mogrify(command, (int(iwork_id),))
-        self._print_command("SELECT work", command)
-        self.cursor.execute(command)
-        return self.cursor.fetchone()
+        table = self._get_table(table_name)
 
-    def get_work_from_work_id(self, work_id: str):
-        self.check_database_connection()
-        command = "SELECT * FROM cofk_union_work WHERE work_id=%s"
-        command = self.cursor.mogrify(command, (work_id,))
-        self._print_command("SELECT work", command)
-        self.cursor.execute(command)
-        return self.cursor.fetchone()
+        stmt = select(table)
+        for col, val in conditions.items():
+            stmt = stmt.where(table.c[col] == val)
 
-    def get_resource_from_resource_id(self, resource_id: int):
-        self.check_database_connection()
-        command = "SELECT * FROM cofk_union_resource WHERE resource_id=%s"
-        command = self.cursor.mogrify(command, (resource_id,))
-        self._print_command("SELECT resource", command)
-        self.cursor.execute(command)
-        return self.cursor.fetchone()
+        self._print_command(f"SELECT {table_name}", stmt)
+        result = self.connection.execute(stmt)
+        row = result.fetchone()
+        return dict(row._mapping) if row else None
 
-    def get_image_from_image_id(self, image_id: int):
+    def _get_many(self, table_name: str, **conditions) -> List[Dict]:
+        """Generic method to get multiple rows from a table."""
         self.check_database_connection()
-        command = "SELECT * FROM cofk_union_image WHERE image_id=%s"
-        command = self.cursor.mogrify(command, (image_id,))
-        self._print_command("SELECT image", command)
-        self.cursor.execute(command)
-        return self.cursor.fetchone()
+        table = self._get_table(table_name)
 
-    def get_comment_from_comment_id(self, comment_id: int):
-        self.check_database_connection()
-        command = "SELECT * FROM cofk_union_comment WHERE comment_id=%s"
-        command = self.cursor.mogrify(command, (comment_id,))
-        self._print_command("SELECT comment", command)
-        self.cursor.execute(command)
-        return self.cursor.fetchone()
+        stmt = select(table)
+        for col, val in conditions.items():
+            if val is not None:
+                stmt = stmt.where(table.c[col] == val)
 
-    def get_institution_from_institution_id(self, institution_id: int):
-        self.check_database_connection()
-        command = "SELECT * FROM cofk_union_institution WHERE institution_id=%s"
-        command = self.cursor.mogrify(command, (institution_id,))
-        self._print_command("SELECT institution", command)
-        self.cursor.execute(command)
-        return self.cursor.fetchone()
+        self._print_command(f"SELECT {table_name}", stmt)
+        result = self.connection.execute(stmt)
+        return [dict(row._mapping) for row in result]
 
-    def get_location_from_location_id(self, location_id: int):
-        self.check_database_connection()
-        command = "SELECT * FROM cofk_union_location WHERE location_id=%s"
-        command = self.cursor.mogrify(command, (location_id,))
-        self._print_command("SELECT location", command)
-        self.cursor.execute(command)
-        return self.cursor.fetchone()
+    def get_work_from_iwork_id(self, iwork_id: int) -> Optional[Dict]:
+        return self._get_one("cofk_union_work", iwork_id=int(iwork_id))
 
-    def get_person_from_iperson_id(self, iperson_id: int):
-        self.check_database_connection()
-        command = "SELECT * FROM cofk_union_person WHERE iperson_id=%s"
-        command = self.cursor.mogrify(command, (iperson_id,))
-        self._print_command("SELECT person", command)
-        self.cursor.execute(command)
-        return self.cursor.fetchone()
+    def get_work_from_work_id(self, work_id: str) -> Optional[Dict]:
+        return self._get_one("cofk_union_work", work_id=work_id)
 
-    def get_person_from_person_id(self, person_id: str):
-        self.check_database_connection()
-        command = "SELECT * FROM cofk_union_person WHERE person_id=%s"
-        command = self.cursor.mogrify(command, (person_id,))
-        self._print_command("SELECT person", command)
-        self.cursor.execute(command)
-        return self.cursor.fetchone()
+    def get_resource_from_resource_id(self, resource_id: int) -> Optional[Dict]:
+        return self._get_one("cofk_union_resource", resource_id=resource_id)
 
-    def get_manifestation_from_manifestation_id(self, manifestation_id: str):
-        self.check_database_connection()
-        command = "SELECT * FROM cofk_union_manifestation WHERE manifestation_id=%s"
-        command = self.cursor.mogrify(command, (manifestation_id,))
-        self._print_command("SELECT manifestation", command)
-        self.cursor.execute(command)
-        return self.cursor.fetchone()
+    def get_image_from_image_id(self, image_id: int) -> Optional[Dict]:
+        return self._get_one("cofk_union_image", image_id=image_id)
+
+    def get_comment_from_comment_id(self, comment_id: int) -> Optional[Dict]:
+        return self._get_one("cofk_union_comment", comment_id=comment_id)
+
+    def get_institution_from_institution_id(self, institution_id: int) -> Optional[Dict]:
+        return self._get_one("cofk_union_institution", institution_id=institution_id)
+
+    def get_location_from_location_id(self, location_id: int) -> Optional[Dict]:
+        return self._get_one("cofk_union_location", location_id=location_id)
+
+    def get_person_from_iperson_id(self, iperson_id: int) -> Optional[Dict]:
+        return self._get_one("cofk_union_person", iperson_id=iperson_id)
+
+    def get_person_from_person_id(self, person_id: str) -> Optional[Dict]:
+        return self._get_one("cofk_union_person", person_id=person_id)
+
+    def get_manifestation_from_manifestation_id(self, manifestation_id: str) -> Optional[Dict]:
+        return self._get_one("cofk_union_manifestation", manifestation_id=manifestation_id)
 
     # ==================== Mapping Table Queries ====================
 
     def get_work_person_maps(self, work_id: str = None, person_id: str = None,
                              relationship_type: str = None) -> List[Dict]:
         """Get work-person relationships from cofk_work_person_map."""
-        self.check_database_connection()
-
-        conditions = []
-        values = []
-
-        if work_id:
-            conditions.append("work_id=%s")
-            values.append(work_id)
-        if person_id:
-            conditions.append("person_id=%s")
-            values.append(person_id)
-        if relationship_type:
-            conditions.append("relationship_type=%s")
-            values.append(relationship_type)
-
-        command = "SELECT * FROM cofk_work_person_map"
-        if conditions:
-            command += " WHERE " + " AND ".join(conditions)
-
-        command = self.cursor.mogrify(command, values)
-        self._print_command("SELECT work_person_map", command)
-        self.cursor.execute(command)
-        return self.cursor.fetchall()
+        return self._get_many(
+            "cofk_work_person_map",
+            work_id=work_id,
+            person_id=person_id,
+            relationship_type=relationship_type
+        )
 
     def get_work_location_maps(self, work_id: str = None, location_id: int = None,
                                relationship_type: str = None) -> List[Dict]:
         """Get work-location relationships from cofk_work_location_map."""
-        self.check_database_connection()
-
-        conditions = []
-        values = []
-
-        if work_id:
-            conditions.append("work_id=%s")
-            values.append(work_id)
-        if location_id:
-            conditions.append("location_id=%s")
-            values.append(location_id)
-        if relationship_type:
-            conditions.append("relationship_type=%s")
-            values.append(relationship_type)
-
-        command = "SELECT * FROM cofk_work_location_map"
-        if conditions:
-            command += " WHERE " + " AND ".join(conditions)
-
-        command = self.cursor.mogrify(command, values)
-        self._print_command("SELECT work_location_map", command)
-        self.cursor.execute(command)
-        return self.cursor.fetchall()
+        return self._get_many(
+            "cofk_work_location_map",
+            work_id=work_id,
+            location_id=location_id,
+            relationship_type=relationship_type
+        )
 
     def get_work_comment_maps(self, work_id: str = None, comment_id: int = None,
                               relationship_type: str = None) -> List[Dict]:
         """Get work-comment relationships from cofk_work_comment_map."""
-        self.check_database_connection()
-
-        conditions = []
-        values = []
-
-        if work_id:
-            conditions.append("work_id=%s")
-            values.append(work_id)
-        if comment_id:
-            conditions.append("comment_id=%s")
-            values.append(comment_id)
-        if relationship_type:
-            conditions.append("relationship_type=%s")
-            values.append(relationship_type)
-
-        command = "SELECT * FROM cofk_work_comment_map"
-        if conditions:
-            command += " WHERE " + " AND ".join(conditions)
-
-        command = self.cursor.mogrify(command, values)
-        self._print_command("SELECT work_comment_map", command)
-        self.cursor.execute(command)
-        return self.cursor.fetchall()
+        return self._get_many(
+            "cofk_work_comment_map",
+            work_id=work_id,
+            comment_id=comment_id,
+            relationship_type=relationship_type
+        )
 
     def get_work_resource_maps(self, work_id: str = None, resource_id: int = None) -> List[Dict]:
         """Get work-resource relationships from cofk_work_resource_map."""
-        self.check_database_connection()
-
-        conditions = []
-        values = []
-
-        if work_id:
-            conditions.append("work_id=%s")
-            values.append(work_id)
-        if resource_id:
-            conditions.append("resource_id=%s")
-            values.append(resource_id)
-
-        command = "SELECT * FROM cofk_work_resource_map"
-        if conditions:
-            command += " WHERE " + " AND ".join(conditions)
-
-        command = self.cursor.mogrify(command, values)
-        self._print_command("SELECT work_resource_map", command)
-        self.cursor.execute(command)
-        return self.cursor.fetchall()
+        return self._get_many(
+            "cofk_work_resource_map",
+            work_id=work_id,
+            resource_id=resource_id
+        )
 
     def get_work_work_maps(self, work_from_id: str = None, work_to_id: str = None,
                            relationship_type: str = None) -> List[Dict]:
         """Get work-work relationships from cofk_work_work_map."""
-        self.check_database_connection()
-
-        conditions = []
-        values = []
-
-        if work_from_id:
-            conditions.append("work_from_id=%s")
-            values.append(work_from_id)
-        if work_to_id:
-            conditions.append("work_to_id=%s")
-            values.append(work_to_id)
-        if relationship_type:
-            conditions.append("relationship_type=%s")
-            values.append(relationship_type)
-
-        command = "SELECT * FROM cofk_work_work_map"
-        if conditions:
-            command += " WHERE " + " AND ".join(conditions)
-
-        command = self.cursor.mogrify(command, values)
-        self._print_command("SELECT work_work_map", command)
-        self.cursor.execute(command)
-        return self.cursor.fetchall()
+        return self._get_many(
+            "cofk_work_work_map",
+            work_from_id=work_from_id,
+            work_to_id=work_to_id,
+            relationship_type=relationship_type
+        )
 
     def get_manif_inst_maps(self, manifestation_id: str = None,
                             institution_id: int = None) -> List[Dict]:
         """Get manifestation-institution relationships from cofk_manif_inst_map."""
-        self.check_database_connection()
-
-        conditions = []
-        values = []
-
-        if manifestation_id:
-            conditions.append("manif_id=%s")
-            values.append(manifestation_id)
-        if institution_id:
-            conditions.append("inst_id=%s")
-            values.append(institution_id)
-
-        command = "SELECT * FROM cofk_manif_inst_map"
-        if conditions:
-            command += " WHERE " + " AND ".join(conditions)
-
-        command = self.cursor.mogrify(command, values)
-        self._print_command("SELECT manif_inst_map", command)
-        self.cursor.execute(command)
-        return self.cursor.fetchall()
+        return self._get_many(
+            "cofk_manif_inst_map",
+            manif_id=manifestation_id,
+            inst_id=institution_id
+        )
 
     # ==================== UPDATE Methods ====================
+
+    def _update(self, type_id: Any, field_updates: Dict, table_name: str,
+                where_field: str, type_name: str, print_sql: bool = False,
+                anonymous: bool = False):
+        """Generic update method using SQLAlchemy."""
+        self.check_database_connection()
+
+        if not field_updates:
+            return
+
+        updates = dict(field_updates)
+        if not anonymous and "change_user" not in updates:
+            updates["change_user"] = self.user
+
+        table = self._get_table(table_name)
+        stmt = update(table).where(table.c[where_field] == type_id).values(**updates)
+
+        if self.debug or print_sql:
+            print(f"* UPDATE {type_name}:", stmt)
+
+        self.connection.execute(stmt)
+        self._audit_update(type_name)
 
     def update_person(self, person_id: str, field_updates: Dict = None,
                       print_sql: bool = False, anonymous: bool = False):
@@ -434,169 +376,124 @@ class DatabaseTweaker:
         self._update(location_id, field_updates, "cofk_union_location",
                      "location_id", "location", print_sql, anonymous)
 
-    def _update(self, type_id, field_updates: Dict, update_table: str,
-                where_field: str, type_name: str, print_sql: bool = False,
-                anonymous: bool = False):
-        self.check_database_connection()
-
-        fields = list(field_updates.keys())
-        data = [field_updates[field] for field in fields]
-
-        if not anonymous and "change_user" not in fields:
-            fields.append("change_user")
-            data.append(self.user)
-
-        data.append(type_id)
-
-        command = f"UPDATE {update_table} SET "
-        command += ", ".join(f"{field}=%s" for field in fields)
-        command += f" WHERE {where_field}=%s"
-
-        command = self.cursor.mogrify(command, data)
-
-        if self.debug or print_sql:
-            print(f"* UPDATE {type_name}:", command)
-
-        self.cursor.execute(command)
-        self._audit_update(type_name)
-
     # ==================== DELETE Methods ====================
 
-    def delete_resource_via_resource_id(self, resource_id: int):
+    def _delete_by_id(self, table_name: str, id_field: str, id_value: Any, audit_name: str):
+        """Generic delete method using SQLAlchemy."""
         self.check_database_connection()
-        command = "DELETE FROM cofk_union_resource WHERE resource_id=%s"
-        command = self.cursor.mogrify(command, (resource_id,))
-        self._print_command("DELETE resource", command)
-        self._audit_delete("resource")
-        self.cursor.execute(command)
+        table = self._get_table(table_name)
+        stmt = delete(table).where(table.c[id_field] == id_value)
+        self._print_command(f"DELETE {audit_name}", stmt)
+        self._audit_delete(audit_name)
+        self.connection.execute(stmt)
+
+    def delete_resource_via_resource_id(self, resource_id: int):
+        self._delete_by_id("cofk_union_resource", "resource_id", resource_id, "resource")
 
     def delete_comment_via_comment_id(self, comment_id: int):
-        self.check_database_connection()
-        command = "DELETE FROM cofk_union_comment WHERE comment_id=%s"
-        command = self.cursor.mogrify(command, (comment_id,))
-        self._print_command("DELETE comment", command)
-        self._audit_delete("comment")
-        self.cursor.execute(command)
+        self._delete_by_id("cofk_union_comment", "comment_id", comment_id, "comment")
 
     def delete_manifestation_via_manifestation_id(self, manifestation_id: str):
-        self.check_database_connection()
-        command = "DELETE FROM cofk_union_manifestation WHERE manifestation_id=%s"
-        command = self.cursor.mogrify(command, (manifestation_id,))
-        self._print_command("DELETE manifestation", command)
-        self._audit_delete("manifestation")
-        self.cursor.execute(command)
+        self._delete_by_id("cofk_union_manifestation", "manifestation_id", manifestation_id, "manifestation")
 
     def delete_work_via_iwork_id(self, iwork_id: int):
-        self.check_database_connection()
-        command = "DELETE FROM cofk_union_work WHERE iwork_id=%s"
-        command = self.cursor.mogrify(command, (int(iwork_id),))
-        self._print_command("DELETE work", command)
-        self._audit_delete("work")
-        self.cursor.execute(command)
+        self._delete_by_id("cofk_union_work", "iwork_id", int(iwork_id), "work")
 
     def delete_work_via_work_id(self, work_id: str):
-        self.check_database_connection()
-        command = "DELETE FROM cofk_union_work WHERE work_id=%s"
-        command = self.cursor.mogrify(command, (work_id,))
-        self._print_command("DELETE work", command)
-        self._audit_delete("work")
-        self.cursor.execute(command)
+        self._delete_by_id("cofk_union_work", "work_id", work_id, "work")
 
     # ==================== DELETE Mapping Tables ====================
 
     def delete_work_person_map(self, recref_id: int):
-        self._delete_map_by_recref_id("cofk_work_person_map", recref_id, "work_person_map")
+        self._delete_by_id("cofk_work_person_map", "recref_id", recref_id, "work_person_map")
 
     def delete_work_location_map(self, recref_id: int):
-        self._delete_map_by_recref_id("cofk_work_location_map", recref_id, "work_location_map")
+        self._delete_by_id("cofk_work_location_map", "recref_id", recref_id, "work_location_map")
 
     def delete_work_comment_map(self, recref_id: int):
-        self._delete_map_by_recref_id("cofk_work_comment_map", recref_id, "work_comment_map")
+        self._delete_by_id("cofk_work_comment_map", "recref_id", recref_id, "work_comment_map")
 
     def delete_work_resource_map(self, recref_id: int):
-        self._delete_map_by_recref_id("cofk_work_resource_map", recref_id, "work_resource_map")
+        self._delete_by_id("cofk_work_resource_map", "recref_id", recref_id, "work_resource_map")
 
     def delete_work_work_map(self, recref_id: int):
-        self._delete_map_by_recref_id("cofk_work_work_map", recref_id, "work_work_map")
+        self._delete_by_id("cofk_work_work_map", "recref_id", recref_id, "work_work_map")
 
     def delete_manif_inst_map(self, recref_id: int):
-        self._delete_map_by_recref_id("cofk_manif_inst_map", recref_id, "manif_inst_map")
+        self._delete_by_id("cofk_manif_inst_map", "recref_id", recref_id, "manif_inst_map")
 
     def delete_manif_image_map(self, recref_id: int):
-        self._delete_map_by_recref_id("cofk_manif_image_map", recref_id, "manif_image_map")
+        self._delete_by_id("cofk_manif_image_map", "recref_id", recref_id, "manif_image_map")
 
     def delete_person_comment_map(self, recref_id: int):
-        self._delete_map_by_recref_id("cofk_person_comment_map", recref_id, "person_comment_map")
+        self._delete_by_id("cofk_person_comment_map", "recref_id", recref_id, "person_comment_map")
 
     def delete_person_resource_map(self, recref_id: int):
-        self._delete_map_by_recref_id("cofk_person_resource_map", recref_id, "person_resource_map")
+        self._delete_by_id("cofk_person_resource_map", "recref_id", recref_id, "person_resource_map")
 
     def delete_person_location_map(self, recref_id: int):
-        self._delete_map_by_recref_id("cofk_person_location_map", recref_id, "person_location_map")
-
-    def _delete_map_by_recref_id(self, table: str, recref_id: int, audit_name: str):
-        self.check_database_connection()
-        command = f"DELETE FROM {table} WHERE recref_id=%s"
-        command = self.cursor.mogrify(command, (recref_id,))
-        self._print_command(f"DELETE {audit_name}", command)
-        self._audit_delete(audit_name)
-        self.cursor.execute(command)
+        self._delete_by_id("cofk_person_location_map", "recref_id", recref_id, "person_location_map")
 
     # ==================== CREATE Methods ====================
 
-    def create_resource(self, name: str, url: str, description: str = ""):
+    def _insert_returning(self, table_name: str, values: Dict, returning_field: str,
+                          audit_name: str) -> Any:
+        """Generic insert method that returns a field value."""
         self.check_database_connection()
+        table = self._get_table(table_name)
 
-        command = """INSERT INTO cofk_union_resource
-            (resource_name, resource_url, resource_details, creation_user, change_user)
-            VALUES (%s, %s, %s, %s, %s)
-            RETURNING resource_id"""
+        stmt = insert(table).values(**values).returning(table.c[returning_field])
+        self._print_command(f"INSERT {audit_name}", stmt)
+        self._audit_insert(audit_name)
 
-        command = self.cursor.mogrify(command, (name, url, description, self.user, self.user))
+        result = self.connection.execute(stmt)
+        return result.fetchone()[0]
 
-        self._print_command("INSERT resource", command)
-        self._audit_insert("resource")
+    def create_resource(self, name: str, url: str, description: str = "") -> int:
+        return self._insert_returning(
+            "cofk_union_resource",
+            {
+                "resource_name": name,
+                "resource_url": url,
+                "resource_details": description,
+                "creation_user": self.user,
+                "change_user": self.user
+            },
+            "resource_id",
+            "resource"
+        )
 
-        self.cursor.execute(command)
-        return self.cursor.fetchone()[0]
-
-    def create_comment(self, comment: str):
-        self.check_database_connection()
-
-        command = """INSERT INTO cofk_union_comment
-            (comment, creation_user, change_user)
-            VALUES (%s, %s, %s)
-            RETURNING comment_id"""
-
-        command = self.cursor.mogrify(command, (comment, self.user, self.user))
-
-        self._print_command("INSERT comment", command)
-        self._audit_insert("comment")
-
-        self.cursor.execute(command)
-        return self.cursor.fetchone()[0]
+    def create_comment(self, comment: str) -> int:
+        return self._insert_returning(
+            "cofk_union_comment",
+            {
+                "comment": comment,
+                "creation_user": self.user,
+                "change_user": self.user
+            },
+            "comment_id",
+            "comment"
+        )
 
     def create_image(self, filename: str, display_order: int, image_credits: str,
                      can_be_displayed: str = 'Y', thumbnail: str = None,
-                     licence_details: str = '', licence_url: str = ''):
-        self.check_database_connection()
-
-        command = """INSERT INTO cofk_union_image
-            (image_filename, display_order, credits, can_be_displayed, thumbnail,
-             licence_details, licence_url, creation_user, change_user)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-            RETURNING image_id"""
-
-        command = self.cursor.mogrify(command, (
-            filename, display_order, image_credits, can_be_displayed, thumbnail,
-            licence_details, licence_url, self.user, self.user
-        ))
-
-        self._print_command("INSERT image", command)
-        self._audit_insert("image")
-
-        self.cursor.execute(command)
-        return self.cursor.fetchone()[0]
+                     licence_details: str = '', licence_url: str = '') -> int:
+        return self._insert_returning(
+            "cofk_union_image",
+            {
+                "image_filename": filename,
+                "display_order": display_order,
+                "credits": image_credits,
+                "can_be_displayed": can_be_displayed,
+                "thumbnail": thumbnail,
+                "licence_details": licence_details,
+                "licence_url": licence_url,
+                "creation_user": self.user,
+                "change_user": self.user
+            },
+            "image_id",
+            "image"
+        )
 
     def create_manifestation(
             self,
@@ -656,112 +553,92 @@ class DatabaseTweaker:
             manifestation_receipt_date_uncertain: int = 0,
             manifestation_receipt_date_approx: int = 0,
             accompaniments: str = None
-    ):
-        self.check_database_connection()
+    ) -> str:
+        values = {
+            "manifestation_id": manifestation_id,
+            "manifestation_type": manifestation_type,
+            "work_id": work_id,
+            "id_number_or_shelfmark": id_number_or_shelfmark,
+            "printed_edition_details": printed_edition_details,
+            "paper_size": paper_size,
+            "paper_type_or_watermark": paper_type_or_watermark,
+            "number_of_pages_of_document": number_of_pages_of_document,
+            "number_of_pages_of_text": number_of_pages_of_text,
+            "seal": seal,
+            "postage_marks": postage_marks,
+            "endorsements": endorsements,
+            "non_letter_enclosures": non_letter_enclosures,
+            "manifestation_creation_calendar": manifestation_creation_calendar,
+            "manifestation_creation_date": manifestation_creation_date,
+            "manifestation_creation_date_gregorian": manifestation_creation_date_gregorian,
+            "manifestation_creation_date_year": manifestation_creation_date_year,
+            "manifestation_creation_date_month": manifestation_creation_date_month,
+            "manifestation_creation_date_day": manifestation_creation_date_day,
+            "manifestation_creation_date2_year": manifestation_creation_date2_year,
+            "manifestation_creation_date2_month": manifestation_creation_date2_month,
+            "manifestation_creation_date2_day": manifestation_creation_date2_day,
+            "manifestation_creation_date_is_range": manifestation_creation_date_is_range,
+            "manifestation_creation_date_inferred": manifestation_creation_date_inferred,
+            "manifestation_creation_date_uncertain": manifestation_creation_date_uncertain,
+            "manifestation_creation_date_approx": manifestation_creation_date_approx,
+            "manifestation_creation_date_as_marked": manifestation_creation_date_as_marked,
+            "manifestation_is_translation": manifestation_is_translation,
+            "language_of_manifestation": language_of_manifestation,
+            "address": address,
+            "manifestation_incipit": manifestation_incipit,
+            "manifestation_excipit": manifestation_excipit,
+            "manifestation_ps": manifestation_ps,
+            "opened": opened,
+            "routing_mark_stamp": routing_mark_stamp,
+            "routing_mark_ms": routing_mark_ms,
+            "handling_instructions": handling_instructions,
+            "stored_folded": stored_folded,
+            "postage_costs_as_marked": postage_costs_as_marked,
+            "postage_costs": postage_costs,
+            "non_delivery_reason": non_delivery_reason,
+            "date_of_receipt_as_marked": date_of_receipt_as_marked,
+            "manifestation_receipt_calendar": manifestation_receipt_calendar,
+            "manifestation_receipt_date": manifestation_receipt_date,
+            "manifestation_receipt_date_gregorian": manifestation_receipt_date_gregorian,
+            "manifestation_receipt_date_year": manifestation_receipt_date_year,
+            "manifestation_receipt_date_month": manifestation_receipt_date_month,
+            "manifestation_receipt_date_day": manifestation_receipt_date_day,
+            "manifestation_receipt_date2_year": manifestation_receipt_date2_year,
+            "manifestation_receipt_date2_month": manifestation_receipt_date2_month,
+            "manifestation_receipt_date2_day": manifestation_receipt_date2_day,
+            "manifestation_receipt_date_is_range": manifestation_receipt_date_is_range,
+            "manifestation_receipt_date_inferred": manifestation_receipt_date_inferred,
+            "manifestation_receipt_date_uncertain": manifestation_receipt_date_uncertain,
+            "manifestation_receipt_date_approx": manifestation_receipt_date_approx,
+            "accompaniments": accompaniments,
+            "creation_user": self.user,
+            "change_user": self.user
+        }
 
-        command = """INSERT INTO cofk_union_manifestation (
-            manifestation_id, manifestation_type, work_id,
-            id_number_or_shelfmark, printed_edition_details,
-            paper_size, paper_type_or_watermark,
-            number_of_pages_of_document, number_of_pages_of_text,
-            seal, postage_marks, endorsements, non_letter_enclosures,
-            manifestation_creation_calendar, manifestation_creation_date,
-            manifestation_creation_date_gregorian,
-            manifestation_creation_date_year, manifestation_creation_date_month,
-            manifestation_creation_date_day,
-            manifestation_creation_date2_year, manifestation_creation_date2_month,
-            manifestation_creation_date2_day, manifestation_creation_date_is_range,
-            manifestation_creation_date_inferred, manifestation_creation_date_uncertain,
-            manifestation_creation_date_approx, manifestation_creation_date_as_marked,
-            manifestation_is_translation, language_of_manifestation,
-            address, manifestation_incipit, manifestation_excipit, manifestation_ps,
-            opened, routing_mark_stamp, routing_mark_ms, handling_instructions,
-            stored_folded, postage_costs_as_marked, postage_costs,
-            non_delivery_reason, date_of_receipt_as_marked,
-            manifestation_receipt_calendar, manifestation_receipt_date,
-            manifestation_receipt_date_gregorian,
-            manifestation_receipt_date_year, manifestation_receipt_date_month,
-            manifestation_receipt_date_day,
-            manifestation_receipt_date2_year, manifestation_receipt_date2_month,
-            manifestation_receipt_date2_day, manifestation_receipt_date_is_range,
-            manifestation_receipt_date_inferred, manifestation_receipt_date_uncertain,
-            manifestation_receipt_date_approx, accompaniments,
-            creation_user, change_user
-        ) VALUES (
-            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-            %s, %s, %s, %s
-        ) RETURNING manifestation_id"""
-
-        command = self.cursor.mogrify(command, (
-            manifestation_id, manifestation_type, work_id,
-            id_number_or_shelfmark, printed_edition_details,
-            paper_size, paper_type_or_watermark,
-            number_of_pages_of_document, number_of_pages_of_text,
-            seal, postage_marks, endorsements, non_letter_enclosures,
-            manifestation_creation_calendar, manifestation_creation_date,
-            manifestation_creation_date_gregorian,
-            manifestation_creation_date_year, manifestation_creation_date_month,
-            manifestation_creation_date_day,
-            manifestation_creation_date2_year, manifestation_creation_date2_month,
-            manifestation_creation_date2_day, manifestation_creation_date_is_range,
-            manifestation_creation_date_inferred, manifestation_creation_date_uncertain,
-            manifestation_creation_date_approx, manifestation_creation_date_as_marked,
-            manifestation_is_translation, language_of_manifestation,
-            address, manifestation_incipit, manifestation_excipit, manifestation_ps,
-            opened, routing_mark_stamp, routing_mark_ms, handling_instructions,
-            stored_folded, postage_costs_as_marked, postage_costs,
-            non_delivery_reason, date_of_receipt_as_marked,
-            manifestation_receipt_calendar, manifestation_receipt_date,
-            manifestation_receipt_date_gregorian,
-            manifestation_receipt_date_year, manifestation_receipt_date_month,
-            manifestation_receipt_date_day,
-            manifestation_receipt_date2_year, manifestation_receipt_date2_month,
-            manifestation_receipt_date2_day, manifestation_receipt_date_is_range,
-            manifestation_receipt_date_inferred, manifestation_receipt_date_uncertain,
-            manifestation_receipt_date_approx, accompaniments,
-            self.user, self.user
-        ))
-
-        self._print_command("INSERT manifestation", command)
-        self._audit_insert("manifestation")
-
-        self.cursor.execute(command)
-        return self.cursor.fetchone()[0]
+        return self._insert_returning(
+            "cofk_union_manifestation",
+            values,
+            "manifestation_id",
+            "manifestation"
+        )
 
     # ==================== CREATE Mapping Table Entries ====================
 
-    def _create_map_entry(self, table: str, fields: List[str], values: List,
+    def _create_map_entry(self, table_name: str, values: Dict,
                           relationship_type: str, audit_name: str) -> int:
         """Generic method to create mapping table entries."""
-        self.check_database_connection()
+        values["relationship_type"] = relationship_type
+        values["creation_user"] = self.user
+        values["change_user"] = self.user
 
-        all_fields = fields + ['relationship_type', 'creation_user', 'change_user']
-        all_values = list(values) + [relationship_type, self.user, self.user]
-
-        placeholders = ', '.join(['%s'] * len(all_values))
-        field_names = ', '.join(all_fields)
-
-        command = f"""INSERT INTO {table} ({field_names})
-            VALUES ({placeholders})
-            RETURNING recref_id"""
-
-        command = self.cursor.mogrify(command, all_values)
-
-        self._print_command(f"INSERT {audit_name}", command)
-        self._audit_insert(audit_name)
-
-        self.cursor.execute(command)
-        return self.cursor.fetchone()[0]
+        return self._insert_returning(table_name, values, "recref_id", audit_name)
 
     # Work-Person relationships
     def create_work_person_map(self, work_id: str, person_id: str,
                                 relationship_type: str) -> int:
         return self._create_map_entry(
             "cofk_work_person_map",
-            ["work_id", "person_id"],
-            [work_id, person_id],
+            {"work_id": work_id, "person_id": person_id},
             relationship_type,
             "work_person_map"
         )
@@ -795,8 +672,7 @@ class DatabaseTweaker:
                                   relationship_type: str) -> int:
         return self._create_map_entry(
             "cofk_work_location_map",
-            ["work_id", "location_id"],
-            [work_id, location_id],
+            {"work_id": work_id, "location_id": location_id},
             relationship_type,
             "work_location_map"
         )
@@ -818,8 +694,7 @@ class DatabaseTweaker:
                                  relationship_type: str) -> int:
         return self._create_map_entry(
             "cofk_work_comment_map",
-            ["work_id", "comment_id"],
-            [work_id, comment_id],
+            {"work_id": work_id, "comment_id": comment_id},
             relationship_type,
             "work_comment_map"
         )
@@ -852,8 +727,7 @@ class DatabaseTweaker:
     def create_work_resource_map(self, work_id: str, resource_id: int) -> int:
         return self._create_map_entry(
             "cofk_work_resource_map",
-            ["work_id", "resource_id"],
-            [work_id, resource_id],
+            {"work_id": work_id, "resource_id": resource_id},
             REL_TYPE_IS_RELATED_TO,
             "work_resource_map"
         )
@@ -866,8 +740,7 @@ class DatabaseTweaker:
                               relationship_type: str) -> int:
         return self._create_map_entry(
             "cofk_work_work_map",
-            ["work_from_id", "work_to_id"],
-            [work_from_id, work_to_id],
+            {"work_from_id": work_from_id, "work_to_id": work_to_id},
             relationship_type,
             "work_work_map"
         )
@@ -883,8 +756,7 @@ class DatabaseTweaker:
                                    relationship_type: str = REL_TYPE_COMMENT_REFERS_TO) -> int:
         return self._create_map_entry(
             "cofk_person_comment_map",
-            ["person_id", "comment_id"],
-            [person_id, comment_id],
+            {"person_id": person_id, "comment_id": comment_id},
             relationship_type,
             "person_comment_map"
         )
@@ -896,8 +768,7 @@ class DatabaseTweaker:
     def create_person_resource_map(self, person_id: str, resource_id: int) -> int:
         return self._create_map_entry(
             "cofk_person_resource_map",
-            ["person_id", "resource_id"],
-            [person_id, resource_id],
+            {"person_id": person_id, "resource_id": resource_id},
             REL_TYPE_IS_RELATED_TO,
             "person_resource_map"
         )
@@ -910,8 +781,7 @@ class DatabaseTweaker:
                                     relationship_type: str) -> int:
         return self._create_map_entry(
             "cofk_person_location_map",
-            ["person_id", "location_id"],
-            [person_id, location_id],
+            {"person_id": person_id, "location_id": location_id},
             relationship_type,
             "person_location_map"
         )
@@ -930,8 +800,7 @@ class DatabaseTweaker:
                                   relationship_type: str = REL_TYPE_COMMENT_REFERS_TO) -> int:
         return self._create_map_entry(
             "cofk_manif_comment_map",
-            ["manifestation_id", "comment_id"],
-            [manifestation_id, comment_id],
+            {"manifestation_id": manifestation_id, "comment_id": comment_id},
             relationship_type,
             "manif_comment_map"
         )
@@ -944,8 +813,7 @@ class DatabaseTweaker:
                                relationship_type: str = REL_TYPE_STORED_IN) -> int:
         return self._create_map_entry(
             "cofk_manif_inst_map",
-            ["manif_id", "inst_id"],
-            [manifestation_id, institution_id],
+            {"manif_id": manifestation_id, "inst_id": institution_id},
             relationship_type,
             "manif_inst_map"
         )
@@ -1003,9 +871,9 @@ class DatabaseTweaker:
         work_id_base = "work_" + datetime.strftime(datetime.now(), "%Y%m%d%H%M%S%f") + "_"
         work_id = work_id_base + work_id_end
 
-        # Get next iwork_id
-        self.cursor.execute("SELECT nextval('cofk_union_work_iwork_id_seq'::regclass)")
-        iwork_id = self.cursor.fetchone()[0]
+        # Get next iwork_id using SQLAlchemy
+        result = self.connection.execute(text("SELECT nextval('cofk_union_work_iwork_id_seq'::regclass)"))
+        iwork_id = result.fetchone()[0]
 
         # Convert values
         addressees_inferred = self.get_int_value(addressees_inferred, 0)
@@ -1032,42 +900,58 @@ class DatabaseTweaker:
         date_of_work_std = self.get_date_string(date_of_work_std_year, date_of_work_std_month, date_of_work_std_day)
         date_of_work_std_gregorian = date_of_work_std
 
-        command = """INSERT INTO cofk_union_work (
-            work_id, iwork_id, description, date_of_work_as_marked, original_calendar,
-            date_of_work_std, date_of_work_std_gregorian,
-            date_of_work_std_year, date_of_work_std_month, date_of_work_std_day,
-            date_of_work2_std_year, date_of_work2_std_month, date_of_work2_std_day,
-            date_of_work_std_is_range, date_of_work_inferred, date_of_work_uncertain,
-            date_of_work_approx, authors_as_marked, addressees_as_marked,
-            authors_inferred, authors_uncertain, addressees_inferred, addressees_uncertain,
-            destination_as_marked, origin_as_marked, destination_inferred, destination_uncertain,
-            origin_inferred, origin_uncertain, abstract, keywords, work_is_translation,
-            incipit, explicit, ps, original_catalogue, accession_code, work_to_be_deleted,
-            editors_notes, edit_status, relevant_to_cofk, creation_user, change_user
-        ) VALUES (
-            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-            %s, %s, %s, %s, %s
-        )"""
+        values = {
+            "work_id": work_id,
+            "iwork_id": iwork_id,
+            "description": description,
+            "date_of_work_as_marked": date_of_work_as_marked,
+            "original_calendar": original_calendar,
+            "date_of_work_std": date_of_work_std,
+            "date_of_work_std_gregorian": date_of_work_std_gregorian,
+            "date_of_work_std_year": date_of_work_std_year,
+            "date_of_work_std_month": date_of_work_std_month,
+            "date_of_work_std_day": date_of_work_std_day,
+            "date_of_work2_std_year": date_of_work2_std_year,
+            "date_of_work2_std_month": date_of_work2_std_month,
+            "date_of_work2_std_day": date_of_work2_std_day,
+            "date_of_work_std_is_range": date_of_work_std_is_range,
+            "date_of_work_inferred": date_of_work_inferred,
+            "date_of_work_uncertain": date_of_work_uncertain,
+            "date_of_work_approx": date_of_work_approx,
+            "authors_as_marked": authors_as_marked,
+            "addressees_as_marked": addressees_as_marked,
+            "authors_inferred": authors_inferred,
+            "authors_uncertain": authors_uncertain,
+            "addressees_inferred": addressees_inferred,
+            "addressees_uncertain": addressees_uncertain,
+            "destination_as_marked": destination_as_marked,
+            "origin_as_marked": origin_as_marked,
+            "destination_inferred": destination_inferred,
+            "destination_uncertain": destination_uncertain,
+            "origin_inferred": origin_inferred,
+            "origin_uncertain": origin_uncertain,
+            "abstract": abstract,
+            "keywords": keywords,
+            "work_is_translation": work_is_translation,
+            "incipit": incipit,
+            "explicit": explicit,
+            "ps": ps,
+            "original_catalogue": original_catalogue,
+            "accession_code": accession_code,
+            "work_to_be_deleted": work_to_be_deleted,
+            "editors_notes": editors_notes,
+            "edit_status": edit_status,
+            "relevant_to_cofk": relevant_to_cofk,
+            "creation_user": self.user,
+            "change_user": self.user
+        }
 
-        command = self.cursor.mogrify(command, (
-            work_id, iwork_id, description, date_of_work_as_marked, original_calendar,
-            date_of_work_std, date_of_work_std_gregorian,
-            date_of_work_std_year, date_of_work_std_month, date_of_work_std_day,
-            date_of_work2_std_year, date_of_work2_std_month, date_of_work2_std_day,
-            date_of_work_std_is_range, date_of_work_inferred, date_of_work_uncertain,
-            date_of_work_approx, authors_as_marked, addressees_as_marked,
-            authors_inferred, authors_uncertain, addressees_inferred, addressees_uncertain,
-            destination_as_marked, origin_as_marked, destination_inferred, destination_uncertain,
-            origin_inferred, origin_uncertain, abstract, keywords, work_is_translation,
-            incipit, explicit, ps, original_catalogue, accession_code, work_to_be_deleted,
-            editors_notes, edit_status, relevant_to_cofk, self.user, self.user
-        ))
-
-        self._print_command("CREATE work", command)
+        table = self._get_table("cofk_union_work")
+        stmt = insert(table).values(**values)
+        self._print_command("CREATE work", stmt)
         self._audit_insert("work")
+        self.connection.execute(stmt)
 
-        self.cursor.execute(command)
         return work_id
 
     # ==================== CREATE Person ====================
@@ -1192,55 +1076,68 @@ class DatabaseTweaker:
             gender = ''
 
         # Get next available ID
-        self.cursor.execute("SELECT nextval('cofk_union_person_iperson_id_seq'::regclass)")
-        iperson_id = self.cursor.fetchone()[0]
+        result = self.connection.execute(text("SELECT nextval('cofk_union_person_iperson_id_seq'::regclass)"))
+        iperson_id = result.fetchone()[0]
         person_id = f"cofk_union_person-iperson_id:{iperson_id:06d}"
 
-        command = """INSERT INTO cofk_union_person (
-            person_id, iperson_id, foaf_name, skos_altlabel, skos_hiddenlabel, person_aliases,
-            date_of_birth_year, date_of_birth_month, date_of_birth_day, date_of_birth,
-            date_of_birth_inferred, date_of_birth_uncertain, date_of_birth_approx,
-            date_of_birth_calendar, date_of_birth_is_range,
-            date_of_birth2_year, date_of_birth2_month, date_of_birth2_day,
-            date_of_death_year, date_of_death_month, date_of_death_day, date_of_death,
-            date_of_death_inferred, date_of_death_uncertain, date_of_death_approx,
-            date_of_death_calendar, date_of_death_is_range,
-            date_of_death2_year, date_of_death2_month, date_of_death2_day,
-            gender, is_organisation, organisation_type,
-            flourished_year, flourished_month, flourished_day, flourished,
-            flourished2_year, flourished2_month, flourished2_day,
-            flourished_is_range, flourished_calendar,
-            flourished_inferred, flourished_uncertain, flourished_approx,
-            editors_notes, further_reading, creation_user, change_user
-        ) VALUES (
-            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-        ) RETURNING person_id"""
+        values = {
+            "person_id": person_id,
+            "iperson_id": iperson_id,
+            "foaf_name": primary_name,
+            "skos_altlabel": synonyms,
+            "skos_hiddenlabel": skos_hiddenlabel,
+            "person_aliases": aliases,
+            "date_of_birth_year": birth_year,
+            "date_of_birth_month": birth_month,
+            "date_of_birth_day": birth_day,
+            "date_of_birth": date_of_birth,
+            "date_of_birth_inferred": birth_inferred,
+            "date_of_birth_uncertain": birth_uncertain,
+            "date_of_birth_approx": birth_approx,
+            "date_of_birth_calendar": birth_calendar,
+            "date_of_birth_is_range": birth_is_range,
+            "date_of_birth2_year": birth2_year,
+            "date_of_birth2_month": birth2_month,
+            "date_of_birth2_day": birth2_day,
+            "date_of_death_year": death_year,
+            "date_of_death_month": death_month,
+            "date_of_death_day": death_day,
+            "date_of_death": date_of_death,
+            "date_of_death_inferred": death_inferred,
+            "date_of_death_uncertain": death_uncertain,
+            "date_of_death_approx": death_approx,
+            "date_of_death_calendar": death_calendar,
+            "date_of_death_is_range": death_is_range,
+            "date_of_death2_year": death2_year,
+            "date_of_death2_month": death2_month,
+            "date_of_death2_day": death2_day,
+            "gender": gender,
+            "is_organisation": is_org,
+            "organisation_type": org_type,
+            "flourished_year": flourished_year,
+            "flourished_month": flourished_month,
+            "flourished_day": flourished_day,
+            "flourished": flourished,
+            "flourished2_year": flourished2_year,
+            "flourished2_month": flourished2_month,
+            "flourished2_day": flourished2_day,
+            "flourished_is_range": flourished_is_range,
+            "flourished_calendar": flourished_calendar,
+            "flourished_inferred": flourished_inferred,
+            "flourished_uncertain": flourished_uncertain,
+            "flourished_approx": flourished_approx,
+            "editors_notes": editors_notes,
+            "further_reading": further_reading,
+            "creation_user": self.user,
+            "change_user": self.user
+        }
 
-        command = self.cursor.mogrify(command, (
-            person_id, iperson_id, primary_name, synonyms, skos_hiddenlabel, aliases,
-            birth_year, birth_month, birth_day, date_of_birth,
-            birth_inferred, birth_uncertain, birth_approx,
-            birth_calendar, birth_is_range,
-            birth2_year, birth2_month, birth2_day,
-            death_year, death_month, death_day, date_of_death,
-            death_inferred, death_uncertain, death_approx,
-            death_calendar, death_is_range,
-            death2_year, death2_month, death2_day,
-            gender, is_org, org_type,
-            flourished_year, flourished_month, flourished_day, flourished,
-            flourished2_year, flourished2_month, flourished2_day,
-            flourished_is_range, flourished_calendar,
-            flourished_inferred, flourished_uncertain, flourished_approx,
-            editors_notes, further_reading, self.user, self.user
-        ))
-
-        self._print_command("INSERT person", command)
-        self._audit_insert("person")
-
-        self.cursor.execute(command)
-        return self.cursor.fetchone()[0]
+        return self._insert_returning(
+            "cofk_union_person",
+            values,
+            "person_id",
+            "person"
+        )
 
     # ==================== CREATE Location ====================
 
@@ -1258,8 +1155,6 @@ class DatabaseTweaker:
             element_6_eg_country: str = '',
             element_7_eg_empire: str = ''
     ) -> int:
-        self.check_database_connection()
-
         location_list = []
         for value in [element_1_eg_room, element_2_eg_building, element_3_eg_parish,
                       element_4_eg_city, element_5_eg_county, element_6_eg_country,
@@ -1269,26 +1164,27 @@ class DatabaseTweaker:
 
         location_name = ", ".join(location_list)
 
-        command = """INSERT INTO cofk_union_location (
-            location_name, latitude, longitude, location_synonyms,
-            element_1_eg_room, element_2_eg_building, element_3_eg_parish,
-            element_4_eg_city, element_5_eg_county, element_6_eg_country,
-            element_7_eg_empire, editors_notes, creation_user, change_user
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        RETURNING location_id"""
-
-        command = self.cursor.mogrify(command, (
-            location_name, latitude, longitude, location_synonyms,
-            element_1_eg_room, element_2_eg_building, element_3_eg_parish,
-            element_4_eg_city, element_5_eg_county, element_6_eg_country,
-            element_7_eg_empire, editors_notes, self.user, self.user
-        ))
-
-        self._print_command("INSERT location", command)
-        self._audit_insert("location")
-
-        self.cursor.execute(command)
-        return self.cursor.fetchone()[0]
+        return self._insert_returning(
+            "cofk_union_location",
+            {
+                "location_name": location_name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "location_synonyms": location_synonyms,
+                "element_1_eg_room": element_1_eg_room,
+                "element_2_eg_building": element_2_eg_building,
+                "element_3_eg_parish": element_3_eg_parish,
+                "element_4_eg_city": element_4_eg_city,
+                "element_5_eg_county": element_5_eg_county,
+                "element_6_eg_country": element_6_eg_country,
+                "element_7_eg_empire": element_7_eg_empire,
+                "editors_notes": editors_notes,
+                "creation_user": self.user,
+                "change_user": self.user
+            },
+            "location_id",
+            "location"
+        )
 
     # ==================== Language Utilities ====================
 
@@ -1297,28 +1193,27 @@ class DatabaseTweaker:
         self.check_database_connection()
 
         codes = code.split(";")
-        placeholders = ', '.join(['%s'] * len(codes))
+        table = self._get_table("iso_639_language_codes")
 
-        command = f"""SELECT language_name FROM iso_639_language_codes
-            WHERE code_639_3 IN ({placeholders})"""
+        stmt = select(table.c.language_name).where(table.c.code_639_3.in_(codes))
+        result = self.connection.execute(stmt)
 
-        command = self.cursor.mogrify(command, codes)
-        self.cursor.execute(command)
-
-        languages = [row['language_name'] for row in self.cursor]
+        languages = [row[0] for row in result]
         return ", ".join(languages)
 
     def add_language_to_work(self, work_id: str, language_code: str, notes: str = None):
         """Add a language to a work via cofk_union_language_of_work."""
         self.check_database_connection()
 
-        command = """INSERT INTO cofk_union_language_of_work (work_id, language_code, notes)
-            VALUES (%s, %s, %s)
-            ON CONFLICT (work_id, language_code) DO NOTHING"""
+        # Use text() for ON CONFLICT which is PostgreSQL-specific
+        stmt = text("""
+            INSERT INTO cofk_union_language_of_work (work_id, language_code, notes)
+            VALUES (:work_id, :language_code, :notes)
+            ON CONFLICT (work_id, language_code) DO NOTHING
+        """)
 
-        command = self.cursor.mogrify(command, (work_id, language_code, notes))
-        self._print_command("INSERT language_of_work", command)
-        self.cursor.execute(command)
+        self._print_command("INSERT language_of_work", stmt)
+        self.connection.execute(stmt, {"work_id": work_id, "language_code": language_code, "notes": notes})
         self._audit_insert("language_of_work")
 
     def add_language_to_manifestation(self, manifestation_id: str, language_code: str,
@@ -1326,14 +1221,15 @@ class DatabaseTweaker:
         """Add a language to a manifestation via cofk_union_language_of_manifestation."""
         self.check_database_connection()
 
-        command = """INSERT INTO cofk_union_language_of_manifestation
-            (manifestation_id, language_code, notes)
-            VALUES (%s, %s, %s)
-            ON CONFLICT (manifestation_id, language_code) DO NOTHING"""
+        stmt = text("""
+            INSERT INTO cofk_union_language_of_manifestation (manifestation_id, language_code, notes)
+            VALUES (:manifestation_id, :language_code, :notes)
+            ON CONFLICT (manifestation_id, language_code) DO NOTHING
+        """)
 
-        command = self.cursor.mogrify(command, (manifestation_id, language_code, notes))
-        self._print_command("INSERT language_of_manifestation", command)
-        self.cursor.execute(command)
+        self._print_command("INSERT language_of_manifestation", stmt)
+        self.connection.execute(stmt, {"manifestation_id": manifestation_id,
+                                        "language_code": language_code, "notes": notes})
         self._audit_insert("language_of_manifestation")
 
     # ==================== Utility Methods ====================
@@ -1389,6 +1285,7 @@ class DatabaseTweaker:
     # ==================== Transaction Methods ====================
 
     def commit_changes(self, commit: bool = False, quiet: bool = False):
+        """Commit or rollback changes."""
         self.check_database_connection()
 
         if commit:
@@ -1405,10 +1302,10 @@ class DatabaseTweaker:
 
     def check_database_connection(self):
         if not self.database_ok():
-            raise psycopg2.DatabaseError("Database not connected")
+            raise SQLAlchemyError("Database not connected")
 
     def database_ok(self) -> bool:
-        return bool(self.connection and self.cursor)
+        return bool(self.engine and self.connection)
 
     # ==================== Audit Methods ====================
 
@@ -1454,9 +1351,9 @@ class DatabaseTweaker:
     def _audit_insert(self, inserted: str):
         self.audit["insertions"][inserted] = self.audit["insertions"].get(inserted, 0) + 1
 
-    def _print_command(self, name: str, command):
+    def _print_command(self, name: str, stmt):
         if self.debug:
-            print(f" * {name}:", command)
+            print(f" * {name}:", stmt)
 
     # ==================== Trigger Methods ====================
 
@@ -1465,21 +1362,40 @@ class DatabaseTweaker:
         if not triggers:
             return
 
-        command = f"ALTER TABLE {table_name} "
-        command += ", ".join(f"ENABLE TRIGGER {trigger}" for trigger in triggers)
-        command += ";"
-
-        self._print_command("ENABLE Triggers", command)
-        self.cursor.execute(command)
+        for trigger in triggers:
+            stmt = text(f"ALTER TABLE {table_name} ENABLE TRIGGER {trigger}")
+            self._print_command("ENABLE Trigger", stmt)
+            self.connection.execute(stmt)
 
     def triggers_disable(self, table_name: str, triggers: List[str] = None):
         triggers = triggers or []
         if not triggers:
             return
 
-        command = f"ALTER TABLE {table_name} "
-        command += ", ".join(f"DISABLE TRIGGER {trigger}" for trigger in triggers)
-        command += ";"
+        for trigger in triggers:
+            stmt = text(f"ALTER TABLE {table_name} DISABLE TRIGGER {trigger}")
+            self._print_command("DISABLE Trigger", stmt)
+            self.connection.execute(stmt)
 
-        self._print_command("DISABLE Triggers", command)
-        self.cursor.execute(command)
+    # ==================== Raw SQL Execution ====================
+
+    def execute_raw(self, sql: str, params: Dict = None) -> List[Dict]:
+        """Execute raw SQL and return results as list of dicts."""
+        self.check_database_connection()
+        stmt = text(sql)
+        self._print_command("RAW SQL", stmt)
+        result = self.connection.execute(stmt, params or {})
+
+        try:
+            return [dict(row._mapping) for row in result]
+        except Exception:
+            return []
+
+    def execute_scalar(self, sql: str, params: Dict = None) -> Any:
+        """Execute raw SQL and return a single scalar value."""
+        self.check_database_connection()
+        stmt = text(sql)
+        self._print_command("RAW SQL", stmt)
+        result = self.connection.execute(stmt, params or {})
+        row = result.fetchone()
+        return row[0] if row else None

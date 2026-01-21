@@ -26,6 +26,7 @@ dependencies = [
     'more-itertools~=9.1',
     'psutil~=5.9',
     'XlsxWriter~=3.1',
+    'sqlalchemy~=2.0',
 
     'cllib~=0.2',
     'cllib-django~=0.0',
