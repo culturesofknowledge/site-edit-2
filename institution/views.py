@@ -2,7 +2,7 @@ import logging
 from abc import ABC
 from typing import Callable, Iterable, Type, TYPE_CHECKING
 
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db.models import Lookup
 from django.forms import ModelForm
@@ -152,6 +152,7 @@ class InstInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitFormVi
 
 
 @login_required
+@permission_required(constant.PM_CHANGE_INST)
 def full_form(request, pk):
     inst: CofkUnionInstitution = get_object_or_404(CofkUnionInstitution, pk=pk)
     inst_form = InstitutionForm(request.POST or None, instance=inst)
@@ -199,6 +200,7 @@ class InstQuickInitView(InstInitView):
 
 
 @login_required
+@permission_required(constant.PM_CHANGE_INST)
 def return_quick_init(request, pk):
     inst: CofkUnionInstitution = CofkUnionInstitution.objects.get(institution_id=pk)
     return view_serv.render_return_quick_init(
@@ -224,7 +226,8 @@ class InstImageRecrefHandler(ImageRecrefHandler):
         return models.CofkInstitutionImageMap.objects.filter(institution=parent, image=target).first()
 
 
-class InstMergeChoiceView(LoginRequiredMixin, MergeChoiceViews):
+class InstMergeChoiceView(PermissionRequiredMixin, LoginRequiredMixin, MergeChoiceViews):
+    permission_required = constant.PM_CHANGE_INST
     @staticmethod
     def get_id_field():
         return CofkUnionInstitution.institution_id
@@ -233,13 +236,15 @@ class InstMergeChoiceView(LoginRequiredMixin, MergeChoiceViews):
         return self.create_merge_choice_context_by_id_field(self.get_id_field(), merge_id_list)
 
 
-class InstMergeConfirmView(LoginRequiredMixin, MergeConfirmViews):
+class InstMergeConfirmView(PermissionRequiredMixin, LoginRequiredMixin, MergeConfirmViews):
+    permission_required = constant.PM_CHANGE_INST
     @property
     def target_model_class(self) -> Type[ModelLike]:
         return CofkUnionInstitution
 
 
-class InstMergeActionView(LoginRequiredMixin, MergeActionViews):
+class InstMergeActionView(PermissionRequiredMixin, LoginRequiredMixin, MergeActionViews):
+    permission_required = constant.PM_CHANGE_INST
 
     @staticmethod
     def get_id_field():

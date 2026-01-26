@@ -7,6 +7,8 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.db.models import Q
 from django.contrib import messages
 
+from core import constant
+from core.helper.perm_serv import class_permission_required
 from login import utils
 from .models import CofkSuggestions
 from .forms import SuggestionForm, SuggestionFilterForm
@@ -48,6 +50,7 @@ def save_with_related_info(suggestion_id, related_id):
     return
 
 # Suggest a person
+@class_permission_required(constant.PM_CHANGE_SUGGESTIONS)
 def suggestion_person(request):
     sug = CofkSuggestions()
     sug.suggestion_type = "Person"
@@ -74,6 +77,7 @@ def suggestion_person(request):
 
 
 # Suggest a place
+@class_permission_required(constant.PM_CHANGE_SUGGESTIONS)
 def suggestion_location(request):
     sug = CofkSuggestions()
     sug.suggestion_type = "Location"
@@ -96,6 +100,7 @@ def suggestion_location(request):
 
 
 # Suggest a publication
+@class_permission_required(constant.PM_CHANGE_SUGGESTIONS)
 def suggestion_publication(request):
     sug = CofkSuggestions()
     sug.suggestion_type = "Publication"
@@ -118,6 +123,7 @@ def suggestion_publication(request):
 
 
 # Suggest an institution
+@class_permission_required(constant.PM_CHANGE_SUGGESTIONS)
 def suggestion_institution(request):
     sug = CofkSuggestions()
     sug.suggestion_type = "Institution"
@@ -139,6 +145,7 @@ def suggestion_institution(request):
         return HttpResponse(f"Error: Invalid request method: {request.method}")
 
 
+@class_permission_required(constant.PM_CHANGE_SUGGESTIONS)
 def suggestion_delete(request, suggestion_id):
     # Delete just the suggestion with the given unique ID
     if request.method != 'POST': # Should be called only on a POST
@@ -152,6 +159,7 @@ def suggestion_delete(request, suggestion_id):
     return redirect("suggestions:suggestion_all")
 
 
+@class_permission_required(constant.PM_CHANGE_SUGGESTIONS)
 def suggestion_edit(request, suggestion_id):
     # Edit the suggestion with the given unique ID
     sug = CofkSuggestions.objects.get(pk=suggestion_id)
@@ -173,6 +181,7 @@ def suggestion_edit(request, suggestion_id):
         return HttpResponse(f"Error: Invalid request method: {request.method}")
 
 
+@class_permission_required(constant.PM_VIEW_SUGGESTIONS)
 def suggestion_show(request, suggestion_id):
     # Show the suggestion with the given unique ID
     if request.method != 'GET': # Should be called only on a GET
@@ -183,6 +192,7 @@ def suggestion_show(request, suggestion_id):
     return render(request, template_view, context)
 
 
+@class_permission_required(constant.PM_VIEW_SUGGESTIONS)
 def suggestion_all(request):
     # Show all the suggestions matching the requested filters
     if request.method != 'GET': # Should be called only on a GET

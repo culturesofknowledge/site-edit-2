@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from core import constant
 
 from core.helper import renderer_serv, view_serv, query_serv
 from core.helper.renderer_serv import RendererFactory
@@ -8,7 +9,8 @@ from manifestation import manif_serv
 from manifestation.models import CofkUnionManifestation
 
 
-class ManifSearchView(LoginRequiredMixin, DefaultSearchView):
+class ManifSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearchView):
+    permission_required = constant.PM_CHANGE_WORK
 
     @property
     def entity(self) -> str:

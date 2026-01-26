@@ -3,8 +3,8 @@ import re
 from collections.abc import Callable
 from typing import Iterable, Any, Type
 
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db.models import F, Q, Model
 from django.db.models.lookups import Exact, Lookup
 from django.forms import BaseForm
@@ -880,7 +880,8 @@ def to_overview_manif(manif: CofkUnionManifestation):
     return manif
 
 
-@login_required()
+@login_required
+@permission_required(constant.PM_CHANGE_WORK)
 def overview_view(request, iwork_id):
     if request.POST:
         return redirect('work:overview_form', iwork_id=iwork_id)
@@ -940,6 +941,7 @@ class WorkQuickInitView(CorrView):
 
 
 @login_required
+@permission_required(constant.PM_CHANGE_WORK)
 def return_quick_init(request, pk):
     work = CofkUnionWork.objects.get(iwork_id=pk)
     return view_serv.render_return_quick_init(

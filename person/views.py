@@ -2,7 +2,7 @@ import itertools
 import logging
 from typing import Callable, Iterable, Type, Any, NoReturn, TYPE_CHECKING
 
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db import models, transaction
 from django.db.models import F, Q, OuterRef
@@ -537,7 +537,8 @@ class PersonImageRecrefHandler(ImageRecrefHandler):
         return CofkPersonImageMap.objects.filter(person=parent, image=target).first()
 
 
-class PersonMergeChoiceView(LoginRequiredMixin, MergeChoiceViews):
+class PersonMergeChoiceView(PermissionRequiredMixin, LoginRequiredMixin, MergeChoiceViews):
+    permission_required = constant.PM_CHANGE_PERSON
 
     def to_context_list(self, merge_id_list: list[str]) -> Iterable['MergeChoiceContext']:
         return self.create_merge_choice_context_by_id_field(self.get_id_field(), merge_id_list)
@@ -547,13 +548,15 @@ class PersonMergeChoiceView(LoginRequiredMixin, MergeChoiceViews):
         return CofkUnionPerson.iperson_id
 
 
-class PersonMergeConfirmView(LoginRequiredMixin, MergeConfirmViews):
+class PersonMergeConfirmView(PermissionRequiredMixin, LoginRequiredMixin, MergeConfirmViews):
+    permission_required = constant.PM_CHANGE_PERSON
     @property
     def target_model_class(self) -> Type[ModelLike]:
         return CofkUnionPerson
 
 
-class PersonMergeActionView(LoginRequiredMixin, MergeActionViews):
+class PersonMergeActionView(PermissionRequiredMixin, LoginRequiredMixin, MergeActionViews):
+    permission_required = constant.PM_CHANGE_PERSON
     @staticmethod
     def get_id_field():
         return PersonMergeChoiceView.get_id_field()
@@ -563,7 +566,8 @@ class PersonMergeActionView(LoginRequiredMixin, MergeActionViews):
         return CofkUnionPerson
 
 
-class PersonDeleteConfirmView(LoginRequiredMixin, DeleteConfirmView):
+class PersonDeleteConfirmView(PermissionRequiredMixin, LoginRequiredMixin, DeleteConfirmView):
+    permission_required = constant.PM_CHANGE_PERSON
 
     def get_model_class(self) -> Type[ModelLike]:
         return CofkUnionPerson
