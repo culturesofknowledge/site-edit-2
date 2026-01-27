@@ -10,14 +10,6 @@
                     <a href="{{ add_entry_url }}" class="btn" target="_blank">Add +</a>
                 </div>
             {% endif %}
-
-            {% if query_fieldset_list and paginator.count %}
-                <div class="margin-left margin-top">
-                    <button id="fieldset-toggle-btn" class="search-form-btn" type="button">
-                        Toggle <span data-feather="search" aria-hidden="true"></span>
-                    </button>
-                </div>
-            {% endif %}
         </div>
     </div>
 
@@ -119,6 +111,11 @@
                     <!-- search function toolbar (e.g. download output, compact, expanded)  -->
                     <aside class="margin-bottom row">
                         <div class="col col--1of2">
+                            {% if query_fieldset_list and paginator.count %}
+                                <button id="fieldset-toggle-btn" class="search-form-btn" type="button">
+                                    Toggle <span data-feather="search" aria-hidden="true"></span>
+                                </button>
+                            {% endif %}
                             {% if merge_page_url %}
                                 <button class="search-form-btn selectable_mode_btn">
                                     Select
