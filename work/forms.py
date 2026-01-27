@@ -404,8 +404,8 @@ description_help_text = "This is in the style 'dd Mon yyyy: Author/Sender (place
 year_help_text = "Year work was created. (Use 'is blank' option in Advanced Search to find works without year.)"
 month_help_text = "Month work was created. (Use 'is blank' option to find works without month.)"
 day_help_text = "Day work was created. (Use 'is blank' option to find works without day.)"
-date_of_work_help_text = "To find works from a specified period, enter dates 'from' and 'to' as YYYY or" \
-                         " dd/mm/yyyy. Either end of the date-range may be left blank, e.g. <ul><li>From 1633'" \
+date_of_work_help_text = "To find works from a specified period, enter dates 'from' and 'to' as yyyy or" \
+                         " dd/mm/yyyy. Either end of the date-range may be left blank, e.g. <ul><li>'From 1633'" \
                          " to find works dated from 1st January 1633 onwards</li><li>'To 1634' to find works dated up" \
                          " to 31st December 1634</li></ul>"
 sender_recipient_help_text = "Enter part or all of the name of either the author/sender or the addressee/recipient " \
@@ -432,7 +432,7 @@ abstr_help_text = 'This field contains a summary of the contents of the letter.'
 keywords_help_text = 'This field contains keywords, plus a list of places and works mentioned within a work.'
 acc_help_text = 'Typically contains the name of the researcher who contributed the data.'
 del_help_text = "Yes or No. If 'Yes', the record is marked for deletion."
-id_help_text = 'The unique ID for the record within the current EMLO database.'
+id_help_text = 'The unique ID for the record within this database.'
 change_help_text = 'Username of the person who last changed the record.'
 
 work_to_be_deleted_choices = [(0, 'No'), (1, 'Yes')]
