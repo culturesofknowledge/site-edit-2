@@ -396,21 +396,20 @@ def lookup_manifestations_searchable(lookup_fn, field_name: str, value: str) -> 
         'manif_to_set__manif_from__id_number_or_shelfmark',
     ]
 
-    pre_filter_q = Q()
+    # All segments must match within the SAME manifestation for a work.
+    manif_q = Q()
     for segment in segments:
-        # Check manifestation fields
-        manif_q = Q()
+        segment_q = Q()
         for field in manif_fields:
-            manif_q |= Q(**{f'{field}__icontains': segment})
+            segment_q |= Q(**{f'{field}__icontains': segment})
 
-        # Also check document type description
-        manif_q |= Q(manifestation_type__in=CofkLookupDocumentType.objects.filter(
+        segment_q |= Q(manifestation_type__in=CofkLookupDocumentType.objects.filter(
             document_type_desc__icontains=segment
         ).values_list('document_type_code', flat=True))
 
-        pre_filter_q &= Exists(CofkUnionManifestation.objects.filter(manif_q, work_id=OuterRef('pk')))
+        manif_q &= segment_q
 
-    return pre_filter_q
+    return Exists(CofkUnionManifestation.objects.filter(manif_q, work_id=OuterRef('pk')))
 
 
 def lookup_person_searchable(lookup_fn, field_name: str, value: str, rel_types: List[str]) -> Q:
