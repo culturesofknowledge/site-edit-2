@@ -49,6 +49,9 @@ python manage.py migrate
 echo "Creating cache table"
 python manage.py createcachetable
 
+echo "add/update permissions"
+python manage.py add_groups_and_permissions
+
 # Start server
 echo "Starting server"
 

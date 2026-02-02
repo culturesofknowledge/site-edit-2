@@ -238,13 +238,13 @@ class KeysetPaginator(CachedCountPaginator):
 
 
 
-def send_email_file_by_url(file_name, to_email):
+def send_email_file_by_url(file_name, to_email, base_url):
     if not to_email:
         log.error(f'unknown user email -- [{to_email}]')
         return
 
     download_path = reverse('file-download', kwargs={'file_path': file_name})
-    download_url = urljoin(settings.EXPORT_ROOT_URL, download_path)
+    download_url = urljoin(base_url, download_path)
     content = f'file can be download from this url: {download_url}'
     resp = email_utils.send_email(to_email,
                                   subject='Search result',
@@ -590,18 +590,26 @@ class BasicSearchView(ListView):
         }
         is_compact_layout = (self.request_data.get('display-style', core_constant.SEARCH_LAYOUT_TABLE)
                              == core_constant.SEARCH_LAYOUT_GRID)
-        results_renderer_factory: RendererFactory = (self.compact_search_results_renderer_factory
+        table_search_results_renderer_factory = self.table_search_results_renderer_factory
+        compact_search_results_renderer_factory = self.compact_search_results_renderer_factory
+
+        results_renderer_factory: RendererFactory = (compact_search_results_renderer_factory
                                                      if is_compact_layout
-                                                     else self.table_search_results_renderer_factory)
+                                                     else table_search_results_renderer_factory)
 
         query_fieldset_list = self.query_fieldset_list if is_compact_layout else self.expanded_query_fieldset_list
 
+        search_components = search_components_factory(default_search_components_dict |
+                                                      self.request_data.dict())
+        search_components.entity = self.entity
+        search_components.is_compact_layout = is_compact_layout
+
         context.update({'query_fieldset_list': query_fieldset_list,
-                        'search_components': search_components_factory(default_search_components_dict |
-                                                                       self.request_data.dict()),
+                        'search_components': search_components,
                         'entity': self.entity or '',
                         'title': self.entity.split(',')[1].title() if self.entity else 'Title',
-                        'results_renderer': results_renderer_factory(self.get_search_results_context(context)),
+                        'results_renderer': results_renderer_factory(self.get_search_results_context(context),
+                                                                     request=self.request),
                         'is_compact_layout': is_compact_layout,
                         'to_user_messages': getattr(self, 'to_user_messages', []),
                         'simplified_query': self.simplified_query,
@@ -629,11 +637,11 @@ class BasicSearchView(ListView):
                            file_fn: Callable[[], str],
                            *args, **kwargs):
 
-        def _fn():
+        def _fn(user_email, base_url):
             try:
-                log.debug(f'start send email[{request.user}]....')
+                log.debug(f'start send email[{user_email}]....')
                 file_name = file_fn()
-                send_email_file_by_url(file_name, request.user.email)
+                send_email_file_by_url(file_name, user_email, base_url=base_url)
             except Exception as e:
                 log.error('send email fail....')
                 log.exception(e)
@@ -642,7 +650,8 @@ class BasicSearchView(ListView):
             msg = f'Your account[{request.user}] have no email, please contact admin.'
         else:
             # create file and send email in other thread
-            Thread(target=_fn).start()
+            base_url = request.build_absolute_uri('/')
+            Thread(target=_fn, args=(request.user.email, base_url)).start()
             msg = 'The selected data is being processed and will be sent to your email soon.'
         self.add_to_user_messages(msg)
 

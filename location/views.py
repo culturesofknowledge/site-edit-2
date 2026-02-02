@@ -2,7 +2,7 @@ import itertools
 import logging
 from typing import Iterable, Union, Type, Callable
 
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db import models
 from django.db.models import Q, Lookup
@@ -88,6 +88,7 @@ class LocationQuickInitView(LocationInitView):
 
 
 @login_required
+@permission_required(constant.PM_CHANGE_LOCATION)
 def return_quick_init(request, pk):
     location: CofkUnionLocation = CofkUnionLocation.objects.get(location_id=pk)
     return view_serv.render_return_quick_init(
@@ -159,12 +160,13 @@ class LocationFFH(FullFormHandler):
 
 
 @login_required
+@permission_required(constant.PM_CHANGE_LOCATION)
 def full_form(request, location_id):
     fhandler = LocationFFH(location_id, request_data=request.POST, request=request)
 
     is_save_success = False
     if request.method == 'POST':
-        perm_serv.validate_permission_denied(request.user, constant.PM_CHANGE_LOCATION)
+        perm_serv.validate_permission_denied(request.user, [constant.PM_CHANGE_LOCATION])
 
         if fhandler.is_invalid():
             return fhandler.render_form(request)
@@ -182,7 +184,8 @@ def full_form(request, location_id):
     return fhandler.render_form(request, is_save_success=is_save_success)
 
 
-class LocationMergeChoiceView(LoginRequiredMixin, MergeChoiceViews):
+class LocationMergeChoiceView(PermissionRequiredMixin, LoginRequiredMixin, MergeChoiceViews):
+    permission_required = constant.PM_CHANGE_LOCATION
     @staticmethod
     def get_id_field():
         return CofkUnionLocation.location_id

@@ -1,6 +1,6 @@
 from typing import Callable, Iterable, Type
 
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db.models import Lookup
 from django.forms import ModelForm
@@ -18,7 +18,8 @@ from publication.publication_suggestion import PublicationSuggestion
 from suggestions import views as sug_view
 
 
-class PubSearchView(LoginRequiredMixin, DefaultSearchView):
+class PubSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearchView):
+    permission_required = constant.PM_CHANGE_PUBLICATION
 
     @property
     def query_fieldset_list(self) -> Iterable:
@@ -98,6 +99,7 @@ class PubInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitFormVie
         return self.resp_form_page(request, form)
 
 @login_required
+@permission_required(constant.PM_CHANGE_PUBLICATION)
 def full_form(request, pk):
     pub: CofkUnionPublication = get_object_or_404(CofkUnionPublication, pk=pk)
     pub_form = PublicationForm(request.POST or None, instance=pub)
@@ -111,7 +113,7 @@ def full_form(request, pk):
 
     is_save_success = False
     if request.POST:
-        perm_serv.validate_permission_denied(request.user, constant.PM_CHANGE_PUBLICATION)
+        perm_serv.validate_permission_denied(request.user, [constant.PM_CHANGE_PUBLICATION])
         if not pub_form.is_valid():
             return _render_form()
 
@@ -128,6 +130,7 @@ class PubQuickInitView(PubInitView):
 
 
 @login_required
+@permission_required(constant.PM_CHANGE_PUBLICATION)
 def return_quick_init(request, pk):
     pub = CofkUnionPublication.objects.get(pk=pk)
     return render(request, 'publication/return_quick_init_pub.html', {

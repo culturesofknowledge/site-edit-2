@@ -9,13 +9,15 @@ class SearchRecordRenderer:
     """ renderer for one record
     """
 
-    def __init__(self, record, record_name='record'):
+    def __init__(self, record, record_name='record', request=None):
         self.record = record
         self.record_name = record_name
+        self.request = request
 
     def __call__(self):
         return render_to_string(self.template_name,
-                                context={self.record_name: self.record})
+                                context={self.record_name: self.record},
+                                request=self.request)
 
     @property
     def template_name(self):
@@ -36,14 +38,15 @@ class CompactSearchResultsRenderer:
     """
     template_name = 'core/component/search_compact_layout.html'
 
-    def __init__(self, records):
+    def __init__(self, records, request=None):
         self.records = records
+        self.request = request
 
     def __call__(self):
         context = {
-            'search_results': map(self.record_renderer_factory, self.records)
+            'search_results': (self.record_renderer_factory(r, request=self.request) for r in self.records)
         }
-        return render_to_string(self.template_name, context)
+        return render_to_string(self.template_name, context, request=self.request)
 
     @property
     def record_renderer_factory(self) -> Type[SearchRecordRenderer]:
@@ -71,8 +74,9 @@ def create_compact_renderer(
 
 def create_table_search_results_renderer(template_path,
                                          record_modifier=None,
-                                         records_name='search_results', context_data=None):
-    def _renderer_by_record(records):
+                                         records_name='search_results', context_data=None,
+                                         request=None):
+    def _renderer_by_record(records, request=request):
         if record_modifier:
             records = [record_modifier(record) for record in records]
         def _render():
@@ -80,7 +84,7 @@ def create_table_search_results_renderer(template_path,
                 records_name: records
             }
             context.update(context_data or {})
-            return render_to_string(template_path, context)
+            return render_to_string(template_path, context, request=request)
 
         return _render
 

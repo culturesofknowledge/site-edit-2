@@ -5,7 +5,7 @@ from typing import Iterable
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.paginator import Paginator
 from django.db.models import Q, Lookup
 from django.shortcuts import render, redirect
@@ -254,7 +254,8 @@ def lookup_fn_issues(value):
     return query
 
 
-class ColWorkSearchView(LoginRequiredMixin, DefaultSearchView):
+class ColWorkSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearchView):
+    permission_required = constant.PM_CHANGE_COLLECTWORK
 
     @property
     def query_fieldset_list(self) -> Iterable:

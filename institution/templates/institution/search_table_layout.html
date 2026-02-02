@@ -1,3 +1,5 @@
+{% load cl_filters %}
+<div class="results-scroll" role="region" aria-label="Search results">
 <table id="results_table">
     <thead>
     <tr></tr>
@@ -23,11 +25,11 @@
                 {{ r.institution_name }}
             </td>
             <td>
-                {% include 'core/component/search_table_layout/link_record.html' with id=r.institution_id view='institution:full_form' %}
+                {% include 'core/component/search_table_layout/link_record.html' with id=r.institution_id view='institution:full_form' edit_perm=constant.PM_CHANGE_INST %}
             </td>
             <td>
                 {% if r.institution_synonyms %}
-                {{ r.institution_synonyms }}
+                {{ r.institution_synonyms|bulleted }}
                 {% endif %}
             </td>
             <td>
@@ -65,3 +67,4 @@
     </tbody>
 
 </table>
+</div>

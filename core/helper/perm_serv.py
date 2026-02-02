@@ -45,6 +45,9 @@ def class_permission_required(perms: str | list[str]):
 
 
 def validate_permission_denied(user: CofkUser, perms: str | list[str]):
+    if isinstance(perms, str):
+        perms = [perms]
+
     if perms is not None and not user.has_perms(perms):
         raise PermissionDenied()
 

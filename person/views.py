@@ -2,7 +2,7 @@ import itertools
 import logging
 from typing import Callable, Iterable, Type, Any, NoReturn, TYPE_CHECKING
 
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db import models, transaction
 from django.db.models import F, Q, OuterRef
@@ -253,7 +253,7 @@ def full_form(request, iperson_id):
     # handle form submit
     is_save_success = False
     if request.POST:
-        perm_serv.validate_permission_denied(request.user, constant.PM_CHANGE_PERSON)
+        perm_serv.validate_permission_denied(request.user, [constant.PM_CHANGE_PERSON])
 
         # ----- validate
         if fhandler.is_invalid():
@@ -305,12 +305,6 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
     def search_field_fn_maps(self) -> dict[str, Lookup]:
         return {'gender': lambda f, v: Exact(F(f), '' if v == 'U' else v),
                 'person_or_group': lambda _, v: Exact(F('is_organisation'), 'Y' if v == 'G' else ''),
-                'birth_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_birth_year'), v),
-                'birth_year_to': lambda _, v: LessThanOrEqual(F('date_of_birth_year'), v),
-                'death_year_from': lambda _, v: GreaterThanOrEqual(F('date_of_death_year'), v),
-                'death_year_to': lambda _, v: LessThanOrEqual(F('date_of_death_year'), v),
-                'flourished_year_from': lambda _, v: GreaterThanOrEqual(F('flourished_year'), v),
-                'flourished_year_to': lambda _, v: LessThanOrEqual(F('flourished2_year'), v),
                 } | query_serv.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
                                                        'change_timestamp')
 
@@ -324,7 +318,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             ('flourished', 'Flourished',),
             ('gender', 'Gender',),
             ('is_organisation', 'Person or group',),
-            ('organisation_type', 'Organisation type',),
+            ('organisation_type', 'Organization type',),
             ('sent', 'Sent',),
             ('recd', 'Rec\'d',),
             ('all_works', 'Sent or Rec\'d',),
@@ -341,6 +335,16 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
     @property
     def search_field_combines(self) -> dict[str: list[str]]:
         return {
+            # Map the UI field to individual fields so matches occur within a single
+            # source field only, avoiding cross-boundary false positives.
+            # This fixes cases where the end of the primary name and the start of a
+            # role/synonym could be matched together by a single substring.
+            'names_and_titles': [
+                'foaf_name',       # primary display name
+                'skos_altlabel',   # synonyms / alternative names
+                'person_aliases',  # titles/roles free text
+                'rolenames',       # aggregated role category descriptions (annotation)
+            ],
             'roles': ['roles__role_category_desc'],
             'images': ['images__image_filename'],
             'organisation_type': ['organisation_type__org_type_desc'],
@@ -394,6 +398,26 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
     def get_queryset_by_request_data(self, request_data, sort_by=None):
         queries = query_serv.create_queries_by_field_fn_maps(request_data, self.search_field_fn_maps)
+
+        # Apply corrected overlap logic for birth and death year filters (moved to service)
+        birth_q = query_serv.build_year_overlap_q_from_request(
+            'date_of_birth', 'birth_year_from', 'birth_year_to', request_data
+        )
+        if birth_q is not None:
+            queries.append(birth_q)
+
+        death_q = query_serv.build_year_overlap_q_from_request(
+            'date_of_death', 'death_year_from', 'death_year_to', request_data
+        )
+        if death_q is not None:
+            queries.append(death_q)
+
+        # Apply same overlap logic for flourished year filters
+        flourished_q = query_serv.build_year_overlap_q_from_request(
+            'flourished', 'flourished_year_from', 'flourished_year_to', request_data
+        )
+        if flourished_q is not None:
+            queries.append(flourished_q)
 
         search_field_fn_maps = {
             'other_details': lookup_other_details,
@@ -513,7 +537,8 @@ class PersonImageRecrefHandler(ImageRecrefHandler):
         return CofkPersonImageMap.objects.filter(person=parent, image=target).first()
 
 
-class PersonMergeChoiceView(LoginRequiredMixin, MergeChoiceViews):
+class PersonMergeChoiceView(PermissionRequiredMixin, LoginRequiredMixin, MergeChoiceViews):
+    permission_required = constant.PM_CHANGE_PERSON
 
     def to_context_list(self, merge_id_list: list[str]) -> Iterable['MergeChoiceContext']:
         return self.create_merge_choice_context_by_id_field(self.get_id_field(), merge_id_list)
@@ -523,13 +548,15 @@ class PersonMergeChoiceView(LoginRequiredMixin, MergeChoiceViews):
         return CofkUnionPerson.iperson_id
 
 
-class PersonMergeConfirmView(LoginRequiredMixin, MergeConfirmViews):
+class PersonMergeConfirmView(PermissionRequiredMixin, LoginRequiredMixin, MergeConfirmViews):
+    permission_required = constant.PM_CHANGE_PERSON
     @property
     def target_model_class(self) -> Type[ModelLike]:
         return CofkUnionPerson
 
 
-class PersonMergeActionView(LoginRequiredMixin, MergeActionViews):
+class PersonMergeActionView(PermissionRequiredMixin, LoginRequiredMixin, MergeActionViews):
+    permission_required = constant.PM_CHANGE_PERSON
     @staticmethod
     def get_id_field():
         return PersonMergeChoiceView.get_id_field()
@@ -539,7 +566,8 @@ class PersonMergeActionView(LoginRequiredMixin, MergeActionViews):
         return CofkUnionPerson
 
 
-class PersonDeleteConfirmView(LoginRequiredMixin, DeleteConfirmView):
+class PersonDeleteConfirmView(PermissionRequiredMixin, LoginRequiredMixin, DeleteConfirmView):
+    permission_required = constant.PM_CHANGE_PERSON
 
     def get_model_class(self) -> Type[ModelLike]:
         return CofkUnionPerson

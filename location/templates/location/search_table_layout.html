@@ -1,3 +1,4 @@
+<div class="results-scroll" role="region" aria-label="Search results">
 <table id="results_table">
     <thead>
     <tr></tr>
@@ -32,7 +33,7 @@
                 {{ r.display_location|linebreaksbr }}
             </td>
             <td>
-                {% include 'core/component/search_table_layout/link_record.html' with id=r.location_id view='location:full_form' %}
+                {% include 'core/component/search_table_layout/link_record.html' with id=r.location_id view='location:full_form' edit_perm=constant.PM_CHANGE_LOCATION %}
             </td>
             <td class="text-heavy">
                 {% if r.editors_notes %}
@@ -95,3 +96,4 @@
     </tbody>
 
 </table>
+</div>

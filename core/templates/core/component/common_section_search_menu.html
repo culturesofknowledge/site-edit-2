@@ -7,6 +7,8 @@
         {% include "core/component/common_section_search_menu_item.html" with url_name='person:search' section_name='People' %}
         {% include "core/component/common_section_search_menu_item.html" with url_name='location:search' section_name='Locations' %}
         {% include "core/component/common_section_search_menu_item.html" with url_name='institution:search' section_name='Repositories' %}
+        {%  if constant.PM_CHANGE_PUBLICATION in perms %}
         {% include "core/component/common_section_search_menu_item.html" with url_name='publication:search' section_name='Publications' %}
+        {% endif %}
     </ul>
 </li>

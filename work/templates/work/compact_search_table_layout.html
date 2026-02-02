@@ -5,6 +5,7 @@
 
 </script>
 
+<div class="results-scroll" role="region" aria-label="Search results">
 <table id="results_table">
     <thead>
     <tr></tr>
@@ -26,10 +27,12 @@
 
             <td>
                 {% include 'work/component/moreinfo.html' with work=r %}
-                {{ r.description }}
+                <div class="text-wrap-wrapper">
+                {{ r.description|break_ambiguous }}
+                </div>
             </td>
             <td>
-                {% include 'core/component/search_table_layout/link_record.html' with id=r.iwork_id view='work:full_form' %}
+                {% include 'core/component/search_table_layout/link_record.html' with id=r.iwork_id view='work:full_form' edit_perm=constant.PM_CHANGE_WORK %}
             </td>
             <td>
                 {{ r.date_for_ordering }}
@@ -68,3 +71,4 @@
     </tbody>
 
 </table>
+</div>

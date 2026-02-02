@@ -1,7 +1,7 @@
 from typing import Iterable
 
 from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.http import Http404
 from django.shortcuts import render, redirect
 from django.urls import reverse
@@ -45,7 +45,7 @@ def full_form(request, pk=None):
 
     is_save_success = False
     if request.POST:
-        perm_serv.validate_permission_denied(request.user, constant.PM_CHANGE_USER)
+        perm_serv.validate_permission_denied(request.user, [constant.PM_CHANGE_USER])
 
         if view_serv.any_invalid_with_log([
             form,
@@ -62,7 +62,8 @@ def full_form(request, pk=None):
     return _render_form()
 
 
-class UserSearchView(LoginRequiredMixin, DefaultSearchView):
+class UserSearchView(PermissionRequiredMixin, LoginRequiredMixin,  DefaultSearchView):
+    permission_required = constant.PM_CHANGE_USER
 
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:

@@ -3,6 +3,7 @@ import re
 from django import template
 from django.core.paginator import Page
 from django.utils.safestring import mark_safe
+from django.utils.html import escape
 
 from core.constant import ENTITIES
 
@@ -20,7 +21,7 @@ def is_general_true(value):
 
 
 @register.filter
-def get_elided_page_range(page: Page, on_each_side=4, on_ends=4):
+def get_elided_page_range(page: Page, on_each_side=2, on_ends=2):
     return page.paginator.get_elided_page_range(number=page.number, on_each_side=on_each_side, on_ends=on_ends)
 
 
@@ -80,4 +81,52 @@ def can_show_for_perm(perm, perms):
 @register.filter
 def render_display_link(value):
     value = re.sub(r'__@_\[(.+?)\](.+?)_@__', r'<a href="\1" target="_blank">\2</a>', value)
+    return mark_safe(value)
+
+
+@register.filter
+def bulleted(value):
+    """Render a string (or list/tuple) as an HTML bullet-pointed list.
+
+    - If value is a string, it will be split on newlines and semicolons.
+    - Empty items are ignored.
+    - Output is marked safe as it is escaped per item.
+    """
+    if not value:
+        return ''
+
+    if isinstance(value, (list, tuple)):
+        items = [str(v) for v in value]
+    else:
+        items = re.split(r'[;\r\n]+', str(value))
+
+    items = [i.strip() for i in items if i and i.strip()]
+    if not items:
+        return ''
+
+    lis = ''.join(f'<li>{escape(i)}</li>' for i in items)
+    return mark_safe(f'<ul class="bullet-list">{lis}</ul>')
+
+
+@register.filter
+def break_ambiguous(value):
+    """
+    Inserts a <wbr> tag after '/', ',', '.', '=' and '&' characters to
+    provide potential break points for long URLs or strings in narrow columns.
+    """
+    if not isinstance(value, str):
+        return value
+
+    # We escape first to be safe, then replace.
+    # We use <wbr> (Word Break Opportunity) instead of Unicode zero-width space
+    # \u200b because \u200b can be treated as an invalid character when
+    # copying URLs or when browsers interpret them. <wbr> is purely visual.
+    value = escape(str(value))
+    for char in ['/', ',', '.', '=']:
+        value = value.replace(char, char + '<wbr>')
+    
+    # We must replace '&amp;' which was produced by escape() 
+    # if we want to allow breaks after ampersands in the original text.
+    value = value.replace('&amp;', '&amp;<wbr>')
+    
     return mark_safe(value)

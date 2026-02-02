@@ -1,4 +1,6 @@
+from django.contrib import messages
 from django.http import FileResponse
+from django.shortcuts import redirect
 
 from core.helper import media_serv
 from login.views import dashboard
@@ -17,3 +19,8 @@ def download_file(request, file_path):
     response['Content-Type'] = 'application/force-download'
     response['Content-Disposition'] = f'attachment; filename={real_file_path.name}'
     return response
+
+
+def permission_denied_to_dashboard(request, exception=None):
+    messages.error(request, 'You do not have permission to access the requested page.')
+    return redirect('login:dashboard')

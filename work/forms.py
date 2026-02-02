@@ -107,6 +107,53 @@ class DatesForm(forms.ModelForm):
             'original_calendar',
         )
 
+    def __init__(self, *args, **kwargs):
+        """
+        Align the split year/month/day fields with the normalized
+        'Dates for ordering (original calendar)' when displaying the form.
+
+        Scenario: Some historical records have inconsistent values between
+        the split fields (date_of_work_std_year/month/day) and the combined
+        string field (date_of_work_std). For read (GET) views, prefer the
+        authoritative combined string to populate the split fields so that
+        users see consistent values.
+        """
+        super().__init__(*args, **kwargs)
+
+        # Only adjust on unbound forms (GET). Do not override user input.
+        if self.is_bound:
+            return
+
+        instance: CofkUnionWork | None = getattr(self, 'instance', None)
+        std = getattr(instance, 'date_of_work_std', None) if instance else None
+        if std and std != DEFAULT_EMPTY_DATE_STR:
+            try:
+                # Expecting YYYY-MM-DD
+                y_str, m_str, d_str = std.split('-')[:3]
+                y = int(y_str)
+                m = int(m_str)
+                d = int(d_str)
+            except Exception:
+                # If unexpected format, do nothing.
+                return
+
+            # Populate the initial values for the split fields from the
+            # combined string so the edit form reflects the ordering date,
+            # but ONLY if the split fields are currently empty.
+            if self.initial.get('date_of_work_std_year') is None:
+                self.initial['date_of_work_std_year'] = y
+            if self.initial.get('date_of_work_std_month') is None:
+                self.initial['date_of_work_std_month'] = m
+            if self.initial.get('date_of_work_std_day') is None:
+                self.initial['date_of_work_std_day'] = d
+
+            if self.initial.get('date_of_work2_std_year') is None:
+                self.initial['date_of_work2_std_year'] = y
+            if self.initial.get('date_of_work2_std_month') is None:
+                self.initial['date_of_work2_std_month'] = m
+            if self.initial.get('date_of_work2_std_day') is None:
+                self.initial['date_of_work2_std_day'] = d
+
 
 class PlacesForm(forms.ModelForm):
     origin_as_marked = CharField(required=False)
@@ -357,12 +404,12 @@ description_help_text = "This is in the style 'dd Mon yyyy: Author/Sender (place
 year_help_text = "Year work was created. (Use 'is blank' option in Advanced Search to find works without year.)"
 month_help_text = "Month work was created. (Use 'is blank' option to find works without month.)"
 day_help_text = "Day work was created. (Use 'is blank' option to find works without day.)"
-date_of_work_help_text = "To find works from a specified period, enter dates 'from' and 'to' as YYYY or" \
-                         " dd/mm/yyyy. Either end of the date-range may be left blank, e.g. <ul><li>From 1633'" \
+date_of_work_help_text = "To find works from a specified period, enter dates 'from' and 'to' as yyyy or" \
+                         " dd/mm/yyyy. Either end of the date-range may be left blank, e.g. <ul><li>'From 1633'" \
                          " to find works dated from 1st January 1633 onwards</li><li>'To 1634' to find works dated up" \
                          " to 31st December 1634</li></ul>"
-sender_recipient_help_text = "Enter part or all of the name of either the author/sender or the" \
-                             " addressee to find all letters either to or from a particular person."
+sender_recipient_help_text = "Enter part or all of the name of either the author/sender or the addressee/recipient " \
+                              "to find all letters either to or from a particular person."
 origin_destination_help_text = "The place to or from which a letter was sent, in standard modern format."
 places_from_searchable = 'The place from which a letter was sent, in standard modern format.'
 places_to_searchable = 'The place to which a letter was sent, in standard modern format.'
@@ -385,7 +432,7 @@ abstr_help_text = 'This field contains a summary of the contents of the letter.'
 keywords_help_text = 'This field contains keywords, plus a list of places and works mentioned within a work.'
 acc_help_text = 'Typically contains the name of the researcher who contributed the data.'
 del_help_text = "Yes or No. If 'Yes', the record is marked for deletion."
-id_help_text = 'The unique ID for the record within the current EMLO database.'
+id_help_text = 'The unique ID for the record within this database.'
 change_help_text = 'Username of the person who last changed the record.'
 
 work_to_be_deleted_choices = [(0, 'No'), (1, 'Yes')]
@@ -465,7 +512,7 @@ class CompactSearchFieldset(BasicSearchFieldset):
     addressees_searchable = SearchCharField(label=field_label_map['work']['addressees_searchable'])
     addressees_searchable_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
-    # Notes on addressees/recipients (beneath Addressee/Recipient)
+    # Notes on addressees/recipients (beneath Addressee/recipient)
     notes_on_addressees = SearchCharField(label=field_label_map['work']['notes_on_addressees'])
     notes_on_addressees_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 

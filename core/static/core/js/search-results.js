@@ -151,7 +151,7 @@ $('.searchcontrol').each((i, searchcontrol) => {
         // Every time a search control is changed, that change is persisted
         let element_name = $(e.target).attr('name');
         localStorage.setItem(`${entity}_${element_name}`, $(e.target).val());
-        //submit_page();
+        submit_page();
 
     });
 
@@ -200,7 +200,16 @@ function setup_fieldset_toggle() {
         $('#query-fieldset').toggle();
         $('#query-result').toggleClass('col--3of4');
         localStorage.setItem('fieldset-toggle', $('#query-fieldset').is(':visible'));
+        if ($('#query-fieldset').is(':visible')) {
+            $('footer').show();
+        } else {
+            $('footer').hide();
+        }
     });
+
+    if (localStorage.getItem('fieldset-toggle') === 'false') {
+        $('footer').hide();
+    }
 }
 
 function setup_advanced_search_toggle() {

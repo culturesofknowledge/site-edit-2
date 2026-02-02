@@ -3,8 +3,8 @@ import re
 from collections.abc import Callable
 from typing import Iterable, Any, Type
 
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db.models import F, Q, Model
 from django.db.models.lookups import Exact, Lookup
 from django.forms import BaseForm
@@ -880,7 +880,8 @@ def to_overview_manif(manif: CofkUnionManifestation):
     return manif
 
 
-@login_required()
+@login_required
+@permission_required(constant.PM_CHANGE_WORK)
 def overview_view(request, iwork_id):
     if request.POST:
         return redirect('work:overview_form', iwork_id=iwork_id)
@@ -940,6 +941,7 @@ class WorkQuickInitView(CorrView):
 
 
 @login_required
+@permission_required(constant.PM_CHANGE_WORK)
 def return_quick_init(request, pk):
     work = CofkUnionWork.objects.get(iwork_id=pk)
     return view_serv.render_return_quick_init(
@@ -973,7 +975,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             ('creators_searchable', 'Author/sender',),
             ('places_from_searchable', 'Origin (standardized)',),
             ('origin_as_marked', 'Origin as marked',),
-            ('addressees_searchable', 'Addressee/Recipient',),
+            ('addressees_searchable', 'Addressee/recipient',),
             ('places_to_searchable', 'Destination (standardized)',),
             ('destination_as_marked', 'Destination as marked',),
             # ('flags', 'Flags',),
@@ -981,7 +983,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             ('language_of_work', 'Language of work',),
             ('original_catalogue', 'Original catalogue',),
             ('accession_code', 'Source of record',),
-            ('work_to_be_deleted', 'Record to be deleted',),
+            ('work_to_be_deleted', 'Work to be deleted',),
             ('change_timestamp', 'Last edit',),
             ('change_user', 'Last edited by',),
             # ('related_resources', 'Related resources',),
@@ -1052,11 +1054,22 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                 search_fields_fn_maps={
                     'notes_on_authors': create_lookup_fn_by_comment([REL_TYPE_COMMENT_AUTHOR]),
                     'notes_on_addressees': create_lookup_fn_by_comment([REL_TYPE_COMMENT_ADDRESSEE]),
-                    'related_resources': create_lookup_fn_by_resource([REL_TYPE_IS_RELATED_TO]),
+                    # Related resources search in Works must only target the resource title/brief description
+                    # and exclude 'Further details of resource'. Therefore, search only on 'resource_name'.
+                    'related_resources': create_recref_lookup_fn([REL_TYPE_IS_RELATED_TO],
+                                                                 'cofkworkresourcemap__resource',
+                                                                 ['resource_name']),
                     'general_notes': create_lookup_fn_by_comment([REL_TYPE_COMMENT_REFERS_TO]),
                     'flags': lookup_fn_flags,
                     # Support combined search such as "Draft%Royal Society" on manifestations summary
                     'manifestations_searchable': work_serv.lookup_manifestations_searchable,
+                    'creators_searchable': lambda f, n, v: work_serv.lookup_person_searchable(f, n, v, [REL_TYPE_CREATED]),
+                    'addressees_searchable': lambda f, n, v: work_serv.lookup_person_searchable(f, n, v, [REL_TYPE_WAS_ADDRESSED_TO]),
+                    'mentioned_searchable': lambda f, n, v: work_serv.lookup_person_searchable(f, n, v, [REL_TYPE_MENTION]),
+                    'sender_or_recipient': lambda f, n, v: work_serv.lookup_person_searchable(f, n, v, [REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO]),
+                    'places_from_searchable': lambda f, n, v: work_serv.lookup_location_searchable(f, n, v, [REL_TYPE_WAS_SENT_FROM]),
+                    'places_to_searchable': lambda f, n, v: work_serv.lookup_location_searchable(f, n, v, [REL_TYPE_WAS_SENT_TO]),
+                    'origin_or_destination': lambda f, n, v: work_serv.lookup_location_searchable(f, n, v, [REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
                 })
         )
 
@@ -1070,7 +1083,6 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             'places_to_searchable',
             'origin_or_destination',
             'manifestations_searchable',
-            'is_owner_of_catalogue',
         }
 
         annotate_keys_needed: set[str] = set()
@@ -1254,7 +1266,7 @@ class WorkCsvHeaderValues(HeaderValues):
             "General notes",
             "Original catalogue",
             "Source of record",
-            "Record to be deleted",
+            "Work to be deleted",
             "Work ID",
             "Date/time of last change",
             "Changed by user",
