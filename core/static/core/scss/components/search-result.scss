@@ -178,3 +178,13 @@ td.text-heavy {
   overscroll-behavior: contain;  /* prevent scroll chaining to the page */
   border: 1px solid $light-grey;
 }
+
+.alt_names_container {
+  border-top: 1px solid $midnight-15;
+  margin-top: $space-xs;
+  padding-top: $space-xs;
+}
+
+.alt_names_title {
+  font-weight: bold;
+}
