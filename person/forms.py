@@ -292,7 +292,9 @@ class GeneralSearchFieldset(BasicSearchFieldset):
     mentioned_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
     roles = SearchCharField(label=field_label_map['person']['roles'],
-                            help_text='Also known as professional categories.')
+                            help_text="Professional categories can be problematic for early modern people. "
+                                      "To ensure a full search for e.g. 'antiquary', add the term "
+                                      "simultaneously into the 'Names and titles/roles' field above.")
     roles_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     editors_notes = SearchCharField(label=field_label_map['person']['editors_notes'],
