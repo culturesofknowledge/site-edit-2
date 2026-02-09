@@ -53,24 +53,26 @@ class CofkSuggestions(models.Model):
     @property
     def parsed_suggestion(self):
         keys = self.fields()
-        key1 = ""
-        key2 = ""
-        text_key = ""
         suggestion_hash = {}
+        current_key = None
+        text_value = ""
+
         for line in self.suggestion_suggestion.split("\n"):
-            keyword = False
+            found_key = False
             for key in keys:
                 if line.startswith(key):
-                    if key1 == "":
-                        key1 = key
-                    else:
-                        key1 = key2
-                    key2 = key
-                    suggestion_hash[key1] = text_key.strip()
-                    text_key = line.split(key)[1].strip().lstrip(":")
-                    keyword = True
+                    if current_key:
+                        suggestion_hash[current_key] = text_value.strip()
+
+                    current_key = key
+                    text_value = line.split(key)[1].strip().lstrip(":")
+                    found_key = True
                     break
-            if not keyword:
-                text_key = text_key + " " + line.strip()
-        suggestion_hash[key2] = text_key.strip()
+
+            if not found_key and current_key:
+                text_value += "\n" + line.strip()
+
+        if current_key:
+            suggestion_hash[current_key] = text_value.strip()
+
         return suggestion_hash

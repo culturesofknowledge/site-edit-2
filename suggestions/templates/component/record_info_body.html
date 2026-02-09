@@ -20,10 +20,11 @@
 </tr>
 <tr>
     <th>Content</th>
-    <td><dl>
+    <td><dl class="suggestion-details">
         {% for k,v in record.parsed_suggestion.items %}
-            {% if v != ' ' %}
-              <dt>{{k}}</dt> <dd>{{v}}</dd>
+            {% if v %}
+              <dt>{{k}}</dt>
+              <dd>{{v|linebreaksbr}}</dd>
             {% endif %}
         {% endfor %}
     </dl></td>

@@ -616,5 +616,20 @@ h2, h3 {
   border-color: #c6d8ff;
 }
 
+.suggestion-details {
+  dt {
+    display: block;
+    margin-bottom: 0.25rem;
+    &::after {
+      content: ":";
+    }
+  }
+  dd {
+    display: block;
+    margin-left: 0;
+    margin-bottom: 1rem;
+  }
+}
+
 
 
