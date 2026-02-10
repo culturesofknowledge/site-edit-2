@@ -140,8 +140,6 @@ class DatabaseTweaker:
                f"/{parts.get('dbname', '')}")
         self.connect(url)
 
-    connect_to_postres = connect_to_postgres
-
     def close(self):
         """Close the database connection."""
         if self.connection:
@@ -818,6 +816,11 @@ class DatabaseTweaker:
             "manif_inst_map"
         )
 
+    def create_relationship_manifestation_of_work(self, manifestation_id: str,
+                                                      work_id: str):
+        """Link manifestation to work via the work_id column."""
+        self.update_manifestation(manifestation_id, {"work_id": work_id})
+
     def create_relationship_manifestation_in_repository(self, manifestation_id: str,
                                                          repository_id: int) -> int:
         return self.create_manif_inst_map(manifestation_id, repository_id, REL_TYPE_STORED_IN)
@@ -1237,6 +1240,8 @@ class DatabaseTweaker:
     @staticmethod
     def get_int_value(value, default: int = None) -> Optional[int]:
         if value is not None and value != '':
+            if isinstance(value, str) and value.upper() in ('Y', 'N'):
+                return 1 if value.upper() == 'Y' else 0
             return int(value)
         return default
 
