@@ -284,6 +284,9 @@ def build_year_overlap_q(prefix: str, a: int | None, b: int | None) -> Q | None:
     if b is not None:
         case3b &= Q(**{f'{year1}__lte': b})
 
+    if a is not None and b is not None:
+        return case1 | case3b
+
     return case1 | case2 | case3a | case3b
 
 
