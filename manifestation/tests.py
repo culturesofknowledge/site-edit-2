@@ -53,4 +53,8 @@ class ManifSearchTests(EmloSeleniumTestCase, CommonSearchTests):
 
     def test_normal(self):
         self.goto_search_page()
-        self.find_search_btn().click()
+
+    def test_search__GET(self):
+        records = self.prepare_records()
+        self.goto_search_page()
+        self.assert_search_page(num_row_show=len(records), num_total=len(records))
