@@ -9,10 +9,10 @@ from datetime import datetime
 from typing import Optional, Dict, List, Any
 
 from sqlalchemy import (
-    create_engine, MetaData, Table, select, insert, update, delete, text, func
+    create_engine, MetaData, Table, select, insert, update, delete, text
 )
 from sqlalchemy.engine import Engine, Connection
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, ResourceClosedError
 
 # Import relationship type constants from core
 from core.constant import (
@@ -41,6 +41,71 @@ from core.constant import (
     REL_TYPE_WAS_IN_LOCATION,
     REL_TYPE_DIED_AT_LOCATION,
 )
+
+
+class TweakerError(Exception):
+    """Base exception for DatabaseTweaker operations."""
+
+
+class DuplicateRelationshipError(TweakerError):
+    """Raised when creating a relationship that already exists."""
+
+
+class InvalidRelationshipTypeError(TweakerError):
+    """Raised when relationship_type is not valid for the target mapping table."""
+
+
+# Valid relationship types for each mapping table, derived from the convenience methods.
+# Tables not listed here skip validation (forward-compatible).
+VALID_RELATIONSHIP_TYPES = {
+    "cofk_work_person_map": {
+        REL_TYPE_CREATED,
+        REL_TYPE_WAS_ADDRESSED_TO,
+        REL_TYPE_MENTION,
+        REL_TYPE_SIGNED,
+        REL_TYPE_SENT,
+        REL_TYPE_INTENDED_FOR,
+    },
+    "cofk_work_location_map": {
+        REL_TYPE_WAS_SENT_TO,
+        REL_TYPE_WAS_SENT_FROM,
+        REL_TYPE_MENTION_PLACE,
+    },
+    "cofk_work_comment_map": {
+        REL_TYPE_COMMENT_REFERS_TO,
+        REL_TYPE_COMMENT_AUTHOR,
+        REL_TYPE_COMMENT_ADDRESSEE,
+        REL_TYPE_COMMENT_DATE,
+        REL_TYPE_COMMENT_ORIGIN,
+        REL_TYPE_COMMENT_DESTINATION,
+        REL_TYPE_COMMENT_ROUTE,
+        REL_TYPE_COMMENT_PERSON_MENTIONED,
+    },
+    "cofk_work_resource_map": {
+        REL_TYPE_IS_RELATED_TO,
+    },
+    "cofk_work_work_map": {
+        REL_TYPE_WORK_IS_REPLY_TO,
+        REL_TYPE_WORK_MATCHES,
+    },
+    "cofk_person_comment_map": {
+        REL_TYPE_COMMENT_REFERS_TO,
+    },
+    "cofk_person_resource_map": {
+        REL_TYPE_IS_RELATED_TO,
+    },
+    "cofk_person_location_map": {
+        REL_TYPE_WAS_BORN_IN_LOCATION,
+        REL_TYPE_WAS_IN_LOCATION,
+        REL_TYPE_DIED_AT_LOCATION,
+    },
+    "cofk_manif_comment_map": {
+        REL_TYPE_COMMENT_REFERS_TO,
+    },
+    "cofk_manif_inst_map": {
+        REL_TYPE_STORED_IN,
+    },
+}
 
 
 class DatabaseTweaker:
@@ -623,8 +688,42 @@ class DatabaseTweaker:
     # ==================== CREATE Mapping Table Entries ====================
 
     def _create_map_entry(self, table_name: str, values: Dict,
-                          relationship_type: str, audit_name: str) -> int:
-        """Generic method to create mapping table entries."""
+                          relationship_type: str, audit_name: str,
+                          skip_duplicate_check: bool = False) -> int:
+        """Generic method to create mapping table entries.
+
+        Validates relationship_type against VALID_RELATIONSHIP_TYPES and
+        checks for duplicate relationships before inserting.
+
+        Args:
+            skip_duplicate_check: If True, bypass the duplicate detection check.
+        """
+        # Validate relationship type
+        valid_types = VALID_RELATIONSHIP_TYPES.get(table_name)
+        if valid_types is not None and relationship_type not in valid_types:
+            raise InvalidRelationshipTypeError(
+                f"Invalid relationship_type '{relationship_type}' for table '{table_name}'. "
+                f"Valid types: {sorted(valid_types)}"
+            )
+
+        # Check for duplicates
+        if not skip_duplicate_check:
+            self.check_database_connection()
+            table = self._get_table(table_name)
+            stmt = select(table.c.recref_id)
+            for col, val in values.items():
+                stmt = stmt.where(table.c[col] == val)
+            stmt = stmt.where(table.c.relationship_type == relationship_type)
+
+            result = self.connection.execute(stmt)
+            existing = result.fetchone()
+            if existing:
+                raise DuplicateRelationshipError(
+                    f"Duplicate relationship in '{table_name}': a row with "
+                    f"{values} and relationship_type='{relationship_type}' "
+                    f"already exists (recref_id={existing[0]})"
+                )
+
         values["relationship_type"] = relationship_type
         values["creation_user"] = self.user
         values["change_user"] = self.user
@@ -1393,7 +1492,7 @@ class DatabaseTweaker:
 
         try:
             return [dict(row._mapping) for row in result]
-        except Exception:
+        except ResourceClosedError:
             return []
 
     def execute_scalar(self, sql: str, params: Dict = None) -> Any:
@@ -1401,6 +1500,11 @@ class DatabaseTweaker:
         self.check_database_connection()
         stmt = text(sql)
         self._print_command("RAW SQL", stmt)
-        result = self.connection.execute(stmt, params or {})
-        row = result.fetchone()
-        return row[0] if row else None
+        try:
+            result = self.connection.execute(stmt, params or {})
+            row = result.fetchone()
+            return row[0] if row else None
+        except SQLAlchemyError as e:
+            raise SQLAlchemyError(
+                f"execute_scalar failed on SQL: {sql}"
+            ) from e

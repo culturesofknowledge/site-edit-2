@@ -15,7 +15,7 @@ Usage:
     python -m tweaker --url postgresql://user:pass@host:5432/dbname --shell
 """
 
-from tweaker.tweaker import DatabaseTweaker
+from tweaker.tweaker import DatabaseTweaker, TweakerError, DuplicateRelationshipError, InvalidRelationshipTypeError
 
-__all__ = ['DatabaseTweaker']
+__all__ = ['DatabaseTweaker', 'TweakerError', 'DuplicateRelationshipError', 'InvalidRelationshipTypeError']
 __version__ = '2.1.0'  # SQLAlchemy version
