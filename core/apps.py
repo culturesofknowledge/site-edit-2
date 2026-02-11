@@ -8,17 +8,22 @@ class CoreConfig(AppConfig):
     name = 'core'
 
     def ready(self):
+        from django.db import OperationalError, ProgrammingError
         from django_q.models import Schedule
         from django.conf import settings
 
         from core.helper.exporter_serv import RUN_EXPORTER_FUNC
-        if not Schedule.objects.filter(func=RUN_EXPORTER_FUNC).count():
-            from django_q.tasks import schedule
-            schedule(
-                RUN_EXPORTER_FUNC,
-                schedule_type=getattr(settings, 'EXPORTER_SCHEDULE_TYPE', Schedule.DAILY),
-                q_options={'timeout': 24 * 60 * 60},
+        try:
+            if not Schedule.objects.filter(func=RUN_EXPORTER_FUNC).count():
+                from django_q.tasks import schedule
+                schedule(
+                    RUN_EXPORTER_FUNC,
+                    schedule_type=getattr(settings, 'EXPORTER_SCHEDULE_TYPE', Schedule.DAILY),
+                    q_options={'timeout': 24 * 60 * 60},
 
-                next_run=(datetime.datetime.now() + datetime.timedelta(days=1)).replace(hour=0, minute=0,
-                                                                                        second=0, microsecond=0),
-            )
+                    next_run=(datetime.datetime.now() + datetime.timedelta(days=1)).replace(hour=0, minute=0,
+                                                                                            second=0, microsecond=0),
+                )
+        except (OperationalError, ProgrammingError):
+            # Table doesn't exist yet - migrations haven't run
+            pass
