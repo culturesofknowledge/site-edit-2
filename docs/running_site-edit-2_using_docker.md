@@ -6,6 +6,9 @@
 git fetch
 git checkout develop
 git submodule update --init
+```
+Note: Uncomment db_old in docker/site-edit-2/docker-compose.yml if commented
+```
 docker compose -f docker/site-edit-2/docker-compose.yml build
 docker compose -f docker/site-edit-2/docker-compose.yml up db db_old web
 ```
