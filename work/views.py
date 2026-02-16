@@ -1047,9 +1047,14 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             ],
         }
 
+        # Exclude fields already handled by search_field_fn_maps to avoid
+        # treating them as direct model fields in create_queries_by_lookup_field
+        fn_map_keys = set(self.search_field_fn_maps.keys())
+        lookup_search_fields = [f for f in self.search_fields if f not in fn_map_keys]
+
         queries.extend(
             query_serv.create_queries_by_lookup_field(
-                request_data, self.search_fields,
+                request_data, lookup_search_fields,
                 search_fields_maps=search_fields_maps,
                 search_fields_fn_maps={
                     'notes_on_authors': create_lookup_fn_by_comment([REL_TYPE_COMMENT_AUTHOR]),
