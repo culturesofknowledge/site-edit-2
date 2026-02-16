@@ -256,6 +256,7 @@ def lookup_fn_issues(value):
 
 class ColWorkSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearchView):
     permission_required = constant.PM_CHANGE_COLLECTWORK
+    raise_exception = True
 
     @property
     def query_fieldset_list(self) -> Iterable:

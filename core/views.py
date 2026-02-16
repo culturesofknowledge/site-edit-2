@@ -22,5 +22,5 @@ def download_file(request, file_path):
 
 
 def permission_denied_to_dashboard(request, exception=None):
-    messages.error(request, 'You do not have permission to access the requested page.')
+    messages.error(request, 'To make this addition, please contact the supervisor editor.')
     return redirect('login:dashboard')

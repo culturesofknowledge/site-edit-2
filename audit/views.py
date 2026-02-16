@@ -21,6 +21,7 @@ log = logging.getLogger(__name__)
 
 class AuditSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearchView):
     permission_required = constant.PM_VIEW_AUDIT
+    raise_exception = True
 
     @property
     def entity(self) -> str:
