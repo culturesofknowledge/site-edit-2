@@ -26,31 +26,31 @@
 
         <label>Date of work:</label>
 
-        <div class="search-fieldset-tippy-container" data-tippy-content="Year month and day work was created. (Use 'is blank' option in Advanced Search to find works without year/month/day)">
+        <div class="search-fieldset-tippy-container" data-tippy-content="Year, month, and day work was created. (Use 'is blank' option in Advanced Search to find works without year/month/day.)">
             <span data-feather="info" aria-hidden="true"></span>
         </div>
 
         <div class="row-no-margin">
-            <div class="ymdele advanced_search">
+            <div class="col--1of4 advanced_search">
                 {{ form.date_of_work_std_year_lookup }}
             </div>
-            <div class="ymdele search_input">
+            <div class="col--4of4 search_input">
                 {{ form.date_of_work_std_year }}
             </div>
         </div>
         <div class="row-no-margin">
-            <div class="ymdele advanced_search">
+            <div class="col--1of4 advanced_search">
                 {{ form.date_of_work_std_month_lookup }}
             </div>
-            <div class="ymdele search_input">
+            <div class="col--4of4 search_input">
                 {{ form.date_of_work_std_month }}
             </div>
         </div>
         <div class="row-no-margin">
-            <div class="ymdele advanced_search">
+            <div class="col--1of4 advanced_search">
                 {{ form.date_of_work_std_day_lookup }}
             </div>
-            <div class="ymdele search_input">
+            <div class="col--4of4 search_input">
                 {{ form.date_of_work_std_day }}
             </div>
         </div>
@@ -78,7 +78,7 @@
     <!-- Origin as marked -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.origin_as_marked field_lookup=form.origin_as_marked_lookup %}
 
-    <!-- Addressee/Recipient -->
+    <!-- Addressee/recipient -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.addressees_searchable field_lookup=form.addressees_searchable_lookup %}
 
     <!-- Notes on addressees/recipients -->

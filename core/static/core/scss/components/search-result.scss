@@ -75,7 +75,8 @@ tr.odd {
 
 td.text-heavy {
     min-width: 150px;
-    word-break: break-word;
+    word-break: normal;
+    overflow-wrap: anywhere;
 }
 
 .simplified_query_container {
@@ -117,18 +118,32 @@ td.text-heavy {
   /* Keep auto layout for natural column sizing */
 }
 
+#results_table th {
+  top: 0px;
+  background-color: $light-grey;
+  border: 1px solid $mid-grey;
+}
+
 #results_table th,
 #results_table td {
   /* Provide sensible bounds across all result tables */
   min-width: 5em;   /* 80px -> 5em (scales with font size) */
-  max-width: 17.5em; /* 280px -> 17.5em */
+  max-width: 12em; /* 280px -> 17.5em */
   vertical-align: top;
 
   /* Robust text wrapping to avoid layout blowouts */
   white-space: normal;           /* allow wrapping */
-  word-break: break-word;        /* fallback for long tokens */
-  overflow-wrap: anywhere;       /* modern browsers */
+  word-break: normal;            /* reset word-break to avoid breaking normal words */
+  overflow-wrap: anywhere;       /* modern browsers, allows breaking long tokens only if necessary */
+  word-wrap: break-word;         /* traditional/Safari support, similar to overflow-wrap */
   hyphens: auto;                 /* nicer long-word breaks where supported */
+  
+  /* Safari specific fix for table-cells: sometimes they need a little help 
+     to respect wrapping when they have long unbreakable strings */
+  & > div {
+     overflow-wrap: anywhere;
+     word-wrap: break-word;
+  }
 }
 
 /* Slightly narrower utility columns where content is typically short */
@@ -142,4 +157,24 @@ td.text-heavy {
 #results_table td.display-point ul {
   margin: 0;
   padding-left: calc(.75 * 1rem);
+}
+
+/* Let heavy text cells wrap to avoid overly wide columns */
+//#results_table td.text-heavy {
+//  white-space: normal;
+//  word-break: break-word;
+//  overflow-wrap: anywhere;
+//  hyphens: auto;
+//}
+
+/* New scroll container placed above/wrapping the table. This holds the scrollbars
+   so the page itself doesn't move. The table element remains unchanged. */
+.results-scroll {
+  height: 70vh;                 /* match viewport height and adapt on resize */
+  max-height: 70vh;
+  width: 100%;
+  overflow: auto;                /* both vertical and horizontal scrolling inside */
+  -webkit-overflow-scrolling: touch; /* smooth scrolling on iOS */
+  overscroll-behavior: contain;  /* prevent scroll chaining to the page */
+  border: 1px solid $light-grey;
 }

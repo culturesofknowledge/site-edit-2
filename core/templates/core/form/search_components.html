@@ -1,25 +1,88 @@
 
 {% load static %}
-<fieldset class="margin-bottom" id="search-components">
-    <div class="search-control">
-        <label class="sc-label">Order: </label>
-        {% with choices_field=form.order %}
-            {% include "core/component/common_form_choices.html" %}
-        {% endwith %}
-    </div>
+<div class="search-components-layout">
+    <fieldset class="margin-bottom" id="search-components">
+        <div class="search-control">
+            <label class="sc-label">Order: </label>
+            {% with choices_field=form.order %}
+                {% include "core/component/common_form_choices.html" %}
+            {% endwith %}
+        </div>
 
-    <div class="search-control sc-row">
-        {{ form.sort_by.errors }}
-        {{ form.sort_by.label_tag }}
-        <span class="sc-input">{{ form.sort_by }}</span>
-    </div>
+        <div class="search-control sc-row">
+            {{ form.sort_by.errors }}
+            {{ form.sort_by.label_tag }}
+            <span class="sc-input">{{ form.sort_by }}</span>
+        </div>
 
-    <div class="search-control sc-row">
-        {{ form.num_record.errors }}
-        {{ form.num_record.label_tag }}
-        <span class="sc-input">{{ form.num_record }}</span>
-    </div>
-    <div class="col" id="hidden_columns">
-    </div>
-    {{ form.page }}
-</fieldset>
+        <div class="search-control sc-row">
+            {{ form.num_record.errors }}
+            {{ form.num_record.label_tag }}
+            <span class="sc-input">{{ form.num_record }}</span>
+        </div>
+
+        {# Only display search rendering selection for work #}
+        {% if form.entity|first in 'work' %}
+            <div class="search-control sc-row">
+                <label class="sc-label">Layout: </label>
+
+                <input type="radio" id="display-as-grid" value="grid"
+                       name="display-style"
+                       class="searchcontrol"
+                        {% if form.is_compact_layout %}
+                       checked
+                        {% endif %}
+                />
+                <label for="display-as-grid" style="width: auto; margin-right: 10px;">
+                    Compact
+                </label>
+
+                <input type="radio" id="display-as-list" value="table"
+                       name="display-style"
+                       class="searchcontrol"
+                        {% if not form.is_compact_layout %}
+                       checked
+                        {% endif %}
+                />
+                <label for="display-as-list" style="width: auto;">
+                    Expanded
+                </label>
+            </div>
+        {% endif %}
+
+        {{ form.page }}
+    </fieldset>
+
+    <fieldset class="margin-bottom" id="hidden-columns-fieldset">
+{#        <legend>Hidden columns</legend>#}
+        <p class="hidden-columns-empty-label" id="hidden-columns-empty-label">No columns are hidden</p>
+        <div class="hidden-columns-list" id="hidden_columns"></div>
+    </fieldset>
+    <script>
+        (function () {
+            function updateHiddenColumnsVisibility() {
+                var list = document.getElementById('hidden_columns');
+                var emptyLabel = document.getElementById('hidden-columns-empty-label');
+                var fieldset = document.getElementById('hidden-columns-fieldset');
+                if (!list || !emptyLabel) return;
+                var isEmpty = list.children.length === 0;
+                emptyLabel.style.display = isEmpty ? '' : 'none';
+                fieldset.style.display = isEmpty ? 'none' : '';
+            }
+
+            function initObserver() {
+                var list = document.getElementById('hidden_columns');
+                if (!list) return;
+                var observer = new MutationObserver(updateHiddenColumnsVisibility);
+                observer.observe(list, { childList: true });
+                updateHiddenColumnsVisibility();
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initObserver);
+            } else {
+                initObserver();
+            }
+        })();
+    </script>
+</div>

@@ -1,3 +1,4 @@
+<div class="results-scroll" role="region" aria-label="Search results">
 <table id="results_table">
     <thead>
     <tr></tr>
@@ -17,7 +18,7 @@
                 {{ r.publication_details }}
             </td>
             <td>
-                {% include 'core/component/search_table_layout/link_record.html' with id=r.publication_id view='publication:full_form' only %}
+                {% include 'core/component/search_table_layout/link_record.html' with id=r.publication_id view='publication:full_form' edit_perm=constant.PM_CHANGE_PUBLICATION only%}
             </td>
             <td>
                 {{ r.abbrev }}
@@ -30,3 +31,4 @@
     </tbody>
 
 </table>
+</div>

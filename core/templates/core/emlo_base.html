@@ -13,7 +13,7 @@
     <script src="{% static 'core/js/select-autosize.js' %}?v={{ constant.VERSION }}"></script>
 
     <!-- feature icon -->
-    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="{% static 'core/js/feather.min.js' %}"></script>
 
     {% block head %}
     {% endblock %}
@@ -50,8 +50,8 @@
 </script>
 
 <!-- Tooltip  -->
-<script src="https://unpkg.com/@popperjs/core@2"></script>
-<script src="https://unpkg.com/tippy.js@6"></script>
+<script src="{% static 'core/js/popper.min.js' %}"></script>
+<script src="{% static 'core/js/tippy-bundle.umd.min.js' %}"></script>
 
 <script>
 

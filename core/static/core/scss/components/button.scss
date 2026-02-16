@@ -4,10 +4,14 @@
   border-radius: $space-xxs;
   transition: 200ms all ease-in-out;
 
-  &:hover, &:focus, &:active {
+  &:hover {
     background-color: $black-15;
     border-color: $black-15;
     color: $black;
+  }
+
+  &:focus, &:active {
+    outline: none;
   }
 }
 
@@ -17,10 +21,14 @@
   border-radius: $space-xxs;
   transition: 200ms all ease-in-out;
 
-  &:hover, &:focus, &:active {
+  &:hover {
     background-color: $faint-grey;
     border-color: $black-85;
     color: $black;
+  }
+
+  &:focus, &:active {
+    outline: none;
   }
 }
 
@@ -28,9 +36,13 @@
   background-color: $midnight;
   color: $white;
 
-  &:hover, &:focus, &:active {
+  &:hover {
     background-color: $black;
     color: $white;
+  }
+
+  &:focus, &:active {
+    outline: none;
   }
 }
 

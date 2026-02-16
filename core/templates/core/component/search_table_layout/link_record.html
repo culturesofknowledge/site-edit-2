@@ -1,3 +1,5 @@
-
+{% load cl_filters %}
 {{ id }}<br/>
+{% if edit_perm in perms %}
 <button class="open-link-btn" url="{% url view id %}">Edit</button>
+{% endif %}

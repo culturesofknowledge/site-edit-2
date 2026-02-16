@@ -132,7 +132,7 @@ class PersonForm(ModelForm):
     flourished_calendar = forms.CharField(required=False,
                                           widget=forms.RadioSelect(choices=date_serv.calendar_choices, ))
 
-    organisation_type = OrgTypeField(required=False)
+    organisation_type = OrgTypeField(required=False, label=field_label_map['person']['organisation_type'])
 
     # extra field
     birth_place = LocationRecrefField(required=False)
@@ -271,7 +271,7 @@ class GeneralSearchFieldset(BasicSearchFieldset):
                                       help_text="Person for individual people; "
                                                 "Group if correspondent is an organization or group.")
 
-    organisation_type = SearchCharField()
+    organisation_type = SearchCharField(label=field_label_map['person']['organisation_type'])
     organisation_type_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     sent = SearchIntField(help_text="Number of letters from this author/sender. "

@@ -760,6 +760,9 @@ def export_all(output_dir: str = '.', skip_url_check=False):
         name_item: str | models.Model
 
         filename = name_item if isinstance(name_item, str) else name_item._meta.db_table
+        if filename.startswith('cofk_union_'):
+            filename = filename[len('cofk_union_'):]
+
         csv_path = output_dir / f'{filename}.csv'
         log.info(f'exporting to {csv_path}')
         DownloadCsvHandler(target_csv_type_factory()).create_csv_file(

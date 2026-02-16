@@ -53,3 +53,5 @@ for url_path, file_path in [
 urlpatterns += [
     path('file-download/<path:file_path>', core.views.download_file, name='file-download'),
 ]
+
+handler403 = 'core.views.permission_denied_to_dashboard'

@@ -146,7 +146,9 @@ choices_lookup_map = {
     'not_blank': cond_not(is_blank),
     'not_null': cond_not(is_null),
     'less_than': lookups.LessThan,
+    'less_than_equal': lookups.LessThanOrEqual,
     'greater_than': lookups.GreaterThan,
+    'greater_than_equal': lookups.GreaterThanOrEqual,
     None: lookups.IExact,
     '': lookups.IExact,
 }
@@ -223,6 +225,78 @@ def create_from_to_date_with_bounds(from_field_name: str, to_field_name: str,
         from_field_name: lambda _, v: GreaterThanOrEqual(F(db_field_name), start_convert_fn(v)),
         to_field_name: lambda _, v: LessThanOrEqual(F(db_field_name), end_convert_fn(v)),
     }
+
+
+def _parse_int_or_none(v) -> int | None:
+    """Best-effort parse of an integer value; returns None on blank/invalid input."""
+    try:
+        return int(v) if v is not None and str(v).strip() != '' else None
+    except (TypeError, ValueError):
+        return None
+
+
+def build_year_overlap_q(prefix: str, a: int | None, b: int | None) -> Q | None:
+    """
+    Build a Q object that matches records whose stored year interval for the given
+    prefix overlaps with the search interval [A, B].
+
+    Fields pattern for prefix 'date_of_birth':
+      - date_of_birth_year  (start)
+      - date_of_birth2_year (end)
+      - date_of_birth_is_range (0 = exact year, 1 = open-ended forward when only start present)
+
+    Search interval interpretation:
+      - A and B both provided -> [A, B]
+      - Only A provided -> [A, +inf)
+      - Only B provided -> (-inf, B]
+
+    Returns None when both A and B are None.
+    """
+    if a is None and b is None:
+        return None
+
+    year1 = f'{prefix}_year'            # start year
+    year2 = f'{prefix}2_year'           # end year
+    is_range = f'{prefix}_is_range'
+
+    # Case 1: Both start and end present on record -> [year1, year2]
+    case1 = Q(**{f'{year1}__isnull': False}) & Q(**{f'{year2}__isnull': False})
+    if b is not None:
+        case1 &= Q(**{f'{year1}__lte': b})
+    if a is not None:
+        case1 &= Q(**{f'{year2}__gte': a})
+
+    # Case 2: Only end present -> (-inf, year2]
+    case2 = Q(**{f'{year1}__isnull': True}) & Q(**{f'{year2}__isnull': False})
+    if a is not None:
+        case2 &= Q(**{f'{year2}__gte': a})
+
+    # Case 3: Only start present
+    case3_base = Q(**{f'{year1}__isnull': False}) & Q(**{f'{year2}__isnull': True})
+    # 3a: Open-ended forward (is_range==1) -> [year1, +inf)
+    case3a = case3_base & Q(**{is_range: 1})
+    if b is not None:
+        case3a &= Q(**{f'{year1}__lte': b})
+    # 3b: Exact point (is_range==0) -> [year1, year1]
+    case3b = case3_base & Q(**{is_range: 0})
+    if a is not None:
+        case3b &= Q(**{f'{year1}__gte': a})
+    if b is not None:
+        case3b &= Q(**{f'{year1}__lte': b})
+
+    return case1 | case2 | case3a | case3b
+
+
+def build_year_overlap_q_from_request(prefix: str,
+                                      from_key: str,
+                                      to_key: str,
+                                      request_data: dict) -> Q | None:
+    """
+    Convenience wrapper to parse A/B from request_data and delegate to build_year_overlap_q.
+    """
+    a = _parse_int_or_none(request_data.get(from_key))
+    b = _parse_int_or_none(request_data.get(to_key))
+    return build_year_overlap_q(prefix, a, b)
 
 
 def update_queryset(queryset: QuerySet,

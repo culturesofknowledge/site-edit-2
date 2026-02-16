@@ -3,7 +3,7 @@
 {% block content %}
 
     <div class="col col--1of3 align-center">
-        <div class="row">
+        <div class="row flex-space-between">
             <h1> {{ title }} </h1>
             {% if add_entry_url and add_entry_url_permission in perms%}
                 <div class="margin-left margin-top">
@@ -56,10 +56,38 @@
 
                 <!-- Number of results -->
                {% if paginator.count > 0 %}
-                <h2>
-                    {{ page_obj|get_results_on_page }} out
-                    of {{ paginator.count | floatformat:'g' }} {{ paginator.count|pluralize:entity }}
-                </h2>
+                <div class="row margin-bottom">
+                    <div class="col col--1of2">
+                        <h2>
+                            {{ page_obj|get_results_on_page }} out
+                            of {{ paginator.count|floatformat:"g" }} {{ paginator.count|pluralize:entity }}
+                        </h2>
+                    </div>
+
+                    <div class="col col--1of2 align-right">
+                        {% if query_fieldset_list %}
+                            <button id="save-query-btn" class="search-form-btn" type="submit"
+                                    name="__form_action" value="save_query">
+                                Save query
+                            </button>
+                        {% endif %}
+
+                        {% if can_export_csv %}
+                            <button type='submit' class="search-form-btn"
+                                    name="__form_action" value="download_csv">
+                                CSV output
+                            </button>
+                        {% endif %}
+
+                        {% if can_export_excel %}
+                            <button id="export_excel_btn" type='submit' class="search-form-btn"
+                                    name="__form_action" value="download_excel">
+                                Excel output
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+                <hr>
                 {% endif %}
 
 
@@ -85,29 +113,9 @@
                         <div class="col col--1of2">
                             {% if query_fieldset_list and paginator.count %}
                                 <button id="fieldset-toggle-btn" class="search-form-btn" type="button">
-                                    Toggle <span data-feather="search" aria-hidden="true"></span>
-                                </button>
-
-                                <button id="save-query-btn" class="search-form-btn" type="submit"
-                                        name="__form_action" value="save_query">
-                                    Save query <span data-feather="save" aria-hidden="true"></span>
+                                    Toggle
                                 </button>
                             {% endif %}
-
-                            {% if can_export_csv %}
-                                <button type='submit' class="search-form-btn"
-                                        name="__form_action" value="download_csv">
-                                    CSV output
-                                </button>
-                            {% endif %}
-
-                            {% if can_export_excel %}
-                                <button id="export_excel_btn" type='submit' class="search-form-btn"
-                                        name="__form_action" value="download_excel">
-                                    Excel output
-                                </button>
-                            {% endif %}
-
                             {% if merge_page_url %}
                                 <button class="search-form-btn selectable_mode_btn">
                                     Select
@@ -117,38 +125,6 @@
                                 </button>
                             {% endif %}
                         </div>
-                        {# Only display search rendering selection for work #}
-                        {% if entity|first in 'work' %}
-                            <div class="col col--1of2">
-                                <h3 class="sr-only">Layout</h3>
-                                <div class="align-right">
-                                    <input type="radio" id="display-as-grid" value="grid"
-                                           name="display-style"
-                                           class="searchcontrol"
-                                            {% if is_compact_layout %}
-                                           checked
-                                            {% endif %}
-
-                                    />
-                                    <label for="display-as-grid">
-                                        Compact
-                                        <small> <span data-feather="grid" aria-hidden="true"></span> </small>
-                                    </label>
-
-                                    <input type="radio" id="display-as-list" value="table"
-                                           name="display-style"
-                                           class="searchcontrol"
-                                            {% if not is_compact_layout %}
-                                           checked
-                                            {% endif %}
-                                    />
-                                    <label for="display-as-list">
-                                        Expanded
-                                        <small><span data-feather="list" aria-hidden="true"></span></small>
-                                    </label>
-                                </div>
-                            </div>
-                        {% endif %}
                     </aside>
 
                     {{ results_renderer | safe }}

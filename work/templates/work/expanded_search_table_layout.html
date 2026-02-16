@@ -5,6 +5,7 @@
 
 </script>
 
+<div class="results-scroll" role="region" aria-label="Search results">
 <table id="results_table">
     <thead>
     <tr></tr>
@@ -14,7 +15,7 @@
         <th>Date for ordering</th>
         <th>Author/Sender</th>
         <th>Origin</th>
-        <th>Addressee/Recipient</th>
+        <th>Addressee/recipient</th>
         <th>Destination</th>
         <th></th>
         <th>Images</th>
@@ -33,12 +34,14 @@
 
             <td>
                 {% if r.editors_notes %}
-                    {{ r.editors_notes|linebreaksbr }}
+                    <div class="text-wrap-wrapper">
+                    {{ r.editors_notes|break_ambiguous|linebreaksbr }}
+                    </div>
                 {% endif %}
             </td>
             <td>
                 {% if user_is_editor_or_supervisor or r.is_owner_of_catalogue %}
-                    {% include 'core/component/search_table_layout/link_record.html' with id=r.iwork_id view='work:full_form' %}
+                    {% include 'core/component/search_table_layout/link_record.html' with id=r.iwork_id view='work:full_form' edit_perm=constant.PM_CHANGE_WORK %}
                 {% else %}
                     {{ r.iwork_id }}
                 {% endif %}
@@ -118,3 +121,4 @@
     </tbody>
 
 </table>
+</div>
