@@ -33,6 +33,7 @@ dependencies = [
 
     'pylint~=3.0',
     'pylint-django~=2.5',
+    'ipython==9.10.0'
 ]
 
 

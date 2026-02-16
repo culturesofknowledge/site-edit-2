@@ -71,7 +71,120 @@ dt = DatabaseTweaker.tweaker_from_connection(dbname, host, port, user, password)
 
 # Direct URL
 dt = DatabaseTweaker("postgresql://user:pass@host:5432/dbname")
+
+# Example: Get a work and print it
+work = dt.get_work_from_iwork_id(12345)
+print(work)
+
+# Example: Create a relationship
+dt.create_relationship_created(person_id='person-1', work_id='work-1')
+
+# Example: Commit changes
+dt.commit_changes(commit=True)
 ```
+
+## Shell Usage
+
+You can also use the tweaker directly from the command line to start an interactive shell:
+
+```bash
+# Start interactive shell using Django settings
+python -m tweaker --shell
+
+# Connect directly using a database URL
+python -m tweaker --shell --url postgresql://user:pass@host:5432/dbname
+```
+
+## Commands Reference
+
+The following methods are available on the `dt` (DatabaseTweaker) instance.
+
+### GET Methods
+Retrieve a single row as a dictionary (or `None` if not found).
+
+- `get_work_from_iwork_id(iwork_id: int)`
+- `get_work_from_work_id(work_id: str)`
+- `get_person_from_iperson_id(iperson_id: int)`
+- `get_person_from_person_id(person_id: str)`
+- `get_location_from_location_id(location_id: int)`
+- `get_institution_from_institution_id(institution_id: int)`
+- `get_manifestation_from_manifestation_id(manifestation_id: str)`
+- `get_resource_from_resource_id(resource_id: int)`
+- `get_image_from_image_id(image_id: int)`
+- `get_comment_from_comment_id(comment_id: int)`
+
+### CREATE Methods
+Insert new records and return the primary key or the new record ID.
+
+- `create_work(work_id_end, ...)`
+- `create_person_or_organisation(primary_name, ...)`
+- `create_location(element_4_eg_city, element_6_eg_country, ...)`
+- `create_manifestation(manifestation_id, manifestation_type, ...)`
+- `create_comment(comment_text)`
+- `create_resource(name, url, description)`
+- `create_image(filename, display_order, ...)`
+
+### UPDATE Methods
+Update existing records using a dictionary of field changes.
+
+- `update_work(work_id, field_updates: dict)`
+- `update_work_from_iwork(iwork_id, field_updates: dict)`
+- `update_person(person_id, field_updates: dict)`
+- `update_person_from_iperson(iperson_id, field_updates: dict)`
+- `update_location(location_id, field_updates: dict)`
+- `update_institution(institution_id, field_updates: dict)`
+- `update_manifestation(manifestation_id, field_updates: dict)`
+- `update_comment(comment_id, field_updates: dict)`
+- `update_resource(resource_id, field_updates: dict)`
+- `update_image(image_id, field_updates: dict)`
+
+### Relationship Methods (Mapping Tables)
+Create links between entities.
+
+- `create_work_person_map(work_id, person_id, relationship_type)`
+- `create_work_location_map(work_id, location_id, relationship_type)`
+- `create_work_comment_map(work_id, comment_id, relationship_type)`
+- `create_work_resource_map(work_id, resource_id)`
+- `create_work_work_map(work_from_id, work_to_id, relationship_type)`
+- `create_person_comment_map(person_id, comment_id, ...)`
+- `create_person_resource_map(person_id, resource_id)`
+- `create_person_location_map(person_id, location_id, relationship_type)`
+- `create_manif_comment_map(manifestation_id, comment_id, ...)`
+- `create_manif_inst_map(manifestation_id, institution_id, ...)`
+
+#### Convenience Relationship Methods
+- `create_relationship_created(person_id, work_id)`
+- `create_relationship_addressed_to(work_id, person_id)`
+- `create_relationship_mentions(work_id, person_id)`
+- `create_relationship_was_sent_from(work_id, location_id)`
+- `create_relationship_was_sent_to(work_id, location_id)`
+- `create_relationship_work_reply_to(work_reply_id, work_id)`
+- (and many others for specific types like `signed`, `sent`, `intended_for`, `born_in`, `died_at`, etc.)
+
+### Querying Mapping Tables
+Retrieve lists of relationship dictionaries.
+
+- `get_work_person_maps(work_id=, person_id=, relationship_type=)`
+- `get_work_location_maps(work_id=, location_id=, relationship_type=)`
+- `get_work_comment_maps(work_id=, comment_id=, relationship_type=)`
+- `get_work_resource_maps(work_id=, resource_id=)`
+- `get_work_work_maps(work_from_id=, work_to_id=, relationship_type=)`
+
+### DELETE Methods
+- `delete_work_via_work_id(work_id)`
+- `delete_work_via_iwork_id(iwork_id)`
+- `delete_manifestation_via_manifestation_id(manifestation_id)`
+- `delete_comment_via_comment_id(comment_id)`
+- `delete_resource_via_resource_id(resource_id)`
+- `delete_work_person_map(recref_id)`
+- `delete_work_location_map(recref_id)`
+- (and other mapping-specific delete methods)
+
+### Raw SQL and Transactions
+- `execute_raw(sql, params=None)` — returns a list of dictionaries
+- `execute_scalar(sql, params=None)` — returns a single value
+- `commit_changes(commit=False)` — use `commit=True` to persist changes to the DB
+- `print_audit()` — show what changes are pending or were just made
 
 ## Tests
 
