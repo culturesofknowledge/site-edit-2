@@ -162,10 +162,6 @@ some lookup key may only apply in first or last element,
 None == all element
 """
 lookup_idx_map = {
-    'starts_with': 0,
-    'not_start_with': 0,
-    'ends_with': -1,
-    'not_end_with': -1,
 }
 
 """
@@ -175,6 +171,9 @@ lookup_conn_type_map = {
     'is_blank': Q.AND,
     'is_null': Q.AND,
     'not_contain': Q.AND,
+    'not_start_with': Q.AND,
+    'not_end_with': Q.AND,
+    'not_equal_to': Q.AND,
 }
 
 nullable_lookup_keys = [

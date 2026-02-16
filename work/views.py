@@ -1000,7 +1000,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def search_field_fn_maps(self) -> dict[str, Lookup]:
         return {
-            'work_to_be_deleted': lambda f, v: Exact(F(f), '0' if v == 'On' else '1'),
+            'work_to_be_deleted': lambda f, v: Exact(F(f), '1' if v == 'On' or v == '1' else '0'),
             'person_sent_pk': create_search_fn_person_recref(AuthorRelationChoices.values),
             'person_rec_pk': create_search_fn_person_recref(AddresseeRelationChoices.values),
             'person_sent_rec_pk': create_search_fn_person_recref(AuthorRelationChoices.values
@@ -1120,6 +1120,27 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     def simplified_query(self) -> list[str]:
         simplified_query = super().simplified_query
 
+        # Handle PK fields
+        pk_fields = [
+            ('person_sent_pk', CofkUnionPerson, 'Person sent'),
+            ('person_rec_pk', CofkUnionPerson, 'Person received'),
+            ('person_sent_rec_pk', CofkUnionPerson, 'Person sent or received'),
+            ('person_mention_pk', CofkUnionPerson, 'Person mentioned'),
+            ('location_sent_pk', CofkUnionLocation, 'Location sent'),
+            ('location_rec_pk', CofkUnionLocation, 'Location received'),
+            ('location_sent_rec_pk', CofkUnionLocation, 'Location sent or received'),
+        ]
+
+        for field_name, model_class, label in pk_fields:
+            if val := self.request_data.get(field_name):
+                obj = model_class.objects.filter(pk=val).first()
+                if obj:
+                    name = general_model_serv.get_display_name(obj)
+                    # Remove the default PK-based entry if it exists
+                    pk_label = self.search_field_label_map.get(field_name, field_name)
+                    simplified_query = [s for s in simplified_query if not s.startswith(f'{pk_label} ')]
+                    simplified_query.append(f'{label} is {name}')
+
         if self.search_field_fn_maps:
             work_to_be_deleted = (self.request_data['work_to_be_deleted']
                                   if 'work_to_be_deleted' in self.request_data else None)
@@ -1161,9 +1182,28 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def _query_fieldset_data(self):
-        return {
+        data = {
             'iwork_id_lookup': 'equals',
         } | self.request_data.dict()
+
+        # If PK is provided but text field is empty, populate text field for better UX
+        pk_to_text_map = [
+            ('person_sent_pk', CofkUnionPerson, 'creators_searchable'),
+            ('person_rec_pk', CofkUnionPerson, 'addressees_searchable'),
+            ('person_sent_rec_pk', CofkUnionPerson, 'sender_or_recipient'),
+            ('person_mention_pk', CofkUnionPerson, 'mentioned_searchable'),
+            ('location_sent_pk', CofkUnionLocation, 'places_from_searchable'),
+            ('location_rec_pk', CofkUnionLocation, 'places_to_searchable'),
+            ('location_sent_rec_pk', CofkUnionLocation, 'origin_or_destination'),
+        ]
+        for pk_field, model_class, text_field in pk_to_text_map:
+            if (pk_val := data.get(pk_field)) and not data.get(text_field):
+                obj = model_class.objects.filter(pk=pk_val).first()
+                if obj:
+                    data[text_field] = general_model_serv.get_display_name(obj)
+                    data[f'{text_field}_lookup'] = 'equals'
+
+        return data
 
     @property
     def query_fieldset_list(self) -> Iterable:
