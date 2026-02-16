@@ -412,6 +412,39 @@ def lookup_manifestations_searchable(lookup_fn, field_name: str, value: str) -> 
     return Exists(CofkUnionManifestation.objects.filter(manif_q, work_id=OuterRef('pk')))
 
 
+def _parse_person_search_parts(segment: str) -> list:
+    """
+    Split a person search segment by commas into individual search terms.
+    Also recognise date ranges like '1630-1679' and split them into separate
+    birth/death year tokens so that each part can be matched independently.
+
+    Name-only parts (non-date) are kept together as a single comma-separated
+    string so that 'smith, john' matches a single person field containing both
+    words, rather than allowing 'smith' and 'john' to match different people.
+    """
+    raw_parts = [p.strip() for p in segment.split(',') if p.strip()]
+    name_parts = []
+    date_parts = []
+    for part in raw_parts:
+        # Detect a year range pattern like "1630-1679"
+        m = re.match(r'^(\d{4})\s*-\s*(\d{4})$', part)
+        if m:
+            date_parts.append(m.group(1))
+            date_parts.append(m.group(2))
+        elif re.match(r'^\d{4}$', part):
+            # Single year like "1630"
+            date_parts.append(part)
+        else:
+            name_parts.append(part)
+
+    parts = []
+    if name_parts:
+        # Keep name parts as a single string so they match the same field
+        parts.append(', '.join(name_parts))
+    parts.extend(date_parts)
+    return parts
+
+
 def lookup_person_searchable(lookup_fn, field_name: str, value: str, rel_types: List[str]) -> Q:
     if not isinstance(value, str):
         return query_serv.run_lookup_fn(lookup_fn, field_name, value)
@@ -432,15 +465,22 @@ def lookup_person_searchable(lookup_fn, field_name: str, value: str, rel_types: 
 
     pre_filter_q = Q()
     for segment in segments:
-        person_q = Q()
-        for field in person_fields:
-            person_q |= Q(**{f'{field}__icontains': segment})
+        parts = _parse_person_search_parts(segment)
 
-        # Check year detail (constructed in StringAgg)
-        # Year detail is: b. {birth} | d. {death} | {birth}-{death}
-        # We can approximate this by checking birth and death years directly
-        person_q |= Q(person__date_of_birth_year__icontains=segment)
-        person_q |= Q(person__date_of_death_year__icontains=segment)
+        # Each part must match the SAME person record
+        person_q = Q()
+        for part in parts:
+            part_q = Q()
+            for field in person_fields:
+                part_q |= Q(**{f'{field}__icontains': part})
+
+            # Check year detail (constructed in StringAgg)
+            # Year detail is: b. {birth} | d. {death} | {birth}-{death}
+            # We can approximate this by checking birth and death years directly
+            part_q |= Q(person__date_of_birth_year__icontains=part)
+            part_q |= Q(person__date_of_death_year__icontains=part)
+
+            person_q &= part_q
 
         pre_filter_q &= Exists(CofkWorkPersonMap.objects.filter(
             person_q,
