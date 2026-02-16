@@ -198,3 +198,9 @@ Bypass password validation and create user anyway? [y/N]: y
 Superuser created successfully.
 ```
 
+## Data Export
+
+Once the site is running and data is migrated, you can export system data into CSV files using the `exporter` management command. 
+
+For more details on how to use the exporter and other admin commands, see [Admin Managed Commands - exporter](admin_managed_commands.md#exporter).
+
