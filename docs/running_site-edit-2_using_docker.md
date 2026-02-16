@@ -204,3 +204,9 @@ Once the site is running and data is migrated, you can export system data into C
 
 For more details on how to use the exporter and other admin commands, see [Admin Managed Commands - exporter](admin_managed_commands.md#exporter).
 
+## Database Tweaker
+
+The `tweaker` is a database manipulation tool used for batch scripts and interactive database updates.
+
+For more details on how to use the tweaker, see [Tweaker README](../tweaker/README.md).
+
