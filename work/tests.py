@@ -395,6 +395,7 @@ def prepare_works_for_search(core_constant=None):
 @dataclass
 class ExpandedRow:
     editors_notes: str
+    work_id: str
     date_for_ordering: str
     author_sender: str
     origin: str
@@ -406,8 +407,8 @@ class ExpandedRow:
     related_resources: str
     subjects: str
     other_details: str
-    id: str
     last_edit: str
+    id: str = ''
 
 
 def assert_table_row(test_case, table_row, expected_data: dict):

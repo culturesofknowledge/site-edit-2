@@ -34,9 +34,16 @@ class MockResolver:
         self.app_name = app_name
 
 
+class MockUser:
+    is_authenticated = False
+    pk = None
+
+
 class MockRequest:
     def __init__(self, app_name):
         self.resolver_match = MockResolver(app_name)
+        self.GET = {}
+        self.user = MockUser()
 
 
 class TestDownloadCsvHandler(TestCase):
