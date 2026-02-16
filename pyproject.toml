@@ -26,12 +26,14 @@ dependencies = [
     'more-itertools~=9.1',
     'psutil~=5.9',
     'XlsxWriter~=3.1',
+    'sqlalchemy~=2.0',
 
     'cllib~=0.2',
     'cllib-django~=0.0',
 
     'pylint~=3.0',
     'pylint-django~=2.5',
+    'ipython==9.10.0'
 ]
 
 
@@ -46,7 +48,7 @@ build-backend = "setuptools.build_meta"
 
 
 [project.scripts]
-
+tweaker = "tweaker.__main__:main"
 
 [tool.setuptools.packages.find]
 exclude = [

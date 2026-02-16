@@ -239,7 +239,7 @@ class MultiM2MTester:
 
 
 def find_search_btn(selenium):
-    return selenium.find_element(By.CSS_SELECTOR, 'button.save[type=submit]')
+    return selenium.find_element(By.CSS_SELECTOR, 'button[type=submit]')
 
 
 class CommonSearchTests:
