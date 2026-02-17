@@ -72,6 +72,7 @@ class PubSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearchVi
 
 class PubInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitFormViewTemplate):
     permission_required = constant.PM_CHANGE_PUBLICATION
+    raise_exception = True
 
     def resp_form_page(self, request, form):
         return render(request, 'publication/init_form.html', {'pub_form': form})
@@ -100,7 +101,7 @@ class PubInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitFormVie
         return self.resp_form_page(request, form)
 
 @login_required
-@permission_required(constant.PM_CHANGE_PUBLICATION)
+@permission_required(constant.PM_CHANGE_PUBLICATION, raise_exception=True)
 def full_form(request, pk):
     pub: CofkUnionPublication = get_object_or_404(CofkUnionPublication, pk=pk)
     pub_form = PublicationForm(request.POST or None, instance=pub)
@@ -131,7 +132,7 @@ class PubQuickInitView(PubInitView):
 
 
 @login_required
-@permission_required(constant.PM_CHANGE_PUBLICATION)
+@permission_required(constant.PM_CHANGE_PUBLICATION, raise_exception=True)
 def return_quick_init(request, pk):
     pub = CofkUnionPublication.objects.get(pk=pk)
     return render(request, 'publication/return_quick_init_pub.html', {
@@ -141,6 +142,7 @@ def return_quick_init(request, pk):
 
 class PubDeleteConfirmView(PermissionRequiredMixin, DeleteConfirmView):
     permission_required = constant.PM_CHANGE_PUBLICATION
+    raise_exception = True
 
     def get_model_class(self) -> Type[ModelLike]:
         return CofkUnionPublication

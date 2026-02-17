@@ -122,6 +122,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
 
 class InstInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitFormViewTemplate):
     permission_required = constant.PM_CHANGE_INST
+    raise_exception = True
 
     def resp_form_page(self, request, form):
         return render(request, 'institution/init_form.html', {'inst_form': form})
@@ -152,7 +153,7 @@ class InstInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitFormVi
 
 
 @login_required
-@permission_required(constant.PM_CHANGE_INST)
+@permission_required(constant.PM_CHANGE_INST, raise_exception=True)
 def full_form(request, pk):
     inst: CofkUnionInstitution = get_object_or_404(CofkUnionInstitution, pk=pk)
     inst_form = InstitutionForm(request.POST or None, instance=inst)
@@ -200,7 +201,7 @@ class InstQuickInitView(InstInitView):
 
 
 @login_required
-@permission_required(constant.PM_CHANGE_INST)
+@permission_required(constant.PM_CHANGE_INST, raise_exception=True)
 def return_quick_init(request, pk):
     inst: CofkUnionInstitution = CofkUnionInstitution.objects.get(institution_id=pk)
     return view_serv.render_return_quick_init(
@@ -228,6 +229,7 @@ class InstImageRecrefHandler(ImageRecrefHandler):
 
 class InstMergeChoiceView(PermissionRequiredMixin, LoginRequiredMixin, MergeChoiceViews):
     permission_required = constant.PM_CHANGE_INST
+    raise_exception = True
     @staticmethod
     def get_id_field():
         return CofkUnionInstitution.institution_id
@@ -238,6 +240,7 @@ class InstMergeChoiceView(PermissionRequiredMixin, LoginRequiredMixin, MergeChoi
 
 class InstMergeConfirmView(PermissionRequiredMixin, LoginRequiredMixin, MergeConfirmViews):
     permission_required = constant.PM_CHANGE_INST
+    raise_exception = True
     @property
     def target_model_class(self) -> Type[ModelLike]:
         return CofkUnionInstitution
@@ -245,6 +248,7 @@ class InstMergeConfirmView(PermissionRequiredMixin, LoginRequiredMixin, MergeCon
 
 class InstMergeActionView(PermissionRequiredMixin, LoginRequiredMixin, MergeActionViews):
     permission_required = constant.PM_CHANGE_INST
+    raise_exception = True
 
     @staticmethod
     def get_id_field():

@@ -16,7 +16,7 @@ from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_BORN_IN_LOCAT
     TRUE_CHAR, REL_TYPE_MENTION
 from core.export_data import cell_values, download_csv_serv
 from core.forms import CommentForm, PersonRecrefForm
-from core.helper import renderer_serv, view_serv, query_serv, recref_serv, form_serv, perm_serv
+from core.helper import renderer_serv, view_serv, query_serv, recref_serv, form_serv, perm_serv, date_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.model_serv import ModelLike
 from core.helper.recref_handler import RecrefFormsetHandler, RoleCategoryHandler, ImageRecrefHandler, \
@@ -55,6 +55,7 @@ def create_context_is_org_form(is_organisation: str):
 
 class PersonInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitFormViewTemplate):
     permission_required = constant.PM_CHANGE_PERSON
+    raise_exception = True
 
     def resp_form_page(self, request, form):
         return render(request, 'person/init_form.html', {
@@ -247,6 +248,7 @@ class PersonFFH(FullFormHandler):
 
 
 @login_required
+@permission_required(constant.PM_CHANGE_PERSON, raise_exception=True)
 def full_form(request, iperson_id):
     fhandler = PersonFFH(iperson_id, request_data=request.POST, request=request)
 
@@ -382,11 +384,11 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
                 _to = self.request_data[_range[1]] if _range[1] in self.request_data else None
 
                 if _to and _from:
-                    simplified_query.append(f'{_range[2]} between {_from} and {_to}.')
+                    simplified_query.append(f'{_range[2]} between {date_serv.normalize_search_display_start(_from)} and {date_serv.normalize_search_display_end(_to)}.')
                 elif _to:
-                    simplified_query.append(f'{_range[2]} before {_to}.')
+                    simplified_query.append(f'{_range[2]} before {date_serv.normalize_search_display_end(_to)}.')
                 elif _from:
-                    simplified_query.append(f'{_range[2]} after {_from}.')
+                    simplified_query.append(f'{_range[2]} after {date_serv.normalize_search_display_start(_from)}.')
 
         return simplified_query
 
@@ -539,6 +541,7 @@ class PersonImageRecrefHandler(ImageRecrefHandler):
 
 class PersonMergeChoiceView(PermissionRequiredMixin, LoginRequiredMixin, MergeChoiceViews):
     permission_required = constant.PM_CHANGE_PERSON
+    raise_exception = True
 
     def to_context_list(self, merge_id_list: list[str]) -> Iterable['MergeChoiceContext']:
         return self.create_merge_choice_context_by_id_field(self.get_id_field(), merge_id_list)
@@ -550,6 +553,7 @@ class PersonMergeChoiceView(PermissionRequiredMixin, LoginRequiredMixin, MergeCh
 
 class PersonMergeConfirmView(PermissionRequiredMixin, LoginRequiredMixin, MergeConfirmViews):
     permission_required = constant.PM_CHANGE_PERSON
+    raise_exception = True
     @property
     def target_model_class(self) -> Type[ModelLike]:
         return CofkUnionPerson
@@ -557,6 +561,7 @@ class PersonMergeConfirmView(PermissionRequiredMixin, LoginRequiredMixin, MergeC
 
 class PersonMergeActionView(PermissionRequiredMixin, LoginRequiredMixin, MergeActionViews):
     permission_required = constant.PM_CHANGE_PERSON
+    raise_exception = True
     @staticmethod
     def get_id_field():
         return PersonMergeChoiceView.get_id_field()
@@ -568,6 +573,7 @@ class PersonMergeActionView(PermissionRequiredMixin, LoginRequiredMixin, MergeAc
 
 class PersonDeleteConfirmView(PermissionRequiredMixin, LoginRequiredMixin, DeleteConfirmView):
     permission_required = constant.PM_CHANGE_PERSON
+    raise_exception = True
 
     def get_model_class(self) -> Type[ModelLike]:
         return CofkUnionPerson

@@ -11,6 +11,7 @@ from manifestation.models import CofkUnionManifestation
 
 class ManifSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearchView):
     permission_required = constant.PM_CHANGE_WORK
+    raise_exception = True
 
     @property
     def entity(self) -> str:
