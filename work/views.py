@@ -1093,8 +1093,9 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         annotate_keys_needed: set[str] = set()
 
         # Include annotations if the corresponding search field has a non-empty value
+        # or if a nullable lookup (is_blank, not_blank, is_null, not_null) is used
         for key in annotatable_fields:
-            if request_data.get(key):
+            if request_data.get(key) or request_data.get(f'{key}_lookup') in query_serv.nullable_lookup_keys:
                 annotate_keys_needed.add(key)
 
         # Also include annotations used in sorting
