@@ -281,8 +281,26 @@ function scrolling() {
 }
 
 function reset_form(form) {
+    let sort_by = form.elements['sort_by'] ? form.elements['sort_by'].value : null;
+    let order = form.elements['order'] ? form.elements['order'].value : null;
+
     localStorage.clear();
-    location.href = window.location.pathname;
+
+    let url = window.location.pathname;
+    let params = new URLSearchParams();
+
+    if (sort_by) {
+        params.append('sort_by', sort_by);
+    }
+    if (order) {
+        params.append('order', order);
+    }
+
+    if (params.toString()) {
+        url += '?' + params.toString();
+    }
+
+    location.href = url;
 }
 
 $(function () {

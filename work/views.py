@@ -991,7 +991,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def default_sort_by_choice(self) -> int:
-        return 2
+        return 7
 
     @property
     def default_order(self):
