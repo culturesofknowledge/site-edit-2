@@ -1000,7 +1000,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def search_field_fn_maps(self) -> dict[str, Lookup]:
         return {
-            'work_to_be_deleted': lambda f, v: Exact(F(f), '0' if v == 'On' else '1'),
+            'work_to_be_deleted': lambda f, v: Exact(F(f), '1' if v == 'On' or v == '1' else '0'),
             'person_sent_pk': create_search_fn_person_recref(AuthorRelationChoices.values),
             'person_rec_pk': create_search_fn_person_recref(AddresseeRelationChoices.values),
             'person_sent_rec_pk': create_search_fn_person_recref(AuthorRelationChoices.values
@@ -1187,9 +1187,28 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def _query_fieldset_data(self):
-        return {
+        data = {
             'iwork_id_lookup': 'equals',
         } | self.request_data.dict()
+
+        # If PK is provided but text field is empty, populate text field for better UX
+        pk_to_text_map = [
+            ('person_sent_pk', CofkUnionPerson, 'creators_searchable'),
+            ('person_rec_pk', CofkUnionPerson, 'addressees_searchable'),
+            ('person_sent_rec_pk', CofkUnionPerson, 'sender_or_recipient'),
+            ('person_mention_pk', CofkUnionPerson, 'mentioned_searchable'),
+            ('location_sent_pk', CofkUnionLocation, 'places_from_searchable'),
+            ('location_rec_pk', CofkUnionLocation, 'places_to_searchable'),
+            ('location_sent_rec_pk', CofkUnionLocation, 'origin_or_destination'),
+        ]
+        for pk_field, model_class, text_field in pk_to_text_map:
+            if (pk_val := data.get(pk_field)) and not data.get(text_field):
+                obj = model_class.objects.filter(pk=pk_val).first()
+                if obj:
+                    data[text_field] = general_model_serv.get_display_name(obj)
+                    data[f'{text_field}_lookup'] = 'equals'
+
+        return data
 
     @property
     def query_fieldset_list(self) -> Iterable:
