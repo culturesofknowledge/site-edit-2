@@ -371,11 +371,11 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
             if gender:
                 gender = [g[1].lower() for g in search_gender_choices if g[0] == gender][0]
-                simplified_query.append(f'Of {gender} gender.')
+                simplified_query.append(f'Of {gender} gender')
 
             if person_or_group:
                 person_or_group = [pog[1].lower() for pog in search_person_or_group if pog[0] == person_or_group][0]
-                simplified_query.append(f'Is a {person_or_group}.')
+                simplified_query.append(f'Is a {person_or_group}')
 
             for _range in [('birth_year_from', 'birth_year_to', 'Born'),
                            ('death_year_from', 'death_year_to', 'Died'),
@@ -384,11 +384,11 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
                 _to = self.request_data[_range[1]] if _range[1] in self.request_data else None
 
                 if _to and _from:
-                    simplified_query.append(f'{_range[2]} between {date_serv.normalize_search_display_start(_from)} and {date_serv.normalize_search_display_end(_to)}.')
+                    simplified_query.append(f'{_range[2]} between {date_serv.normalize_search_display_start(_from)} and {date_serv.normalize_search_display_end(_to)}')
                 elif _to:
-                    simplified_query.append(f'{_range[2]} before {date_serv.normalize_search_display_end(_to)}.')
+                    simplified_query.append(f'{_range[2]} before {date_serv.normalize_search_display_end(_to)}')
                 elif _from:
-                    simplified_query.append(f'{_range[2]} after {date_serv.normalize_search_display_start(_from)}.')
+                    simplified_query.append(f'{_range[2]} after {date_serv.normalize_search_display_start(_from)}')
 
         return simplified_query
 

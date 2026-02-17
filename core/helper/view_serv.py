@@ -389,14 +389,29 @@ class BasicSearchView(ListView):
                     lookup_val in query_serv.nullable_lookup_keys
             ):
                 label_name = self.search_field_label_map.get(field_name) or field_name.replace('_', ' ').capitalize()
-                lookup_key = lookup_val.replace('_', ' ')
 
-                if lookup_val in query_serv.nullable_lookup_keys:
-                    simplified_query.append(f'{label_name} {lookup_key}.')
-                else:
+                lookup_key_map = {
+                    'is_null': 'is blank',
+                    'is_blank': 'is blank',
+                    'not_null': 'is not blank',
+                    'not_blank': 'is not blank',
+                    'not_equal_to': 'is not equal to',
+                    'greater_than': 'is greater than',
+                    'less_than': 'is less than',
+                    'less_than_equal': 'is less than or equal to',
+                    'greater_than_equal': 'is greater than or equal to',
+                }
+
+                lookup_key = lookup_key_map.get(lookup_val)
+
+                if not lookup_key:
+                    lookup_key = lookup_val.replace('_', ' ')
                     if lookup_key.startswith('not'):
                         lookup_key = 'does ' + lookup_key
 
+                if lookup_val in query_serv.nullable_lookup_keys:
+                    simplified_query.append(f'{label_name} {lookup_key}')
+                else:
                     simplified_query.append(f'{label_name} {lookup_key} \'{field_val}\'')
 
         if self.search_field_fn_maps:
@@ -404,11 +419,11 @@ class BasicSearchView(ListView):
             _to = self.request_data['change_timestamp_to'] if 'change_timestamp_to' in self.request_data else None
 
             if _to and _from:
-                simplified_query.append(f'Last edited between {_from} and {_to}.')
+                simplified_query.append(f'Last edited between {_from} and {_to}')
             elif _to:
-                simplified_query.append(f'Last edited before {_to}.')
+                simplified_query.append(f'Last edited before {_to}')
             elif _from:
-                simplified_query.append(f'Last edited after {_from}.')
+                simplified_query.append(f'Last edited after {_from}')
 
         return simplified_query
 

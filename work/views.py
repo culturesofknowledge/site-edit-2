@@ -1152,7 +1152,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
             if work_to_be_deleted:
                 if work_to_be_deleted == 'on':
-                    simplified_query.append('Is to be deleted.')
+                    simplified_query.append('Is to be deleted')
 
             _from = self.request_data['date_of_work_std_from'] if 'date_of_work_std_from' in self.request_data else None
             _to = self.request_data['date_of_work_std_to'] if 'date_of_work_std_to' in self.request_data else None
@@ -1160,13 +1160,13 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             if _to and _from:
                 disp_from = date_serv.normalize_search_display_start(_from)
                 disp_to = date_serv.normalize_search_display_end(_to)
-                simplified_query.append(f'Date for ordering between {disp_from} and {disp_to}.')
+                simplified_query.append(f'Date for ordering between {disp_from} and {disp_to}')
             elif _to:
                 disp_to = date_serv.normalize_search_display_end(_to)
-                simplified_query.append(f'Date for ordering before {disp_to}.')
+                simplified_query.append(f'Date for ordering before {disp_to}')
             elif _from:
                 disp_from = date_serv.normalize_search_display_start(_from)
-                simplified_query.append(f'Date for ordering after {disp_from}.')
+                simplified_query.append(f'Date for ordering after {disp_from}')
 
         return simplified_query
 
