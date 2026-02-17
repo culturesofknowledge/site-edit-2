@@ -22,6 +22,7 @@ def lookup_fn_is_favorite(lookup, field, value):
 
 class LanguageSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearchView):
     permission_required = constant.PM_CHANGE_LANGUAGE
+    raise_exception = True
 
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:

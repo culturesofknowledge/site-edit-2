@@ -20,6 +20,7 @@ from suggestions import views as sug_view
 
 class PubSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearchView):
     permission_required = constant.PM_CHANGE_PUBLICATION
+    raise_exception = True
 
     @property
     def query_fieldset_list(self) -> Iterable:

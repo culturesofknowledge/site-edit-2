@@ -64,6 +64,7 @@ def full_form(request, pk=None):
 
 class UserSearchView(PermissionRequiredMixin, LoginRequiredMixin,  DefaultSearchView):
     permission_required = constant.PM_CHANGE_USER
+    raise_exception = True
 
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:

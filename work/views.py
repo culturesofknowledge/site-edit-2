@@ -22,7 +22,7 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_MENTION_WORK, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_IS_RELATED_TO
 from core.export_data import excel_maker, cell_values
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, LocRecrefForm
-from core.helper import view_serv, lang_serv, model_serv, query_serv, renderer_serv, date_serv
+from core.helper import view_serv, lang_serv, model_serv, query_serv, renderer_serv, date_serv, general_model_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.form_serv import save_multi_rel_recref_formset
 from core.helper.lang_serv import LangModelAdapter, NewLangForm
@@ -1047,9 +1047,14 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             ],
         }
 
+        # Exclude fields already handled by search_field_fn_maps to avoid
+        # treating them as direct model fields in create_queries_by_lookup_field
+        fn_map_keys = set(self.search_field_fn_maps.keys())
+        lookup_search_fields = [f for f in self.search_fields if f not in fn_map_keys]
+
         queries.extend(
             query_serv.create_queries_by_lookup_field(
-                request_data, self.search_fields,
+                request_data, lookup_search_fields,
                 search_fields_maps=search_fields_maps,
                 search_fields_fn_maps={
                     'notes_on_authors': create_lookup_fn_by_comment([REL_TYPE_COMMENT_AUTHOR]),
@@ -1119,6 +1124,27 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def simplified_query(self) -> list[str]:
         simplified_query = super().simplified_query
+
+        # Handle PK fields
+        pk_fields = [
+            ('person_sent_pk', CofkUnionPerson, 'Person sent'),
+            ('person_rec_pk', CofkUnionPerson, 'Person received'),
+            ('person_sent_rec_pk', CofkUnionPerson, 'Person sent or received'),
+            ('person_mention_pk', CofkUnionPerson, 'Person mentioned'),
+            ('location_sent_pk', CofkUnionLocation, 'Location sent'),
+            ('location_rec_pk', CofkUnionLocation, 'Location received'),
+            ('location_sent_rec_pk', CofkUnionLocation, 'Location sent or received'),
+        ]
+
+        for field_name, model_class, label in pk_fields:
+            if val := self.request_data.get(field_name):
+                obj = model_class.objects.filter(pk=val).first()
+                if obj:
+                    name = general_model_serv.get_display_name(obj)
+                    # Remove the default PK-based entry if it exists
+                    pk_label = self.search_field_label_map.get(field_name, field_name)
+                    simplified_query = [s for s in simplified_query if not s.startswith(f'{pk_label} ')]
+                    simplified_query.append(f'{label} is {name}')
 
         if self.search_field_fn_maps:
             work_to_be_deleted = (self.request_data['work_to_be_deleted']

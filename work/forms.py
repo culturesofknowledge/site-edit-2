@@ -560,6 +560,14 @@ class CompactSearchFieldset(BasicSearchFieldset):
     iwork_id = SearchCharField(label=field_label_map['work']['iwork_id'], help_text=id_help_text)
     iwork_id_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
+    person_sent_pk = forms.IntegerField(widget=forms.HiddenInput(), required=False)
+    person_rec_pk = forms.IntegerField(widget=forms.HiddenInput(), required=False)
+    person_sent_rec_pk = forms.IntegerField(widget=forms.HiddenInput(), required=False)
+    person_mention_pk = forms.IntegerField(widget=forms.HiddenInput(), required=False)
+    location_sent_pk = forms.IntegerField(widget=forms.HiddenInput(), required=False)
+    location_rec_pk = forms.IntegerField(widget=forms.HiddenInput(), required=False)
+    location_sent_rec_pk = forms.IntegerField(widget=forms.HiddenInput(), required=False)
+
 
 class ExpandedSearchFieldset(CompactSearchFieldset):
     title = 'Expanded Search'
