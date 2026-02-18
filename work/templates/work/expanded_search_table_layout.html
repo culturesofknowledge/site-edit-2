@@ -59,6 +59,11 @@
                         <li> {{ m }} </li>
                     {% endfor %}
                 </ul>
+                {% if r.author_comments_list %}
+                    {% for comment in r.author_comments_list %}
+                        <p>Note: {{ comment.comment }}</p>
+                    {% endfor %}
+                {% endif %}
             </td>
             <td>
                 {% if r.places_from_for_display %}
@@ -71,6 +76,11 @@
                         <li> {{ m }} </li>
                     {% endfor %}
                 </ul>
+                {% if r.addressee_comments_list %}
+                    {% for comment in r.addressee_comments_list %}
+                        <p>Note: {{ comment.comment }}</p>
+                    {% endfor %}
+                {% endif %}
             </td>
             <td>
                 {% if r.places_to_for_display %}

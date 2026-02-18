@@ -951,6 +951,12 @@ def return_quick_init(request, pk):
     )
 
 
+def _work_record_modifier(work: CofkUnionWork):
+    work.author_comments_list = list(work.author_comments)
+    work.addressee_comments_list = list(work.addressee_comments)
+    return work
+
+
 class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     # Enable keyset pagination for better performance with large work datasets
@@ -990,8 +996,8 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         ]
 
     @property
-    def default_sort_by_choice(self) -> int:
-        return 7
+    def default_sort_by_choice(self):
+        return 2
 
     @property
     def default_order(self):
@@ -1174,12 +1180,14 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def table_search_results_renderer_factory(self) -> RendererFactory:
         return renderer_serv.create_table_search_results_renderer('work/expanded_search_table_layout.html',
+                                                                  record_modifier=_work_record_modifier,
                                                                   context_data=self.get_context())
 
     @property
     def compact_search_results_renderer_factory(self) -> RendererFactory:
         # Compact search results for works are also table formatted
         return renderer_serv.create_table_search_results_renderer('work/compact_search_table_layout.html',
+                                                                  record_modifier=_work_record_modifier,
                                                                   context_data=self.get_context())
 
     @property
