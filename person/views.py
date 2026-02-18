@@ -596,6 +596,12 @@ def lookup_other_details(lookup_fn, f, v) -> Q:
     conn_type = query_serv.get_lookup_conn_type_by_lookup_key(
         query_serv.get_lookup_key_by_lookup_fn(lookup_fn)
     )
+
+    related_person_detail_fields = [
+        f for f in query_serv.person_detail_fields
+        if f != 'person_aliases'
+    ]
+
     q = query_utils.create_q_by_field_names(
         lookup_fn,
 
@@ -603,9 +609,9 @@ def lookup_other_details(lookup_fn, f, v) -> Q:
             query_utils.join_fields('cofkpersonlocationmap__location',
                                     query_serv.location_detail_fields),
             query_utils.join_fields('active_relationships__related',
-                                    query_serv.person_detail_fields),
+                                    related_person_detail_fields),
             query_utils.join_fields('passive_relationships__person',
-                                    query_serv.person_detail_fields),
+                                    related_person_detail_fields),
             query_utils.join_fields('cofkpersoncommentmap__comment',
                                     query_serv.comment_detail_fields),
             query_utils.join_fields('cofkpersonresourcemap__resource',
