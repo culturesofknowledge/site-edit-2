@@ -513,3 +513,77 @@ class WorkSearchTests(EmloSeleniumTestCase, CommonSearchTests):
             self.find_element_by_css('.actionbox button[type=button]').click()
             self.find_element_by_css(f'input[name={k}]').send_keys(v)
             self.find_search_btn().click()
+
+    def test_flags_field_validation(self):
+        fixture_default_lookup_catalogue()
+
+        # Create test works with different flag combinations
+        work_date_inferred = CofkUnionWork(iwork_id=100, date_of_work_inferred=1)
+        work_date_inferred.save()
+        work_date_uncertain = CofkUnionWork(iwork_id=101, date_of_work_uncertain=1)
+        work_date_uncertain.save()
+        work_date_approximate = CofkUnionWork(iwork_id=102, date_of_work_approx=1)
+        work_date_approximate.save()
+        work_author_inferred = CofkUnionWork(iwork_id=103, authors_inferred=1)
+        work_author_inferred.save()
+        work_author_uncertain = CofkUnionWork(iwork_id=104, authors_uncertain=1)
+        work_author_uncertain.save()
+        work_addressee_inferred = CofkUnionWork(iwork_id=105, addressees_inferred=1)
+        work_addressee_inferred.save()
+        work_addressee_uncertain = CofkUnionWork(iwork_id=106, addressees_uncertain=1)
+        work_addressee_uncertain.save()
+        work_origin_inferred = CofkUnionWork(iwork_id=107, origin_inferred=1)
+        work_origin_inferred.save()
+        work_origin_uncertain = CofkUnionWork(iwork_id=108, origin_uncertain=1)
+        work_origin_uncertain.save()
+        work_destination_inferred = CofkUnionWork(iwork_id=109, destination_inferred=1)
+        work_destination_inferred.save()
+        work_destination_uncertain = CofkUnionWork(iwork_id=110, destination_uncertain=1)
+        work_destination_uncertain.save()
+
+        test_cases = [
+            ("Date of work INFERRED", work_date_inferred),
+            ("Date of work UNCERTAIN", work_date_uncertain),
+            ("Date of work APPROXIMATE", work_date_approximate),
+            ("Author/sender INFERRED", work_author_inferred),
+            ("Author/sender UNCERTAIN", work_author_uncertain),
+            ("Recipient/Addressee INFERRED", work_addressee_inferred),
+            ("Recipient/Addressee UNCERTAIN", work_addressee_uncertain),
+            ("Origin INFERRED", work_origin_inferred),
+            ("Origin UNCERTAIN", work_origin_uncertain),
+            ("Destination INFERRED", work_destination_inferred),
+            ("Destination UNCERTAIN", work_destination_uncertain),
+        ]
+
+        self.goto_search_page()
+        self.find_search_btn().click()  # Initial search to load the page
+
+        for flag_string, expected_work in test_cases:
+            with self.subTest(flag_string=flag_string):
+                self.find_element_by_css('.actionbox button[type=button]').click()  # Clear previous search
+                flags_input = self.find_element_by_css('input[name="flags"]')
+                flags_input.send_keys(flag_string)
+                self.find_search_btn().click()
+
+                results = self.find_elements_by_css('#results_table tr[entry_id]')
+                self.assertEqual(len(results), 1, f"Expected 1 result for '{flag_string}', got {len(results)}")
+                self.assertEqual(int(results[0].get_attribute('entry_id')), expected_work.iwork_id)
+
+        invalid_test_cases = [
+            "Date INFERRED",
+            "Author INFERRED",
+            "Date APPROXIMATE",  # This was the original problematic case
+            "Date of work INFERRED EXTRA",
+            "Invalid Flag Combination",
+            "Date of work INFERRED UNCERTAIN", # Should not match as a single phrase
+        ]
+
+        for flag_string in invalid_test_cases:
+            with self.subTest(flag_string=flag_string):
+                self.find_element_by_css('.actionbox button[type=button]').click()  # Clear previous search
+                flags_input = self.find_element_by_css('input[name="flags"]')
+                flags_input.send_keys(flag_string)
+                self.find_search_btn().click()
+
+                results = self.find_elements_by_css('#results_table tr[entry_id]')
+                self.assertEqual(len(results), 0, f"Expected 0 results for invalid flag '{flag_string}', got {len(results)}")

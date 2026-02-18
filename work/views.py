@@ -85,25 +85,30 @@ def create_lookup_fn_by_resource(rel_types: list) -> Callable:
 
 
 def lookup_fn_flags(lookup_fn, field_name, value):
-    cond_map = [
-        (r'Date\s+of\s+work\s+INFERRED', lambda: Q(date_of_work_inferred=1)),
-        (r'Date\s+of\s+work\s+UNCERTAIN', lambda: Q(date_of_work_uncertain=1)),
-        (r'Date\s+of\s+work\s+APPROXIMATE', lambda: Q(date_of_work_approx=1)),
-        (r'Author\s*/\s*sender\s+INFERRED', lambda: Q(authors_inferred=1)),
-        (r'Author\s*/\s*sender\s+UNCERTAIN', lambda: Q(authors_uncertain=1)),
-        (r'Addressee\s+INFERRED', lambda: Q(addressees_inferred=1)),
-        (r'Addressee\s+UNCERTAIN', lambda: Q(addressees_uncertain=1)),
-        (r'Origin\s+INFERRED', lambda: Q(origin_inferred=1)),
-        (r'Origin\s+UNCERTAIN', lambda: Q(origin_uncertain=1)),
-        (r'Destination\s+INFERRED', lambda: Q(destination_inferred=1)),
-        (r'Destination\s+UNCERTAIN', lambda: Q(destination_uncertain=1)),
-    ]
+    # Define valid flag phrases and their corresponding Q objects
+    valid_flags_map = {
+        'date of work inferred': lambda: Q(date_of_work_inferred=1),
+        'date of work uncertain': lambda: Q(date_of_work_uncertain=1),
+        'date of work approximate': lambda: Q(date_of_work_approx=1),
+        'author/sender inferred': lambda: Q(authors_inferred=1),
+        'author/sender uncertain': lambda: Q(authors_uncertain=1),
+        'recipient/addressee inferred': lambda: Q(addressees_inferred=1),
+        'recipient/addressee uncertain': lambda: Q(addressees_uncertain=1),
+        'origin inferred': lambda: Q(origin_inferred=1),
+        'origin uncertain': lambda: Q(origin_uncertain=1),
+        'destination inferred': lambda: Q(destination_inferred=1),
+        'destination uncertain': lambda: Q(destination_uncertain=1),
+    }
 
-    query = Q()
-    for pattern, q in cond_map:
-        if re.search(pattern, value, re.IGNORECASE):
-            query |= q()
-    return query
+    # Normalize the input value for case-insensitive matching
+    normalized_value = value.lower().strip()
+
+    # Check for an exact match in the valid_flags_map
+    if normalized_value in valid_flags_map:
+        return valid_flags_map[normalized_value]()
+    else:
+        # If no exact match, return a query that yields no results
+        return Q(pk__isnull=True)
 
 
 def create_search_fn_location_recref(rel_types: list) -> Callable:
