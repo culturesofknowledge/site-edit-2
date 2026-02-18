@@ -30,6 +30,18 @@
                 <div class="text-wrap-wrapper">
                 {{ r.description|break_ambiguous }}
                 </div>
+                {% if r.author_comments_list %}
+                    <p><strong>Author/Sender Notes:</strong></p>
+                    {% for comment in r.author_comments_list %}
+                        <p>Note: {{ comment.comment }}</p>
+                    {% endfor %}
+                {% endif %}
+                {% if r.addressee_comments_list %}
+                    <p><strong>Addressee/Recipient Notes:</strong></p>
+                    {% for comment in r.addressee_comments_list %}
+                        <p>Note: {{ comment.comment }}</p>
+                    {% endfor %}
+                {% endif %}
             </td>
             <td>
                 {% include 'core/component/search_table_layout/link_record.html' with id=r.iwork_id view='work:full_form' edit_perm=constant.PM_CHANGE_WORK %}
