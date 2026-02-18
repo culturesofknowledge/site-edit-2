@@ -952,8 +952,8 @@ def return_quick_init(request, pk):
 
 
 def _work_record_modifier(work: CofkUnionWork):
-    work.author_comments_list = list(work.author_comments())
-    work.addressee_comments_list = list(work.addressee_comments())
+    work.author_comments_list = list(work.author_comments)
+    work.addressee_comments_list = list(work.addressee_comments)
     return work
 
 
