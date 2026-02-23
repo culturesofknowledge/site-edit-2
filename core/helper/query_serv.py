@@ -134,10 +134,9 @@ def lookup_icontains_wildcard(field, value):
 
 def lookup_not_icontains_with_blank(field, value):
     # Exclude records that contain the value
-    exclude_q = ~Q(lookup_icontains_wildcard(field, value))
-    # Include records that are blank or null
-    blank_q = is_blank(field, None)  # val is not used by is_blank, so None is fine
-    return exclude_q | blank_q
+    # The blank_q part is removed as ~Q(lookup_icontains_wildcard)
+    # should correctly handle cases where the related field is absent.
+    return ~Q(lookup_icontains_wildcard(field, value))
 
 
 choices_lookup_map = {
