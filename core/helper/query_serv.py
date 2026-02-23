@@ -132,12 +132,20 @@ def lookup_icontains_wildcard(field, value):
         return lookups.IContains(field, value)
 
 
+def lookup_not_icontains_with_blank(field, value):
+    # Exclude records that contain the value
+    exclude_q = ~lookup_icontains_wildcard(field, value)
+    # Include records that are blank or null
+    blank_q = is_blank(field, None)  # val is not used by is_blank, so None is fine
+    return exclude_q | blank_q
+
+
 choices_lookup_map = {
     'contains': lookup_icontains_wildcard,
     'starts_with': lookups.IStartsWith,
     'ends_with': lookups.IEndsWith,
     'equals': lookups.IExact,
-    'not_contain': cond_not(lookup_icontains_wildcard),
+    'not_contain': lookup_not_icontains_with_blank,
     'not_start_with': cond_not(lookups.IStartsWith),
     'not_end_with': cond_not(lookups.IEndsWith),
     'not_equal_to': cond_not(lookups.IExact),
