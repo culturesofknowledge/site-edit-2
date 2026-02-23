@@ -329,11 +329,11 @@ class TestDatabaseTweakerIntegration(TransactionTestCase):
         self.assertEqual(person['date_of_death_year'], 1870)
 
     def test_create_organisation(self):
-        """Test creating an organisation."""
+        """Test creating an organization."""
         org_id = self.dt.create_person_or_organisation(
             primary_name="Test University",
             is_org='Y',
-            editors_notes="Test organisation"
+            editors_notes="Test organization"
         )
 
         self.assertIsNotNone(org_id)
