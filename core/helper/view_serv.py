@@ -589,7 +589,6 @@ class BasicSearchView(ListView):
             sort_by = [f'-{s}' for s in sort_by]
 
         # Always add 'pk' as a secondary sort to ensure consistent ordering
-        # The user requested ascending order for the secondary sort by ID.
         if 'pk' not in sort_by and '-pk' not in sort_by:
             sort_by.append('pk')
 
