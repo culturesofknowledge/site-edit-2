@@ -14,9 +14,12 @@ from core.constant import DEFAULT_MONTH, DEFAULT_DAY, DEFAULT_EMPTY_DATE_STR
 from location import location_serv
 from person import person_serv
 from work.models import CofkUnionWork
+from core import query_cache_serv
+from manifestation import manif_serv
 
 log = logging.getLogger(__name__)
 HIDDEN_DATE_STD = '1900-01-01'
+
 
 
 def get_recref_display_name(work: CofkUnionWork) -> str:
@@ -161,11 +164,28 @@ class DisplayableWork(CofkUnionWork):
 
     @property
     def manifestations_for_display(self) -> List[str]:
-        # Derived value for CofkUnionQueryable
-        # Example:
-        # Letter.Bodleian Library, University of Oxford: MS.Locke c. 19, f. 48 - - Printed copy. ‘The Clarendon Edition of the Works of John Locke: The Correspondence of John Locke’, ed.E.S.de Beer, 8 vols(Oxford: OUP, 1978), vol. 4, letter 1282.
-        # see https://github.com/culturesofknowledge/site-edit/blob/9a74580d2567755ab068a2d8761df8f81718910e/docker-postgres/cofk-empty.postgres.schema.sql#L6541
-        manif_names = [m.to_string() for m in self.manif_set.all()]
+        manif_type_order = [
+            'Letter',
+            'Scribal copy',
+            'Draft',
+            'Extract',
+            'Printed copy',
+            'Digital copy',
+            'Other',
+        ]
+        manif_type_map = query_cache_serv.create_lookup_doc_desc_map()
+
+        def get_sort_key(manif):
+            display_name = manif_type_map.get(manif.manifestation_type, 'Other')
+            try:
+                return manif_type_order.index(display_name)
+            except ValueError:
+                return len(manif_type_order)  # Place 'Other' or unknown types at the end
+
+        # Get all manifestations and sort them
+        sorted_manifs = sorted(self.manif_set.all(), key=get_sort_key)
+
+        manif_names = [m.to_string() for m in sorted_manifs]
         return manif_names
 
     @property
