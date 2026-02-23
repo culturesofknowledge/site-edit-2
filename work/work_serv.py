@@ -7,18 +7,18 @@ from django.db.models import Q, F
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
-from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, \
-    REL_TYPE_MENTION
+from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO,     REL_TYPE_MENTION
 from core.helper import data_serv,query_serv
 from core.constant import DEFAULT_MONTH, DEFAULT_DAY, DEFAULT_EMPTY_DATE_STR
 from location import location_serv
 from person import person_serv
 from work.models import CofkUnionWork
-from core import query_cache_serv
+from core.helper import query_cache_serv
 from manifestation import manif_serv
 
 log = logging.getLogger(__name__)
 HIDDEN_DATE_STD = '1900-01-01'
+
 
 
 
