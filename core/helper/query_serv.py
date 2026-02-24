@@ -106,11 +106,26 @@ def create_queries_by_lookup_field(request_data: dict,
             conn_type = get_lookup_conn_type_by_lookup_key(lookup_key)
 
             _queries = []
-            for search_field in _names:
-                log.debug(f'query cond: field_name[{field_name}] search_field[{search_field}] '
-                          f'field_val[{field_val}] lookup_key[{lookup_key}]')
-                _queries.append(run_lookup_fn(lookup_fn, search_field, field_val))
-            yield query_utils.concat_queries(_queries, conn_type)
+            if lookup_key in ('not_contain', 'not_start_with', 'not_end_with', 'not_equal_to'):
+                # For negation with multi-field mappings, build positive OR query first, then negate.
+                # This avoids issues with separate JOINs on reverse relations.
+                positive_lookup_fn = {
+                    'not_contain': lookup_icontains_wildcard,
+                    'not_start_with': lookups.IStartsWith,
+                    'not_end_with': lookups.IEndsWith,
+                    'not_equal_to': lookups.IExact,
+                }.get(lookup_key)
+                for search_field in _names:
+                    log.debug(f'query cond: field_name[{field_name}] search_field[{search_field}] '
+                              f'field_val[{field_val}] lookup_key[{lookup_key}]')
+                    _queries.append(run_lookup_fn(positive_lookup_fn, search_field, field_val))
+                yield ~query_utils.concat_queries(_queries, Q.OR)
+            else:
+                for search_field in _names:
+                    log.debug(f'query cond: field_name[{field_name}] search_field[{search_field}] '
+                              f'field_val[{field_val}] lookup_key[{lookup_key}]')
+                    _queries.append(run_lookup_fn(lookup_fn, search_field, field_val))
+                yield query_utils.concat_queries(_queries, conn_type)
 
         elif search_fields_fn_maps and field_name in search_fields_fn_maps:
             # handle search_fields_fn_maps
@@ -323,9 +338,30 @@ def update_queryset(queryset: QuerySet,
         queryset = queryset.annotate(**annotate)
 
     if queries:
-        queryset = queryset.filter(
-            create_exists_by_mode(model_class, queries, annotate=annotate)
-        )
+        # Separate negated queries (e.g. "does not contain" on related fields) from positive ones.
+        # Negated queries must use ~Exists(positive) instead of Exists(~positive) to avoid
+        # incorrect results with LEFT JOINs on reverse relations.
+        positive_queries = []
+        negated_queries = []
+        for q in queries:
+            if isinstance(q, Q) and q.negated and len(q.children) == 1:
+                # Extract the inner positive Q and handle with ~Exists
+                inner_q = Q()
+                inner_q.add(q.children[0], Q.AND)
+                if hasattr(q.children[0], 'connector'):
+                    inner_q = q.children[0]
+                negated_queries.append(inner_q)
+            else:
+                positive_queries.append(q)
+
+        if positive_queries:
+            queryset = queryset.filter(
+                create_exists_by_mode(model_class, positive_queries, annotate=annotate)
+            )
+        for neg_q in negated_queries:
+            queryset = queryset.filter(
+                ~create_exists_by_mode(model_class, [neg_q], annotate=annotate)
+            )
 
     if sort_by:
         queryset = queryset.order_by(*sort_by)
