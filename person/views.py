@@ -593,9 +593,15 @@ class PersonDeleteConfirmView(PermissionRequiredMixin, LoginRequiredMixin, Delet
 
 
 def lookup_other_details(lookup_fn, f, v) -> Q:
-    conn_type = query_serv.get_lookup_conn_type_by_lookup_key(
-        query_serv.get_lookup_key_by_lookup_fn(lookup_fn)
-    )
+    # Determine the actual lookup function to use for the positive condition
+    actual_lookup_fn = lookup_fn
+    is_negated_search = False
+    if lookup_fn == query_serv.lookup_not_icontains_with_blank:
+        actual_lookup_fn = query_serv.lookup_icontains_wildcard
+        is_negated_search = True
+
+    # Always combine positive conditions with OR to represent "contains in any of these fields"
+    conn_type = Q.OR
 
     related_person_detail_fields = [
         f for f in query_serv.person_detail_fields
@@ -603,7 +609,7 @@ def lookup_other_details(lookup_fn, f, v) -> Q:
     ]
 
     q = query_utils.create_q_by_field_names(
-        lookup_fn,
+        actual_lookup_fn,
 
         itertools.chain(
             query_utils.join_fields('cofkpersonlocationmap__location',
@@ -620,7 +626,10 @@ def lookup_other_details(lookup_fn, f, v) -> Q:
                                     query_serv.image_detail_fields),
         ), v, conn_type=conn_type)
 
-    return q
+    if is_negated_search:
+        return ~q # Negate the entire Q object for "does not contain"
+    else:
+        return q
 
 
 def get_target_or_related_id(recref: CofkPersonPersonMap):
