@@ -7,6 +7,7 @@
         <th>Publication ID</th>
         <th>Abbrev</th>
         <th>Last edit</th>
+        <th>Edit</th>
     </tr>
     </thead>
     <tbody>
@@ -25,6 +26,11 @@
             </td>
             <td>
                 {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r only %}
+            </td>
+            <td>
+                {% if constant.PM_CHANGE_PUBLICATION in perms %}
+                    <button class="open-link-btn" url="{% url 'publication:full_form' r.publication_id %}">Edit</button>
+                {% endif %}
             </td>
         </tr>
     {% endfor %}
