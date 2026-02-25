@@ -19,7 +19,8 @@ from manifestation import fixtures as manif_fixtures
 from manifestation.models import CofkUnionManifestation
 from person import fixtures as person_fixtures
 from work import fixtures as work_fixtures
-from work import work_serv
+from django.test import TestCase
+from work.work_serv import DisplayableWork
 from work.models import CofkUnionWork, CofkUnionLanguageOfWork
 from work.recref_adapter import WorkLocRecrefAdapter, WorkResourceRecrefAdapter, WorkCommentRecrefAdapter, \
     WorkPersonRecrefAdapter
@@ -79,7 +80,7 @@ class WorkFormTests(EmloSeleniumTestCase):
         self.click_submit()
 
         # assert work object
-        iwork_id = self.get_id_by_url_pattern(r'/work/form/corr/(\d+)')
+        iwork_id = self.get_id_by_url_pattern(r'/work/form/corr/(\\d+)')
         work = CofkUnionWork.objects.filter(iwork_id=iwork_id).first()
         self.assertIsNotNone(work)
         self.assertGreater(work.cofkworkcommentmap_set.filter(relationship_type=REL_TYPE_COMMENT_AUTHOR)
@@ -165,7 +166,7 @@ class WorkFormTests(EmloSeleniumTestCase):
         self.click_submit()
 
         # assert work object
-        iwork_id = self.get_id_by_url_pattern(r'/work/form/dates/(\d+)')
+        iwork_id = self.get_id_by_url_pattern(r'/work/form/dates/(\\d+)')
         work = CofkUnionWork.objects.filter(iwork_id=iwork_id).first()
         self.assertIsNotNone(work)
         self.assertGreater(work.cofkworkcommentmap_set.filter(relationship_type=REL_TYPE_COMMENT_DATE)
@@ -189,7 +190,7 @@ class WorkFormTests(EmloSeleniumTestCase):
         self.click_submit()
 
         # assert work object
-        iwork_id = self.get_id_by_url_pattern(r'/work/form/places/(\d+)')
+        iwork_id = self.get_id_by_url_pattern(r'/work/form/places/(\\d+)')
         work = CofkUnionWork.objects.filter(iwork_id=iwork_id).first()
         self.assertIsNotNone(work)
         field_val_tester.assert_all(work)
@@ -250,7 +251,7 @@ class WorkFormTests(EmloSeleniumTestCase):
         self.click_submit()
 
         # assert work object
-        iwork_id = self.get_id_by_url_pattern(r'/work/form/details/(\d+)')
+        iwork_id = self.get_id_by_url_pattern(r'/work/form/details/(\\d+)')
         work: CofkUnionWork = CofkUnionWork.objects.filter(iwork_id=iwork_id).first()
         self.assertIsNotNone(work)
         field_val_tester.assert_all(work)
@@ -273,7 +274,7 @@ class WorkFormTests(EmloSeleniumTestCase):
         input_lang_list = {'English', }
 
         self.goto_vname('work:manif_init', iwork_id=work.iwork_id)
-        iwork_id = self.get_id_by_url_pattern(r'/work/form/manif/(\d+)')
+        iwork_id = self.get_id_by_url_pattern(r'/work/form/manif/(\\d+)')
         self.assertEqual(iwork_id and int(iwork_id), work.iwork_id)
 
         self.selenium.maximize_window()
@@ -295,7 +296,7 @@ class WorkFormTests(EmloSeleniumTestCase):
         self.click_submit()
 
         # assert work object
-        manif_id = re.findall(r'/work/form/manif/(\d+)/([^/#]+)', self.selenium.current_url)
+        manif_id = re.findall(r'/work/form/manif/(\\d+)/([^/#]+)', self.selenium.current_url)
         self.assertTrue(manif_id)
         manif_id = manif_id[0][1]
         manif = CofkUnionManifestation.objects.filter(manifestation_id=manif_id).first()
@@ -587,3 +588,31 @@ class WorkSearchTests(EmloSeleniumTestCase, CommonSearchTests):
 
                 results = self.find_elements_by_css('#results_table tr[entry_id]')
                 self.assertEqual(len(results), 0, f"Expected 0 results for invalid flag '{flag_string}', got {len(results)}")
+
+
+class DisplayableWorkTests(TestCase):
+    def test_date_for_ordering_with_default_empty_date(self):
+        # Case 1: date_of_work_std is DEFAULT_EMPTY_DATE_STR
+        work = CofkUnionWork(date_of_work_std=constant.DEFAULT_EMPTY_DATE_STR)
+        displayable_work = DisplayableWork(work)
+        self.assertEqual(displayable_work.date_for_ordering, constant.DEFAULT_EMPTY_DATE_STR)
+
+        # Case 2: date_of_work_std is a normal date
+        displayable_work = DisplayableWork(date_of_work_std='2023-01-15')
+        self.assertEqual(displayable_work.date_for_ordering, '2023-01-15')
+
+        # Case 3: date_of_work_std is empty (defaults to 9999-12-31), but year is set
+        work = CofkUnionWork(date_of_work_std=None, date_of_work_std_year=2024,
+                             date_of_work_std_month=2, date_of_work_std_day=29)
+        displayable_work = DisplayableWork(work)
+        self.assertEqual(displayable_work.date_for_ordering, constant.DEFAULT_EMPTY_DATE_STR)
+
+        # Case 4: date_of_work_std is empty (defaults to 9999-12-31), year is set, month/day are default
+        work = CofkUnionWork(date_of_work_std=None, date_of_work_std_year=2025) # Changed to None for consistency
+        displayable_work = DisplayableWork(work)
+        self.assertEqual(displayable_work.date_for_ordering, constant.DEFAULT_EMPTY_DATE_STR)
+
+        # Case 5: date_of_work_std is None (defaults to 9999-12-31) and date_of_work_std_year is None
+        work = CofkUnionWork(date_of_work_std=None, date_of_work_std_year=None)
+        displayable_work = DisplayableWork(work)
+        self.assertEqual(displayable_work.date_for_ordering, constant.DEFAULT_EMPTY_DATE_STR)
