@@ -42,7 +42,7 @@ def more_info(work: DisplayableWork):
     if work.general_notes:
         tooltip.append(f'Notes: {work.general_notes}\n')
 
-    return ' ~ '.join(tooltip)
+    return ', '.join(tooltip)
 
 
 @register.filter

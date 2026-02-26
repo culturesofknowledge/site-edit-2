@@ -258,7 +258,7 @@ class DisplayableWork(CofkUnionWork):
 
     @property
     def general_notes(self) -> str:
-        return ', '.join([c.comment for c in self.general_comments])
+        return ' ~ '.join([c.comment for c in self.general_comments])
 
     @property
     def catalogue(self) -> str:
