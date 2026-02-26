@@ -264,8 +264,8 @@ class AuditSearchFieldset(BasicSearchFieldset):
 
     table_name = CharSelectField(choices=table_name_choices, )
 
-    key_value_text = forms.CharField(required=False, label='Record ID')
-    key_value_text_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
+    key_value_integer = forms.IntegerField(required=False, label='Record ID')
+    key_value_integer_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
     key_decode = forms.CharField(required=False, label='Record Desc')
     key_decode_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)

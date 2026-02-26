@@ -891,11 +891,12 @@ def overview_view(request, iwork_id):
     if request.POST:
         return redirect('work:overview_form', iwork_id=iwork_id)
 
-    work = get_object_or_404(CofkUnionWork, iwork_id=iwork_id)
+    work = get_object_or_404(DisplayableWork, iwork_id=iwork_id) # Use DisplayableWork here
 
     context = dict(
         iwork_id=work.iwork_id,
         work=work,
+        date_for_ordering=work.date_for_ordering,
         work_display_name=work_serv.get_recref_display_name(work),
 
         notes_work=work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_DATE),

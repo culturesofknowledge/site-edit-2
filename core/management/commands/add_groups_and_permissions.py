@@ -31,12 +31,12 @@ class Command(BaseCommand):
                 constant.PM_CHANGE_LANGUAGE,
                 constant.PM_ADD_SUGGESTIONS,
                 constant.PM_VIEW_SUGGESTIONS,
+                constant.PM_VIEW_AUDIT,
             ],
         }
         group_permissions_dict[constant.ROLE_SUPER] = group_permissions_dict[constant.ROLE_EDITOR] + [
             constant.PM_CHANGE_USER,
             constant.PM_CHANGE_COMMENT,
-            constant.PM_VIEW_AUDIT,
             constant.PM_EXPORT_FILE_WORK,
             constant.PM_EXPORT_FILE_PERSON,
             constant.PM_EXPORT_FILE_LOCATION,

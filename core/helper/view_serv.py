@@ -586,7 +586,11 @@ class BasicSearchView(ListView):
 
         # Assign correct order
         if self.request_data.get('order', self.default_order) == 'desc':
-            return [f'-{s}' for s in sort_by]
+            sort_by = [f'-{s}' for s in sort_by]
+
+        # Always add 'pk' as a secondary sort to ensure consistent ordering
+        if 'pk' not in sort_by and '-pk' not in sort_by:
+            sort_by.append('pk')
 
         return sort_by
 

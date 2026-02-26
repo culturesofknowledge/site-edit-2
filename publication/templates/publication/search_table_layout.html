@@ -4,7 +4,7 @@
     <tr></tr>
     <tr>
         <th>Publication Details</th>
-        <th>Publication ID</th>
+        <th>ID</th>
         <th>Abbrev</th>
         <th>Last edit</th>
     </tr>
@@ -19,6 +19,9 @@
             </td>
             <td>
                 {% include 'core/component/search_table_layout/link_record.html' with id=r.publication_id view='publication:full_form' edit_perm=constant.PM_CHANGE_PUBLICATION only%}
+                {% if constant.PM_CHANGE_PUBLICATION in perms %}
+                    <button class="open-link-btn" url="{% url 'publication:full_form' r.publication_id %}">Edit</button>
+                {% endif %}
             </td>
             <td>
                 {{ r.abbrev }}

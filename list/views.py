@@ -226,7 +226,7 @@ class OrgTypeListView(PermissionRequiredMixin, LoginRequiredMixin, CofkListView)
 
     @property
     def list_type(self):
-        return 'organisation type'
+        return 'organization type'
 
     @property
     def save_perm(self):

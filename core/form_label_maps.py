@@ -11,7 +11,15 @@ field_label_map = {
         'is_active': 'Active',
         'is_staff': 'Staff',
     },
-    'audit': common_fields | {},
+    'audit': common_fields | {
+        'table_name': 'Table',
+        'key_value_integer': 'Record ID',
+        'key_decode': 'Record Desc',
+        'column_name': 'Changed field',
+        'change_type': 'Change type',
+        'change_made': 'Changes made',
+        'audit_id': 'Audit Trail',
+    },
     'institution': common_fields | {
         'institution_name': 'Name',
         'institution_city': 'City',
