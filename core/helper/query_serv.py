@@ -97,6 +97,13 @@ def create_queries_by_lookup_field(request_data: dict,
             log.warning(f'lookup fn not found -- [{field_name}][{lookup_key}]')
             continue
 
+        # Determine if this is a string lookup that should exclude nulls
+        is_string_lookup_with_value = lookup_key in [
+            'contains', 'starts_with', 'ends_with',
+            'not_contain', 'not_start_with', 'not_end_with',
+            'equals', 'not_equal_to',
+        ] and field_val is not None
+
         if search_fields_maps and field_name in search_fields_maps:
             # handle search_fields_maps
 
@@ -118,24 +125,34 @@ def create_queries_by_lookup_field(request_data: dict,
                 for search_field in _names:
                     log.debug(f'query cond: field_name[{field_name}] search_field[{search_field}] '
                               f'field_val[{field_val}] lookup_key[{lookup_key}]')
-                    _queries.append(run_lookup_fn(positive_lookup_fn, search_field, field_val))
+                    q_obj = run_lookup_fn(positive_lookup_fn, search_field, field_val)
+                    if is_string_lookup_with_value:
+                        q_obj &= Q(**{f'{search_field}__isnull': False})
+                    _queries.append(q_obj)
                 yield ~query_utils.concat_queries(_queries, Q.OR)
             else:
                 for search_field in _names:
                     log.debug(f'query cond: field_name[{field_name}] search_field[{search_field}] '
                               f'field_val[{field_val}] lookup_key[{lookup_key}]')
-                    _queries.append(run_lookup_fn(lookup_fn, search_field, field_val))
+                    q_obj = run_lookup_fn(lookup_fn, search_field, field_val)
+                    if is_string_lookup_with_value:
+                        q_obj &= Q(**{f'{search_field}__isnull': False})
+                    _queries.append(q_obj)
                 yield query_utils.concat_queries(_queries, conn_type)
 
         elif search_fields_fn_maps and field_name in search_fields_fn_maps:
             # handle search_fields_fn_maps
             log.debug(f'query cond: field_name[{field_name}] field_val[{field_val}] lookup_key[{lookup_key}]')
+            # For search_fields_fn_maps, the lookup function itself should handle nullability if needed
             yield search_fields_fn_maps[field_name](lookup_fn, field_name, field_val)
 
         else:
             # handle normal case
             log.debug(f'query cond: field_name[{field_name}] field_val[{field_val}] lookup_key[{lookup_key}]')
-            yield run_lookup_fn(lookup_fn, field_name, field_val)
+            q_obj = run_lookup_fn(lookup_fn, field_name, field_val)
+            if is_string_lookup_with_value:
+                q_obj &= Q(**{f'{field_name}__isnull': False})
+            yield q_obj
 
 
 def lookup_icontains_wildcard(field, value):
