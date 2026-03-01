@@ -1,4 +1,4 @@
-VERSION = "0.4"
+VERSION = "0.5"
 ENTITIES = {
     'audit': 'audit',
     'institution': 'repository',

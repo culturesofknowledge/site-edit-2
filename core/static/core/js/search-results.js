@@ -24,10 +24,6 @@ function toggle_advanced_search_controls()  {
 
 }
 
-if (localStorage.getItem('advanced-search-toggle') === 'true') {
-    toggle_advanced_search_controls();
-    $("#advanced_search").prop("checked", true);
-}
 
 
 var emlojs = emlojs || {};
@@ -215,7 +211,6 @@ function setup_fieldset_toggle() {
 function setup_advanced_search_toggle() {
     $('#advanced_search').on('click', function () {
         toggle_advanced_search_controls();
-        localStorage.setItem('advanced-search-toggle', $('#advanced_search').prop('checked'));
     });
 
 }
