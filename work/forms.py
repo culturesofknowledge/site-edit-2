@@ -347,7 +347,7 @@ class CommonWorkForm(forms.Form):
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-        if user and not utils.is_user_editor_or_supervisor(user):
+        if user and not utils.is_user_supervisor(user):
             self.fields['catalogue'].widget.attrs['readonly'] = True
             self.fields['catalogue'].widget.attrs['disabled'] = True
 
