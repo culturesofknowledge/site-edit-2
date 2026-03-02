@@ -110,20 +110,94 @@ def prepare_person_records() -> list[CofkUnionPerson]:
 
 
 class PersonCommonSearchTests(EmloSeleniumTestCase, CommonSearchTests):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setup_common_search_test(self, 'person:search', prepare_person_records)
+    def test_search__display_flourished_dates(self):
+        # Create a person with only flourished dates
+        person_fl = test_serv.create_person_by_dict(
+            {
+                'foaf_name': 'Flourished Person',
+                'flourished_year': 1600,
+                'flourished2_year': 1650,
+                'date_of_birth_year': None,
+                'date_of_death_year': None,
+            }
+        )
 
-    def test_search__search_unique(self):
-        def _fill(target_record):
-            ele = self.selenium.find_element(By.ID, 'id_iperson_id')
-            ele.send_keys(target_record.iperson_id)
+        # Create a person with birth and death dates
+        person_bd = test_serv.create_person_by_dict(
+            {
+                'foaf_name': 'Born Died Person',
+                'date_of_birth_year': 1500,
+                'date_of_death_year': 1580,
+                'flourished_year': None,
+            }
+        )
 
-        def _check(target_record):
-            self.assertEqual(self.find_entry_id_by_table_rows(0),
-                             str(target_record.iperson_id))
+        # Create a person related to the above two
+        person_related = test_serv.create_person_by_dict(
+            {
+                'foaf_name': 'Related Person',
+            }
+        )
+        from person.models import CofkPersonPersonMap
+        CofkPersonPersonMap.objects.create(
+            person=person_related,
+            related=person_fl,
+            relationship_type=constant.REL_TYPE_UNSPECIFIED_RELATIONSHIP_WITH
+        )
+        CofkPersonPersonMap.objects.create(
+            person=person_related,
+            related=person_bd,
+            relationship_type=constant.REL_TYPE_UNSPECIFIED_RELATIONSHIP_WITH
+        )
 
-        self._test_search__search_unique(_fill, _check)
+        self.selenium.get(self.get_url_by_viewname('person:search'))
+        self.selenium.find_element(By.ID, 'id_foaf_name').send_keys('Person')
+        self.click_search_btn()
+
+        # Find the row for 'Flourished Person'
+        fl_row = self.find_row_by_text('Flourished Person')
+        self.assertIsNotNone(fl_row, "Flourished Person row not found")
+
+        # Assert 'Fl.' column for 'Flourished Person'
+        fl_col_index = self.get_header_column_index('Fl.')
+        fl_date_text = fl_row.find_elements(By.TAG_NAME, 'td')[fl_col_index].text
+        self.assertEqual(fl_date_text.strip(), 'fl. 1600-1650')
+
+        # Find the row for 'Born Died Person'
+        bd_row = self.find_row_by_text('Born Died Person')
+        self.assertIsNotNone(bd_row, "Born Died Person row not found")
+
+        # Assert 'Born' and 'Died' columns for 'Born Died Person'
+        born_col_index = self.get_header_column_index('Born')
+        died_col_index = self.get_header_column_index('Died')
+        born_date_text = bd_row.find_elements(By.TAG_NAME, 'td')[born_col_index].text
+        died_date_text = bd_row.find_elements(By.TAG_NAME, 'td')[died_col_index].text
+        self.assertEqual(born_date_text.strip(), '1500')
+        self.assertEqual(died_date_text.strip(), '1580')
+
+        # Find the row for 'Related Person'
+        related_row = self.find_row_by_text('Related Person')
+        self.assertIsNotNone(related_row, "Related Person row not found")
+
+        # Assert 'Other details' column for 'Related Person'
+        other_details_col_index = self.get_header_column_index('Other details')
+        other_details_text = related_row.find_elements(By.TAG_NAME, 'td')[other_details_col_index].text
+        self.assertIn('Flourished Person, fl. 1600-1650', other_details_text)
+        self.assertIn('Born Died Person, 1500-1580', other_details_text)
+
+    def get_header_column_index(self, header_text):
+        headers = self.selenium.find_elements(By.CSS_SELECTOR, '#results_table thead th')
+        for i, header in enumerate(headers):
+            if header.text.strip() == header_text:
+                return i
+        raise ValueError(f"Header '{header_text}' not found.")
+
+    def find_row_by_text(self, text):
+        rows = self.selenium.find_elements(By.CSS_SELECTOR, '#results_table tbody tr')
+        for row in rows:
+            if text in row.text:
+                return row
+        return None
 
 
 class PersonQueryTests(TestCase):

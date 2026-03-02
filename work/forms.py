@@ -17,6 +17,7 @@ from institution.models import CofkUnionInstitution
 from manifestation.models import CofkUnionManifestation
 from work.models import CofkUnionWork
 from work.recref_adapter import WorkPersonRecrefAdapter, ManifPersonRecrefAdapter
+from login import utils
 
 log = logging.getLogger(__name__)
 
@@ -343,6 +344,12 @@ class CommonWorkForm(forms.Form):
     catalogue_list = forms.Field(required=False, widget=widgets_serv.Datalist())
 
     work_to_be_deleted = form_serv.DeleteCheckboxField(is_str=False, initial=0)
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if user and not utils.is_user_editor_or_supervisor(user):
+            self.fields['catalogue'].widget.attrs['readonly'] = True
+            self.fields['catalogue'].widget.attrs['disabled'] = True
 
 
 class AuthorRelationChoices(TextChoices):
