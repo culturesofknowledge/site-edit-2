@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 
 def get_recref_display_name(person: CofkUnionPerson):
-    return person and person.foaf_name
+    return person and person.to_string()
 
 
 def get_display_name(person: CofkUnionPerson):
