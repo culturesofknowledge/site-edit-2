@@ -1,10 +1,10 @@
 {% extends "work/basic_form.html" %}
 {% block tabcontent %}
     <div id="header_author" class="header toc-item">
-        <h2>Authors / Senders</h2>
+        <h2>Authors/senders</h2>
     </div>
     <fieldset>
-        {% include "core/component/common_multi_rel_recref_formset.html" with multi_rel_recref_formset=author_formset recref_type='person' id_field=corr_form.selected_author_id label_add='Add another author/sender:' %}
+        {% include "core/component/common_multi_rel_recref_formset.html" with multi_rel_recref_formset=author_formset recref_type='person' id_field=corr_form.selected_author_id label_add='Add another author/sender:' help_text_type='author' %}
 
         <div class="multi_rel_recref_container">
         <label> Authors/sender as marked: </label>
@@ -31,10 +31,10 @@
 
 
     <div id="header_addressees" class="header toc-item">
-        <h2>Addressees</h2>
+        <h2>Recipients/addressees</h2>
     </div>
     <fieldset>
-        {% include "core/component/common_multi_rel_recref_formset.html" with multi_rel_recref_formset=addressee_formset recref_type='person' id_field=corr_form.selected_addressee_id label_add='Add another addressee:' %}
+        {% include "core/component/common_multi_rel_recref_formset.html" with multi_rel_recref_formset=addressee_formset recref_type='person' id_field=corr_form.selected_addressee_id label_add='Add another addressee:' help_text_type='addressee' %}
 
         <div class="multi_rel_recref_container">
         <label> Addressees as marked: </label>

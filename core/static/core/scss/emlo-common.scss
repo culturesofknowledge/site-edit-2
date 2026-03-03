@@ -235,25 +235,37 @@ nav.flex-space-between {
 }
 
 
-.multi_rel_recref_container {
-  display: grid;
-  grid-template-columns: 25fr 75fr;
-  grid-row-gap: 8px;
-  width: 100%;
-  font-size: $typescale-7;
+.formset-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
 
-  & > .grid-item {
-    background-color: #f2f2f2;
+  .person-display-name {
+    padding-right: 15px;
+    font-weight: bold;
+    min-width: 200px; /* Adjust as needed */
+  }
 
-    & > .name {
-      font-size: $typescale-4;
+  .multi_rel_recref_container {
+    display: grid;
+    grid-template-columns: 25fr 75fr;
+    grid-row-gap: 8px;
+    width: 100%;
+    font-size: $typescale-7;
+
+    & > .grid-item {
+      background-color: #f2f2f2;
+
+      & > .name {
+        font-size: $typescale-4;
+      }
     }
-  }
 
-  & > label, span{
-    font-size: 1.44em;
-  }
+    & > label, span{
+      font-size: 1.44em;
+    }
 
+  }
 }
 
 .sub-recref-form {

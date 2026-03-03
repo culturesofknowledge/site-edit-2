@@ -1,12 +1,25 @@
 <div class="multi_rel_recref_container">
     {{ multi_rel_recref_formset.management_form }}
     {% for form in multi_rel_recref_formset %}
-        {{ form }}
+        <div class="formset-row">
+            {% if form.instance.pk %}
+                <div class="person-display-name">
+                    {{ form.instance.to_string }}
+                </div>
+            {% endif %}
+            {{ form }}
+        </div>
     {% endfor %}
 </div>
 {% if multi_rel_recref_formset|length %}
 <div class="margin-bottom">
-    User can delete entity by uncheck all checkbox of related entity.
+    {% if help_text_type == 'author' %}
+        To remove an author/sender, please uncheck the checkbox(es) and save.
+    {% elif help_text_type == 'addressee' %}
+        To remove an addressee/recipient, please uncheck the checkbox(es) and save.
+    {% else %}
+        User can delete entity by uncheck all checkbox of related entity.
+    {% endif %}
 </div>
 {% endif %}
 
