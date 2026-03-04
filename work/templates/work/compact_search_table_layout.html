@@ -67,7 +67,7 @@
                 {% endif %}
             </td>
             <td>
-                {{ r.change_timestamp|date:"d M Y H:i" }} by {{ r.change_user }}<br/>
+                {{ r.change_timestamp|standard_datetime }} by {{ r.change_user }}<br/>
                 Source: {{ r.accession_code }}<br/>
                 [{{ r.catalogue}}]
             </td>

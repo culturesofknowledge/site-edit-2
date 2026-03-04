@@ -308,11 +308,11 @@
         <span class="col-label">Alternative work ID (for internal system use):</span>
         <span> {{ work.work_id }} </span>
         <span class="col-label">Creation date/time:</span>
-        <span> {{ work.creation_timestamp }} </span>
+        <span> {{ work.creation_timestamp|standard_datetime }} </span>
         <span class="col-label">Created by user:</span>
         <span> {{ work.creation_user }} </span>
         <span class="col-label">Date/time of last change:</span>
-        <span> {{ work.change_timestamp }} </span>
+        <span> {{ work.change_timestamp|standard_datetime }} </span>
         <span class="col-label">Changed by user:</span>
         <span> {{ work.change_user }} </span>
     </div>

@@ -31,7 +31,7 @@
     <tr>
 
         <td>{{ upload.upload_id }}</td>
-        <td>{{ upload.upload_timestamp|date:"d M Y H:i" }}</td>
+        <td>{{ upload.upload_timestamp|standard_datetime }}</td>
         <td>{{ upload.upload_name }}</td>
         <td>{{ upload.uploader_email }}</td>
         <td>{{ upload.total_works }}</td>

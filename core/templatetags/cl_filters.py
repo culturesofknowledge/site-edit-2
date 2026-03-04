@@ -2,12 +2,23 @@ import re
 
 from django import template
 from django.core.paginator import Page
+from django.template.defaultfilters import date as date_filter
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 
 from core.constant import ENTITIES
 
+STANDARD_DATETIME_FORMAT = "d M Y H:i"
+
 register = template.Library()
+
+
+@register.filter
+def standard_datetime(value):
+    """Format a datetime using the project-wide standard format."""
+    if not value:
+        return ''
+    return date_filter(value, STANDARD_DATETIME_FORMAT)
 
 
 @register.filter

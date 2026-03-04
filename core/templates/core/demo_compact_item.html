@@ -1,3 +1,4 @@
+{% load cl_filters %}
 <article class="row selectable_entry" entry_id="{{ record.pk }}">
     <div class="col col--4of6">
         <h3>
@@ -14,7 +15,7 @@
             <dt>Last edited by </dt>
             <dd>
                 {{ record.change_user }}<br/>
-                {{ record.change_timestamp }}
+                {{ record.change_timestamp|standard_datetime }}
             </dd>
         </dl>
     </aside>
