@@ -22,30 +22,39 @@ HIDDEN_DATE_STD = '1900-01-01'
 
 
 
+def _format_work_date(year, month, day) -> str:
+    if all((year, month, day)):
+        return date(year=year, month=month, day=day).strftime('%-d %b %Y')
+    elif all((year, month)):
+        return date(year=year, month=month, day=1).strftime('%b %Y')
+    elif year:
+        return str(year)
+    return 'Unknown date'
+
+
 def get_recref_display_name(work: CofkUnionWork) -> str:
     if not work:
         return ''
 
-    if all((work.date_of_work_std_year,
-            work.date_of_work_std_month,
-            work.date_of_work_std_day,)):
-        work_date = date(year=work.date_of_work_std_year,
-                         month=work.date_of_work_std_month,
-                         day=work.date_of_work_std_day)
-        work_date_str = work_date.strftime('%-d %b %Y')
+    work_date_str = _format_work_date(work.date_of_work_std_year,
+                                      work.date_of_work_std_month,
+                                      work.date_of_work_std_day)
 
-    elif all((work.date_of_work_std_year,
-              work.date_of_work_std_month,)):
-        work_date = date(year=work.date_of_work_std_year,
-                         month=work.date_of_work_std_month,
-                         day=1)
-        work_date_str = work_date.strftime('%b %Y')
-
-    elif work.date_of_work_std_year:
-        work_date_str = str(work.date_of_work_std_year)
-
-    else:
-        work_date_str = 'Unknown date'
+    if work.date_of_work_std_is_range:
+        has_from = work.date_of_work_std_year is not None
+        has_to = work.date_of_work2_std_year is not None
+        if has_from and not has_to:
+            work_date_str = f'On or after {work_date_str}'
+        elif has_to and not has_from:
+            work_date2 = _format_work_date(work.date_of_work2_std_year,
+                                           work.date_of_work2_std_month,
+                                           work.date_of_work2_std_day)
+            work_date_str = f'On or before {work_date2}'
+        elif has_from and has_to:
+            work_date2 = _format_work_date(work.date_of_work2_std_year,
+                                           work.date_of_work2_std_month,
+                                           work.date_of_work2_std_day)
+            work_date_str = f'Between {work_date_str} and {work_date2}'
 
     from_person_str = join_names(find_related_person_names(work, REL_TYPE_CREATED))
     from_person_str = from_person_str or 'unknown author/sender'
