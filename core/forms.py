@@ -24,6 +24,14 @@ class RecrefForm(forms.Form):
     is_delete = form_serv.DeleteCheckboxField()
 
     @property
+    def initial_target_id(self):
+        target_id = str(self.initial.get('target_id', ''))
+        # Extract numeric ID from values like 'cofk_import_ead-ead_c01_id:000012345'
+        if ':' in target_id:
+            target_id = target_id.split(':')[-1]
+        return target_id.lstrip('0') or '0'
+
+    @property
     def target_url(self) -> str:
         return ''  # tobe define by subclass
 
