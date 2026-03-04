@@ -217,6 +217,12 @@ class DisplayableWork(CofkUnionWork):
                 t.work_from.description,
             ) for t in (self.work_to_set.all() or [])
         ]
+        links += [
+            data_serv.endcode_url_content(
+                reverse("work:overview_form", args=[t.work_to.iwork_id]),
+                t.work_to.description,
+            ) for t in (self.work_from_set.all() or [])
+        ]
         return ', '.join(links)
 
     @property
