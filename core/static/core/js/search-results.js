@@ -68,6 +68,9 @@ emlojs.recref_select_service = {
 
     setup_all: function () {
 
+        // hide the edit buttons as they are not required while selcting the row
+        $('.open-link-btn').hide();
+
         if (return_quick_init_vname) {
 
             $('.selectable_entry').on('click', (e) => {
