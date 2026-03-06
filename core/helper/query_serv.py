@@ -3,7 +3,7 @@ import re
 from typing import Callable, Iterable, Any, Literal
 
 import more_itertools
-from django.db.models import F, QuerySet
+from django.db.models import F, QuerySet, Exists, OuterRef, Min, Max
 from django.db.models import Q, lookups
 from django.db.models.base import ModelBase
 from django.db.models.lookups import GreaterThanOrEqual, LessThanOrEqual, Exact
@@ -122,6 +122,7 @@ def create_queries_by_lookup_field(request_data: dict,
                     'not_end_with': lookups.IEndsWith,
                     'not_equal_to': lookups.IExact,
                 }.get(lookup_key)
+
                 for search_field in _names:
                     log.debug(f'query cond: field_name[{field_name}] search_field[{search_field}] '
                               f'field_val[{field_val}] lookup_key[{lookup_key}]')
@@ -129,7 +130,8 @@ def create_queries_by_lookup_field(request_data: dict,
                     if is_string_lookup_with_value:
                         q_obj &= Q(**{f'{search_field}__isnull': False})
                     _queries.append(q_obj)
-                yield ~query_utils.concat_queries(_queries, Q.OR)
+                negated_q = ~query_utils.concat_queries(_queries, Q.OR)
+                yield negated_q
             else:
                 for search_field in _names:
                     log.debug(f'query cond: field_name[{field_name}] search_field[{search_field}] '
@@ -381,7 +383,27 @@ def update_queryset(queryset: QuerySet,
             )
 
     if sort_by:
-        queryset = queryset.order_by(*sort_by)
+        new_sort_by = []
+        for s in sort_by:
+            field_name = s.lstrip('-')
+            is_desc = s.startswith('-')
+
+            # Multi-valued fields (reverse relations like resources, images, comments)
+            # cause duplicates in the result set if sorted directly.
+            # Use Min/Max annotation to avoid duplicates and handle NULLs.
+            multi_valued_prefixes = ('resources__', 'images__', 'comments__')
+            if any(field_name.startswith(p) for p in multi_valued_prefixes):
+                annotated_field = f'sort_{field_name.replace("__", "_")}'
+                if is_desc:
+                    queryset = queryset.annotate(**{annotated_field: Max(field_name)})
+                    new_sort_by.append(F(annotated_field).desc(nulls_last=True))
+                else:
+                    queryset = queryset.annotate(**{annotated_field: Min(field_name)})
+                    new_sort_by.append(F(annotated_field).asc(nulls_first=True))
+            else:
+                new_sort_by.append(s)
+
+        queryset = queryset.order_by(*new_sort_by)
 
     log.debug('queryset sql\n: %s', convert_queryset_to_sql(queryset))
     return queryset
@@ -425,12 +447,29 @@ def create_recref_lookup_fn(rel_types: list, recref_field_name: str, cond_fields
             )
             return rel_type_query & non_blank_query
 
-        cond_query = create_q_by_field_names(
-            lookup_fn,
-            join_fields(recref_field_name, cond_fields),
-            v
-        )
-        return rel_type_query & cond_query
+        if lookup_key in ('not_contain', 'not_start_with', 'not_end_with', 'not_equal_to'):
+            # For negation with multi-field mappings, build positive OR query first, then negate.
+            # This avoids issues with separate JOINs on reverse relations.
+            positive_lookup_fn = {
+                'not_contain': lookup_icontains_wildcard,
+                'not_start_with': lookups.IStartsWith,
+                'not_end_with': lookups.IEndsWith,
+                'not_equal_to': lookups.IExact,
+            }.get(lookup_key)
+            positive_q = create_q_by_field_names(
+                positive_lookup_fn,
+                join_fields(recref_field_name, cond_fields),
+                v,
+                conn_type=Q.OR,
+            )
+            return ~positive_q
+        else:
+            cond_query = create_q_by_field_names(
+                lookup_fn,
+                join_fields(recref_field_name, cond_fields),
+                v
+            )
+            return rel_type_query & cond_query
 
     return _fn
 

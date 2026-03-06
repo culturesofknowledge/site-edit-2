@@ -10,6 +10,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 
 from core import constant
 from core.export_data import cell_values, download_csv_serv
+from core.constant import TRUE_CHAR
 from core.helper import renderer_serv, query_serv, view_serv, perm_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.model_serv import ModelLike
@@ -68,8 +69,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
             'institution_name': ['institution_name', 'institution_synonyms'],
             'institution_city': ['institution_city', 'institution_city_synonyms'],
             'institution_country': ['institution_country', 'institution_country_synonyms'],
-            'resources': ['resources__resource_name', 'resources__resource_details',
-                          'resources__resource_url'],
+            'resources': ['resources__resource_name', 'resources__resource_details'],
             'images': ['images__image_filename']}
 
     @property
@@ -97,7 +97,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
         queries.extend(
             query_serv.create_queries_by_lookup_field(request_data, self.search_fields, self.search_field_combines)
         )
-        return self.create_queryset_by_queries(CofkUnionInstitution, queries, sort_by=sort_by).distinct()
+        return query_serv.update_queryset(CofkUnionInstitution.objects.all(), CofkUnionInstitution, queries=queries, sort_by=sort_by).distinct()
 
     @property
     def compact_search_results_renderer_factory(self) -> RendererFactory:
