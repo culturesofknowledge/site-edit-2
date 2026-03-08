@@ -1012,7 +1012,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def search_field_fn_maps(self) -> dict[str, Lookup]:
         return {
-            'work_to_be_deleted': lambda f, v: Exact(F(f), '1' if v == 'On' or v == '1' else '0'),
+            'work_to_be_deleted': lambda f, v: Exact(F(f), '1' if v.lower() == 'on' or v == '1' else '0'),
             'person_sent_pk': create_search_fn_person_recref(AuthorRelationChoices.values),
             'person_rec_pk': create_search_fn_person_recref(AddresseeRelationChoices.values),
             'person_sent_rec_pk': create_search_fn_person_recref(AuthorRelationChoices.values
