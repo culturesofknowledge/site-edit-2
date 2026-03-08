@@ -20,6 +20,16 @@
 .alert-octagon {
   width: 24px;
   height: 38px;
+  stroke: darkgrey;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+
+}
+
+.alert-octagon-delete {
+  width: 24px;
+  height: 38px;
   stroke: red;
   stroke-width: 2;
   stroke-linecap: round;
