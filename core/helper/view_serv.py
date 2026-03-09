@@ -585,12 +585,32 @@ class BasicSearchView(ListView):
             sort_by = [sort_by]
 
         # Assign correct order
-        if self.request_data.get('order', self.default_order) == 'desc':
+        is_desc = self.request_data.get('order', self.default_order) == 'desc'
+        if is_desc:
             sort_by = [f'-{s}' for s in sort_by]
 
-        # Always add 'pk' as a secondary sort to ensure consistent ordering
-        if 'pk' not in sort_by and '-pk' not in sort_by:
-            sort_by.append('pk')
+        # Always add a secondary sort to ensure consistent ordering
+        # For some models, the human-readable ID is not the PK (e.g. CofkUnionPerson.iperson_id)
+        # We prefer sorting by this ID if it exists.
+        secondary_sort = 'pk'
+        id_fields = ['iperson_id', 'iwork_id']
+        if hasattr(self, 'queryset') and self.queryset is not None:
+            for id_field in id_fields:
+                if hasattr(self.queryset.model, id_field):
+                    secondary_sort = id_field
+                    break
+        elif hasattr(self, 'entity'):
+            # Fallback for when queryset is not yet available on self
+            if self.entity.startswith('person'):
+                secondary_sort = 'iperson_id'
+            elif self.entity.startswith('work'):
+                secondary_sort = 'iwork_id'
+
+        if secondary_sort not in sort_by and f'-{secondary_sort}' not in sort_by:
+            if is_desc:
+                sort_by.append(f'-{secondary_sort}')
+            else:
+                sort_by.append(secondary_sort)
 
         return sort_by
 
