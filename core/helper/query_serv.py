@@ -97,11 +97,12 @@ def create_queries_by_lookup_field(request_data: dict,
             log.warning(f'lookup fn not found -- [{field_name}][{lookup_key}]')
             continue
 
-        # Determine if this is a string lookup that should exclude nulls
+        # Determine if this is a positive string lookup that should exclude nulls.
+        # Negation lookups (not_contain, not_start_with, etc.) must NOT exclude nulls,
+        # because NULL fields genuinely "do not contain" the search term.
         is_string_lookup_with_value = lookup_key in [
             'contains', 'starts_with', 'ends_with',
-            'not_contain', 'not_start_with', 'not_end_with',
-            'equals', 'not_equal_to',
+            'equals',
         ] and field_val is not None
 
         if search_fields_maps and field_name in search_fields_maps:
@@ -130,7 +131,10 @@ def create_queries_by_lookup_field(request_data: dict,
                     if is_string_lookup_with_value:
                         q_obj &= Q(**{f'{search_field}__isnull': False})
                     _queries.append(q_obj)
-                negated_q = ~query_utils.concat_queries(_queries, Q.OR)
+                combined_q = query_utils.concat_queries(_queries, Q.OR)
+                if not isinstance(combined_q, Q):
+                    combined_q = Q(combined_q)
+                negated_q = ~combined_q
                 yield negated_q
             else:
                 for search_field in _names:
@@ -454,6 +458,9 @@ def create_recref_lookup_fn(rel_types: list, recref_field_name: str, cond_fields
         if lookup_key in ('not_contain', 'not_start_with', 'not_end_with', 'not_equal_to'):
             # For negation with multi-field mappings, build positive OR query first, then negate.
             # This avoids issues with separate JOINs on reverse relations.
+            # Include rel_type_query so that only the specific relationship type is considered;
+            # without it, records matching the text in a *different* relationship type would be
+            # incorrectly excluded.
             positive_lookup_fn = {
                 'not_contain': lookup_icontains_wildcard,
                 'not_start_with': lookups.IStartsWith,
@@ -466,7 +473,7 @@ def create_recref_lookup_fn(rel_types: list, recref_field_name: str, cond_fields
                 v,
                 conn_type=Q.OR,
             )
-            return ~positive_q
+            return ~Q(rel_type_query & positive_q)
         else:
             cond_query = create_q_by_field_names(
                 lookup_fn,

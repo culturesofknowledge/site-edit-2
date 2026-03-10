@@ -401,6 +401,12 @@ def is_hidden_work(work: CofkUnionWork, cached_catalogue_status: dict[Any, int] 
             not is_catalogue_published or
             work.date_of_work_std == HIDDEN_DATE_STD)
 
+def _is_negated_lookup(lookup_fn) -> bool:
+    """Return True if lookup_fn corresponds to a negation search operator."""
+    lookup_key = query_serv.get_lookup_key_by_lookup_fn(lookup_fn)
+    return lookup_key in ('not_contain', 'not_start_with', 'not_end_with', 'not_equal_to')
+
+
 def lookup_manifestations_searchable(lookup_fn, field_name: str, value: str) -> Q:
     """
     Allow combining document type and repository (and more terms) using % as an ordered wildcard separator.
@@ -444,7 +450,10 @@ def lookup_manifestations_searchable(lookup_fn, field_name: str, value: str) -> 
 
         manif_q &= segment_q
 
-    return Exists(CofkUnionManifestation.objects.filter(manif_q, work_id=OuterRef('pk')))
+    exists_q = Exists(CofkUnionManifestation.objects.filter(manif_q, work_id=OuterRef('pk')))
+    if _is_negated_lookup(lookup_fn):
+        return ~exists_q
+    return exists_q
 
 
 def _parse_person_search_parts(segment: str) -> list:
@@ -498,6 +507,8 @@ def lookup_person_searchable(lookup_fn, field_name: str, value: str, rel_types: 
         'person__person_aliases',
     ]
 
+    negate = _is_negated_lookup(lookup_fn)
+
     pre_filter_q = Q()
     for segment in segments:
         parts = _parse_person_search_parts(segment)
@@ -517,11 +528,15 @@ def lookup_person_searchable(lookup_fn, field_name: str, value: str, rel_types: 
 
             person_q &= part_q
 
-        pre_filter_q &= Exists(CofkWorkPersonMap.objects.filter(
+        exists_q = Exists(CofkWorkPersonMap.objects.filter(
             person_q,
             work_id=OuterRef('pk'),
             relationship_type__in=rel_types
         ))
+        if negate:
+            pre_filter_q &= ~exists_q
+        else:
+            pre_filter_q &= exists_q
 
     return pre_filter_q
 
@@ -543,16 +558,22 @@ def lookup_location_searchable(lookup_fn, field_name: str, value: str, rel_types
         'location__location_synonyms',
     ]
 
+    negate = _is_negated_lookup(lookup_fn)
+
     pre_filter_q = Q()
     for segment in segments:
         loc_q = Q()
         for field in location_fields:
             loc_q |= Q(**{f'{field}__icontains': segment})
 
-        pre_filter_q &= Exists(CofkWorkLocationMap.objects.filter(
+        exists_q = Exists(CofkWorkLocationMap.objects.filter(
             loc_q,
             work_id=OuterRef('pk'),
             relationship_type__in=rel_types
         ))
+        if negate:
+            pre_filter_q &= ~exists_q
+        else:
+            pre_filter_q &= exists_q
 
     return pre_filter_q
