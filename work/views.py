@@ -1140,10 +1140,10 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
         # Handle PK fields
         pk_fields = [
-            ('person_sent_pk', CofkUnionPerson, 'Person sent'),
-            ('person_rec_pk', CofkUnionPerson, 'Person received'),
-            ('person_sent_rec_pk', CofkUnionPerson, 'Person sent or received'),
-            ('person_mention_pk', CofkUnionPerson, 'Person mentioned'),
+            ('person_sent_pk', CofkUnionPerson, 'Author/sender'),
+            ('person_rec_pk', CofkUnionPerson, 'Addressee/recipient'),
+            ('person_sent_rec_pk', CofkUnionPerson, 'Sender or recipient'),
+            ('person_mention_pk', CofkUnionPerson, 'People mentioned'),
             ('location_sent_pk', CofkUnionLocation, 'Location sent'),
             ('location_rec_pk', CofkUnionLocation, 'Location received'),
             ('location_sent_rec_pk', CofkUnionLocation, 'Location sent or received'),
@@ -1157,7 +1157,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                     # Remove the default PK-based entry if it exists
                     pk_label = self.search_field_label_map.get(field_name, field_name)
                     simplified_query = [s for s in simplified_query if not s.startswith(f'{pk_label} ')]
-                    simplified_query.append(f'{label} is {name}')
+                    simplified_query.append(f'{label} contains \'{name}\'')
 
         if self.search_field_fn_maps:
             work_to_be_deleted = (self.request_data['work_to_be_deleted']
@@ -1221,7 +1221,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                 obj = model_class.objects.filter(pk=pk_val).first()
                 if obj:
                     data[text_field] = general_model_serv.get_display_name(obj)
-                    data[f'{text_field}_lookup'] = 'equals'
+                    data[f'{text_field}_lookup'] = 'contains'
 
         return data
 
