@@ -310,11 +310,15 @@ def build_year_overlap_q(prefix: str, a: int | None, b: int | None) -> Q | None:
     case2 = Q(**{f'{year1}__isnull': True}) & Q(**{f'{year2}__isnull': False})
     if a is not None:
         case2 &= Q(**{f'{year2}__gte': a})
+    if b is not None:
+        case2 &= Q(**{f'{year2}__lte': b})
 
     # Case 3: Only start present
     case3_base = Q(**{f'{year1}__isnull': False}) & Q(**{f'{year2}__isnull': True})
     # 3a: Open-ended forward (is_range==1) -> [year1, +inf)
     case3a = case3_base & Q(**{is_range: 1})
+    if a is not None:
+        case3a &= Q(**{f'{year1}__gte': a})
     if b is not None:
         case3a &= Q(**{f'{year1}__lte': b})
     # 3b: Exact point (is_range==0) -> [year1, year1]
