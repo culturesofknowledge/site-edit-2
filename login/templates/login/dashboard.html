@@ -40,7 +40,7 @@
             <a href="{% url 'list:roles' %}" title="Add or edit roles" target="_self" tabindex="1">Roles</a>
         </li>
         {% endif %}
-        {%  if constant.PM_CHANGE_SUBJECT in perms %}
+        {%  if constant.PM_VIEW_SUBJECT in perms %}
         <li>
             <a href="{% url 'list:subjects' %}" title="Add or edit subjects" target="_self" tabindex="1">Subjects</a>
         </li>

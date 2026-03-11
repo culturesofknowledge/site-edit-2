@@ -29,7 +29,7 @@
                             <li>Catalogues</li>
                         </a>
                         {% endif %}
-                        {%  if constant.PM_CHANGE_SUBJECT in perms %}
+                        {%  if constant.PM_VIEW_SUBJECT in perms %}
                         <a href="{% url 'list:subjects' %}">
                             <li>Subjects</li>
                         </a>

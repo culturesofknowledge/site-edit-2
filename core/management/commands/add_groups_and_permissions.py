@@ -26,7 +26,7 @@ class Command(BaseCommand):
                 constant.PM_CHANGE_ROLECAT,
                 constant.PM_CHANGE_LOOKUPCAT,
                 constant.PM_VIEW_LOOKUPCAT,
-                constant.PM_CHANGE_SUBJECT,
+                constant.PM_VIEW_SUBJECT,
                 constant.PM_CHANGE_ORGTYPE,
                 constant.PM_CHANGE_LANGUAGE,
                 constant.PM_ADD_SUGGESTIONS,
@@ -43,6 +43,7 @@ class Command(BaseCommand):
             constant.PM_EXPORT_FILE_INST,
             constant.PM_TRIGGER_EXPORTER,
             constant.PM_CHANGE_COLLECTWORK,
+            constant.PM_CHANGE_SUBJECT,
         ]
         group_permissions_dict[constant.ROLE_CONTRIBUTING_EDITOR] = [
             constant.PM_CHANGE_WORK,

@@ -180,7 +180,7 @@ class CatalogueListView(PermissionRequiredMixin, LoginRequiredMixin, CofkListVie
 
 
 class SubjectListView(PermissionRequiredMixin, LoginRequiredMixin, CofkListView):
-    permission_required = constant.PM_CHANGE_SUBJECT
+    permission_required = constant.PM_VIEW_SUBJECT
     raise_exception = True
     model = CofkUnionSubject
     template_name = 'list/subjects.html'
