@@ -145,7 +145,7 @@ field_label_map = {
         'origin_as_marked': 'Origin as marked',
         'addressees': 'Addressees',
         'addressees_as_marked': 'Addressees as marked',
-        'notes_on_addressees': 'Notes on addressees',
+        'notes_on_addressees': 'Notes on addressees/recipients',
         'destination': 'Destination',
         'destination_as_marked': 'Destination as marked',
         'manifestations': 'Manifestations',
