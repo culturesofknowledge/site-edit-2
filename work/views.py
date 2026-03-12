@@ -1238,8 +1238,12 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         if not self.has_perms(constant.PM_EXPORT_FILE_WORK):
             return None
 
+        is_compact = (self.request_data.get('display-style', constant.SEARCH_LAYOUT_TABLE)
+                      == constant.SEARCH_LAYOUT_GRID)
+        header_values = CompactWorkCsvHeaderValues() if is_compact else WorkCsvHeaderValues()
+
         return (lambda: view_serv.create_export_file_name('work', 'csv'),
-                lambda: DownloadCsvHandler(WorkCsvHeaderValues()).create_csv_file,
+                lambda: DownloadCsvHandler(header_values).create_csv_file,
                 constant.PM_EXPORT_FILE_WORK,
                 )
 
@@ -1250,8 +1254,25 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         if not self.has_perms(constant.PM_EXPORT_FILE_WORK):
             return None
 
+        is_compact = (self.request_data.get('display-style', constant.SEARCH_LAYOUT_TABLE)
+                      == constant.SEARCH_LAYOUT_GRID)
+
+        if is_compact:
+            def create_compact_work_excel(queryable_works, file_path=None):
+                return excel_maker.create_excel_from_header_values(
+                    queryable_works, file_path, CompactWorkCsvHeaderValues(), 'Work'
+                )
+            return (lambda: view_serv.create_export_file_name('work', 'xlsx'),
+                    lambda: create_compact_work_excel,
+                    constant.PM_EXPORT_FILE_WORK,
+                    )
+
+        def create_expanded_work_excel(queryable_works, file_path=None):
+            return excel_maker.create_excel_from_header_values(
+                queryable_works, file_path, WorkCsvHeaderValues(), 'Work'
+            )
         return (lambda: view_serv.create_export_file_name('work', 'xlsx'),
-                lambda: excel_maker.create_work_excel,
+                lambda: create_expanded_work_excel,
                 constant.PM_EXPORT_FILE_WORK,
                 )
 
@@ -1297,37 +1318,100 @@ class ManifImageRecrefHandler(ImageRecrefHandler):
         return CofkManifImageMap.objects.filter(manif=parent, image=target).first()
 
 
-class WorkCsvHeaderValues(HeaderValues):
+class CompactWorkCsvHeaderValues(HeaderValues):
     def get_header_list(self) -> list[str]:
         return [
             "Description",
-            "Editor's notes",
-            "Date of work as marked",
-            "Year",
-            "Month",
-            "Day",
+            "Date as marked on letter",
+            "Year date",
+            "Month date",
+            "Day date",
             "Date in original calendar",
-            "Creators",
-            "Notes on authors/senders",
-            "Places from",
-            "Origin as marked",
-            "Addressees",
-            "Places to",
-            "Destination as marked",
+            "Author",
+            "Notes on Author in relation to letter",
+            "Recipient",
+            "Origin name",
+            "Destination name",
             "Flags",
             "Images",
             "Manifestations",
             "Related resources",
-            "Language of work",
+            "Language(s)",
+            "Subjects",
+            "Abstract",
+            "General notes for public display",
+            "Source of record",
+            "Original Catalogue name",
+            "Record to be deleted",
+            "EMLO Letter ID Number",
+            "Date/time of last change",
+            "Changed by user",
+        ]
+
+    def obj_to_values(self, obj) -> Iterable[str]:
+        obj: DisplayableWork
+        values = (
+            obj.description,
+            obj.date_of_work_as_marked,
+            obj.date_of_work_std_year,
+            obj.date_of_work_std_month,
+            obj.date_of_work_std_day,
+            obj.date_of_work_std_gregorian,
+            obj.queryable_people(REL_TYPE_CREATED, is_details=True),
+            cell_values.notes(obj.author_comments),
+            obj.queryable_people(REL_TYPE_WAS_ADDRESSED_TO, is_details=True),
+            obj.places_from_for_display,
+            obj.places_to_for_display,
+            work_serv.flags(obj),
+            obj.images,
+            ' -- '.join(' '.join(manif_serv.get_manif_details(m))
+                        for m in obj.manif_set.all()),
+            cell_values.resource_str_by_list(wrm.resource for wrm in obj.cofkworkresourcemap_set.all()),
+            obj.language_of_work,
+            obj.subjects_for_display,
+            obj.abstract,
+            obj.general_notes,
+            obj.accession_code,
+            obj.original_catalogue and obj.original_catalogue.catalogue_name,
+            obj.work_to_be_deleted,
+            obj.iwork_id,
+            cell_values.simple_datetime(obj.change_timestamp),
+            obj.change_user,
+        )
+        return values
+
+
+class WorkCsvHeaderValues(HeaderValues):
+    def get_header_list(self) -> list[str]:
+        return [
+            "Description",
+            "Editors' working notes",
+            "Date as marked on letter",
+            "Year date",
+            "Month date",
+            "Day date",
+            "Date in original calendar",
+            "Author",
+            "Notes on Author in relation to letter",
+            "Origin name",
+            "Origin as marked in body/text of letter",
+            "Recipient",
+            "Destination name",
+            "Destination as marked in body/text of letter",
+            "Flags",
+            "Images",
+            "Manifestations",
+            "Related resources",
+            "Language(s)",
             "Subjects",
             "Abstract",
             "People mentioned",
             "Keywords",
-            "General notes",
-            "Original catalogue",
+            "General notes for public display",
+            "Original Catalogue name",
             "Source of record",
             "Work to be deleted",
-            "Work ID",
+            "EMLO Letter ID Number",
             "Date/time of last change",
             "Changed by user",
         ]
