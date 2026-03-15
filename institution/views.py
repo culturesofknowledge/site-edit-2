@@ -97,7 +97,12 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
         queries.extend(
             query_serv.create_queries_by_lookup_field(request_data, self.search_fields, self.search_field_combines)
         )
-        return query_serv.update_queryset(CofkUnionInstitution.objects.all(), CofkUnionInstitution, queries=queries, sort_by=sort_by).distinct()
+        queryset = query_serv.update_queryset(CofkUnionInstitution.objects.all(), CofkUnionInstitution, queries=queries, sort_by=sort_by).distinct()
+        queryset = queryset.prefetch_related(
+            'resources',
+            'images',
+        )
+        return queryset
 
     @property
     def compact_search_results_renderer_factory(self) -> RendererFactory:

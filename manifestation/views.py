@@ -30,6 +30,7 @@ class ManifSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearch
     def get_queryset(self):
         queryset = CofkUnionManifestation.objects.all()
         queryset = query_serv.update_queryset(queryset, CofkUnionManifestation, sort_by=self.get_sort_by())
+        queryset = queryset.select_related('work')
         return queryset
 
     @property
