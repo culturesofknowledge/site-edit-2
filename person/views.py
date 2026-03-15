@@ -295,10 +295,6 @@ def full_form(request, iperson_id):
 
 class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
-    # Enable keyset pagination for better performance with large person datasets
-    use_keyset_pagination = True
-    keyset_sort_field = 'iperson_id'  # Primary key is indexed and unique
-
     @property
     def entity(self) -> str:
         return 'person,people'

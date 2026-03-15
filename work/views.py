@@ -965,10 +965,6 @@ def _work_record_modifier(work: CofkUnionWork):
 
 class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
-    # Enable keyset pagination for better performance with large work datasets
-    use_keyset_pagination = True
-    keyset_sort_field = 'iwork_id'  # Primary key is indexed and unique
-
     @property
     def entity(self) -> str:
         return 'work,works'
