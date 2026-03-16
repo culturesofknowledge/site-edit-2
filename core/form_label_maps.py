@@ -105,6 +105,7 @@ field_label_map = {
         'original_catalogue': 'Original catalogue',
         'accession_code': 'Source of record',
         'mentioned_searchable': 'People mentioned',
+        'places_mentioned_searchable': 'Places mentioned',
         'origin_as_marked': 'Origin as marked',
         'destination_as_marked': 'Destination as marked',
         'subjects': 'Subjects',
