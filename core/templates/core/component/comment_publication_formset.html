@@ -32,8 +32,10 @@
 
                 {% if user.is_supervisor %}
                     {% include "core/component/common_delete_checkbox.html" with show_cond=form.comment_id.value field=form.is_delete %}
-                    {{ form.record_tracker_label }}
+                {% else %}
+                    &nbsp;
                 {% endif %}
+                {{ form.record_tracker_label }}
             </div>
             {% if form.comment_id.value %}
                 {% if user.is_supervisor %}
