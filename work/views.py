@@ -988,7 +988,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             ('destination_as_marked', 'Destination as marked',),
             # ('flags', 'Flags',),
             ('manifestations_searchable', 'Manifestations',),
-            ('language_of_work', 'Language of work',),
+            ('language_set__language_code__language_name', 'Language of work',),
             ('original_catalogue', 'Original catalogue',),
             ('accession_code', 'Source of record',),
             ('work_to_be_deleted', 'Work to be deleted',),
