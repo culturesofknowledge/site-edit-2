@@ -259,8 +259,8 @@ class SubRecrefForm(forms.Form):
     rel_type = 'unknown rel_type'
     rel_type_label = 'unknown rel_type_label'
     recref_id = forms.CharField(required=False, widget=forms.HiddenInput())
-    from_date = forms.DateField(required=False, widget=widgets_serv.NewDateInput())
-    to_date = forms.DateField(required=False, widget=widgets_serv.NewDateInput())
+    from_date = widgets_serv.FlexibleDateField(required=False)
+    to_date = widgets_serv.FlexibleDateField(required=False)
     is_selected = ZeroOneCheckboxField(required=False, is_str=False)
 
 

@@ -20,13 +20,23 @@
 
                 {% if not form.no_date %}
                     <div class="inline-from-to">
-                        <span>From:</span>
+                        <span>From: &nbsp;</span>
                         {{ recref_form.from_date }}
-                        <span>To:</span>
+                        <span>&nbsp; To: &nbsp;</span>
                         {{ recref_form.to_date }}
-                    </div>
+                     </div>
                 {% endif %}
 
             </div>
+            {% if recref_form.from_date.errors %}
+            <div class="recref-row alert danger">
+                {{ recref_form.from_date.errors.0 }}
+           </div>
+            {% endif %}
+            {% if recref_form.to_date.errors %}
+            <div class="recref-row alert danger">
+                 {{ recref_form.to_date.errors.0 }}
+            </div>
+            {% endif %}
         {% endfor %}
 </div>
