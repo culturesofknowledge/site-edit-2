@@ -55,7 +55,8 @@ from work.forms import WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
 from work.models import CofkWorkPersonMap, CofkUnionWork, CofkWorkCommentMap, CofkWorkResourceMap, \
     CofkUnionLanguageOfWork
 from work.recref_adapter import WorkLocRecrefAdapter, ManifInstRecrefAdapter, WorkSubjectRecrefAdapter, \
-    EarlierLetterRecrefAdapter, LaterLetterRecrefAdapter, EnclosureManifRecrefAdapter, EnclosedManifRecrefAdapter, \
+    EarlierLetterRecrefAdapter, LaterLetterRecrefAdapter, MatchingLetterRecrefAdapter, \
+    EnclosureManifRecrefAdapter, EnclosedManifRecrefAdapter, \
     WorkCommentRecrefAdapter, ManifCommentRecrefAdapter, WorkResourceRecrefAdapter, ManifImageRecrefAdapter, \
     WorkPersonRecrefAdapter, ManifPersonRecrefAdapter
 from work.view_components import WorkFormDescriptor
@@ -346,7 +347,7 @@ class CorrFFH(BasicWorkFFH):
         )
         self.matching_letter_handler = MultiRecrefAdapterHandler(
             request_data, name='matching_letter',
-            recref_adapter=EarlierLetterRecrefAdapter(self.safe_work),
+            recref_adapter=MatchingLetterRecrefAdapter(self.safe_work),
             recref_form_class=WorkRecrefForm,
             rel_type=REL_TYPE_WORK_MATCHES,
         )
@@ -917,7 +918,9 @@ def overview_view(request, iwork_id):
         answered_link_list=[WorkLinkData(r.work_from) for r in
                             work.work_to_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)],
         matches_link_list=[WorkLinkData(r.work_to) for r in
-                           work.work_from_set.filter(relationship_type=constant.REL_TYPE_WORK_MATCHES)],
+                           work.work_from_set.filter(relationship_type=constant.REL_TYPE_WORK_MATCHES)]
+                         + [WorkLinkData(r.work_from) for r in
+                            work.work_to_set.filter(relationship_type=constant.REL_TYPE_WORK_MATCHES)],
 
         origin_link_list=to_location_link_list(work, constant.REL_TYPE_WAS_SENT_FROM),
         destination_link_list=to_location_link_list(work, constant.REL_TYPE_WAS_SENT_TO),
