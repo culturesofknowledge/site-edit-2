@@ -139,15 +139,15 @@ td.text-heavy {
 
   /* Robust text wrapping to avoid layout blowouts */
   white-space: normal;           /* allow wrapping */
-  word-break: normal;            /* reset word-break to avoid breaking normal words */
-  overflow-wrap: anywhere;       /* modern browsers, allows breaking long tokens only if necessary */
+  word-break: break-all;            /* reset word-break to avoid breaking normal words */
+  overflow-wrap: break-word;       /* modern browsers, allows breaking long tokens only if necessary */
   word-wrap: break-word;         /* traditional/Safari support, similar to overflow-wrap */
   hyphens: auto;                 /* nicer long-word breaks where supported */
   
   /* Safari specific fix for table-cells: sometimes they need a little help 
      to respect wrapping when they have long unbreakable strings */
   & > div {
-     overflow-wrap: anywhere;
+     overflow-wrap: break-word;
      word-wrap: break-word;
   }
 }
