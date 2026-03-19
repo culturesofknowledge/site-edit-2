@@ -2,6 +2,7 @@ import logging
 from abc import ABC
 from typing import List
 
+from core.helper import query_cache_serv
 from uploader.entities.entity import CofkEntity
 from uploader.models import CofkCollectUpload, CofkCollectManifestation, CofkCollectWork, CofkCollectInstitution
 
@@ -19,6 +20,8 @@ class CofkManifestations(CofkEntity, ABC):
         self.repositories = repositories
         self.works = works
         self.manifestations: List[CofkCollectManifestation] = []
+        self.lookup_doc_desc_map = query_cache_serv.create_lookup_doc_desc_map()
+
 
         for index, row in enumerate(self.sheet.worksheet.iter_rows(), start=1):
             man_dict = self.get_row(row, index)
@@ -53,6 +56,13 @@ class CofkManifestations(CofkEntity, ABC):
             # TODO can this be right?
             if 'manifestation_type_p' in man_dict:
                 man_dict['manifestation_type'] = man_dict.pop('manifestation_type_p')
+
+            if 'manifestation_type' in man_dict:
+                if man_dict['manifestation_type'] not in self.lookup_doc_desc_map:
+                    self.add_error(
+                        f'manifestation_type "{man_dict["manifestation_type"]}" is not a valid document type. '
+                        f'Valid values: {list(self.lookup_doc_desc_map.keys())}'
+                    )
 
             if 'repository_name' in man_dict:
                 del man_dict['repository_name']
