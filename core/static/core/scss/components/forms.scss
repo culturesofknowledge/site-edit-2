@@ -21,7 +21,7 @@ textarea {
   width: 100%;
   padding: $space-xs;
   border: 1px solid $light-grey;
-  font-size: $typescale-5a;
+  font-size: 1rem;
   color: $black;
   background-color: $white;
   transition: all 0.2s ease;
@@ -56,7 +56,7 @@ select {
 textarea {
   min-height: 100px;
   resize: vertical;
-  font-size: $typescale-5;
+  font-size: 1rem;
 }
 
 .checkbox-group,
