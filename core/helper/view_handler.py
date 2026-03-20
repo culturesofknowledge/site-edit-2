@@ -41,8 +41,7 @@ class FullFormHandler:
 
     @property
     def all_recref_handlers(self) -> Iterable[MultiRecrefHandler]:
-        attr_list = (getattr(self, p) for p in dir(self))
-        attr_list = (a for a in attr_list if isinstance(a, MultiRecrefHandler))
+        attr_list = (v for v in self.__dict__.values() if isinstance(v, MultiRecrefHandler))
         return attr_list
 
     def all_img_recref_handlers(self) -> Iterable[tuple[str, 'ImageRecrefHandler']]:
@@ -90,6 +89,14 @@ class FullFormHandler:
         for c in self.all_recref_formset_handlers():
             c.save(parent, request)
 
+    @property
+    def has_form_errors(self):
+        """Check if any form or formset has validation errors."""
+        for f in self.every_form_formset:
+            if hasattr(f, 'errors') and f.errors:
+                return True
+        return False
+
     def create_context(self):
         context = dict(self.all_named_form_formset())
         context_list = itertools.chain(
@@ -99,6 +106,7 @@ class FullFormHandler:
         )
         for c in context_list:
             context.update(c)
+        context['has_form_errors'] = self.has_form_errors
         return context
 
     def is_invalid(self):
