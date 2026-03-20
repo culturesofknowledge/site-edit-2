@@ -33,7 +33,7 @@ def full_form(request, pk=None):
     instance: CofkUser = CofkUser.objects.filter(pk=pk).first()
     form = UserForm(request.POST or None, instance=instance)
 
-    new_password = request.session.pop('new_password', None)
+    new_password = request.session.pop(pk + '_new_password', None) if pk else None
 
     def _render_form():
         return render(request, 'user/init_form.html',
@@ -63,7 +63,7 @@ def full_form(request, pk=None):
             new_password = str_utils.create_random_str(12)
             form.instance.set_password(new_password)
             form.instance.save()
-            request.session['new_password'] = new_password
+            request.session[form.instance.pk + '_new_password'] = new_password
             return redirect(reverse('user:full_form', kwargs={'pk': form.instance.pk}))
 
     return _render_form()
