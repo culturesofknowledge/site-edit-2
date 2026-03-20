@@ -20,6 +20,7 @@
                     {{ form.from_date }}
                     <small> &nbsp; To:  &nbsp;</small>
                     {{ form.to_date }}
+                    &nbsp; <i><small>(Enter yyyy, mm/yyyy, or dd/mm/yyyy)</small></i>
                 </div>
             {% endif %}
             </div>
@@ -47,5 +48,6 @@
         <small> &nbsp; To: &nbsp;</small>
         {{ new_form.to_date }}
         {% if new_form.to_date.errors %}<small class="text-danger">{{ new_form.to_date.errors.0 }}</small>{% endif %}
+        &nbsp; <i><small>(Enter yyyy, mm/yyyy, or dd/mm/yyyy)</small></i>
     </div>
 {% endif %}

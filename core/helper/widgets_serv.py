@@ -1,3 +1,4 @@
+import calendar
 import datetime
 import re
 
@@ -30,8 +31,8 @@ class NewDateInput(widgets.Input):
 
 class FlexibleDateField(forms.Field):
     """A form field that accepts dates in DD/MM/YYYY, MM/YYYY, or YYYY format.
-    Stores as a date object (padding missing day/month with 1).
-    Displays existing dates as DD/MM/YYYY.
+    Stores as a date object. Displays existing dates as DD/MM/YYYY.
+    Subclasses FromDateField and ToDateField control how partial dates are defaulted.
     """
     widget = NewDateInput
 
@@ -39,6 +40,49 @@ class FlexibleDateField(forms.Field):
         if isinstance(value, datetime.date):
             return value.strftime('%d/%m/%Y')
         return value
+
+    def _validate_and_parse(self, value):
+        """Parse and validate the date string. Returns (year, month, day, format_type).
+        format_type is 'full', 'month_year', or 'year'.
+        """
+        # Try DD/MM/YYYY
+        m = re.fullmatch(r'(\d{1,2})/(\d{1,2})/(\d{4})', value)
+        if m:
+            day, month, year = int(m.group(1)), int(m.group(2)), int(m.group(3))
+            if month < 1 or month > 12:
+                raise ValidationError('Month must be between 1 and 12.')
+            if day < 1 or day > 31:
+                raise ValidationError('Day must be between 1 and 31.')
+            max_day = calendar.monthrange(year, month)[1]
+            if day > max_day:
+                month_name = calendar.month_name[month]
+                raise ValidationError(f'{month_name} {year} only has {max_day} days.')
+            return year, month, day, 'full'
+
+        # Try MM/YYYY
+        m = re.fullmatch(r'(\d{1,2})/(\d{4})', value)
+        if m:
+            month, year = int(m.group(1)), int(m.group(2))
+            if month < 1 or month > 12:
+                raise ValidationError('Month must be between 1 and 12.')
+            return year, month, None, 'month_year'
+
+        # Try YYYY
+        m = re.fullmatch(r'(\d{4})', value)
+        if m:
+            year = int(m.group(1))
+            return year, None, None, 'year'
+
+        raise ValidationError('Enter a date in DD/MM/YYYY, MM/YYYY, or YYYY format.')
+
+    def _default_date(self, year, month, day, format_type):
+        """Default partial dates. Base implementation defaults to start of period."""
+        if format_type == 'full':
+            return datetime.date(year, month, day)
+        elif format_type == 'month_year':
+            return datetime.date(year, month, 1)
+        else:
+            return datetime.date(year, 1, 1)
 
     def clean(self, value):
         value = super().clean(value)
@@ -48,36 +92,40 @@ class FlexibleDateField(forms.Field):
         if not value:
             return None
 
-        # Try DD/MM/YYYY
-        m = re.fullmatch(r'(\d{1,2})/(\d{1,2})/(\d{4})', value)
-        if m:
-            day, month, year = int(m.group(1)), int(m.group(2)), int(m.group(3))
-            try:
-                return datetime.date(year, month, day)
-            except ValueError:
-                raise ValidationError('Enter a valid date in DD/MM/YYYY or MM/YYYY or YYYY format.')
+        year, month, day, format_type = self._validate_and_parse(value)
+        try:
+            return self._default_date(year, month, day, format_type)
+        except ValueError:
+            raise ValidationError('Enter a valid date in DD/MM/YYYY, MM/YYYY, or YYYY format.')
 
-        # Try MM/YYYY
-        m = re.fullmatch(r'(\d{1,2})/(\d{4})', value)
-        if m:
-            month, year = int(m.group(1)), int(m.group(2))
-            if month < 1 or month > 12:
-                raise ValidationError('Month must be between 1 and 12.')
-            try:
-                return datetime.date(year, month, 1)
-            except ValueError:
-                raise ValidationError('Enter a valid date in MM/YYYY format.')
 
-        # Try YYYY
-        m = re.fullmatch(r'(\d{4})', value)
-        if m:
-            year = int(m.group(1))
-            try:
-                return datetime.date(year, 1, 1)
-            except ValueError:
-                raise ValidationError('Enter a valid year in YYYY format.')
+class FromDateField(FlexibleDateField):
+    """Date field for 'From' dates. Partial dates default to start of period.
+    YYYY -> 01/01/YYYY, MM/YYYY -> 01/MM/YYYY
+    """
 
-        raise ValidationError('Enter a date in DD/MM/YYYY, MM/YYYY, or YYYY format.')
+    def _default_date(self, year, month, day, format_type):
+        if format_type == 'full':
+            return datetime.date(year, month, day)
+        elif format_type == 'month_year':
+            return datetime.date(year, month, 1)
+        else:
+            return datetime.date(year, 1, 1)
+
+
+class ToDateField(FlexibleDateField):
+    """Date field for 'To' dates. Partial dates default to end of period.
+    YYYY -> 31/12/YYYY, MM/YYYY -> last day of that month
+    """
+
+    def _default_date(self, year, month, day, format_type):
+        if format_type == 'full':
+            return datetime.date(year, month, day)
+        elif format_type == 'month_year':
+            last_day = calendar.monthrange(year, month)[1]
+            return datetime.date(year, month, last_day)
+        else:
+            return datetime.date(year, 12, 31)
 
 
 class SearchDateTimeInput(widgets.Input):
