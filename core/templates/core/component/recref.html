@@ -4,7 +4,7 @@
     <div class="multi_rel_recref_container recref_main margin-bottom" recref_type="{{ recref_type }}">
         <label>{{ label }}</label>
         <div>
-            <input id="{{ fid }}_name" type="text" class="recref_text" disabled
+            <input id="{{ fid }}_name" type="text" class="recref_text" readonly
                     {% if id_field.recref_name %}
                    value="{{ id_field.recref_name }}"
                     {% endif %}
