@@ -54,7 +54,7 @@ def get_recref_display_name(work: CofkUnionWork) -> str:
             work_date2 = _format_work_date(work.date_of_work2_std_year,
                                            work.date_of_work2_std_month,
                                            work.date_of_work2_std_day)
-            work_date_str = f'Between {work_date_str} and {work_date2}'
+            work_date_str = f'{work_date_str} to {work_date2}'
 
     from_person_str = join_names(find_related_person_names(work, REL_TYPE_CREATED))
     from_person_str = from_person_str or 'unknown author/sender'
