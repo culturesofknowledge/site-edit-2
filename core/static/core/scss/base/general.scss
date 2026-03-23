@@ -162,6 +162,13 @@ input[readonly] {
   background: gainsboro;
 }
 
+input[readonly]:focus {
+  outline: none;
+  border: none;
+  background: gainsboro;
+}
+
+
 label {
   display: inline-block;
   font-weight: 500;
