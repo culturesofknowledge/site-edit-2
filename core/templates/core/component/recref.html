@@ -4,7 +4,7 @@
     <div class="multi_rel_recref_container recref_main margin-bottom" recref_type="{{ recref_type }}">
         <label>{{ label }}</label>
         <div>
-            <input id="{{ fid }}_name" type="text" class="recref_text" readonly
+            <input id="{{ fid }}_name" type="text" class="recref_text" disabled
                     {% if id_field.recref_name %}
                    value="{{ id_field.recref_name }}"
                     {% endif %}
@@ -15,6 +15,7 @@
                    value="{{ id_field.value }}"
                     {% endif %}
             />
+            <p style="font-size: 13px;"> Please select an author/sender, then click Save. </p>
             <div class="button-row">
                 <button id="{{ fid }}_select_btn" class="recref_select">Select</button>
                 {% if not hide_create_btn %}
