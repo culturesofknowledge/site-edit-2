@@ -1082,6 +1082,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                     'creators_searchable': lambda f, n, v: work_serv.lookup_person_searchable(f, n, v, [REL_TYPE_CREATED]),
                     'addressees_searchable': lambda f, n, v: work_serv.lookup_person_searchable(f, n, v, [REL_TYPE_WAS_ADDRESSED_TO]),
                     'mentioned_searchable': lambda f, n, v: work_serv.lookup_person_searchable(f, n, v, [REL_TYPE_MENTION]),
+                    'places_mentioned_searchable': lambda f, n, v: work_serv.lookup_location_searchable(f, n, v, [REL_TYPE_MENTION_PLACE]),
                     'sender_or_recipient': lambda f, n, v: work_serv.lookup_person_searchable(f, n, v, [REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO]),
                     'places_from_searchable': lambda f, n, v: work_serv.lookup_location_searchable(f, n, v, [REL_TYPE_WAS_SENT_FROM]),
                     'places_to_searchable': lambda f, n, v: work_serv.lookup_location_searchable(f, n, v, [REL_TYPE_WAS_SENT_TO]),
@@ -1094,6 +1095,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             'addressees_searchable',
             'creators_searchable',
             'mentioned_searchable',
+            'places_mentioned_searchable',
             'sender_or_recipient',
             'places_from_searchable',
             'places_to_searchable',
@@ -1465,6 +1467,13 @@ def create_queryset_by_queries(
         'addressees_searchable': subqueries.create_joined_person_ann_field([REL_TYPE_WAS_ADDRESSED_TO]),
         'creators_searchable': subqueries.create_joined_person_ann_field([REL_TYPE_CREATED]),
         'mentioned_searchable': subqueries.create_joined_person_ann_field([REL_TYPE_MENTION]),
+        'places_mentioned_searchable': subqueries.create_joined_location_ann_field(
+            [REL_TYPE_MENTION_PLACE],
+            [
+                'cofkworklocationmap__location__location_name',
+                'cofkworklocationmap__location__location_synonyms',
+            ]
+        ),
         'sender_or_recipient': subqueries.create_joined_person_ann_field([REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO]),
         'places_from_searchable': subqueries.create_joined_location_ann_field(
             [REL_TYPE_WAS_SENT_FROM],
