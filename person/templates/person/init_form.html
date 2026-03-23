@@ -55,13 +55,16 @@
                     <div class="margin-bottom">
                         {% include "core/component/common_form_choices.html" with label_text='Gender' choices_field=person_form.gender %}
                     </div>
-                    <div class="margin-bottom">
-                        {{ person_form.is_organisation }}
-                        <label for="{{ person_form.is_organisation.id_for_label }}">Organization?</label>
-                        <small> (Leave this checkbox blank if the correspondent was an individual person; tick if the
+                    
+                    <div class="margin-bottom form-inline-align">
+                        <div class="checkbox-inline">
+                            {{ person_form.is_organisation }}
+                            <label for="{{ person_form.is_organisation.id_for_label }}">Organization?</label>
+                             <small> (Leave this checkbox blank if the correspondent was an individual person; tick if the
                             correspondent was a group or organization.)</small>
+                        </div>
                     </div>
-
+                    
                     <div class="org-type-div margin-bottom"
                             {% if not is_org_form %}
                          style="display: none"
