@@ -574,6 +574,7 @@ class CompactSearchFieldset(BasicSearchFieldset):
     location_sent_pk = forms.IntegerField(widget=forms.HiddenInput(), required=False)
     location_rec_pk = forms.IntegerField(widget=forms.HiddenInput(), required=False)
     location_sent_rec_pk = forms.IntegerField(widget=forms.HiddenInput(), required=False)
+    location_mention_pk = forms.IntegerField(widget=forms.HiddenInput(), required=False)
 
 
 class ExpandedSearchFieldset(CompactSearchFieldset):

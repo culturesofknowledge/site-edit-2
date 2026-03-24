@@ -48,6 +48,7 @@ field_label_map = {
         'element_5_eg_county': '5. E.g. county',
         'element_6_eg_country': '6. E.g. country',
         'element_7_eg_empire': '7. E.g. empire',
+        'mentioned': 'Mentioned',
         'images': 'Images',
     },
     'person': common_fields | {
@@ -119,6 +120,7 @@ field_label_map = {
         'location_sent_pk': 'Location sent',
         'location_rec_pk': 'Location received',
         'location_sent_rec_pk': 'Location sent or received',
+        'location_mention_pk': 'Location mentioned',
     },
     'lang': {
         'code_639_3': '3-letter language code',

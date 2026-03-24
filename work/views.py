@@ -1021,6 +1021,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             'location_rec_pk': create_search_fn_location_recref([REL_TYPE_WAS_SENT_TO]),
             'location_sent_rec_pk': create_search_fn_location_recref(
                 [REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
+            'location_mention_pk': create_search_fn_location_recref([REL_TYPE_MENTION_PLACE]),
         } | query_serv.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
                                                'change_timestamp') \
             | query_serv.create_from_to_date_with_bounds(
@@ -1148,6 +1149,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             ('location_sent_pk', CofkUnionLocation, 'Location sent'),
             ('location_rec_pk', CofkUnionLocation, 'Location received'),
             ('location_sent_rec_pk', CofkUnionLocation, 'Location sent or received'),
+            ('location_mention_pk', CofkUnionLocation, 'Places mentioned'),
         ]
 
         for field_name, model_class, label in pk_fields:
@@ -1216,6 +1218,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             ('location_sent_pk', CofkUnionLocation, 'places_from_searchable'),
             ('location_rec_pk', CofkUnionLocation, 'places_to_searchable'),
             ('location_sent_rec_pk', CofkUnionLocation, 'origin_or_destination'),
+            ('location_mention_pk', CofkUnionLocation, 'places_mentioned_searchable'),
         ]
         for pk_field, model_class, text_field in pk_to_text_map:
             if (pk_val := data.get(pk_field)) and not data.get(text_field):

@@ -9,6 +9,7 @@
         <th>Sent</th>
         <th>Rec'd</th>
         <th>Sent<br>and Rec'd</th>
+        <th>Ment'd</th>
         <th>Researchers' notes</th>
         <th>Related resources</th>
         <th>Latitude</th>
@@ -61,6 +62,14 @@
                     <a href="{% url 'work:search' %}?location_sent_rec_pk={{ r.location_id }}" class="search_link"
                        target="_blank">
                         {{ r.all_works }}
+                    </a>
+                {% endif %}
+            </td>
+            <td>
+                {% if r.mentioned %}
+                    <a href="{% url 'work:search' %}?location_mention_pk={{ r.location_id }}" class="search_link"
+                       target="_blank">
+                        {{ r.mentioned }}
                     </a>
                 {% endif %}
             </td>
