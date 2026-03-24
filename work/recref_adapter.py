@@ -110,6 +110,33 @@ class WorkWorkRecrefAdapter(RecrefFormAdapter, ABC):
         return work_serv.get_recref_display_name(CofkUnionWork.objects.get(work_id=target_id))
 
 
+class MatchingLetterRecrefAdapter(WorkWorkRecrefAdapter):
+    """Adapter for 'matches' relationship which is bidirectional.
+    Queries both work_from_set and work_to_set so matching letters
+    are visible from either side of the relationship.
+    """
+    def __init__(self, work=None):
+        self.work = work
+
+    def find_recref_records(self, rel_type):
+        from itertools import chain
+        forward = self.work.work_from_set.filter(relationship_type=rel_type)
+        reverse = self.work.work_to_set.filter(relationship_type=rel_type)
+        for rec in chain(forward, reverse):
+            # For reverse records, swap IDs so target_id_name ('work_to_id') points to the other work
+            if rec.work_to_id == self.work.work_id:
+                rec.__dict__['work_to_id'], rec.__dict__['work_from_id'] = rec.__dict__['work_from_id'], rec.__dict__['work_to_id']
+            yield rec
+
+    @classmethod
+    def parent_field(cls) -> ForwardManyToOneDescriptor:
+        return CofkWorkWorkMap.work_from
+
+    @classmethod
+    def target_field(cls) -> ForwardManyToOneDescriptor:
+        return CofkWorkWorkMap.work_to
+
+
 class EarlierLetterRecrefAdapter(WorkWorkRecrefAdapter):
     def __init__(self, work=None):
         self.work = work

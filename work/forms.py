@@ -436,7 +436,7 @@ manif_help_text = 'The Manifestations field contains a very brief summary of all
                   'using the wildcard % (percent-sign).</i>'
 img_help_text = 'Contains filenames of any scanned images of manifestations.'
 abstr_help_text = 'This field contains a summary of the contents of the letter.'
-keywords_help_text = 'This field contains keywords, plus a list of places and works mentioned within a work.'
+keywords_help_text = 'This field contains keywords.'
 acc_help_text = 'Typically contains the name of the researcher who contributed the data.'
 del_help_text = "Yes or No. If 'Yes', the record is marked for deletion."
 id_help_text = 'The unique ID for the record within this database.'
@@ -574,6 +574,7 @@ class CompactSearchFieldset(BasicSearchFieldset):
     location_sent_pk = forms.IntegerField(widget=forms.HiddenInput(), required=False)
     location_rec_pk = forms.IntegerField(widget=forms.HiddenInput(), required=False)
     location_sent_rec_pk = forms.IntegerField(widget=forms.HiddenInput(), required=False)
+    location_mention_pk = forms.IntegerField(widget=forms.HiddenInput(), required=False)
 
 
 class ExpandedSearchFieldset(CompactSearchFieldset):
@@ -589,6 +590,10 @@ class ExpandedSearchFieldset(CompactSearchFieldset):
     mentioned_searchable = SearchCharField(label=field_label_map['work']['mentioned_searchable'],
                                            help_text='This field contains a list of people mentioned within a work.')
     mentioned_searchable_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
+
+    places_mentioned_searchable = SearchCharField(label=field_label_map['work']['places_mentioned_searchable'],
+                                                  help_text='This field contains a list of places mentioned within a work.')
+    places_mentioned_searchable_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     keywords = SearchCharField(help_text=keywords_help_text)
     keywords_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)

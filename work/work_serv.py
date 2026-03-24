@@ -7,7 +7,8 @@ from django.db.models import Q, F
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
-from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO,     REL_TYPE_MENTION
+from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, \
+    REL_TYPE_MENTION, REL_TYPE_MENTION_PLACE
 from core.helper import data_serv,query_serv
 from core.constant import DEFAULT_MONTH, DEFAULT_DAY, DEFAULT_EMPTY_DATE_STR
 from location import location_serv
@@ -54,7 +55,7 @@ def get_recref_display_name(work: CofkUnionWork) -> str:
             work_date2 = _format_work_date(work.date_of_work2_std_year,
                                            work.date_of_work2_std_month,
                                            work.date_of_work2_std_day)
-            work_date_str = f'Between {work_date_str} and {work_date2}'
+            work_date_str = f'{work_date_str} to {work_date2}'
 
     from_person_str = join_names(find_related_person_names(work, REL_TYPE_CREATED))
     from_person_str = from_person_str or 'unknown author/sender'
@@ -219,6 +220,10 @@ class DisplayableWork(CofkUnionWork):
         return self.queryable_people(REL_TYPE_MENTION)
 
     @property
+    def places_mentioned(self) -> str:
+        return ", ".join([l.location_name for l in self.find_locations_by_rel_type(REL_TYPE_MENTION_PLACE) if l.location_name])
+
+    @property
     def related_works(self) -> str:
         links = [
             data_serv.endcode_url_content(
@@ -264,6 +269,9 @@ class DisplayableWork(CofkUnionWork):
 
         if people_mentioned := self.people_mentioned:
             _other_details.append(f'<strong>People mentioned</strong>: {people_mentioned}')
+
+        if places_mentioned := self.places_mentioned:
+            _other_details.append(f'<strong>Places mentioned</strong>: {places_mentioned}')
 
         return mark_safe('<br/><br/>'.join(_other_details))
 

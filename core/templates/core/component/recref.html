@@ -8,6 +8,10 @@
                     {% if id_field.recref_name %}
                    value="{{ id_field.recref_name }}"
                     {% endif %}
+                    {% if placeholder %}
+                   placeholder="{{ placeholder }}"
+                    {% endif %}
+                   style="background-color: #e8e8e8;"
             />
             <input id="{{ fid }}" type="hidden" class="recref_id"
                    name="{{ id_field.html_name }}"

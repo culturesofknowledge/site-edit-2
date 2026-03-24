@@ -274,7 +274,7 @@ class WorkExcelHeaderValues(HeaderValues):
             obj.find_persons_by_rel_type(constant.REL_TYPE_MENTION))
 
         match_work_name, match_work_id = cell_values.name_id(
-            obj.find_work_to_list_by_rel_type(constant.REL_TYPE_WORK_MATCHES))
+            obj.find_matching_works_by_rel_type(constant.REL_TYPE_WORK_MATCHES))
 
         original_catalogue = obj.original_catalogue
         original_catalogue = original_catalogue and original_catalogue.catalogue_name

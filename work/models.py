@@ -84,6 +84,12 @@ class CofkUnionWork(models.Model, RecordTracker):
     def find_work_to_list_by_rel_type(self, rel_type) -> Iterable['CofkUnionWork']:
         return (r.work_to for r in recref_serv.prefetch_filter_rel_type(self.work_from_set, rel_type))
 
+    def find_matching_works_by_rel_type(self, rel_type) -> Iterable['CofkUnionWork']:
+        from itertools import chain
+        forward = (r.work_to for r in recref_serv.prefetch_filter_rel_type(self.work_from_set, rel_type))
+        reverse = (r.work_from for r in recref_serv.prefetch_filter_rel_type(self.work_to_set, rel_type))
+        return chain(forward, reverse)
+
     @property
     def author_comments(self) -> Iterable['CofkUnionComment']:
         return self.find_comments_by_rel_type(REL_TYPE_COMMENT_AUTHOR)

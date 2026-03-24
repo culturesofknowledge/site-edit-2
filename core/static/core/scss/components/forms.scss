@@ -19,9 +19,9 @@ input[type="search"],
 select,
 textarea {
   width: 100%;
-  padding: $space-xs;
+  padding: $space-xxs;
   border: 1px solid $light-grey;
-  font-size: $typescale-5a;
+  font-size: $typescale-5;
   color: $black;
   background-color: $white;
   transition: all 0.2s ease;
@@ -124,3 +124,16 @@ textarea {
   }
 }
 
+
+
+.new-password-box {
+  padding: 10px;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 4px;
+}
+
+.new-password-value {
+  color: darkgreen;
+  font-weight: bolder;
+}

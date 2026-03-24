@@ -73,6 +73,10 @@ class GeneralSearchFieldset(form_serv.BasicSearchFieldset):
                                       "latitude/longitude.")
     recd_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
+    mentioned = SearchIntField(help_text="Number of letters in which this place was mentioned. You can search on "
+                                    "these 'number' fields using 'Advanced Search'.")
+    mentioned_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
+
     all_works = SearchIntField(label=field_label_map['location']['all_works'],
                                  help_text="Total number of letters sent to and from this place. You can search on "
                                            "these ‘number’ fields using ‘Advanced Search’, e.g. you could enter "
