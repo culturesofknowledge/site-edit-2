@@ -290,6 +290,10 @@ def create_works(collect_works, username, union_work_dict, upload, request):
                 inst = manif.repository
                 union_inst = CofkUnionInstitution.objects.filter(pk=inst.institution_id).first()
 
+                if union_inst is None:
+                    log.warning(f'No union institution found for repository id {inst.institution_id}, skipping.')
+                    continue
+
                 cmim = CofkManifInstMap(relationship_type=REL_TYPE_STORED_IN,
                                         manif=union_manif, inst=union_inst, inst_id=union_inst.institution_id)
                 cmim.update_current_user_timestamp(username)

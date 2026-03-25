@@ -121,7 +121,7 @@ class CofkValidateWork:
             self.add_error("There is neither a destination_id nor a destination_name.",
                            ', '.join([destination_id.key, destination_name.key]))
 
-        if not (origin_id or origin_name):
+        if not (origin_id.value or origin_name.value):
             self.add_error("There is neither a origin_id nor a origin_name.",
                            ', '.join([origin_id.key, origin_name.key]))
 
@@ -175,12 +175,12 @@ def validate_manifestation(df):
                 m_errors.append(CofkValueException('There should be an en dash used between folio numbers,'
                                                    ' not a hyphen.', 'id_number_or_shelfmark'))
 
-            if manifestation['id_number_or_shelfmark'][-1] != '.':
+            if manifestation['id_number_or_shelfmark'] and manifestation['id_number_or_shelfmark'][-1] != '.':
                 m_errors.append(CofkValueException('There should not be a full stop at the end of'
                                                    ' a shelfmark.', 'id_number_or_shelfmark'))
 
         if 'printed_edition_details' in manifestation:
-            if manifestation['printed_edition_details'][-1] == '.':
+            if manifestation['printed_edition_details'] and manifestation['printed_edition_details'][-1] == '.':
                 m_errors.append(CofkValueException('There should not be a full stop at the end of bibliographic'
                                                    ' details of a manifestation.', 'printed_edition_details'))
 
