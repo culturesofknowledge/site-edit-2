@@ -50,7 +50,7 @@ class CofkValidateWork:
 
         # Make sure month is between 1-12
         if m.value is not None and not 0 < m.value < 13:
-            self.add_error('{} is {} but must be between 1 and 12'.format(m.key, m.value), y.key)
+            self.add_error('{} is {} but must be between 1 and 12'.format(m.key, m.value), m.key)
 
         # Check day of month
         if d.value is not None:
@@ -83,29 +83,32 @@ class CofkValidateWork:
 
         # Date is a range, switch between Julian to Gregorian calendar was around October 1582.
         # This could get sticky.
-        if date_of_work_std_is_range == 1:
+        if date_of_work_std_is_range.value == 1:
             date_of_work2_std_year = self.get_value('date_of_work2_std_year')
             date_of_work2_std_month = self.get_value('date_of_work2_std_month')
             date_of_work2_std_day = self.get_value('date_of_work2_std_day')
 
             self.validate_date(date_of_work2_std_year, date_of_work2_std_month, date_of_work2_std_day)
 
-            first_date = datetime.datetime(date_of_work_std_year.value,
-                                           date_of_work_std_month.value, date_of_work_std_day.value)
-            second_date = datetime.datetime(date_of_work2_std_year.value,
-                                            date_of_work2_std_month.value, date_of_work2_std_day.value)
+            range_values = [date_of_work_std_year, date_of_work_std_month, date_of_work_std_day,
+                            date_of_work2_std_year, date_of_work2_std_month, date_of_work2_std_day]
+            if all(v.value is not None for v in range_values):
+                first_date = datetime.datetime(date_of_work_std_year.value,
+                                               date_of_work_std_month.value, date_of_work_std_day.value)
+                second_date = datetime.datetime(date_of_work2_std_year.value,
+                                                date_of_work2_std_month.value, date_of_work2_std_day.value)
 
-            if first_date >= second_date:
-                cols = [date_of_work_std_year.key, date_of_work_std_month.key, date_of_work_std_day.key,
-                        date_of_work2_std_year.key, date_of_work2_std_month.key, date_of_work2_std_day.key]
-                self.add_error("The start date in a date range can not be after the end date.", ', '.join(cols))
+                if first_date >= second_date:
+                    cols = [date_of_work_std_year.key, date_of_work_std_month.key, date_of_work_std_day.key,
+                            date_of_work2_std_year.key, date_of_work2_std_month.key, date_of_work2_std_day.key]
+                    self.add_error("The start date in a date range can not be after the end date.", ', '.join(cols))
 
         notes_on_date_of_work = self.get_value('notes_on_date_of_work')
 
-        if notes_on_date_of_work.value is not None and notes_on_date_of_work.value[0].islower():
+        if notes_on_date_of_work.value and notes_on_date_of_work.value[0].islower():
             self.add_error("Notes with dates have to start with an upper case letter.", notes_on_date_of_work.key)
 
-        if notes_on_date_of_work.value is not None and notes_on_date_of_work.value[-1] != '.':
+        if notes_on_date_of_work.value and notes_on_date_of_work.value[-1] != '.':
             self.add_error("Notes with dates have to end with a full stop.", notes_on_date_of_work.key)
 
     def validate_places(self):
@@ -134,7 +137,7 @@ class CofkValidateWork:
     def validate_keywords(self):
         keywords = self.get_value('keywords')
 
-        if len(keywords.value.split('; ')) - 1 != keywords.value.count(';'):
+        if keywords.value and len(keywords.value.split('; ')) - 1 != keywords.value.count(';'):
             self.add_error("Not all keywords are properly separated with a space after the separator, ;.", keywords.key)
 
 

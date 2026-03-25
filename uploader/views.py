@@ -181,7 +181,10 @@ def lookup_fn_date_of_work(lookup_fn, field_name, value):
     value = str(value).strip()
     query = Q()
     date_pattern = r'^([\d\?]{4})(?:-([\d]{2}|[\?]{2}))?(?:-([\d]{2}|[\?]{2}))?$'
-    matches = [re.search(date_pattern, v) for v in value.split(' to ')]
+    matches = [re.search(date_pattern, v.strip()) for v in value.split(' to ')]
+
+    if any(m is None for m in matches):
+        return Q(pk=0)
 
     if len(matches) == 1:
         year = matches[0].group(1)
