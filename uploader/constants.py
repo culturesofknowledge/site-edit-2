@@ -61,7 +61,7 @@ MANDATORY_SHEETS = {
                     'abstract', 'keywords', 'language_id', 'language_of_work', 'hasgreek', 'hasarabic', 'hashebrew',
                     'haslatin', 'answererby', 'incipit', 'explicit', 'notes_on_letter', 'mention_id', 'emlo_mention_id',
                     'notes_on_people_mentioned', 'editors_notes', 'resource_name', 'resource_url', 'resource_details'],
-        'ids': ['iwork_id', 'author_ids', 'addressee_ids', 'origin_id', 'emlo_mention_id'],
+        'ids': ['iwork_id', 'author_ids', 'addressee_ids', 'origin_id', 'destination_id', 'emlo_mention_id'],
         'ints': ['iwork_id', 'date_of_work_std_year', 'date_of_work_std_month', 'date_of_work_std_day',
                  'date_of_work2_std_year', 'date_of_work2_std_month', 'date_of_work2_std_day', 'origin_id',
                  'destination_id'],

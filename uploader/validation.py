@@ -32,6 +32,8 @@ class CofkValidateWork:
         self.errors = []
 
         self.validate_dates()
+        self.validate_places()
+        self.validate_keywords()
 
     def get_value(self, key) -> CofkValue:
         value = {'key': key, 'value': None}
