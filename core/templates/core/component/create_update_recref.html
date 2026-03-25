@@ -1,3 +1,4 @@
+{% load cl_filters %}
 <div class="recref-list">
     {{ recref_formset.management_form }}
     {% for form in recref_formset %}
@@ -38,7 +39,14 @@
     {% endfor %}
 </div>
 
-{% include "core/component/recref.html" with recref_type=recref_type id_field=new_form.target_id label=add_label hide_create_btn=hide_create_btn placeholder=placeholder %}
+{% if recref_formset.forms %}
+    {% with add_label|add_another_if_startswith as label_text %}
+        {% include "core/component/recref.html" with recref_type=recref_type id_field=new_form.target_id label=label_text hide_create_btn=hide_create_btn placeholder=placeholder %}
+    {% endwith %}
+{% else %}
+    {% include "core/component/recref.html" with recref_type=recref_type id_field=new_form.target_id label=add_label hide_create_btn=hide_create_btn placeholder=placeholder %}
+{% endif %}
+
 {% if not no_date %}
     <label>Relevant dates:</label>
     <div class="inline-from-to">

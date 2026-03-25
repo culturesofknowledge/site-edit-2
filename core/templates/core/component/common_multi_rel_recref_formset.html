@@ -17,3 +17,10 @@
 {% endif %}
 
 {% include "core/component/recref.html" with recref_type=recref_type id_field=id_field label=label_add placeholder=placeholder %}
+{% if recref_formset.forms %}
+    {% with label_add|add_another_if_startswith as label_text %}
+        {% include "core/component/recref.html" with recref_type=recref_type id_field=id_field label=label_text placeholder=placeholder %}
+    {% endwith %}
+{% else %}
+    {% include "core/component/recref.html" with recref_type=recref_type id_field=id_field label=label_add placeholder=placeholder %}
+{% endif %}
