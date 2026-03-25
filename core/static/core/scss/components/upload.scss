@@ -2,7 +2,13 @@ div#upload-header {
   margin-top: 100px;
 }
 
+span#upload-title {
+  font-size: 1.5em;
+  color: #333333;
+}
+
 span#upload-summary {
+  display: block;
   background-color: $light-grey;
   font-weight: bold;
   padding: $space-xs;
