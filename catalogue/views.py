@@ -133,7 +133,7 @@ class CatalogueSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSe
     def get_queryset(self):
         model_class = CofkLookupCatalogue
         request_data = self.request_data.dict()
-        if self.request.user.has_perm(constant.PM_CHANGE_LOOKUPCAT):
+        if self.request.user.has_perm(constant.PM_VIEW_LOOKUPCAT):
             return model_class.objects \
                 .annotate(**{f'{self.count_field}_count': Count(self.count_field)}).order_by(self.updated_fields[0]).all()
         else:
