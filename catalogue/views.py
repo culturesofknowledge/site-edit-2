@@ -161,5 +161,5 @@ class CatalogueSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSe
         )
 
     def get_context(self, **kwargs):
-        context = {'can_edit': utils.is_user_editor_or_supervisor(self.request.user)}
+        context = {'can_edit': utils.is_user_supervisor(self.request.user)}
         return context
