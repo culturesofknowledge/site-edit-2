@@ -20,17 +20,15 @@
                     {{ is_range }}
                     <label for="{{ is_range.id_for_label }}">Date range?</label>
                 </div>
-                <small>
-                    Tick the 'Date range' box in either of the following cases:
-                    <ul>
-                        <li>
-                            The {{ name }} is known to have been written over a period of two or more days
-                        </li>
-                        <li>
-                            The {{ name }} cannot be precisely dated even to a single year
-                        </li>
-                    </ul>
-                </small>
+                Tick the 'Date range' box in either of the following cases:
+                <ul>
+                    <li>
+                        The {{ name }} is known to have been written over a period of two or more days
+                    </li>
+                    <li>
+                        The {{ name }} cannot be precisely dated even to a single year
+                    </li>
+                </ul>
             </div>
 
             <div class="margin-bottom">
@@ -47,21 +45,15 @@
                 </div>
 
                 <span>
-                    <small>
                     Leave any part or parts of the date blank if necessary.
-                    </small>
                     <br/>
-                    <small>
                     If the original {{ name }} was dated using the Julian calendar, please retain the Julian
                     day/month here. For example, if the date was marked as 8th January 1659/60 in the
                     original {{ name }}, then enter the day here as '8' not '18'.
-                    </small>
                     <br/>
-                    <small>
                     However, please do adjust the year for {{ name }}s dated using the form of Julian calendar
                     where the New Year began on 25th March. For example, 8th January 1659/60 should be
                     entered as 8-Jan-1660.
-                    </small>
                     <br/>
                 </span>
             </div>
@@ -72,12 +64,12 @@
                     month and year):
                 </h5>
                 <div class="row-no-margin">
-                    <div class="original-calendar-div col--1of2">
+                    <div class="original-calendar-div margin-right row-no-margin">
                         <label>In original calendar:</label>
                         {{ normal_date }}
                     </div>
 
-                    <div class="gregorian-calendar-div col--1of2">
+                    <div class="gregorian-calendar-div row-no-margin">
                         <label>In Gregorian calendar:</label>
                         {{ gregorian_date }}
                     </div>
