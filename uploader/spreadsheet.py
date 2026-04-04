@@ -7,9 +7,9 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from uploader.constants import MANDATORY_SHEETS
 from uploader.entities.entity import CofkEntity
-from uploader.entities.locations import CofkLocations
+from uploader.entities.locations import CofkLocations, CofkBulkLocations
 from uploader.entities.manifestations import CofkManifestations
-from uploader.entities.people import CofkPeople
+from uploader.entities.people import CofkPeople, CofkBulkPeople
 from uploader.entities.repositories import CofkRepositories
 from uploader.entities.work import CofkWork
 from uploader.models import CofkCollectUpload
@@ -178,13 +178,27 @@ class CofkUploadExcelFile:
             log.info(f'{self.upload}: created ' + ', '.join(log_msg))
 
     def _process_people_only(self):
-        """Process a bulk people-only upload."""
-        self._load_sheet('People')
+        """Process a people-only upload.
 
-        if self.missing:
-            raise CofkExcelFileError('</br> '.join(self.missing))
+        Detects format automatically:
+        - Standard (3-column) format: header row contains 'primary_name'
+        - Bulk (24-column) format: header row contains verbose column titles
+        """
+        try:
+            sheet = CofkSheet(self.wb['People'])
+        except StopIteration:
+            raise CofkExcelFileError('People sheet is missing its header rows.')
 
-        self.sheets['People'].entities = CofkPeople(upload=self.upload, sheet=self.sheets['People'])
+        is_bulk = 'primary_name' not in sheet.header
+
+        if not is_bulk and sheet.missing_columns:
+            cols = sheet.missing_columns
+            ms = ('columns ' + ', '.join(cols)) if len(cols) > 1 else f'column "{cols.pop()}"'
+            raise CofkExcelFileError(f'Missing {ms} from the People sheet.')
+
+        self.sheets['People'] = sheet
+        entity_class = CofkBulkPeople if is_bulk else CofkPeople
+        self.sheets['People'].entities = entity_class(upload=self.upload, sheet=self.sheets['People'])
 
         if self.sheets['People'].entities.errors:
             self.errors['people'] = self.sheets['People'].entities.format_errors_for_template()
@@ -193,17 +207,37 @@ class CofkUploadExcelFile:
         if self.total_errors == 0:
             people = self.sheets['People'].entities.people
             self.sheets['People'].entities.bulk_create(people)
-            log.info(f'{self.upload}: created {len(people)} CofkCollectPerson (bulk people upload)')
+            fmt = 'bulk people' if is_bulk else 'people'
+            log.info(f'{self.upload}: created {len(people)} CofkCollectPerson ({fmt} upload)')
 
     def _process_locations_only(self):
-        """Process a bulk locations-only upload."""
-        self._load_sheet('Places')
+        """Process a locations-only upload.
 
-        if self.missing:
-            raise CofkExcelFileError('</br> '.join(self.missing))
+        Detects format automatically:
+        - Standard (2-column) format: header row contains 'location_name'
+        - Bulk (14-column) format: header row contains verbose column titles
+        """
+        try:
+            sheet = CofkSheet(self.wb['Places'])
+        except StopIteration:
+            raise CofkExcelFileError('Places sheet is missing its header rows.')
 
-        self.sheets['Places'].entities = CofkLocations(upload=self.upload, sheet=self.sheets['Places'],
-                                                       work_data=None)
+        is_bulk = 'location_name' not in sheet.header
+
+        if not is_bulk and sheet.missing_columns:
+            cols = sheet.missing_columns
+            ms = ('columns ' + ', '.join(cols)) if len(cols) > 1 else f'column "{cols.pop()}"'
+            raise CofkExcelFileError(f'Missing {ms} from the Places sheet.')
+
+        self.sheets['Places'] = sheet
+
+        if is_bulk:
+            self.sheets['Places'].entities = CofkBulkLocations(upload=self.upload,
+                                                               sheet=self.sheets['Places'])
+        else:
+            self.sheets['Places'].entities = CofkLocations(upload=self.upload,
+                                                           sheet=self.sheets['Places'],
+                                                           work_data=None)
 
         if self.sheets['Places'].entities.errors:
             self.errors['locations'] = self.sheets['Places'].entities.format_errors_for_template()
@@ -212,4 +246,5 @@ class CofkUploadExcelFile:
         if self.total_errors == 0:
             locations = self.sheets['Places'].entities.locations
             self.sheets['Places'].entities.bulk_create(locations)
-            log.info(f'{self.upload}: created {len(locations)} CofkCollectLocation (bulk locations upload)')
+            fmt = 'bulk locations' if is_bulk else 'locations'
+            log.info(f'{self.upload}: created {len(locations)} CofkCollectLocation ({fmt} upload)')
