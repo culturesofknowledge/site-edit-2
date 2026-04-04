@@ -3,7 +3,7 @@ import re
 from typing import Callable, Iterable, Any, Literal
 
 import more_itertools
-from django.db.models import F, QuerySet, Exists, OuterRef, Min, Max
+from django.db.models import F, QuerySet, Min, Max
 from django.db.models import Q, lookups
 from django.db.models.base import ModelBase
 from django.db.models.lookups import GreaterThanOrEqual, LessThanOrEqual, Exact
@@ -207,8 +207,6 @@ some lookup key may only apply in first or last element,
 None == all element
 """
 lookup_idx_map = {
-    'ends_with': 0,
-    'not_end_with': 0,
 }
 
 """

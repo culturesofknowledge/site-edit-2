@@ -1,3 +1,5 @@
+from django.urls import reverse
+
 from core import constant
 from core.helper import webdriver_actions, perm_serv
 from core.helper.test_serv import EmloSeleniumTestCase
@@ -19,7 +21,11 @@ class TestPermission(EmloSeleniumTestCase):
         if has_perm:
             assert not webdriver_actions.is_403(self.selenium)
         else:
-            assert webdriver_actions.is_403(self.selenium)
+            # Permission denied redirects to dashboard (not a 403 page)
+            dashboard_path = reverse('login:dashboard')
+            assert self.selenium.current_url.endswith(dashboard_path), (
+                f"Expected redirect to dashboard, got {self.selenium.current_url}"
+            )
 
         self.goto_vname('login:dashboard')
         assert not webdriver_actions.is_403(self.selenium)

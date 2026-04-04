@@ -127,13 +127,17 @@ class DisplayableWork(CofkUnionWork):
 
     @property
     def date_for_ordering(self):
-        # Prefer the normalized standard date string if present and not the default empty sentinel
-        if self.date_of_work_std and self.date_of_work_std != '':
+        # None means the object was not saved; treat as no date
+        if self.date_of_work_std is None:
+            return DEFAULT_EMPTY_DATE_STR
+
+        # A real date (not the sentinel) can be returned directly
+        if self.date_of_work_std != DEFAULT_EMPTY_DATE_STR:
             return self.date_of_work_std
 
-        # Otherwise, construct a full YYYY-MM-DD using defaults for missing month/day
+        # Sentinel stored: construct from individual year/month/day fields if available
         if not self.date_of_work_std_year:
-            return ''
+            return DEFAULT_EMPTY_DATE_STR
 
         year = int(self.date_of_work_std_year)
         month = int(self.date_of_work_std_month or DEFAULT_MONTH)
