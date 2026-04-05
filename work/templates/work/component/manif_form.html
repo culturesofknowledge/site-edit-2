@@ -130,12 +130,15 @@
 <fieldset>
     <legend id="header_incipit" class="toc-item">Incipit and explicit</legend>
 
-    <label>Manifestation incipit</label>
-    {{ manif_form.manifestation_incipit }}
+    <div class="flex">
+        <label>Manifestation incipit: &nbsp; </label>
+        {{ manif_form.manifestation_incipit }}
+    </div>
 
-    <label>Manifestation explicit</label>
-    {{ manif_form.manifestation_excipit }}
-
+    <div class="flex">
+        <label>Manifestation explicit: </label>
+        {{ manif_form.manifestation_excipit }}
+    </div>
 </fieldset>
 
 {% include "core/component/comment_publication_formset.html" with comment_formset=manif_comment_formset comment_title='Notes on manifestation' %}
