@@ -34,14 +34,11 @@ class LocationSearchIssueTest(TestCase):
             'location_name_lookup': 'ends_with'
         }
         
-        # We need to mock the request_data in the search_view
-        search_view.request_data = request_data
-        
         qs = search_view.get_queryset_by_request_data(request_data)
         results = list(qs)
-        
+
         result_names = [loc.location_name for loc in results]
-        
+
         # Current behavior (buggy): only loc2 will be found because it only searches synonyms
         # Desired behavior: both loc1 and loc2 should be found
         self.assertIn('London, England', result_names, "Primary name ending with England should be found")
@@ -78,8 +75,6 @@ class LocationSearchIssueTest(TestCase):
             'location_name': 'England',
             'location_name_lookup': 'not_end_with'
         }
-        
-        search_view.request_data = request_data
         
         qs = search_view.get_queryset_by_request_data(request_data)
         results = list(qs)
