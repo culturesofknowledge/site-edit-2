@@ -451,7 +451,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
     def csv_export_setting(self):
-        if not self.has_perms(constant.PM_EXPORT_FILE_PERSON):
+        if not self.has_perms([constant.PM_EXPORT_FILE_PERSON]):
             return None
         return (lambda: view_serv.create_export_file_name('person', 'csv'),
                 lambda: DownloadCsvHandler(PersonCsvHeaderValues()).create_csv_file,

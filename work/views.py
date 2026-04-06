@@ -1239,7 +1239,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def csv_export_setting(self):
-        if not self.has_perms(constant.PM_EXPORT_FILE_WORK):
+        if not self.has_perms([constant.PM_EXPORT_FILE_WORK]):
             return None
 
         is_compact = (self.request_data.get('display-style', constant.SEARCH_LAYOUT_TABLE)
@@ -1255,7 +1255,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     def excel_export_setting(self) -> tuple[Callable[[], str], Callable[[Iterable, str], Any], str] | None:
         """ overrider this to enable download csv """
 
-        if not self.has_perms(constant.PM_EXPORT_FILE_WORK):
+        if not self.has_perms([constant.PM_EXPORT_FILE_WORK]):
             return None
 
         is_compact = (self.request_data.get('display-style', constant.SEARCH_LAYOUT_TABLE)

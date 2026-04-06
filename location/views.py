@@ -306,7 +306,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
     def csv_export_setting(self):
-        if not self.has_perms(constant.PM_EXPORT_FILE_LOCATION):
+        if not self.has_perms([constant.PM_EXPORT_FILE_LOCATION]):
             return None
         return (lambda: view_serv.create_export_file_name('location', 'csv'),
                 lambda: DownloadCsvHandler(LocationCsvHeaderValues()).create_csv_file,
