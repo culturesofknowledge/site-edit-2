@@ -35,9 +35,24 @@
         <td>{{ upload.upload_timestamp|standard_datetime }}</td>
         <td>{{ upload.upload_name }}</td>
         <td>{{ upload.uploader_email }}</td>
-        <td>{{ upload.total_works }}</td>
-        <td>{{ upload.works_accepted }}</td>
-        <td>{{ upload.works_rejected }}</td>
+        <td>
+            {% if upload.upload_type == 'work' %}
+            {{ upload.total_works }}
+            {% else %}
+            N/A
+            {% endif %}</td>
+        <td>
+            {% if upload.upload_type == 'work' %}
+            {{ upload.works_accepted }}
+            {% else %}
+            N/A
+            {% endif %}</td>
+        <td>
+            {% if upload.upload_type == 'work' %}
+            {{ upload.works_rejected }}
+            {% else %}
+            N/A
+            {% endif %}</td>
         <td>{{ upload.upload_status }}</td>
         <td><form action="/upload/{{ upload.upload_id }}"><button type="submit" class="btn">Review</button></form></td>
         <!--<td><input type="button" value="Export"></td>-->
