@@ -1,11 +1,21 @@
 
 .url_checker_div {
   display: flex;
+  align-items: stretch;
 
-  button {
-    width: 140px;
+  input {
+    flex: 1;
+    margin-bottom: 0;
   }
 
+  button {
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    margin-left: 10px;
+  }
 }
 
 .standtext_btn {
