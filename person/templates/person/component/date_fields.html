@@ -1,8 +1,11 @@
 <fieldset class="date-fields-div">
     <legend>{{ title_name | title }}</legend>
-    <div class="margin-bottom">
-        {% include "core/component/common_form_choices.html" with label_text='Calendar of '|add:title_name choices_field=calendar %}
+    <div class="margin-bottom calendar-div">
+        {% with new_label_text='Calendar of '|add:title_name %}
+            {% include "core/component/common_form_choices.html" with label_text=new_label_text choices_field=calendar as_col=True %}
+        {% endwith %}
     </div>
+    
     <div class="is-range-div margin-bottom">
         {{ is_range }}
         <label for="{{ is_range.id_for_label }}">Date range?</label>
