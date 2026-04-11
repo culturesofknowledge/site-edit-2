@@ -364,7 +364,6 @@
     margin-bottom: 10px;
 
     .control-label {
-      text-align: right;
       padding-top: 6px;
       line-height: 1.4;
     }
@@ -374,6 +373,14 @@
       align-items: center;
       gap: 8px;
       flex-wrap: wrap;
+
+      &:has(.help-inline) {
+        input,
+        select,
+        textarea {
+          margin-bottom: 0;
+        }
+      }
 
       input[type='text'],
       select,
