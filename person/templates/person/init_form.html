@@ -54,7 +54,7 @@
                         <small>(No more than 200 characters. Preferably Surname, Forename)</small>
                     </div>
                     <div class="margin-bottom">
-                        {% include "core/component/common_form_choices.html" with label_text='Gender' choices_field=person_form.gender %}
+                        {% include "core/component/common_form_choices.html" with label_text='Gender' choices_field=person_form.gender as_col=True %}
                     </div>
                     <div class="margin-bottom">
                         {{ person_form.is_organisation }}
