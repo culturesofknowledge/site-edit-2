@@ -423,9 +423,9 @@ places_to_searchable = 'The place to which a letter was sent, in standard modern
 flags_help_text = "May contain the words 'Date of work', 'Author/sender', 'Addressee/recipient', 'Origin' " \
                   "and/or 'Destination', followed by 'INFERRED', 'UNCERTAIN' or, in the case of date," \
                   " 'APPROXIMATE'. E.g. 'Author/sender INFERRED'."
-date_as_marked_help_text = "This field could contain the actual words marked within the " \
-                           "letter, such as 'ipsis Kalendis Decembribus C I. I. CCVI', or" \
-                           " a modern researcher's notation such as 'n.d.'"
+date_as_marked_help_text = "This field should contain the actual words marked within the letter," \
+                "such as 'ipsis Kalendis Decembribus C I. I. CCVI'."
+
 manif_help_text = 'The Manifestations field contains a very brief summary of all the ' \
                   'manifestations of a work. This summary includes document type plus ' \
                   'either repository and shelfmark or printed edition details.</p><p><i>You can ' \
