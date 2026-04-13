@@ -217,7 +217,7 @@ class DisplayableWork(CofkUnionWork):
 
     def queryable_people(self, rel_type: str, is_details: bool = False) -> str:
         # Derived value for CofkUnionQueryable
-        return ", ".join([p.to_string(is_details=is_details) for p in self.find_persons_by_rel_type(rel_type)])
+        return ' ~ '.join([p.to_string(is_details=is_details) for p in self.find_persons_by_rel_type(rel_type)])
 
     @property
     def people_mentioned(self):
