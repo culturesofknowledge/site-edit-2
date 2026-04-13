@@ -225,7 +225,7 @@ class DisplayableWork(CofkUnionWork):
 
     @property
     def places_mentioned(self) -> str:
-        return ", ".join([l.location_name for l in self.find_locations_by_rel_type(REL_TYPE_MENTION_PLACE) if l.location_name])
+        return ' ~ '.join([l.location_name for l in self.find_locations_by_rel_type(REL_TYPE_MENTION_PLACE) if l.location_name])
 
     @property
     def related_works(self) -> str:
