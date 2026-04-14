@@ -2,19 +2,31 @@
 
 <fieldset>
     <legend id="header_basic_details" class="toc-item">Basic details</legend>
-    <label>Document type:</label>
-    {{ manif_form.manifestation_type }}
+    
+    <div class="flex flex-label">
+        <label>Document type:</label>
+        {{ manif_form.manifestation_type }}
+    </div>
 
-    {% include "core/component/recref.html" with recref_type='inst' id_field=manif_form.selected_inst_id label='Repository' %}
+    <div>
+    {% include "core/component/recref.html" with recref_type='inst' id_field=manif_form.selected_inst_id label='Repository:' %}
 
+    </div>
 
-    <label>ID number or shelfmark:</label>
-    {{ manif_form.id_number_or_shelfmark }}
+    <div class="flex flex-label">
+        <label>ID number or shelfmark:</label>
+        {{ manif_form.id_number_or_shelfmark }}
+    </div>
+    
+    <label class="margin-bottom margin-top">Or </label>
+    
+    <div class="flex flex-label margin-bottom">
+        <label>Printed edition details: </label>
+        {{ manif_form.printed_edition_details }}
+    </div>
+    
 
-    <label class="margin-bottom">Or </label>
-    <label>Printed edition details: </label>
-
-    {{ manif_form.printed_edition_details }}
+    
     <div class="ref-publication-row" textbox_id="{{ manif_form.printed_edition_details.id_for_label }}"></div>
 
 </fieldset>
