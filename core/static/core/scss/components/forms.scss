@@ -42,6 +42,11 @@ textarea {
   }
 }
 
+input.lat-long-field {
+  width: 120px;
+  display: inline-block;
+}
+
 select {
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -123,8 +128,6 @@ textarea {
     }
   }
 }
-
-
 
 .new-password-box {
   padding: 10px;
