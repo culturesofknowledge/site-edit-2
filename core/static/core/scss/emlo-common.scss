@@ -164,6 +164,7 @@ nav.flex-space-between {
   display: flex;
   flex-wrap: wrap;
   flex-direction: row;
+  align-items: baseline;
 
   & > label:first-of-type {
     width: 100%;
@@ -175,9 +176,6 @@ nav.flex-space-between {
     margin: 0;
   }
 
-  small {
-    margin: auto 0;
-  }
 }
 
 .row-spaced {
