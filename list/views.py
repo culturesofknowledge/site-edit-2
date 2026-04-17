@@ -112,7 +112,7 @@ class CofkListView(ListView):
 
 
 class RoleListView(PermissionRequiredMixin, LoginRequiredMixin, CofkListView):
-    permission_required = constant.PM_CHANGE_ROLECAT
+    permission_required = constant.PM_VIEW_ROLECAT
     raise_exception = True
     model = CofkUnionRoleCategory
     template_name = 'list/roles.html'
@@ -139,7 +139,7 @@ class RoleListView(PermissionRequiredMixin, LoginRequiredMixin, CofkListView):
 
 
 class CatalogueListView(PermissionRequiredMixin, LoginRequiredMixin, CofkListView):
-    permission_required = constant.PM_CHANGE_LOOKUPCAT
+    permission_required = constant.PM_VIEW_LOOKUPCAT
     raise_exception = True
     model = CofkLookupCatalogue
     template_name = 'catalogue/init_form.html'
@@ -207,7 +207,7 @@ class SubjectListView(PermissionRequiredMixin, LoginRequiredMixin, CofkListView)
 
 
 class OrgTypeListView(PermissionRequiredMixin, LoginRequiredMixin, CofkListView):
-    permission_required = constant.PM_CHANGE_ORGTYPE
+    permission_required = constant.PM_VIEW_ORGTYPE
     raise_exception = True
     model = CofkUnionOrgType
     template_name = 'list/orgtypes.html'

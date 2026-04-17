@@ -26,7 +26,7 @@
 <fieldset>
     <legend id="header_former_owners" class="toc-item">Former owners</legend>
 
-    {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_former.update_formset new_form=recref_former.new_form add_label='Add former owner:' %}
+    {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_former.update_formset new_form=recref_former.new_form add_label='Add former owner:' placeholder='Please select or create former owner, then click Save.' %}
 
 </fieldset>
 
@@ -37,7 +37,7 @@
         Note: when entering enclosure details, please treat any work/manifestation on the Cultures of Knowledge system as a letter.
     </span>
 
-    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosure_manif.update_formset new_form=recref_enclosure_manif.new_form add_label='Add another enclosed letter:' hide_create_btn=True no_date=True %}
+    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosure_manif.update_formset new_form=recref_enclosure_manif.new_form add_label='Add enclosed letter:' hide_create_btn=True no_date=True placeholder='Please select enclosed letter, then click Save.' %}
 
     <span>OTHER TYPES of enclosure, e.g. money, books, samples of minerals:</span>
     <label> Details of enclosures other than letters </label>
@@ -52,7 +52,7 @@
 <fieldset>
     <legend id="header_letters" class="toc-item">Letters in which this one was enclosed</legend>
 
-    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosed_manif.update_formset new_form=recref_enclosed_manif.new_form add_label='Add another enclosing letter:' hide_create_btn=True no_date=True %}
+    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosed_manif.update_formset new_form=recref_enclosed_manif.new_form add_label='Add enclosing letter:' hide_create_btn=True no_date=True placeholder='Please select enclosing letter, then click Save.' %}
 
 </fieldset>
 
@@ -130,12 +130,15 @@
 <fieldset>
     <legend id="header_incipit" class="toc-item">Incipit and explicit</legend>
 
-    <label>Manifestation incipit</label>
-    {{ manif_form.manifestation_incipit }}
+    <div class="flex">
+        <label>Manifestation incipit: &nbsp; </label>
+        {{ manif_form.manifestation_incipit }}
+    </div>
 
-    <label>Manifestation explicit</label>
-    {{ manif_form.manifestation_excipit }}
-
+    <div class="flex">
+        <label>Manifestation explicit: </label>
+        {{ manif_form.manifestation_excipit }}
+    </div>
 </fieldset>
 
 {% include "core/component/comment_publication_formset.html" with comment_formset=manif_comment_formset comment_title='Notes on manifestation' %}
@@ -150,7 +153,7 @@
             {{ form }}
         {% endfor %}
     </div>
-    {% include "core/component/recref.html" with recref_type='person' id_field=manif_form.selected_scribe_id label='Add scribe:' %}
+    {% include "core/component/recref.html" with recref_type='person' id_field=manif_form.selected_scribe_id label='Add scribe:' placeholder='Please select scribe, then click Save.' %}
 
 </fieldset>
 <fieldset>

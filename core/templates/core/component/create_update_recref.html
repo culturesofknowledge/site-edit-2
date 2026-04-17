@@ -1,8 +1,10 @@
+{% load cl_filters %}
 <div class="recref-list">
     {{ recref_formset.management_form }}
     {% for form in recref_formset %}
 
-        <div class="recref-row">
+        <div >
+            <div class="recref-row">
             {{ form.recref_id }}
             {{ form.target_id }}
             <label class="recref-title">
@@ -10,27 +12,50 @@
                     {{ form.initial_target_id }}, {{ form.rec_name.value }}
                 </a>
             </label>
-
+            {% include "core/component/common_checkbox.html" with field=form.is_delete name='Delete' class_name="recref-del" %}
+            </div>
+            <div class="recref-row">
             {% if not no_date %}
                 <div class="inline-from-to margin-right">
-                    <small>From:</small>
+                    <small>From: &nbsp;</small>
                     {{ form.from_date }}
-                    <small>To:</small>
+                    <small> &nbsp; To:  &nbsp;</small>
                     {{ form.to_date }}
+                    &nbsp; <i><small>(Enter yyyy, mm/yyyy, or dd/mm/yyyy)</small></i>
                 </div>
             {% endif %}
-            {% include "core/component/common_checkbox.html" with field=form.is_delete name='Delete' class_name="recref-del" %}
+            </div>
+            {% if form.from_date.errors %}
+            <div class="recref-row alert danger">
+                {{ form.from_date.errors.0 }}
+           </div>
+            {% endif %}
+            {% if form.to_date.errors %}
+            <div class="recref-row alert danger">
+                 {{ form.to_date.errors.0 }}
+            </div>
+            {% endif %}
         </div>
     {% endfor %}
 </div>
 
-{% include "core/component/recref.html" with recref_type=recref_type id_field=new_form.target_id label=add_label hide_create_btn=hide_create_btn %}
+{% if recref_formset.forms %}
+    {% with add_label|add_another_if_startswith as label_text %}
+        {% include "core/component/recref.html" with recref_type=recref_type id_field=new_form.target_id label=label_text hide_create_btn=hide_create_btn placeholder=placeholder %}
+    {% endwith %}
+{% else %}
+    {% include "core/component/recref.html" with recref_type=recref_type id_field=new_form.target_id label=add_label hide_create_btn=hide_create_btn placeholder=placeholder %}
+{% endif %}
+
 {% if not no_date %}
     <label>Relevant dates:</label>
     <div class="inline-from-to">
-        <small>From:</small>
+        <small>From: &nbsp; </small>
         {{ new_form.from_date }}
-        <small>To:</small>
+        {% if new_form.from_date.errors %}<small class="text-danger">{{ new_form.from_date.errors.0 }}</small>{% endif %}
+        <small> &nbsp; To: &nbsp;</small>
         {{ new_form.to_date }}
+        {% if new_form.to_date.errors %}<small class="text-danger">{{ new_form.to_date.errors.0 }}</small>{% endif %}
+        &nbsp; <i><small>(Enter yyyy, mm/yyyy, or dd/mm/yyyy)</small></i>
     </div>
 {% endif %}

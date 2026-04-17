@@ -19,8 +19,8 @@ class RecrefForm(forms.Form):
     recref_id = forms.CharField(required=False, widget=forms.HiddenInput())
     target_id = forms.CharField(required=False, widget=forms.HiddenInput())
     rec_name = forms.CharField(required=False)
-    from_date = forms.DateField(required=False, widget=widgets_serv.NewDateInput())
-    to_date = forms.DateField(required=False, widget=widgets_serv.NewDateInput())
+    from_date = widgets_serv.FromDateField(required=False)
+    to_date = widgets_serv.ToDateField(required=False)
     is_delete = form_serv.DeleteCheckboxField()
 
     @property

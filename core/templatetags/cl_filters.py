@@ -141,3 +141,13 @@ def break_ambiguous(value):
     value = value.replace('&amp;', '&amp;<wbr>')
     
     return mark_safe(value)
+
+@register.filter
+def add_another_if_startswith(value, prefix="Add "):
+    if not isinstance(value, str):
+        return value
+
+    if value.startswith(prefix):
+        return value.replace(prefix, "Add another ", 1)
+
+    return value
