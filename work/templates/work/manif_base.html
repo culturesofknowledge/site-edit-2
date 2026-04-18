@@ -60,7 +60,12 @@
                     {% endif %}
 
                 </td>
-                <td> {{ manif.manifestation_type }} </td>
+                <td>
+                    {{ manif.type_display_name }}
+                    {% for letter in manif.enclosed_letters %}
+                        <br/><a href="{% url 'work:manif_update' letter.work_id letter.manif_id %}" target="_blank">{{ letter.label }}</a>
+                    {% endfor %}
+                </td>
                 <td>
                     {% with images=manif.images %}
                         {% include "core/component/search_table_layout/img_result.html" %}

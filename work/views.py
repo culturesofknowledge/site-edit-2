@@ -486,9 +486,21 @@ class ManifFFH(BasicWorkFFH):
                 inst = _manif.find_selected_inst()
                 inst = inst and inst.inst
                 _manif.inst_display_name = inst_serv.get_recref_display_name(inst)
+                _manif.type_display_name = dict(manif_type_choices).get(_manif.manifestation_type, '')
                 _manif.lang_list_str = ', '.join(
                     (l.language_code.language_name for l in _manif.language_set.iterator())
                 )
+                # Find enclosed letters for this manifestation
+                enclosed_letters = []
+                for enclosed_manif in _manif.find_encloses():
+                    if enclosed_manif.work:
+                        label = 'Enclosure: ' + manif_serv.get_rich_display_name(enclosed_manif)
+                        enclosed_letters.append({
+                            'work_id': enclosed_manif.work.iwork_id,
+                            'manif_id': enclosed_manif.manifestation_id,
+                            'label': label,
+                        })
+                _manif.enclosed_letters = enclosed_letters
                 manif_set.append(_manif)
 
             context['manif_set'] = manif_set
