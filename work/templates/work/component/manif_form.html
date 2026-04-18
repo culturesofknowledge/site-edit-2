@@ -117,12 +117,13 @@
 <fieldset>
     <legend id="header_language" class="toc-item">Language of manifestation</legend>
     {{ manif_form.manifestation_is_translation }}
-    <label for="{{ manif_form.manifestation_is_translation.id_for_label }}"> Manifestation is translation </label>
-    <small>
+    <label for="{{ manif_form.manifestation_is_translation.id_for_label }}"> Manifestation is translation
+    <small class="fw-200">
         (It is not necessary to enter language, incipit and explicit of manifestation if they are the same as those of
         the original work.)
-        <br/>
     </small>
+    </label>
+    <br/>
     {% include "core/component/lang_section.html" with lang_formset=edit_lang_formset new_lang_form=new_lang_form %}
 
 </fieldset>

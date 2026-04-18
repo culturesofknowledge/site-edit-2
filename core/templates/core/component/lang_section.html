@@ -1,28 +1,25 @@
 <!-- remember import lang_service.js and call setup_add_lang() -->
 <small>
-    If a language you require is not displayed below, you can add it to the list: Add further possible languages
+    If a language you require is not displayed below, you can add it to the list: <a href="{% url 'lang:search' %}" target="_blank">Add further possible languages</a>
 
     <br/>
     <br/>
-    If the languages you want are already displayed below, tick one or more checkboxes to select as many as
-    required, then click Save. You can also enter very brief notes on the selected languages using the input fields
-    below each checkbox, for example if you wanted to specify that a text is mainly in one language but there are
-    just a few words in another language.
+    If the languages you want are in the dropdown, select as many as required and then click save. You can enter brief notes on the selected languages using the input fields to their right.
 </small>
 
 {{ lang_formset.management_form }}
 {% for form in lang_formset %}
-    <div class="lang-item">
+    <div class="lang-item margin-top">
         <label class="lang-label">{{ form.lang_name.value }}  </label>
         {{ form.lang_name }}
         {{ form.notes }}
         {{ form.lang_rec_id }}
-        {% include "core/component/common_delete_checkbox.html" with show_cond=True field=form.is_delete %}
+        &nbsp;{% include "core/component/common_delete_checkbox.html" with show_cond=True field=form.is_delete %}
     </div>
 {% endfor %}
 
 <div class="lang_div">
-    <label>New Language:</label>
+    <label>New language:</label>
     {% include "core/component/selectfilter.html" with datalist_field=new_lang_form.language_list %}
     <div class="new_lang_div"></div>
 

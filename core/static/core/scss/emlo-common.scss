@@ -452,6 +452,7 @@ nav.flex-space-between {
 // for lang_section
 .lang-item {
   @extend .row-no-margin;
+  align-items: baseline;
 
   & > .lang-label {
     @extend .col--1of5;
