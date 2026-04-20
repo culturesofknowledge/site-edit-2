@@ -137,3 +137,18 @@ textarea {
   color: darkgreen;
   font-weight: bolder;
 }
+
+// Image URL fields - greyed out by default for existing images
+.image-url-field {
+  input {
+    &.image-url-disabled {
+      background-color: $faint-grey;
+    }
+  }
+}
+
+.image-url-editable-toggle {
+  label[for^="make-urls-editable"] {
+    font-weight: normal;
+  }
+}

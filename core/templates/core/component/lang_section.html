@@ -18,9 +18,10 @@
     </div>
 {% endfor %}
 
-<div class="lang_div">
+<div class="lang_div multi_rel_recref_container">
     <label>New language:</label>
-    {% include "core/component/selectfilter.html" with datalist_field=new_lang_form.language_list %}
-    <div class="new_lang_div"></div>
-
+    <div>
+        {% include "core/component/selectfilter.html" with datalist_field=new_lang_form.language_list %}
+        <div class="new_lang_div"></div>
+    </div>
 </div>
