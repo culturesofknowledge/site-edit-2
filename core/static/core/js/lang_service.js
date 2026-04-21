@@ -13,8 +13,8 @@ function on_lang_select_change(e, selected_lang, selected_val) {
     let new_lang = $('<div class="lang-item"></div>')
     new_lang.append(`<label class="lang-label">${selected_lang}</label>`)
     new_lang.append(`<input name="lang_name" type="hidden" value="${selected_lang}" />`)
-    new_lang.append(`<input name="lang_note" type="text" />`)
-    let del_btn_jqe = $('<button class="lang_del_btn">Del</button>')
+    new_lang.append(`<input name="lang_note" type="text" />&nbsp;`)
+    let del_btn_jqe = $('<button class="lang_del_btn">Delete</button>')
     del_btn_jqe.on('click', on_lang_del_click)
     new_lang.append(del_btn_jqe)
 

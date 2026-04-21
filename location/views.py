@@ -10,7 +10,8 @@ from django.forms import BaseForm, BaseFormSet
 from django.shortcuts import render, get_object_or_404, redirect
 
 from core import constant
-from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM
+from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM, \
+    REL_TYPE_MENTION_PLACE
 from core.export_data import download_csv_serv, cell_values
 from core.forms import CommentForm
 from core.helper import view_serv, renderer_serv, query_serv, perm_serv
@@ -45,6 +46,7 @@ def create_queryset_by_queries(model_class: Type[models.Model], queries: Iterabl
         'sent': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_FROM]),
         'recd': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_TO]),
         'all_works': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
+        'mentioned': create_sql_count_work_by_location([REL_TYPE_MENTION_PLACE]),
     }
 
     queryset = query_serv.update_queryset(queryset, model_class, queries=queries, annotate=annotate,
@@ -243,6 +245,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
             ('sent', 'Sent',),
             ('recd', 'Rec\'d',),
             ('all_works', 'Sent or Rec\'d',),
+            ('mentioned', 'Mentioned',),
             ('researchers_notes', 'Researchers\' notes',),
             ('resources', 'Related resources',),
             ('latitude', 'Latitude',),
@@ -303,7 +306,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
     def csv_export_setting(self):
-        if not self.has_perms(constant.PM_EXPORT_FILE_LOCATION):
+        if not self.has_perms([constant.PM_EXPORT_FILE_LOCATION]):
             return None
         return (lambda: view_serv.create_export_file_name('location', 'csv'),
                 lambda: DownloadCsvHandler(LocationCsvHeaderValues()).create_csv_file,
@@ -323,6 +326,7 @@ class LocationCsvHeaderValues(HeaderValues):
             "Sent",
             "Recd",
             "All works",
+            "Mentioned",
             "Researchers notes",
             "Related resources",
             "Latitude",
@@ -348,6 +352,7 @@ class LocationCsvHeaderValues(HeaderValues):
             obj.sent,
             obj.recd,
             obj.all_works,
+            obj.mentioned,
             download_csv_serv.join_comment_lines(obj.comments.iterator()),
             cell_values.resource_str_by_list(obj.resources.iterator()),
             obj.latitude,

@@ -5,21 +5,16 @@
 
 {% with header_id=header_id|default:'header_image' %}
     <div>
-        <h1 id="{{ header_id }}"
-            class="{{ header_class|default:'toc-item' }}"
-        >
-            Images
-        </h1>
         <div>
-            Copyright law must be respected at all times. You must ensure that all necessary permissions
+            <i>Copyright law</i> must be respected at all times. You must ensure that all necessary permissions
             have been
             obtained before uploading or attempting to display images.
         </div>
-        <div>
-            You can associate images with a location in two different ways:
+        <div class="margin-bottom">
+            You can associate images with a manifestation in two different ways:
             <ol>
                 <li>
-                    Upload them if you have a copy on your own personal computer
+                    Upload them if you have a copy on your own personal computer.
                 </li>
                 <li>
                     Link to them by typing in, or copying and pasting in, the URL of an image on this or
@@ -36,12 +31,15 @@
         {% for form in img_handler.image_formset|reverse_list %}
             {% if forloop.first %}
                 <strong> Upload image files from your own computer: </strong>
-                {{ img_handler.img_form }}
+                <br/><br/>
+                <div class="multi_rel_recref_container">
+                    <label>Selected image:</label>
+                    <div>{{ img_handler.img_form }}</div>
+                </div>
                 <p>Or:</p>
 
                 <strong> Enter or change links to images by typing in the URL: </strong>
-                <div> Enter new image details:</div>
-
+                
             {% endif %}
 
 
@@ -56,18 +54,80 @@
                 </legend>
 
                 {{ form.image_id }}
-                {% include "core/component/common_field_layout.html" with field=form.image_filename %}
-                {% include "core/component/common_field_layout.html" with field=form.thumbnail %}
-                {% include "core/component/common_field_layout.html" with field=form.credits %}
-                {% include "core/component/common_field_layout.html" with field=form.licence_details %}
-                {% include "core/component/common_field_layout.html" with field=form.licence_url %}
-                {% include "core/component/common_checkbox.html" with field=form.can_be_displayed name='Can be displayed to public:' is_normal_size=True %}
-                {% include "core/component/common_field_layout.html" with field=form.display_order %}
 
+                {% if not forloop.first and form.thumbnail.value %}
+                    <div class="margin-bottom">
+                        <img src="{{ form.thumbnail.value }}" alt="Thumbnail preview"
+                             style="max-width: 200px; max-height: 200px; border: 1px solid #ccc; padding: 4px;">
+                    </div>
+                {% elif not forloop.first and form.image_filename.value %}
+                    <div class="margin-bottom">
+                        <img src="{{ form.image_filename.value }}" alt="Thumbnail preview"
+                             style="max-width: 200px; max-height: 200px; border: 1px solid #ccc; padding: 4px;">
+                    </div>
+                {% endif %}
+
+                <div class="multi_rel_recref_container">
+                    <label>{{ form.image_filename.label }}:</label>
+                    <div class="{% if not forloop.first %}image-url-field{% endif %}">{{ form.image_filename.errors }}{{ form.image_filename }}</div>
+                </div>
+                <div class="multi_rel_recref_container">
+                    <label>{{ form.thumbnail.label }}:</label>
+                    <div class="{% if not forloop.first %}image-url-field{% endif %}">{{ form.thumbnail.errors }}{{ form.thumbnail }}</div>
+                </div>
+                {% if not forloop.first %}
+                <div class="multi_rel_recref_container image-url-editable-toggle">
+                    <label></label>
+                    <div>
+                        <input type="checkbox" class="make-urls-editable-checkbox" id="make-urls-editable-{{ forloop.counter0 }}">
+                        <label for="make-urls-editable-{{ forloop.counter0 }}">Make URLs editable</label>
+                    </div>
+                </div>
+                {% endif %}
+                <div class="multi_rel_recref_container">
+                    <label>{{ form.credits.label }}:</label>
+                    <div>{{ form.credits.errors }}{{ form.credits }}</div>
+                </div>
+                <div class="multi_rel_recref_container">
+                    <label>{{ form.licence_details.label }}:</label>
+                    <div>{{ form.licence_details.errors }}{{ form.licence_details }}</div>
+                </div>
+                <div class="multi_rel_recref_container">
+                    <label>{{ form.licence_url.label }}:</label>
+                    <div>{{ form.licence_url.errors }}{{ form.licence_url }}</div>
+                </div>
+                {% include "core/component/common_checkbox.html" with field=form.can_be_displayed name='Can be displayed to public <i style="font-weight:lighter">(If this box is not ticked, the image will not be displayed in the \'front-end\'.)</i>:' is_normal_size=True %}
+                <div class="multi_rel_recref_container">
+                    <label>{{ form.display_order.label }}:</label>
+                    <div>{{ form.display_order.errors }}{{ form.display_order }}</div>
+                </div>
+
+                {% if not forloop.first %}
+                    {% include "core/component/common_checkbox.html" with field=form.is_delete name='Delete image from manifestation <i style="font-weight:lighter">(Tick then click save to delete the connection between this manifestation and this image.)</i>:' is_normal_size=True %}
+                {% endif %}
 
             </fieldset>
 
 
         {% endfor %}
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.image-url-field input').forEach(function (input) {
+                input.classList.add('image-url-disabled');
+                input.readOnly = true;
+            });
+
+            document.querySelectorAll('.make-urls-editable-checkbox').forEach(function (checkbox) {
+                checkbox.addEventListener('change', function () {
+                    var fieldset = this.closest('fieldset');
+                    fieldset.querySelectorAll('.image-url-field input').forEach(function (input) {
+                        input.readOnly = !checkbox.checked;
+                        input.classList.toggle('image-url-disabled', !checkbox.checked);
+                    });
+                });
+            });
+        });
+    </script>
 {% endwith %}

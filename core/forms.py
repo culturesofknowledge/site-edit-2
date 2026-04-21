@@ -2,6 +2,7 @@ from django import forms
 from django.conf import settings
 from django.forms import ModelForm, HiddenInput, IntegerField, Form
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 
 from core.helper import form_serv, model_serv
 from core.helper import widgets_serv
@@ -19,8 +20,8 @@ class RecrefForm(forms.Form):
     recref_id = forms.CharField(required=False, widget=forms.HiddenInput())
     target_id = forms.CharField(required=False, widget=forms.HiddenInput())
     rec_name = forms.CharField(required=False)
-    from_date = forms.DateField(required=False, widget=widgets_serv.NewDateInput())
-    to_date = forms.DateField(required=False, widget=widgets_serv.NewDateInput())
+    from_date = widgets_serv.FromDateField(required=False)
+    to_date = widgets_serv.ToDateField(required=False)
     is_delete = form_serv.DeleteCheckboxField()
 
     @property
@@ -129,11 +130,11 @@ class ImageForm(ModelForm):
     thumbnail = forms.CharField(required=False,
                                 label='URL for thumbnail (if any)')
     credits = forms.CharField(required=False,
-                              label="Credits for 'front end' display*")
+                              label="Credits for 'front-end' display*")
     licence_details = form_serv.CommonTextareaField(label='Either: full text of licence*')
 
     licence_url = forms.CharField(required=False,
-                                  label='licence URL*',
+                                  label='Or: licence URL*',
                                   initial=settings.DEFAULT_IMG_LICENCE_URL,
                                   )
     licence_url.widget.attrs.update({'class': 'url_checker', })
@@ -141,7 +142,10 @@ class ImageForm(ModelForm):
     can_be_displayed = form_serv.ZeroOneCheckboxField(required=False,
                                                        label='Can be displayed to public',
                                                        initial='1', )
-    display_order = forms.IntegerField(required=False, label='Order for display in front end', initial=1)
+    display_order = forms.IntegerField(required=False, label=mark_safe('Order for display in front-end <i style="font-weight:lighter">(Please enter a number greater than or equal to 1. If multiple images have the same number, they will be ordered by filename.)</i>'), initial=1)
+
+    is_delete = ZeroOneCheckboxField(is_str=False, label='Delete image from manifestation')
+    is_delete.widget.attrs.update({'class': 'warn-checked'})
 
     def clean_display_order(self):
         display_order = self.cleaned_data.get('display_order')
@@ -165,7 +169,7 @@ class ImageForm(ModelForm):
 
 
 class UploadImageForm(Form):
-    selected_image = forms.ImageField(required=False)
+    selected_image = forms.ImageField(required=False, label='')
 
 
 class CatalogueForm(ModelForm):

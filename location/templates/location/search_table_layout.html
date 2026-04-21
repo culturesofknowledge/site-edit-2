@@ -9,6 +9,7 @@
         <th>Sent</th>
         <th>Rec'd</th>
         <th>Sent<br>and Rec'd</th>
+        <th>Ment'd</th>
         <th>Researchers' notes</th>
         <th>Related resources</th>
         <th>Latitude</th>
@@ -65,6 +66,14 @@
                 {% endif %}
             </td>
             <td>
+                {% if r.mentioned %}
+                    <a href="{% url 'work:search' %}?location_mention_pk={{ r.location_id }}" class="search_link"
+                       target="_blank">
+                        {{ r.mentioned }}
+                    </a>
+                {% endif %}
+            </td>
+            <td>
                 {% include "core/component/search_table_layout/comment_result.html" with comments=r.comments %}
             </td>
             <td>
@@ -87,7 +96,9 @@
             <td> {{ r.element_5_eg_county }} </td>
             <td> {{ r.element_6_eg_country }} </td>
             <td> {{ r.element_7_eg_empire }} </td>
-            <td></td>
+            <td>
+                {% include "core/component/search_table_layout/img_result.html" with images=r.images %}
+            </td>
             <td>
                 {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r %}
             </td>

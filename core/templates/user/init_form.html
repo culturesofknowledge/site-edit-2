@@ -16,6 +16,14 @@
                 {{ form.errors }}
             </div>
 
+            {% if new_password %}
+                <div class="margin-bottom new-password-box">
+                    The user <strong>{{ form.instance.username }}</strong> has been allocated the password
+                    <span class="new-password-value">{{ new_password }}</span>
+                    <br><span> Please inform the user of their initial password, and ask them to change their password on their first login.</span>
+                    <br><small> (Alternatively you could change the user's password yourself using the 'Edit' and 'Reset Password' options)</small>
+                </div>
+            {% endif %}
 
             <form method="post">
                 {% csrf_token %}

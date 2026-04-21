@@ -24,8 +24,8 @@ class LocationForm(ModelForm):
     element_6_eg_country = CharField(required=False, label='6. Country, e.g. England')
     element_7_eg_empire = CharField(required=False, label='7. Larger political entity, e.g. United Kingdom')
     location_synonyms = form_serv.CommonTextareaField(required=False, label='Alternative names for location')
-    latitude = CharField(required=False)
-    longitude = CharField(required=False)
+    latitude = CharField(required=False , widget=forms.TextInput(attrs={"class": "lat-long-field"}))
+    longitude = CharField(required=False , widget=forms.TextInput(attrs={"class": "lat-long-field"}))
 
     class Meta:
         model = CofkUnionLocation
@@ -72,6 +72,10 @@ class GeneralSearchFieldset(form_serv.BasicSearchFieldset):
                                       "please note that these will be slower searches than those on place name or "
                                       "latitude/longitude.")
     recd_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
+
+    mentioned = SearchIntField(help_text="Number of letters in which this place was mentioned. You can search on "
+                                    "these 'number' fields using 'Advanced Search'.")
+    mentioned_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
     all_works = SearchIntField(label=field_label_map['location']['all_works'],
                                  help_text="Total number of letters sent to and from this place. You can search on "

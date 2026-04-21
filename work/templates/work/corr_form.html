@@ -4,10 +4,10 @@
         <h2>Authors/senders</h2>
     </div>
     <fieldset>
-        {% include "core/component/common_multi_rel_recref_formset.html" with multi_rel_recref_formset=author_formset recref_type='person' id_field=corr_form.selected_author_id label_add='Add another author/sender:' help_text_type='author' %}
+        {% include "core/component/common_multi_rel_recref_formset.html" with multi_rel_recref_formset=author_formset recref_type='person' id_field=corr_form.selected_author_id label_add='Add author/sender:' help_text_type='author' placeholder='Please select or create author/sender, then click Save.' %}
 
         <div class="multi_rel_recref_container">
-        <label> Authors/sender as marked: </label>
+        <label> Authors/senders as marked: </label>
         {{ corr_form.authors_as_marked }}
         </div>
 
@@ -16,12 +16,12 @@
 
         <div class="row-no-margin">
             <div class="margin-right">
-                {% include "core/component/common_checkbox.html" with field=corr_form.authors_inferred name='Authors/senders inferred' is_normal_size=True%}
+                {% include "core/component/common_checkbox.html" with field=corr_form.authors_inferred name='Authors/senders inferred' %}
             </div>
 
 
             <div class="margin-right">
-                {% include "core/component/common_checkbox.html" with field=corr_form.authors_uncertain  name='Authors/senders uncertain' is_normal_size=True%}
+                {% include "core/component/common_checkbox.html" with field=corr_form.authors_uncertain  name='Authors/senders uncertain' %}
             </div>
         </div>
         </div>
@@ -34,7 +34,7 @@
         <h2>Addressees/recipients</h2>
     </div>
     <fieldset>
-        {% include "core/component/common_multi_rel_recref_formset.html" with multi_rel_recref_formset=addressee_formset recref_type='person' id_field=corr_form.selected_addressee_id label_add='Add another addressee:' help_text_type='addressee' %}
+        {% include "core/component/common_multi_rel_recref_formset.html" with multi_rel_recref_formset=addressee_formset recref_type='person' id_field=corr_form.selected_addressee_id label_add='Add addressee:' help_text_type='addressee' placeholder='Please select or create addressee/recipient, then click Save.' %}
 
         <div class="multi_rel_recref_container">
         <label> Addressees as marked: </label>
@@ -62,21 +62,21 @@
         <h2>Earlier letters answered by this one</h2>
     </div>
     <fieldset>
-        {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_earlier_letter.update_formset new_form=recref_earlier_letter.new_form add_label='Add letter answered by this one:' no_date=True %}
+        {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_earlier_letter.update_formset new_form=recref_earlier_letter.new_form add_label='Add letter answered by this one:' no_date=True placeholder='Please select letter answered by this one, then click Save.' %}
     </fieldset>
 
     <div id="header_later_letter" class="header toc-item">
         <h2>Later letter</h2>
     </div>
     <fieldset>
-        {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_later_letter.update_formset new_form=recref_later_letter.new_form add_label='Add reply to this:' no_date=True %}
+        {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_later_letter.update_formset new_form=recref_later_letter.new_form add_label='Add reply to this:' no_date=True placeholder='Please select reply to this, then click Save.' %}
     </fieldset>
 
     <div id="header_matching" class="header toc-item">
         <h2>Matching letter</h2>
     </div>
     <fieldset>
-        {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_matching_letter.update_formset new_form=recref_matching_letter.new_form add_label='Add another match:' no_date=True %}
+        {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_matching_letter.update_formset new_form=recref_matching_letter.new_form add_label='Add match:' no_date=True placeholder='Please select matching letter, then click Save.' %}
     </fieldset>
 
 {% endblock %}

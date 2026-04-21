@@ -34,12 +34,12 @@
                             <li>Subjects</li>
                         </a>
                         {% endif %}
-                        {%  if constant.PM_CHANGE_ORGTYPE in perms %}
+                        {%  if constant.PM_VIEW_ORGTYPE in perms %}
                         <a href="{% url 'list:orgtypes' %}">
                             <li>Org. types</li>
                         </a>
                         {% endif %}
-                        {%  if constant.PM_CHANGE_ROLECAT in perms %}
+                        {%  if constant.PM_VIEW_ROLECAT in perms %}
                         <a href="{% url 'lang:search' %}">
                             <li>Languages</li>
                         </a>

@@ -42,6 +42,7 @@
 
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
+                {% include "core/component/form_errors_banner.html" %}
                 {% include "core/component/form_descriptor.html" with descriptor=form_descriptor %}
 
                 <fieldset>

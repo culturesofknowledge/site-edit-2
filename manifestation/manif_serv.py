@@ -4,6 +4,7 @@ from django.urls import reverse
 
 from core.helper import model_serv, query_cache_serv
 from manifestation.models import CofkUnionManifestation
+from work.forms import manif_type_choices
 
 
 def get_form_url(manif: CofkUnionManifestation):
@@ -18,6 +19,26 @@ def get_form_url(manif: CofkUnionManifestation):
 
 def get_recref_display_name(manif: CofkUnionManifestation):
     return manif and (manif.id_number_or_shelfmark or manif.manifestation_id)
+
+
+def get_rich_display_name(manif: CofkUnionManifestation):
+    """Return a rich display name for a manifestation including its type, shelfmark, and associated work details."""
+    if not manif:
+        return ''
+    from work import work_serv
+    type_display = dict(manif_type_choices).get(manif.manifestation_type, '')
+    shelfmark = manif.id_number_or_shelfmark or ''
+    parts = []
+    if type_display:
+        parts.append(type_display)
+    if shelfmark:
+        parts.append(shelfmark)
+    label = ': '.join(parts) if parts else manif.manifestation_id
+    if manif.work:
+        work = manif.work
+        work_display = work_serv.get_recref_display_name(work)
+        label += f' -- Work ID {work.iwork_id}, {work_display}'
+    return label
 
 
 def get_recref_target_id(manif: CofkUnionManifestation):

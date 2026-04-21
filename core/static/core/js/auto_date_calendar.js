@@ -71,7 +71,8 @@ function AutoCalendar(year_jqe,
                       day_jqe,
                       calendar_jqe,
                       normal_date_jqe,
-                      gregorian_jqe,) {
+                      gregorian_jqe,
+                      manual_checkbox_jqe) {
 
     this.year_jqe = year_jqe;
     this.month_jqe = month_jqe;
@@ -79,6 +80,11 @@ function AutoCalendar(year_jqe,
     this.calendar_jqe = calendar_jqe;
     this.normal_date_jqe = normal_date_jqe;
     this.gregorian_jqe = gregorian_jqe;
+    this.manual_checkbox_jqe = manual_checkbox_jqe;
+
+    this.is_manual = function() {
+        return this.manual_checkbox_jqe && this.manual_checkbox_jqe.is(':checked');
+    }
 
 
     this.get_selected_date = function () {
@@ -117,23 +123,40 @@ function AutoCalendar(year_jqe,
         });
 
         let update_all_calendar = function (e) {
+            if (self.is_manual()) return;
             self.update_original_calendar()
             self.update_gregorian_calendar()
         }
         this.month_jqe.on('change', update_all_calendar);
         this.day_jqe.on('input', update_all_calendar)
         this.year_jqe.on('input', update_all_calendar)
+
+        if (this.manual_checkbox_jqe) {
+            let update_readonly = function() {
+                let is_manual = self.is_manual();
+                self.normal_date_jqe.prop('readonly', !is_manual);
+                self.gregorian_jqe.prop('readonly', !is_manual);
+                if (!is_manual) {
+                    update_all_calendar();
+                }
+            }
+            this.manual_checkbox_jqe.on('change', update_readonly);
+            update_readonly();
+        }
     }
 
 
 }
 
 function maintain_is_range(autodate_div_jqe, is_range_jqe) {
+    let to_div_jqe = autodate_div_jqe.find('.to-div');
     if (is_range_jqe.is(":checked")) {
-        autodate_div_jqe.find('.to-div').show();
+        to_div_jqe.show();
+        to_div_jqe.find('input, select').prop('disabled', false);
         autodate_div_jqe.find('.from-label').text('From:')
     } else {
-        autodate_div_jqe.find('.to-div').hide();
+        to_div_jqe.hide();
+        to_div_jqe.find('input, select').prop('disabled', true);
         autodate_div_jqe.find('.from-label').text('Date:')
     }
 }
@@ -161,7 +184,6 @@ function setup_autodate_div(autodate_div_selector) {
         autodate_div_jqe.find('.calendar-div input'),
         autodate_div_jqe.find('.original-calendar-div input'),
         autodate_div_jqe.find('.gregorian-calendar-div input'),
+        autodate_div_jqe.find('.manual-date-checkbox'),
     ).setup_auto_calendar();
-
-
 }
