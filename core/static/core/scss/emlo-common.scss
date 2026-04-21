@@ -1,6 +1,11 @@
 
 .url_checker_div {
   display: flex;
+
+  .btn {
+    white-space: nowrap;
+    margin-left: 10px;
+  }
 }
 
 .standtext_btn {
