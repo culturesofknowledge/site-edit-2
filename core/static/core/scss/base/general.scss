@@ -163,6 +163,13 @@ input[readonly] {
   background: gainsboro;
 }
 
+input[readonly]:focus {
+  outline: none;
+  border: none;
+  background: gainsboro;
+}
+
+
 label {
   display: inline-block;
   font-weight: 500;
@@ -272,4 +279,20 @@ input[type="radio"] {
 ::placeholder {
   font-style: italic;
   color: $mid-grey;
+}
+
+.form-inline-align .checkbox-inline {
+    display: flex;
+    align-items: flex-start; /* key change */
+    gap: 8px;
+    cursor: pointer;
+}
+
+.form-inline-align input[type="checkbox"] {
+    margin-top: 3px; /* fine-tune vertical alignment */
+}
+
+.form-inline-align small {
+    margin-top: 1px;
+    font-size: 0.85em;
 }
