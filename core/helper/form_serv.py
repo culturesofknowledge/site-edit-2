@@ -275,6 +275,7 @@ class MultiRelRecrefForm(forms.Form):
 
     name = forms.CharField(required=False)
     target_id = forms.CharField(required=False, widget=forms.HiddenInput())
+    is_delete = DeleteCheckboxField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -363,6 +364,16 @@ class MultiRelRecrefForm(forms.Form):
         data: dict = self.cleaned_data
         recref_list = data['recref_list']
         target_model = recref_adapter.find_target_instance(data['target_id'])
+
+        # delete all relations if is_delete is checked
+        if data.get('is_delete'):
+            for recref_data in recref_list:
+                if recref_data.get('recref_id'):
+                    db_recref = recref_adapter.find_recref_by_id(recref_data['recref_id'])
+                    if db_recref:
+                        log.info(f'delete (is_delete) [{db_recref.relationship_type}][{db_recref}]')
+                        db_recref.delete()
+            return
 
         # delete unchecked relation
         del_recref_list = (recref for recref in recref_list

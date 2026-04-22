@@ -191,7 +191,12 @@
         <div class="multi_rel_recref_container margin-bottom">
             {{ scribe_recref_formset.management_form }}
             {% for form in scribe_recref_formset %}
-                {{ form }}
+                <div class="grid-item">
+                    {{ form }}
+                </div>
+                <div class="grid-item">
+                    {% include "core/component/common_checkbox.html" with field=form.is_delete name="Delete from 'scribe' list" class_name="recref-del" %}
+                </div>
             {% endfor %}
         </div>
 
