@@ -1,4 +1,5 @@
 {% load static %}
+{% load cl_filters %}
 
 <fieldset>
     <legend id="header_basic_details" class="toc-item">Basic details</legend>
@@ -186,13 +187,20 @@
 <fieldset>
     <legend id="header_scribe" class="toc-item">Scribe/hand</legend>
 
-    <div class="multi_rel_recref_container">
-        {{ scribe_recref_formset.management_form }}
-        {% for form in scribe_recref_formset %}
-            {{ form }}
-        {% endfor %}
-    </div>
-    {% include "core/component/recref.html" with recref_type='person' id_field=manif_form.selected_scribe_id label='Add scribe:' placeholder='Please select scribe, then click Save.' %}
+    {% if scribe_recref_formset.forms %}
+        <div class="multi_rel_recref_container margin-bottom">
+            {{ scribe_recref_formset.management_form }}
+            {% for form in scribe_recref_formset %}
+                {{ form }}
+            {% endfor %}
+        </div>
+
+        {% with 'Add scribe:'|add_another_if_startswith as label_text %}
+            {% include "core/component/recref.html" with recref_type='person' id_field=manif_form.selected_scribe_id label=label_text placeholder='Please select scribe, then click Save.' %}
+        {% endwith %}
+    {% else %}
+        {% include "core/component/recref.html" with recref_type='person' id_field=manif_form.selected_scribe_id label='Add scribe:' placeholder='Please select scribe, then click Save.' %}
+    {% endif %}
 
 </fieldset>
 <fieldset>
