@@ -3,6 +3,7 @@ import re
 from collections.abc import Callable
 from typing import Iterable, Any, Type
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db.models import F, Q, Model
@@ -1045,6 +1046,23 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     def get_queryset(self):
         if not self.request_data:
+            return CofkUnionWork.objects.none()
+
+        # Validate date_of_work_std_from and date_of_work_std_to formats
+        date_fields = [
+            ('date_of_work_std_from', "field 'Date of work std' (from)"),
+            ('date_of_work_std_to', "field 'Date of work std' (to)"),
+        ]
+        has_date_error = False
+        for field_name, field_label in date_fields:
+            date_val = self.request_data.get(field_name)
+            if date_val:
+                error = date_serv.validate_search_date_str(date_val)
+                if error:
+                    messages.error(self.request, f"Error: {field_label}: {error}")
+                    has_date_error = True
+
+        if has_date_error:
             return CofkUnionWork.objects.none()
 
         return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
