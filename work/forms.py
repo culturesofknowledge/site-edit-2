@@ -364,7 +364,7 @@ class AddresseeRelationChoices(TextChoices):
 
 
 class ScribeRelationChoices(TextChoices):
-    HANDWROTE = 'handwrote', 'Handwrite'
+    HANDWROTE = 'handwrote', 'Handwrote'
     PARTLY_HANDWROTE = 'partly_handwrote', 'Partly handwrote'
 
 
