@@ -59,7 +59,9 @@ def display_resources(values: str) -> str:
 
 @register.filter
 def render_queryable_manif(values: str):
-    return mark_safe(re.sub(link_pattern, r'<a href="\3" target="_blank">\5</a>', values))
+    result = re.sub(link_pattern, r'<a href="\3" target="_blank">\5</a>', values)
+    result = result.replace('\n', '<br>')
+    return mark_safe(result)
 
 
 @register.filter
