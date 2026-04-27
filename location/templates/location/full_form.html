@@ -38,16 +38,16 @@
 
 
                 <!-- Comment section -->
-                <h1 id="header_researcher_note">Researcher' notes for front-end display</h1>
-                {% include "core/component/comment_publication_formset.html" with comment_formset=comment_formset %}
-
+                {% include "core/component/comment_publication_formset.html" with comment_formset=comment_formset comment_title="Researchers' notes" %}
 
                 <!-- Resource section -->
-                <h1 id="header_resource">Related resource: </h1>
-                {% include "core/component/resource_formset.html" with res_formset=res_formset %}
+                {% include "core/component/resource_formset.html" with res_formset=res_formset res_title="Related resources" %}
 
                 <!-- Images section -->
-                {% include "core/component/image_formset.html" with img_handler=img_handler %}
+                <fieldset>
+                    <legend id="header_images" class="toc-item">Images</legend>
+                    {% include "core/component/image_formset.html" with img_handler=img_handler %}
+                </fieldset>
 
                 {% url 'location:delete' loc_form.instance.location_id as del_url %}
                 {% include "core/component/del_confirm_fieldset.html" with del_url=del_url name='location' %}

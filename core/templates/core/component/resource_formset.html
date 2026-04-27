@@ -7,7 +7,7 @@ Remember call setup_url_checker, setup_standtext functions
     <fieldset>
         <legend id="{{ header_id }}"
                 class="{{ header_class|default:'toc-item' }}">
-            Resources
+            {{ res_title|default:'Resources' }}
         </legend>
 
         {{ res_formset.management_form }}
