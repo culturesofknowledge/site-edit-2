@@ -47,14 +47,35 @@ def more_info(work: DisplayableWork):
 
 @register.filter
 def display_resources(values: str) -> str:
-    resources = list(data_serv.decode_multi_url_content(values))
+    """Render encoded link content as HTML list items.
 
+    Supports plain-text labels (e.g. "Reply to:") that appear between
+    encoded link markers — they are rendered as bold list items so that
+    relationship types are visible in search results.
+    """
+    if not values:
+        return ''
+
+    # Split on the full encoded-link pattern, keeping separators
+    segments = re.split(r'(xxxCofkLinkStartxxx.*?xxxCofkLinkEndxxx)', values)
     html = '<ul>'
-    for link, text in resources:
-        html += f'<li><a href="{link}" target="_blank">{text}</a></li>'
+    has_content = False
+    for segment in segments:
+        m = re.match(link_pattern, segment)
+        if m:
+            link, text = m.group(3), m.group(5)
+            html += f'<li><a href="{link}" target="_blank">{text}</a></li>'
+            has_content = True
+        else:
+            # Plain text between links — may contain labels like "Reply to:"
+            for piece in re.split(r'\s*\|\s*', segment):
+                piece = piece.strip(' ,')
+                if piece:
+                    html += f'<li><strong>{piece}</strong></li>'
+                    has_content = True
     html += '</ul>'
 
-    return mark_safe(html)
+    return mark_safe(html) if has_content else ''
 
 
 @register.filter
