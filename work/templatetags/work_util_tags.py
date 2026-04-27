@@ -71,7 +71,7 @@ def display_resources(values: str) -> str:
             for piece in re.split(r'\s*\|\s*', segment):
                 piece = piece.strip(' ,')
                 if piece:
-                    html += f'<li><strong>{piece}</strong></li>'
+                    html += f'<li style="list-style:none;"><strong>{piece}</strong></li>'
                     has_content = True
     html += '</ul>'
 
