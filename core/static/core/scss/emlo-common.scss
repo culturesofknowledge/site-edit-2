@@ -138,6 +138,30 @@ nav.flex-space-between {
 
 }
 
+.date-fields-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1rem;
+
+  .choices-container .choice-item {
+    width: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-right: 1rem;
+
+    label {
+      margin-bottom: 0;
+      font-weight: normal;
+    }
+
+    input {
+      margin-bottom: 0;
+    }
+  }
+}
+
 .issues-date-ct {
   display: flex;
   flex-direction: row;
