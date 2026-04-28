@@ -127,6 +127,16 @@ class DisplayableWork(CofkUnionWork):
 
     @property
     def date_for_ordering(self):
+        # If there is a "to" date (range), use the "to" date for ordering
+        if self.date_of_work2_std_year:
+            import calendar
+            year = int(self.date_of_work2_std_year)
+            # For "to" date, default blank month to 12 (end of year)
+            month = int(self.date_of_work2_std_month or 12)
+            # Default blank day to last day of the month (handles leap years)
+            day = int(self.date_of_work2_std_day or calendar.monthrange(year, month)[1])
+            return f"{year:04d}-{month:02d}-{day:02d}"
+
         # None means the object was not saved; treat as no date
         if self.date_of_work_std is None:
             return DEFAULT_EMPTY_DATE_STR
