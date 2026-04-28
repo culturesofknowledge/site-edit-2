@@ -1,5 +1,6 @@
 {% extends "person/init_form.html" %}
 {% load static %}
+{% load cl_filters %}
 
 {% block more_section_content %}
     {% include "core/component/close_if_save_success.html" with is_save_success=is_save_success %}
@@ -104,10 +105,8 @@
             });
 
             setup_url_checker();
-            setup_standtext([
-                'CERL', 'Deutsche Nationalbibliothek',
-                'ODNB entry', 'VIAF', 'Wikidata ID', 'Wikipedia',
-            ]);
+            {% resource_descriptors_json 'People' as people_descriptors %}
+            setup_standtext({{ people_descriptors }});
 
         })
 

@@ -8,7 +8,7 @@ from core.helper import form_serv, model_serv
 from core.helper import widgets_serv
 from core.helper.form_serv import CommonTextareaField, ZeroOneCheckboxField
 from core.models import CofkUnionComment, CofkUnionResource, CofkUnionImage, CofkLookupCatalogue, CofkUnionRoleCategory, \
-    CofkUnionSubject, CofkUnionOrgType
+    CofkUnionSubject, CofkUnionOrgType, CofkResourceDescriptor
 from login.models import CofkUser
 from login import utils
 from manifestation.models import CofkUnionManifestation
@@ -212,3 +212,15 @@ class OrgTypeForm(ModelForm):
     class Meta:
         model = CofkUnionOrgType
         fields = '__all__'
+
+
+class ResourceDescriptorForm(ModelForm):
+    description = forms.CharField(label="Description", max_length=200)
+    related_to = forms.ChoiceField(
+        label="Descriptor relevant to",
+        choices=CofkResourceDescriptor.RELATED_TO_CHOICES,
+    )
+
+    class Meta:
+        model = CofkResourceDescriptor
+        fields = ['description', 'related_to']
