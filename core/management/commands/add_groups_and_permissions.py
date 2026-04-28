@@ -26,7 +26,6 @@ class Command(BaseCommand):
                 constant.PM_VIEW_ROLECAT,
                 constant.PM_VIEW_SUBJECT,
                 constant.PM_VIEW_ORGTYPE,
-                constant.PM_VIEW_RESOURCE_DESC,
                 constant.PM_CHANGE_LANGUAGE,
                 constant.PM_ADD_SUGGESTIONS,
                 constant.PM_VIEW_SUGGESTIONS,
@@ -47,6 +46,7 @@ class Command(BaseCommand):
             constant.PM_CHANGE_ROLECAT,
             constant.PM_VIEW_LOOKUPCAT,
             constant.PM_CHANGE_LOOKUPCAT,
+            constant.PM_VIEW_RESOURCE_DESC,
             constant.PM_CHANGE_RESOURCE_DESC,
         ]
         group_permissions_dict[constant.ROLE_CONTRIBUTING_EDITOR] = [
