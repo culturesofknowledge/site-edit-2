@@ -48,14 +48,16 @@
 {% endif %}
 
 {% if not no_date %}
-    <label>Relevant dates:</label>
-    <div class="inline-from-to">
-        <small>From: &nbsp; </small>
-        {{ new_form.from_date }}
-        {% if new_form.from_date.errors %}<small class="text-danger">{{ new_form.from_date.errors.0 }}</small>{% endif %}
-        <small> &nbsp; To: &nbsp;</small>
-        {{ new_form.to_date }}
-        {% if new_form.to_date.errors %}<small class="text-danger">{{ new_form.to_date.errors.0 }}</small>{% endif %}
-        &nbsp; <i><small>(Enter yyyy, mm/yyyy, or dd/mm/yyyy)</small></i>
+    <div class="multi_rel_recref_container" >
+        <label>Relevant dates:</label>
+        <div class="inline-from-to">
+            From: &nbsp;
+            {{ new_form.from_date }}
+            {% if new_form.from_date.errors %}<small class="text-danger">{{ new_form.from_date.errors.0 }}</small>{% endif %}
+            &nbsp; To: &nbsp;
+            {{ new_form.to_date }}
+            {% if new_form.to_date.errors %}<small class="text-danger">{{ new_form.to_date.errors.0 }}</small>{% endif %}
+            &nbsp; <i><small>(Enter yyyy, mm/yyyy, or dd/mm/yyyy)</small></i>
+        </div>
     </div>
 {% endif %}

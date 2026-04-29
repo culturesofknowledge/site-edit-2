@@ -24,8 +24,8 @@ class LocationForm(ModelForm):
     element_6_eg_country = CharField(required=False, label='6. Country, e.g. England')
     element_7_eg_empire = CharField(required=False, label='7. Larger political entity, e.g. United Kingdom')
     location_synonyms = form_serv.CommonTextareaField(required=False, label='Alternative names for location')
-    latitude = CharField(required=False)
-    longitude = CharField(required=False)
+    latitude = CharField(required=False , widget=forms.TextInput(attrs={"class": "lat-long-field"}))
+    longitude = CharField(required=False , widget=forms.TextInput(attrs={"class": "lat-long-field"}))
 
     class Meta:
         model = CofkUnionLocation

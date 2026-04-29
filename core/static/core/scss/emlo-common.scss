@@ -2,16 +2,15 @@
 .url_checker_div {
   display: flex;
 
-  button {
-    background-color: black;
+  .btn {
+    white-space: nowrap;
+    margin-left: 10px;
   }
-
 }
 
 .standtext_btn {
-  border-style: dashed;
-  border-width: 1px;
-  border-color: black;
+  background: #c2c1c0;
+  padding: 10px;
   margin-right: 10px;
   margin-top: -2px;
   margin-bottom: 15px;
@@ -188,6 +187,7 @@ nav.flex-space-between {
   display: flex;
   flex-wrap: wrap;
   flex-direction: row;
+  align-items: baseline;
 
   & > label:first-of-type {
     width: 100%;
@@ -199,9 +199,6 @@ nav.flex-space-between {
     margin: 0;
   }
 
-  small {
-    margin: auto 0;
-  }
 }
 
 .row-spaced {
@@ -478,6 +475,7 @@ nav.flex-space-between {
 // for lang_section
 .lang-item {
   @extend .row-no-margin;
+  align-items: baseline;
 
   & > .lang-label {
     @extend .col--1of5;
