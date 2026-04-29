@@ -4,12 +4,12 @@
     <tr></tr>
     <tr>
         <th>Name</th>
-        <th>ID</th>
-        <th>Editors' notes</th>
-        <th>Sent</th>
-        <th>Rec'd</th>
-        <th>Sent<br>and Rec'd</th>
-        <th>Researchers' notes</th>
+        <th class="col-id">ID</th>
+        <th class="col-wide">Editors' notes</th>
+        <th class="col-count">Sent</th>
+        <th class="col-count">Rec'd</th>
+        <th class="col-count">Sent<br>and Rec'd</th>
+        <th class="col-wide">Researchers' notes</th>
         <th>Related resources</th>
         <th>Latitude</th>
         <th>Longitude</th>
@@ -21,7 +21,7 @@
         <th>6. E.g. country</th>
         <th>7. E.g. empire</th>
         <th>Images</th>
-        <th>Last edit</th>
+        <th class="col-last-edit">Last edit</th>
     </tr>
     </thead>
     <tbody>
@@ -32,15 +32,15 @@
             <td>
                 {{ r.display_location|linebreaksbr }}
             </td>
-            <td>
+            <td class="col-id">
                 {% include 'core/component/search_table_layout/link_record.html' with id=r.location_id view='location:full_form' edit_perm=constant.PM_CHANGE_LOCATION %}
             </td>
-            <td class="text-heavy">
+            <td class="text-heavy col-wide">
                 {% if r.editors_notes %}
                     {{ r.editors_notes|linebreaksbr }}
                 {% endif %}
             </td>
-            <td>
+            <td class="col-count">
                 {% if r.sent %}
                     <a href="{% url 'work:search' %}?location_sent_pk={{ r.location_id }}" class="search_link"
                        target="_blank">
@@ -48,7 +48,7 @@
                     </a>
                 {% endif %}
             </td>
-            <td>
+            <td class="col-count">
                 {% if r.recd %}
                     <a href="{% url 'work:search' %}?location_rec_pk={{ r.location_id }}" class="search_link"
                        target="_blank">
@@ -56,7 +56,7 @@
                     </a>
                 {% endif %}
             </td>
-            <td>
+            <td class="col-count">
                 {% if r.all_works %}
                     <a href="{% url 'work:search' %}?location_sent_rec_pk={{ r.location_id }}" class="search_link"
                        target="_blank">
@@ -64,7 +64,7 @@
                     </a>
                 {% endif %}
             </td>
-            <td>
+            <td class="col-wide">
                 {% include "core/component/search_table_layout/comment_result.html" with comments=r.comments %}
             </td>
             <td>
@@ -88,7 +88,7 @@
             <td> {{ r.element_6_eg_country }} </td>
             <td> {{ r.element_7_eg_empire }} </td>
             <td></td>
-            <td>
+            <td class="col-last-edit">
                 {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r %}
             </td>
         </tr>
