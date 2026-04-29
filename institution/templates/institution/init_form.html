@@ -32,28 +32,28 @@
 
                 {% include "core/component/form_descriptor.html" with descriptor=form_descriptor %}
                 <fieldset>
-                    <legend id="header_inst" class="toc-item">Institution</legend>
+                    <legend id="header_inst" class="toc-item">Repository</legend>
                     <div class="margin-bottom">
-                        <label>Institution name</label>
+                        <label>Repository name:</label>
                         {{ inst_form.institution_name }}
                         {{ inst_form.institution_name.errors }}
                     </div>
 
                     <div class="margin-bottom">
-                        <label>Alternative institution names</label>
+                        <label>Alternative repository names:</label>
                         {{ inst_form.institution_synonyms }}
                         {{ inst_form.institution_synonyms.errors }}
-                        <small>(Please use this field for different variations of the institution name, e.g. BL for
+                        <small>Please use this field for different variations of the repository name, e.g. BL for
                             British Library.
                             You can also use this field to translate the name into different languages.
-                            Please put each alternative institution name on a separate line.)</small>
+                            Please put each alternative repository name on a separate line.</small>
                     </div>
 
                     <div class="margin-bottom">
-                        <label>Editors' notes</label>
+                        <label>Editors' notes:</label>
                         {{ inst_form.editors_notes }}
                         {{ inst_form.editors_notes.errors }}
-                        <small>(Notes for internal use.)</small>
+                        <small>Notes for internal use.</small>
 
                         <div class="ref-publication-row" textbox_id="id_editors_notes"></div>
 
@@ -63,17 +63,17 @@
                 <fieldset>
                     <legend id="header_city" class="toc-item">City</legend>
                     <div class="margin-bottom">
-                        <label>City name</label>
+                        <label>City name:</label>
                         {{ inst_form.institution_city }}
                         {{ inst_form.institution_city.errors }}
                     </div>
 
                     <div class="margin-bottom">
-                        <label>Alternative city names</label>
+                        <label>Alternative city names:</label>
                         {{ inst_form.institution_city_synonyms }}
                         {{ inst_form.institution_city_synonyms.errors }}
-                        <small>(Please use this field to give the city name in other languages, if required.
-                            Please put each alternative city name on a separate line.)</small>
+                        <small>Please use this field to give the city name in other languages, if required.
+                            Please put each alternative city name on a separate line.</small>
                     </div>
 
                 </fieldset>
@@ -81,17 +81,17 @@
                 <fieldset>
                     <legend id="header_country" class="toc-item">Country</legend>
                     <div class="margin-bottom">
-                        <label>Country name</label>
+                        <label>Country name:</label>
                         {{ inst_form.institution_country }}
                         {{ inst_form.institution_country.errors }}
                     </div>
 
                     <div class="margin-bottom">
-                        <label>Alternative city names</label>
+                        <label>Alternative city names:</label>
                         {{ inst_form.institution_country_synonyms }}
                         {{ inst_form.institution_country_synonyms.errors }}
-                        <small>(Please use this field to give the country name in other languages, if required.
-                            Please put each alternative country name on a separate line.)</small>
+                        <small>Please use this field to give the country name in other languages, if required.
+                            Please put each alternative country name on a separate line.</small>
                     </div>
 
                 </fieldset>
@@ -102,6 +102,11 @@
 
                 {% if img_handler %}
                     {% include "core/component/image_formset.html" with img_handler=img_handler %}
+                {% endif %}
+
+                {% if inst_form.instance and inst_form.instance.pk and  constant.PM_CHANGE_INST|can_show_for_perm:perms  %}
+                    {% url 'institution:delete' inst_form.instance.pk as del_url %}
+                    {% include "core/component/del_confirm_fieldset.html" with del_url=del_url name='Repository' %}
                 {% endif %}
 
                 <div class="bg-white sticky-bottom">
