@@ -670,4 +670,49 @@ h2, h3 {
 }
 
 
+// Horizontal label-input layout for all edit forms
+.form-col-right {
+
+  // Auto-rendered Django table forms (e.g. location form):
+  // remove data-table borders and left-align th labels.
+  table {
+    border: none;
+
+    th, td {
+      border: none;
+      padding: 0.3em 0 0.8em 0;
+      vertical-align: top;
+    }
+
+    th {
+      text-align: left;
+      width: 25%;
+      padding-right: 1.5rem;
+      font-weight: normal;
+    }
+  }
+
+  // Manually laid-out field rows (person, institution, publication forms):
+  // any .margin-bottom div whose first direct child is a label gets a
+  // two-column grid — label on the left, everything else on the right.
+  // Excludes .form-inline-align (checkbox rows) and divs that start with
+  // a wrapper div (e.g. date-field rows) via :has(> label:first-child).
+  fieldset > .margin-bottom:has(> label:first-child):not(.form-inline-align) {
+    display: grid;
+    grid-template-columns: 25% 75%;
+    column-gap: 1.5rem;
+    align-items: start;
+
+    > label:first-child {
+      padding-top: 0.4em;
+    }
+
+    > input, > textarea, > select,
+    > ul, > small, > span, > div {
+      grid-column: 2;
+    }
+  }
+}
+
+
 
