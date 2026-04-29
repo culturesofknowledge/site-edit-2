@@ -48,7 +48,7 @@
                 <fieldset>
                     <legend id="header_person" class="toc-item">Core fields and editors' notes</legend>
                     <div class="margin-bottom">
-                        <label>Primary name*</label>
+                        <label>Primary name:*</label>
                         {{ person_form.foaf_name }}
                         {{ person_form.foaf_name.errors }}
                         <small>No more than 200 characters. Preferably Surname, Forename</small>
@@ -71,14 +71,14 @@
                          style="display: none"
                             {% endif %}
                     >
-                        <label>Organization type</label>
+                        <label>Organization type:</label>
                         {{ person_form.organisation_type }}
                         <small>Further details of a group's purpose or role can be given in the professions/titles
                             field.</small>
                     </div>
 
                     <div class="margin-bottom">
-                        <label>Editors' notes</label>
+                        <label>Editors' notes:</label>
                         {{ person_form.editors_notes }}
                         <small>
                             These notes are for internal use; we do not plan to display them on the 'front end' website.
