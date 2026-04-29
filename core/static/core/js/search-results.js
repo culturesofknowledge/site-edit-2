@@ -212,10 +212,28 @@ function setup_fieldset_toggle() {
 }
 
 function setup_advanced_search_toggle() {
+    let searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get('search_type') === 'advance') {
+        $('#advanced_search').prop('checked', true);
+        toggle_advanced_search_controls();
+        $('#search_form').append('<input type="hidden" name="search_type" value="advance">');
+    }
+
     $('#advanced_search').on('click', function () {
         toggle_advanced_search_controls();
-    });
 
+        let params = new URLSearchParams(window.location.search);
+        if ($(this).is(':checked')) {
+            params.set('search_type', 'advance');
+            if (!$('#search_form input[name="search_type"]').length) {
+                $('#search_form').append('<input type="hidden" name="search_type" value="advance">');
+            }
+        } else {
+            params.delete('search_type');
+            $('#search_form input[name="search_type"]').remove();
+        }
+        history.replaceState(null, '', window.location.pathname + '?' + params.toString());
+    });
 }
 
 function show_column(show_tag, column_index) {
