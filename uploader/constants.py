@@ -174,7 +174,7 @@ BULK_LOCATIONS_SHEET = {
         'resource_url',         # 14 RELATED RESOURCE URL
     ],
     'required': [],
-    'strings': ['element_4_eg_city', 'element_5_eg_county', 'element_6_eg_country',
-                'element_3_eg_parish', 'element_2_eg_building', 'element_1_eg_room',
-                'element_7_eg_empire', 'location_synonyms', 'notes_on_place', 'editors_notes'],
+    'strings': [('element_4_eg_city', 100), ('element_5_eg_county', 100), ('element_6_eg_country', 100),
+                ('element_3_eg_parish', 100), ('element_2_eg_building', 100), ('element_1_eg_room', 100),
+                ('element_7_eg_empire', 100), 'location_synonyms', 'notes_on_place', 'editors_notes'],
 }

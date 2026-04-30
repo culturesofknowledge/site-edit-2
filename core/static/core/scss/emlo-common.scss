@@ -580,7 +580,9 @@ h2, h3 {
     border-left: 3px solid #007bff;
 }
 
-
+.messages {
+  clear: both;
+}
 
 // Suggestion filter styling: add left/right padding and improve spacing/legibility
 #f_filter {

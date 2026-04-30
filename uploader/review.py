@@ -386,7 +386,33 @@ def accept_people(upload: CofkCollectUpload, username: str, request=None):
     try:
         with transaction.atomic():
             for person in collect_people:
-                union_person = CofkUnionPerson(foaf_name=person.primary_name)
+                union_person = CofkUnionPerson(
+                    init_seq_id=True,
+                    foaf_name=person.primary_name,
+                    gender=person.gender,
+                    is_organisation=person.is_organisation,
+                    editors_notes=person.editors_notes,
+                    date_of_birth_year=person.date_of_birth_year,
+                    date_of_birth_month=person.date_of_birth_month,
+                    date_of_birth_day=person.date_of_birth_day,
+                    date_of_birth_inferred=person.date_of_birth_inferred,
+                    date_of_birth_uncertain=person.date_of_birth_uncertain,
+                    date_of_birth_approx=person.date_of_birth_approx,
+                    date_of_birth_is_range=person.date_of_birth_is_range,
+                    date_of_birth2_year=person.date_of_birth2_year,
+                    date_of_birth2_month=person.date_of_birth2_month,
+                    date_of_birth2_day=person.date_of_birth2_day,
+                    date_of_death_year=person.date_of_death_year,
+                    date_of_death_month=person.date_of_death_month,
+                    date_of_death_day=person.date_of_death_day,
+                    date_of_death_inferred=person.date_of_death_inferred,
+                    date_of_death_uncertain=person.date_of_death_uncertain,
+                    date_of_death_approx=person.date_of_death_approx,
+                    date_of_death_is_range=person.date_of_death_is_range,
+                    date_of_death2_year=person.date_of_death2_year,
+                    date_of_death2_month=person.date_of_death2_month,
+                    date_of_death2_day=person.date_of_death2_day,
+                )
                 union_person.person_id = create_person_id(union_person.iperson_id)
                 union_person.update_current_user_timestamp(username)
                 union_person.save()
@@ -433,7 +459,20 @@ def accept_locations(upload: CofkCollectUpload, username: str, request=None):
     try:
         with transaction.atomic():
             for location in collect_locations:
-                union_location = CofkUnionLocation(location_name=location.location_name)
+                union_location = CofkUnionLocation(
+                    location_name=location.location_name,
+                    element_1_eg_room=location.element_1_eg_room,
+                    element_2_eg_building=location.element_2_eg_building,
+                    element_3_eg_parish=location.element_3_eg_parish,
+                    element_4_eg_city=location.element_4_eg_city,
+                    element_5_eg_county=location.element_5_eg_county,
+                    element_6_eg_country=location.element_6_eg_country,
+                    element_7_eg_empire=location.element_7_eg_empire,
+                    location_synonyms=location.location_synonyms,
+                    editors_notes=location.editors_notes,
+                    latitude=location.latitude,
+                    longitude=location.longitude,
+                )
                 union_location.update_current_user_timestamp(username)
                 union_location.save()
                 location.union_location = union_location
