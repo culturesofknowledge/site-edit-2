@@ -699,7 +699,7 @@ h2, h3 {
   // a wrapper div (e.g. date-field rows) via :has(> label:first-child).
   fieldset > .margin-bottom:has(> label:first-child):not(.form-inline-align) {
     display: grid;
-    grid-template-columns: 25% 75%;
+    grid-template-columns: 25% 1fr;
     column-gap: 1.5rem;
     align-items: start;
 
