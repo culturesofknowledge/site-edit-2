@@ -36,9 +36,11 @@
         {{ details_form.abstract }}
 
         <label class="margin-right">Subject(s):</label>
-        {% for s in subjects %}
-            {{ s }}
-        {% endfor %}
+        <div class="choices-container">
+            {% for s in subjects %}
+                {{ s }}
+            {% endfor %}
+        </div>
 
         <label>Keywords (ideally separated by semi-colons)</label>
         {{ details_form.keywords }}

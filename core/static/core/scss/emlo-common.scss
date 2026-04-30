@@ -151,6 +151,13 @@ nav.flex-space-between {
 
 }
 
+// Roles/titles (person) and subjects (work) need 4-column layout
+fieldset:has(#header_roles) .choices-container .choice-item,
+fieldset:has(#header_abstract) .choices-container .choice-item {
+  width: 25%;
+  margin-right: 0;
+}
+
 .issues-date-ct {
   display: flex;
   flex-direction: row;
