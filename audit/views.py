@@ -166,21 +166,35 @@ def replace_old_url(value: str) -> str:
 
 
 def create_display_key(record: CofkUnionAuditLiteral) -> str:
-    if record.table_name == 'cofk_union_work':
-        result = f'Work ID {record.key_value_integer}'
-    elif record.table_name == 'cofk_union_person':
-        result = f'Person ID {record.key_value_integer}'
-    elif record.table_name == 'cofk_union_location':
-        result = f'Location ID {record.key_value_integer}'
-    elif record.table_name == 'cofk_union_institution':
-        result = f'Institution ID {record.key_value_integer}'
-    elif record.table_name == 'cofk_union_manifestation':
-        result = f'Manifestation ID {record.key_value_text}'
-    elif record.table_name == 'cofk_union_comment':
-        result = f'Comment ID {record.key_value_text}'
-    elif record.table_name == 'cofk_union_resource':
-        result = f'Resource ID {record.key_value_text}'
+    integer_id_tables = {
+        'cofk_union_work': 'Work ID',
+        'cofk_union_person': 'Person ID',
+        'cofk_union_location': 'Location ID',
+        'cofk_union_institution': 'Institution ID',
+        'cofk_union_image': 'Image ID',
+        'cofk_union_publication': 'Publication ID',
+        'cofk_union_nationality': 'Nationality ID',
+        'cofk_union_org_type': 'Org Type ID',
+        'cofk_union_role_category': 'Role Category ID',
+        'cofk_union_subject': 'Subject ID',
+        'cofk_union_speed_entry_text': 'Speed Entry Text ID',
+        'cofk_union_person_summary': 'Person Summary ID',
+    }
+    text_id_tables = {
+        'cofk_union_manifestation': 'Manifestation ID',
+        'cofk_union_comment': 'Comment ID',
+        'cofk_union_resource': 'Resource ID',
+        'cofk_union_favourite_language': 'Favourite Language ID',
+        'cofk_union_language_of_manifestation': 'Language Of Manifestation ID',
+        'cofk_union_language_of_work': 'Language Of Work ID',
+    }
+
+    if record.table_name in integer_id_tables:
+        result = f'{integer_id_tables[record.table_name]} {record.key_value_integer}'
+    elif record.table_name in text_id_tables:
+        result = f'{text_id_tables[record.table_name]} {record.key_value_text}'
     else:
-        result = record.key_value_text
+        key_value = record.key_value_integer if record.key_value_integer else record.key_value_text
+        result = f'{record.table_name} {key_value}'
 
     return result

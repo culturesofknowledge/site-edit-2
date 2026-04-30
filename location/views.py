@@ -221,8 +221,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
     def search_field_combines(self) -> dict[str: list[str]]:
-        return {'location_name': ['location_name', 'location_synonyms'],
-                'resources': ['resources__resource_name', 'resources__resource_details'],
+        return {'resources': ['resources__resource_name', 'resources__resource_details'],
                 'researchers_notes': ['comments__comment'],
                 'images': ['images__image_filename']}
 
@@ -269,8 +268,7 @@ class LocationSearchView(LoginRequiredMixin, BasicSearchView):
         return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
 
     def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:
-        search_fields_maps = {'location_name': ['location_name', 'location_synonyms'],
-                              'resources': ['resources__resource_name', 'resources__resource_details'],
+        search_fields_maps = {'resources': ['resources__resource_name', 'resources__resource_details'],
                               'researchers_notes': ['comments__comment'],
                               'images': ['images__image_filename']}
 

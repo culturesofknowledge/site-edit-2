@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 
 from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, \
-    REL_TYPE_MENTION, REL_TYPE_MENTION_PLACE
+    REL_TYPE_MENTION, REL_TYPE_MENTION_PLACE, REL_TYPE_WORK_IS_REPLY_TO, REL_TYPE_WORK_MATCHES
 from core.helper import data_serv,query_serv
 from core.constant import DEFAULT_MONTH, DEFAULT_DAY, DEFAULT_EMPTY_DATE_STR
 from location import location_serv
@@ -127,6 +127,16 @@ class DisplayableWork(CofkUnionWork):
 
     @property
     def date_for_ordering(self):
+        # If there is a "to" date (range), use the "to" date for ordering
+        if self.date_of_work2_std_year:
+            import calendar
+            year = int(self.date_of_work2_std_year)
+            # For "to" date, default blank month to 12 (end of year)
+            month = int(self.date_of_work2_std_month or 12)
+            # Default blank day to last day of the month (handles leap years)
+            day = int(self.date_of_work2_std_day or calendar.monthrange(year, month)[1])
+            return f"{year:04d}-{month:02d}-{day:02d}"
+
         # None means the object was not saved; treat as no date
         if self.date_of_work_std is None:
             return DEFAULT_EMPTY_DATE_STR
@@ -217,7 +227,7 @@ class DisplayableWork(CofkUnionWork):
 
     def queryable_people(self, rel_type: str, is_details: bool = False) -> str:
         # Derived value for CofkUnionQueryable
-        return ", ".join([p.to_string(is_details=is_details) for p in self.find_persons_by_rel_type(rel_type)])
+        return ' ~ '.join([p.to_string(is_details=is_details) for p in self.find_persons_by_rel_type(rel_type)])
 
     @property
     def people_mentioned(self):
@@ -225,23 +235,44 @@ class DisplayableWork(CofkUnionWork):
 
     @property
     def places_mentioned(self) -> str:
-        return ", ".join([l.location_name for l in self.find_locations_by_rel_type(REL_TYPE_MENTION_PLACE) if l.location_name])
+        return ' ~ '.join([l.location_name for l in self.find_locations_by_rel_type(REL_TYPE_MENTION_PLACE) if l.location_name])
+
+    def _work_link_with_id(self, work):
+        return data_serv.endcode_url_content(
+            reverse("work:overview_form", args=[work.iwork_id]),
+            f'[Letter ID: {work.iwork_id}] {work.description}',
+        )
 
     @property
     def related_works(self) -> str:
-        links = [
-            data_serv.endcode_url_content(
-                reverse("work:overview_form", args=[t.work_from.iwork_id]),
-                t.work_from.description,
-            ) for t in (self.work_to_set.all() or [])
+        sections = []
+
+        # "Reply to" — this work is a reply to earlier letters (work_from_set with is_reply_to)
+        reply_to_links = [
+            self._work_link_with_id(t.work_to)
+            for t in self.work_from_set.filter(relationship_type=REL_TYPE_WORK_IS_REPLY_TO)
         ]
-        links += [
-            data_serv.endcode_url_content(
-                reverse("work:overview_form", args=[t.work_to.iwork_id]),
-                t.work_to.description,
-            ) for t in (self.work_from_set.all() or [])
+        if reply_to_links:
+            sections.append('Reply to: ' + ', '.join(reply_to_links))
+
+        # "Answered by" — later letters that are replies to this work (work_to_set with is_reply_to)
+        answered_by_links = [
+            self._work_link_with_id(t.work_from)
+            for t in self.work_to_set.filter(relationship_type=REL_TYPE_WORK_IS_REPLY_TO)
         ]
-        return ', '.join(links)
+        if answered_by_links:
+            sections.append('Answered by: ' + ', '.join(answered_by_links))
+
+        # "Matching letter" — bidirectional matches
+        matching_links = []
+        for t in self.work_from_set.filter(relationship_type=REL_TYPE_WORK_MATCHES):
+            matching_links.append(self._work_link_with_id(t.work_to))
+        for t in self.work_to_set.filter(relationship_type=REL_TYPE_WORK_MATCHES):
+            matching_links.append(self._work_link_with_id(t.work_from))
+        if matching_links:
+            sections.append('Matching letter: ' + ', '.join(matching_links))
+
+        return ' | '.join(sections)
 
     @property
     def related_resources(self) -> str:

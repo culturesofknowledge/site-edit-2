@@ -2,8 +2,10 @@
 {% with header_id='header_'|add:name %}
     <fieldset id="{{ autodate_id }}" class="autodate-div">
         <legend id="{{ header_id }}" class="toc-item">{{ name|capfirst }} date</legend>
-        <label>Date of {{ name }} as marked:</label>
-        {{ date_as_marked }}
+        <div class="multi_rel_recref_container">
+            <label>Date of {{ name }} as marked:</label>
+            <div>{{ date_as_marked }}</div>
+        </div>
 
         <div class="margin-bottom calendar-div">
             {% with new_label_text="Calendar used for the date supplied below in 'Date of "|add:name|add:" in standard format':" %}
@@ -75,7 +77,9 @@
                         <label>In Gregorian calendar:</label>
                         {{ gregorian_date }}
                     </div>
-
+                    <div>
+                    <button type="button" class="refresh-date-btn btn btn-sm btn-outline-secondary" style="margin-left: 10px;">Refresh</button>
+                    </div>
                     <div class="manual-date-div margin-left">
                         <input type="checkbox" class="manual-date-checkbox" id="{{ autodate_id }}_manual_date">
                         <label for="{{ autodate_id }}_manual_date">Enter Manually</label>
