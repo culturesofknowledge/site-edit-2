@@ -3,14 +3,15 @@
     <div class="margin-bottom">
         {% include "core/component/common_form_choices.html" with label_text='Calendar of '|add:title_name choices_field=calendar %}
     </div>
-    <div class="is-range-div margin-bottom">
-        {{ is_range }}
-        <label for="{{ is_range.id_for_label }}">Date range?</label>
-        <small>
-            {{ date_range_msg }}
-        </small>
-    </div>
 
+    <div class="is-range-div margin-bottom form-inline-align">
+        <div class="checkbox-inline">
+            {{ is_range }}
+            <label for="{{ is_range.id_for_label }}">Date range?</label>
+            <small>{{ date_range_msg }}</small>
+        </div>
+    </div>
+   
     <div class="margin-bottom">
         <div class="row-no-margin">
             <div class="from-div">

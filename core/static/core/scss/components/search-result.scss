@@ -185,6 +185,21 @@ td.text-heavy {
   border: 1px solid $light-grey;
 }
 
+.img-thumbnail {
+  width: 60px;
+}
+
+.img-placeholder-link {
+  display: inline-block;
+  width: 60px;
+  height: 60px;
+  background: $faint-grey;
+  text-align: center;
+  line-height: 60px;
+  font-size: 10px;
+  vertical-align: middle;
+}
+
 .alt_names_container {
   border-top: 1px solid $midnight-15;
   margin-top: $space-xs;

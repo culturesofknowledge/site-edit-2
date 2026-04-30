@@ -10,10 +10,13 @@ function setup_url_checker() {
         jqe_container = jqe_input.parent()
 
         // button
-        let jqe_btn = $('<button class="btn">');
+        let jqe_btn = $('<button class="btn">Check URL</button>');
         jqe_btn.on('click', (jqe_btn_e) => {
             jqe_btn_e.preventDefault()
-            window.open($(jqe_btn_e.target).parent().find('input').val(), '_blank')
+            let url = $(jqe_btn_e.target).parent().find('input').val();
+            if (url) {
+                window.open(url, '_blank')
+            }
         });
         jqe_container.append(jqe_btn);
 

@@ -9,6 +9,7 @@
 @import 'base/typography.scss';
 @import 'base/general.scss';
 
+@import "emlo-common";
 @import "components/forms.scss";
 @import 'components/button.scss';
 @import 'components/dropdown.scss';
@@ -33,4 +34,4 @@
 @import "page-header";
 @import "page-footer";
 
-@import "emlo-common";
+

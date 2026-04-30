@@ -38,6 +38,31 @@ class RecordTracker:
             self.change_user = user
 
 
+def _find_max_val_for_seq(cursor, seq_name):
+    """Try to find the max existing value for a sequence by querying the related table."""
+    # Sequence naming convention: {table}_{column}_seq
+    # e.g. cofk_union_work_iwork_id_seq -> table: cofk_union_work, column: iwork_id
+    if seq_name.endswith('_seq'):
+        base = seq_name[:-4]  # remove '_seq'
+        # Try splitting at the last underscore-separated known column patterns
+        # Find the table and column by checking what exists in the database
+        for i in range(len(base) - 1, 0, -1):
+            if base[i] == '_':
+                table_name = base[:i]
+                col_name = base[i + 1:]
+                if col_name:
+                    try:
+                        cursor.execute(
+                            f"SELECT MAX({col_name}) FROM {table_name}"
+                        )
+                        result = cursor.fetchone()
+                        if result and result[0] is not None:
+                            return result[0]
+                    except Exception:
+                        continue
+    return None
+
+
 def next_seq_safe(seq_name):
     from django.db import connection
 
@@ -51,8 +76,13 @@ def next_seq_safe(seq_name):
 
         init_val = settings.EMLO_SEQ_VAL_INIT.get(seq_name, None)
         if init_val is None:
-            logging.debug(f'init val of [{seq_name}] not found in EMLO_SEQ_VAL_INIT')
-            init_val = 1
+            max_val = _find_max_val_for_seq(cursor, seq_name)
+            if max_val is not None:
+                init_val = max_val + 1
+                logging.debug(f'init val of [{seq_name}] set to {init_val} based on max existing value')
+            else:
+                logging.debug(f'init val of [{seq_name}] not found in EMLO_SEQ_VAL_INIT')
+                init_val = 1
 
         cursor.execute(f"CREATE SEQUENCE {seq_name} start with {init_val} ")
         cursor.execute(nextval_sql)
