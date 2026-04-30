@@ -2,8 +2,9 @@ from typing import Union
 
 from django.urls import reverse
 
-from core.helper import model_serv, query_cache_serv
+from core.helper import model_serv, query_cache_serv, data_serv
 from manifestation.models import CofkUnionManifestation
+from work.forms import manif_type_choices
 
 
 def get_form_url(manif: CofkUnionManifestation):
@@ -18,6 +19,26 @@ def get_form_url(manif: CofkUnionManifestation):
 
 def get_recref_display_name(manif: CofkUnionManifestation):
     return manif and (manif.id_number_or_shelfmark or manif.manifestation_id)
+
+
+def get_rich_display_name(manif: CofkUnionManifestation):
+    """Return a rich display name for a manifestation including its type, shelfmark, and associated work details."""
+    if not manif:
+        return ''
+    from work import work_serv
+    type_display = dict(manif_type_choices).get(manif.manifestation_type, '')
+    shelfmark = manif.id_number_or_shelfmark or ''
+    parts = []
+    if type_display:
+        parts.append(type_display)
+    if shelfmark:
+        parts.append(shelfmark)
+    label = ': '.join(parts) if parts else manif.manifestation_id
+    if manif.work:
+        work = manif.work
+        work_display = work_serv.get_recref_display_name(work)
+        label += f' -- Work ID {work.iwork_id}, {work_display}'
+    return label
 
 
 def get_recref_target_id(manif: CofkUnionManifestation):
@@ -57,9 +78,15 @@ def get_manif_details(manif: CofkUnionManifestation) -> list[str]:
         manifestation_summary.append(f' ~ Excipit: {manif.manifestation_excipit}.')
 
     for enclosed_in in manif.find_enclosed_in():
-        manifestation_summary.append(f' ~ {enclosed_in.id_number_or_shelfmark}')
+        shelfmark = enclosed_in.id_number_or_shelfmark or enclosed_in.manifestation_id
+        url = get_form_url(enclosed_in)
+        link = data_serv.endcode_url_content(url, shelfmark) if url else shelfmark
+        manifestation_summary.append(f' ~ Had enclosure: {link}')
 
     for encloses in manif.find_encloses():
-        manifestation_summary.append(f' ~ {encloses.id_number_or_shelfmark}')
+        shelfmark = encloses.id_number_or_shelfmark or encloses.manifestation_id
+        url = get_form_url(encloses)
+        link = data_serv.endcode_url_content(url, shelfmark) if url else shelfmark
+        manifestation_summary.append(f' ~ Was enclosure in: {link}')
 
     return manifestation_summary

@@ -1,12 +1,12 @@
 .existing-note {
   background-color: #e0e0e0;
-  padding: 10px;
+  padding: 10px 10px 0px 10px;
   margin-bottom: 0.5em;
+  grid-template-columns: 24.5fr 75.5fr;
 }
 
 .existing-note-readonly {
   background-color: #e0e0e0;
-  padding: 10px;
   white-space: pre-wrap;
-  font-size: $typescale-5;
+  font-size: $typescale-4;
 }

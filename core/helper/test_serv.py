@@ -360,8 +360,11 @@ def create_work_by_dict(work_dict: dict = None, work_id=None) -> CofkUnionWork:
 
 
 def create_person_by_dict(pson_dict: dict = None) -> CofkUnionPerson:
-    return create_model_instance(CofkUnionPerson,
-                                 instance_dict=pson_dict or person.fixtures.person_dict_a)
+    import uuid
+    instance_dict = dict(pson_dict or person.fixtures.person_dict_a)
+    if 'person_id' not in instance_dict:
+        instance_dict['person_id'] = str(uuid.uuid4())
+    return create_model_instance(CofkUnionPerson, instance_dict=instance_dict)
 
 
 def create_location_by_dict(loc_dict: dict = None) -> CofkUnionLocation:

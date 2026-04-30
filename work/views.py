@@ -3,6 +3,7 @@ import re
 from collections.abc import Callable
 from typing import Iterable, Any, Type
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db.models import F, Q, Model
@@ -486,9 +487,21 @@ class ManifFFH(BasicWorkFFH):
                 inst = _manif.find_selected_inst()
                 inst = inst and inst.inst
                 _manif.inst_display_name = inst_serv.get_recref_display_name(inst)
+                _manif.type_display_name = dict(manif_type_choices).get(_manif.manifestation_type, '')
                 _manif.lang_list_str = ', '.join(
                     (l.language_code.language_name for l in _manif.language_set.iterator())
                 )
+                # Find enclosed letters for this manifestation
+                enclosed_letters = []
+                for enclosed_manif in _manif.find_encloses():
+                    if enclosed_manif.work:
+                        label = 'Enclosure: ' + manif_serv.get_rich_display_name(enclosed_manif)
+                        enclosed_letters.append({
+                            'work_id': enclosed_manif.work.iwork_id,
+                            'manif_id': enclosed_manif.manifestation_id,
+                            'label': label,
+                        })
+                _manif.enclosed_letters = enclosed_letters
                 manif_set.append(_manif)
 
             context['manif_set'] = manif_set
@@ -518,6 +531,7 @@ class ManifFFH(BasicWorkFFH):
         if not manif.manifestation_id:
             manif.manifestation_id = create_manif_id(self.request_iwork_id)
 
+        manif.update_current_user_timestamp(request.user.username)
         manif.save()
         log.info(f'save manif {manif}')
 
@@ -1035,6 +1049,23 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         if not self.request_data:
             return CofkUnionWork.objects.none()
 
+        # Validate date_of_work_std_from and date_of_work_std_to formats
+        date_fields = [
+            ('date_of_work_std_from', "field 'Date of work std' (from)"),
+            ('date_of_work_std_to', "field 'Date of work std' (to)"),
+        ]
+        has_date_error = False
+        for field_name, field_label in date_fields:
+            date_val = self.request_data.get(field_name)
+            if date_val:
+                error = date_serv.validate_search_date_str(date_val)
+                if error:
+                    messages.error(self.request, f"Error: {field_label}: {error}")
+                    has_date_error = True
+
+        if has_date_error:
+            return CofkUnionWork.objects.none()
+
         return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
 
     def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:
@@ -1239,7 +1270,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def csv_export_setting(self):
-        if not self.has_perms(constant.PM_EXPORT_FILE_WORK):
+        if not self.has_perms([constant.PM_EXPORT_FILE_WORK]):
             return None
 
         is_compact = (self.request_data.get('display-style', constant.SEARCH_LAYOUT_TABLE)
@@ -1255,7 +1286,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     def excel_export_setting(self) -> tuple[Callable[[], str], Callable[[Iterable, str], Any], str] | None:
         """ overrider this to enable download csv """
 
-        if not self.has_perms(constant.PM_EXPORT_FILE_WORK):
+        if not self.has_perms([constant.PM_EXPORT_FILE_WORK]):
             return None
 
         is_compact = (self.request_data.get('display-style', constant.SEARCH_LAYOUT_TABLE)

@@ -1,4 +1,4 @@
-VERSION = "0.6"
+VERSION = "0.8"
 ENTITIES = {
     'audit': 'audit',
     'institution': 'repository',
@@ -99,12 +99,16 @@ PM_CHANGE_PERSON = 'person.change_cofkunionperson'
 PM_CHANGE_PUBLICATION = 'publication.change_cofkunionpublication'
 PM_CHANGE_LOCATION = 'location.change_cofkunionlocation'
 PM_CHANGE_INST = 'institution.change_cofkunioninstitution'
+PM_VIEW_ROLECAT = 'core.view_cofkunionrolecategory'
 PM_CHANGE_ROLECAT = 'core.change_cofkunionrolecategory'
 PM_CHANGE_LOOKUPCAT = 'core.change_cofklookupcatalogue'
 PM_VIEW_LOOKUPCAT = 'core.view_cofklookupcatalogue'
 PM_VIEW_SUBJECT = 'core.view_cofkunionsubject'
 PM_CHANGE_SUBJECT = 'core.change_cofkunionsubject'
+PM_VIEW_ORGTYPE = 'core.view_cofkunionorgtype'
 PM_CHANGE_ORGTYPE = 'core.change_cofkunionorgtype'
+PM_VIEW_RESOURCE_DESC = 'core.view_cofkresourcedescriptor'
+PM_CHANGE_RESOURCE_DESC = 'core.change_cofkresourcedescriptor'
 PM_CHANGE_COLLECTWORK = 'uploader.change_cofkcollectwork'
 PM_CHANGE_LANGUAGE = 'core.change_iso639languagecode'
 PM_CHANGE_SUGGESTIONS = 'suggestions.change_cofksuggestions'

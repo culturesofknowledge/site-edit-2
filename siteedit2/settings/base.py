@@ -280,3 +280,8 @@ EXPORTER_SCHEDULE_TYPE = 'D'  # D: Daily, I: Minutes, H: Hourly, W: Weekly, M: M
 # Test
 SELENIUM_CHROME_LOCAL_DRIVER = False
 SELENIUM_CHROME_HEADLESS = False
+
+# session logout
+SESSION_COOKIE_AGE = 7200 #(2 hr in seconds); resets on inactivity.
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_SAVE_EVERY_REQUEST = True

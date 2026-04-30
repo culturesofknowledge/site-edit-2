@@ -42,6 +42,11 @@ textarea {
   }
 }
 
+input.lat-long-field {
+  width: 120px;
+  display: inline-block;
+}
+
 select {
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -56,7 +61,7 @@ select {
 textarea {
   min-height: 100px;
   resize: vertical;
-  font-size: $typescale-5;
+  font-size: $typescale-4;
 }
 
 .checkbox-group,
@@ -124,8 +129,6 @@ textarea {
   }
 }
 
-
-
 .new-password-box {
   padding: 10px;
   background-color: #d4edda;
@@ -136,4 +139,19 @@ textarea {
 .new-password-value {
   color: darkgreen;
   font-weight: bolder;
+}
+
+// Image URL fields - greyed out by default for existing images
+.image-url-field {
+  input {
+    &.image-url-disabled {
+      background-color: $faint-grey;
+    }
+  }
+}
+
+.image-url-editable-toggle {
+  label[for^="make-urls-editable"] {
+    font-weight: normal;
+  }
 }

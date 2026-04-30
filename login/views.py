@@ -1,5 +1,6 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.views import LoginView
+from django.contrib.auth.views import LoginView, LogoutView
 from django.shortcuts import render
 
 from core.helper import exporter_serv
@@ -17,3 +18,14 @@ def password_changed(request):
 
 class EmloLoginView(LoginView):
     template_name = 'login/login.html'
+
+
+class EmloLogoutView(LogoutView):
+    next_page = 'login:gate'
+
+    def dispatch(self, request, *args, **kwargs):
+        storage = messages.get_messages(request)
+        for _ in storage:
+            pass
+        storage.used = True
+        return super().dispatch(request, *args, **kwargs)

@@ -6,10 +6,10 @@ from django.db.models import Count
 from django.views.generic import ListView
 
 from core import constant
-from core.forms import CatalogueForm, RoleForm, SubjectForm, OrgTypeForm
+from core.forms import CatalogueForm, RoleForm, SubjectForm, OrgTypeForm, ResourceDescriptorForm
 from core.helper import perm_serv
 from core.models import CofkLookupCatalogue, CofkUnionRoleCategory, CofkUnionSubject, CofkUnionOrgType, \
-    CofkUserSavedQuery
+    CofkUserSavedQuery, CofkResourceDescriptor
 
 from login.utils import get_contributing_editors
 
@@ -112,7 +112,7 @@ class CofkListView(ListView):
 
 
 class RoleListView(PermissionRequiredMixin, LoginRequiredMixin, CofkListView):
-    permission_required = constant.PM_CHANGE_ROLECAT
+    permission_required = constant.PM_VIEW_ROLECAT
     raise_exception = True
     model = CofkUnionRoleCategory
     template_name = 'list/roles.html'
@@ -139,7 +139,7 @@ class RoleListView(PermissionRequiredMixin, LoginRequiredMixin, CofkListView):
 
 
 class CatalogueListView(PermissionRequiredMixin, LoginRequiredMixin, CofkListView):
-    permission_required = constant.PM_CHANGE_LOOKUPCAT
+    permission_required = constant.PM_VIEW_LOOKUPCAT
     raise_exception = True
     model = CofkLookupCatalogue
     template_name = 'catalogue/init_form.html'
@@ -207,7 +207,7 @@ class SubjectListView(PermissionRequiredMixin, LoginRequiredMixin, CofkListView)
 
 
 class OrgTypeListView(PermissionRequiredMixin, LoginRequiredMixin, CofkListView):
-    permission_required = constant.PM_CHANGE_ORGTYPE
+    permission_required = constant.PM_VIEW_ORGTYPE
     raise_exception = True
     model = CofkUnionOrgType
     template_name = 'list/orgtypes.html'
@@ -231,6 +231,82 @@ class OrgTypeListView(PermissionRequiredMixin, LoginRequiredMixin, CofkListView)
     @property
     def save_perm(self):
         return constant.PM_CHANGE_ORGTYPE
+
+
+class ResourceDescriptorListView(PermissionRequiredMixin, LoginRequiredMixin, ListView):
+    permission_required = constant.PM_VIEW_RESOURCE_DESC
+    raise_exception = True
+    model = CofkResourceDescriptor
+    template_name = 'list/resource_descriptors.html'
+    paginate_by = 100
+
+    def get_queryset(self):
+        related_to = self.request.GET.get('related_to', '')
+        queryset = self.model.objects.all()
+        if related_to:
+            queryset = queryset.filter(related_to=related_to)
+        return queryset.order_by('description')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = ResourceDescriptorForm
+        context['related_to_choices'] = CofkResourceDescriptor.RELATED_TO_CHOICES
+        context['selected_related_to'] = self.request.GET.get('related_to', '')
+        context['searched'] = 'related_to' in self.request.GET
+        return context
+
+    def post(self, request, *args, **kwargs):
+        perm_serv.validate_permission_denied(request.user, constant.PM_CHANGE_RESOURCE_DESC)
+
+        if 'delete' in request.POST:
+            pk = request.POST.get('descriptor_id')
+            obj = self.model.objects.filter(pk=pk).first()
+            if obj:
+                msg = f'Successfully deleted resource descriptor "{obj.description}" ({obj.pk})'
+                obj.delete()
+                messages.success(request, msg)
+
+        elif 'save' in request.POST:
+            pk = request.POST.get('descriptor_id')
+            obj = self.model.objects.filter(pk=pk).first()
+            if obj:
+                form = ResourceDescriptorForm(request.POST, instance=obj)
+                if form.is_valid():
+                    form.save()
+                    messages.success(request, f'Successfully updated resource descriptor'
+                                              f' "{obj.description}" ({obj.pk})')
+                else:
+                    for error_field in form.errors.as_data():
+                        for field_error in form.errors.as_data()[error_field]:
+                            if field_error.code == 'unique_together':
+                                messages.error(request, f'A resource descriptor with this description'
+                                                        f' and relevant to already exists.')
+                            else:
+                                messages.error(request, f'Error updating resource descriptor.')
+
+        elif 'add' in request.POST:
+            form = ResourceDescriptorForm(request.POST)
+            if form.is_valid():
+                obj = form.save()
+                messages.success(request, f'Successfully created new resource descriptor'
+                                          f' "{obj.description}"')
+            else:
+                errors = form.errors.as_data()
+                for error_field in errors:
+                    for field_error in errors[error_field]:
+                        if field_error.code == 'unique_together':
+                            messages.error(request, f'A resource descriptor with this description'
+                                                    f' and relevant to already exists.')
+                        elif field_error.code == 'max_length':
+                            limit_value = field_error.params['limit_value']
+                            show_value = field_error.params['show_value']
+                            messages.error(request,
+                                           f'Description can at most have {limit_value}'
+                                           f' characters but has {show_value}.')
+                        else:
+                            messages.error(request, f'Error creating resource descriptor.')
+
+        return super().get(self, request, *args, **kwargs)
 
 
 class SavedQueries(ListView):

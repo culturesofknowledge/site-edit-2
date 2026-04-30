@@ -140,6 +140,40 @@ def date_to_simple_date_str(dt):
     return dt.strftime(constant.SIMPLE_DATE_FORMAT)
 
 
+def validate_search_date_str(date_str: str) -> str | None:
+    """
+    Validate a search date string in dd/mm/yyyy, mm/yyyy, or yyyy format.
+    Returns an error message if invalid, or None if valid.
+    """
+    if not date_str or not date_str.strip():
+        return None
+
+    date_str = date_str.strip()
+    parts = date_str.split('/')
+
+    try:
+        if len(parts) == 1:
+            year = int(parts[0])
+            if year < 1 or year > 9999:
+                return 'Invalid date format. Please use dd/mm/yyyy, mm/yyyy, or yyyy.'
+        elif len(parts) == 2:
+            month, year = int(parts[0]), int(parts[1])
+            if not (1 <= month <= 12) or year < 1 or year > 9999:
+                return 'Invalid date format. Please use dd/mm/yyyy, mm/yyyy, or yyyy.'
+        elif len(parts) == 3:
+            day, month, year = int(parts[0]), int(parts[1]), int(parts[2])
+            if year < 1 or year > 9999:
+                return 'Invalid date format. Please use dd/mm/yyyy, mm/yyyy, or yyyy.'
+            # Validate the actual date
+            datetime.date(year, month, day)
+        else:
+            return 'Invalid date format. Please use dd/mm/yyyy, mm/yyyy, or yyyy.'
+    except (ValueError, TypeError):
+        return 'Invalid date format. Please use dd/mm/yyyy, mm/yyyy, or yyyy.'
+
+    return None
+
+
 calendar_choices = [
     ('', 'Unknown'),
     ('G', 'Gregorian'),
