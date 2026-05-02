@@ -1,3 +1,13 @@
-.date-gap {
-  margin-bottom: 10px; // Adjust as needed for the desired gap
+.overview-table {
+  display: grid;
+  grid-template-columns: 30% 1fr;
+  column-gap: 1rem;
+  row-gap: 0.25rem;
+  align-items: baseline;
+  margin-bottom: 1.5rem;
+
+  .date-gap {
+    grid-column: 1 / -1;
+    margin-bottom: 10px;
+  }
 }
