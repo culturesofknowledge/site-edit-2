@@ -32,6 +32,14 @@ textarea {
     box-shadow: 0 0 0 2px rgba($gold, 0.2);
   }
 
+  &[readonly] {
+    &:focus {
+      border-color: $light-grey;  // revert to default
+      box-shadow: none;           // remove glow
+      outline: none;
+    }
+  }
+
   &:disabled {
     background-color: $faint-grey;
     cursor: not-allowed;
