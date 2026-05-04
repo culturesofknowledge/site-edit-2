@@ -160,28 +160,12 @@ nav.flex-space-between {
 
 }
 
-.date-fields-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 1rem;
-
-  .choices-container .choice-item {
-    width: auto;
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    margin-right: 1rem;
-
-    label {
-      margin-bottom: 0;
-      font-weight: normal;
-    }
-
-    input {
-      margin-bottom: 0;
-    }
-  }
+// Roles/titles (person) and subjects (work) need 4-column layout
+fieldset:has(#header_roles) .choices-container .choice-item,
+fieldset:has(#header_abstract) .choices-container .choice-item {
+  width: 25%;
+  margin-right: 0;
+  margin-bottom: 10px;
 }
 
 .issues-date-ct {
