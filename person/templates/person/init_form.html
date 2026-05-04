@@ -53,7 +53,7 @@
                         {{ person_form.foaf_name.errors }}
                         <small>(No more than 200 characters. Preferably Surname, Forename)</small>
                     </div>
-                    <div class="margin-bottom choices-container">
+                    <div class="margin-bottom choices-container form-inline-align">
                         {% include "core/component/common_form_choices.html" with label_text='Gender' choices_field=person_form.gender %}
                     </div>
                     <div class="margin-bottom">
