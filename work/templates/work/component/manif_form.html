@@ -66,87 +66,119 @@
 
 </fieldset>
 
-<fieldset>
-    <legend id="header_paper_and_markings" class="toc-item"> Paper and markings</legend>
+<fieldset id="paper-and-markings">
+  <legend id="header_paper_and_markings" class="toc-item">Paper and markings</legend>
+  
+  <br />
 
-    <div class="multi_rel_recref_container">
-    <label>Letter opened:</label>
-    {{ manif_form.opened }}
+  <div class="form-group">
+    <label class="control-label" for="id_opened">Letter opened:</label>
+    <div class="controls">
+      {{ manif_form.opened }}
     </div>
+  </div>
 
-    <div class="multi_rel_recref_container">
-    <label>Paper size:</label>
-    {{ manif_form.paper_size }}
+  <div class="form-group">
+    <label class="control-label" for="id_paper_size">Paper size:</label>
+    <div class="controls">
+      {{ manif_form.paper_size }}
+      <span class="help-inline">(up to 500 characters)</span>
     </div>
-    <span>(up to 500 characters)</span>
+  </div>
 
-    <div class="multi_rel_recref_container">
-    <label>Stored folded:</label>
-    {{ manif_form.stored_folded }}
+  <div class="form-group">
+    <label class="control-label" for="id_stored_folded">Stored folded:</label>
+    <div class="controls">
+      {{ manif_form.stored_folded }}
     </div>
+  </div>
 
-    <div class="multi_rel_recref_container">
-    <label>Paper type, watermark:</label>
-    {{ manif_form.paper_type_or_watermark }}
+  <div class="form-group">
+    <label class="control-label" for="id_paper_type_or_watermark">Paper type, watermark:</label>
+    <div class="controls">
+      {{ manif_form.paper_type_or_watermark }}
+      <span class="help-inline">(up to 500 characters)</span>
     </div>
-    <span>(up to 500 characters)</span>
+  </div>
 
-    <div class="multi_rel_recref_container">
-    <label>Number of pages:</label>
-    {{ manif_form.number_of_pages_of_document }}
+  <div class="form-group">
+    <label class="control-label" for="id_number_of_pages_of_document">Number of pages:</label>
+    <div class="controls">
+      {{ manif_form.number_of_pages_of_document }}
+      <span class="help-inline">(whole numbers only)</span>
     </div>
-    <span>(whole numbers only)</span>
+  </div>
 
-    <div class="multi_rel_recref_container">
-    <label>Seal:</label>
-    {{ manif_form.seal }}
+  <div class="form-group">
+    <label class="control-label" for="id_seal">Seal:</label>
+    <div class="controls">
+      {{ manif_form.seal }}
     </div>
+  </div>
 
-    <div class="multi_rel_recref_container">
-    <label>Postage marks:</label>
-    {{ manif_form.postage_marks }}
+  <div class="form-group">
+    <label class="control-label" for="id_postage_marks">Postage marks:</label>
+    <div class="controls">
+      {{ manif_form.postage_marks }}
     </div>
+  </div>
 
-    <div class="multi_rel_recref_container">
-    <label>Postage costs as marked:</label>
-    {{ manif_form.postage_costs_as_marked }}
+  <div class="form-group">
+    <label class="control-label" for="id_postage_costs_as_marked">Postage costs as marked:</label>
+    <div class="controls">
+      {{ manif_form.postage_costs_as_marked }}
     </div>
+  </div>
 
-    <div class="multi_rel_recref_container">
-    <label>Postage cost(s):</label>
-    {{ manif_form.postage_costs }}
+  <div class="form-group">
+    <label class="control-label" for="id_postage_costs">Postage cost(s):</label>
+    <div class="controls">
+      {{ manif_form.postage_costs }}
     </div>
+  </div>
 
-    <div class="multi_rel_recref_container">
-    <label>Address:</label>
-    {{ manif_form.address }}
+  <div class="form-group">
+    <label class="control-label" for="id_address">Address:</label>
+    <div class="controls">
+      {{ manif_form.address }}
     </div>
+  </div>
 
-    <div class="multi_rel_recref_container">
-    <label>Routing Mark (stamp):</label>
-    {{ manif_form.routing_mark_stamp }}
+  <div class="form-group">
+    <label class="control-label" for="id_routing_mark_stamp">Routing Mark (stamp):</label>
+    <div class="controls">
+      {{ manif_form.routing_mark_stamp }}
     </div>
+  </div>
 
-    <div class="multi_rel_recref_container">
-    <label>Routing Mark (MS):</label>
-    {{ manif_form.routing_mark_ms }}
+  <div class="form-group">
+    <label class="control-label" for="id_routing_mark_ms">Routing Mark (MS):</label>
+    <div class="controls">
+      {{ manif_form.routing_mark_ms }}
     </div>
+  </div>
 
-    <div class="multi_rel_recref_container">
-    <label>Handling Instructions:</label>
-    {{ manif_form.handling_instructions }}
+  <div class="form-group">
+    <label class="control-label" for="id_handling_instructions">Handling Instructions:</label>
+    <div class="controls">
+      {{ manif_form.handling_instructions }}
     </div>
+  </div>
 
-    <div class="multi_rel_recref_container">
-    <label>Other endorsements:</label>
-    {{ manif_form.endorsements }}
+  <div class="form-group">
+    <label class="control-label" for="id_endorsements">Other endorsements:</label>
+    <div class="controls">
+      {{ manif_form.endorsements }}
     </div>
+  </div>
 
-    <div class="multi_rel_recref_container">
-    <label>Reason for non-delivery:</label>
-    {{ manif_form.non_delivery_reason }}
+  <div class="form-group">
+    <label class="control-label" for="id_non_delivery_reason">Reason for non-delivery:</label>
+    <div class="controls">
+      {{ manif_form.non_delivery_reason }}
+      <span class="help-inline">(up to 500 characters)</span>
     </div>
-
+  </div>
 
 </fieldset>
 
