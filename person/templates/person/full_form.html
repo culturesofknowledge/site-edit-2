@@ -7,18 +7,31 @@
     <script src="/static/core/js/recref_service.js"></script>
     <fieldset id="header_known_loc">
         <legend id="header_geo_locations" class="toc-item">Known geographical locations</legend>
-        {% include "core/component/recref.html" with recref_type='location' id_field=person_form.birth_place label='Birthplace (or place of formation for organizations):' %}
-        {% include "core/component/recref.html" with recref_type='location' id_field=person_form.death_place label='Place of death (or of cessation if an organization):' %}
+        {% include "core/component/recref.html" with recref_type='location'
+                id_field=person_form.birth_place
+                label='Birthplace (or place of formation for organizations):'
+                placeholder='Please select or create birthplace, then click Save.' %}
+        {% include "core/component/recref.html" with recref_type='location'
+                id_field=person_form.death_place
+                label='Place of death (or of cessation if an organization):'
+                placeholder='Please select or create place of death, then click Save.' %}
 
 
         <h3>Other locations:</h3>
-        {% include "core/component/create_update_recref.html" with recref_type='location' recref_formset=recref_other_loc.update_formset new_form=recref_other_loc.new_form add_label='Add location:' %}
+        {% include "core/component/create_update_recref.html" with recref_type='location'
+                recref_formset=recref_other_loc.update_formset new_form=recref_other_loc.new_form
+                add_label='Add location:'
+                placeholder='Please select or create location, then click Save.'%}
 
 
     </fieldset>
     <fieldset>
         <legend id="header_organisations" class="toc-item">Organizations to which belonged</legend>
-        {% include "core/component/create_update_recref.html" with recref_type='organisation' recref_formset=recref_organisation.update_formset new_form=recref_organisation.new_form add_label='Add organization:' %}
+        {% include "core/component/create_update_recref.html" with recref_type='organisation'
+                recref_formset=recref_organisation.update_formset
+                new_form=recref_organisation.new_form
+                add_label='Add organization:'
+                placeholder='Please select or create organization, then click save.' %}
     </fieldset>
 
 
@@ -38,47 +51,74 @@
 
         <fieldset>
             <legend id="header_parents" class="toc-sub-item">Parents</legend>
-            {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_parent.update_formset new_form=recref_parent.new_form add_label='Add parent:' no_date=True %}
+            {% include "core/component/create_update_recref.html" with recref_type='person'
+                    recref_formset=recref_parent.update_formset new_form=recref_parent.new_form
+                    add_label='Add parent:' no_date=True
+                    placeholder='Please select or create parent, then click Save.' %}
         </fieldset>
 
         <fieldset>
             <legend id="header_children" class="toc-sub-item">Children</legend>
-            {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_children.update_formset new_form=recref_children.new_form add_label='Add child:' no_date=True %}
+            {% include "core/component/create_update_recref.html" with recref_type='person'
+                    recref_formset=recref_children.update_formset new_form=recref_children.new_form
+                    add_label='Add child:' no_date=True
+                    placeholder='Please select or create child, then click Save.'%}
         </fieldset>
 
         <fieldset>
             <legend id="header_employers" class="toc-sub-item">Employers</legend>
-            {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_employer.update_formset new_form=recref_employer.new_form add_label='Add employer:' %}
+            {% include "core/component/create_update_recref.html" with recref_type='person'
+                    recref_formset=recref_employer.update_formset new_form=recref_employer.new_form
+                    add_label='Add employer:'
+                    placeholder='Please select or create employer, then click Save.' %}
         </fieldset>
 
         <fieldset>
             <legend id="header_employees" class="toc-sub-item">Employees</legend>
-            {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_employee.update_formset new_form=recref_employee.new_form add_label='Add employee:' %}
+            {% include "core/component/create_update_recref.html" with recref_type='person'
+                    recref_formset=recref_employee.update_formset new_form=recref_employee.new_form
+                    add_label='Add employee:'
+                    placeholder='Please select or create employee, then click Save.' %}
         </fieldset>
 
         <fieldset>
             <legend id="header_teachers" class="toc-sub-item">Teachers</legend>
-            {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_teacher.update_formset new_form=recref_teacher.new_form add_label='Add teacher:' %}
+            {% include "core/component/create_update_recref.html" with recref_type='person'
+                    recref_formset=recref_teacher.update_formset new_form=recref_teacher.new_form
+                    add_label='Add teacher:'
+                    placeholder='Please select or create teacher, then click Save.' %}
         </fieldset>
 
         <fieldset>
             <legend id="header_students" class="toc-sub-item">Students</legend>
-            {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_student.update_formset new_form=recref_student.new_form add_label='Add student:' %}
+            {% include "core/component/create_update_recref.html" with recref_type='person'
+                    recref_formset=recref_student.update_formset new_form=recref_student.new_form
+                    add_label='Add student:'
+                    placeholder='Please select or create student, then click Save.' %}
         </fieldset>
 
         <fieldset>
             <legend id="header_patrons" class="toc-sub-item">Patrons</legend>
-            {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_patron.update_formset new_form=recref_patron.new_form add_label='Add patron:' %}
+            {% include "core/component/create_update_recref.html" with recref_type='person'
+                    recref_formset=recref_patron.update_formset new_form=recref_patron.new_form
+                    add_label='Add patron:'
+                    placeholder='Please select or create patron, then click Save.' %}
         </fieldset>
 
         <fieldset>
             <legend id="header_proteges" class="toc-sub-item">Protégés</legend>
-            {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_protege.update_formset new_form=recref_protege.new_form add_label='Add protege:' %}
+            {% include "core/component/create_update_recref.html" with recref_type='person'
+                    recref_formset=recref_protege.update_formset new_form=recref_protege.new_form
+                    add_label='Add protégé:'
+                    placeholder='Please select or create protégé, then click Save.' %}
         </fieldset>
 
         <fieldset>
             <legend id="header_other_relationships" class="toc-sub-item">Other relationships</legend>
-            {% include "core/component/common_multi_rel_recref_formset.html" with multi_rel_recref_formset=person_other_formset  recref_type='person' help_text_type='related person' id_field=person_form.selected_other_id label_add='Add related person:' %}
+            {% include "core/component/common_multi_rel_recref_formset.html" with multi_rel_recref_formset=person_other_formset
+                    recref_type='person' help_text_type='related person'
+                    id_field=person_form.selected_other_id label_add='Add related person:'
+                    placeholder='Please select or create related person, then click Save.' %}
         </fieldset>
 
     </fieldset>
