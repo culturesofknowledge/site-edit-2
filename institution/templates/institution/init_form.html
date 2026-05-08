@@ -101,7 +101,10 @@
                 {% endif %}
 
                 {% if img_handler %}
-                    {% include "core/component/image_formset.html" with img_handler=img_handler %}
+                    <fieldset>
+                        <legend id="header_images" class="toc-item">Images</legend>
+                        {% include "core/component/image_formset.html" with img_handler=img_handler %}
+                    </fieldset>
                 {% endif %}
 
                 <div class="bg-white sticky-bottom">
