@@ -18,18 +18,22 @@
 
                 <fieldset>
                     <legend>Publication</legend>
-                    <div class="margin-bottom">
+                    <div class="margin-bottom multi_rel_recref_container">
                         <label>Publication Details*</label>
-                        {{ pub_form.publication_details }}
-                        {{ pub_form.publication_details.errors }}
-                        <small>(e.g. author(s)/editor(s), title, place and year of publication)</small>
+                        <div>
+                            {{ pub_form.publication_details }}
+                            {{ pub_form.publication_details.errors }}
+                            <small>(e.g. author(s)/editor(s), title, place and year of publication)</small>
+                        </div>
                     </div>
 
-                    <div class="margin-bottom">
+                    <div class="margin-bottom multi_rel_recref_container">
                         <label>Abbreviation</label>
-                        {{ pub_form.abbrev }}
-                        {{ pub_form.abbrev.errors }}
-                        <small>(optional, max. 50 characters)</small>
+                        <div>
+                            {{ pub_form.abbrev }}
+                            {{ pub_form.abbrev.errors }}
+                            <small>(optional, max. 50 characters)</small>
+                        </div>
                     </div>
                 </fieldset>
                 {% if pub_form.instance and pub_form.instance.pk and  constant.PM_CHANGE_PUBLICATION|can_show_for_perm:perms  %}
