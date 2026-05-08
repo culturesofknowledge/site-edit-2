@@ -16,13 +16,13 @@
 
 
     </fieldset>
-    <fieldset id="header_organisations">
+    <fieldset>
         <legend id="header_organisations" class="toc-item">Organizations to which belonged</legend>
         {% include "core/component/create_update_recref.html" with recref_type='organisation' recref_formset=recref_organisation.update_formset new_form=recref_organisation.new_form add_label='Add organization:' %}
     </fieldset>
 
 
-    <fieldset id="header_member">
+    <fieldset>
         <legend id="header_member" class="toc-item">Members</legend>
         {% if person_form.is_organisation.value == 'Y' %}
             {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_member.update_formset new_form=recref_member.new_form add_label='Add member:' %}
