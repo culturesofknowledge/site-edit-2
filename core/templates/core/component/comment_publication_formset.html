@@ -6,7 +6,11 @@
 {% with header_id=header_id|default:'header_comment' %}
     <fieldset>
         <legend id="{{ header_id }}" class="{{ header_class|default:'toc-item' }}">
-            {% if comment_title %}{{ comment_title }}{% else %}Notes{% endif %}
+            {% if comment_title %}
+                {{ comment_title }}
+            {% else %}
+                Researchers’ notes for front-end display
+            {% endif %}
         </legend>
 
         {% for form in comment_formset %}
