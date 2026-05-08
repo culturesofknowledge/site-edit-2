@@ -3,30 +3,32 @@
 
 <fieldset>
     <legend id="header_basic_details" class="toc-item">Basic details</legend>
-    
+
     <div class="flex flex-label">
         <label>Document type:</label>
         {{ manif_form.manifestation_type }}
     </div>
 
     <div>
-        {% include "core/component/recref.html" with recref_type='inst' id_field=manif_form.selected_inst_id label='Repository:' %}
+        {% include "core/component/recref.html" with recref_type='inst'
+                id_field=manif_form.selected_inst_id label='Repository:'
+                placeholder='Please select or create repository, then click Save.' %}
     </div>
 
     <div class="flex flex-label">
         <label>ID number or shelfmark:</label>
         {{ manif_form.id_number_or_shelfmark }}
     </div>
-    
+
     <label class="margin-bottom margin-top">Or </label>
-    
+
     <div class="flex flex-label margin-bottom">
         <label>Printed edition details: </label>
         {{ manif_form.printed_edition_details }}
     </div>
-    
 
-    
+
+
     <div class="ref-publication-row" textbox_id="{{ manif_form.printed_edition_details.id_for_label }}"></div>
 
 </fieldset>
@@ -38,7 +40,10 @@
 <fieldset>
     <legend id="header_former_owners" class="toc-item">Former owners</legend>
 
-    {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_former.update_formset new_form=recref_former.new_form add_label='Add former owner:' placeholder='Please select or create former owner, then click Save.' %}
+    {% include "core/component/create_update_recref.html" with recref_type='person'
+            recref_formset=recref_former.update_formset new_form=recref_former.new_form
+            add_label='Add former owner:'
+            placeholder='Please select or create former owner, then click Save.' %}
 
 </fieldset>
 
@@ -49,7 +54,10 @@
         Note: when entering enclosure details, please treat any work/manifestation on the Cultures of Knowledge system as a letter.
     </span>
 
-    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosure_manif.update_formset new_form=recref_enclosure_manif.new_form add_label='Add enclosed letter:' hide_create_btn=True no_date=True placeholder='Please select enclosed letter, then click Save.' %}
+    {% include "core/component/create_update_recref.html" with recref_type='manif'
+            recref_formset=recref_enclosure_manif.update_formset new_form=recref_enclosure_manif.new_form
+            add_label='Add enclosed letter:' hide_create_btn=True no_date=True
+            placeholder='Please select enclosed letter, then click Save.' %}
 
     <span>OTHER TYPES of enclosure, e.g. money, books, samples of minerals:</span>
     <div class="multi_rel_recref_container">
@@ -68,13 +76,16 @@
 <fieldset>
     <legend id="header_letters" class="toc-item">Letters in which this one was enclosed</legend>
 
-    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosed_manif.update_formset new_form=recref_enclosed_manif.new_form add_label='Add enclosing letter:' hide_create_btn=True no_date=True placeholder='Please select enclosing letter, then click Save.' %}
+    {% include "core/component/create_update_recref.html" with recref_type='manif'
+            recref_formset=recref_enclosed_manif.update_formset new_form=recref_enclosed_manif.new_form
+            add_label='Add enclosing letter:' hide_create_btn=True no_date=True
+            placeholder='Please select enclosing letter, then click Save.' %}
 
 </fieldset>
 
 <fieldset id="paper-and-markings">
   <legend id="header_paper_and_markings" class="toc-item">Paper and markings</legend>
-  
+
   <br />
 
   <div class="form-group">
@@ -239,10 +250,14 @@
         </div>
 
         {% with 'Add scribe:'|add_another_if_startswith as label_text %}
-            {% include "core/component/recref.html" with recref_type='person' id_field=manif_form.selected_scribe_id label=label_text placeholder='Please select scribe, then click Save.' %}
+            {% include "core/component/recref.html" with recref_type='person'
+                    id_field=manif_form.selected_scribe_id label=label_text
+                    placeholder='Please select scribe, then click Save.' %}
         {% endwith %}
     {% else %}
-        {% include "core/component/recref.html" with recref_type='person' id_field=manif_form.selected_scribe_id label='Add scribe:' placeholder='Please select scribe, then click Save.' %}
+        {% include "core/component/recref.html" with recref_type='person'
+                id_field=manif_form.selected_scribe_id label='Add scribe:'
+                placeholder='Please select scribe, then click Save.' %}
     {% endif %}
 
 </fieldset>

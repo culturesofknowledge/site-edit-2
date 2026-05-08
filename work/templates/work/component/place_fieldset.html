@@ -1,14 +1,16 @@
 {% with cap_name=name|capfirst header_id='header_'|add:name %}
     <fieldset>
-        <legend
-                id="{{ header_id }}"
-                class="{{ header_class|default:'toc-item' }}"
-        >{{ cap_name }}</legend>
+        <legend id="{{ header_id }}" class="{{ header_class|default: 'toc-item' }}">
+            {{ cap_name }}
+        </legend>
+        <div class="multi_rel_recref_container">
+            <label>{{ cap_name }} as marked:</label>
+            <div>{{ marked }}</div>
+        </div>
 
-        <label>{{ cap_name }} as marked:</label>
-        {{ marked }}
-
-        {% include "core/component/recref.html" with recref_type='location' id_field=selected_id label=cap_name|add:' (standard format):' placeholder='Please select or create '|add:name|add:'.' %}
+        {% include "core/component/recref.html" with recref_type='location' id_field=selected_id
+                label=cap_name|add:' (standard format):'
+                placeholder='Please select or create '|add:name|add:'.' %}
 
         {% include "core/component/common_checkbox.html" with field=inferred name=cap_name|add:' inferred' %}
 
