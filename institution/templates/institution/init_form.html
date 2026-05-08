@@ -87,7 +87,7 @@
                     </div>
 
                     <div class="margin-bottom">
-                        <label>Alternative city names:</label>
+                        <label>Alternative country names:</label>
                         {{ inst_form.institution_country_synonyms }}
                         {{ inst_form.institution_country_synonyms.errors }}
                         <small>Please use this field to give the country name in other languages, if required.
@@ -105,6 +105,11 @@
                         <legend id="header_images" class="toc-item">Images</legend>
                         {% include "core/component/image_formset.html" with img_handler=img_handler %}
                     </fieldset>
+                {% endif %}
+
+                {% if inst_form.instance and inst_form.instance.pk and  constant.PM_CHANGE_INST|can_show_for_perm:perms  %}
+                    {% url 'institution:delete' inst_form.instance.pk as del_url %}
+                    {% include "core/component/del_confirm_fieldset.html" with del_url=del_url name='Repository' %}
                 {% endif %}
 
                 <div class="bg-white sticky-bottom">
