@@ -25,64 +25,38 @@
 
     <h2 id="header_date" class="toc-item margin-bottom">Date of work</h2>
     <div class="overview-table">
-        {% if date_for_ordering %}
             <span class="col-label">Date for ordering:</span>
             <span> {{ date_for_ordering }} </span>
-        {% endif %}
-        {% if work.date_of_work_as_marked %}
             <span class="col-label">Date of work as marked:</span>
             <span> {{ work.date_of_work_as_marked }} </span>
-        {% endif %}
-        {% if original_calendar_display %}
             <span class="col-label">Original calendar:</span>
             <span> {{ original_calendar_display }} </span>
-        {% endif %}
-        {% if date_for_ordering %}
             <span class="col-label">Date of work is range:</span>
             <span>
                 {% include "core/component/strong_yes_no.html" with val=work.date_of_work_std_is_range %}
             </span>
-        {% endif %}
         {% if work.date_of_work_std_is_range %}
-            {% if work.date_of_work_std_year %}
                 <span class="col-label">From Year:</span>
                 <span> {{ work.date_of_work_std_year }} </span>
-            {% endif %}
-            {% if work.date_of_work_std_month %}
                 <span class="col-label">From Month:</span>
                 <span> {{ work.date_of_work_std_month }} </span>
-            {% endif %}
-            {% if work.date_of_work_std_day %}
                 <span class="col-label">From Day:</span>
                 <span> {{ work.date_of_work_std_day }} </span>
-            {% endif %}
-            {% if work.date_of_work2_std_year %}
                 <span class="col-label">To Year:</span>
                 <span> {{ work.date_of_work2_std_year }} </span>
-            {% endif %}
-            {% if work.date_of_work2_std_month %}
                 <span class="col-label">To Month:</span>
                 <span> {{ work.date_of_work2_std_month }} </span>
-            {% endif %}
-            {% if work.date_of_work2_std_day %}
                 <span class="col-label">To Day:</span>
                 <span> {{ work.date_of_work2_std_day }} </span>
-            {% endif %}
         {% else %}
-            {% if work.date_of_work_std_year %}
                 <span class="col-label">Year:</span>
                 <span> {{ work.date_of_work_std_year }} </span>
-            {% endif %}
-            {% if work.date_of_work_std_month %}
                 <span class="col-label">Month:</span>
                 <span> {{ work.date_of_work_std_month }} </span>
-            {% endif %}
-            {% if work.date_of_work_std_day %}
                 <span class="col-label">Day:</span>
                 <span> {{ work.date_of_work_std_day }} </span>
-            {% endif %}
         {% endif %}
-        {% if date_for_ordering %}
+        {% if date_for_ordering|length > 0 %}
             <span class="col-label">Date of work inferred:</span>
             {% include "core/component/strong_yes_no.html" with val=work.date_of_work_inferred %}
             <span class="col-label">Date of work uncertain:</span>
@@ -96,11 +70,11 @@
                 {% include 'core/component/li_list.html' with values=notes_work %}
             </ul>
         {% endif %}
-        {% if work.date_of_work_std %}
+        {% if work.date_of_work_std|length > 0 %}
             <span class="col-label">Date for ordering (in original calendar):</span>
             <span> {{ work.date_of_work_std }} </span>
         {% endif %}
-        {% if work.date_of_work_std_gregorian %}
+        {% if work.date_of_work_std_gregorian|length > 0 %}
             <span class="col-label">Date for ordering (Gregorian):</span>
             <span> {{ work.date_of_work_std_gregorian }}</span>
         {% endif %}
