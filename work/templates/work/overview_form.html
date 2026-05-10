@@ -35,8 +35,8 @@
         <span>
             {% include "core/component/strong_yes_no.html" with val=work.date_of_work_std_is_range %}
         </span>
-        <span class="col-label">From Year:</span>
         {% if work.date_of_work_std_is_range %}
+            <span class="col-label">From Year:</span>
             <span> {{ work.date_of_work_std_year }} </span>
             <span class="col-label">From Month:</span>
             <span> {{ work.date_of_work_std_month }} </span>
@@ -145,9 +145,9 @@
     <h2 id="header_place" class="toc-item margin-bottom">Place of origin</h2>
     <div class="overview-table">
         <span class="col-label">Place from which sent (standard format):</span>
-        <span>
-            <a href="{{ origin_link_list[0].link }}" target="_blank"> {{ origin_link_list[0].name }}</a>
-        </span>
+        <ul class="no-margin overview-list">
+            {% include 'work/component/overview/link_list.html' with values=origin_link_list %}
+        </ul>
         <span class="col-label">Origin as marked:</span>
         <span> {{ work.origin_as_marked }} </span>
         <span class="col-label">Origin inferred:</span>
@@ -163,9 +163,9 @@
     <h2 id="header_destination" class="toc-item margin-bottom">Destination </h2>
     <div class="overview-table">
         <span class="col-label">Place to which sent (standard format):</span>
-        <span>
-            <a href="{{ destination_link_list[0].link }}" target="_blank"> {{ destination_link_list[0].name }}</a>
-        </span>
+        <ul class="no-margin overview-list">
+             {% include 'work/component/overview/link_list.html' with values=destination_link_list %}
+        </ul>
         <span class="col-label">Destination as marked:</span>
         <span> {{ work.destination_as_marked }} </span>
         <span class="col-label">Destination inferred:</span>
@@ -181,10 +181,10 @@
 
     <h2 id="header_language" class="toc-item margin-bottom">Language and content</h2>
     <div class="overview-table">
-            <span class="col-label">Language of work:</span>
-            <span>
-                {{ language }}
-            </span>
+        <span class="col-label">Language of work:</span>
+        <span>
+            {{ language }}
+        </span>
         <span class="col-label">Work is translation:</span>
         <span>
             {% include 'core/component/strong_yes_no.html' with val=work.work_is_translation %}
@@ -245,11 +245,11 @@
                 <span class="col-label">Manifestation creation date gregorian:</span>
                 <span> {{ m.manifestation_creation_date_gregorian }} </span>
                 <span class="col-label">Manifestation creation date year:</span>
-                <span> {{ m.manifestation_creation_date_year }} </span>
+                <span> {{ m.manifestation_creation_date_year|default_if_none:'' }} </span>
                 <span class="col-label">Manifestation creation date month:</span>
-                <span> {{ m.manifestation_creation_date_month }} </span>
+                <span> {{ m.manifestation_creation_date_month|default_if_none:''  }} </span>
                 <span class="col-label">Manifestation creation date day:</span>
-                <span> {{ m.manifestation_creation_date_day }} </span>
+                <span> {{ m.manifestation_creation_date_day|default_if_none:''  }} </span>
                 <span class="col-label">Manifestation receipt calendar:</span>
                 <span> {{ m.manifestation_receipt_calendar_display }} </span>
                 <span class="col-label">Manifestation receipt date:</span>
@@ -257,11 +257,11 @@
                 <span class="col-label">Manifestation receipt date gregorian:</span>
                 <span> {{ m.manifestation_receipt_date_gregorian }} </span>
                 <span class="col-label">Manifestation receipt date year:</span>
-                <span> {{ m.manifestation_receipt_date_year }} </span>
+                <span> {{ m.manifestation_receipt_date_year|default_if_none:''  }} </span>
                 <span class="col-label">Manifestation receipt date month:</span>
-                <span> {{ m.manifestation_receipt_date_month }} </span>
+                <span> {{ m.manifestation_receipt_date_month|default_if_none:''  }} </span>
                 <span class="col-label">Manifestation receipt date day:</span>
-                <span> {{ m.manifestation_receipt_date_day }} </span>
+                <span> {{ m.manifestation_receipt_date_day|default_if_none:''  }} </span>
                 <span class="col-label">Manifestation receipt date inferred:</span>
                 <span>
                     {% include 'core/component/strong_yes_no.html' with val=m.manifestation_receipt_date_inferred %}
