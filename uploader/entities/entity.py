@@ -91,7 +91,7 @@ class CofkEntity:
                 elif isinstance(entity[id_field], str):
                     for int_value in [i for i in entity[id_field].split(SEPARATOR) if i != '']:
                         try:
-                            if int(int_value) < 0:
+                            if int(int_value) < 1:
                                 self.add_error(f'Column {id_field} in {self.sheet.name}'
                                                f' sheet contains an invalid value (value: {int_value}).')
                         except ValueError:
@@ -99,7 +99,7 @@ class CofkEntity:
                                            f' sheet contains an invalid value (value: {int_value}).')
 
         if 'ints' in self.fields:
-            for int_value in [t for t in self.fields['ints'] if t in entity and not isinstance(t, int)]:
+            for int_value in [t for t in self.fields['ints'] if t in entity and not isinstance(entity[t], int)]:
                 try:
                     entity[int_value] = int(entity[int_value])
                 except ValueError:
