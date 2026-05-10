@@ -25,23 +25,23 @@
     <thead>
     <tr></tr>
     <tr>
-        <th>Names and titles/roles</th>
-        <th>ID</th>
-        <th>Born</th>
-        <th>Died</th>
-        <th>Fl.</th>
-        <th>Sex</th>
-        <th>Org.?</th>
+        <th class="col-wide">Names and titles/roles</th>
+        <th class="col-id">ID</th>
+        <th class="col-year">Born</th>
+        <th class="col-year">Died</th>
+        <th class="col-year">Fl.</th>
+        <th class="col-narrow">Sex</th>
+        <th class="col-narrow">Org.?</th>
         <th>Organization type</th>
-        <th>Sent</th>
-        <th>Rec'd</th>
-        <th>Sent<br>and Rec'd</th>
-        <th>Ment'd</th>
-        <th>Editor's notes</th>
-        <th>Further reading</th>
+        <th class="col-count">Sent</th>
+        <th class="col-count">Rec'd</th>
+        <th class="col-count">Sent<br>and Rec'd</th>
+        <th class="col-count">Ment'd</th>
+        <th class="col-wide">Editor's notes</th>
+        <th class="col-wide">Further reading</th>
         <th>Images</th>
-        <th>Other details</th>
-        <th>Last edit</th>
+        <th class="col-wide">Other details</th>
+        <th class="col-last-edit">Last edit</th>
     </tr>
     </thead>
     <tbody>
@@ -49,31 +49,31 @@
     {% for r in search_results %}
         <tr class="selectable_entry {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}"
             entry_id="{{ r.iperson_id }}" target="_blank">
-            <td>
+            <td class="col-wide">
                 {{ r.names_and_roles }}
             </td>
 
-            <td>
+            <td class="col-id">
                 {% include 'core/component/search_table_layout/link_record.html' with id=r.iperson_id view='person:full_form' edit_perm=constant.PM_CHANGE_PERSON %}
             </td>
 
-            <td>
+            <td class="col-year">
                 {{ r.birth_year_range }}
             </td>
 
-            <td>
+            <td class="col-year">
                 {{ r.death_year_range }}
             </td>
 
-            <td>
+            <td class="col-year">
                 {{ r.flourished_year_range }}
             </td>
 
-            <td>
+            <td class="col-narrow">
                 {{ r.gender }}
             </td>
 
-            <td>
+            <td class="col-narrow">
                 {% if r.is_organisation %}
                     {{ r.is_organisation }}
                 {% endif %}
@@ -84,7 +84,7 @@
                     {{ r.organisation_type.org_type_desc }}
                 {% endif %}
             </td>
-            <td>
+            <td class="col-count">
                 {% if r.sent > 0 %}
                     <a href="{% url 'work:search' %}?person_sent_pk={{ r.person_id }}" class="search_link"
                        target="_blank">
@@ -92,7 +92,7 @@
                     </a>
                 {% endif %}
             </td>
-            <td>
+            <td class="col-count">
                 {% if r.recd > 0 %}
                     <a href="{% url 'work:search' %}?person_rec_pk={{ r.person_id }}" class="search_link"
                        target="_blank">
@@ -100,7 +100,7 @@
                     </a>
                 {% endif %}
             </td>
-            <td>
+            <td class="col-count">
                 {% if r.all_works > 0 %}
                     <a href="{% url 'work:search' %}?person_sent_rec_pk={{ r.person_id }}" class="search_link"
                        target="_blank">
@@ -108,7 +108,7 @@
                     </a>
                 {% endif %}
             </td>
-            <td>
+            <td class="col-count">
                 {% if r.mentioned > 0 %}
                     <a href="{% url 'work:search' %}?person_mention_pk={{ r.person_id }}" class="search_link"
                        target="_blank">
@@ -117,13 +117,13 @@
                 {% endif %}
             </td>
 
-            <td>
+            <td class="col-wide">
                 {% if r.editors_notes %}
                     {{ r.editors_notes|linebreaksbr }}
                 {% endif %}
             </td>
 
-            <td>
+            <td class="col-wide">
                 {% if r.further_reading %}
                     {{ r.further_reading }}
                 {% endif %}
@@ -132,10 +132,10 @@
                 {% include "core/component/search_table_layout/img_result.html" with images=r.images %}
             </td>
 
-            <td>
+            <td class="col-wide">
                 {{ r.other_details_for_display|linebreaksbr|render_display_link }}
             </td>
-            <td>
+            <td class="col-last-edit">
                 {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r %}
             </td>
 
