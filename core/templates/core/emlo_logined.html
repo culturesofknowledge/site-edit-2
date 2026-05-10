@@ -17,7 +17,7 @@
 
             {% if constant.PM_VIEW_LOOKUPCAT in perms %}
                 <li class="menu-item">
-                    <a href="">List</a>
+                    <a href="">Lists</a>
                     <ul class='unstyled-list no-margin menu-subitem'>
                         {%  if constant.PM_CHANGE_ROLECAT in perms %}
                         <a href="{% url 'list:roles' %}">
@@ -42,6 +42,11 @@
                         {%  if constant.PM_VIEW_ROLECAT in perms %}
                         <a href="{% url 'lang:search' %}">
                             <li>Languages</li>
+                        </a>
+                        {% endif %}
+                        {%  if constant.PM_VIEW_RESOURCE_DESC in perms %}
+                        <a href="{% url 'list:resources' %}">
+                            <li>Resources</li>
                         </a>
                         {% endif %}
                         {% if constant.PM_CHANGE_USER in perms %}

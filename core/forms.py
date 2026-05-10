@@ -8,7 +8,7 @@ from core.helper import form_serv, model_serv
 from core.helper import widgets_serv
 from core.helper.form_serv import CommonTextareaField, ZeroOneCheckboxField
 from core.models import CofkUnionComment, CofkUnionResource, CofkUnionImage, CofkLookupCatalogue, CofkUnionRoleCategory, \
-    CofkUnionSubject, CofkUnionOrgType
+    CofkUnionSubject, CofkUnionOrgType, CofkResourceDescriptor
 from login.models import CofkUser
 from login import utils
 from manifestation.models import CofkUnionManifestation
@@ -142,7 +142,7 @@ class ImageForm(ModelForm):
     can_be_displayed = form_serv.ZeroOneCheckboxField(required=False,
                                                        label='Can be displayed to public',
                                                        initial='1', )
-    display_order = forms.IntegerField(required=False, label=mark_safe('Order for display in front-end <i style="font-weight:lighter">(Please enter a number greater than or equal to 1. If multiple images have the same number, they will be ordered by filename.)</i>'), initial=1)
+    display_order = forms.IntegerField(required=False, label=mark_safe('Order for display in front-end: <br/><small>Please enter a number greater than or equal to 1. If multiple images have the same number, they will be ordered by filename.</small>'), initial=1)
 
     is_delete = ZeroOneCheckboxField(is_str=False, label='Delete image from manifestation')
     is_delete.widget.attrs.update({'class': 'warn-checked'})
@@ -212,3 +212,15 @@ class OrgTypeForm(ModelForm):
     class Meta:
         model = CofkUnionOrgType
         fields = '__all__'
+
+
+class ResourceDescriptorForm(ModelForm):
+    description = forms.CharField(label="Description", max_length=200)
+    related_to = forms.ChoiceField(
+        label="Descriptor relevant to",
+        choices=CofkResourceDescriptor.RELATED_TO_CHOICES,
+    )
+
+    class Meta:
+        model = CofkResourceDescriptor
+        fields = ['description', 'related_to']

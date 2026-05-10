@@ -531,6 +531,7 @@ class ManifFFH(BasicWorkFFH):
         if not manif.manifestation_id:
             manif.manifestation_id = create_manif_id(self.request_iwork_id)
 
+        manif.update_current_user_timestamp(request.user.username)
         manif.save()
         log.info(f'save manif {manif}')
 
