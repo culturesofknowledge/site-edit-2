@@ -25,7 +25,7 @@ from core.helper.view_serv import DefaultSearchView
 from core.models import CofkLookupCatalogue, CofkLookupDocumentType
 from uploader.forms import CofkCollectUploadForm, GeneralSearchFieldset
 from uploader.models import CofkCollectUpload, CofkCollectPerson, CofkCollectLocation
-from uploader.review import reject_works
+from uploader.review import reject_works, accept_people, reject_people, accept_locations, reject_locations
 from uploader.uploader_serv import DisplayableCollectWork
 
 log = logging.getLogger(__name__)
@@ -115,8 +115,18 @@ class AddUploadView(TemplateView):
 @login_required
 @permission_required(constant.PM_CHANGE_COLLECTWORK, raise_exception=True)
 def upload_review(request, upload_id, **kwargs):
-    template_url = 'uploader/review.html'
     upload: CofkCollectUpload = CofkCollectUpload.objects.filter(pk=upload_id).first()
+
+    if upload.upload_type == 'people':
+        return _upload_review_people(request, upload)
+    elif upload.upload_type == 'location':
+        return _upload_review_locations(request, upload)
+
+    return _upload_review_works(request, upload)
+
+
+def _upload_review_works(request, upload: CofkCollectUpload):
+    template_url = 'uploader/review.html'
 
     prefetch = ['authors', 'addressees', 'people_mentioned', 'languages', 'subjects', 'manifestations', 'resources',
                 'upload_status', 'addressees__iperson', 'authors__iperson', 'people_mentioned__iperson',
@@ -141,7 +151,6 @@ def upload_review(request, upload_id, **kwargs):
     people = CofkCollectPerson.objects.filter(upload=upload, union_iperson__isnull=True)
     places = CofkCollectLocation.objects.filter(upload=upload, union_location__isnull=True)
 
-    # TODO, are all of these required for context?
     context = {'username': request.user.username,
                'upload': upload,
                'works_page': works_page,
@@ -153,8 +162,6 @@ def upload_review(request, upload_id, **kwargs):
                'per_page_options': [1000, 2500, 5000]
                }
 
-    # copy variables onto context because we can't pickle the request object which means
-    # it can't be passed to Django Q2
     for prop in ['work_id', 'accession_code', 'catalogue_code']:
         if prop in request.POST:
             context[prop] = request.POST[prop]
@@ -177,11 +184,48 @@ def upload_review(request, upload_id, **kwargs):
     return render(request, template_url, context)
 
 
+def _upload_review_people(request, upload: CofkCollectUpload):
+    if 'confirm' in request.POST and 'action' in request.POST:
+        if request.POST['action'] == 'accept':
+            accept_people(upload, request.user.username, request)
+            return redirect(reverse('uploader:upload_list'))
+        elif request.POST['action'] == 'reject':
+            reject_people(upload, request)
+            return redirect(reverse('uploader:upload_list'))
+
+    people = CofkCollectPerson.objects.filter(upload=upload).order_by('iperson_id')
+    context = {
+        'upload': upload,
+        'people': people,
+    }
+    return render(request, 'uploader/review_people.html', context)
+
+
+def _upload_review_locations(request, upload: CofkCollectUpload):
+    if 'confirm' in request.POST and 'action' in request.POST:
+        if request.POST['action'] == 'accept':
+            accept_locations(upload, request.user.username, request)
+            return redirect(reverse('uploader:upload_list'))
+        elif request.POST['action'] == 'reject':
+            reject_locations(upload, request)
+            return redirect(reverse('uploader:upload_list'))
+
+    locations = CofkCollectLocation.objects.filter(upload=upload).order_by('location_id')
+    context = {
+        'upload': upload,
+        'locations': locations,
+    }
+    return render(request, 'uploader/review_locations.html', context)
+
+
 def lookup_fn_date_of_work(lookup_fn, field_name, value):
     value = str(value).strip()
     query = Q()
     date_pattern = r'^([\d\?]{4})(?:-([\d]{2}|[\?]{2}))?(?:-([\d]{2}|[\?]{2}))?$'
-    matches = [re.search(date_pattern, v) for v in value.split(' to ')]
+    matches = [re.search(date_pattern, v.strip()) for v in value.split(' to ')]
+
+    if any(m is None for m in matches):
+        return Q(pk=0)
 
     if len(matches) == 1:
         year = matches[0].group(1)

@@ -1,0 +1,59 @@
+{% extends "core/emlo_logined.html" %}
+{% load static %}
+
+{% block content %}
+
+<div id="upload-header">
+    <span id="upload-title">Bulk people upload by {{ upload.upload_username }} uploaded {{ upload.upload_timestamp }}</span>
+    <span id="upload-summary">Status: {{ upload.upload_status }} | People in upload: {{ people.count }}</span>
+
+    <div class="padding-top">
+        Back to list of contributions
+        <button type="button" class="btn inline_btn" onclick="location.href='/upload'">Back</button>
+
+        <button class="btn inline_btn" id="accept_all" onclick="document.getElementById('confirm').style.display='block'; document.getElementById('action').value='accept';">Accept all</button>
+        <button class="btn inline_btn" id="reject_all" onclick="document.getElementById('confirm').style.display='block'; document.getElementById('action').value='reject';">Reject all</button>
+    </div>
+    <em>Note: confirmation will be required before Accept/Reject.</em>
+</div>
+
+{% include "core/component/messages.html" %}
+
+<form method="post">
+    {% csrf_token %}
+    <fieldset id="confirm" style="max-width: 50%; margin-top: 1em; display: none;">
+        <h2 id="confirm_title">Accept {{ people.count }} new people?</h2>
+        <p>This will create new entries in the union catalogue for each new person listed below.</p>
+        <input type="hidden" value="" name="action" id="action"/>
+        <button class="btn inline_btn" name="confirm">Confirm</button>
+        <button type="button" class="btn inline_btn" onclick="document.getElementById('confirm').style.display='none';">Cancel</button>
+    </fieldset>
+</form>
+
+<div id="review">
+    <h2>People ({{ people.count }})</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Primary name</th>
+                <th>Editors' notes</th>
+                <th>Union record</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for person in people %}
+            <tr>
+                <td>{{ person.iperson_id }}</td>
+                <td>{{ person.primary_name }}</td>
+                <td>{{ person.editors_notes|default:'' }}</td>
+                <td>{% if person.union_iperson %}Linked to union record {{ person.union_iperson.iperson_id }}{% else %}New{% endif %}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4">No people in this upload.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
