@@ -132,10 +132,30 @@ nav.flex-space-between {
   justify-content: left;
 
   .choice-item {
-    width: 40%;
+    width: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-right: 1rem;
+
+    label {
+      margin-bottom: 0;
+      font-weight: normal;
+    }
+
+    input {
+      margin-bottom: 0;
+    }
   }
 
 }
+
+// Roles/titles (person) and subjects (work) need 4-column layout
+fieldset:has(#header_roles) .choices-container .choice-item,
+fieldset:has(#header_abstract) .choices-container .choice-item {
+  width: 25%;
+  margin-right: 0;
+  margin-bottom: 10px;
 
 .date-fields-row {
   display: flex;
