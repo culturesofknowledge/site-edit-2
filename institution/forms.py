@@ -18,6 +18,7 @@ class InstitutionForm(ModelForm):
 
     class Meta:
         model = CofkUnionInstitution
+        name = 'Repository'
         exclude = (
             'creation_user',
             'change_user',

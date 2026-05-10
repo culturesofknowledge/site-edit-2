@@ -71,7 +71,8 @@ function AutoCalendar(year_jqe,
                       day_jqe,
                       calendar_jqe,
                       normal_date_jqe,
-                      gregorian_jqe,) {
+                      gregorian_jqe,
+                      manual_checkbox_jqe) {
 
     this.year_jqe = year_jqe;
     this.month_jqe = month_jqe;
@@ -79,6 +80,11 @@ function AutoCalendar(year_jqe,
     this.calendar_jqe = calendar_jqe;
     this.normal_date_jqe = normal_date_jqe;
     this.gregorian_jqe = gregorian_jqe;
+    this.manual_checkbox_jqe = manual_checkbox_jqe;
+
+    this.is_manual = function() {
+        return this.manual_checkbox_jqe && this.manual_checkbox_jqe.is(':checked');
+    }
 
 
     this.get_selected_date = function () {
@@ -117,23 +123,40 @@ function AutoCalendar(year_jqe,
         });
 
         let update_all_calendar = function (e) {
+            if (self.is_manual()) return;
             self.update_original_calendar()
             self.update_gregorian_calendar()
         }
         this.month_jqe.on('change', update_all_calendar);
         this.day_jqe.on('input', update_all_calendar)
         this.year_jqe.on('input', update_all_calendar)
+
+        if (this.manual_checkbox_jqe) {
+            let update_readonly = function() {
+                let is_manual = self.is_manual();
+                self.normal_date_jqe.prop('readonly', !is_manual);
+                self.gregorian_jqe.prop('readonly', !is_manual);
+                if (!is_manual) {
+                    update_all_calendar();
+                }
+            }
+            this.manual_checkbox_jqe.on('change', update_readonly);
+            update_readonly();
+        }
     }
 
 
 }
 
 function maintain_is_range(autodate_div_jqe, is_range_jqe) {
+    let to_div_jqe = autodate_div_jqe.find('.to-div');
     if (is_range_jqe.is(":checked")) {
-        autodate_div_jqe.find('.to-div').show();
+        to_div_jqe.show();
+        to_div_jqe.find('input, select').prop('disabled', false);
         autodate_div_jqe.find('.from-label').text('From:')
     } else {
-        autodate_div_jqe.find('.to-div').hide();
+        to_div_jqe.hide();
+        to_div_jqe.find('input, select').prop('disabled', true);
         autodate_div_jqe.find('.from-label').text('Date:')
     }
 }
@@ -153,15 +176,94 @@ function setup_autodate_div(autodate_div_selector) {
     // setup is_range
     setup_is_range(autodate_div_jqe);
 
-    // setup from date
-    new AutoCalendar(
-        autodate_div_jqe.find('.from-div .ad-year'),
-        autodate_div_jqe.find('.from-div .ad-month'),
-        autodate_div_jqe.find('.from-div .ad-day'),
-        autodate_div_jqe.find('.calendar-div input'),
-        autodate_div_jqe.find('.original-calendar-div input'),
-        autodate_div_jqe.find('.gregorian-calendar-div input'),
-    ).setup_auto_calendar();
+    let from_year_jqe = autodate_div_jqe.find('.from-div .ad-year');
+    let from_month_jqe = autodate_div_jqe.find('.from-div .ad-month');
+    let from_day_jqe = autodate_div_jqe.find('.from-div .ad-day');
+    let to_year_jqe = autodate_div_jqe.find('.to-div .ad-year');
+    let to_month_jqe = autodate_div_jqe.find('.to-div .ad-month');
+    let to_day_jqe = autodate_div_jqe.find('.to-div .ad-day');
+    let calendar_jqe = autodate_div_jqe.find('.calendar-div input');
+    let normal_date_jqe = autodate_div_jqe.find('.original-calendar-div input');
+    let gregorian_jqe = autodate_div_jqe.find('.gregorian-calendar-div input');
+    let manual_checkbox_jqe = autodate_div_jqe.find('.manual-date-checkbox');
+    let is_range_jqe = autodate_div_jqe.find('.is-range-div input');
+    let refresh_btn_jqe = autodate_div_jqe.find('.refresh-date-btn');
 
+    // Create AutoCalendar for "from" date fields (used for from-date computation)
+    let from_auto_cal = new AutoCalendar(
+        from_year_jqe, from_month_jqe, from_day_jqe,
+        calendar_jqe, normal_date_jqe, gregorian_jqe,
+        manual_checkbox_jqe,
+    );
 
+    // Function to update ordering date based on range state
+    function update_ordering_date() {
+        if (manual_checkbox_jqe.length && manual_checkbox_jqe.is(':checked')) return;
+
+        if (is_range_jqe.is(':checked') && to_year_jqe.val()) {
+            // Use "to" date for ordering, default blank month to 12, day to last day of month
+            let year = to_year_jqe.val() || 9999;
+            let month = to_month_jqe.val() || 12;
+            let day = to_day_jqe.val() || cal_max_day_of_month(parseInt(year), parseInt(month));
+            normal_date_jqe.val(to_date_str(year, month, day));
+
+            let calendar_code = calendar_jqe.parent().find('input:checked').val();
+            let [new_year, new_month, new_day] = convert_date_by_calendar_code(
+                calendar_code, year, month, day
+            );
+            gregorian_jqe.val(to_date_str(new_year, new_month, new_day));
+        } else {
+            // Use "from" date (default behavior)
+            from_auto_cal.update_original_calendar();
+            from_auto_cal.update_gregorian_calendar();
+        }
+    }
+
+    // Listen to "to" date field changes to update ordering date
+    to_year_jqe.on('input', update_ordering_date);
+    to_month_jqe.on('change', update_ordering_date);
+    to_day_jqe.on('input', update_ordering_date);
+    is_range_jqe.on('change', update_ordering_date);
+
+    // Listen to "from" date field changes
+    from_year_jqe.on('input', update_ordering_date);
+    from_month_jqe.on('change', update_ordering_date);
+    from_day_jqe.on('input', update_ordering_date);
+
+    // Listen to calendar type changes
+    calendar_jqe.on('change', function (e) {
+        if (e.target.checked) {
+            update_ordering_date();
+        }
+    });
+
+    // Setup manual checkbox behavior
+    if (manual_checkbox_jqe.length) {
+        let update_readonly = function(trigger_update) {
+            let is_manual = manual_checkbox_jqe.is(':checked');
+            normal_date_jqe.prop('readonly', !is_manual);
+            gregorian_jqe.prop('readonly', !is_manual);
+            if (!is_manual && trigger_update) {
+                update_ordering_date();
+            }
+        }
+        manual_checkbox_jqe.on('change', function() { update_readonly(true); });
+        // On initial page load, only set readonly state without overwriting
+        // server-rendered values (which may have been manually entered).
+        update_readonly(false);
+    }
+
+    // Refresh button: force-recompute ordering dates from date range fields,
+    // overwriting any manually entered values.
+    refresh_btn_jqe.on('click', function() {
+        // Temporarily treat as non-manual to allow update
+        let was_manual = manual_checkbox_jqe.is(':checked');
+        if (was_manual) {
+            manual_checkbox_jqe.prop('checked', false);
+        }
+        update_ordering_date();
+        if (was_manual) {
+            manual_checkbox_jqe.prop('checked', true);
+        }
+    });
 }

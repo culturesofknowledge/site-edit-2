@@ -2,7 +2,7 @@ from django.contrib.auth.views import LogoutView, PasswordChangeView
 from django.urls import path
 
 from . import views
-from .views import EmloLoginView, password_changed
+from .views import EmloLoginView, EmloLogoutView, password_changed
 
 app_name = 'login'
 urlpatterns = [
@@ -11,5 +11,5 @@ urlpatterns = [
     path('change-password', PasswordChangeView.as_view(template_name='login/change-password.html',
                                       success_url='password-changed'), name='change-password'),
     path('password-changed', password_changed, name='password-changed'),
-    path('logout', LogoutView.as_view(next_page='login:gate'), name='logout'),
+    path('logout', EmloLogoutView.as_view(), name='logout'),
 ]

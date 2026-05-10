@@ -1,6 +1,7 @@
 from django.urls import path
 
-from .views import CatalogueListView, RoleListView, SubjectListView, OrgTypeListView, SavedQueries
+from .views import CatalogueListView, RoleListView, SubjectListView, OrgTypeListView, SavedQueries, \
+    ResourceDescriptorListView
 
 app_name = 'list'
 urlpatterns = [
@@ -8,5 +9,6 @@ urlpatterns = [
     path('roles/', RoleListView.as_view(), name='roles'),
     path('catalogues/', CatalogueListView.as_view(), name='catalogues'),
     path('orgtypes/', OrgTypeListView.as_view(), name='orgtypes'),
+    path('resources/', ResourceDescriptorListView.as_view(), name='resources'),
     path('queries/', SavedQueries.as_view(), name='savedqueries')
 ]

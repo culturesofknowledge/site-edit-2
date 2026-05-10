@@ -1,5 +1,6 @@
 {% extends "core/emlo_common_form.html" %}
 {% load static %}
+{% load cl_filters %}
 
 
 {% block head %}
@@ -10,11 +11,9 @@
 
         $(function () {
             setup_location_form_listener()
-            setup_important_label();
             setup_url_checker()
-            setup_standtext([
-                'GeoNames', 'TGN', 'Wikidata ID', 'Wikipeda',
-            ]);
+            {% resource_descriptors_json 'Places' as places_descriptors %}
+            setup_standtext({{ places_descriptors }});
             setup_checkbox_position()
         })
     </script>
@@ -25,9 +24,9 @@
     <div class="form-core-div">
         <div class="form-col-left toc-host"></div>
         <div class="form-col-right">
-            <h1 class="align-center" id="header_location">Location</h1>
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
+                {% include "core/component/form_errors_banner.html" %}
                 {% include "core/component/form_descriptor.html" with descriptor=form_descriptor %}
                 <fieldset>
                     <legend id="header_init_{{ forloop.counter0 }}" class="toc-item">

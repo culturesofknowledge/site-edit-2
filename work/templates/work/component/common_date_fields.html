@@ -2,8 +2,10 @@
 {% with header_id='header_'|add:name %}
     <fieldset id="{{ autodate_id }}" class="autodate-div">
         <legend id="{{ header_id }}" class="toc-item">{{ name|capfirst }} date</legend>
-        <label>Date of {{ name }} as marked:</label>
-        {{ date_as_marked }}
+        <div class="multi_rel_recref_container">
+            <label>Date of {{ name }} as marked:</label>
+            <div>{{ date_as_marked }}</div>
+        </div>
 
         <div class="margin-bottom calendar-div">
             {% with new_label_text="Calendar used for the date supplied below in 'Date of "|add:name|add:" in standard format':" %}
@@ -20,17 +22,15 @@
                     {{ is_range }}
                     <label for="{{ is_range.id_for_label }}">Date range?</label>
                 </div>
-                <small>
-                    Tick the 'Date range' box in either of the following cases:
-                    <ul>
-                        <li>
-                            The {{ name }} is known to have been written over a period of two or more days
-                        </li>
-                        <li>
-                            The {{ name }} cannot be precisely dated even to a single year
-                        </li>
-                    </ul>
-                </small>
+                Tick the 'Date range' box in either of the following cases:
+                <ul>
+                    <li>
+                        The {{ name }} is known to have been written over a period of two or more days
+                    </li>
+                    <li>
+                        The {{ name }} cannot be precisely dated even to a single year
+                    </li>
+                </ul>
             </div>
 
             <div class="margin-bottom">
@@ -47,46 +47,42 @@
                 </div>
 
                 <span>
-                    <small>
                     Leave any part or parts of the date blank if necessary.
-                    </small>
                     <br/>
-                    <br/>
-
-                    <small>
                     If the original {{ name }} was dated using the Julian calendar, please retain the Julian
                     day/month here. For example, if the date was marked as 8th January 1659/60 in the
                     original {{ name }}, then enter the day here as '8' not '18'.
-                    </small>
                     <br/>
-                    <br/>
-
-                    <small>
                     However, please do adjust the year for {{ name }}s dated using the form of Julian calendar
                     where the New Year began on 25th March. For example, 8th January 1659/60 should be
                     entered as 8-Jan-1660.
-                    </small>
-
                     <br/>
-
-
                 </span>
             </div>
 
             <div class="margin-bottom">
-                <h5>
+                <i class="margin-bottom">
                     Dates for ordering (these will normally be automatically generated as you enter day,
                     month and year):
-                </h5>
+                </i>
+                <br/>
+                <br/>
                 <div class="row-no-margin">
-                    <div class="original-calendar-div col--1of2">
+                    <div class="original-calendar-div margin-right row-no-margin">
                         <label>In original calendar:</label>
                         {{ normal_date }}
                     </div>
 
-                    <div class="gregorian-calendar-div col--1of2">
+                    <div class="gregorian-calendar-div row-no-margin">
                         <label>In Gregorian calendar:</label>
                         {{ gregorian_date }}
+                    </div>
+                    <div>
+                    <button type="button" class="refresh-date-btn btn btn-sm btn-outline-secondary" style="margin-left: 10px;">Refresh</button>
+                    </div>
+                    <div class="manual-date-div margin-left">
+                        <input type="checkbox" class="manual-date-checkbox" id="{{ autodate_id }}_manual_date">
+                        <label for="{{ autodate_id }}_manual_date">Enter Manually</label>
                     </div>
                 </div>
             </div>

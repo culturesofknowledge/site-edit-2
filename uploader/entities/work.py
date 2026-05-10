@@ -97,6 +97,8 @@ class CofkWork(CofkEntity):
 
     def get_person(self, person_id: str, person_name: str = None) -> CofkCollectPerson:
         if person_id is None or person_id == '':
+            if person_name is None:
+                return None
             people = [p for p in self.people if p.primary_name and p.primary_name.lower() == person_name.lower()]
 
             if len(people) == 1:
@@ -151,9 +153,9 @@ class CofkWork(CofkEntity):
 
     def process_locations(self, work: CofkCollectWork, location_list: List[Any], location_model: Type[models.Model],
                           work_dict: dict, ids: str, names: str, id_type: str):
-        for work_dict in self.clean_lists(work_dict, ids, names):
-            _id = work_dict[ids]
-            name = work_dict[names]
+        for location_entry in self.clean_lists(work_dict, ids, names):
+            _id = location_entry[ids]
+            name = location_entry[names]
             if location := self.get_location(_id, name):
                 related_location = location_model(upload=self.upload, iwork=work, location=location)
                 setattr(related_location, id_type, self.get_new_id(id_type))

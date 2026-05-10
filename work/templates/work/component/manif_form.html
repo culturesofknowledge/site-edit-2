@@ -1,20 +1,26 @@
 {% load static %}
+{% load cl_filters %}
 
 <fieldset>
     <legend id="header_basic_details" class="toc-item">Basic details</legend>
+    <div class="multi_rel_recref_container">
     <label>Document type:</label>
     {{ manif_form.manifestation_type }}
+    </div>
 
-    {% include "core/component/recref.html" with recref_type='inst' id_field=manif_form.selected_inst_id label='Repository' %}
+    {% include "core/component/recref.html" with recref_type='inst' id_field=manif_form.selected_inst_id label='Repository' placeholder='Please select or create repository, then click save.' %}
 
-
+    <div class="multi_rel_recref_container">
     <label>ID number or shelfmark:</label>
     {{ manif_form.id_number_or_shelfmark }}
+    </div>
 
     <label class="margin-bottom">Or </label>
+    <div class="multi_rel_recref_container">
     <label>Printed edition details: </label>
 
     {{ manif_form.printed_edition_details }}
+    </div>
     <div class="ref-publication-row" textbox_id="{{ manif_form.printed_edition_details.id_for_label }}"></div>
 
 </fieldset>
@@ -26,7 +32,7 @@
 <fieldset>
     <legend id="header_former_owners" class="toc-item">Former owners</legend>
 
-    {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_former.update_formset new_form=recref_former.new_form add_label='Add former owner:' %}
+    {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_former.update_formset new_form=recref_former.new_form add_label='Add former owner:' placeholder='Please select or create former owner, then click Save.' %}
 
 </fieldset>
 
@@ -37,14 +43,18 @@
         Note: when entering enclosure details, please treat any work/manifestation on the Cultures of Knowledge system as a letter.
     </span>
 
-    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosure_manif.update_formset new_form=recref_enclosure_manif.new_form add_label='Add another enclosed letter:' hide_create_btn=True no_date=True %}
+    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosure_manif.update_formset new_form=recref_enclosure_manif.new_form add_label='Add enclosed letter:' hide_create_btn=True no_date=True placeholder='Please select enclosed letter, then click Save.' %}
 
     <span>OTHER TYPES of enclosure, e.g. money, books, samples of minerals:</span>
+    <div class="multi_rel_recref_container">
     <label> Details of enclosures other than letters </label>
     {{ manif_form.non_letter_enclosures }}
+    </div>
 
+    <div class="multi_rel_recref_container">
     <label> Details of attached or accompanying materials </label>
     {{ manif_form.accompaniments }}
+    </div>
 
 </fieldset>
 
@@ -52,61 +62,90 @@
 <fieldset>
     <legend id="header_letters" class="toc-item">Letters in which this one was enclosed</legend>
 
-    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosed_manif.update_formset new_form=recref_enclosed_manif.new_form add_label='Add another enclosing letter:' hide_create_btn=True no_date=True %}
+    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosed_manif.update_formset new_form=recref_enclosed_manif.new_form add_label='Add enclosing letter:' hide_create_btn=True no_date=True placeholder='Please select enclosing letter, then click Save.' %}
 
 </fieldset>
 
 <fieldset>
     <legend id="header_paper_and_markings" class="toc-item"> Paper and markings</legend>
 
+    <div class="multi_rel_recref_container">
     <label>Letter opened:</label>
     {{ manif_form.opened }}
+    </div>
 
+    <div class="multi_rel_recref_container">
     <label>Paper size:</label>
     {{ manif_form.paper_size }}
+    </div>
     <span>(up to 500 characters)</span>
 
-
+    <div class="multi_rel_recref_container">
     <label>Stored folded:</label>
     {{ manif_form.stored_folded }}
+    </div>
 
+    <div class="multi_rel_recref_container">
     <label>Paper type, watermark:</label>
     {{ manif_form.paper_type_or_watermark }}
+    </div>
     <span>(up to 500 characters)</span>
 
+    <div class="multi_rel_recref_container">
     <label>Number of pages:</label>
     {{ manif_form.number_of_pages_of_document }}
+    </div>
     <span>(whole numbers only)</span>
 
+    <div class="multi_rel_recref_container">
     <label>Seal:</label>
     {{ manif_form.seal }}
+    </div>
 
+    <div class="multi_rel_recref_container">
     <label>Postage marks:</label>
     {{ manif_form.postage_marks }}
+    </div>
 
+    <div class="multi_rel_recref_container">
     <label>Postage costs as marked:</label>
     {{ manif_form.postage_costs_as_marked }}
+    </div>
 
+    <div class="multi_rel_recref_container">
     <label>Postage cost(s):</label>
     {{ manif_form.postage_costs }}
+    </div>
 
+    <div class="multi_rel_recref_container">
     <label>Address:</label>
     {{ manif_form.address }}
+    </div>
 
+    <div class="multi_rel_recref_container">
     <label>Routing Mark (stamp):</label>
     {{ manif_form.routing_mark_stamp }}
+    </div>
 
+    <div class="multi_rel_recref_container">
     <label>Routing Mark (MS):</label>
     {{ manif_form.routing_mark_ms }}
+    </div>
 
+    <div class="multi_rel_recref_container">
     <label>Handling Instructions:</label>
     {{ manif_form.handling_instructions }}
+    </div>
 
+    <div class="multi_rel_recref_container">
     <label>Other endorsements:</label>
     {{ manif_form.endorsements }}
+    </div>
 
+    <div class="multi_rel_recref_container">
     <label>Reason for non-delivery:</label>
     {{ manif_form.non_delivery_reason }}
+    </div>
 
 
 </fieldset>
@@ -117,12 +156,13 @@
 <fieldset>
     <legend id="header_language" class="toc-item">Language of manifestation</legend>
     {{ manif_form.manifestation_is_translation }}
-    <label for="{{ manif_form.manifestation_is_translation.id_for_label }}"> Manifestation is translation </label>
-    <small>
+    <label for="{{ manif_form.manifestation_is_translation.id_for_label }}"> Manifestation is translation
+    <small class="fw-200 type-6">
         (It is not necessary to enter language, incipit and explicit of manifestation if they are the same as those of
         the original work.)
-        <br/>
     </small>
+    </label>
+    <br/>
     {% include "core/component/lang_section.html" with lang_formset=edit_lang_formset new_lang_form=new_lang_form %}
 
 </fieldset>
@@ -130,12 +170,15 @@
 <fieldset>
     <legend id="header_incipit" class="toc-item">Incipit and explicit</legend>
 
-    <label>Manifestation incipit</label>
-    {{ manif_form.manifestation_incipit }}
+    <div class="multi_rel_recref_container">
+        <label>Manifestation incipit: </label>
+        {{ manif_form.manifestation_incipit }}
+    </div>
 
-    <label>Manifestation explicit</label>
-    {{ manif_form.manifestation_excipit }}
-
+    <div class="multi_rel_recref_container">
+        <label>Manifestation explicit: </label>
+        {{ manif_form.manifestation_excipit }}
+    </div>
 </fieldset>
 
 {% include "core/component/comment_publication_formset.html" with comment_formset=manif_comment_formset comment_title='Notes on manifestation' %}
@@ -144,13 +187,25 @@
 <fieldset>
     <legend id="header_scribe" class="toc-item">Scribe/hand</legend>
 
-    <div class="multi_rel_recref_container">
-        {{ scribe_recref_formset.management_form }}
-        {% for form in scribe_recref_formset %}
-            {{ form }}
-        {% endfor %}
-    </div>
-    {% include "core/component/recref.html" with recref_type='person' id_field=manif_form.selected_scribe_id label='Add scribe:' %}
+    {% if scribe_recref_formset.forms %}
+        <div class="multi_rel_recref_container margin-bottom">
+            {{ scribe_recref_formset.management_form }}
+            {% for form in scribe_recref_formset %}
+                <div class="grid-item">
+                    {{ form }}
+                </div>
+                <div class="grid-item">
+                    {% include "core/component/common_checkbox.html" with field=form.is_delete name="Delete from 'scribe' list" class_name="recref-del" %}
+                </div>
+            {% endfor %}
+        </div>
+
+        {% with 'Add scribe:'|add_another_if_startswith as label_text %}
+            {% include "core/component/recref.html" with recref_type='person' id_field=manif_form.selected_scribe_id label=label_text placeholder='Please select scribe, then click Save.' %}
+        {% endwith %}
+    {% else %}
+        {% include "core/component/recref.html" with recref_type='person' id_field=manif_form.selected_scribe_id label='Add scribe:' placeholder='Please select scribe, then click Save.' %}
+    {% endif %}
 
 </fieldset>
 <fieldset>

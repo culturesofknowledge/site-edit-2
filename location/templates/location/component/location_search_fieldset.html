@@ -17,6 +17,9 @@
     <!-- Sent and rec'd -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.all_works field_lookup=form.all_works_lookup %}
 
+    <!-- Mentioned -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.mentioned field_lookup=form.mentioned_lookup %}
+
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.researchers_notes field_lookup=form.researchers_notes_lookup %}
 
     <!-- Related resources -->

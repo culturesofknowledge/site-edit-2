@@ -9,6 +9,7 @@
         <th class="col-count">Sent</th>
         <th class="col-count">Rec'd</th>
         <th class="col-count">Sent<br>and Rec'd</th>
+        <th class="col-count">Mentioned</th>
         <th class="col-wide">Researchers' notes</th>
         <th>Related resources</th>
         <th>Latitude</th>
@@ -64,6 +65,14 @@
                     </a>
                 {% endif %}
             </td>
+            <td class="col-count">
+                {% if r.mentioned %}
+                    <a href="{% url 'work:search' %}?location_mention_pk={{ r.location_id }}" class="search_link"
+                       target="_blank">
+                        {{ r.mentioned }}
+                    </a>
+                {% endif %}
+            </td>
             <td class="col-wide">
                 {% include "core/component/search_table_layout/comment_result.html" with comments=r.comments %}
             </td>
@@ -87,8 +96,10 @@
             <td> {{ r.element_5_eg_county }} </td>
             <td> {{ r.element_6_eg_country }} </td>
             <td> {{ r.element_7_eg_empire }} </td>
-            <td></td>
             <td class="col-last-edit">
+                {% include "core/component/search_table_layout/img_result.html" with images=r.images %}
+            </td>
+            <td>
                 {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r %}
             </td>
         </tr>

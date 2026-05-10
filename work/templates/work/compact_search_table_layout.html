@@ -62,7 +62,12 @@
             {% include 'work/component/manif_display_td.html' with work=r %}
 
             <td>
+                {% if r.related_works %}
+                    {{ r.related_works|display_resources }}
+                {% endif %}
+
                 {% if r.related_resources %}
+                    Resources:
                     {{ r.related_resources|display_resources }}
                 {% endif %}
             </td>

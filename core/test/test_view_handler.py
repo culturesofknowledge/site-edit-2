@@ -147,6 +147,7 @@ class SimpleFullFormHandlerTest(BasicFullFormHandlerTest):
             {
                 'location_form': self.ffh.location_form,
                 'person_form': self.ffh.person_form,
+                'has_form_errors': False,
             }
         )
 
@@ -231,6 +232,7 @@ class ComplexFullFormHandlerTest(BasicFullFormHandlerTest):
                             )
         for v in self.ffh.recref_formset_handlers:
             expected_context |= v.create_context()
+        expected_context['has_form_errors'] = False
 
         self.assertDictEqual(self.ffh.create_context(), expected_context)
 

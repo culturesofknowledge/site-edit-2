@@ -3,6 +3,7 @@ import re
 from collections.abc import Callable
 from typing import Iterable, Any, Type
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db.models import F, Q, Model
@@ -55,7 +56,8 @@ from work.forms import WorkAuthorRecrefForm, WorkAddresseeRecrefForm, \
 from work.models import CofkWorkPersonMap, CofkUnionWork, CofkWorkCommentMap, CofkWorkResourceMap, \
     CofkUnionLanguageOfWork
 from work.recref_adapter import WorkLocRecrefAdapter, ManifInstRecrefAdapter, WorkSubjectRecrefAdapter, \
-    EarlierLetterRecrefAdapter, LaterLetterRecrefAdapter, EnclosureManifRecrefAdapter, EnclosedManifRecrefAdapter, \
+    EarlierLetterRecrefAdapter, LaterLetterRecrefAdapter, MatchingLetterRecrefAdapter, \
+    EnclosureManifRecrefAdapter, EnclosedManifRecrefAdapter, \
     WorkCommentRecrefAdapter, ManifCommentRecrefAdapter, WorkResourceRecrefAdapter, ManifImageRecrefAdapter, \
     WorkPersonRecrefAdapter, ManifPersonRecrefAdapter
 from work.view_components import WorkFormDescriptor
@@ -346,7 +348,7 @@ class CorrFFH(BasicWorkFFH):
         )
         self.matching_letter_handler = MultiRecrefAdapterHandler(
             request_data, name='matching_letter',
-            recref_adapter=EarlierLetterRecrefAdapter(self.safe_work),
+            recref_adapter=MatchingLetterRecrefAdapter(self.safe_work),
             recref_form_class=WorkRecrefForm,
             rel_type=REL_TYPE_WORK_MATCHES,
         )
@@ -485,9 +487,21 @@ class ManifFFH(BasicWorkFFH):
                 inst = _manif.find_selected_inst()
                 inst = inst and inst.inst
                 _manif.inst_display_name = inst_serv.get_recref_display_name(inst)
+                _manif.type_display_name = dict(manif_type_choices).get(_manif.manifestation_type, '')
                 _manif.lang_list_str = ', '.join(
                     (l.language_code.language_name for l in _manif.language_set.iterator())
                 )
+                # Find enclosed letters for this manifestation
+                enclosed_letters = []
+                for enclosed_manif in _manif.find_encloses():
+                    if enclosed_manif.work:
+                        label = 'Enclosure: ' + manif_serv.get_rich_display_name(enclosed_manif)
+                        enclosed_letters.append({
+                            'work_id': enclosed_manif.work.iwork_id,
+                            'manif_id': enclosed_manif.manifestation_id,
+                            'label': label,
+                        })
+                _manif.enclosed_letters = enclosed_letters
                 manif_set.append(_manif)
 
             context['manif_set'] = manif_set
@@ -517,6 +531,7 @@ class ManifFFH(BasicWorkFFH):
         if not manif.manifestation_id:
             manif.manifestation_id = create_manif_id(self.request_iwork_id)
 
+        manif.update_current_user_timestamp(request.user.username)
         manif.save()
         log.info(f'save manif {manif}')
 
@@ -917,7 +932,9 @@ def overview_view(request, iwork_id):
         answered_link_list=[WorkLinkData(r.work_from) for r in
                             work.work_to_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)],
         matches_link_list=[WorkLinkData(r.work_to) for r in
-                           work.work_from_set.filter(relationship_type=constant.REL_TYPE_WORK_MATCHES)],
+                           work.work_from_set.filter(relationship_type=constant.REL_TYPE_WORK_MATCHES)]
+                         + [WorkLinkData(r.work_from) for r in
+                            work.work_to_set.filter(relationship_type=constant.REL_TYPE_WORK_MATCHES)],
 
         origin_link_list=to_location_link_list(work, constant.REL_TYPE_WAS_SENT_FROM),
         destination_link_list=to_location_link_list(work, constant.REL_TYPE_WAS_SENT_TO),
@@ -988,7 +1005,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             ('destination_as_marked', 'Destination as marked',),
             # ('flags', 'Flags',),
             ('manifestations_searchable', 'Manifestations',),
-            ('language_of_work', 'Language of work',),
+            ('language_set__language_code__language_name', 'Language of work',),
             ('original_catalogue', 'Original catalogue',),
             ('accession_code', 'Source of record',),
             ('work_to_be_deleted', 'Work to be deleted',),
@@ -1018,6 +1035,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             'location_rec_pk': create_search_fn_location_recref([REL_TYPE_WAS_SENT_TO]),
             'location_sent_rec_pk': create_search_fn_location_recref(
                 [REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO]),
+            'location_mention_pk': create_search_fn_location_recref([REL_TYPE_MENTION_PLACE]),
         } | query_serv.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
                                                'change_timestamp') \
             | query_serv.create_from_to_date_with_bounds(
@@ -1029,6 +1047,23 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     def get_queryset(self):
         if not self.request_data:
+            return CofkUnionWork.objects.none()
+
+        # Validate date_of_work_std_from and date_of_work_std_to formats
+        date_fields = [
+            ('date_of_work_std_from', "field 'Date of work std' (from)"),
+            ('date_of_work_std_to', "field 'Date of work std' (to)"),
+        ]
+        has_date_error = False
+        for field_name, field_label in date_fields:
+            date_val = self.request_data.get(field_name)
+            if date_val:
+                error = date_serv.validate_search_date_str(date_val)
+                if error:
+                    messages.error(self.request, f"Error: {field_label}: {error}")
+                    has_date_error = True
+
+        if has_date_error:
             return CofkUnionWork.objects.none()
 
         return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
@@ -1079,6 +1114,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                     'creators_searchable': lambda f, n, v: work_serv.lookup_person_searchable(f, n, v, [REL_TYPE_CREATED]),
                     'addressees_searchable': lambda f, n, v: work_serv.lookup_person_searchable(f, n, v, [REL_TYPE_WAS_ADDRESSED_TO]),
                     'mentioned_searchable': lambda f, n, v: work_serv.lookup_person_searchable(f, n, v, [REL_TYPE_MENTION]),
+                    'places_mentioned_searchable': lambda f, n, v: work_serv.lookup_location_searchable(f, n, v, [REL_TYPE_MENTION_PLACE]),
                     'sender_or_recipient': lambda f, n, v: work_serv.lookup_person_searchable(f, n, v, [REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO]),
                     'places_from_searchable': lambda f, n, v: work_serv.lookup_location_searchable(f, n, v, [REL_TYPE_WAS_SENT_FROM]),
                     'places_to_searchable': lambda f, n, v: work_serv.lookup_location_searchable(f, n, v, [REL_TYPE_WAS_SENT_TO]),
@@ -1091,6 +1127,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             'addressees_searchable',
             'creators_searchable',
             'mentioned_searchable',
+            'places_mentioned_searchable',
             'sender_or_recipient',
             'places_from_searchable',
             'places_to_searchable',
@@ -1143,6 +1180,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             ('location_sent_pk', CofkUnionLocation, 'Location sent'),
             ('location_rec_pk', CofkUnionLocation, 'Location received'),
             ('location_sent_rec_pk', CofkUnionLocation, 'Location sent or received'),
+            ('location_mention_pk', CofkUnionLocation, 'Places mentioned'),
         ]
 
         for field_name, model_class, label in pk_fields:
@@ -1211,6 +1249,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
             ('location_sent_pk', CofkUnionLocation, 'places_from_searchable'),
             ('location_rec_pk', CofkUnionLocation, 'places_to_searchable'),
             ('location_sent_rec_pk', CofkUnionLocation, 'origin_or_destination'),
+            ('location_mention_pk', CofkUnionLocation, 'places_mentioned_searchable'),
         ]
         for pk_field, model_class, text_field in pk_to_text_map:
             if (pk_val := data.get(pk_field)) and not data.get(text_field):
@@ -1231,7 +1270,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def csv_export_setting(self):
-        if not self.has_perms(constant.PM_EXPORT_FILE_WORK):
+        if not self.has_perms([constant.PM_EXPORT_FILE_WORK]):
             return None
 
         is_compact = (self.request_data.get('display-style', constant.SEARCH_LAYOUT_TABLE)
@@ -1247,7 +1286,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     def excel_export_setting(self) -> tuple[Callable[[], str], Callable[[Iterable, str], Any], str] | None:
         """ overrider this to enable download csv """
 
-        if not self.has_perms(constant.PM_EXPORT_FILE_WORK):
+        if not self.has_perms([constant.PM_EXPORT_FILE_WORK]):
             return None
 
         is_compact = (self.request_data.get('display-style', constant.SEARCH_LAYOUT_TABLE)
@@ -1462,6 +1501,13 @@ def create_queryset_by_queries(
         'addressees_searchable': subqueries.create_joined_person_ann_field([REL_TYPE_WAS_ADDRESSED_TO]),
         'creators_searchable': subqueries.create_joined_person_ann_field([REL_TYPE_CREATED]),
         'mentioned_searchable': subqueries.create_joined_person_ann_field([REL_TYPE_MENTION]),
+        'places_mentioned_searchable': subqueries.create_joined_location_ann_field(
+            [REL_TYPE_MENTION_PLACE],
+            [
+                'cofkworklocationmap__location__location_name',
+                'cofkworklocationmap__location__location_synonyms',
+            ]
+        ),
         'sender_or_recipient': subqueries.create_joined_person_ann_field([REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO]),
         'places_from_searchable': subqueries.create_joined_location_ann_field(
             [REL_TYPE_WAS_SENT_FROM],
