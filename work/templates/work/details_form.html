@@ -1,7 +1,6 @@
 {% extends "work/basic_form.html" %}
 {% load static %}
 {% block tabcontent %}
-    <h1>Work - Other Details</h1>
     <fieldset>
         <legend id="header_editors_notes" class="toc-item">Editor' notes</legend>
         <label>Source of data:</label>
@@ -36,9 +35,11 @@
         {{ details_form.abstract }}
 
         <label class="margin-right">Subject(s):</label>
-        {% for s in subjects %}
-            {{ s }}
-        {% endfor %}
+        <div class="choices-container">
+            {% for s in subjects %}
+                {{ s }}
+            {% endfor %}
+        </div>
 
         <label>Keywords (ideally separated by semi-colons)</label>
         {{ details_form.keywords }}

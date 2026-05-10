@@ -21,7 +21,7 @@ textarea {
   width: 100%;
   padding: $space-xxs;
   border: 1px solid $light-grey;
-  font-size: $typescale-5;
+  font-size: 13px;
   color: $black;
   background-color: $white;
   transition: all 0.2s ease;
@@ -30,6 +30,14 @@ textarea {
     outline: none;
     border-color: $gold;
     box-shadow: 0 0 0 2px rgba($gold, 0.2);
+  }
+
+  &[readonly] {
+    &:focus {
+      border-color: $light-grey;  // revert to default
+      box-shadow: none;           // remove glow
+      outline: none;
+    }
   }
 
   &:disabled {
@@ -58,11 +66,6 @@ select {
   padding-right: $space-lg;
 }
 
-textarea {
-  min-height: 100px;
-  resize: vertical;
-  font-size: $typescale-4;
-}
 
 .checkbox-group,
 .radio-group {

@@ -9,9 +9,7 @@
         {{ manif_form.manifestation_type }}
     </div>
 
-    <div>
-        {% include "core/component/recref.html" with recref_type='inst' id_field=manif_form.selected_inst_id label='Repository:' %}
-    </div>
+    {% include "core/component/recref.html" with recref_type='inst' id_field=manif_form.selected_inst_id label='Repository' placeholder='Please select or create repository, then click Save.' %}
 
     <div class="flex flex-label">
         <label>ID number or shelfmark:</label>

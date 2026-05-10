@@ -3,6 +3,7 @@ from abc import ABC
 from typing import List
 
 from person.models import CofkUnionPerson
+from uploader.constants import BULK_PEOPLE_SHEET
 from uploader.entities.entity import CofkEntity
 from uploader.models import CofkCollectUpload, CofkCollectPerson
 
@@ -77,3 +78,61 @@ class CofkPeople(CofkEntity, ABC):
 
     def person_exists_by_name(self, name: str) -> bool:
         return len([p for p in self.people if p.primary_name and p.primary_name.lower() == name.lower() and p.union_iperson is None]) > 0
+
+
+class CofkBulkPeople(CofkEntity, ABC):
+    """
+    Processes the bulk People spreadsheet (BULKnewPEOPLErecordsTEMPLATE format).
+
+    All records are treated as new people — no IDs referencing the Union catalogue.
+    Columns are mapped by position using BULK_PEOPLE_SHEET.
+    """
+
+    @property
+    def fields(self) -> dict:
+        return BULK_PEOPLE_SHEET
+
+    def __init__(self, upload: CofkCollectUpload, sheet):
+        super().__init__(upload, sheet)
+        self.people: List[CofkCollectPerson] = []
+        iperson_ids = list(CofkCollectPerson.objects.values_list('iperson_id').order_by('-iperson_id')[:1])
+        latest_iperson_id = iperson_ids[0][0] if len(iperson_ids) == 1 else 0
+
+        for index, row in enumerate(self.sheet.worksheet.iter_rows(), start=1):
+            row_dict = self.get_row(row, index)
+
+            if index <= self.sheet.header_length or row_dict == {}:
+                continue
+
+            self.check_required(row_dict)
+            self.check_data_types(row_dict)
+
+            if 'primary_name' not in row_dict:
+                continue
+
+            primary_name = row_dict['primary_name']
+
+            if self.person_exists_by_name(primary_name):
+                log.warning(f'Duplicate person name "{primary_name}" in bulk People sheet, skipping.')
+                continue
+
+            latest_iperson_id += 1
+            person_kwargs = {
+                'iperson_id': latest_iperson_id,
+                'upload': upload,
+                'primary_name': primary_name,
+            }
+
+            for field in ['alternative_names', 'roles_or_titles', 'gender', 'is_organisation',
+                          'date_of_birth_year', 'date_of_birth_inferred', 'date_of_birth_uncertain',
+                          'date_of_birth_approx', 'date_of_death_year', 'date_of_death_inferred',
+                          'date_of_death_uncertain', 'date_of_death_approx',
+                          'flourished_year', 'flourished2_year', 'flourished_is_range',
+                          'notes_on_person', 'editors_notes']:
+                if field in row_dict:
+                    person_kwargs[field] = row_dict[field]
+
+            self.people.append(CofkCollectPerson(**person_kwargs))
+
+    def person_exists_by_name(self, name: str) -> bool:
+        return any(p.primary_name and p.primary_name.lower() == name.lower() for p in self.people)

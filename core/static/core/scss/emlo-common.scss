@@ -2,19 +2,29 @@
 .url_checker_div {
   display: flex;
 
+  input {
+    flex: 1;
+    min-width: 0;
+  }
+
   .btn {
     white-space: nowrap;
     margin-left: 10px;
+    flex-shrink: 0;
   }
 }
 
 .standtext_btn {
-  background: #c2c1c0;
+  background: #f5f5f5;
   padding: 10px;
   margin-right: 10px;
   margin-top: -2px;
   margin-bottom: 15px;
   cursor: pointer;
+}
+
+.margin-bottom:has(.res_standtext) .row-no-margin {
+  flex-wrap: wrap;
 }
 
 .record_tracker_label {
@@ -132,9 +142,53 @@ nav.flex-space-between {
   justify-content: left;
 
   .choice-item {
-    width: 40%;
+    width: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-right: 1rem;
+
+    label {
+      margin-bottom: 0;
+      font-weight: normal;
+    }
+
+    input {
+      margin-bottom: 0;
+    }
   }
 
+}
+
+// Roles/titles (person) and subjects (work) need 4-column layout
+fieldset:has(#header_roles) .choices-container .choice-item,
+fieldset:has(#header_abstract) .choices-container .choice-item {
+  width: 25%;
+  margin-right: 0;
+  margin-bottom: 10px;
+
+.date-fields-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1rem;
+
+  .choices-container .choice-item {
+    width: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-right: 1rem;
+
+    label {
+      margin-bottom: 0;
+      font-weight: normal;
+    }
+
+    input {
+      margin-bottom: 0;
+    }
+  }
 }
 
 .issues-date-ct {
@@ -580,7 +634,9 @@ h2, h3 {
     border-left: 3px solid #007bff;
 }
 
-
+.messages {
+  clear: both;
+}
 
 // Suggestion filter styling: add left/right padding and improve spacing/legibility
 #f_filter {
