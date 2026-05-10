@@ -15,16 +15,14 @@
         <label>ID number or shelfmark:</label>
         {{ manif_form.id_number_or_shelfmark }}
     </div>
-    
+
     <label class="margin-bottom margin-top">Or </label>
     
     <div class="flex flex-label margin-bottom">
         <label>Printed edition details: </label>
         {{ manif_form.printed_edition_details }}
     </div>
-    
 
-    
     <div class="ref-publication-row" textbox_id="{{ manif_form.printed_edition_details.id_for_label }}"></div>
 
 </fieldset>
