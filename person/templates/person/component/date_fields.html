@@ -1,31 +1,31 @@
 <fieldset class="date-fields-div">
     <legend>{{ title_name | title }}</legend>
-    <div class="margin-bottom">
-        {% include "core/component/common_form_choices.html" with label_text='Calendar of '|add:title_name choices_field=calendar %}
-    </div>
-    <div class="is-range-div margin-bottom">
-        {{ is_range }}
-        <label for="{{ is_range.id_for_label }}">Date range?</label>
-        <small>
-            {{ date_range_msg }}
-        </small>
-    </div>
+    <div class="date-fields-row">
+        <div class="choices-container">
+            {% with new_label_text='Calendar of '|add:title_name %}
+                {% include "core/component/common_form_choices.html" with label_text=new_label_text choices_field=calendar %}
+            {% endwith %}
+        </div>
 
-    <div class="margin-bottom">
-        <div class="row-no-margin">
-            <div class="from-div">
-                <label class="from-label">Date:</label>
-                {% include 'core/component/form_three_date_fields.html' with day_field=day_field month_field=month_field year_field=year_field %}
-            </div>
+        <div class="is-range-div">
+            {{ is_range }}
+            <label for="{{ is_range.id_for_label }}">Date range?</label>
+            <small>{{ date_range_msg }}</small>
+        </div>
 
-            <div class="to-div">
-                <label class="to-label">To:</label>
-                {% include 'core/component/form_three_date_fields.html' with day_field=day_field2 month_field=month_field2 year_field=year_field2 %}
+        <div class="from-to-div">
+            <div class="row-no-margin">
+                <div class="from-div">
+                    <label class="from-label">Date:</label>
+                    {% include 'core/component/form_three_date_fields.html' with day_field=day_field month_field=month_field year_field=year_field %}
+                </div>
+                <div class="to-div">
+                    <label class="to-label">To:</label>
+                    {% include 'core/component/form_three_date_fields.html' with day_field=day_field2 month_field=month_field2 year_field=year_field2 %}
+                </div>
             </div>
         </div>
 
+        {% include "person/component/issues_with_date.html" with title='Issues with '|add:title_name|add:':' inferred=inferred  uncertain=uncertain  approx=approx %}
     </div>
-
-    {% include "person/component/issues_with_date.html" with title='Issues with '|add:title_name|add:':' inferred=inferred  uncertain=uncertain  approx=approx %}
-
 </fieldset>

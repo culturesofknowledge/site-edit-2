@@ -240,7 +240,7 @@ class ManifInstRecrefAdapter(RecrefFormAdapter):
 class ManifManifRecrefAdapter(RecrefFormAdapter, ABC):
 
     def find_target_display_name_by_id(self, target_id):
-        return manif_serv.get_recref_display_name(self.find_target_instance(target_id))
+        return manif_serv.get_rich_display_name(self.find_target_instance(target_id))
 
 
 class EnclosureManifRecrefAdapter(ManifManifRecrefAdapter):

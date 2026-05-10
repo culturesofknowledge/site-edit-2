@@ -1,7 +1,14 @@
+{% load img_result_tags %}
 {% if images.count %}
     {% for image in images.iterator %}
             <a href="{{ image.image_filename }}" target="_blank" title="View image in new tab">
-                <img src="{{ image.image_filename }}" style="width: 60px;">
+                {% thumbnail_url image.image_filename as thumb_url %}
+                {% if thumb_url %}
+                    <img src="{{ thumb_url }}" class="img-thumbnail">
+                {% else %}
+                    <span class="img-placeholder-link" title="{{ image.image_filename }}">🔗 Link</span>
+                {% endif %}
             </a>
+            <br/>
     {% endfor %}
 {% endif %}

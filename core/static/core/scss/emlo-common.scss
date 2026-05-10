@@ -2,16 +2,15 @@
 .url_checker_div {
   display: flex;
 
-  button {
-    background-color: black;
+  .btn {
+    white-space: nowrap;
+    margin-left: 10px;
   }
-
 }
 
 .standtext_btn {
-  border-style: dashed;
-  border-width: 1px;
-  border-color: black;
+  background: #c2c1c0;
+  padding: 10px;
   margin-right: 10px;
   margin-top: -2px;
   margin-bottom: 15px;
@@ -157,6 +156,29 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
   width: 25%;
   margin-right: 0;
   margin-bottom: 10px;
+
+.date-fields-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1rem;
+
+  .choices-container .choice-item {
+    width: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-right: 1rem;
+
+    label {
+      margin-bottom: 0;
+      font-weight: normal;
+    }
+
+    input {
+      margin-bottom: 0;
+    }
+  }
 }
 
 .issues-date-ct {
@@ -185,6 +207,7 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
   display: flex;
   flex-wrap: wrap;
   flex-direction: row;
+  align-items: baseline;
 
   & > label:first-of-type {
     width: 100%;
@@ -196,9 +219,6 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
     margin: 0;
   }
 
-  small {
-    margin: auto 0;
-  }
 }
 
 .row-spaced {
@@ -475,6 +495,7 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
 // for lang_section
 .lang-item {
   @extend .row-no-margin;
+  align-items: baseline;
 
   & > .lang-label {
     @extend .col--1of5;
@@ -603,7 +624,9 @@ h2, h3 {
     border-left: 3px solid #007bff;
 }
 
-
+.messages {
+  clear: both;
+}
 
 // Suggestion filter styling: add left/right padding and improve spacing/legibility
 #f_filter {

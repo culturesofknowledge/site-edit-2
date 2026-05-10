@@ -26,8 +26,16 @@ emlojs.leave_warning = {
         }
 
         // event beforeunload
-        const org_input_map = load_input_map()
+        // Use setTimeout to capture the initial state after all $(function(){}) handlers have run,
+        // so that JS-driven field updates (e.g. auto_date_calendar) are included in the baseline.
+        let org_input_map = null;
+        setTimeout(function () {
+            org_input_map = load_input_map();
+        }, 0);
         window.addEventListener('beforeunload', function (e) {
+            if (!org_input_map) {
+                return;
+            }
             if (emlojs.leave_warning.is_submit) {
                 return
             }
