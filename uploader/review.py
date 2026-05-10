@@ -290,6 +290,10 @@ def create_works(collect_works, username, union_work_dict, upload, request):
                 inst = manif.repository
                 union_inst = CofkUnionInstitution.objects.filter(pk=inst.institution_id).first()
 
+                if union_inst is None:
+                    log.warning(f'No union institution found for repository id {inst.institution_id}, skipping.')
+                    continue
+
                 cmim = CofkManifInstMap(relationship_type=REL_TYPE_STORED_IN,
                                         manif=union_manif, inst=union_inst, inst_id=union_inst.institution_id)
                 cmim.update_current_user_timestamp(username)
@@ -367,6 +371,138 @@ def create_works(collect_works, username, union_work_dict, upload, request):
             log.exception(e)
 
     log.info(f'{upload}: created ' + ', '.join(log_msg))
+
+
+def accept_people(upload: CofkCollectUpload, username: str, request=None):
+    """Accept a bulk people upload — create CofkUnionPerson for all new collect people."""
+    collect_people = CofkCollectPerson.objects.filter(upload=upload, union_iperson__isnull=True)
+
+    if not collect_people.exists():
+        msg = f'No new people in the upload "{upload.upload_name}" to accept.'
+        if request:
+            messages.warning(request, msg)
+        return
+
+    try:
+        with transaction.atomic():
+            for person in collect_people:
+                union_person = CofkUnionPerson(
+                    init_seq_id=True,
+                    foaf_name=person.primary_name,
+                    gender=person.gender,
+                    is_organisation=person.is_organisation,
+                    editors_notes=person.editors_notes,
+                    date_of_birth_year=person.date_of_birth_year,
+                    date_of_birth_month=person.date_of_birth_month,
+                    date_of_birth_day=person.date_of_birth_day,
+                    date_of_birth_inferred=person.date_of_birth_inferred,
+                    date_of_birth_uncertain=person.date_of_birth_uncertain,
+                    date_of_birth_approx=person.date_of_birth_approx,
+                    date_of_birth_is_range=person.date_of_birth_is_range,
+                    date_of_birth2_year=person.date_of_birth2_year,
+                    date_of_birth2_month=person.date_of_birth2_month,
+                    date_of_birth2_day=person.date_of_birth2_day,
+                    date_of_death_year=person.date_of_death_year,
+                    date_of_death_month=person.date_of_death_month,
+                    date_of_death_day=person.date_of_death_day,
+                    date_of_death_inferred=person.date_of_death_inferred,
+                    date_of_death_uncertain=person.date_of_death_uncertain,
+                    date_of_death_approx=person.date_of_death_approx,
+                    date_of_death_is_range=person.date_of_death_is_range,
+                    date_of_death2_year=person.date_of_death2_year,
+                    date_of_death2_month=person.date_of_death2_month,
+                    date_of_death2_day=person.date_of_death2_day,
+                )
+                union_person.person_id = create_person_id(union_person.iperson_id)
+                union_person.update_current_user_timestamp(username)
+                union_person.save()
+                person.union_iperson = union_person
+                person.save()
+                log.info(f'Created new union person {union_person}')
+
+            upload.upload_status_id = 4  # Accepted and saved into main database
+            upload.save()
+
+    except Exception as e:
+        log.error(f'Bulk people upload {upload} failed.')
+        log.exception(e)
+        if request:
+            messages.error(request, 'An error occurred while accepting people. Please try again.')
+        return
+
+    msg = f'Successfully accepted {collect_people.count()} new people.'
+    if request:
+        messages.success(request, msg)
+    log.info(f'{upload}: {msg}')
+
+
+def reject_people(upload: CofkCollectUpload, request=None):
+    """Reject a bulk people upload."""
+    upload.upload_status_id = 3  # Review complete
+    upload.save()
+    msg = f'Upload "{upload.upload_name}" has been rejected.'
+    if request:
+        messages.success(request, msg)
+    log.info(f'{upload}: rejected (people bulk upload)')
+
+
+def accept_locations(upload: CofkCollectUpload, username: str, request=None):
+    """Accept a bulk locations upload — create CofkUnionLocation for all new collect locations."""
+    collect_locations = CofkCollectLocation.objects.filter(upload=upload, union_location__isnull=True)
+
+    if not collect_locations.exists():
+        msg = f'No new locations in the upload "{upload.upload_name}" to accept.'
+        if request:
+            messages.warning(request, msg)
+        return
+
+    try:
+        with transaction.atomic():
+            for location in collect_locations:
+                union_location = CofkUnionLocation(
+                    location_name=location.location_name,
+                    element_1_eg_room=location.element_1_eg_room,
+                    element_2_eg_building=location.element_2_eg_building,
+                    element_3_eg_parish=location.element_3_eg_parish,
+                    element_4_eg_city=location.element_4_eg_city,
+                    element_5_eg_county=location.element_5_eg_county,
+                    element_6_eg_country=location.element_6_eg_country,
+                    element_7_eg_empire=location.element_7_eg_empire,
+                    location_synonyms=location.location_synonyms,
+                    editors_notes=location.editors_notes,
+                    latitude=location.latitude,
+                    longitude=location.longitude,
+                )
+                union_location.update_current_user_timestamp(username)
+                union_location.save()
+                location.union_location = union_location
+                location.save()
+                log.info(f'Created new union location {union_location}')
+
+            upload.upload_status_id = 4  # Accepted and saved into main database
+            upload.save()
+
+    except Exception as e:
+        log.error(f'Bulk locations upload {upload} failed.')
+        log.exception(e)
+        if request:
+            messages.error(request, 'An error occurred while accepting locations. Please try again.')
+        return
+
+    msg = f'Successfully accepted {collect_locations.count()} new locations.'
+    if request:
+        messages.success(request, msg)
+    log.info(f'{upload}: {msg}')
+
+
+def reject_locations(upload: CofkCollectUpload, request=None):
+    """Reject a bulk locations upload."""
+    upload.upload_status_id = 3  # Review complete
+    upload.save()
+    msg = f'Upload "{upload.upload_name}" has been rejected.'
+    if request:
+        messages.success(request, msg)
+    log.info(f'{upload}: rejected (locations bulk upload)')
 
 
 def reject_works(context: dict, upload: CofkCollectUpload, request):

@@ -51,6 +51,7 @@ class CofkCollectUpload(models.Model):
     _id = models.CharField(max_length=32, blank=True, null=True)
     upload_name = models.CharField(max_length=254, blank=True, null=True)
     upload_file = models.FileField(upload_to=user_directory_path, blank=True, null=True)  # schema changed
+    upload_type = models.CharField(max_length=20, default='work')  # 'work' | 'people' | 'location'
 
     class Meta:
         db_table = 'cofk_collect_upload'

@@ -66,6 +66,7 @@ def handle_upload(upload: CofkCollectUpload, email_results: bool = False, file_n
 
     try:
         cuef = CofkUploadExcelFile(upload, file)
+        upload.upload_type = cuef.upload_type
 
         elapsed = round(time.time() - start)
 

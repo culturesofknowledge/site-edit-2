@@ -48,21 +48,21 @@
                 <fieldset>
                     <legend id="header_person" class="toc-item">Core fields and editors' notes</legend>
                     <div class="margin-bottom">
-                        <label>Primary name*</label>
+                        <label>Primary name:*</label>
                         {{ person_form.foaf_name }}
                         {{ person_form.foaf_name.errors }}
-                        <small>(No more than 200 characters. Preferably Surname, Forename)</small>
+                        <small>No more than 200 characters. Preferably Surname, Forename</small>
                     </div>
-                    <div class="margin-bottom">
-                        {% include "core/component/common_form_choices.html" with label_text='Gender' choices_field=person_form.gender %}
+                    <div class="margin-bottom choices-container form-inline-align">
+                        {% include "core/component/common_form_choices.html" with label_text='Gender:' choices_field=person_form.gender %}
                     </div>
                     
                     <div class="margin-bottom form-inline-align">
                         <div class="checkbox-inline">
                             {{ person_form.is_organisation }}
                             <label for="{{ person_form.is_organisation.id_for_label }}">Organization?</label>
-                             <small> (Leave this checkbox blank if the correspondent was an individual person; tick if the
-                            correspondent was a group or organization.)</small>
+                             <small> Leave this checkbox blank if the correspondent was an individual person; tick if the
+                            correspondent was a group or organization.</small>
                         </div>
                     </div>
                     
@@ -71,14 +71,14 @@
                          style="display: none"
                             {% endif %}
                     >
-                        <label>Organization type</label>
+                        <label>Organization type:</label>
                         {{ person_form.organisation_type }}
                         <small>Further details of a group's purpose or role can be given in the professions/titles
                             field.</small>
                     </div>
 
                     <div class="margin-bottom">
-                        <label>Editors' notes</label>
+                        <label>Editors' notes:</label>
                         {{ person_form.editors_notes }}
                         <small>
                             These notes are for internal use; we do not plan to display them on the 'front end' website.
@@ -112,22 +112,24 @@
                     </div>
                     <div class="margin-bottom">
                         <label>Further details of roles / titles:</label>
-                        {{ person_form.person_aliases }}
+                        <div>
+                            {{ person_form.person_aliases }}
+                            <small>
+                                Please use this field for titles and career-related details such as '5th Earl of Aylesbury' or
+                                'Bishop of Chester 1650-1680'.
+                                <br/>
+                                Please put each role/title on a separate line.
+                            </small>
+                        </div>
                     </div>
-                    <small>
-                        Please use this field for titles and career-related details such as '5th Earl of Aylesbury' or
-                        'Bishop of Chester 1650-1680'.
-                        <br/>
-                        Please put each role/title on a separate line.
-                    </small>
                 </fieldset>
 
                 <fieldset>
                     <legend id="header_dates" class="toc-item">Dates</legend>
 
-                    {% include "person/component/date_fields.html" with title_name=is_org_form|yesno:'date formed,date of birth' calendar=person_form.date_of_birth_calendar  is_range=person_form.date_of_birth_is_range  inferred=person_form.date_of_birth_inferred  uncertain=person_form.date_of_birth_uncertain  approx=person_form.date_of_birth_approx day_field=person_form.date_of_birth_day month_field=person_form.date_of_birth_month year_field=person_form.date_of_birth_year day_field2=person_form.date_of_birth2_day month_field2=person_form.date_of_birth2_month year_field2=person_form.date_of_birth2_year date_range_msg='(Tick this box if the date of birth cannot be narrowed down to a single year.)' %}
-                    {% include "person/component/date_fields.html" with title_name=is_org_form|yesno:'date disbanded,date of death' calendar=person_form.date_of_death_calendar  is_range=person_form.date_of_death_is_range  inferred=person_form.date_of_death_inferred  uncertain=person_form.date_of_death_uncertain  approx=person_form.date_of_death_approx day_field=person_form.date_of_death_day month_field=person_form.date_of_death_month year_field=person_form.date_of_death_year day_field2=person_form.date_of_death2_day month_field2=person_form.date_of_death2_month year_field2=person_form.date_of_death2_year date_range_msg='(Tick this box if the date of death cannot be narrowed down to a single year.)' %}
-                    {% include "person/component/date_fields.html" with title_name='date when flourished' calendar=person_form.flourished_calendar  is_range=person_form.flourished_is_range  inferred=person_form.flourished_inferred  uncertain=person_form.flourished_uncertain  approx=person_form.flourished_approx day_field=person_form.flourished_day month_field=person_form.flourished_month year_field=person_form.flourished_year day_field2=person_form.flourished2_day month_field2=person_form.flourished2_month year_field2=person_form.flourished2_year date_range_msg='(Tick this box if the date when flourished cannot be narrowed down to a single year.)' %}
+                    {% include "person/component/date_fields.html" with title_name=is_org_form|yesno:'date formed,date of birth' calendar=person_form.date_of_birth_calendar  is_range=person_form.date_of_birth_is_range  inferred=person_form.date_of_birth_inferred  uncertain=person_form.date_of_birth_uncertain  approx=person_form.date_of_birth_approx day_field=person_form.date_of_birth_day month_field=person_form.date_of_birth_month year_field=person_form.date_of_birth_year day_field2=person_form.date_of_birth2_day month_field2=person_form.date_of_birth2_month year_field2=person_form.date_of_birth2_year date_range_msg='Tick this box if the date of birth cannot be narrowed down to a single year.' %}
+                    {% include "person/component/date_fields.html" with title_name=is_org_form|yesno:'date disbanded,date of death' calendar=person_form.date_of_death_calendar  is_range=person_form.date_of_death_is_range  inferred=person_form.date_of_death_inferred  uncertain=person_form.date_of_death_uncertain  approx=person_form.date_of_death_approx day_field=person_form.date_of_death_day month_field=person_form.date_of_death_month year_field=person_form.date_of_death_year day_field2=person_form.date_of_death2_day month_field2=person_form.date_of_death2_month year_field2=person_form.date_of_death2_year date_range_msg='Tick this box if the date of death cannot be narrowed down to a single year.' %}
+                    {% include "person/component/date_fields.html" with title_name='date when flourished' calendar=person_form.flourished_calendar  is_range=person_form.flourished_is_range  inferred=person_form.flourished_inferred  uncertain=person_form.flourished_uncertain  approx=person_form.flourished_approx day_field=person_form.flourished_day month_field=person_form.flourished_month year_field=person_form.flourished_year day_field2=person_form.flourished2_day month_field2=person_form.flourished2_month year_field2=person_form.flourished2_year date_range_msg='Tick this box if the date when flourished cannot be narrowed down to a single year.' %}
 
                 </fieldset>
 
