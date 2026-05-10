@@ -302,6 +302,17 @@ function reset_form(form) {
 }
 
 $(function () {
+    // Keep sticky table header anchored just below the navigation bar.
+    const siteHeader = document.querySelector('.site-header');
+    if (siteHeader) {
+        const updateNavHeight = () => {
+            document.documentElement.style.setProperty('--nav-height', siteHeader.offsetHeight + 'px');
+        };
+        updateNavHeight();
+        window.addEventListener('resize', updateNavHeight);
+        window.addEventListener('load', updateNavHeight);
+    }
+
     emlojs.selectable_service.setup_all()
     setup_merge_btn();
     setup_fieldset_toggle();

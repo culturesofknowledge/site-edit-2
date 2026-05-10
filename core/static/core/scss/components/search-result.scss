@@ -119,15 +119,17 @@ td.text-heavy {
   width: max-content;            /* expand to fit columns so wrapper can scroll */
   max-width: none;               /* do not clamp the intrinsic width */
 
-  /* Table visuals */
-  border-collapse: collapse;
   /* Keep auto layout for natural column sizing */
+  /* border-collapse must stay 'separate' (inherited from the global table rule) —
+     position:sticky on thead cells is broken when border-collapse:collapse is set */
 }
 
 #results_table th {
-  top: 0px;
+  top: 0;  /* sticky at top of .results-scroll scroll viewport, which itself sticks below the nav */
   background-color: $light-grey;
-  border: 1px solid $mid-grey;
+  /* Use directional borders only to avoid doubled borders with border-collapse:separate */
+  border-right: 1px solid $mid-grey;
+  border-bottom: 2px solid $mid-grey;
 }
 
 #results_table th,
@@ -173,15 +175,20 @@ td.text-heavy {
 //  hyphens: auto;
 //}
 
-/* New scroll container placed above/wrapping the table. This holds the scrollbars
-   so the page itself doesn't move. The table element remains unchanged. */
+/* Scroll container for the results table.
+   position:sticky makes the entire container lock below the nav bar as the page scrolls.
+   overflow:auto enables both horizontal (for wide tables) and vertical (for many rows) scroll.
+   The thead th elements use top:0 to stick at the top of this container's viewport,
+   which — because the container itself is stuck below the nav — places them right below the nav. */
 .results-scroll {
-  height: 70vh;                 /* match viewport height and adapt on resize */
+  position: sticky;
+  top: var(--nav-height, 100px);
+  height: 70vh;
   max-height: 70vh;
   width: 100%;
-  overflow: auto;                /* both vertical and horizontal scrolling inside */
-  -webkit-overflow-scrolling: touch; /* smooth scrolling on iOS */
-  overscroll-behavior: contain;  /* prevent scroll chaining to the page */
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   border: 1px solid $light-grey;
 }
 
