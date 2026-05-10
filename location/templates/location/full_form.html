@@ -37,12 +37,10 @@
 
 
                 <!-- Comment section -->
-                <h1 id="header_researcher_note">Researcher' notes for front-end display</h1>
-                {% include "core/component/comment_publication_formset.html" with comment_formset=comment_formset %}
+                {% include "core/component/comment_publication_formset.html" with comment_formset=comment_formset comment_title='Researchers’ notes for front-end display:' %}
 
 
                 <!-- Resource section -->
-                <h1 id="header_resource">Related resource: </h1>
                 {% include "core/component/resource_formset.html" with res_formset=res_formset %}
 
                 <!-- Images section -->

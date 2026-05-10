@@ -73,16 +73,15 @@
                     >
                         <label>Organization type:</label>
                         {{ person_form.organisation_type }}
-                        <small>Further details of a group's purpose or role can be given in the professions/titles
-                            field.</small>
+                        <small>Further details of a group's purpose or role can be given in the roles/titles field.</small>
                     </div>
 
                     <div class="margin-bottom">
                         <label>Editors' notes:</label>
                         {{ person_form.editors_notes }}
                         <small>
-                            These notes are for internal use; we do not plan to display them on the 'front end' website.
-                            To enter a publicly available note, please use the researchers' notes field instead.
+                            These notes are for internal use; they will not be published in the ‘front end’ of the database.
+                            To enter a publicly available note, please use the researchers' notes field (below).
                         </small>
                     </div>
 
@@ -96,9 +95,10 @@
                         {{ person_form.skos_altlabel }}
                         {{ person_form.skos_altlabel.errors }}
                         <small>
-                            Please use this field for different spellings of the primary name, e.g. Lyster for Lister.
-                            You can also use it for alternative names such as a woman's maiden/married name.
-                            Please put each synonym on a separate line.
+                            Please use this field for different spellings of the primary name, e.g. ‘Martin Lyster’ for
+                            ‘Martin Lister’. You can also use it for alternative names such as a woman's maiden/married
+                            name. <br/>Please put each synonym on a separate line and ensure there are no extra spaces at the
+                            end of each line.
                         </small>
                     </div>
 
@@ -116,9 +116,9 @@
                             {{ person_form.person_aliases }}
                             <small>
                                 Please use this field for titles and career-related details such as '5th Earl of Aylesbury' or
-                                'Bishop of Chester 1650-1680'.
-                                <br/>
-                                Please put each role/title on a separate line.
+                                'Bishop of Chester, 1650-80'. <br/>
+                                Please put each role/title on a separate line and ensure there are no extra spaces at the
+                                end of each line.
                             </small>
                         </div>
                     </div>
