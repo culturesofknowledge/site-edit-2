@@ -3,24 +3,26 @@
 
 <fieldset>
     <legend id="header_basic_details" class="toc-item">Basic details</legend>
-    <div class="multi_rel_recref_container">
-    <label>Document type:</label>
-    {{ manif_form.manifestation_type }}
+    
+    <div class="flex flex-label">
+        <label>Document type:</label>
+        {{ manif_form.manifestation_type }}
     </div>
 
     {% include "core/component/recref.html" with recref_type='inst' id_field=manif_form.selected_inst_id label='Repository' placeholder='Please select or create repository, then click Save.' %}
 
-    <div class="multi_rel_recref_container">
-    <label>ID number or shelfmark:</label>
-    {{ manif_form.id_number_or_shelfmark }}
+    <div class="flex flex-label">
+        <label>ID number or shelfmark:</label>
+        {{ manif_form.id_number_or_shelfmark }}
     </div>
 
-    <label class="margin-bottom">Or </label>
-    <div class="multi_rel_recref_container">
-    <label>Printed edition details: </label>
-
-    {{ manif_form.printed_edition_details }}
+    <label class="margin-bottom margin-top">Or </label>
+    
+    <div class="flex flex-label margin-bottom">
+        <label>Printed edition details: </label>
+        {{ manif_form.printed_edition_details }}
     </div>
+
     <div class="ref-publication-row" textbox_id="{{ manif_form.printed_edition_details.id_for_label }}"></div>
 
 </fieldset>
