@@ -2,9 +2,15 @@
 .url_checker_div {
   display: flex;
 
+  input {
+    flex: 1;
+    min-width: 0;
+  }
+
   .btn {
     white-space: nowrap;
     margin-left: 10px;
+    flex-shrink: 0;
   }
 }
 
@@ -15,6 +21,10 @@
   margin-top: -2px;
   margin-bottom: 15px;
   cursor: pointer;
+}
+
+.margin-bottom:has(.res_standtext) .row-no-margin {
+  flex-wrap: wrap;
 }
 
 .record_tracker_label {
