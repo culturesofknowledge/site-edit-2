@@ -1,7 +1,8 @@
 <fieldset>
     <legend id="header_delete" class="toc-item">Delete?</legend>
-    <label> Delete this {{ name }}? </label>
-
-    <a class="margin-right btn" href="{{ del_url }}"> Delete </a>
-    <span><small>Confirmation will be requested before the deletion takes place.</small></span>
+    <div class="margin-bottom flex flex-label">
+        <label> Delete this {{ name }}? </label>
+        <a class="margin-right btn" href="{{ del_url }}"> Delete </a><br/>
+        <small>Confirmation will be requested before the deletion takes place.</small>
+    </div>
 </fieldset>
