@@ -43,3 +43,7 @@
   }
 
 }
+
+fieldset:has(> legend.toc-sub-item) {
+  margin-top: 10px;
+}
