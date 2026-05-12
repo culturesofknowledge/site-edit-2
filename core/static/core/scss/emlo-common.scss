@@ -190,507 +190,506 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
       }
     }
   }
+}
 
-  .issues-date-ct {
-    display: flex;
-    flex-direction: row;
+.issues-date-ct {
+  display: flex;
+  flex-direction: row;
 
-    .issues-date-item {
-      margin-right: 15px;
-    }
+  .issues-date-item {
+    margin-right: 15px;
   }
+}
 
-  .button-row {
-    display: flex;
-    align-items: center;
+.button-row {
+  display: flex;
+  align-items: center;
 
-    button {
-      margin-right: 20px;
-    }
-  }
-
-  .button-row button {
-    margin-right: 8px;
-  }
-
-  .inline-from-to {
-    display: flex;
-    flex-wrap: wrap;
-    flex-direction: row;
-    align-items: baseline;
-
-    & > label:first-of-type {
-      width: 100%;
-    }
-
-    input[type=date] {
-      height: 35px;
-      width: 130px;
-      margin: 0;
-    }
-
-  }
-
-  .row-spaced {
-    @extend .row;
-    margin: 0px;
-
-    & > * {
-      margin-right: $space-xs;
-    }
-
-  }
-
-  .ref-publication-row {
-    @extend .row;
-    margin: $space-xxs $space-xxs $space-xxs 0;
-
-    button {
-      margin-left: $space-xs;
-      margin-right: $space-xs;
-    }
-
-    /*button:hover {
-      background-color: $light-grey;
-      color: $black;
-    }*/
-  }
-
-  .row-no-margin {
-    display: flex;
-  }
-
-  .row-date-fields {
-    @extend .row-no-margin;
-
-    input, select {
-      width: 80px;
-    }
-
-    input.ad-year {
-      width: 110px;
-    }
-  }
-
-  .row-from-to {
-    @extend .row-no-margin;
-
-    & > div {
-      @extend .col--1of2;
-    }
-  }
-
-  .row-from-to small {
-    margin-right: 0.5em;
-    margin-left: 0.5em;
-  }
-
-
-  .multi_rel_recref_container {
-    display: grid;
-    grid-template-columns: 12fr 75fr;
-    grid-row-gap: 8px;
-    width: 100%;
-    font-size: $typescale-7;
-
-    & > .grid-item {
-      background-color: #f2f2f2;
-      padding: 0.8em;
-
-      & > .name {
-        font-size: $typescale-4;
-      }
-    }
-
-    & > label, span {
-      font-size: 1.44em;
-    }
-
-  }
-
-  .sub-recref-form {
-    display: grid;
-    grid-template-columns: 1fr 2fr;
-    width: 100%;
-
-    input[type=date] {
-      width: 100px;
-    }
-
-    div:only-child {
-      width: 500px;
-    }
-  }
-
-
-  .autodate-div .from-div, .date-fields-div .from-div {
+  button {
     margin-right: 20px;
   }
+}
 
+.button-row button {
+  margin-right: 8px;
+}
 
-  .recref-list {
-    margin-bottom: 1em;
+.inline-from-to {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  align-items: baseline;
 
-    .recref-row {
-      @extend .row-no-margin;
-      margin-bottom: 1em;
-    }
-
-    .recref-title {
-      margin-right: 1em;
-      margin-top: auto;
-      margin-bottom: auto;
-      width: 70%;
-      background-color: #f2f2f2;
-      padding: 0.8em;
-    }
-
-    .recref-del {
-      margin: auto 0;
-    }
-
+  & > label:first-of-type {
+    width: 100%;
   }
 
-
-  .errorlist {
-    color: red;
-  }
-
-  .warn-checked:checked + label {
-    color: red !important;
-    font-weight: bold;
-  }
-
-
-  .form-core-div {
-    @extend .row;
-    font-size: 16px;
-  }
-
-
-  @media only screen and (min-width: $mborder-small) and (max-width: $mborder-mid) {
-    .form-col-left {
-      flex-basis: 100%;
-    }
-  }
-
-
-  .form-col-left {
-    @extend .col;
-    max-width: 25%;
-  }
-
-  .form-col-right {
-    @extend .col;
-    @extend .col--2of3;
-    min-width: 75%;
-
-    line-height: 1.4;
-
-    label {
-      display: block;
-    }
-
-  }
-
-
-  @media only screen and (min-width: $mborder-mid) {
-    .form-descriptor {
-      position: -webkit-sticky;
-      position: sticky;
-      top: 100px;
-      background-color: white;
-      padding: 0.2em;
-      z-index: 99;
-
-      h3 {
-        margin: 0;
-      }
-    }
-  }
-
-  .sub-form-desc .desc-id {
-    padding: 3px;
-    font-size: 1em;
-    font-weight: bolder;
-  }
-
-
-  .merge-div .merge-items {
-    @extend .col--4of5;
-    margin-bottom: 0.8rem;
-    border: 1px solid;
-    padding: 0 1em 1em;
-  }
-
-  .merge-detail {
-    font-size: 0.8rem;
-
-    & > ul {
-      margin: 0;
-    }
-  }
-
-  .form-note-root {
-    margin: 1em 1em 2em;
-  }
-
-
-  .selectfilter-root {
-    position: relative;
-
-    .sf-select {
-      border: 1px solid;
-      padding: 0.5em;
-      cursor: pointer;
-    }
-
-    .sf-input {
-      margin-bottom: 0;
-    }
-
-    .sf-search-div {
-      position: absolute;
-      width: 100%;
-      z-index: 1000;
-      background-color: white;
-    }
-
-    .sf-list {
-      width: 100%;
-      height: 300px;
-      background-color: #e7f0fc;
-      z-index: 10;
-      overflow-y: auto;
-      border: 1px solid;
-    }
-
-
-    .sf-item {
-      padding: 0.5em;
-
-      &:hover, &.selected {
-        background-color: cadetblue;
-        cursor: pointer;
-      }
-
-    }
-
-  }
-
-  .tab-link {
-    display: inline-block;
-    padding: 10px 20px;
-    text-decoration: none;
-    color: #555;
-    border: 1px solid transparent;
-    border-bottom: none;
-    margin-right: 5px;
-  }
-
-  .tab-link:hover {
-    background-color: #f1f1f1;
-    color: #000;
-    cursor: pointer;
-  }
-
-  .tab-link.active {
-    font-weight: bold;
-    color: #000;
-    border: 1px solid #ccc;
-    border-bottom: 2px solid #868281;
-    background-color: #fff;
-  }
-
-  // for lang_section
-  .lang-item {
-    @extend .row-no-margin;
-    align-items: baseline;
-
-    & > .lang-label {
-      @extend .col--1of5;
-    }
-
-    & > input[type=text] {
-      @extend .col--2of5;
-    }
-
-  }
-
-  .search-form-btn {
-    @extend .btn;
-    @extend .margin-right;
-    @extend .inline_btn;
-  }
-
-  .open-link-btn {
-    @extend .btn;
-    @extend .inline_btn;
-    margin-top: $space-unit;
-  }
-
-
-  $del-red: #800000;
-
-  .del-confirm-div {
-    background-color: #f2f2f2;
-    color: $del-red;
-
-    #confirm-label {
-      color: $del-red !important;
-      margin-top: 1rem;
-      margin-bottom: 1rem;
-      cursor: pointer;
-    }
-
-    #cancel-btn {
-      @extend .margin-right ;
-      @extend .btn;
-      height: 37px;
-      text-transform: uppercase;
-      letter-spacing: 0.045em;
-      font-size: 15px;
-    }
-
-    #del-btn:disabled {
-      background-color: silver;
-      cursor: not-allowed;
-    }
-
-    #del-btn {
-      background-color: $del-red;
-    }
-
-  }
-
-
-  .date-standard-format {
-    background-color: lightgray;
-    border: solid 1px;
-
-    & > legend {
-      border: solid 2px;
-      background-color: lightgray;
-    }
-  }
-
-
-  .important-tag {
-    color: #FFD700;
-    background-color: cadetblue;
-    padding: 0.5em;
-    border-radius: 5px;
-    font-weight: bold;
-  }
-
-  .right {
-    float: right;
-    margin-right: 20px;
-  }
-
-  .padding-right {
-    padding-right: 10px;
-  }
-
-  table.suggestion thead tr th {
-    background-color: lightgray;
-    font-weight: bold;
-  }
-
-  table.suggestion tbody tr th {
-    width: 30%;
-  }
-
-  .suggestion-buttons {
-    margin-bottom: 20px;
-  }
-
-  .btn-text-width {
-    width: fit-content;
-  }
-
-  input.btn-text-width {
-    padding: 0px 5px;
-  }
-
-  h2, h3 {
+  input[type=date] {
+    height: 35px;
+    width: 130px;
     margin: 0;
-    font-size: 1.5em;
-    color: #333;
   }
 
-  .multi-rel-recref-container {
-    margin-bottom: 15px;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    background-color: #f9f9f9;
+}
+
+.row-spaced {
+  @extend .row;
+  margin: 0px;
+
+  & > * {
+    margin-right: $space-xs;
   }
 
-  .info-message {
-    color: #555;
-    font-size: 0.9em;
-    background-color: #eef4ff;
-    padding: 10px;
-    border-left: 3px solid #007bff;
+}
+
+.ref-publication-row {
+  @extend .row;
+  margin: $space-xxs $space-xxs $space-xxs 0;
+
+  button {
+    margin-left: $space-xs;
+    margin-right: $space-xs;
   }
 
-  .messages {
-    clear: both;
+  /*button:hover {
+    background-color: $light-grey;
+    color: $black;
+  }*/
+}
+
+.row-no-margin {
+  display: flex;
+}
+
+.row-date-fields {
+  @extend .row-no-margin;
+
+  input, select {
+    width: 80px;
   }
 
-  // Suggestion filter styling: add left/right padding and improve spacing/legibility
-  #f_filter {
-    // Lay out the checkboxes nicely in a row that wraps
-    display: inline-flex;
-    align-items: center;
-    flex-wrap: wrap;
+  input.ad-year {
+    width: 110px;
   }
+}
 
-  // Space the checkbox a touch from the preceding text and align pairs nicely
-  #f_filter input.checkbox {
-    margin-left: 0.25rem; // ~4px
-    // Ensure there is a visible gap before the adjacent label
-    margin-right: 0.4rem !important; // slightly larger and with priority to win over resets
+.row-from-to {
+  @extend .row-no-margin;
+
+  & > div {
+    @extend .col--1of2;
   }
+}
 
-  // Make the labels next to the checkboxes look like compact pills with padding
-  #f_filter input.checkbox + label {
-    //display: inline-block;
-    padding: 0.2rem 0.8rem;
-    // top right bottom left
-    margin: 0.2rem 0.8rem 0.2rem 0.2rem; // left margin adds space even if checkbox margin is overridden
-    border-radius: 0.25rem;
-    cursor: pointer;
-  }
+.row-from-to small {
+  margin-right: 0.5em;
+  margin-left: 0.5em;
+}
 
-  // Subtle hover/active states for better UX
-  #f_filter input.checkbox + label:hover {
-    background-color: #f1f3f5;
-  }
 
-  #f_filter input.checkbox:checked + label {
-    background-color: #eef4ff;
-    border-color: #c6d8ff;
-  }
+.multi_rel_recref_container {
+  display: grid;
+  grid-template-columns: 12fr 75fr;
+  grid-row-gap: 8px;
+  width: 100%;
+  font-size: $typescale-7;
 
-  .suggestion-details {
-    dt {
-      display: block;
-      margin-bottom: 0.25rem;
+  & > .grid-item {
+    background-color: #f2f2f2;
+    padding: 0.8em;
 
-      &::after {
-        content: ":";
-      }
+    & > .name {
+      font-size: $typescale-4;
     }
+  }
 
-    dd {
-      display: block;
-      margin-left: 0;
-      margin-bottom: 1rem;
+  & > label, span {
+    font-size: 1.44em;
+  }
+
+}
+
+.sub-recref-form {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  width: 100%;
+
+  input[type=date] {
+    width: 100px;
+  }
+
+  div:only-child {
+    width: 500px;
+  }
+}
+
+
+.autodate-div .from-div, .date-fields-div .from-div {
+  margin-right: 20px;
+}
+
+
+.recref-list {
+  margin-bottom: 1em;
+
+  .recref-row {
+    @extend .row-no-margin;
+    margin-bottom: 1em;
+  }
+
+  .recref-title {
+    margin-right: 1em;
+    margin-top: auto;
+    margin-bottom: auto;
+    width: 70%;
+    background-color: #f2f2f2;
+    padding: 0.8em;
+  }
+
+  .recref-del {
+    margin: auto 0;
+  }
+
+}
+
+
+.errorlist {
+  color: red;
+}
+
+.warn-checked:checked + label {
+  color: red !important;
+  font-weight: bold;
+}
+
+
+.form-core-div {
+  @extend .row;
+  font-size: 16px;
+}
+
+
+@media only screen and (min-width: $mborder-small) and (max-width: $mborder-mid) {
+  .form-col-left {
+    flex-basis: 100%;
+  }
+}
+
+
+.form-col-left {
+  @extend .col;
+  max-width: 25%;
+}
+
+.form-col-right {
+  @extend .col;
+  @extend .col--2of3;
+  min-width: 75%;
+
+  line-height: 1.4;
+
+  label {
+    display: block;
+  }
+
+}
+
+
+@media only screen and (min-width: $mborder-mid) {
+  .form-descriptor {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 100px;
+    background-color: white;
+    padding: 0.2em;
+    z-index: 99;
+
+    h3 {
+      margin: 0;
     }
   }
 }
+
+.sub-form-desc .desc-id {
+  padding: 3px;
+  font-size: 1em;
+  font-weight: bolder;
+}
+
+
+.merge-div .merge-items {
+  @extend .col--4of5;
+  margin-bottom: 0.8rem;
+  border: 1px solid;
+  padding: 0 1em 1em;
+}
+
+.merge-detail {
+  font-size: 0.8rem;
+
+  & > ul {
+    margin: 0;
+  }
+}
+
+.form-note-root {
+  margin: 1em 1em 2em;
+}
+
+
+.selectfilter-root {
+  position: relative;
+
+  .sf-select {
+    border: 1px solid;
+    padding: 0.5em;
+    cursor: pointer;
+  }
+
+  .sf-input {
+    margin-bottom: 0;
+  }
+
+  .sf-search-div {
+    position: absolute;
+    width: 100%;
+    z-index: 1000;
+    background-color: white;
+  }
+
+  .sf-list {
+    width: 100%;
+    height: 300px;
+    background-color: #e7f0fc;
+    z-index: 10;
+    overflow-y: auto;
+    border: 1px solid;
+  }
+
+
+  .sf-item {
+    padding: 0.5em;
+
+    &:hover, &.selected {
+      background-color: cadetblue;
+      cursor: pointer;
+    }
+
+  }
+
+}
+
+.tab-link {
+  display: inline-block;
+  padding: 10px 20px;
+  text-decoration: none;
+  color: #555;
+  border: 1px solid transparent;
+  border-bottom: none;
+  margin-right: 5px;
+}
+
+.tab-link:hover {
+  background-color: #f1f1f1;
+  color: #000;
+  cursor: pointer;
+}
+
+.tab-link.active {
+  font-weight: bold;
+  color: #000;
+  border: 1px solid #ccc;
+  border-bottom: 2px solid #868281;
+  background-color: #fff;
+}
+
+// for lang_section
+.lang-item {
+  @extend .row-no-margin;
+  align-items: baseline;
+
+  & > .lang-label {
+    @extend .col--1of5;
+  }
+
+  & > input[type=text] {
+    @extend .col--2of5;
+  }
+
+}
+
+.search-form-btn {
+  @extend .btn;
+  @extend .margin-right;
+  @extend .inline_btn;
+}
+
+.open-link-btn {
+  @extend .btn;
+  @extend .inline_btn;
+  margin-top: $space-unit;
+}
+
+
+$del-red: #800000;
+
+.del-confirm-div {
+  background-color: #f2f2f2;
+  color: $del-red;
+
+  #confirm-label {
+    color: $del-red !important;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    cursor: pointer;
+  }
+
+  #cancel-btn {
+    @extend .margin-right ;
+    @extend .btn;
+    height: 37px;
+    text-transform: uppercase;
+    letter-spacing: 0.045em;
+    font-size: 15px;
+  }
+
+  #del-btn:disabled {
+    background-color: silver;
+    cursor: not-allowed;
+  }
+
+  #del-btn {
+    background-color: $del-red;
+  }
+
+}
+
+
+.date-standard-format {
+  background-color: lightgray;
+  border: solid 1px;
+
+  & > legend {
+    border: solid 2px;
+    background-color: lightgray;
+  }
+}
+
+
+.important-tag {
+  color: #FFD700;
+  background-color: cadetblue;
+  padding: 0.5em;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+.right {
+  float: right;
+  margin-right: 20px;
+}
+
+.padding-right {
+  padding-right: 10px;
+}
+
+table.suggestion thead tr th {
+  background-color: lightgray;
+  font-weight: bold;
+}
+
+table.suggestion tbody tr th {
+  width: 30%;
+}
+
+.suggestion-buttons {
+  margin-bottom: 20px;
+}
+
+.btn-text-width {
+  width: fit-content;
+}
+
+input.btn-text-width {
+  padding: 0px 5px;
+}
+
+h2, h3 {
+  margin: 0;
+  font-size: 1.5em;
+  color: #333;
+}
+
+.multi-rel-recref-container {
+  margin-bottom: 15px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+
+.info-message {
+  color: #555;
+  font-size: 0.9em;
+  background-color: #eef4ff;
+  padding: 10px;
+  border-left: 3px solid #007bff;
+}
+
+.messages {
+  clear: both;
+}
+
+// Suggestion filter styling: add left/right padding and improve spacing/legibility
+#f_filter {
+  // Lay out the checkboxes nicely in a row that wraps
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+// Space the checkbox a touch from the preceding text and align pairs nicely
+#f_filter input.checkbox {
+  margin-left: 0.25rem; // ~4px
+  // Ensure there is a visible gap before the adjacent label
+  margin-right: 0.4rem !important; // slightly larger and with priority to win over resets
+}
+
+// Make the labels next to the checkboxes look like compact pills with padding
+#f_filter input.checkbox + label {
+  //display: inline-block;
+  padding: 0.2rem 0.8rem;
+  // top right bottom left
+  margin: 0.2rem 0.8rem 0.2rem 0.2rem; // left margin adds space even if checkbox margin is overridden
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+// Subtle hover/active states for better UX
+#f_filter input.checkbox + label:hover {
+  background-color: #f1f3f5;
+}
+
+#f_filter input.checkbox:checked + label {
+  background-color: #eef4ff;
+  border-color: #c6d8ff;
+}
+
+.suggestion-details {
+  dt {
+    display: block;
+    margin-bottom: 0.25rem;
+    &::after {
+      content: ":";
+    }
+  }
+  dd {
+    display: block;
+    margin-left: 0;
+    margin-bottom: 1rem;
+  }
+}
+
 
 
 
