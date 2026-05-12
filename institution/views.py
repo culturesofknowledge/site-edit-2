@@ -118,7 +118,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
 
     @property
     def csv_export_setting(self):
-        if not self.has_perms(constant.PM_EXPORT_FILE_INST):
+        if not self.has_perms([constant.PM_EXPORT_FILE_INST]):
             return None
         return (lambda: view_serv.create_export_file_name('inst', 'csv'),
                 lambda: DownloadCsvHandler(InstCsvHeaderValues()).create_csv_file,

@@ -48,6 +48,7 @@ field_label_map = {
         'element_5_eg_county': '5. E.g. county',
         'element_6_eg_country': '6. E.g. country',
         'element_7_eg_empire': '7. E.g. empire',
+        'mentioned': 'Mentioned',
         'images': 'Images',
     },
     'person': common_fields | {
@@ -62,16 +63,6 @@ field_label_map = {
         'mentioned': 'Mentioned',
         'roles': 'Professional roles',
         'further_reading': 'Further reading',
-
-        # TODO seem like fields not belong to person
-        'element_1_eg_room': '1. E.g. room',
-        'element_2_eg_building': '2. E.g. building',
-        'element_3_eg_parish': '3. E.g. parish',
-        'element_4_eg_city': '4. E.g. city',
-        'element_5_eg_county': '5. E.g. county',
-        'element_6_eg_country': '6. E.g. country',
-        'element_7_eg_empire': '7. E.g. empire',
-
         'images': 'Images',
         'iperson_id': 'Person or group ID',
         'other_details': 'Other details',
@@ -105,6 +96,7 @@ field_label_map = {
         'original_catalogue': 'Original catalogue',
         'accession_code': 'Source of record',
         'mentioned_searchable': 'People mentioned',
+        'places_mentioned_searchable': 'Places mentioned',
         'origin_as_marked': 'Origin as marked',
         'destination_as_marked': 'Destination as marked',
         'subjects': 'Subjects',
@@ -118,6 +110,7 @@ field_label_map = {
         'location_sent_pk': 'Location sent',
         'location_rec_pk': 'Location received',
         'location_sent_rec_pk': 'Location sent or received',
+        'location_mention_pk': 'Location mentioned',
     },
     'lang': {
         'code_639_3': '3-letter language code',

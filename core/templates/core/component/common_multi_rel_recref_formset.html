@@ -1,3 +1,4 @@
+{% load cl_filters %}
 <div class="multi_rel_recref_container">
     {{ multi_rel_recref_formset.management_form }}
     {% for form in multi_rel_recref_formset %}
@@ -11,9 +12,15 @@
     {% elif help_text_type == 'addressee' %}
         To remove an addressee/recipient, please uncheck the checkbox(es) and save.
     {% else %}
-        To remove {{ help_text_type }} uncheck all checkboxs of the related entity.
+        To remove {{ help_text_type }}, please uncheck all checkbox(es) and save.
     {% endif %}
 </div>
 {% endif %}
 
-{% include "core/component/recref.html" with recref_type=recref_type id_field=id_field label=label_add %}
+{% if multi_rel_recref_formset.forms %}
+    {% with label_add|add_another_if_startswith as label_text %}
+        {% include "core/component/recref.html" with recref_type=recref_type id_field=id_field label=label_text placeholder=placeholder %}
+    {% endwith %}
+{% else %}
+    {% include "core/component/recref.html" with recref_type=recref_type id_field=id_field label=label_add placeholder=placeholder %}
+{% endif %}

@@ -18,7 +18,7 @@ from location import fixtures as location_fixtures
 from manifestation import fixtures as manif_fixtures
 from manifestation.models import CofkUnionManifestation
 from person import fixtures as person_fixtures
-from work import fixtures as work_fixtures
+from work import fixtures as work_fixtures, work_serv
 from django.test import TestCase
 from work.work_serv import DisplayableWork
 from work.models import CofkUnionWork, CofkUnionLanguageOfWork
@@ -80,7 +80,7 @@ class WorkFormTests(EmloSeleniumTestCase):
         self.click_submit()
 
         # assert work object
-        iwork_id = self.get_id_by_url_pattern(r'/work/form/corr/(\\d+)')
+        iwork_id = self.get_id_by_url_pattern(r'/work/form/corr/(\d+)')
         work = CofkUnionWork.objects.filter(iwork_id=iwork_id).first()
         self.assertIsNotNone(work)
         self.assertGreater(work.cofkworkcommentmap_set.filter(relationship_type=REL_TYPE_COMMENT_AUTHOR)
@@ -166,7 +166,7 @@ class WorkFormTests(EmloSeleniumTestCase):
         self.click_submit()
 
         # assert work object
-        iwork_id = self.get_id_by_url_pattern(r'/work/form/dates/(\\d+)')
+        iwork_id = self.get_id_by_url_pattern(r'/work/form/dates/(\d+)')
         work = CofkUnionWork.objects.filter(iwork_id=iwork_id).first()
         self.assertIsNotNone(work)
         self.assertGreater(work.cofkworkcommentmap_set.filter(relationship_type=REL_TYPE_COMMENT_DATE)
@@ -190,7 +190,7 @@ class WorkFormTests(EmloSeleniumTestCase):
         self.click_submit()
 
         # assert work object
-        iwork_id = self.get_id_by_url_pattern(r'/work/form/places/(\\d+)')
+        iwork_id = self.get_id_by_url_pattern(r'/work/form/places/(\d+)')
         work = CofkUnionWork.objects.filter(iwork_id=iwork_id).first()
         self.assertIsNotNone(work)
         field_val_tester.assert_all(work)
@@ -251,7 +251,7 @@ class WorkFormTests(EmloSeleniumTestCase):
         self.click_submit()
 
         # assert work object
-        iwork_id = self.get_id_by_url_pattern(r'/work/form/details/(\\d+)')
+        iwork_id = self.get_id_by_url_pattern(r'/work/form/details/(\d+)')
         work: CofkUnionWork = CofkUnionWork.objects.filter(iwork_id=iwork_id).first()
         self.assertIsNotNone(work)
         field_val_tester.assert_all(work)
@@ -274,7 +274,7 @@ class WorkFormTests(EmloSeleniumTestCase):
         input_lang_list = {'English', }
 
         self.goto_vname('work:manif_init', iwork_id=work.iwork_id)
-        iwork_id = self.get_id_by_url_pattern(r'/work/form/manif/(\\d+)')
+        iwork_id = self.get_id_by_url_pattern(r'/work/form/manif/(\d+)')
         self.assertEqual(iwork_id and int(iwork_id), work.iwork_id)
 
         self.selenium.maximize_window()
@@ -296,7 +296,7 @@ class WorkFormTests(EmloSeleniumTestCase):
         self.click_submit()
 
         # assert work object
-        manif_id = re.findall(r'/work/form/manif/(\\d+)/([^/#]+)', self.selenium.current_url)
+        manif_id = re.findall(r'/work/form/manif/(\d+)/([^/#]+)', self.selenium.current_url)
         self.assertTrue(manif_id)
         manif_id = manif_id[0][1]
         manif = CofkUnionManifestation.objects.filter(manifestation_id=manif_id).first()
@@ -450,17 +450,17 @@ class WorkSearchTests(EmloSeleniumTestCase, CommonSearchTests):
 
         expected_data = dict(
             editors_notes=target_work.editors_notes,
-            date_for_ordering='1122-11-22\nAs marked: work_dict_a.date_of_work_as_marked',
-            author_sender='person aaaa b. 1921',
+            date_for_ordering='1122-11-22\n\nAs marked: work_dict_a.date_of_work_as_marked',
+            author_sender='person aaaa, b. 1921',
             origin='location_name value\n\nAs marked: origin_as_marked value',
-            addressee='person bbbb d. 1922',
+            addressee='person bbbb, d. 1922',
             destination='location_name value 2',
             uncertainties='',
             images='',
             manifestations='ABC. Postmark: postage_marks a. id_number_or_shelfmark a printed_edition_details a',
             related_resources='Resources:\nresource_name a\nresource_name b',
             subjects='Astronomy',
-            other_details='Keywords: keywords value\n\nAbstract: abstract value\n\nLanguages: English (notes a), Japanese (notes b)\n\nNotes: comment a, comment b',
+            other_details='Keywords: keywords value\n\nAbstract: abstract value\n\nLanguages: English (notes a), Japanese (notes b)\n\nNotes: comment a ~ comment b',
             id=target_work.iwork_id,
         )
         assert_table_row(self, table_row_data_dict[target_work.iwork_id], expected_data)
@@ -519,27 +519,27 @@ class WorkSearchTests(EmloSeleniumTestCase, CommonSearchTests):
         fixture_default_lookup_catalogue()
 
         # Create test works with different flag combinations
-        work_date_inferred = CofkUnionWork(iwork_id=100, date_of_work_inferred=1)
+        work_date_inferred = CofkUnionWork(work_id='flag_test_100', iwork_id=100, date_of_work_inferred=1)
         work_date_inferred.save()
-        work_date_uncertain = CofkUnionWork(iwork_id=101, date_of_work_uncertain=1)
+        work_date_uncertain = CofkUnionWork(work_id='flag_test_101', iwork_id=101, date_of_work_uncertain=1)
         work_date_uncertain.save()
-        work_date_approximate = CofkUnionWork(iwork_id=102, date_of_work_approx=1)
+        work_date_approximate = CofkUnionWork(work_id='flag_test_102', iwork_id=102, date_of_work_approx=1)
         work_date_approximate.save()
-        work_author_inferred = CofkUnionWork(iwork_id=103, authors_inferred=1)
+        work_author_inferred = CofkUnionWork(work_id='flag_test_103', iwork_id=103, authors_inferred=1)
         work_author_inferred.save()
-        work_author_uncertain = CofkUnionWork(iwork_id=104, authors_uncertain=1)
+        work_author_uncertain = CofkUnionWork(work_id='flag_test_104', iwork_id=104, authors_uncertain=1)
         work_author_uncertain.save()
-        work_addressee_inferred = CofkUnionWork(iwork_id=105, addressees_inferred=1)
+        work_addressee_inferred = CofkUnionWork(work_id='flag_test_105', iwork_id=105, addressees_inferred=1)
         work_addressee_inferred.save()
-        work_addressee_uncertain = CofkUnionWork(iwork_id=106, addressees_uncertain=1)
+        work_addressee_uncertain = CofkUnionWork(work_id='flag_test_106', iwork_id=106, addressees_uncertain=1)
         work_addressee_uncertain.save()
-        work_origin_inferred = CofkUnionWork(iwork_id=107, origin_inferred=1)
+        work_origin_inferred = CofkUnionWork(work_id='flag_test_107', iwork_id=107, origin_inferred=1)
         work_origin_inferred.save()
-        work_origin_uncertain = CofkUnionWork(iwork_id=108, origin_uncertain=1)
+        work_origin_uncertain = CofkUnionWork(work_id='flag_test_108', iwork_id=108, origin_uncertain=1)
         work_origin_uncertain.save()
-        work_destination_inferred = CofkUnionWork(iwork_id=109, destination_inferred=1)
+        work_destination_inferred = CofkUnionWork(work_id='flag_test_109', iwork_id=109, destination_inferred=1)
         work_destination_inferred.save()
-        work_destination_uncertain = CofkUnionWork(iwork_id=110, destination_uncertain=1)
+        work_destination_uncertain = CofkUnionWork(work_id='flag_test_110', iwork_id=110, destination_uncertain=1)
         work_destination_uncertain.save()
 
         test_cases = [

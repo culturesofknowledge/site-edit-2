@@ -19,13 +19,13 @@ class LocationForm(ModelForm):
     element_1_eg_room = CharField(required=False, label='1. Room, e.g. Porters\' lodge')
     element_2_eg_building = CharField(required=False, label='2. Building, e.g. New College')
     element_3_eg_parish = CharField(required=False, label='3. Parish, district, or street, e.g. Holywell Street')
-    element_4_eg_city = CharField(required=True, label='4. City, town, or village, e.g. Oxford')
+    element_4_eg_city = CharField(required=False, label='4. City, town, or village, e.g. Oxford')
     element_5_eg_county = CharField(required=False, label='5. County, e.g. Oxfordshire')
     element_6_eg_country = CharField(required=False, label='6. Country, e.g. England')
     element_7_eg_empire = CharField(required=False, label='7. Larger political entity, e.g. United Kingdom')
     location_synonyms = form_serv.CommonTextareaField(required=False, label='Alternative names for location')
-    latitude = CharField(required=False)
-    longitude = CharField(required=False)
+    latitude = CharField(required=False , widget=forms.TextInput(attrs={"class": "lat-long-field"}))
+    longitude = CharField(required=False , widget=forms.TextInput(attrs={"class": "lat-long-field"}))
 
     class Meta:
         model = CofkUnionLocation
@@ -72,6 +72,10 @@ class GeneralSearchFieldset(form_serv.BasicSearchFieldset):
                                       "please note that these will be slower searches than those on place name or "
                                       "latitude/longitude.")
     recd_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
+
+    mentioned = SearchIntField(help_text="Number of letters in which this place was mentioned. You can search on "
+                                    "these 'number' fields using 'Advanced Search'.")
+    mentioned_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
     all_works = SearchIntField(label=field_label_map['location']['all_works'],
                                  help_text="Total number of letters sent to and from this place. You can search on "

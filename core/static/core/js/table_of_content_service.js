@@ -33,7 +33,7 @@ function build_table_of_content_ui() {
     toc_items.each(function (idx, ele) {
         let link_jqe;
         if (ele.classList.contains('toc-sub-item')) {
-            link_jqe = $(`<li><a href="#${ele.id}">${ele.textContent}</a></li>`)
+            link_jqe = $(`<a class="toc-sub-link" href="#${ele.id}">${ele.textContent}</a>`)
         } else {
             link_jqe = $(`<a href="#${ele.id}">${ele.textContent}</a>`)
         }
