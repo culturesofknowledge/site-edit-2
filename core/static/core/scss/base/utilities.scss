@@ -256,6 +256,38 @@
   display: flex;
 }
 
+.flex-label {
+  display: flex;
+  gap: 0.5rem;
+
+  label {      // fixed alignment width
+    width: 180px;     // safety for smaller text
+    text-align: left;
+    margin: 0;
+  }
+
+  // inputs / selects / textarea
+  input,
+  select,
+  textarea,
+  .recref-container {   // in case your include wraps things
+    flex: 1;
+    width: 100%;
+  }
+}
+
+// 📱 Responsive fallback
+@media (max-width: 640px) {
+  .flex-label {
+    flex-direction: column;
+    align-items: flex-start;
+
+    label {
+      width: 100%;
+    }
+  }
+}
+
 .flex-wrap {
   display: flex;
   flex-wrap: wrap;

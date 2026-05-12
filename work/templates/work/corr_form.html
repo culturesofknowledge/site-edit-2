@@ -1,9 +1,7 @@
 {% extends "work/basic_form.html" %}
 {% block tabcontent %}
-    <div id="header_author" class="header toc-item">
-        <h2>Authors/senders</h2>
-    </div>
     <fieldset>
+        <legend id="header_author" class="toc-item">Authors/senders</legend>
         {% include "core/component/common_multi_rel_recref_formset.html" with multi_rel_recref_formset=author_formset recref_type='person' id_field=corr_form.selected_author_id label_add='Add author/sender:' help_text_type='author' placeholder='Please select or create author/sender, then click Save.' %}
 
         <div class="multi_rel_recref_container">
@@ -29,11 +27,8 @@
         {% include "core/component/comment_publication_formset.html" with comment_formset=author_comment_formset comment_title='Notes on authors/senders' header_id='header_comment_author' header_class='toc-sub-item' %}
     </fieldset>
 
-
-    <div id="header_addressees" class="header toc-item">
-        <h2>Addressees/recipients</h2>
-    </div>
     <fieldset>
+        <legend id="header_addressees" class="toc-item">Addressees/recipients</legend>
         {% include "core/component/common_multi_rel_recref_formset.html" with multi_rel_recref_formset=addressee_formset recref_type='person' id_field=corr_form.selected_addressee_id label_add='Add addressee:' help_text_type='addressee' placeholder='Please select or create addressee/recipient, then click Save.' %}
 
         <div class="multi_rel_recref_container">
@@ -58,24 +53,18 @@
 
     </fieldset>
 
-    <div id="header_earlier_letter" class="header toc-item">
-        <h2>Earlier letters answered by this one</h2>
-    </div>
     <fieldset>
+        <legend id="header_earlier_letter" class="toc-item"Earlier letters answered by this one</legend>
         {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_earlier_letter.update_formset new_form=recref_earlier_letter.new_form add_label='Add letter answered by this one:' no_date=True placeholder='Please select letter answered by this one, then click Save.' %}
     </fieldset>
 
-    <div id="header_later_letter" class="header toc-item">
-        <h2>Later letter</h2>
-    </div>
     <fieldset>
+        <legend id="header_later_letter" class="toc-item">Later letter</legend>
         {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_later_letter.update_formset new_form=recref_later_letter.new_form add_label='Add reply to this:' no_date=True placeholder='Please select reply to this, then click Save.' %}
     </fieldset>
 
-    <div id="header_matching" class="header toc-item">
-        <h2>Matching letter</h2>
-    </div>
     <fieldset>
+        <legend id="header_matching" class="toc-item">Matching letter</legend>
         {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_matching_letter.update_formset new_form=recref_matching_letter.new_form add_label='Add match:' no_date=True placeholder='Please select matching letter, then click Save.' %}
     </fieldset>
 
