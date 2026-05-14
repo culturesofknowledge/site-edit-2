@@ -35,9 +35,12 @@ class TestFileUpload(UploadIncludedTestCase):
         tf = tempfile.NamedTemporaryFile(suffix='.xlsx')
         wb.save(tf.name)
 
-        msg = r'Missing sheets: Manifestation, People, Places, Repositories, Work'
-        self.assertRaisesRegex(CofkExcelFileError, msg, CofkUploadExcelFile,
-                               self.new_upload, tf.name)
+        msg = (r"Could not determine upload type. File must contain either a Work sheet (standard upload),"
+               r" only a People sheet (bulk people), or only a Places sheet (bulk locations).")
+
+        with self.assertRaises(CofkExcelFileError) as ctx:
+            CofkUploadExcelFile(self.new_upload, tf.name)
+        self.assertEqual(str(ctx.exception), msg)
 
     def test_incomplete_headers(self):
         wb = Workbook()
@@ -164,7 +167,6 @@ class TestFileUpload(UploadIncludedTestCase):
         self.assertIn(msg, cuef.errors['people']['errors'][0]['errors'])
         self.assertIn(msg2, cuef.errors['people']['errors'][0]['errors'])
 
-
     def test_mismatching_people_one_exists(self):
         """
         This test replicates the above test except that one of the ids exists in the Union catalogue.
@@ -215,7 +217,7 @@ class TestFileUpload(UploadIncludedTestCase):
             'Manifestation': [[1, 1, "ALS", 2, "Bodleian", "test", "test", '', '', '', '', ''],
                               [2, 1, '', '', '', '', '', "P", "test", "test", '', '']],
             'Repositories': [['Bodleian', 2]]
-            }
+        }
 
         filename = self.create_excel_file(data)
 

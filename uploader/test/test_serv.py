@@ -10,7 +10,7 @@ from openpyxl.workbook import Workbook
 
 from core import constant
 from core.helper import perm_serv
-from core.models import Iso639LanguageCode
+from core.models import CofkLookupDocumentType, Iso639LanguageCode
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation
 from login.models import CofkUser
@@ -89,6 +89,9 @@ class UploadIncludedTestCase(UploaderTestCase):
 
         for loc in [782, 400285]:
             CofkUnionLocation(pk=loc).save()
+
+        for code, desc in [('ALS', 'Autograph Letter Signed'), ('P', 'Printed')]:
+            CofkLookupDocumentType.objects.create(document_type_code=code, document_type_desc=desc)
 
         for lang in ['eng', 'fra']:
             Iso639LanguageCode(code_639_3=lang).save()

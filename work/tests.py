@@ -18,8 +18,9 @@ from location import fixtures as location_fixtures
 from manifestation import fixtures as manif_fixtures
 from manifestation.models import CofkUnionManifestation
 from person import fixtures as person_fixtures
-from work import fixtures as work_fixtures
-from work import work_serv
+from work import fixtures as work_fixtures, work_serv
+from django.test import TestCase
+from work.work_serv import DisplayableWork
 from work.models import CofkUnionWork, CofkUnionLanguageOfWork
 from work.recref_adapter import WorkLocRecrefAdapter, WorkResourceRecrefAdapter, WorkCommentRecrefAdapter, \
     WorkPersonRecrefAdapter
@@ -449,17 +450,17 @@ class WorkSearchTests(EmloSeleniumTestCase, CommonSearchTests):
 
         expected_data = dict(
             editors_notes=target_work.editors_notes,
-            date_for_ordering='1122-11-22\nAs marked: work_dict_a.date_of_work_as_marked',
-            author_sender='person aaaa b. 1921',
+            date_for_ordering='1122-11-22\n\nAs marked: work_dict_a.date_of_work_as_marked',
+            author_sender='person aaaa, b. 1921',
             origin='location_name value\n\nAs marked: origin_as_marked value',
-            addressee='person bbbb d. 1922',
+            addressee='person bbbb, d. 1922',
             destination='location_name value 2',
             uncertainties='',
             images='',
             manifestations='ABC. Postmark: postage_marks a. id_number_or_shelfmark a printed_edition_details a',
             related_resources='Resources:\nresource_name a\nresource_name b',
             subjects='Astronomy',
-            other_details='Keywords: keywords value\n\nAbstract: abstract value\n\nLanguages: English (notes a), Japanese (notes b)\n\nNotes: comment a, comment b',
+            other_details='Keywords: keywords value\n\nAbstract: abstract value\n\nLanguages: English (notes a), Japanese (notes b)\n\nNotes: comment a ~ comment b',
             id=target_work.iwork_id,
         )
         assert_table_row(self, table_row_data_dict[target_work.iwork_id], expected_data)
@@ -513,3 +514,105 @@ class WorkSearchTests(EmloSeleniumTestCase, CommonSearchTests):
             self.find_element_by_css('.actionbox button[type=button]').click()
             self.find_element_by_css(f'input[name={k}]').send_keys(v)
             self.find_search_btn().click()
+
+    def test_flags_field_validation(self):
+        fixture_default_lookup_catalogue()
+
+        # Create test works with different flag combinations
+        work_date_inferred = CofkUnionWork(work_id='flag_test_100', iwork_id=100, date_of_work_inferred=1)
+        work_date_inferred.save()
+        work_date_uncertain = CofkUnionWork(work_id='flag_test_101', iwork_id=101, date_of_work_uncertain=1)
+        work_date_uncertain.save()
+        work_date_approximate = CofkUnionWork(work_id='flag_test_102', iwork_id=102, date_of_work_approx=1)
+        work_date_approximate.save()
+        work_author_inferred = CofkUnionWork(work_id='flag_test_103', iwork_id=103, authors_inferred=1)
+        work_author_inferred.save()
+        work_author_uncertain = CofkUnionWork(work_id='flag_test_104', iwork_id=104, authors_uncertain=1)
+        work_author_uncertain.save()
+        work_addressee_inferred = CofkUnionWork(work_id='flag_test_105', iwork_id=105, addressees_inferred=1)
+        work_addressee_inferred.save()
+        work_addressee_uncertain = CofkUnionWork(work_id='flag_test_106', iwork_id=106, addressees_uncertain=1)
+        work_addressee_uncertain.save()
+        work_origin_inferred = CofkUnionWork(work_id='flag_test_107', iwork_id=107, origin_inferred=1)
+        work_origin_inferred.save()
+        work_origin_uncertain = CofkUnionWork(work_id='flag_test_108', iwork_id=108, origin_uncertain=1)
+        work_origin_uncertain.save()
+        work_destination_inferred = CofkUnionWork(work_id='flag_test_109', iwork_id=109, destination_inferred=1)
+        work_destination_inferred.save()
+        work_destination_uncertain = CofkUnionWork(work_id='flag_test_110', iwork_id=110, destination_uncertain=1)
+        work_destination_uncertain.save()
+
+        test_cases = [
+            ("Date of work INFERRED", work_date_inferred),
+            ("Date of work UNCERTAIN", work_date_uncertain),
+            ("Date of work APPROXIMATE", work_date_approximate),
+            ("Author/sender INFERRED", work_author_inferred),
+            ("Author/sender UNCERTAIN", work_author_uncertain),
+            ("Recipient/Addressee INFERRED", work_addressee_inferred),
+            ("Recipient/Addressee UNCERTAIN", work_addressee_uncertain),
+            ("Origin INFERRED", work_origin_inferred),
+            ("Origin UNCERTAIN", work_origin_uncertain),
+            ("Destination INFERRED", work_destination_inferred),
+            ("Destination UNCERTAIN", work_destination_uncertain),
+        ]
+
+        self.goto_search_page()
+        self.find_search_btn().click()  # Initial search to load the page
+
+        for flag_string, expected_work in test_cases:
+            with self.subTest(flag_string=flag_string):
+                self.find_element_by_css('.actionbox button[type=button]').click()  # Clear previous search
+                flags_input = self.find_element_by_css('input[name="flags"]')
+                flags_input.send_keys(flag_string)
+                self.find_search_btn().click()
+
+                results = self.find_elements_by_css('#results_table tr[entry_id]')
+                self.assertEqual(len(results), 1, f"Expected 1 result for '{flag_string}', got {len(results)}")
+                self.assertEqual(int(results[0].get_attribute('entry_id')), expected_work.iwork_id)
+
+        invalid_test_cases = [
+            "Date INFERRED",
+            "Author INFERRED",
+            "Date APPROXIMATE",  # This was the original problematic case
+            "Date of work INFERRED EXTRA",
+            "Invalid Flag Combination",
+            "Date of work INFERRED UNCERTAIN", # Should not match as a single phrase
+        ]
+
+        for flag_string in invalid_test_cases:
+            with self.subTest(flag_string=flag_string):
+                self.find_element_by_css('.actionbox button[type=button]').click()  # Clear previous search
+                flags_input = self.find_element_by_css('input[name="flags"]')
+                flags_input.send_keys(flag_string)
+                self.find_search_btn().click()
+
+                results = self.find_elements_by_css('#results_table tr[entry_id]')
+                self.assertEqual(len(results), 0, f"Expected 0 results for invalid flag '{flag_string}', got {len(results)}")
+
+
+class DisplayableWorkTests(TestCase):
+    def test_date_for_ordering_with_default_empty_date(self):
+        # Case 1: date_of_work_std is DEFAULT_EMPTY_DATE_STR
+        work = CofkUnionWork(date_of_work_std=constant.DEFAULT_EMPTY_DATE_STR)
+        displayable_work = DisplayableWork(work)
+        self.assertEqual(displayable_work.date_for_ordering, constant.DEFAULT_EMPTY_DATE_STR)
+
+        # Case 2: date_of_work_std is a normal date
+        displayable_work = DisplayableWork(date_of_work_std='2023-01-15')
+        self.assertEqual(displayable_work.date_for_ordering, '2023-01-15')
+
+        # Case 3: date_of_work_std is empty (defaults to 9999-12-31), but year is set
+        work = CofkUnionWork(date_of_work_std=None, date_of_work_std_year=2024,
+                             date_of_work_std_month=2, date_of_work_std_day=29)
+        displayable_work = DisplayableWork(work)
+        self.assertEqual(displayable_work.date_for_ordering, constant.DEFAULT_EMPTY_DATE_STR)
+
+        # Case 4: date_of_work_std is empty (defaults to 9999-12-31), year is set, month/day are default
+        work = CofkUnionWork(date_of_work_std=None, date_of_work_std_year=2025) # Changed to None for consistency
+        displayable_work = DisplayableWork(work)
+        self.assertEqual(displayable_work.date_for_ordering, constant.DEFAULT_EMPTY_DATE_STR)
+
+        # Case 5: date_of_work_std is None (defaults to 9999-12-31) and date_of_work_std_year is None
+        work = CofkUnionWork(date_of_work_std=None, date_of_work_std_year=None)
+        displayable_work = DisplayableWork(work)
+        self.assertEqual(displayable_work.date_for_ordering, constant.DEFAULT_EMPTY_DATE_STR)

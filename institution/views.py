@@ -10,6 +10,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 
 from core import constant
 from core.export_data import cell_values, download_csv_serv
+from core.constant import TRUE_CHAR
 from core.helper import renderer_serv, query_serv, view_serv, perm_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.model_serv import ModelLike
@@ -68,8 +69,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
             'institution_name': ['institution_name', 'institution_synonyms'],
             'institution_city': ['institution_city', 'institution_city_synonyms'],
             'institution_country': ['institution_country', 'institution_country_synonyms'],
-            'resources': ['resources__resource_name', 'resources__resource_details',
-                          'resources__resource_url'],
+            'resources': ['resources__resource_name', 'resources__resource_details'],
             'images': ['images__image_filename']}
 
     @property
@@ -97,7 +97,12 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
         queries.extend(
             query_serv.create_queries_by_lookup_field(request_data, self.search_fields, self.search_field_combines)
         )
-        return self.create_queryset_by_queries(CofkUnionInstitution, queries, sort_by=sort_by).distinct()
+        queryset = query_serv.update_queryset(CofkUnionInstitution.objects.all(), CofkUnionInstitution, queries=queries, sort_by=sort_by).distinct()
+        queryset = queryset.prefetch_related(
+            'resources',
+            'images',
+        )
+        return queryset
 
     @property
     def compact_search_results_renderer_factory(self) -> RendererFactory:
@@ -113,7 +118,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
 
     @property
     def csv_export_setting(self):
-        if not self.has_perms(constant.PM_EXPORT_FILE_INST):
+        if not self.has_perms([constant.PM_EXPORT_FILE_INST]):
             return None
         return (lambda: view_serv.create_export_file_name('inst', 'csv'),
                 lambda: DownloadCsvHandler(InstCsvHeaderValues()).create_csv_file,
@@ -122,6 +127,7 @@ class InstSearchView(LoginRequiredMixin, DefaultSearchView, ABC):
 
 class InstInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitFormViewTemplate):
     permission_required = constant.PM_CHANGE_INST
+    raise_exception = True
 
     def resp_form_page(self, request, form):
         return render(request, 'institution/init_form.html', {'inst_form': form})
@@ -152,7 +158,7 @@ class InstInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitFormVi
 
 
 @login_required
-@permission_required(constant.PM_CHANGE_INST)
+@permission_required(constant.PM_CHANGE_INST, raise_exception=True)
 def full_form(request, pk):
     inst: CofkUnionInstitution = get_object_or_404(CofkUnionInstitution, pk=pk)
     inst_form = InstitutionForm(request.POST or None, instance=inst)
@@ -200,7 +206,7 @@ class InstQuickInitView(InstInitView):
 
 
 @login_required
-@permission_required(constant.PM_CHANGE_INST)
+@permission_required(constant.PM_CHANGE_INST, raise_exception=True)
 def return_quick_init(request, pk):
     inst: CofkUnionInstitution = CofkUnionInstitution.objects.get(institution_id=pk)
     return view_serv.render_return_quick_init(
@@ -228,6 +234,7 @@ class InstImageRecrefHandler(ImageRecrefHandler):
 
 class InstMergeChoiceView(PermissionRequiredMixin, LoginRequiredMixin, MergeChoiceViews):
     permission_required = constant.PM_CHANGE_INST
+    raise_exception = True
     @staticmethod
     def get_id_field():
         return CofkUnionInstitution.institution_id
@@ -238,6 +245,7 @@ class InstMergeChoiceView(PermissionRequiredMixin, LoginRequiredMixin, MergeChoi
 
 class InstMergeConfirmView(PermissionRequiredMixin, LoginRequiredMixin, MergeConfirmViews):
     permission_required = constant.PM_CHANGE_INST
+    raise_exception = True
     @property
     def target_model_class(self) -> Type[ModelLike]:
         return CofkUnionInstitution
@@ -245,6 +253,7 @@ class InstMergeConfirmView(PermissionRequiredMixin, LoginRequiredMixin, MergeCon
 
 class InstMergeActionView(PermissionRequiredMixin, LoginRequiredMixin, MergeActionViews):
     permission_required = constant.PM_CHANGE_INST
+    raise_exception = True
 
     @staticmethod
     def get_id_field():

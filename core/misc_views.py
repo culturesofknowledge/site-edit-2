@@ -5,7 +5,7 @@ from core import constant
 from core.helper import exporter_serv
 
 
-@permission_required(constant.PM_TRIGGER_EXPORTER)
+@permission_required(constant.PM_TRIGGER_EXPORTER, raise_exception=True)
 def trigger_export(request):
     exporter_serv.mark_exporter_pending()
     return redirect('login:dashboard')

@@ -24,10 +24,6 @@ function toggle_advanced_search_controls()  {
 
 }
 
-if (localStorage.getItem('advanced-search-toggle') === 'true') {
-    toggle_advanced_search_controls();
-    $("#advanced_search").prop("checked", true);
-}
 
 
 var emlojs = emlojs || {};
@@ -71,6 +67,9 @@ emlojs.selectable_service = {
 emlojs.recref_select_service = {
 
     setup_all: function () {
+
+        // hide the edit buttons as they are not required while selcting the row
+        $('.open-link-btn').hide();
 
         if (return_quick_init_vname) {
 
@@ -215,7 +214,6 @@ function setup_fieldset_toggle() {
 function setup_advanced_search_toggle() {
     $('#advanced_search').on('click', function () {
         toggle_advanced_search_controls();
-        localStorage.setItem('advanced-search-toggle', $('#advanced_search').prop('checked'));
     });
 
 }
@@ -281,8 +279,26 @@ function scrolling() {
 }
 
 function reset_form(form) {
+    let sort_by = form.elements['sort_by'] ? form.elements['sort_by'].value : null;
+    let order = form.elements['order'] ? form.elements['order'].value : null;
+
     localStorage.clear();
-    location.href = window.location.pathname;
+
+    let url = window.location.pathname;
+    let params = new URLSearchParams();
+
+    if (sort_by) {
+        params.append('sort_by', sort_by);
+    }
+    if (order) {
+        params.append('order', order);
+    }
+
+    if (params.toString()) {
+        url += '?' + params.toString();
+    }
+
+    location.href = url;
 }
 
 $(function () {

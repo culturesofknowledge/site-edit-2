@@ -3,7 +3,7 @@
 {% load cl_filters %}
 
 {% block content %}
-    <button class="sticky-btn inline_btn" onclick="location.href='/'; return false;">Cancel</button>
+    <button type="button" class="sticky-btn inline_btn" onclick="location.href='/'; return false;">Cancel</button>
     {% if save_perm|can_show_for_perm:perms %}
         <button type="submit" class="sticky-btn inline_btn"> Save</button>
         <button id="save_close_btn" type="submit" class="sticky-btn inline_btn" style="display: none">

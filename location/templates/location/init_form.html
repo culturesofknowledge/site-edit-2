@@ -7,7 +7,6 @@
     <script defer>
         document.addEventListener('DOMContentLoaded', (e) => {
             setup_location_form_listener();
-            setup_important_label();
         });
     </script>
 {% endblock %}
@@ -17,7 +16,6 @@
     <div class="form-core-div">
         <div class="form-col-left toc-host"></div>
         <div class="form-col-right">
-            <h1 class="align-center">Location</h1>
 
             <form method="post">
                 {% csrf_token %}

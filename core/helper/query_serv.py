@@ -3,7 +3,7 @@ import re
 from typing import Callable, Iterable, Any, Literal
 
 import more_itertools
-from django.db.models import F, QuerySet
+from django.db.models import F, QuerySet, Min, Max
 from django.db.models import Q, lookups
 from django.db.models.base import ModelBase
 from django.db.models.lookups import GreaterThanOrEqual, LessThanOrEqual, Exact
@@ -97,6 +97,14 @@ def create_queries_by_lookup_field(request_data: dict,
             log.warning(f'lookup fn not found -- [{field_name}][{lookup_key}]')
             continue
 
+        # Determine if this is a positive string lookup that should exclude nulls.
+        # Negation lookups (not_contain, not_start_with, etc.) must NOT exclude nulls,
+        # because NULL fields genuinely "do not contain" the search term.
+        is_string_lookup_with_value = lookup_key in [
+            'contains', 'starts_with', 'ends_with',
+            'equals',
+        ] and field_val is not None
+
         if search_fields_maps and field_name in search_fields_maps:
             # handle search_fields_maps
 
@@ -106,21 +114,51 @@ def create_queries_by_lookup_field(request_data: dict,
             conn_type = get_lookup_conn_type_by_lookup_key(lookup_key)
 
             _queries = []
-            for search_field in _names:
-                log.debug(f'query cond: field_name[{field_name}] search_field[{search_field}] '
-                          f'field_val[{field_val}] lookup_key[{lookup_key}]')
-                _queries.append(run_lookup_fn(lookup_fn, search_field, field_val))
-            yield query_utils.concat_queries(_queries, conn_type)
+            if lookup_key in ('not_contain', 'not_start_with', 'not_end_with', 'not_equal_to'):
+                # For negation with multi-field mappings, build positive OR query first, then negate.
+                # This avoids issues with separate JOINs on reverse relations.
+                positive_lookup_fn = {
+                    'not_contain': lookup_icontains_wildcard,
+                    'not_start_with': lookups.IStartsWith,
+                    'not_end_with': lookups.IEndsWith,
+                    'not_equal_to': lookups.IExact,
+                }.get(lookup_key)
+
+                for search_field in _names:
+                    log.debug(f'query cond: field_name[{field_name}] search_field[{search_field}] '
+                              f'field_val[{field_val}] lookup_key[{lookup_key}]')
+                    q_obj = run_lookup_fn(positive_lookup_fn, search_field, field_val)
+                    if is_string_lookup_with_value:
+                        q_obj &= Q(**{f'{search_field}__isnull': False})
+                    _queries.append(q_obj)
+                combined_q = query_utils.concat_queries(_queries, Q.OR)
+                if not isinstance(combined_q, Q):
+                    combined_q = Q(combined_q)
+                negated_q = ~combined_q
+                yield negated_q
+            else:
+                for search_field in _names:
+                    log.debug(f'query cond: field_name[{field_name}] search_field[{search_field}] '
+                              f'field_val[{field_val}] lookup_key[{lookup_key}]')
+                    q_obj = run_lookup_fn(lookup_fn, search_field, field_val)
+                    if is_string_lookup_with_value:
+                        q_obj &= Q(**{f'{search_field}__isnull': False})
+                    _queries.append(q_obj)
+                yield query_utils.concat_queries(_queries, conn_type)
 
         elif search_fields_fn_maps and field_name in search_fields_fn_maps:
             # handle search_fields_fn_maps
             log.debug(f'query cond: field_name[{field_name}] field_val[{field_val}] lookup_key[{lookup_key}]')
+            # For search_fields_fn_maps, the lookup function itself should handle nullability if needed
             yield search_fields_fn_maps[field_name](lookup_fn, field_name, field_val)
 
         else:
             # handle normal case
             log.debug(f'query cond: field_name[{field_name}] field_val[{field_val}] lookup_key[{lookup_key}]')
-            yield run_lookup_fn(lookup_fn, field_name, field_val)
+            q_obj = run_lookup_fn(lookup_fn, field_name, field_val)
+            if is_string_lookup_with_value:
+                q_obj &= Q(**{f'{field_name}__isnull': False})
+            yield q_obj
 
 
 def lookup_icontains_wildcard(field, value):
@@ -132,12 +170,19 @@ def lookup_icontains_wildcard(field, value):
         return lookups.IContains(field, value)
 
 
+def lookup_not_icontains_with_blank(field, value):
+    # Exclude records that contain the value
+    # The blank_q part is removed as ~Q(lookup_icontains_wildcard)
+    # should correctly handle cases where the related field is absent.
+    return ~Q(lookup_icontains_wildcard(field, value))
+
+
 choices_lookup_map = {
     'contains': lookup_icontains_wildcard,
     'starts_with': lookups.IStartsWith,
     'ends_with': lookups.IEndsWith,
     'equals': lookups.IExact,
-    'not_contain': cond_not(lookup_icontains_wildcard),
+    'not_contain': lookup_not_icontains_with_blank,
     'not_start_with': cond_not(lookups.IStartsWith),
     'not_end_with': cond_not(lookups.IEndsWith),
     'not_equal_to': cond_not(lookups.IExact),
@@ -162,10 +207,6 @@ some lookup key may only apply in first or last element,
 None == all element
 """
 lookup_idx_map = {
-    'starts_with': 0,
-    'not_start_with': 0,
-    'ends_with': -1,
-    'not_end_with': -1,
 }
 
 """
@@ -175,6 +216,9 @@ lookup_conn_type_map = {
     'is_blank': Q.AND,
     'is_null': Q.AND,
     'not_contain': Q.AND,
+    'not_start_with': Q.AND,
+    'not_end_with': Q.AND,
+    'not_equal_to': Q.AND,
 }
 
 nullable_lookup_keys = [
@@ -270,11 +314,15 @@ def build_year_overlap_q(prefix: str, a: int | None, b: int | None) -> Q | None:
     case2 = Q(**{f'{year1}__isnull': True}) & Q(**{f'{year2}__isnull': False})
     if a is not None:
         case2 &= Q(**{f'{year2}__gte': a})
+    if b is not None:
+        case2 &= Q(**{f'{year2}__lte': b})
 
     # Case 3: Only start present
     case3_base = Q(**{f'{year1}__isnull': False}) & Q(**{f'{year2}__isnull': True})
     # 3a: Open-ended forward (is_range==1) -> [year1, +inf)
     case3a = case3_base & Q(**{is_range: 1})
+    if a is not None:
+        case3a &= Q(**{f'{year1}__gte': a})
     if b is not None:
         case3a &= Q(**{f'{year1}__lte': b})
     # 3b: Exact point (is_range==0) -> [year1, year1]
@@ -283,6 +331,9 @@ def build_year_overlap_q(prefix: str, a: int | None, b: int | None) -> Q | None:
         case3b &= Q(**{f'{year1}__gte': a})
     if b is not None:
         case3b &= Q(**{f'{year1}__lte': b})
+
+    if a is not None and b is not None:
+        return case1 | case3b
 
     return case1 | case2 | case3a | case3b
 
@@ -314,12 +365,53 @@ def update_queryset(queryset: QuerySet,
         queryset = queryset.annotate(**annotate)
 
     if queries:
-        queryset = queryset.filter(
-            create_exists_by_mode(model_class, queries, annotate=annotate)
-        )
+        # Separate negated queries (e.g. "does not contain" on related fields) from positive ones.
+        # Negated queries must use ~Exists(positive) instead of Exists(~positive) to avoid
+        # incorrect results with LEFT JOINs on reverse relations.
+        positive_queries = []
+        negated_queries = []
+        for q in queries:
+            if isinstance(q, Q) and q.negated and len(q.children) == 1:
+                # Extract the inner positive Q and handle with ~Exists
+                inner_q = Q()
+                inner_q.add(q.children[0], Q.AND)
+                if hasattr(q.children[0], 'connector'):
+                    inner_q = q.children[0]
+                negated_queries.append(inner_q)
+            else:
+                positive_queries.append(q)
+
+        if positive_queries:
+            queryset = queryset.filter(
+                create_exists_by_mode(model_class, positive_queries, annotate=annotate)
+            )
+        for neg_q in negated_queries:
+            queryset = queryset.filter(
+                ~create_exists_by_mode(model_class, [neg_q], annotate=annotate)
+            )
 
     if sort_by:
-        queryset = queryset.order_by(*sort_by)
+        new_sort_by = []
+        for s in sort_by:
+            field_name = s.lstrip('-')
+            is_desc = s.startswith('-')
+
+            # Multi-valued fields (reverse relations like resources, images, comments)
+            # cause duplicates in the result set if sorted directly.
+            # Use Min/Max annotation to avoid duplicates and handle NULLs.
+            multi_valued_prefixes = ('resources__', 'images__', 'comments__')
+            if any(field_name.startswith(p) for p in multi_valued_prefixes):
+                annotated_field = f'sort_{field_name.replace("__", "_")}'
+                if is_desc:
+                    queryset = queryset.annotate(**{annotated_field: Max(field_name)})
+                    new_sort_by.append(F(annotated_field).desc(nulls_last=True))
+                else:
+                    queryset = queryset.annotate(**{annotated_field: Min(field_name)})
+                    new_sort_by.append(F(annotated_field).asc(nulls_first=True))
+            else:
+                new_sort_by.append(s)
+
+        queryset = queryset.order_by(*new_sort_by)
 
     log.debug('queryset sql\n: %s', convert_queryset_to_sql(queryset))
     return queryset
@@ -329,15 +421,66 @@ def create_recref_lookup_fn(rel_types: list, recref_field_name: str, cond_fields
     recref_name = '__'.join(recref_field_name.split('__')[:-1])
 
     def _fn(lookup_fn, f, v):
-        query = Q(**{
+        rel_type_query = Q(**{
             f'{recref_name}__relationship_type__in': rel_types,
         })
-        cond_query = create_q_by_field_names(
-            lookup_fn,
-            join_fields(recref_field_name, cond_fields),
-            v
-        )
-        return query & cond_query
+
+        lookup_key = get_lookup_key_by_lookup_fn(lookup_fn)
+
+        if lookup_key == 'is_blank':
+            # "is blank" means no matching recref exists at all, OR the related
+            # field value is empty/null.  Build a positive match for non-blank
+            # records and negate it so that works without any recref are included.
+            from cllib_django.query_utils import cond_not as _cond_not
+            not_blank_fn = _cond_not(is_blank)
+            non_blank_query = create_q_by_field_names(
+                not_blank_fn,
+                join_fields(recref_field_name, cond_fields),
+                v,
+                conn_type=Q.AND,
+            )
+            # Wrap the positive query (recref exists with non-blank content) in a
+            # single Q node so that the negation produces ~Q with exactly one child.
+            # update_queryset recognises this pattern and converts it to ~Exists(...).
+            return ~Q(rel_type_query & non_blank_query)
+
+        if lookup_key == 'not_blank':
+            # "not blank" means a matching recref exists with non-empty content
+            not_blank_fn = cond_not(is_blank)
+            non_blank_query = create_q_by_field_names(
+                not_blank_fn,
+                join_fields(recref_field_name, cond_fields),
+                v,
+                conn_type=Q.AND,
+            )
+            return rel_type_query & non_blank_query
+
+        if lookup_key in ('not_contain', 'not_start_with', 'not_end_with', 'not_equal_to'):
+            # For negation with multi-field mappings, build positive OR query first, then negate.
+            # This avoids issues with separate JOINs on reverse relations.
+            # Include rel_type_query so that only the specific relationship type is considered;
+            # without it, records matching the text in a *different* relationship type would be
+            # incorrectly excluded.
+            positive_lookup_fn = {
+                'not_contain': lookup_icontains_wildcard,
+                'not_start_with': lookups.IStartsWith,
+                'not_end_with': lookups.IEndsWith,
+                'not_equal_to': lookups.IExact,
+            }.get(lookup_key)
+            positive_q = create_q_by_field_names(
+                positive_lookup_fn,
+                join_fields(recref_field_name, cond_fields),
+                v,
+                conn_type=Q.OR,
+            )
+            return ~Q(rel_type_query & positive_q)
+        else:
+            cond_query = create_q_by_field_names(
+                lookup_fn,
+                join_fields(recref_field_name, cond_fields),
+                v
+            )
+            return rel_type_query & cond_query
 
     return _fn
 

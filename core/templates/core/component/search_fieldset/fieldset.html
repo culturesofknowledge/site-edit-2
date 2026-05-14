@@ -12,6 +12,8 @@
     {% block fields %}
     {% endblock %}
 
+    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+
 </fieldset>
 </div>
 

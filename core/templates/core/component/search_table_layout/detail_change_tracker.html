@@ -1,7 +1,7 @@
-
+{% load cl_filters %}
 
 {% if record.change_timestamp %}
-    {{ record.change_timestamp|date:"d M Y H:i" }}
+    {{ record.change_timestamp|standard_datetime }}
 
 {% endif %}
 

@@ -95,21 +95,35 @@ class CofkUnionPerson(models.Model, RecordTracker):
         """
         Used by work.creators_for_display and work.addressees_for_display
         """
-        dob = str(self.date_of_birth_year)
-        dod = str(self.date_of_death_year)
+        dob = str(self.date_of_birth_year) if self.date_of_birth_year else ''
+        dod = str(self.date_of_death_year) if self.date_of_death_year else ''
+        fl_start = str(self.flourished_year) if self.flourished_year else ''
+        fl_end = str(self.flourished2_year) if self.flourished2_year else ''
 
-        if self.date_of_death_is_range == 1:
-            dod += ' or after'
+        date_str = ''
 
-        if self.date_of_birth_is_range == 1:
-            dob += ' or before'
+        if dob and dod:
+            if self.date_of_death_is_range == 1:
+                dod += ' or after'
+            if self.date_of_birth_is_range == 1:
+                dob += ' or before'
+            date_str = f'{dob}-{dod}'
+        elif dob:
+            if self.date_of_birth_is_range == 1:
+                dob += ' or before'
+            date_str = f'b. {dob}'
+        elif dod:
+            if self.date_of_death_is_range == 1:
+                dod += ' or after'
+            date_str = f'd. {dod}'
+        elif fl_start:
+            if fl_end and fl_end != fl_start:
+                date_str = f'fl. {fl_start}-{fl_end}'
+            else:
+                date_str = f'fl. {fl_start}'
 
-        if self.date_of_birth_year and self.date_of_death_year:
-            person = f'{self.foaf_name}, {dob}-{dod}'
-        elif self.date_of_birth_year:
-            person = f'{self.foaf_name} b. {dob}'
-        elif self.date_of_death_year:
-            person = f'{self.foaf_name} d. {dod}'
+        if date_str:
+            person = f'{self.foaf_name}, {date_str}'
         else:
             person = str(self.foaf_name)
 

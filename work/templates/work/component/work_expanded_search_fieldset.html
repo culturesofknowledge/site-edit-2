@@ -114,6 +114,9 @@
     <!-- People mentioned -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.mentioned_searchable field_lookup=form.mentioned_searchable_lookup %}
 
+    <!-- Places mentioned -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.places_mentioned_searchable field_lookup=form.places_mentioned_searchable_lookup %}
+
     <!-- Keywords -->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.keywords field_lookup=form.keywords_lookup %}
 
@@ -143,6 +146,8 @@
 
     <!-- Last changed by-->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.change_user field_lookup=form.change_user_lookup %}
+
+    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
 
     <script>
 

@@ -8,41 +8,54 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 
 from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, \
-    REL_TYPE_MENTION
+    REL_TYPE_MENTION, REL_TYPE_MENTION_PLACE, REL_TYPE_WORK_IS_REPLY_TO, REL_TYPE_WORK_MATCHES
 from core.helper import data_serv,query_serv
 from core.constant import DEFAULT_MONTH, DEFAULT_DAY, DEFAULT_EMPTY_DATE_STR
 from location import location_serv
 from person import person_serv
 from work.models import CofkUnionWork
+from core.helper import query_cache_serv
+from manifestation import manif_serv
 
 log = logging.getLogger(__name__)
 HIDDEN_DATE_STD = '1900-01-01'
+
+
+
+
+def _format_work_date(year, month, day) -> str:
+    if all((year, month, day)):
+        return date(year=year, month=month, day=day).strftime('%-d %b %Y')
+    elif all((year, month)):
+        return date(year=year, month=month, day=1).strftime('%b %Y')
+    elif year:
+        return str(year)
+    return 'Unknown date'
 
 
 def get_recref_display_name(work: CofkUnionWork) -> str:
     if not work:
         return ''
 
-    if all((work.date_of_work_std_year,
-            work.date_of_work_std_month,
-            work.date_of_work_std_day,)):
-        work_date = date(year=work.date_of_work_std_year,
-                         month=work.date_of_work_std_month,
-                         day=work.date_of_work_std_day)
-        work_date_str = work_date.strftime('%-d %b %Y')
+    work_date_str = _format_work_date(work.date_of_work_std_year,
+                                      work.date_of_work_std_month,
+                                      work.date_of_work_std_day)
 
-    elif all((work.date_of_work_std_year,
-              work.date_of_work_std_month,)):
-        work_date = date(year=work.date_of_work_std_year,
-                         month=work.date_of_work_std_month,
-                         day=1)
-        work_date_str = work_date.strftime('%b %Y')
-
-    elif work.date_of_work_std_year:
-        work_date_str = str(work.date_of_work_std_year)
-
-    else:
-        work_date_str = 'Unknown date'
+    if work.date_of_work_std_is_range:
+        has_from = work.date_of_work_std_year is not None
+        has_to = work.date_of_work2_std_year is not None
+        if has_from and not has_to:
+            work_date_str = f'On or after {work_date_str}'
+        elif has_to and not has_from:
+            work_date2 = _format_work_date(work.date_of_work2_std_year,
+                                           work.date_of_work2_std_month,
+                                           work.date_of_work2_std_day)
+            work_date_str = f'On or before {work_date2}'
+        elif has_from and has_to:
+            work_date2 = _format_work_date(work.date_of_work2_std_year,
+                                           work.date_of_work2_std_month,
+                                           work.date_of_work2_std_day)
+            work_date_str = f'{work_date_str} to {work_date2}'
 
     from_person_str = join_names(find_related_person_names(work, REL_TYPE_CREATED))
     from_person_str = from_person_str or 'unknown author/sender'
@@ -114,13 +127,27 @@ class DisplayableWork(CofkUnionWork):
 
     @property
     def date_for_ordering(self):
-        # Prefer the normalized standard date string if present and not the default empty sentinel
-        if self.date_of_work_std and self.date_of_work_std != DEFAULT_EMPTY_DATE_STR:
+        # If there is a "to" date (range), use the "to" date for ordering
+        if self.date_of_work2_std_year:
+            import calendar
+            year = int(self.date_of_work2_std_year)
+            # For "to" date, default blank month to 12 (end of year)
+            month = int(self.date_of_work2_std_month or 12)
+            # Default blank day to last day of the month (handles leap years)
+            day = int(self.date_of_work2_std_day or calendar.monthrange(year, month)[1])
+            return f"{year:04d}-{month:02d}-{day:02d}"
+
+        # None means the object was not saved; treat as no date
+        if self.date_of_work_std is None:
+            return DEFAULT_EMPTY_DATE_STR
+
+        # A real date (not the sentinel) can be returned directly
+        if self.date_of_work_std != DEFAULT_EMPTY_DATE_STR:
             return self.date_of_work_std
 
-        # Otherwise, construct a full YYYY-MM-DD using defaults for missing month/day
+        # Sentinel stored: construct from individual year/month/day fields if available
         if not self.date_of_work_std_year:
-            return ''
+            return DEFAULT_EMPTY_DATE_STR
 
         year = int(self.date_of_work_std_year)
         month = int(self.date_of_work_std_month or DEFAULT_MONTH)
@@ -161,11 +188,28 @@ class DisplayableWork(CofkUnionWork):
 
     @property
     def manifestations_for_display(self) -> List[str]:
-        # Derived value for CofkUnionQueryable
-        # Example:
-        # Letter.Bodleian Library, University of Oxford: MS.Locke c. 19, f. 48 - - Printed copy. ‘The Clarendon Edition of the Works of John Locke: The Correspondence of John Locke’, ed.E.S.de Beer, 8 vols(Oxford: OUP, 1978), vol. 4, letter 1282.
-        # see https://github.com/culturesofknowledge/site-edit/blob/9a74580d2567755ab068a2d8761df8f81718910e/docker-postgres/cofk-empty.postgres.schema.sql#L6541
-        manif_names = [m.to_string() for m in self.manif_set.all()]
+        manif_type_order = [
+            'Letter',
+            'Scribal copy',
+            'Draft',
+            'Extract',
+            'Printed copy',
+            'Digital copy',
+            'Other',
+        ]
+        manif_type_map = query_cache_serv.create_lookup_doc_desc_map()
+
+        def get_sort_key(manif):
+            display_name = manif_type_map.get(manif.manifestation_type, 'Other')
+            try:
+                return manif_type_order.index(display_name)
+            except ValueError:
+                return len(manif_type_order)  # Place 'Other' or unknown types at the end
+
+        # Get all manifestations and sort them
+        sorted_manifs = sorted(self.manif_set.all(), key=get_sort_key)
+
+        manif_names = [m.to_string() for m in sorted_manifs]
         return manif_names
 
     @property
@@ -183,21 +227,52 @@ class DisplayableWork(CofkUnionWork):
 
     def queryable_people(self, rel_type: str, is_details: bool = False) -> str:
         # Derived value for CofkUnionQueryable
-        return ", ".join([p.to_string(is_details=is_details) for p in self.find_persons_by_rel_type(rel_type)])
+        return ' ~ '.join([p.to_string(is_details=is_details) for p in self.find_persons_by_rel_type(rel_type)])
 
     @property
     def people_mentioned(self):
         return self.queryable_people(REL_TYPE_MENTION)
 
     @property
+    def places_mentioned(self) -> str:
+        return ' ~ '.join([l.location_name for l in self.find_locations_by_rel_type(REL_TYPE_MENTION_PLACE) if l.location_name])
+
+    def _work_link_with_id(self, work):
+        return data_serv.endcode_url_content(
+            reverse("work:overview_form", args=[work.iwork_id]),
+            f'[Letter ID: {work.iwork_id}] {work.description}',
+        )
+
+    @property
     def related_works(self) -> str:
-        links = [
-            data_serv.endcode_url_content(
-                reverse("work:overview_form", args=[t.work_from.iwork_id]),
-                t.work_from.description,
-            ) for t in (self.work_to_set.all() or [])
+        sections = []
+
+        # "Reply to" — this work is a reply to earlier letters (work_from_set with is_reply_to)
+        reply_to_links = [
+            self._work_link_with_id(t.work_to)
+            for t in self.work_from_set.filter(relationship_type=REL_TYPE_WORK_IS_REPLY_TO)
         ]
-        return ', '.join(links)
+        if reply_to_links:
+            sections.append('Reply to: ' + ', '.join(reply_to_links))
+
+        # "Answered by" — later letters that are replies to this work (work_to_set with is_reply_to)
+        answered_by_links = [
+            self._work_link_with_id(t.work_from)
+            for t in self.work_to_set.filter(relationship_type=REL_TYPE_WORK_IS_REPLY_TO)
+        ]
+        if answered_by_links:
+            sections.append('Answered by: ' + ', '.join(answered_by_links))
+
+        # "Matching letter" — bidirectional matches
+        matching_links = []
+        for t in self.work_from_set.filter(relationship_type=REL_TYPE_WORK_MATCHES):
+            matching_links.append(self._work_link_with_id(t.work_to))
+        for t in self.work_to_set.filter(relationship_type=REL_TYPE_WORK_MATCHES):
+            matching_links.append(self._work_link_with_id(t.work_from))
+        if matching_links:
+            sections.append('Matching letter: ' + ', '.join(matching_links))
+
+        return ' | '.join(sections)
 
     @property
     def related_resources(self) -> str:
@@ -230,6 +305,9 @@ class DisplayableWork(CofkUnionWork):
         if people_mentioned := self.people_mentioned:
             _other_details.append(f'<strong>People mentioned</strong>: {people_mentioned}')
 
+        if places_mentioned := self.places_mentioned:
+            _other_details.append(f'<strong>Places mentioned</strong>: {places_mentioned}')
+
         return mark_safe('<br/><br/>'.join(_other_details))
 
     @property
@@ -238,7 +316,7 @@ class DisplayableWork(CofkUnionWork):
 
     @property
     def general_notes(self) -> str:
-        return ', '.join([c.comment for c in self.general_comments])
+        return ' ~ '.join([c.comment for c in self.general_comments])
 
     @property
     def catalogue(self) -> str:
@@ -366,6 +444,12 @@ def is_hidden_work(work: CofkUnionWork, cached_catalogue_status: dict[Any, int] 
             not is_catalogue_published or
             work.date_of_work_std == HIDDEN_DATE_STD)
 
+def _is_negated_lookup(lookup_fn) -> bool:
+    """Return True if lookup_fn corresponds to a negation search operator."""
+    lookup_key = query_serv.get_lookup_key_by_lookup_fn(lookup_fn)
+    return lookup_key in ('not_contain', 'not_start_with', 'not_end_with', 'not_equal_to')
+
+
 def lookup_manifestations_searchable(lookup_fn, field_name: str, value: str) -> Q:
     """
     Allow combining document type and repository (and more terms) using % as an ordered wildcard separator.
@@ -409,7 +493,43 @@ def lookup_manifestations_searchable(lookup_fn, field_name: str, value: str) -> 
 
         manif_q &= segment_q
 
-    return Exists(CofkUnionManifestation.objects.filter(manif_q, work_id=OuterRef('pk')))
+    exists_q = Exists(CofkUnionManifestation.objects.filter(manif_q, work_id=OuterRef('pk')))
+    if _is_negated_lookup(lookup_fn):
+        return ~exists_q
+    return exists_q
+
+
+def _parse_person_search_parts(segment: str) -> list:
+    """
+    Split a person search segment by commas into individual search terms.
+    Also recognise date ranges like '1630-1679' and split them into separate
+    birth/death year tokens so that each part can be matched independently.
+
+    Name-only parts (non-date) are kept together as a single comma-separated
+    string so that 'smith, john' matches a single person field containing both
+    words, rather than allowing 'smith' and 'john' to match different people.
+    """
+    raw_parts = [p.strip() for p in segment.split(',') if p.strip()]
+    name_parts = []
+    date_parts = []
+    for part in raw_parts:
+        # Detect a year range pattern like "1630-1679"
+        m = re.match(r'^(\d{4})\s*-\s*(\d{4})$', part)
+        if m:
+            date_parts.append(m.group(1))
+            date_parts.append(m.group(2))
+        elif re.match(r'^\d{4}$', part):
+            # Single year like "1630"
+            date_parts.append(part)
+        else:
+            name_parts.append(part)
+
+    parts = []
+    if name_parts:
+        # Keep name parts as a single string so they match the same field
+        parts.append(', '.join(name_parts))
+    parts.extend(date_parts)
+    return parts
 
 
 def lookup_person_searchable(lookup_fn, field_name: str, value: str, rel_types: List[str]) -> Q:
@@ -430,23 +550,36 @@ def lookup_person_searchable(lookup_fn, field_name: str, value: str, rel_types: 
         'person__person_aliases',
     ]
 
+    negate = _is_negated_lookup(lookup_fn)
+
     pre_filter_q = Q()
     for segment in segments:
+        parts = _parse_person_search_parts(segment)
+
+        # Each part must match the SAME person record
         person_q = Q()
-        for field in person_fields:
-            person_q |= Q(**{f'{field}__icontains': segment})
+        for part in parts:
+            part_q = Q()
+            for field in person_fields:
+                part_q |= Q(**{f'{field}__icontains': part})
 
-        # Check year detail (constructed in StringAgg)
-        # Year detail is: b. {birth} | d. {death} | {birth}-{death}
-        # We can approximate this by checking birth and death years directly
-        person_q |= Q(person__date_of_birth_year__icontains=segment)
-        person_q |= Q(person__date_of_death_year__icontains=segment)
+            # Check year detail (constructed in StringAgg)
+            # Year detail is: b. {birth} | d. {death} | {birth}-{death}
+            # We can approximate this by checking birth and death years directly
+            part_q |= Q(person__date_of_birth_year__icontains=part)
+            part_q |= Q(person__date_of_death_year__icontains=part)
 
-        pre_filter_q &= Exists(CofkWorkPersonMap.objects.filter(
+            person_q &= part_q
+
+        exists_q = Exists(CofkWorkPersonMap.objects.filter(
             person_q,
             work_id=OuterRef('pk'),
             relationship_type__in=rel_types
         ))
+        if negate:
+            pre_filter_q &= ~exists_q
+        else:
+            pre_filter_q &= exists_q
 
     return pre_filter_q
 
@@ -468,16 +601,22 @@ def lookup_location_searchable(lookup_fn, field_name: str, value: str, rel_types
         'location__location_synonyms',
     ]
 
+    negate = _is_negated_lookup(lookup_fn)
+
     pre_filter_q = Q()
     for segment in segments:
         loc_q = Q()
         for field in location_fields:
             loc_q |= Q(**{f'{field}__icontains': segment})
 
-        pre_filter_q &= Exists(CofkWorkLocationMap.objects.filter(
+        exists_q = Exists(CofkWorkLocationMap.objects.filter(
             loc_q,
             work_id=OuterRef('pk'),
             relationship_type__in=rel_types
         ))
+        if negate:
+            pre_filter_q &= ~exists_q
+        else:
+            pre_filter_q &= exists_q
 
     return pre_filter_q

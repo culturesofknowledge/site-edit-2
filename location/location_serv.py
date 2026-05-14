@@ -1,4 +1,7 @@
+import re
+
 from django.urls import reverse
+from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
 from location.models import CofkUnionLocation
@@ -25,9 +28,13 @@ class DisplayableLocation(CofkUnionLocation):
 
 
     def display_location(self) -> str:
-        location = self.location_name
+        location = escape(self.location_name)
 
         if self.location_synonyms:
-            location += f'\n\nAlternative names: {self.location_synonyms}'
+            items = re.split(r'[;\r\n]+', str(self.location_synonyms))
+            items = [i.strip() for i in items if i and i.strip()]
+            if items:
+                synonyms_str = '\n'.join(escape(i) for i in items)
+                location += f'\n<div class="alt_names_container"><span class="alt_names_title">Alternative names:</span>\n{synonyms_str}</div>'
 
         return mark_safe(location)

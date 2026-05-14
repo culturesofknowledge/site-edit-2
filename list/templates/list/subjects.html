@@ -5,12 +5,15 @@
 
     {% include "core/component/messages.html" %}
 
-    <p>An subject can only be deleted if no works are associated with it, in
+    {%  if constant.PM_CHANGE_SUBJECT in perms %}
+    <p>A subject can only be deleted if no works are associated with it, in
         which case a delete button is displayed alongside the save button.</p>
+    {% endif %}
     <p>If any works are associated with a subject the number of works is displayed that links to search
         results for all works of that subject.</p>
 
-        <fieldset class="lookup_fieldset">
+    {%  if constant.PM_CHANGE_SUBJECT in perms %}
+    <fieldset class="lookup_fieldset">
         <legend>Add new subject</legend>
         <form method="post">
             {% csrf_token %}
@@ -21,11 +24,12 @@
             <input type="submit" class="btn" value="Add" name="add">
         </form>
     </fieldset>
+    {% endif %}
 
     {% if paginator.count > 20 %}
 
     <div class="result_count">
-        <h2>{{ page_obj|get_results_on_page }} out of {{ paginator.count | floatformat:'g' }} roles</h2>
+        <h2>{{ page_obj|get_results_on_page }} out of {{ paginator.count | floatformat:'g' }} records</h2>
     </div>
 
     {% endif %}
@@ -48,8 +52,10 @@
 
                 {% if c.work_count > 0 %}
                 <label>Number of works:&nbsp;</label><a href="{% url 'work:search' %}?&subjects_lookup=equals&subjects={{ c.subject_desc|urlencode }}" target="_blank">{{ c.work_count }}</a><br/>
-                <input type="submit" class="btn" value="Save" name="save">
-                {% else %}
+                {%  if constant.PM_CHANGE_SUBJECT in perms %}
+                    <input type="submit" class="btn" value="Save" name="save">
+                {% endif %}
+                {% elif constant.PM_CHANGE_SUBJECT in perms %}
                 <input type="submit" class="btn inline_btn" value="Save" name="save">
                 <input type="submit" class="btn inline_btn" value="Delete" name="delete">
 

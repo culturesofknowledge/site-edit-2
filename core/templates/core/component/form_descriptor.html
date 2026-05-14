@@ -1,3 +1,4 @@
+{% load cl_filters %}
 {% if descriptor and descriptor.name %}
     <div class="form-descriptor">
         <div class="desc-name">
@@ -6,11 +7,13 @@
     </div>
     <div class="margin-bottom sub-form-desc">
         <small>
+            <i>
             <span class="desc-id">{{ descriptor.model_name }} ID {{ descriptor.id }}.</span>
             {% if descriptor.change_timestamp %}
-                Last change {{ descriptor.change_timestamp }}
-                by {{ descriptor.change_user }}
+                Last change {{ descriptor.change_timestamp|standard_datetime }}
+                    by {{ descriptor.change_user }}
             {% endif %}
+            </i>
         </small>
     </div>
 {% endif %}

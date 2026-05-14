@@ -3,6 +3,7 @@ from django.contrib.auth.models import PermissionsMixin, UserManager
 from django.db import models
 
 from core.models import CofkUserSavedQuery
+from core import constant
 
 
 class CofkUser(AbstractBaseUser, PermissionsMixin):
@@ -21,6 +22,10 @@ class CofkUser(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'username'
+
+    @property
+    def is_supervisor(self):
+        return self.groups.filter(name=constant.ROLE_SUPER).exists()
 
     @property
     def has_saved_queries(self):

@@ -2,20 +2,29 @@
 .url_checker_div {
   display: flex;
 
-  button {
-    background-color: black;
+  input {
+    flex: 1;
+    min-width: 0;
   }
 
+  .btn {
+    white-space: nowrap;
+    margin-left: 10px;
+    flex-shrink: 0;
+  }
 }
 
 .standtext_btn {
-  border-style: dashed;
-  border-width: 1px;
-  border-color: black;
+  background: #f5f5f5;
+  padding: 10px;
   margin-right: 10px;
   margin-top: -2px;
   margin-bottom: 15px;
   cursor: pointer;
+}
+
+.margin-bottom:has(.res_standtext) .row-no-margin {
+  flex-wrap: wrap;
 }
 
 .record_tracker_label {
@@ -35,7 +44,7 @@ tr.selectable_entry:not(.selected):hover {
 }
 
 .selectable_entry.selected {
-  background-color: cadetblue;
+  background-color: #97c4eb;
 }
 
 .menu-item {
@@ -133,9 +142,54 @@ nav.flex-space-between {
   justify-content: left;
 
   .choice-item {
-    width: 40%;
+    width: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-right: 1rem;
+
+    label {
+      margin-bottom: 0;
+      font-weight: normal;
+    }
+
+    input {
+      margin-bottom: 0;
+    }
   }
 
+}
+
+// Roles/titles (person) and subjects (work) need 4-column layout
+fieldset:has(#header_roles) .choices-container .choice-item,
+fieldset:has(#header_abstract) .choices-container .choice-item {
+  width: 25%;
+  margin-right: 0;
+  margin-bottom: 10px;
+
+  .date-fields-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 1rem;
+
+    .choices-container .choice-item {
+      width: auto;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-right: 1rem;
+
+      label {
+        margin-bottom: 0;
+        font-weight: normal;
+      }
+
+      input {
+        margin-bottom: 0;
+      }
+    }
+  }
 }
 
 .issues-date-ct {
@@ -157,13 +211,14 @@ nav.flex-space-between {
 }
 
 .button-row button {
-    margin-right: 8px;
+  margin-right: 8px;
 }
 
 .inline-from-to {
   display: flex;
   flex-wrap: wrap;
   flex-direction: row;
+  align-items: baseline;
 
   & > label:first-of-type {
     width: 100%;
@@ -175,9 +230,6 @@ nav.flex-space-between {
     margin: 0;
   }
 
-  small {
-    margin: auto 0;
-  }
 }
 
 .row-spaced {
@@ -237,20 +289,21 @@ nav.flex-space-between {
 
 .multi_rel_recref_container {
   display: grid;
-  grid-template-columns: 25fr 75fr;
+  grid-template-columns: 12fr 75fr;
   grid-row-gap: 8px;
   width: 100%;
   font-size: $typescale-7;
 
   & > .grid-item {
     background-color: #f2f2f2;
+    padding: 0.8em;
 
     & > .name {
       font-size: $typescale-4;
     }
   }
 
-  & > label, span{
+  & > label, span {
     font-size: 1.44em;
   }
 
@@ -289,6 +342,8 @@ nav.flex-space-between {
     margin-top: auto;
     margin-bottom: auto;
     width: 70%;
+    background-color: #f2f2f2;
+    padding: 0.8em;
   }
 
   .recref-del {
@@ -396,10 +451,10 @@ nav.flex-space-between {
   }
 
   .sf-search-div {
-      position: absolute;
-      width: 100%;
-      z-index: 1000;
-      background-color: white;
+    position: absolute;
+    width: 100%;
+    z-index: 1000;
+    background-color: white;
   }
 
   .sf-list {
@@ -451,6 +506,7 @@ nav.flex-space-between {
 // for lang_section
 .lang-item {
   @extend .row-no-margin;
+  align-items: baseline;
 
   & > .lang-label {
     @extend .col--1of5;
@@ -553,6 +609,7 @@ table.suggestion tbody tr th {
 .btn-text-width {
   width: fit-content;
 }
+
 input.btn-text-width {
   padding: 0px 5px;
 }
@@ -564,22 +621,24 @@ h2, h3 {
 }
 
 .multi-rel-recref-container {
-    margin-bottom: 15px;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    background-color: #f9f9f9;
+  margin-bottom: 15px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9;
 }
 
 .info-message {
-    color: #555;
-    font-size: 0.9em;
-    background-color: #eef4ff;
-    padding: 10px;
-    border-left: 3px solid #007bff;
+  color: #555;
+  font-size: 0.9em;
+  background-color: #eef4ff;
+  padding: 10px;
+  border-left: 3px solid #007bff;
 }
 
-
+.messages {
+  clear: both;
+}
 
 // Suggestion filter styling: add left/right padding and improve spacing/legibility
 #f_filter {
@@ -616,5 +675,17 @@ h2, h3 {
   border-color: #c6d8ff;
 }
 
-
-
+.suggestion-details {
+  dt {
+    display: block;
+    margin-bottom: 0.25rem;
+    &::after {
+      content: ":";
+    }
+  }
+  dd {
+    display: block;
+    margin-left: 0;
+    margin-bottom: 1rem;
+  }
+}

@@ -1,3 +1,4 @@
+{% load cl_filters %}
 <table>
     <thead>
     <tr>
@@ -14,7 +15,7 @@
     {% for r in search_results %}
         <tr class="selectable_entry">
 
-            <td>{{ r.change_timestamp|date:"d M Y H:i" }} by {{ r.change_user }}</td>
+            <td>{{ r.change_timestamp|standard_datetime }} by {{ r.change_user }}</td>
 
             <td>
                 <div>

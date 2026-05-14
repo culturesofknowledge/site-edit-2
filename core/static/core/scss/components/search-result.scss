@@ -20,7 +20,17 @@
 .alert-octagon {
   width: 24px;
   height: 38px;
-  stroke: red;
+  stroke: darkgrey;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+
+}
+
+.alert-octagon-delete {
+  width: 24px;
+  height: 38px;
+  stroke: #800020;
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -95,10 +105,6 @@ td.text-heavy {
     margin: unset;
 }
 
-.simplified_query ul li, span {
-    font-size: $typescale-6;
-}
-
 .result_count {
     float: left;
 }
@@ -133,24 +139,71 @@ td.text-heavy {
 
   /* Robust text wrapping to avoid layout blowouts */
   white-space: normal;           /* allow wrapping */
-  word-break: normal;            /* reset word-break to avoid breaking normal words */
-  overflow-wrap: anywhere;       /* modern browsers, allows breaking long tokens only if necessary */
-  word-wrap: break-word;         /* traditional/Safari support, similar to overflow-wrap */
-  hyphens: auto;                 /* nicer long-word breaks where supported */
+  word-break: normal;            /* only break at natural break points (spaces, hyphens) */
+  overflow-wrap: break-word;     /* force-break only when a token truly overflows (e.g. long URLs) */
+  word-wrap: break-word;         /* traditional/Safari support */
+  hyphens: none;                 /* prevent browser from auto-hyphenating words */
   
   /* Safari specific fix for table-cells: sometimes they need a little help 
      to respect wrapping when they have long unbreakable strings */
   & > div {
-     overflow-wrap: anywhere;
+     overflow-wrap: break-word;
      word-wrap: break-word;
   }
 }
 
-/* Slightly narrower utility columns where content is typically short */
-#results_table td:nth-child(7),  /* flags / icons column */
-#results_table td:nth-child(8),  /* images */
-#results_table td:nth-child(13) { /* ID */
-  max-width: 8.75em; /* 140px -> 8.75em */
+/* Column width utility classes — applied via class on both <th> and <td> */
+
+/* ID: shrink to content width; header is just "ID" so naturally narrow */
+#results_table .col-id {
+  min-width: 2.5em;
+  max-width: 8em;
+}
+
+/* Last-edit / date column: wide enough for "18 Dec 2025" on one line */
+#results_table .col-last-edit {
+  min-width: 8em;
+  max-width: 11em;
+}
+
+/* Count columns (Sent, Rec'd, Ment'd, etc.): all the same narrow width */
+#results_table .col-count {
+  min-width: 2.5em;
+  max-width: 5em;
+}
+
+/* Year columns (Born, Died, Fl.): fits one year; a range wraps to two lines */
+#results_table .col-year {
+  min-width: 2.5em;
+  max-width: 5em;
+}
+
+/* Very narrow (Sex, Org.?): as narrow as possible */
+#results_table .col-narrow {
+  min-width: 1.5em;
+  max-width: 5em;
+}
+
+/* ISO-format ordering date (1690-03-31): prevent hyphens causing mid-date line breaks */
+#results_table .col-date {
+  min-width: 2.5em;
+  max-width: 9em;
+}
+
+/* nowrap only on data cells — header text "Date for ordering" must still wrap */
+#results_table td.col-date {
+  white-space: nowrap;
+
+  /* "As marked:" text inside can still wrap normally */
+  p {
+    white-space: normal;
+  }
+}
+
+/* Wide columns: more room for text-heavy content */
+#results_table .col-wide {
+  min-width: 10em;
+  max-width: 22em;
 }
 
 /* Allow multi-item lists inside cells to wrap nicely without extra spacing */
@@ -177,4 +230,29 @@ td.text-heavy {
   -webkit-overflow-scrolling: touch; /* smooth scrolling on iOS */
   overscroll-behavior: contain;  /* prevent scroll chaining to the page */
   border: 1px solid $light-grey;
+}
+
+.img-thumbnail {
+  width: 60px;
+}
+
+.img-placeholder-link {
+  display: inline-block;
+  width: 60px;
+  height: 60px;
+  background: $faint-grey;
+  text-align: center;
+  line-height: 60px;
+  font-size: 10px;
+  vertical-align: middle;
+}
+
+.alt_names_container {
+  border-top: 1px solid $midnight-15;
+  margin-top: $space-xs;
+  padding-top: $space-xs;
+}
+
+.alt_names_title {
+  font-weight: bold;
 }

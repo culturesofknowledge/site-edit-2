@@ -35,15 +35,6 @@
         <div class="form-col-left toc-host"></div>
         <div class="form-col-right">
 
-            <h1 class="align-center">
-                {% if is_org_form %}
-                    Organization
-                {% else %}
-                    Person
-                {% endif %}
-            </h1>
-
-
             <div>
                 {{ person_form.errors }}
             </div>
@@ -51,43 +42,46 @@
 
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
+                {% include "core/component/form_errors_banner.html" %}
                 {% include "core/component/form_descriptor.html" with descriptor=form_descriptor %}
 
                 <fieldset>
                     <legend id="header_person" class="toc-item">Core fields and editors' notes</legend>
                     <div class="margin-bottom">
-                        <label>Primary name*</label>
+                        <label>Primary name:*</label>
                         {{ person_form.foaf_name }}
                         {{ person_form.foaf_name.errors }}
-                        <small>(No more than 200 characters. Preferably Surname, Forename)</small>
+                        <small>No more than 200 characters. Preferably Surname, Forename</small>
                     </div>
-                    <div class="margin-bottom">
-                        {% include "core/component/common_form_choices.html" with label_text='Gender' choices_field=person_form.gender %}
+                    <div class="margin-bottom choices-container form-inline-align">
+                        {% include "core/component/common_form_choices.html" with label_text='Gender:' choices_field=person_form.gender %}
                     </div>
-                    <div class="margin-bottom">
-                        {{ person_form.is_organisation }}
-                        <label for="{{ person_form.is_organisation.id_for_label }}">Organization?</label>
-                        <small> (Leave this checkbox blank if the correspondent was an individual person; tick if the
-                            correspondent was a group or organization.)</small>
+                    
+                    <div class="margin-bottom form-inline-align">
+                        <div class="checkbox-inline">
+                            {{ person_form.is_organisation }}
+                            <label for="{{ person_form.is_organisation.id_for_label }}">Organization?</label>
+                             <small> Leave this checkbox blank if the correspondent was an individual person; tick if the
+                            correspondent was a group or organization.</small>
+                        </div>
                     </div>
-
+                    
                     <div class="org-type-div margin-bottom"
                             {% if not is_org_form %}
                          style="display: none"
                             {% endif %}
                     >
-                        <label>Organization type</label>
+                        <label>Organization type:</label>
                         {{ person_form.organisation_type }}
-                        <small>Further details of a group's purpose or role can be given in the professions/titles
-                            field.</small>
+                        <small>Further details of a group's purpose or role can be given in the roles/titles field.</small>
                     </div>
 
                     <div class="margin-bottom">
-                        <label>Editors' notes</label>
+                        <label>Editors' notes:</label>
                         {{ person_form.editors_notes }}
                         <small>
-                            These notes are for internal use; we do not plan to display them on the 'front end' website.
-                            To enter a publicly available note, please use the researchers' notes field instead.
+                            These notes are for internal use; they will not be published in the ‘front end’ of the database.
+                            To enter a publicly available note, please use the researchers' notes field (below).
                         </small>
                     </div>
 
@@ -101,9 +95,10 @@
                         {{ person_form.skos_altlabel }}
                         {{ person_form.skos_altlabel.errors }}
                         <small>
-                            Please use this field for different spellings of the primary name, e.g. Lyster for Lister.
-                            You can also use it for alternative names such as a woman's maiden/married name.
-                            Please put each synonym on a separate line.
+                            Please use this field for different spellings of the primary name, e.g. ‘Martin Lyster’ for
+                            ‘Martin Lister’. You can also use it for alternative names such as a woman's maiden/married
+                            name. <br/>Please put each synonym on a separate line and ensure there are no extra spaces at the
+                            end of each line.
                         </small>
                     </div>
 
@@ -117,22 +112,24 @@
                     </div>
                     <div class="margin-bottom">
                         <label>Further details of roles / titles:</label>
-                        {{ person_form.person_aliases }}
+                        <div>
+                            {{ person_form.person_aliases }}
+                            <small>
+                                Please use this field for titles and career-related details such as '5th Earl of Aylesbury' or
+                                'Bishop of Chester, 1650-80'. <br/>
+                                Please put each role/title on a separate line and ensure there are no extra spaces at the
+                                end of each line.
+                            </small>
+                        </div>
                     </div>
-                    <small>
-                        Please use this field for titles and career-related details such as '5th Earl of Aylesbury' or
-                        'Bishop of Chester 1650-1680'.
-                        <br/>
-                        Please put each role/title on a separate line.
-                    </small>
                 </fieldset>
 
                 <fieldset>
                     <legend id="header_dates" class="toc-item">Dates</legend>
 
-                    {% include "person/component/date_fields.html" with title_name=is_org_form|yesno:'date formed,date of birth' calendar=person_form.date_of_birth_calendar  is_range=person_form.date_of_birth_is_range  inferred=person_form.date_of_birth_inferred  uncertain=person_form.date_of_birth_uncertain  approx=person_form.date_of_birth_approx day_field=person_form.date_of_birth_day month_field=person_form.date_of_birth_month year_field=person_form.date_of_birth_year day_field2=person_form.date_of_birth2_day month_field2=person_form.date_of_birth2_month year_field2=person_form.date_of_birth2_year date_range_msg='(Tick this box if the date of birth cannot be narrowed down to a single year.)' %}
-                    {% include "person/component/date_fields.html" with title_name=is_org_form|yesno:'date disbanded,date of death' calendar=person_form.date_of_death_calendar  is_range=person_form.date_of_death_is_range  inferred=person_form.date_of_death_inferred  uncertain=person_form.date_of_death_uncertain  approx=person_form.date_of_death_approx day_field=person_form.date_of_death_day month_field=person_form.date_of_death_month year_field=person_form.date_of_death_year day_field2=person_form.date_of_death2_day month_field2=person_form.date_of_death2_month year_field2=person_form.date_of_death2_year date_range_msg='(Tick this box if the date of death cannot be narrowed down to a single year.)' %}
-                    {% include "person/component/date_fields.html" with title_name='date when flourished' calendar=person_form.flourished_calendar  is_range=person_form.flourished_is_range  inferred=person_form.flourished_inferred  uncertain=person_form.flourished_uncertain  approx=person_form.flourished_approx day_field=person_form.flourished_day month_field=person_form.flourished_month year_field=person_form.flourished_year day_field2=person_form.flourished2_day month_field2=person_form.flourished2_month year_field2=person_form.flourished2_year date_range_msg='(Tick this box if the date when flourished cannot be narrowed down to a single year.)' %}
+                    {% include "person/component/date_fields.html" with title_name=is_org_form|yesno:'date formed,date of birth' calendar=person_form.date_of_birth_calendar  is_range=person_form.date_of_birth_is_range  inferred=person_form.date_of_birth_inferred  uncertain=person_form.date_of_birth_uncertain  approx=person_form.date_of_birth_approx day_field=person_form.date_of_birth_day month_field=person_form.date_of_birth_month year_field=person_form.date_of_birth_year day_field2=person_form.date_of_birth2_day month_field2=person_form.date_of_birth2_month year_field2=person_form.date_of_birth2_year date_range_msg='Tick this box if the date of birth cannot be narrowed down to a single year.' %}
+                    {% include "person/component/date_fields.html" with title_name=is_org_form|yesno:'date disbanded,date of death' calendar=person_form.date_of_death_calendar  is_range=person_form.date_of_death_is_range  inferred=person_form.date_of_death_inferred  uncertain=person_form.date_of_death_uncertain  approx=person_form.date_of_death_approx day_field=person_form.date_of_death_day month_field=person_form.date_of_death_month year_field=person_form.date_of_death_year day_field2=person_form.date_of_death2_day month_field2=person_form.date_of_death2_month year_field2=person_form.date_of_death2_year date_range_msg='Tick this box if the date of death cannot be narrowed down to a single year.' %}
+                    {% include "person/component/date_fields.html" with title_name='date when flourished' calendar=person_form.flourished_calendar  is_range=person_form.flourished_is_range  inferred=person_form.flourished_inferred  uncertain=person_form.flourished_uncertain  approx=person_form.flourished_approx day_field=person_form.flourished_day month_field=person_form.flourished_month year_field=person_form.flourished_year day_field2=person_form.flourished2_day month_field2=person_form.flourished2_month year_field2=person_form.flourished2_year date_range_msg='Tick this box if the date when flourished cannot be narrowed down to a single year.' %}
 
                 </fieldset>
 

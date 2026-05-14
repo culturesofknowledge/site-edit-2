@@ -111,6 +111,25 @@ def _create_excel_by_fill_fn(fill_fn: Callable[[Workbook], NoReturn],
     log.info(f'[Completed] create excel [{file_path=}] ')
 
 
+@debug_utils.Timer(name='create_excel_from_header_values').measure_fn
+def create_excel_from_header_values(rows: Iterable, file_path: str,
+                                    header_values: HeaderValues, sheet_name: str) -> 'Workbook':
+    """Create a simple single-sheet Excel file using the given HeaderValues."""
+    rows = list(rows)
+
+    def _fill_fn(workbook: Workbook):
+        header_format = workbook.add_format({
+            'bold': True,
+            'bg_color': 'D3D3D3',
+        })
+        fill_sheet(workbook.add_worksheet(), rows,
+                   header_values=header_values,
+                   sheet_name=sheet_name,
+                   header_format=header_format)
+
+    return _create_excel_by_fill_fn(_fill_fn, file_path=file_path)
+
+
 @debug_utils.Timer(name='create_work_excel').measure_fn
 def create_work_excel(queryable_works: Iterable[CofkUnionWork],
                       file_path: str = None) -> 'Workbook':

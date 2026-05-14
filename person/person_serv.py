@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 
 def get_recref_display_name(person: CofkUnionPerson):
-    return person and person.foaf_name
+    return person and person.to_string()
 
 
 def get_display_name(person: CofkUnionPerson):
@@ -22,18 +22,7 @@ def get_display_name(person: CofkUnionPerson):
 def get_display_name_for_other_details(person: CofkUnionPerson):
     if not person:
         return person
-
-    name = person.foaf_name
-    if not person.is_organisation:
-        if person.date_of_birth_year and not person.date_of_death_year:
-            name += f', b.{person.date_of_birth_year}'
-        elif person.date_of_birth_year and person.date_of_death_year:
-            name += f', {person.date_of_birth_year}-{person.date_of_death_year}'
-    else:
-        if person.date_of_birth_year:
-            name += f', formed {person.date_of_birth_year}'
-
-    return name
+    return person.to_string()
 
 
 def get_recref_target_id(person: CofkUnionPerson):
@@ -118,7 +107,10 @@ def get_display_dict_other_details(person: CofkUnionPerson, new_line='\n') -> st
                                                            default_raw_value=True)
             display_str = name_fn(mmap)
             if mmap.from_date and mmap.from_date.year:
-                display_str = f'From {mmap.from_date.year}: {display_str}'
+                if mmap.to_date and mmap.to_date.year:
+                    display_str = f'{mmap.from_date.year}-{mmap.to_date.year}: {display_str}'
+                else:
+                    display_str = f'From {mmap.from_date.year}: {display_str}'
 
             if url_fn:
                 display_str = encode_display_link(url_fn(mmap), display_str)
@@ -172,8 +164,10 @@ class SearchResultPerson(DisplayablePerson):
         return display_year
 
     def flourished_year_range(self):
-        return self.decode_year_range(self.flourished_year, self.flourished2_year,
-                                      self.flourished_is_range)
+        if year_range := self.decode_year_range(self.flourished_year, self.flourished2_year,
+                                                self.flourished_is_range):
+            return f'fl. {year_range}'
+        return ''
 
     def birth_year_range(self):
         return self.decode_year_range(self.date_of_birth_year, self.date_of_birth2_year,

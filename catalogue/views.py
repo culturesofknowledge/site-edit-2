@@ -19,7 +19,7 @@ from login import utils
 
 
 @login_required
-@permission_required(constant.PM_CHANGE_LOOKUPCAT)
+@permission_required(constant.PM_CHANGE_LOOKUPCAT, raise_exception=True)
 def update_catalogue(request, pk=None):
     instance: CofkLookupCatalogue = CofkLookupCatalogue.objects.filter(pk=pk).first()
     form = CatalogueForm(request.POST or None, instance=instance)
@@ -83,6 +83,7 @@ def update_catalogue(request, pk=None):
 
 class CatalogueInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitFormViewTemplate):
     permission_required = constant.PM_CHANGE_LOOKUPCAT
+    raise_exception = True
 
     def resp_form_page(self, request, form):
         return render(request, 'catalogue/init_form.html', {'form': form})
@@ -96,6 +97,7 @@ class CatalogueInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitF
 
 class CatalogueSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearchView):
     permission_required = constant.PM_VIEW_LOOKUPCAT
+    raise_exception = True
 
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
@@ -131,7 +133,7 @@ class CatalogueSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSe
     def get_queryset(self):
         model_class = CofkLookupCatalogue
         request_data = self.request_data.dict()
-        if self.request.user.has_perm(constant.PM_CHANGE_LOOKUPCAT):
+        if self.request.user.has_perm(constant.PM_VIEW_LOOKUPCAT):
             return model_class.objects \
                 .annotate(**{f'{self.count_field}_count': Count(self.count_field)}).order_by(self.updated_fields[0]).all()
         else:
@@ -159,5 +161,5 @@ class CatalogueSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSe
         )
 
     def get_context(self, **kwargs):
-        context = {'can_edit': utils.is_user_editor_or_supervisor(self.request.user)}
+        context = {'can_edit': utils.is_user_supervisor(self.request.user)}
         return context

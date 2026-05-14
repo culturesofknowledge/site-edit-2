@@ -8,6 +8,10 @@
                     {% if id_field.recref_name %}
                    value="{{ id_field.recref_name }}"
                     {% endif %}
+                    {% if placeholder %}
+                      placeholder="{{ placeholder }}"
+                    {% endif %}
+                   style="background-color: #e8e8e8;"
             />
             <input id="{{ fid }}" type="hidden" class="recref_id"
                    name="{{ id_field.html_name }}"
@@ -16,11 +20,11 @@
                     {% endif %}
             />
             <div class="button-row">
-                <button id="{{ fid }}_clean_btn" class="recref_clean">Clean</button>
                 <button id="{{ fid }}_select_btn" class="recref_select">Select</button>
                 {% if not hide_create_btn %}
                 <button id="{{ fid }}_create_btn" class="recref_create">Create</button>
                 {% endif %}
+                <button id="{{ fid }}_clean_btn" class="recref_clean">Clear</button>
             </div>
         </div>
     </div>

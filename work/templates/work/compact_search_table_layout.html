@@ -11,13 +11,13 @@
     <tr></tr>
     <tr>
         <th>Description</th>
-        <th>Work ID</th>
-        <th>Date for ordering</th>
-        <th>&nbsp;</th>
+        <th class="col-id">ID</th>
+        <th class="col-date">Date for ordering</th>
+        <th>Flags</th>
         <th>Images</th>
-        <th>Manifestations</th>
+        <th class="col-wide">Manifestations</th>
         <th>Related resources</th>
-        <th>Last edit</th>
+        <th class="col-last-edit">Last edit</th>
     </tr>
     </thead>
     <tbody>
@@ -30,13 +30,18 @@
                 <div class="text-wrap-wrapper">
                 {{ r.description|break_ambiguous }}
                 </div>
+                {% if r.author_comments_list %}
+                    {% for comment in r.author_comments_list %}
+                        <p>Note: {{ comment.comment }}</p>
+                    {% endfor %}
+                {% endif %}
             </td>
-            <td>
+            <td class="col-id">
                 {% include 'core/component/search_table_layout/link_record.html' with id=r.iwork_id view='work:full_form' edit_perm=constant.PM_CHANGE_WORK %}
             </td>
-            <td>
+            <td class="col-date">
                 {{ r.date_for_ordering }}
-
+                </br></br>
                 {% if r.date_of_work_as_marked %}
                     <p>As marked: {{ r.date_of_work_as_marked }}</p>
                 {% endif %}
@@ -57,12 +62,17 @@
             {% include 'work/component/manif_display_td.html' with work=r %}
 
             <td>
+                {% if r.related_works %}
+                    {{ r.related_works|display_resources }}
+                {% endif %}
+
                 {% if r.related_resources %}
+                    Resources:
                     {{ r.related_resources|display_resources }}
                 {% endif %}
             </td>
-            <td>
-                {{ r.change_timestamp|date:"d M Y H:i" }} by {{ r.change_user }}<br/>
+            <td class="col-last-edit">
+                {{ r.change_timestamp|standard_datetime }} by {{ r.change_user }}<br/>
                 Source: {{ r.accession_code }}<br/>
                 [{{ r.catalogue}}]
             </td>

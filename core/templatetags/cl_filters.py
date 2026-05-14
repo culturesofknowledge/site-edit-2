@@ -1,13 +1,25 @@
+import json
 import re
 
 from django import template
 from django.core.paginator import Page
+from django.template.defaultfilters import date as date_filter
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 
 from core.constant import ENTITIES
 
+STANDARD_DATETIME_FORMAT = "d M Y H:i"
+
 register = template.Library()
+
+
+@register.filter
+def standard_datetime(value):
+    """Format a datetime using the project-wide standard format."""
+    if not value:
+        return ''
+    return date_filter(value, STANDARD_DATETIME_FORMAT)
 
 
 @register.filter
@@ -130,3 +142,24 @@ def break_ambiguous(value):
     value = value.replace('&amp;', '&amp;<wbr>')
     
     return mark_safe(value)
+
+@register.filter
+def add_another_if_startswith(value, prefix="Add "):
+    if not isinstance(value, str):
+        return value
+
+    if value.startswith(prefix):
+        return value.replace(prefix, "Add another ", 1)
+
+    return value
+
+
+@register.simple_tag
+def resource_descriptors_json(related_to):
+    from core.models import CofkResourceDescriptor
+    descriptors = list(
+        CofkResourceDescriptor.objects.filter(related_to=related_to)
+        .order_by('description')
+        .values_list('description', flat=True)
+    )
+    return mark_safe(json.dumps(descriptors))

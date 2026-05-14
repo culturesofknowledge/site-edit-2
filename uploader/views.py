@@ -25,7 +25,7 @@ from core.helper.view_serv import DefaultSearchView
 from core.models import CofkLookupCatalogue, CofkLookupDocumentType
 from uploader.forms import CofkCollectUploadForm, GeneralSearchFieldset
 from uploader.models import CofkCollectUpload, CofkCollectPerson, CofkCollectLocation
-from uploader.review import reject_works
+from uploader.review import reject_works, accept_people, reject_people, accept_locations, reject_locations
 from uploader.uploader_serv import DisplayableCollectWork
 
 log = logging.getLogger(__name__)
@@ -115,8 +115,18 @@ class AddUploadView(TemplateView):
 @login_required
 @permission_required(constant.PM_CHANGE_COLLECTWORK, raise_exception=True)
 def upload_review(request, upload_id, **kwargs):
-    template_url = 'uploader/review.html'
     upload: CofkCollectUpload = CofkCollectUpload.objects.filter(pk=upload_id).first()
+
+    if upload.upload_type == 'people':
+        return _upload_review_people(request, upload)
+    elif upload.upload_type == 'location':
+        return _upload_review_locations(request, upload)
+
+    return _upload_review_works(request, upload)
+
+
+def _upload_review_works(request, upload: CofkCollectUpload):
+    template_url = 'uploader/review.html'
 
     prefetch = ['authors', 'addressees', 'people_mentioned', 'languages', 'subjects', 'manifestations', 'resources',
                 'upload_status', 'addressees__iperson', 'authors__iperson', 'people_mentioned__iperson',
@@ -141,7 +151,6 @@ def upload_review(request, upload_id, **kwargs):
     people = CofkCollectPerson.objects.filter(upload=upload, union_iperson__isnull=True)
     places = CofkCollectLocation.objects.filter(upload=upload, union_location__isnull=True)
 
-    # TODO, are all of these required for context?
     context = {'username': request.user.username,
                'upload': upload,
                'works_page': works_page,
@@ -153,8 +162,6 @@ def upload_review(request, upload_id, **kwargs):
                'per_page_options': [1000, 2500, 5000]
                }
 
-    # copy variables onto context because we can't pickle the request object which means
-    # it can't be passed to Django Q2
     for prop in ['work_id', 'accession_code', 'catalogue_code']:
         if prop in request.POST:
             context[prop] = request.POST[prop]
@@ -177,11 +184,48 @@ def upload_review(request, upload_id, **kwargs):
     return render(request, template_url, context)
 
 
+def _upload_review_people(request, upload: CofkCollectUpload):
+    if 'confirm' in request.POST and 'action' in request.POST:
+        if request.POST['action'] == 'accept':
+            accept_people(upload, request.user.username, request)
+            return redirect(reverse('uploader:upload_list'))
+        elif request.POST['action'] == 'reject':
+            reject_people(upload, request)
+            return redirect(reverse('uploader:upload_list'))
+
+    people = CofkCollectPerson.objects.filter(upload=upload).order_by('iperson_id')
+    context = {
+        'upload': upload,
+        'people': people,
+    }
+    return render(request, 'uploader/review_people.html', context)
+
+
+def _upload_review_locations(request, upload: CofkCollectUpload):
+    if 'confirm' in request.POST and 'action' in request.POST:
+        if request.POST['action'] == 'accept':
+            accept_locations(upload, request.user.username, request)
+            return redirect(reverse('uploader:upload_list'))
+        elif request.POST['action'] == 'reject':
+            reject_locations(upload, request)
+            return redirect(reverse('uploader:upload_list'))
+
+    locations = CofkCollectLocation.objects.filter(upload=upload).order_by('location_id')
+    context = {
+        'upload': upload,
+        'locations': locations,
+    }
+    return render(request, 'uploader/review_locations.html', context)
+
+
 def lookup_fn_date_of_work(lookup_fn, field_name, value):
     value = str(value).strip()
     query = Q()
     date_pattern = r'^([\d\?]{4})(?:-([\d]{2}|[\?]{2}))?(?:-([\d]{2}|[\?]{2}))?$'
-    matches = [re.search(date_pattern, v) for v in value.split(' to ')]
+    matches = [re.search(date_pattern, v.strip()) for v in value.split(' to ')]
+
+    if any(m is None for m in matches):
+        return Q(pk=0)
 
     if len(matches) == 1:
         year = matches[0].group(1)
@@ -229,33 +273,39 @@ def lookup_fn_date_of_work(lookup_fn, field_name, value):
 
 
 def lookup_fn_issues(value):
-    cond_map = [
-        (r'Date\s+of\s+work\s+INFERRED', lambda: Q(date_of_work_inferred=1)),
-        (r'Date\s+of\s+work\s+UNCERTAIN', lambda: Q(date_of_work_uncertain=1)),
-        (r'Date\s+of\s+work\s+APPROXIMATE', lambda: Q(date_of_work_approx=1)),
-        (r'Author\s*/\s*sender\s+INFERRED', lambda: Q(authors_inferred=1)),
-        (r'Author\s*/\s*sender\s+UNCERTAIN', lambda: Q(authors_uncertain=1)),
-        (r'Addressee\s+INFERRED', lambda: Q(addressees_inferred=1)),
-        (r'Addressee\s+UNCERTAIN', lambda: Q(addressees_uncertain=1)),
-        (r'Origin\s+INFERRED', lambda: Q(origin_inferred=1)),
-        (r'Origin\s+UNCERTAIN', lambda: Q(origin_uncertain=1)),
-        (r'Destination\s+INFERRED', lambda: Q(destination_inferred=1)),
-        (r'Destination\s+UNCERTAIN', lambda: Q(destination_uncertain=1)),
-        (r'People\s+mentioned\s+INFERRED', lambda: Q(mentioned_inferred=1)),
-        (r'People\s+mentioned\s+UNCERTAIN', lambda: Q(mentioned_uncertain=1)),
-        (r'Place\s+mentioned\s+INFERRED', lambda: Q(place_mentioned_inferred=1)),
-        (r'Place\s+mentioned\s+UNCERTAIN', lambda: Q(place_mentioned_uncertain=1)),
-    ]
+    # Define valid flag phrases and their corresponding Q objects
+    valid_flags_map = {
+        'date of work inferred': lambda: Q(date_of_work_inferred=1),
+        'date of work uncertain': lambda: Q(date_of_work_uncertain=1),
+        'date of work approximate': lambda: Q(date_of_work_approx=1),
+        'author/sender inferred': lambda: Q(authors_inferred=1),
+        'author/sender uncertain': lambda: Q(authors_uncertain=1),
+        'addressee inferred': lambda: Q(addressees_inferred=1),
+        'addressee uncertain': lambda: Q(addressees_uncertain=1),
+        'origin inferred': lambda: Q(origin_inferred=1),
+        'origin uncertain': lambda: Q(origin_uncertain=1),
+        'destination inferred': lambda: Q(destination_inferred=1),
+        'destination uncertain': lambda: Q(destination_uncertain=1),
+        'people mentioned inferred': lambda: Q(mentioned_inferred=1),
+        'people mentioned uncertain': lambda: Q(mentioned_uncertain=1),
+        'place mentioned inferred': lambda: Q(place_mentioned_inferred=1),
+        'place mentioned uncertain': lambda: Q(place_mentioned_uncertain=1),
+    }
 
-    query = Q()
-    for pattern, q in cond_map:
-        if re.search(pattern, value, re.IGNORECASE):
-            query |= q()
-    return query
+    # Normalize the input value for case-insensitive matching
+    normalized_value = value.lower().strip()
+
+    # Check for an exact match in the valid_flags_map
+    if normalized_value in valid_flags_map:
+        return valid_flags_map[normalized_value]()
+    else:
+        # If no exact match, return a query that yields no results
+        return Q(pk__isnull=True)
 
 
 class ColWorkSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearchView):
     permission_required = constant.PM_CHANGE_COLLECTWORK
+    raise_exception = True
 
     @property
     def query_fieldset_list(self) -> Iterable:
@@ -297,7 +347,7 @@ class ColWorkSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSear
             ('origin_as_marked', 'Origin as marked'),
             ('addressees', 'Addressees'),
             ('addressees_as_marked', 'Addressees as marked'),
-            ('notes_on_addressees', 'Notes on addressees'),
+            ('notes_on_addressees', 'Notes on addressees/recipients'),
             ('destination', 'Destination'),
             ('destination_as_marked', 'Destination as marked'),
             ('manifestations', 'Manifestations'),

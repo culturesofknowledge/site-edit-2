@@ -17,7 +17,7 @@
 
     {% if paginator.count > 20 %}
     <div class="result_count">
-        <h2>{{ page_obj|get_results_on_page }} out of {{ paginator.count | floatformat:'g' }} saved queries</h2>
+        <h2>{{ page_obj|get_results_on_page }} out of {{ paginator.count | floatformat:'g' }} records</h2>
     </div>
     {% endif %}
 
@@ -44,7 +44,7 @@
 
             </td>
             <td>
-                {{ saved_query.creation_timestamp }}
+                {{ saved_query.creation_timestamp|standard_datetime }}
             </td>
             <td>
                 {{ saved_query.query_class|get_entity }}

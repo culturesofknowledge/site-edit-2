@@ -5450,7 +5450,7 @@ begin
     when column_name = 'person_id' then 'Person ID (for internal system use)'
     when column_name = 'iwork_id' then 'Work ID'
     when column_name = 'work_id' then 'Work ID (for internal system use)'
-    when column_name = 'foaf_name' then 'Person or organisation name'
+    when column_name = 'foaf_name' then 'Person or organization name'
     when column_name = 'skos_altlabel' then 'Synonyms'
     when column_name = 'skos_hiddenlabel' then 'Other versions of name'
     when column_name = 'explicit' then 'Excipit'
@@ -11625,7 +11625,7 @@ begin
         new.flourished_is_range::text );
     end if;
 
-    -- cofk_union_person: organisation type
+    -- cofk_union_person: organization type
     if TG_OP = 'UPDATE' then
       perform dbf_cofk_union_audit_literal_update( 'cofk_union_person',
         new.person_id,

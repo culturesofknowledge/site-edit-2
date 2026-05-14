@@ -16,7 +16,7 @@ from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_WAS_BORN_IN_LOCAT
     TRUE_CHAR, REL_TYPE_MENTION
 from core.export_data import cell_values, download_csv_serv
 from core.forms import CommentForm, PersonRecrefForm
-from core.helper import renderer_serv, view_serv, query_serv, recref_serv, form_serv, perm_serv
+from core.helper import renderer_serv, view_serv, query_serv, recref_serv, form_serv, perm_serv, date_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.model_serv import ModelLike
 from core.helper.recref_handler import RecrefFormsetHandler, RoleCategoryHandler, ImageRecrefHandler, \
@@ -55,6 +55,7 @@ def create_context_is_org_form(is_organisation: str):
 
 class PersonInitView(PermissionRequiredMixin, LoginRequiredMixin, CommonInitFormViewTemplate):
     permission_required = constant.PM_CHANGE_PERSON
+    raise_exception = True
 
     def resp_form_page(self, request, form):
         return render(request, 'person/init_form.html', {
@@ -247,6 +248,7 @@ class PersonFFH(FullFormHandler):
 
 
 @login_required
+@permission_required(constant.PM_CHANGE_PERSON, raise_exception=True)
 def full_form(request, iperson_id):
     fhandler = PersonFFH(iperson_id, request_data=request.POST, request=request)
 
@@ -292,10 +294,6 @@ def full_form(request, iperson_id):
 
 
 class PersonSearchView(LoginRequiredMixin, BasicSearchView):
-
-    # Enable keyset pagination for better performance with large person datasets
-    use_keyset_pagination = True
-    keyset_sort_field = 'iperson_id'  # Primary key is indexed and unique
 
     @property
     def entity(self) -> str:
@@ -369,11 +367,11 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
             if gender:
                 gender = [g[1].lower() for g in search_gender_choices if g[0] == gender][0]
-                simplified_query.append(f'Of {gender} gender.')
+                simplified_query.append(f'Of {gender} gender')
 
             if person_or_group:
                 person_or_group = [pog[1].lower() for pog in search_person_or_group if pog[0] == person_or_group][0]
-                simplified_query.append(f'Is a {person_or_group}.')
+                simplified_query.append(f'Is a {person_or_group}')
 
             for _range in [('birth_year_from', 'birth_year_to', 'Born'),
                            ('death_year_from', 'death_year_to', 'Died'),
@@ -382,11 +380,11 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
                 _to = self.request_data[_range[1]] if _range[1] in self.request_data else None
 
                 if _to and _from:
-                    simplified_query.append(f'{_range[2]} between {_from} and {_to}.')
+                    simplified_query.append(f'{_range[2]} between {date_serv.normalize_search_display_start(_from)} and {date_serv.normalize_search_display_end(_to)}')
                 elif _to:
-                    simplified_query.append(f'{_range[2]} before {_to}.')
+                    simplified_query.append(f'{_range[2]} before {date_serv.normalize_search_display_end(_to)}')
                 elif _from:
-                    simplified_query.append(f'{_range[2]} after {_from}.')
+                    simplified_query.append(f'{_range[2]} after {date_serv.normalize_search_display_start(_from)}')
 
         return simplified_query
 
@@ -453,7 +451,7 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
 
     @property
     def csv_export_setting(self):
-        if not self.has_perms(constant.PM_EXPORT_FILE_PERSON):
+        if not self.has_perms([constant.PM_EXPORT_FILE_PERSON]):
             return None
         return (lambda: view_serv.create_export_file_name('person', 'csv'),
                 lambda: DownloadCsvHandler(PersonCsvHeaderValues()).create_csv_file,
@@ -539,6 +537,7 @@ class PersonImageRecrefHandler(ImageRecrefHandler):
 
 class PersonMergeChoiceView(PermissionRequiredMixin, LoginRequiredMixin, MergeChoiceViews):
     permission_required = constant.PM_CHANGE_PERSON
+    raise_exception = True
 
     def to_context_list(self, merge_id_list: list[str]) -> Iterable['MergeChoiceContext']:
         return self.create_merge_choice_context_by_id_field(self.get_id_field(), merge_id_list)
@@ -550,6 +549,7 @@ class PersonMergeChoiceView(PermissionRequiredMixin, LoginRequiredMixin, MergeCh
 
 class PersonMergeConfirmView(PermissionRequiredMixin, LoginRequiredMixin, MergeConfirmViews):
     permission_required = constant.PM_CHANGE_PERSON
+    raise_exception = True
     @property
     def target_model_class(self) -> Type[ModelLike]:
         return CofkUnionPerson
@@ -557,6 +557,7 @@ class PersonMergeConfirmView(PermissionRequiredMixin, LoginRequiredMixin, MergeC
 
 class PersonMergeActionView(PermissionRequiredMixin, LoginRequiredMixin, MergeActionViews):
     permission_required = constant.PM_CHANGE_PERSON
+    raise_exception = True
     @staticmethod
     def get_id_field():
         return PersonMergeChoiceView.get_id_field()
@@ -568,6 +569,7 @@ class PersonMergeActionView(PermissionRequiredMixin, LoginRequiredMixin, MergeAc
 
 class PersonDeleteConfirmView(PermissionRequiredMixin, LoginRequiredMixin, DeleteConfirmView):
     permission_required = constant.PM_CHANGE_PERSON
+    raise_exception = True
 
     def get_model_class(self) -> Type[ModelLike]:
         return CofkUnionPerson
@@ -587,19 +589,31 @@ class PersonDeleteConfirmView(PermissionRequiredMixin, LoginRequiredMixin, Delet
 
 
 def lookup_other_details(lookup_fn, f, v) -> Q:
-    conn_type = query_serv.get_lookup_conn_type_by_lookup_key(
-        query_serv.get_lookup_key_by_lookup_fn(lookup_fn)
-    )
+    # Determine the actual lookup function to use for the positive condition
+    actual_lookup_fn = lookup_fn
+    is_negated_search = False
+    if lookup_fn == query_serv.lookup_not_icontains_with_blank:
+        actual_lookup_fn = query_serv.lookup_icontains_wildcard
+        is_negated_search = True
+
+    # Always combine positive conditions with OR to represent "contains in any of these fields"
+    conn_type = Q.OR
+
+    related_person_detail_fields = [
+        f for f in query_serv.person_detail_fields
+        if f != 'person_aliases'
+    ]
+
     q = query_utils.create_q_by_field_names(
-        lookup_fn,
+        actual_lookup_fn,
 
         itertools.chain(
             query_utils.join_fields('cofkpersonlocationmap__location',
                                     query_serv.location_detail_fields),
             query_utils.join_fields('active_relationships__related',
-                                    query_serv.person_detail_fields),
+                                    related_person_detail_fields),
             query_utils.join_fields('passive_relationships__person',
-                                    query_serv.person_detail_fields),
+                                    related_person_detail_fields),
             query_utils.join_fields('cofkpersoncommentmap__comment',
                                     query_serv.comment_detail_fields),
             query_utils.join_fields('cofkpersonresourcemap__resource',
@@ -608,7 +622,10 @@ def lookup_other_details(lookup_fn, f, v) -> Q:
                                     query_serv.image_detail_fields),
         ), v, conn_type=conn_type)
 
-    return q
+    if is_negated_search:
+        return ~q # Negate the entire Q object for "does not contain"
+    else:
+        return q
 
 
 def get_target_or_related_id(recref: CofkPersonPersonMap):

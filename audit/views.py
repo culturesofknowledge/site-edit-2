@@ -21,10 +21,77 @@ log = logging.getLogger(__name__)
 
 class AuditSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearchView):
     permission_required = constant.PM_VIEW_AUDIT
+    raise_exception = True
 
     @property
     def entity(self) -> str:
         return 'audit,audits'
+
+    @property
+    def search_field_fn_maps(self) -> dict:
+        return {'table_name': query_utils.create_eq_query,
+                'column_name': query_utils.create_eq_query,
+                'change_type': query_utils.create_eq_query,
+                } | query_serv.create_from_to_datetime('change_timestamp_from', 'change_timestamp_to',
+                                                       'change_timestamp')
+
+    @property
+    def search_field_combines(self) -> dict:
+        return {
+            'change_made': ['new_column_value', 'old_column_value'],
+        }
+
+    @property
+    def simplified_query(self) -> list[str]:
+        simplified_query = []
+
+        for field_name in self.search_fields:
+            field_val = self.request_data.get(field_name)
+            lookup_val = self.request_data.get(f'{field_name}_lookup', 'equals')
+
+            if (field_val is not None and field_val != '') or (
+                    field_name in self.request_data and
+                    f'{field_name}_lookup' in self.request_data and
+                    lookup_val in query_serv.nullable_lookup_keys
+            ):
+                label_name = self.search_field_label_map.get(field_name) or field_name.replace('_', ' ').capitalize()
+
+                lookup_key_map = {
+                    'is_null': 'is blank',
+                    'is_blank': 'is blank',
+                    'not_null': 'is not blank',
+                    'not_blank': 'is not blank',
+                    'not_equal_to': 'is not equal to',
+                    'greater_than': 'is greater than',
+                    'less_than': 'is less than',
+                    'less_than_equal': 'is less than or equal to',
+                    'greater_than_equal': 'is greater than or equal to',
+                }
+
+                lookup_key = lookup_key_map.get(lookup_val)
+
+                if not lookup_key:
+                    lookup_key = lookup_val.replace('_', ' ')
+                    if lookup_key.startswith('not'):
+                        lookup_key = 'does ' + lookup_key
+
+                if lookup_val in query_serv.nullable_lookup_keys:
+                    simplified_query.append(f'{label_name} {lookup_key}')
+                else:
+                    simplified_query.append(f'{label_name} {lookup_key} \'{field_val}\'')
+
+        if self.search_field_fn_maps:
+            _from = self.request_data.get('change_timestamp_from')
+            _to = self.request_data.get('change_timestamp_to')
+
+            if _to and _from:
+                simplified_query.append(f'Change date/time between {_from} and {_to}')
+            elif _to:
+                simplified_query.append(f'Change date/time before {_to}')
+            elif _from:
+                simplified_query.append(f'Change date/time after {_from}')
+
+        return simplified_query
 
     def get_queryset(self):
         if not self.request_data:
@@ -40,7 +107,7 @@ class AuditSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearch
         queries = query_serv.create_queries_by_field_fn_maps(self.request_data, field_fn_maps)
         queries.extend(
             query_serv.create_queries_by_lookup_field(self.request_data, [
-                'change_user', 'table_name', 'key_value_text', 'key_decode',
+                'change_user', 'table_name', 'key_value_integer', 'key_decode',
                 'change_made', 'audit_id',
             ], search_fields_maps={
                 'change_made': ['new_column_value', 'old_column_value'],
@@ -99,21 +166,35 @@ def replace_old_url(value: str) -> str:
 
 
 def create_display_key(record: CofkUnionAuditLiteral) -> str:
-    if record.table_name == 'cofk_union_work':
-        result = f'Work ID {record.key_value_integer}'
-    elif record.table_name == 'cofk_union_person':
-        result = f'Person ID {record.key_value_integer}'
-    elif record.table_name == 'cofk_union_location':
-        result = f'Location ID {record.key_value_integer}'
-    elif record.table_name == 'cofk_union_institution':
-        result = f'Institution ID {record.key_value_integer}'
-    elif record.table_name == 'cofk_union_manifestation':
-        result = f'Manifestation ID {record.key_value_text}'
-    elif record.table_name == 'cofk_union_comment':
-        result = f'Comment ID {record.key_value_text}'
-    elif record.table_name == 'cofk_union_resource':
-        result = f'Resource ID {record.key_value_text}'
+    integer_id_tables = {
+        'cofk_union_work': 'Work ID',
+        'cofk_union_person': 'Person ID',
+        'cofk_union_location': 'Location ID',
+        'cofk_union_institution': 'Institution ID',
+        'cofk_union_image': 'Image ID',
+        'cofk_union_publication': 'Publication ID',
+        'cofk_union_nationality': 'Nationality ID',
+        'cofk_union_org_type': 'Org Type ID',
+        'cofk_union_role_category': 'Role Category ID',
+        'cofk_union_subject': 'Subject ID',
+        'cofk_union_speed_entry_text': 'Speed Entry Text ID',
+        'cofk_union_person_summary': 'Person Summary ID',
+    }
+    text_id_tables = {
+        'cofk_union_manifestation': 'Manifestation ID',
+        'cofk_union_comment': 'Comment ID',
+        'cofk_union_resource': 'Resource ID',
+        'cofk_union_favourite_language': 'Favourite Language ID',
+        'cofk_union_language_of_manifestation': 'Language Of Manifestation ID',
+        'cofk_union_language_of_work': 'Language Of Work ID',
+    }
+
+    if record.table_name in integer_id_tables:
+        result = f'{integer_id_tables[record.table_name]} {record.key_value_integer}'
+    elif record.table_name in text_id_tables:
+        result = f'{text_id_tables[record.table_name]} {record.key_value_text}'
     else:
-        result = record.key_value_text
+        key_value = record.key_value_integer if record.key_value_integer else record.key_value_text
+        result = f'{record.table_name} {key_value}'
 
     return result
