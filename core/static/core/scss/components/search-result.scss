@@ -114,18 +114,14 @@ td.text-heavy {
 }
 
 #results_table {
-  /* Size behavior: allow table to be wider than the viewport/container */
-  min-width: 100%;               /* ensure at least full width */
-  width: max-content;            /* expand to fit columns so wrapper can scroll */
-  max-width: none;               /* do not clamp the intrinsic width */
+  width: 100%;
 
-  /* Keep auto layout for natural column sizing */
   /* border-collapse must stay 'separate' (inherited from the global table rule) —
      position:sticky on thead cells is broken when border-collapse:collapse is set */
 }
 
 #results_table th {
-  top: 0;
+  top: var(--nav-height, 100px);
   background-color: $light-grey;
   /* Use directional borders only to avoid doubled borders with border-collapse:separate */
   border-right: 1px solid $mid-grey;
@@ -176,12 +172,10 @@ td.text-heavy {
 //}
 
 /* Wrapper for the results table.
-   overflow-x:auto handles wide tables that exceed the container width.
-   No fixed height — the table expands naturally and the page scroll handles vertical navigation. */
+   No overflow set — keeping this free of any overflow value lets CSS position:sticky
+   on the thead cells anchor correctly to the page scroll. */
 .results-scroll {
   width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
   border: 1px solid $light-grey;
 }
 
