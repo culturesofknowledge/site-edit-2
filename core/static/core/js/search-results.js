@@ -301,6 +301,35 @@ function reset_form(form) {
     location.href = url;
 }
 
+function setupStickyTableHeader() {
+    const tableWrap = document.querySelector('.results-scroll');
+    const table = document.getElementById('results_table');
+    if (!tableWrap || !table) return;
+
+    const headerRow = table.querySelector('thead tr:last-child');
+    if (!headerRow) return;
+
+    function syncHeader() {
+        const navHeight = parseFloat(
+            getComputedStyle(document.documentElement).getPropertyValue('--nav-height')
+        ) || 100;
+        const rect = tableWrap.getBoundingClientRect();
+        const headerHeight = headerRow.offsetHeight || 40;
+
+        if (rect.top < navHeight && rect.bottom > navHeight + headerHeight) {
+            headerRow.style.transform = `translateY(${navHeight - rect.top}px)`;
+            headerRow.style.position = 'relative';
+            headerRow.style.zIndex = '100';
+        } else {
+            headerRow.style.transform = '';
+            headerRow.style.position = '';
+            headerRow.style.zIndex = '';
+        }
+    }
+
+    window.addEventListener('scroll', syncHeader, { passive: true });
+}
+
 $(function () {
     // Keep sticky table header anchored just below the navigation bar.
     const siteHeader = document.querySelector('.site-header');
@@ -326,6 +355,7 @@ $(function () {
 
     if ($('#results_table thead').length) {
         add_hide_buttons_to_columns();
+        setupStickyTableHeader();
     }
 
     if (recref_mode == '1') {
