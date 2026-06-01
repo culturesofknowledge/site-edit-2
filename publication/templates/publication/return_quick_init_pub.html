@@ -4,21 +4,21 @@
 
 {% block content %}
     <h2>The following publication has been selected.</h2>
-
+    <br/>
     <input id="ref_id" type="hidden" value="{{ pub.publication_id }}"/>
     <div class="margin-bottom">
-        <h3>Details</h3>
+        <h3 class="margin-bottom">Details</h3>
         <div class="row-spaced">
-            <h3 class="selected_val">{{ pub.publication_details }}</h3>
+            <h4 class="selected_val">{{ pub.publication_details }}</h4>
             <button class="select_btn"> Select</button>
         </div>
     </div>
 
     {% if pub.abbrev %}
         <div class="margin-bottom">
-            <h3>Abbrev</h3>
+            <h3 class="margin-bottom">Abbreviation</h3>
             <div class="row-spaced">
-                <h3 class="selected_val">{{ pub.abbrev }}</h3>
+                <h4 class="selected_val">{{ pub.abbrev }}</h4>
                 <button class="select_btn"> Select</button>
             </div>
         </div>

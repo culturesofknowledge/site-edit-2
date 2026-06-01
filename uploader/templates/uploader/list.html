@@ -5,18 +5,19 @@
 
 <h1>Uploads</h1>
 
-<div style="text-align: right;">
+{% include "core/component/messages.html" %}
+
+<div class="right">
     <h2>{{ page_obj|get_results_on_page }} out
         of {{ paginator.count | floatformat:'g' }} uploads</h2>
 </div>
-
-{% include "core/component/messages.html" %}
 
 {% include 'core/component/pagination.html' %}
 
 <table>
     <tr>
         <th>ID</th>
+        <th>Type</th>
         <th>Date/time</th>
         <th>Source of data</th>
         <th>Contact email</th>
@@ -29,18 +30,32 @@
     </tr>
 {% for upload in object_list %}
     <tr>
-
         <td>{{ upload.upload_id }}</td>
+        <td>{{ upload.upload_type }}</td>
         <td>{{ upload.upload_timestamp|standard_datetime }}</td>
         <td>{{ upload.upload_name }}</td>
         <td>{{ upload.uploader_email }}</td>
-        <td>{{ upload.total_works }}</td>
-        <td>{{ upload.works_accepted }}</td>
-        <td>{{ upload.works_rejected }}</td>
+        <td>
+            {% if upload.upload_type == 'work' %}
+            {{ upload.total_works }}
+            {% else %}
+            N/A
+            {% endif %}</td>
+        <td>
+            {% if upload.upload_type == 'work' %}
+            {{ upload.works_accepted }}
+            {% else %}
+            N/A
+            {% endif %}</td>
+        <td>
+            {% if upload.upload_type == 'work' %}
+            {{ upload.works_rejected }}
+            {% else %}
+            N/A
+            {% endif %}</td>
         <td>{{ upload.upload_status }}</td>
         <td><form action="/upload/{{ upload.upload_id }}"><button type="submit" class="btn">Review</button></form></td>
         <!--<td><input type="button" value="Export"></td>-->
-
     </tr>
 {% endfor %}
 </table>

@@ -230,6 +230,7 @@ input[type="radio"] {
     user-select: none;
     gap: $checkbox-gap; // 🟢 This adds space between box and label text
     margin-bottom: 0.5rem;
+    margin-right: 0.5rem;
     font-size: 0.95rem;
 
     &::before {
