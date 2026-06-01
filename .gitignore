@@ -57,3 +57,4 @@ static
 core/static/core/scss/main.css
 core/management/commands/playground.py
 upload/
+siteedit2/settings/local_dev.py
