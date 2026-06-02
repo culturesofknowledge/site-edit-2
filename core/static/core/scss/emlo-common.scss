@@ -1,3 +1,4 @@
+$del-red: #940025;
 
 .url_checker_div {
   display: flex;
@@ -357,13 +358,12 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
 
 }
 
-
 .errorlist {
-  color: red;
+  color: $del-red;
 }
 
 .warn-checked:checked + label {
-  color: red !important;
+  color: $del-red !important;
   font-weight: bold;
 }
 
@@ -514,7 +514,7 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
   align-items: baseline;
 
   & > .lang-label {
-    @extend .col--1of5;
+    width: 190px;
   }
 
   & > input[type=text] {
@@ -534,9 +534,6 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
   @extend .inline_btn;
   margin-top: $space-unit;
 }
-
-
-$del-red: #800000;
 
 .del-confirm-div {
   background-color: #f2f2f2;

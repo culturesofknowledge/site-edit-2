@@ -30,7 +30,7 @@
             <form method="post">
                 {% csrf_token %}
 
-                {% include "core/component/form_descriptor.html" with descriptor=form_descriptor %}
+                {% include "institution/component/form_descriptor.html" with descriptor=form_descriptor %}
                 <fieldset>
                     <legend id="header_inst" class="toc-item">Repository</legend>
                     <div class="flex flex-label margin-bottom">
@@ -117,7 +117,7 @@
 
                 {% if inst_form.instance and inst_form.instance.pk and  constant.PM_CHANGE_INST|can_show_for_perm:perms  %}
                     {% url 'institution:delete' inst_form.instance.pk as del_url %}
-                    {% include "core/component/del_confirm_fieldset.html" with del_url=del_url name='Repository' %}
+                    {% include "core/component/del_confirm_fieldset.html" with del_url=del_url name='repository' %}
                 {% endif %}
 
                 <div class="bg-white sticky-bottom">

@@ -8,7 +8,7 @@
         </div>
 
         <div class="margin-bottom calendar-div">
-            {% with new_label_text="Calendar used for the date supplied below in 'Date of "|add:name|add:" in standard format':" %}
+            {% with new_label_text="Calendar used for the date supplied below in 'Date of "|add:name|add:" in standard format'" %}
                 {% include "core/component/common_form_choices.html" with label_text=new_label_text choices_field=calendar_used as_col=True %}
             {% endwith %}
         </div>
