@@ -246,6 +246,11 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
   @extend .row;
   margin: $space-xxs $space-xxs $space-xxs 0;
 
+  label {
+    width: 180px;
+    font-weight: 400;
+  }
+
   button {
     margin-left: $space-xs;
     margin-right: $space-xs;

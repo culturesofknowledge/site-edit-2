@@ -1,4 +1,4 @@
-{% extends "core/emlo_common_form.html" %}
+    {% extends "core/emlo_common_form.html" %}
 {% load static %}
 {% load cl_filters %}
 
@@ -32,19 +32,129 @@
                     <legend id="header_init_{{ forloop.counter0 }}" class="toc-item">
                         {{ loc_form.form_title__ }}
                     </legend>
-                    {{ loc_form }}
+
+                    <div class="flex flex-label">
+                        <label>{{ loc_form.editors_notes.label }}:</label>
+                        {{ loc_form.editors_notes }}
+                        {{ loc_form.editors_notes.errors }}
+                    </div>
+                    <div class="flex flex-help-text margin-bottom">
+                        <small>{{ loc_form.editors_notes.help_text }}</small>
+                    </div>
+
+                    <div class="flex flex-label">
+                        <label>{{ loc_form.element_1_eg_room.label }}:</label>
+                        {{ loc_form.element_1_eg_room }}
+                        {{ loc_form.element_1_eg_room.errors }}
+                    </div>
+                    <div class="flex flex-help-text margin-bottom">
+                        <small>{{ loc_form.element_1_eg_room.help_text }}</small>
+                    </div>
+
+                    <div class="flex flex-label">
+                        <label>{{ loc_form.element_2_eg_building.label }}:</label>
+                        {{ loc_form.element_2_eg_building }}
+                        {{ loc_form.element_2_eg_building.errors }}
+                    </div>
+                    <div class="flex flex-help-text margin-bottom">
+                        <small>{{ loc_form.element_2_eg_building.help_text }}</small>
+                    </div>
+
+                    <div class="flex flex-label">
+                        <label>{{ loc_form.element_3_eg_parish.label }}:</label>
+                        {{ loc_form.element_3_eg_parish }}
+                        {{ loc_form.element_3_eg_parish.errors }}
+                    </div>
+                    <div class="flex flex-help-text margin-bottom">
+                        <small>{{ loc_form.element_3_eg_parish.help_text }}</small>
+                    </div>
+
+                    <div class="flex flex-label">
+                        <label>{{ loc_form.element_4_eg_city.label }}:</label>
+                        {{ loc_form.element_4_eg_city }}
+                        {{ loc_form.element_4_eg_city.errors }}
+                    </div>
+                    <div class="flex flex-help-text margin-bottom">
+                        <small>{{ loc_form.element_4_eg_city.help_text }}</small>
+                    </div>
+
+                    <div class="flex flex-label">
+                        <label>{{ loc_form.element_5_eg_county.label }}:</label>
+                        {{ loc_form.element_5_eg_county }}
+                        {{ loc_form.element_5_eg_county.errors }}
+                    </div>
+                    <div class="flex flex-help-text margin-bottom">
+                        <small>{{ loc_form.element_5_eg_county.help_text }}</small>
+                    </div>
+
+                    <div class="flex flex-label">
+                        <label>{{ loc_form.element_6_eg_country.label }}:</label>
+                        {{ loc_form.element_6_eg_country }}
+                        {{ loc_form.element_6_eg_country.errors }}
+                    </div>
+                    <div class="flex flex-help-text margin-bottom">
+                        <small>{{ loc_form.element_6_eg_country.help_text }}</small>
+                    </div>
+
+                    <div class="flex flex-label">
+                        <label>{{ loc_form.element_7_eg_empire.label }}:</label>
+                        {{ loc_form.element_7_eg_empire }}
+                        {{ loc_form.element_7_eg_empire.errors }}
+                    </div>
+                    <div class="flex flex-help-text margin-bottom">
+                        <small>{{ loc_form.element_7_eg_empire.help_text }}</small>
+                    </div>
+
+                    <div class="flex flex-label">
+                        <label>{{ loc_form.location_name.label }}:</label>
+                        {{ loc_form.location_name }}
+                        {{ loc_form.location_name.errors }}
+                    </div>
+                    <div class="flex flex-help-text margin-bottom">
+                        <small>{{ loc_form.location_name.help_text }}</small>
+                    </div>
+
+                    <div class="flex flex-label">
+                        <label>{{ loc_form.location_synonyms.label }}:</label>
+                        {{ loc_form.location_synonyms }}
+                        {{ loc_form.location_synonyms.errors }}
+                    </div>
+                    <div class="flex flex-help-text margin-bottom">
+                        <small>{{ loc_form.location_synonyms.help_text }}</small>
+                    </div>
+
+                    <div class="flex flex-label">
+                        <label>{{ loc_form.latitude.label }}:</label>
+                        {{ loc_form.latitude }}
+                        {{ loc_form.latitude.errors }}
+                    </div>
+                    <div class="flex flex-help-text margin-bottom">
+                        <small>{{ loc_form.latitude.help_text }}</small>
+                    </div>
+
+                    <div class="flex flex-label">
+                        <label>{{ loc_form.longitude.label }}:</label>
+                        {{ loc_form.longitude }}
+                        {{ loc_form.longitude.errors }}
+                    </div>
+                    <div class="flex flex-help-text margin-bottom">
+                        <small>{{ loc_form.longitude.help_text }}</small>
+                    </div>
                 </fieldset>
 
 
                 <!-- Comment section -->
-                {% include "core/component/comment_publication_formset.html" with comment_formset=comment_formset comment_title='Researchers’ notes for front-end display:' %}
+                {% include "core/component/comment_publication_formset.html" with comment_formset=comment_formset comment_title='Researchers’ notes for front-end display' %}
 
 
                 <!-- Resource section -->
                 {% include "core/component/resource_formset.html" with res_formset=res_formset %}
 
                 <!-- Images section -->
-                {% include "core/component/image_formset.html" with img_handler=img_handler %}
+                <fieldset>
+                    <legend id="header_images" class="toc-item">Images</legend>
+                    {% include "core/component/image_formset.html" with img_handler=img_handler %}
+                </fieldset>
 
                 {% url 'location:delete' loc_form.instance.location_id as del_url %}
                 {% include "core/component/del_confirm_fieldset.html" with del_url=del_url name='location' %}
