@@ -87,7 +87,10 @@
 
     {% include "core/component/resource_formset.html" with res_formset=res_formset %}
 
-    {% include "core/component/image_formset.html" with img_handler=img_handler %}
+    <fieldset>
+            <legend id="header_images" class="toc-item">Images</legend>
+            {% include "core/component/image_formset.html" with img_handler=img_handler %}
+    </fieldset>
 
     {% url 'person:delete' person_form.instance.iperson_id as del_url %}
     {% include "core/component/del_confirm_fieldset.html" with del_url=del_url name='person or organization' %}

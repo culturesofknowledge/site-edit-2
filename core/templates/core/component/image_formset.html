@@ -29,31 +29,30 @@
 
         {{ img_handler.image_formset.management_form }}
         {% for form in img_handler.image_formset|reverse_list %}
-            {% if forloop.first %}
-                <strong> Upload image files from your own computer: </strong>
-                <br/><br/>
-                <div class="multi_rel_recref_container">
-                    <label>Selected image:</label>
-                    <div>{{ img_handler.img_form }}</div>
-                </div>
-                <p>Or:</p>
-
-                <strong> Enter or change links to images by typing in the URL: </strong>
-                
-            {% endif %}
-
-
             <fieldset>
                 <legend id="{{ header_id }}_{{ forloop.counter0 }}"
                         class="toc-sub-item">
                     {% if forloop.first %}
-                        Enter new image details:
+                        Enter new image details
                     {% else %}
                         Existing image no. {{ forloop.counter0 }} of {{ img_handler.total_images }}
                     {% endif %}
                 </legend>
 
                 {{ form.image_id }}
+
+                {% if forloop.first %}
+                    <strong> Upload image files from your own computer: </strong>
+                    <br/><br/>
+                    <div class="multi_rel_recref_container">
+                        <label>Selected image:</label>
+                        <div>{{ img_handler.img_form }}</div>
+                    </div>
+                    <p>Or:</p>
+
+                    <strong> Enter or change links to images by typing in the URL: </strong>
+
+                {% endif %}
 
                 {% if not forloop.first and form.thumbnail.value %}
                     <div class="margin-bottom">

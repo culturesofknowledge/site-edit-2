@@ -15,7 +15,7 @@
 
         {% for form in comment_formset %}
             <div class="multi_rel_recref_container{% if form.comment_id.value %} existing-note{% endif %}">
-                <label id="{{ header_id }}_{{ forloop.counter0 }}" class="toc-sub-item">
+                <label id="{{ header_id }}_{{ forloop.counter0 }}">
                     {% if form.comment_id.value %}
                         Existing note:
                     {% else %}
