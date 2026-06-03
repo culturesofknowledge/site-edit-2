@@ -231,6 +231,15 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
     margin: 0;
   }
 
+  input {
+    padding-bottom: 5px;
+    margin-bottom: 0px;
+  }
+
+  small {
+    margin-bottom: 10px;
+  }
+
 }
 
 .row-spaced {
