@@ -15,7 +15,7 @@
 
         {% for form in comment_formset %}
             <div class="multi_rel_recref_container{% if form.comment_id.value %} existing-note{% endif %}">
-                <label id="{{ header_id }}_{{ forloop.counter0 }}" class="toc-sub-item">
+                <label id="{{ header_id }}_{{ forloop.counter0 }}">
                     {% if form.comment_id.value %}
                         Existing note:
                     {% else %}
@@ -42,14 +42,13 @@
                     <div class="ref-publication-row multi_rel_recref_container" textbox_id="{{ form.comment.id_for_label }}"></div>
                 {% endif %}
             {% else %}
-                <div class="ref-publication-row multi_rel_recref_container" textbox_id="{{ form.comment.id_for_label }}"></div>
+                    <div class="ref-publication-row multi_rel_recref_container" textbox_id="{{ form.comment.id_for_label }}"></div>
             {% endif %}
         {% endfor %}
-        <div class="multi_rel_recref_container">
-        <label></label>
-            <span><small>
+        <div class="flex flex-help-text">
+            <small>
                 You can copy references from an existing list into the above field by using the 'Copy' button. Or add a new reference to the list by using the 'Create' button, then select full details or abbreviation.
-            </small></span>
+            </small>
         </div>
     </fieldset>
 {% endwith %}

@@ -47,7 +47,7 @@
 
     {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosure_manif.update_formset new_form=recref_enclosure_manif.new_form add_label='Add enclosed letter:' hide_create_btn=True no_date=True placeholder='Please select enclosed letter, then click Save.' %}
 
-    <span>OTHER TYPES of enclosure, e.g. money, books, samples of minerals:</span>
+    <label>Other types of enclosure <small> e.g. money, books, samples of minerals</small>:</label>
     <div class="multi_rel_recref_container">
     <label> Details of enclosures other than letters </label>
     {{ manif_form.non_letter_enclosures }}
@@ -80,7 +80,9 @@
     <label>Paper size:</label>
     {{ manif_form.paper_size }}
     </div>
-    <span>(up to 500 characters)</span>
+    <div class="flex flex-help-text margin-bottom">
+        <small>(up to 500 characters)</small>
+    </div>
 
     <div class="multi_rel_recref_container">
     <label>Stored folded:</label>
@@ -91,13 +93,17 @@
     <label>Paper type, watermark:</label>
     {{ manif_form.paper_type_or_watermark }}
     </div>
-    <span>(up to 500 characters)</span>
+    <div class="flex flex-help-text margin-bottom">
+        <small>(up to 500 characters)</small>
+    </div>
 
     <div class="multi_rel_recref_container">
     <label>Number of pages:</label>
     {{ manif_form.number_of_pages_of_document }}
     </div>
-    <span>(whole numbers only)</span>
+    <div class="flex flex-help-text margin-bottom">
+        <small>(whole numbers only)</small>
+    </div>
 
     <div class="multi_rel_recref_container">
     <label>Seal:</label>
@@ -211,7 +217,7 @@
 
 </fieldset>
 <fieldset>
-    <legend>Images</legend>
+    <legend class="toc-item">Images</legend>
     {% include "core/component/image_formset.html" with img_handler=img_handler %}
 
 </fieldset>

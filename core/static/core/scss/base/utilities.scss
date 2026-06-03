@@ -260,12 +260,6 @@
   display: flex;
   gap: 0.5rem;
 
-  label {      // fixed alignment width
-    width: 180px;     // safety for smaller text
-    text-align: left;
-    margin: 0;
-  }
-
   // inputs / selects / textarea
   input,
   select,
@@ -274,6 +268,22 @@
     flex: 1;
     width: 100%;
   }
+}
+
+.flex-label > label {
+    width: 180px;     // safety for smaller text
+    text-align: left;
+    margin: 0;
+}
+
+.flex-label > a.btn {
+  margin-top: 8px;
+  height: 35px;
+}
+
+.flex-help-text > small {
+    text-align: left;
+    margin: -10px 0 0 190px;
 }
 
 // 📱 Responsive fallback
@@ -378,4 +388,12 @@
 
 .hiding {
   display: none;
+}
+
+.multi_rel_recref_container > label {
+  width: 190px;
+}
+
+.lighter {
+  font-weight: 400;
 }

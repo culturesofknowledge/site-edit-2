@@ -3,12 +3,20 @@
 {% block tabcontent %}
     <fieldset>
         <legend id="header_editors_notes" class="toc-item">Editor' notes</legend>
-        <label>Source of data:</label>
-        <span>(max. 250 characters)</span>
-        {{ details_form.accession_code }}
 
-        <label>Editors' notes</label>
-        {{ details_form.editors_notes }}
+        <div class="flex flex-label">
+            <label>Source of data:</label>
+            {{ details_form.accession_code }}
+        </div>
+        <div class="flex flex-help-text margin-bottom">
+            <small>(max. 250 characters)</small>
+        </div>
+
+        <div class="flex flex-label">
+            <label>Editors' notes:</label>
+            {{ details_form.editors_notes }}
+        </div>
+
     </fieldset>
 
     <fieldset>
@@ -19,30 +27,44 @@
     <fieldset>
         <legend>Incipit and explicit</legend>
 
-        <label>Incipit</label>
-        {{ details_form.incipit }}
+        <div class="flex flex-label">
+            <label>Incipit:</label>
+            {{ details_form.incipit }}
+        </div>
 
-        <label>Explicit</label>
-        {{ details_form.explicit }}
-
-        <label>Postscript</label>
-        {{ details_form.ps }}
+        <div class="flex flex-label">
+            <label>Explicit:</label>
+            {{ details_form.explicit }}
+        </div>
+        <div class="flex flex-label">
+            <label>Postscript:</label>
+            {{ details_form.ps }}
+        </div>
     </fieldset>
 
     <fieldset>
         <legend id="header_abstract" class="toc-item">Abstract, subjects and keywords</legend>
-        <label>Abstract</label>
-        {{ details_form.abstract }}
+
+        <div class="flex flex-label">
+            <label>Abstract:</label>
+            {{ details_form.abstract }}
+        </div>
 
         <label class="margin-right">Subject(s):</label>
-        <div class="choices-container">
+        <div class="choices-container margin-bottom">
             {% for s in subjects %}
                 {{ s }}
             {% endfor %}
         </div>
 
-        <label>Keywords (ideally separated by semi-colons)</label>
-        {{ details_form.keywords }}
+        <div class="flex flex-label">
+            <label>Keywords:</label>
+            {{ details_form.keywords }}
+        </div>
+        <div class="flex flex-help-text margin-bottom">
+            <small>Ideally separated by semi-colons.</small>
+        </div>
+
     </fieldset>
 
     <fieldset>
