@@ -178,7 +178,7 @@ calendar_choices = [
     ('', 'Unknown'),
     ('G', 'Gregorian'),
     ('JJ', 'Julian (year starting 1st Jan)'),
-    ('JM', 'Julian (year starting 25th Mar)'),
+    ('JM', 'Julian (year starting 25th Mar) (Please only use this option after consultation with EMLO\'s editors)'),
     ('O', 'Other'),
 ]
 
