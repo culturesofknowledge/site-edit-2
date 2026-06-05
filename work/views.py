@@ -476,7 +476,7 @@ class ManifFFH(BasicWorkFFH):
 
     def create_context(self, is_save_success=False):
         context = super().create_context(is_save_success=is_save_success)
-        context['work_category'] = 'Manifestation'
+        context['work_category'] = 'Manifestations'
         if self.manif:
             context['manif_id'] = self.manif.manifestation_id
 
@@ -580,7 +580,7 @@ class ResourcesFFH(BasicWorkFFH):
 
     def create_context(self, is_save_success=False):
         context : dict = super().create_context(is_save_success=is_save_success)
-        context.update({'work_category':'Resources'})
+        context.update({'work_category':'Related resources'})
         return context
 
 class DetailsFFH(BasicWorkFFH):
