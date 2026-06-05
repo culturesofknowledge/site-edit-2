@@ -55,17 +55,17 @@
 
     <fieldset>
         <legend id="header_earlier_letter" class="toc-item">Earlier letters answered by this one</legend>
-        {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_earlier_letter.update_formset new_form=recref_earlier_letter.new_form add_label='Add letter answered by this one:' no_date=True placeholder='Please select letter answered by this one, then click Save.' %}
+        {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_earlier_letter.update_formset new_form=recref_earlier_letter.new_form add_label='Add letter answered by this one:' no_date=True placeholder='Please select or create letter answered by this one, then click Save.' %}
     </fieldset>
 
     <fieldset>
         <legend id="header_later_letter" class="toc-item">Later letter</legend>
-        {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_later_letter.update_formset new_form=recref_later_letter.new_form add_label='Add reply to this:' no_date=True placeholder='Please select reply to this, then click Save.' %}
+        {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_later_letter.update_formset new_form=recref_later_letter.new_form add_label='Add reply to this:' no_date=True placeholder='Please select or create reply to this, then click Save.' %}
     </fieldset>
 
     <fieldset>
         <legend id="header_matching" class="toc-item">Matching letter</legend>
-        {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_matching_letter.update_formset new_form=recref_matching_letter.new_form add_label='Add match:' no_date=True placeholder='Please select matching letter, then click Save.' %}
+        {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_matching_letter.update_formset new_form=recref_matching_letter.new_form add_label='Add match:' no_date=True placeholder='Please select or create matching letter, then click Save.' %}
     </fieldset>
 
 {% endblock %}
