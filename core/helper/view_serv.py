@@ -467,7 +467,7 @@ class BasicSearchView(ListView):
             # create file and send email in other thread
             base_url = request.build_absolute_uri('/')
             Thread(target=_fn, args=(request.user.email, base_url)).start()
-            msg = 'The selected data is being processed and will be sent to your email soon.'
+            msg = 'The selected data are being processed and will be sent to your email soon.'
         self.add_to_user_messages(msg)
 
         # stay as same page
