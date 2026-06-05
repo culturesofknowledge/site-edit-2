@@ -130,11 +130,11 @@ class ImageForm(ModelForm):
     thumbnail = forms.CharField(required=False,
                                 label='URL for thumbnail (if any)')
     credits = forms.CharField(required=False,
-                              label="Credits for 'front-end' display*")
-    licence_details = form_serv.CommonTextareaField(label='Either: full text of licence*')
+                              label="Credits for 'front-end' display")
+    licence_details = form_serv.CommonTextareaField(label='Either: full text of licence')
 
     licence_url = forms.CharField(required=False,
-                                  label='Or: licence URL*',
+                                  label='Or: licence URL',
                                   initial=settings.DEFAULT_IMG_LICENCE_URL,
                                   )
     licence_url.widget.attrs.update({'class': 'url_checker', })
@@ -142,7 +142,7 @@ class ImageForm(ModelForm):
     can_be_displayed = form_serv.ZeroOneCheckboxField(required=False,
                                                        label='Can be displayed to public',
                                                        initial='1', )
-    display_order = forms.IntegerField(required=False, label='Order for display in front-end:', initial=1)
+    display_order = forms.IntegerField(required=False, label='Order for display in front-end', initial=1)
 
     is_delete = ZeroOneCheckboxField(is_str=False, label='Delete image from manifestation')
     is_delete.widget.attrs.update({'class': 'warn-checked'})

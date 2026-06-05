@@ -9,7 +9,7 @@
         {{ manif_form.manifestation_type }}
     </div>
 
-    {% include "core/component/recref.html" with recref_type='inst' id_field=manif_form.selected_inst_id label='Repository' placeholder='Please select or create repository, then click Save.' %}
+    {% include "core/component/recref.html" with recref_type='inst' id_field=manif_form.selected_inst_id label='Repository:' placeholder='Please select or create repository, then click Save.' %}
 
     <div class="flex flex-label">
         <label>ID number or shelfmark:</label>
@@ -49,12 +49,12 @@
 
     <label>Other types of enclosure <small> e.g. money, books, samples of minerals</small>:</label>
     <div class="multi_rel_recref_container">
-    <label> Details of enclosures other than letters </label>
+    <label>Details of enclosures other than letters:</label>
     {{ manif_form.non_letter_enclosures }}
     </div>
 
     <div class="multi_rel_recref_container">
-    <label> Details of attached or accompanying materials </label>
+    <label>Details of attached or accompanying materials:</label>
     {{ manif_form.accompaniments }}
     </div>
 

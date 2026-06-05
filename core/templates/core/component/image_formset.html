@@ -84,7 +84,7 @@
                 </div>
                 {% endif %}
                 <div class="multi_rel_recref_container">
-                    <label>{{ form.credits.label }}:</label>
+                    <label>{{ form.credits.label }}:*</label>
                     <div>{{ form.credits.errors }}{{ form.credits }}</div>
                 </div>
                 <div class="multi_rel_recref_container">
@@ -92,7 +92,7 @@
                     <div>{{ form.licence_details.errors }}{{ form.licence_details }}</div>
                 </div>
                 <div class="multi_rel_recref_container">
-                    <label>{{ form.licence_url.label }}:</label>
+                    <label>{{ form.licence_url.label }}:*</label>
                     <div>{{ form.licence_url.errors }}{{ form.licence_url }}</div>
                 </div>
                 {% include "core/component/common_checkbox.html" with field=form.can_be_displayed name='Can be displayed to public <small>If this box is not ticked, the image will not be displayed in the \'front-end\'.</small>:' is_normal_size=True %}
