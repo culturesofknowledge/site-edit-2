@@ -82,7 +82,7 @@ changed_field_choices = [
     ('destination_inferred', 'Destination Inferred'),
     ('destination_uncertain', 'Destination Uncertain'),
     ('display_order', 'Display Order'),
-    ('editors_notes', 'Editors Notes'),
+    ('editors_notes', "Editors' Notes"),
     ('edit_status', 'Edit Status'),
     ('element_1_eg_room', 'Element 1 Eg Room'),
     ('element_2_eg_building', 'Element 2 Eg Building'),
