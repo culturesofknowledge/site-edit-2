@@ -6,7 +6,7 @@
 
         <div class="flex flex-label">
             <label>Source of data:</label>
-            {% if not user.is_supervisor %}
+            {% if details_form.accession_code.value and not user.is_supervisor %}
                 <input type="text" name="{{ details_form.accession_code.html_name }}" value="{{ details_form.accession_code.value }}" readonly disabled>
             {% else %}
                 {{ details_form.accession_code }}
