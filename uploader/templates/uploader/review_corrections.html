@@ -1,0 +1,74 @@
+{% extends "core/emlo_logined.html" %}
+{% load static %}
+
+{% block content %}
+
+<div id="upload-header">
+    <span id="upload-title">Bulk corrections upload by {{ upload.upload_username }} uploaded {{ upload.upload_timestamp }}</span>
+    <span id="upload-summary">Status: {{ upload.upload_status }} | Corrections in upload: {{ corrections_count }}</span>
+
+    <div class="padding-top">
+        Back to list of contributions
+        <button type="button" class="btn inline_btn" onclick="location.href='/upload'">Back</button>
+
+        <button class="btn inline_btn" id="accept_all"
+                onclick="document.getElementById('confirm').style.display='block';
+                         document.getElementById('confirm_title').textContent='Accept {{ corrections_count }} correction(s)?';
+                         document.getElementById('action').value='accept';">Accept all</button>
+        <button class="btn inline_btn" id="reject_all"
+                onclick="document.getElementById('confirm').style.display='block';
+                         document.getElementById('confirm_title').textContent='Reject all corrections?';
+                         document.getElementById('action').value='reject';">Reject all</button>
+    </div>
+    <em>Note: confirmation will be required before Accept/Reject.</em>
+</div>
+
+{% include "core/component/messages.html" %}
+
+<form method="post">
+    {% csrf_token %}
+    <fieldset id="confirm" style="max-width: 50%; margin-top: 1em; display: none;">
+        <h2 id="confirm_title"></h2>
+        <p>Accepting will apply the proposed values to the live database. This cannot be undone.</p>
+        <input type="hidden" value="" name="action" id="action"/>
+        <button class="btn inline_btn" name="confirm">Confirm</button>
+        <button type="button" class="btn inline_btn"
+                onclick="document.getElementById('confirm').style.display='none';">Cancel</button>
+    </fieldset>
+</form>
+
+<div id="review">
+    <h2>Corrections ({{ corrections_count }})</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>EMLO Letter ID</th>
+                <th>Work</th>
+                <th>Field</th>
+                <th>Current value</th>
+                <th>Proposed new value</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in correction_rows %}
+            <tr>
+                <td>{{ row.iwork_id }}</td>
+                <td>
+                    {% if row.work_id %}
+                        <a href="/work/{{ row.work_id }}">{{ row.work_desc|default:row.work_id }}</a>
+                    {% else %}
+                        <span class="text-danger">Work not found</span>
+                    {% endif %}
+                </td>
+                <td>{{ row.field }}</td>
+                <td>{{ row.old_value|default:"—" }}</td>
+                <td>{{ row.new_value }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5">No corrections in this upload.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
