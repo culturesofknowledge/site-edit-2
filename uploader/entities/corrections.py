@@ -22,8 +22,8 @@ class CofkWorkCorrections(CofkEntity):
     and supplies one or more correction fields. Corrections are stored as a JSON dict
     {field_name: new_value} on CofkCollectWorkCorrection.
 
-    'Original Catalogue name' is resolved to a CofkLookupCatalogue catalogue_code and
-    stored under the key 'original_catalogue_code' to avoid FK serialisation issues.
+    'Original Catalogue name' expects a catalogue_code value (e.g. 'EMLO') which is
+    validated against CofkLookupCatalogue and stored under 'original_catalogue_code'.
     """
 
     @property

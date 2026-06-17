@@ -14,6 +14,7 @@ from work.models import CofkUnionWork
 log = logging.getLogger(__name__)
 
 CORRECTION_HEADERS = ['EMLO Letter ID Number', 'Command', 'Original Catalogue name']
+CORRECTION_ROW = [9901, 'UPDATE', 'TESTCAT']  # TESTCAT is the catalogue_code, not the name
 
 
 class TestCorrectionUpload(UploadIncludedFactoryTestCase):
@@ -43,7 +44,7 @@ class TestCorrectionUpload(UploadIncludedFactoryTestCase):
     def tearDown(self):
         super().tearDown()
 
-    def _make_file(self, header_row, data_rows, sheet_name='work'):
+    def _make_file(self, header_row, data_rows, sheet_name='Corrections'):
         wb = Workbook()
         ws = wb.create_sheet(sheet_name)
         ws.append(header_row)
@@ -60,7 +61,7 @@ class TestCorrectionUpload(UploadIncludedFactoryTestCase):
         """Lowercase 'work' sheet is detected as 'correction' upload type."""
         path = self._make_file(
             CORRECTION_HEADERS,
-            [[9901, 'UPDATE', 'Test Catalogue']],
+            [CORRECTION_ROW],
         )
         cuef = CofkUploadExcelFile(self.new_upload, path)
         self.assertEqual(cuef.upload_type, 'correction')
@@ -69,7 +70,7 @@ class TestCorrectionUpload(UploadIncludedFactoryTestCase):
         """Uppercase 'Work' sheet is NOT treated as correction upload."""
         path = self._make_file(
             CORRECTION_HEADERS,
-            [[9901, 'UPDATE', 'Test Catalogue']],
+            [CORRECTION_ROW],
             sheet_name='Work',  # uppercase — standard upload
         )
         # Standard upload requires all 5 mandatory sheets; this will raise an error
@@ -82,7 +83,7 @@ class TestCorrectionUpload(UploadIncludedFactoryTestCase):
         """A valid data row creates a CofkCollectWorkCorrection with the correct corrections dict."""
         path = self._make_file(
             CORRECTION_HEADERS,
-            [[9901, 'UPDATE', 'Test Catalogue']],
+            [CORRECTION_ROW],
         )
         CofkUploadExcelFile(self.new_upload, path)
         correction = CofkCollectWorkCorrection.objects.get(upload=self.new_upload, iwork_id=9901)
@@ -93,7 +94,7 @@ class TestCorrectionUpload(UploadIncludedFactoryTestCase):
         """The union_work FK is populated when the iwork_id is found."""
         path = self._make_file(
             CORRECTION_HEADERS,
-            [[9901, 'UPDATE', 'Test Catalogue']],
+            [CORRECTION_ROW],
         )
         CofkUploadExcelFile(self.new_upload, path)
         correction = CofkCollectWorkCorrection.objects.get(upload=self.new_upload, iwork_id=9901)
@@ -137,7 +138,7 @@ class TestCorrectionUpload(UploadIncludedFactoryTestCase):
         """'Original Catalogue name' is resolved to catalogue_code stored as original_catalogue_code."""
         path = self._make_file(
             CORRECTION_HEADERS,
-            [[9901, 'UPDATE', 'Test Catalogue']],
+            [CORRECTION_ROW],
         )
         CofkUploadExcelFile(self.new_upload, path)
         correction = CofkCollectWorkCorrection.objects.get(upload=self.new_upload, iwork_id=9901)
@@ -149,7 +150,7 @@ class TestCorrectionUpload(UploadIncludedFactoryTestCase):
         """An unrecognised catalogue name produces a validation error."""
         path = self._make_file(
             CORRECTION_HEADERS,
-            [[9901, 'UPDATE', 'NonExistentCatalogue']],
+            [[9901, 'UPDATE', 'BADCODE']],
         )
         cuef = CofkUploadExcelFile(self.new_upload, path)
         self.assertGreater(cuef.total_errors, 0)
