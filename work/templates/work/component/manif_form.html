@@ -3,24 +3,26 @@
 
 <fieldset>
     <legend id="header_basic_details" class="toc-item">Basic details</legend>
-    <div class="multi_rel_recref_container">
-    <label>Document type:</label>
-    {{ manif_form.manifestation_type }}
+    
+    <div class="flex flex-label">
+        <label>Document type:</label>
+        {{ manif_form.manifestation_type }}
     </div>
 
-    {% include "core/component/recref.html" with recref_type='inst' id_field=manif_form.selected_inst_id label='Repository' placeholder='Please select or create repository, then click save.' %}
+    {% include "core/component/recref.html" with recref_type='inst' id_field=manif_form.selected_inst_id label='Repository:' placeholder='Please select or create repository, then click Save.' %}
 
-    <div class="multi_rel_recref_container">
-    <label>ID number or shelfmark:</label>
-    {{ manif_form.id_number_or_shelfmark }}
+    <div class="flex flex-label">
+        <label>ID number or shelfmark:</label>
+        {{ manif_form.id_number_or_shelfmark }}
     </div>
 
-    <label class="margin-bottom">Or </label>
-    <div class="multi_rel_recref_container">
-    <label>Printed edition details: </label>
-
-    {{ manif_form.printed_edition_details }}
+    <label class="margin-bottom margin-top">Or </label>
+    
+    <div class="flex flex-label margin-bottom">
+        <label>Printed edition details: </label>
+        {{ manif_form.printed_edition_details }}
     </div>
+
     <div class="ref-publication-row" textbox_id="{{ manif_form.printed_edition_details.id_for_label }}"></div>
 
 </fieldset>
@@ -43,16 +45,16 @@
         Note: when entering enclosure details, please treat any work/manifestation on the Cultures of Knowledge system as a letter.
     </span>
 
-    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosure_manif.update_formset new_form=recref_enclosure_manif.new_form add_label='Add enclosed letter:' hide_create_btn=True no_date=True placeholder='Please select enclosed letter, then click Save.' %}
+    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosure_manif.update_formset new_form=recref_enclosure_manif.new_form add_label='Add enclosed letter:' hide_create_btn=False no_date=True placeholder='Please select or create enclosed letter, then click Save.' %}
 
-    <span>OTHER TYPES of enclosure, e.g. money, books, samples of minerals:</span>
+    <label>Other types of enclosure <small> e.g. money, books, samples of minerals</small>:</label>
     <div class="multi_rel_recref_container">
-    <label> Details of enclosures other than letters </label>
+    <label>Details of enclosures other than letters:</label>
     {{ manif_form.non_letter_enclosures }}
     </div>
 
     <div class="multi_rel_recref_container">
-    <label> Details of attached or accompanying materials </label>
+    <label>Details of attached or accompanying materials:</label>
     {{ manif_form.accompaniments }}
     </div>
 
@@ -62,7 +64,7 @@
 <fieldset>
     <legend id="header_letters" class="toc-item">Letters in which this one was enclosed</legend>
 
-    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosed_manif.update_formset new_form=recref_enclosed_manif.new_form add_label='Add enclosing letter:' hide_create_btn=True no_date=True placeholder='Please select enclosing letter, then click Save.' %}
+    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosed_manif.update_formset new_form=recref_enclosed_manif.new_form add_label='Add enclosing letter:' hide_create_btn=False no_date=True placeholder='Please select or craate enclosing letter, then click Save.' %}
 
 </fieldset>
 
@@ -78,7 +80,9 @@
     <label>Paper size:</label>
     {{ manif_form.paper_size }}
     </div>
-    <span>(up to 500 characters)</span>
+    <div class="flex flex-help-text margin-bottom">
+        <small>(up to 500 characters)</small>
+    </div>
 
     <div class="multi_rel_recref_container">
     <label>Stored folded:</label>
@@ -89,13 +93,17 @@
     <label>Paper type, watermark:</label>
     {{ manif_form.paper_type_or_watermark }}
     </div>
-    <span>(up to 500 characters)</span>
+    <div class="flex flex-help-text margin-bottom">
+        <small>(up to 500 characters)</small>
+    </div>
 
     <div class="multi_rel_recref_container">
     <label>Number of pages:</label>
     {{ manif_form.number_of_pages_of_document }}
     </div>
-    <span>(whole numbers only)</span>
+    <div class="flex flex-help-text margin-bottom">
+        <small>(whole numbers only)</small>
+    </div>
 
     <div class="multi_rel_recref_container">
     <label>Seal:</label>
@@ -201,15 +209,15 @@
         </div>
 
         {% with 'Add scribe:'|add_another_if_startswith as label_text %}
-            {% include "core/component/recref.html" with recref_type='person' id_field=manif_form.selected_scribe_id label=label_text placeholder='Please select scribe, then click Save.' %}
+            {% include "core/component/recref.html" with recref_type='person' id_field=manif_form.selected_scribe_id label=label_text placeholder='Please select or create scribe, then click Save.' %}
         {% endwith %}
     {% else %}
-        {% include "core/component/recref.html" with recref_type='person' id_field=manif_form.selected_scribe_id label='Add scribe:' placeholder='Please select scribe, then click Save.' %}
+        {% include "core/component/recref.html" with recref_type='person' id_field=manif_form.selected_scribe_id label='Add scribe:' placeholder='Please select or create scribe, then click Save.' %}
     {% endif %}
 
 </fieldset>
 <fieldset>
-    <legend>Images</legend>
+    <legend id="header_image" class="toc-item">Images</legend>
     {% include "core/component/image_formset.html" with img_handler=img_handler %}
 
 </fieldset>

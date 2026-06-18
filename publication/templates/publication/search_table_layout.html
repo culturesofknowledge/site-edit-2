@@ -4,9 +4,9 @@
     <tr></tr>
     <tr>
         <th>Publication Details</th>
-        <th>ID</th>
+        <th class="col-id">ID</th>
         <th>Abbrev</th>
-        <th>Last edit</th>
+        <th class="col-last-edit">Last edit</th>
     </tr>
     </thead>
     <tbody>
@@ -17,7 +17,7 @@
             <td>
                 {{ r.publication_details }}
             </td>
-            <td>
+            <td class="col-id">
                 {% include 'core/component/search_table_layout/link_record.html' with id=r.publication_id view='publication:full_form' edit_perm=constant.PM_CHANGE_PUBLICATION only%}
                 {% if constant.PM_CHANGE_PUBLICATION in perms %}
                     <button class="open-link-btn" url="{% url 'publication:full_form' r.publication_id %}">Edit</button>
@@ -26,7 +26,7 @@
             <td>
                 {{ r.abbrev }}
             </td>
-            <td>
+            <td class="col-last-edit">
                 {% include "core/component/search_table_layout/detail_change_tracker.html" with record=r only %}
             </td>
         </tr>

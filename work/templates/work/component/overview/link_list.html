@@ -1,5 +1,7 @@
 {% for l in values %}
-    <li>
-        <a href="{{ l.link }}" target="_blank"> {{ l.name }}</a>
-    </li>
+    {% if l.name|length > 0 %}
+        <li>
+            <a href="{{ l.link }}" target="_blank"> {{ l.name }}</a>
+        </li>
+    {% endif %}
 {% endfor %}

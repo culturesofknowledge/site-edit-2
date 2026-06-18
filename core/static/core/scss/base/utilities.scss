@@ -256,6 +256,48 @@
   display: flex;
 }
 
+.flex-label {
+  display: flex;
+  gap: 0.5rem;
+
+  // inputs / selects / textarea
+  input,
+  select,
+  textarea,
+  .recref-container {   // in case your include wraps things
+    flex: 1;
+    width: 100%;
+  }
+}
+
+.flex-label > label {
+    width: 180px;     // safety for smaller text
+    text-align: left;
+    margin: 0;
+}
+
+.flex-label > a.btn {
+  margin-top: 8px;
+  height: 35px;
+}
+
+.flex-help-text > small {
+    text-align: left;
+    margin: -10px 0 0 190px;
+}
+
+// 📱 Responsive fallback
+@media (max-width: 640px) {
+  .flex-label {
+    flex-direction: column;
+    align-items: flex-start;
+
+    label {
+      width: 100%;
+    }
+  }
+}
+
 .flex-wrap {
   display: flex;
   flex-wrap: wrap;
@@ -346,4 +388,12 @@
 
 .hiding {
   display: none;
+}
+
+.multi_rel_recref_container > label {
+  width: 190px;
+}
+
+.lighter {
+  font-weight: 400;
 }

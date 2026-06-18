@@ -4,18 +4,18 @@
 {{ comment_formset.management_form }}
 
 {% with header_id=header_id|default:'header_comment' %}
-    <div id="{{ header_id }}" class="header {{ header_class|default:'toc-item' }}">
-        <h2>{% if comment_title %}
+    <fieldset>
+        <legend id="{{ header_id }}" class="{{ header_class|default:'toc-item' }}">
+            {% if comment_title %}
                 {{ comment_title }}
             {% else %}
                 Notes
-            {% endif %}</h2>
-    </div>
-    <fieldset>
+            {% endif %}
+        </legend>
 
         {% for form in comment_formset %}
             <div class="multi_rel_recref_container{% if form.comment_id.value %} existing-note{% endif %}">
-                <label id="{{ header_id }}_{{ forloop.counter0 }}" class="toc-sub-item">
+                <label id="{{ header_id }}_{{ forloop.counter0 }}">
                     {% if form.comment_id.value %}
                         Existing note:
                     {% else %}
@@ -42,14 +42,13 @@
                     <div class="ref-publication-row multi_rel_recref_container" textbox_id="{{ form.comment.id_for_label }}"></div>
                 {% endif %}
             {% else %}
-                <div class="ref-publication-row multi_rel_recref_container" textbox_id="{{ form.comment.id_for_label }}"></div>
+                    <div class="ref-publication-row multi_rel_recref_container" textbox_id="{{ form.comment.id_for_label }}"></div>
             {% endif %}
         {% endfor %}
-        <div class="multi_rel_recref_container">
-        <label></label>
-            <span><i>
+        <div class="flex flex-help-text">
+            <small>
                 You can copy references from an existing list into the above field by using the 'Copy' button. Or add a new reference to the list by using the 'Create' button, then select full details or abbreviation.
-            </i></span>
+            </small>
         </div>
     </fieldset>
 {% endwith %}
