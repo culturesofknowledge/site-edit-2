@@ -87,6 +87,6 @@ def get_manif_details(manif: CofkUnionManifestation) -> list[str]:
         shelfmark = encloses.id_number_or_shelfmark or encloses.manifestation_id
         url = get_form_url(encloses)
         link = data_serv.endcode_url_content(url, shelfmark) if url else shelfmark
-        manifestation_summary.append(f' ~ Was enclosure in: {link}')
+        manifestation_summary.append(f' ~ Was enclosed in: {link}')
 
     return manifestation_summary
