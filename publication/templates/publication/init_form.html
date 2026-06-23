@@ -18,23 +18,32 @@
 
                 <fieldset>
                     <legend>Publication</legend>
-                    <div class="margin-bottom">
-                        <label>Publication Details*</label>
+                    <div class="flex flex-label">
+                        <label>Publication details:*</label>
                         {{ pub_form.publication_details }}
                         {{ pub_form.publication_details.errors }}
-                        <small>(e.g. author(s)/editor(s), title, place and year of publication)</small>
+                    </div>
+                    <div class="flex flex-help-text margin-bottom ">
+                        <small>e.g. author(s)/editor(s), title, place and year of publication</small>
                     </div>
 
-                    <div class="margin-bottom">
-                        <label>Abbreviation</label>
+                    <div class="flex flex-label">
+                        <label>Abbreviation:</label>
                         {{ pub_form.abbrev }}
                         {{ pub_form.abbrev.errors }}
-                        <small>(optional, max. 50 characters)</small>
+                    </div>
+                    <div class="flex flex-help-text margin-bottom">
+                        <small>optional, max. 50 characters</small>
+                    </div>
+                    <div class="flex flex-label"><small>
+                        Please note: changes to the details shown here will not affect the printed edition details of
+                        any existing works/manifestations. The publication details shown here will simply be used in a
+                        'pick-list' to help save you unnecessary typing in future.</small>
                     </div>
                 </fieldset>
                 {% if pub_form.instance and pub_form.instance.pk and  constant.PM_CHANGE_PUBLICATION|can_show_for_perm:perms  %}
                     {% url 'publication:delete' pub_form.instance.pk as del_url %}
-                    {% include "core/component/del_confirm_fieldset.html" with del_url=del_url name='Publication' %}
+                    {% include "publication/component/del_confirm_fieldset.html" with del_url=del_url name='publication' %}
                 {% endif %}
 
                 <div class="bg-white sticky-bottom">

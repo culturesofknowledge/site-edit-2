@@ -1,15 +1,26 @@
 {% extends "work/basic_form.html" %}
 {% load static %}
 {% block tabcontent %}
-    <h1>Work - Other Details</h1>
     <fieldset>
-        <legend id="header_editors_notes" class="toc-item">Editor' notes</legend>
-        <label>Source of data:</label>
-        <span>(max. 250 characters)</span>
-        {{ details_form.accession_code }}
+        <legend id="header_editors_notes" class="toc-item">Editors' notes</legend>
 
-        <label>Editors' notes</label>
-        {{ details_form.editors_notes }}
+        <div class="flex flex-label">
+            <label>Source of data:</label>
+            {% if details_form.accession_code.value and not user.is_supervisor %}
+                <input type="text" name="{{ details_form.accession_code.html_name }}" value="{{ details_form.accession_code.value }}" readonly disabled>
+            {% else %}
+                {{ details_form.accession_code }}
+            {% endif %}
+        </div>
+        <div class="flex flex-help-text margin-bottom">
+            <small>(max. 250 characters)</small>
+        </div>
+
+        <div class="flex flex-label">
+            <label>Editors' notes:</label>
+            {{ details_form.editors_notes }}
+        </div>
+
     </fieldset>
 
     <fieldset>
@@ -20,28 +31,44 @@
     <fieldset>
         <legend>Incipit and explicit</legend>
 
-        <label>Incipit</label>
-        {{ details_form.incipit }}
+        <div class="flex flex-label">
+            <label>Incipit:</label>
+            {{ details_form.incipit }}
+        </div>
 
-        <label>Explicit</label>
-        {{ details_form.explicit }}
-
-        <label>Postscript</label>
-        {{ details_form.ps }}
+        <div class="flex flex-label">
+            <label>Explicit:</label>
+            {{ details_form.explicit }}
+        </div>
+        <div class="flex flex-label">
+            <label>Postscript:</label>
+            {{ details_form.ps }}
+        </div>
     </fieldset>
 
     <fieldset>
         <legend id="header_abstract" class="toc-item">Abstract, subjects and keywords</legend>
-        <label>Abstract</label>
-        {{ details_form.abstract }}
+
+        <div class="flex flex-label">
+            <label>Abstract:</label>
+            {{ details_form.abstract }}
+        </div>
 
         <label class="margin-right">Subject(s):</label>
-        {% for s in subjects %}
-            {{ s }}
-        {% endfor %}
+        <div class="choices-container margin-bottom">
+            {% for s in subjects %}
+                {{ s }}
+            {% endfor %}
+        </div>
 
-        <label>Keywords (ideally separated by semi-colons)</label>
-        {{ details_form.keywords }}
+        <div class="flex flex-label">
+            <label>Keywords:</label>
+            {{ details_form.keywords }}
+        </div>
+        <div class="flex flex-help-text margin-bottom">
+            <small>Ideally separated by semi-colons.</small>
+        </div>
+
     </fieldset>
 
     <fieldset>
@@ -49,7 +76,7 @@
 
         {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_people.update_formset new_form=recref_people.new_form add_label='Add person mentioned:' no_date=True placeholder='Please select or create person mentioned, then click Save.' %}
 
-        {% include "core/component/comment_publication_formset.html" with comment_formset=people_comment_formset %}
+        {% include "core/component/comment_publication_formset.html" with comment_formset=people_comment_formset comment_title='Notes on people mentioned' header_id='header_comment_mentioned' header_class='toc-sub-item' %}
     </fieldset>
 
     <fieldset>
@@ -59,13 +86,11 @@
 
     <fieldset>
         <legend id="header_work" class="toc-item">Works mentioned</legend>
-        {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_work.update_formset new_form=recref_work.new_form add_label='Add work mentioned:' no_date=True placeholder='Please select work mentioned, then click Save.' %}
+        {% include "core/component/create_update_recref.html" with recref_type='work' recref_formset=recref_work.update_formset new_form=recref_work.new_form add_label='Add work mentioned:' no_date=True placeholder='Please select or create work mentioned, then click Save.' %}
     </fieldset>
 
-    <fieldset>
-        <legend>General notes on work</legend>
-        {% include "core/component/comment_publication_formset.html" with comment_formset=general_comment_formset %}
-    </fieldset>
+
+    {% include "core/component/comment_publication_formset.html" with comment_formset=general_comment_formset comment_title='General notes on work' header_id='header_comment_work' header_class='toc-item'  %}
 
 
     <script src="{% static 'core/js/lang_service.js' %}" defer></script>

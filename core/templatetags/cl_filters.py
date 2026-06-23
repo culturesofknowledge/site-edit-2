@@ -1,3 +1,4 @@
+import json
 import re
 
 from django import template
@@ -151,3 +152,14 @@ def add_another_if_startswith(value, prefix="Add "):
         return value.replace(prefix, "Add another ", 1)
 
     return value
+
+
+@register.simple_tag
+def resource_descriptors_json(related_to):
+    from core.models import CofkResourceDescriptor
+    descriptors = list(
+        CofkResourceDescriptor.objects.filter(related_to=related_to)
+        .order_by('description')
+        .values_list('description', flat=True)
+    )
+    return mark_safe(json.dumps(descriptors))

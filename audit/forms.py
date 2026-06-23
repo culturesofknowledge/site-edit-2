@@ -82,7 +82,7 @@ changed_field_choices = [
     ('destination_inferred', 'Destination Inferred'),
     ('destination_uncertain', 'Destination Uncertain'),
     ('display_order', 'Display Order'),
-    ('editors_notes', 'Editors Notes'),
+    ('editors_notes', "Editors' Notes"),
     ('edit_status', 'Edit Status'),
     ('element_1_eg_room', 'Element 1 Eg Room'),
     ('element_2_eg_building', 'Element 2 Eg Building'),
@@ -231,8 +231,8 @@ changed_field_choices_dict = dict(changed_field_choices)
 change_type_choices = [
     (None, ''),
     (constant.CHANGE_TYPE_NEW, 'New'),
-    (constant.CHANGE_TYPE_CHANGE, 'Change'),
-    (constant.CHANGE_TYPE_DELETE, 'Delete'),
+    (constant.CHANGE_TYPE_CHANGE, 'Changed'),
+    (constant.CHANGE_TYPE_DELETE, 'Deleted'),
 ]
 
 table_name_choices = [
@@ -264,18 +264,26 @@ class AuditSearchFieldset(BasicSearchFieldset):
 
     table_name = CharSelectField(choices=table_name_choices, )
 
-    key_value_integer = forms.IntegerField(required=False, label='Record ID')
+    key_value_integer = forms.IntegerField(required=False, label='Record ID',
+                                           help_text='The ID of the record that was changed.')
     key_value_integer_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)
 
-    key_decode = forms.CharField(required=False, label='Record Desc')
+    key_decode = forms.CharField(required=False, label='Record Desc',
+                                 help_text= 'A brief description of the record that was changed (e.g. the current name '
+                                            'of a person or place).')
     key_decode_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
     column_name = CharSelectField(choices=changed_field_choices, )
 
     change_type = CharSelectField(choices=change_type_choices, )
 
-    change_made = forms.CharField(required=False)
+    change_made = forms.CharField(required=False,
+                                  help_text="Contains the old and/or new version of the data. E.g. for a person whose "
+                                            "name was changed to 'Bloggs, Fred' from 'Bloggs, F', this field would "
+                                            "contain the words 'New: Bloggs, Fred', then a blank line, "
+                                            "then 'Old: Bloggs, F'.")
     change_made_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
-    audit_id = forms.IntegerField(required=False)
+    audit_id = forms.IntegerField(required=False, label="Audit trail entry", help_text="A sequential number for every "
+                                                                                       "detail added to the audit trail.")
     audit_id_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)

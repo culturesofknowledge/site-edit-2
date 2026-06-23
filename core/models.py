@@ -145,6 +145,32 @@ class CofkUnionSubject(models.Model):
         db_table = 'cofk_union_subject'
 
 
+class CofkResourceDescriptor(models.Model):
+    RELATED_TO_PEOPLE = 'People'
+    RELATED_TO_PLACES = 'Places'
+    RELATED_TO_REPOSITORIES = 'Repositories'
+    RELATED_TO_WORKS = 'Works'
+
+    RELATED_TO_CHOICES = [
+        (RELATED_TO_PEOPLE, 'People'),
+        (RELATED_TO_PLACES, 'Places'),
+        (RELATED_TO_REPOSITORIES, 'Repositories'),
+        (RELATED_TO_WORKS, 'Works'),
+    ]
+
+    descriptor_id = models.AutoField(primary_key=True)
+    description = models.CharField(max_length=200)
+    related_to = models.CharField(max_length=20, choices=RELATED_TO_CHOICES)
+
+    class Meta:
+        db_table = 'cofk_resource_descriptor'
+        ordering = ['description']
+        unique_together = ['description', 'related_to']
+
+    def __str__(self):
+        return f'{self.description} ({self.related_to})'
+
+
 class Iso639LanguageCode(models.Model):
     code_639_3 = models.CharField(max_length=3, primary_key=True)
     code_639_1 = models.CharField(max_length=2)
