@@ -1,0 +1,38 @@
+<!--
+Remember call setup_url_checker, setup_standtext functions
+-->
+{% load cl_filters %}
+
+{% with header_id=header_id|default:'header_res' %}
+    {{ res_formset.management_form }}
+    {% for form in res_formset|reverse_list %}
+        <fieldset>
+            <legend id="{{ header_id }}_{{ forloop.counter0 }}"
+                    class="toc-item">
+
+                {% if forloop.first %}
+                    Add a new resource
+                {% else %}
+                    Resource no. {{ forloop.counter0 }}. {{ form.resource_name.value }}
+                {% endif %}
+            </legend>
+
+            {{ form.resource_id }}
+            <div class="margin-bottom">
+                {% include "core/component/common_field_layout.html" with field=form.resource_name %}
+            </div>
+            <div class="margin-bottom">
+                {% include "core/component/common_field_layout.html" with field=form.resource_url %}
+            </div>
+            <div class="margin-bottom">
+                {% include "core/component/common_field_layout.html" with field=form.resource_details %}
+            </div>
+
+            {% include "core/component/common_delete_checkbox.html" with show_cond=form.resource_id.value field=form.is_delete %}
+
+            {{ form.record_tracker_label }}
+
+        </fieldset>
+
+    {% endfor %}
+{% endwith %}

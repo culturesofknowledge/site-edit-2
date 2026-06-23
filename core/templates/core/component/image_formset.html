@@ -29,31 +29,30 @@
 
         {{ img_handler.image_formset.management_form }}
         {% for form in img_handler.image_formset|reverse_list %}
-            {% if forloop.first %}
-                <strong> Upload image files from your own computer: </strong>
-                <br/><br/>
-                <div class="multi_rel_recref_container">
-                    <label>Selected image:</label>
-                    <div>{{ img_handler.img_form }}</div>
-                </div>
-                <p>Or:</p>
-
-                <strong> Enter or change links to images by typing in the URL: </strong>
-                
-            {% endif %}
-
-
             <fieldset>
                 <legend id="{{ header_id }}_{{ forloop.counter0 }}"
                         class="toc-sub-item">
                     {% if forloop.first %}
-                        Enter new image details:
+                        Enter new image details
                     {% else %}
                         Existing image no. {{ forloop.counter0 }} of {{ img_handler.total_images }}
                     {% endif %}
                 </legend>
 
                 {{ form.image_id }}
+
+                {% if forloop.first %}
+                    <strong> Upload image files from your own computer: </strong>
+                    <br/><br/>
+                    <div class="multi_rel_recref_container">
+                        <label>Selected image:</label>
+                        <div>{{ img_handler.img_form }}</div>
+                    </div>
+                    <p>Or:</p>
+
+                    <strong> Enter or change links to images by typing in the URL: </strong>
+
+                {% endif %}
 
                 {% if not forloop.first and form.thumbnail.value %}
                     <div class="margin-bottom">
@@ -85,25 +84,28 @@
                 </div>
                 {% endif %}
                 <div class="multi_rel_recref_container">
-                    <label>{{ form.credits.label }}:</label>
+                    <label>{{ form.credits.label }}:*</label>
                     <div>{{ form.credits.errors }}{{ form.credits }}</div>
                 </div>
                 <div class="multi_rel_recref_container">
-                    <label>{{ form.licence_details.label }}:</label>
+                    <label>{{ form.licence_details.label }}:*</label>
                     <div>{{ form.licence_details.errors }}{{ form.licence_details }}</div>
                 </div>
                 <div class="multi_rel_recref_container">
-                    <label>{{ form.licence_url.label }}:</label>
+                    <label>{{ form.licence_url.label }}:*</label>
                     <div>{{ form.licence_url.errors }}{{ form.licence_url }}</div>
                 </div>
-                {% include "core/component/common_checkbox.html" with field=form.can_be_displayed name='Can be displayed to public <i style="font-weight:lighter">(If this box is not ticked, the image will not be displayed in the \'front-end\'.)</i>:' is_normal_size=True %}
-                <div class="multi_rel_recref_container">
+                {% include "core/component/common_checkbox.html" with field=form.can_be_displayed name='Can be displayed to public <small>If this box is not ticked, the image will not be displayed in the \'front-end\'.</small>:' is_normal_size=True %}
+                <div class="flex flex-label">
                     <label>{{ form.display_order.label }}:</label>
-                    <div>{{ form.display_order.errors }}{{ form.display_order }}</div>
+                    {{ form.display_order.errors }}{{ form.display_order }}
+                </div>
+                <div class="flex flex-help-text">
+                    <small>Please enter a number greater than or equal to 1. If multiple images have the same number, they will be ordered by filename.</small>
                 </div>
 
                 {% if not forloop.first %}
-                    {% include "core/component/common_checkbox.html" with field=form.is_delete name='Delete image from manifestation <i style="font-weight:lighter">(Tick then click save to delete the connection between this manifestation and this image.)</i>:' is_normal_size=True %}
+                    {% include "core/component/common_checkbox.html" with field=form.is_delete name='Delete image from manifestation <small>Tick then click save to delete the connection between this manifestation and this image.</small>:' is_normal_size=True %}
                 {% endif %}
 
             </fieldset>

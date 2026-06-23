@@ -107,7 +107,10 @@ def get_display_dict_other_details(person: CofkUnionPerson, new_line='\n') -> st
                                                            default_raw_value=True)
             display_str = name_fn(mmap)
             if mmap.from_date and mmap.from_date.year:
-                display_str = f'From {mmap.from_date.year}: {display_str}'
+                if mmap.to_date and mmap.to_date.year:
+                    display_str = f'{mmap.from_date.year}-{mmap.to_date.year}: {display_str}'
+                else:
+                    display_str = f'From {mmap.from_date.year}: {display_str}'
 
             if url_fn:
                 display_str = encode_display_link(url_fn(mmap), display_str)

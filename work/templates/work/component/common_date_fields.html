@@ -8,7 +8,7 @@
         </div>
 
         <div class="margin-bottom calendar-div">
-            {% with new_label_text="Calendar used for the date supplied below in 'Date of "|add:name|add:" in standard format':" %}
+            {% with new_label_text="Calendar used for the date supplied below in 'Date of "|add:name|add:" in standard format'" %}
                 {% include "core/component/common_form_choices.html" with label_text=new_label_text choices_field=calendar_used as_col=True %}
             {% endwith %}
         </div>
@@ -77,7 +77,9 @@
                         <label>In Gregorian calendar:</label>
                         {{ gregorian_date }}
                     </div>
-
+                    <div>
+                    <button type="button" class="refresh-date-btn btn btn-sm btn-outline-secondary" style="margin-left: 10px;">Refresh</button>
+                    </div>
                     <div class="manual-date-div margin-left">
                         <input type="checkbox" class="manual-date-checkbox" id="{{ autodate_id }}_manual_date">
                         <label for="{{ autodate_id }}_manual_date">Enter Manually</label>
