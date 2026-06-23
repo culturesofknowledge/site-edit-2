@@ -10,7 +10,8 @@ from publication.models import CofkUnionPublication
 class PublicationForm(ModelForm):
     publication_details = form_serv.CommonTextareaField(
         required=True,
-        help_text='E.g. author(s)/editor(s), title, place and year of publication.'
+        help_text="e.g.: AuthorSurname, Forename, ‘Title of publication’ (Place of publication: publisher if known, YYYY) "
+                  "<br/>or: AuthorSurname, Forename, ‘Title of article’, ‘Title of Journal’, issue no (YYYY)"
     )
     abbrev = forms.CharField(
         required=False,

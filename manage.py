@@ -3,6 +3,17 @@
 import os
 import sys
 
+import django.utils.version as _v, traceback as _tb                                                                                                                                                      
+_orig = _v.get_complete_version                           
+def _watch(version=None):                                                                                                                                                                                
+    if version is not None and len(version) != 5:         
+        print(f'\n!!! BAD VERSION: {version!r}')                                                                                                                                                         
+        _tb.print_stack(limit=20)
+        raise RuntimeError(f'Bad version: {version!r}')                                                                                                                                                  
+    return _orig(version)                                                                                                                                                                                
+_v.get_complete_version = _watch
+
+
 
 def main():
     """Run administrative tasks."""

@@ -61,7 +61,7 @@ MANDATORY_SHEETS = {
                     'abstract', 'keywords', 'language_id', 'language_of_work', 'hasgreek', 'hasarabic', 'hashebrew',
                     'haslatin', 'answererby', 'incipit', 'explicit', 'notes_on_letter', 'mention_id', 'emlo_mention_id',
                     'notes_on_people_mentioned', 'editors_notes', 'resource_name', 'resource_url', 'resource_details'],
-        'ids': ['iwork_id', 'author_ids', 'addressee_ids', 'origin_id', 'emlo_mention_id'],
+        'ids': ['iwork_id', 'author_ids', 'addressee_ids', 'origin_id', 'destination_id', 'emlo_mention_id'],
         'ints': ['iwork_id', 'date_of_work_std_year', 'date_of_work_std_month', 'date_of_work_std_day',
                  'date_of_work2_std_year', 'date_of_work2_std_month', 'date_of_work2_std_day', 'origin_id',
                  'destination_id'],
@@ -113,3 +113,68 @@ MANDATORY_SHEETS = {
 
 MAX_YEAR = 1900
 MIN_YEAR = 1400
+
+# Column definitions for bulk People upload (BULKnewPEOPLErecordsTEMPLATE format).
+# Columns are mapped by position (index) rather than by matching header text, because the
+# template uses verbose human-readable column headers.
+BULK_PEOPLE_SHEET = {
+    'columns': [
+        'primary_name',            # 1  Primary name
+        'alternative_names',       # 2  Synonyms
+        'roles_or_titles',         # 3  Occupations / roles / titles
+        'gender',                  # 4  GENDER
+        'is_organisation',         # 5  IS ORGANIZATION
+        'date_of_birth_year',      # 6  BIRTH YEAR / FOUNDATION YEAR IF ORG
+        'date_of_birth_inferred',  # 7  BIRTH YEAR INFERRED
+        'date_of_birth_uncertain', # 8  BIRTH YEAR UNCERTAIN
+        'date_of_birth_approx',    # 9  BIRTH YEAR APPROX
+        'date_of_death_year',      # 10 DEATH YEAR / DISBAND YEAR IF ORG
+        'date_of_death_inferred',  # 11 DEATH YEAR INFERRED
+        'date_of_death_uncertain', # 12 DEATH YEAR UNCERTAIN
+        'date_of_death_approx',    # 13 DEATH YEAR APPROX
+        'flourished_year',         # 14 FLOURISHED EARLIEST YEAR 1
+        'flourished2_year',        # 15 FLOURISHED LATEST YEAR 2
+        'flourished_is_range',     # 16 FLOURISHED IS RANGE
+        '_flourished_inferred',    # 17 FLOURISHED YEAR INFERRED (no model field)
+        '_flourished_uncertain',   # 18 FLOURISHED YEAR UNCERTAIN (no model field)
+        '_flourished_approx',      # 19 FLOURISHED YEAR APPROX (no model field)
+        'notes_on_person',         # 20 GENERAL NOTES ON PERSON
+        'editors_notes',           # 21 EDITORS' NOTES AND QUERIES
+        'resource_name',           # 22 RELATED RESOURCE NAME
+        'resource_url',            # 23 RELATED RESOURCE URL
+        '_further_reading',        # 24 Further reading (no model field)
+    ],
+    'required': ['primary_name'],
+    'strings': [('primary_name', 200), ('gender', 1), ('is_organisation', 1),
+                'alternative_names', 'roles_or_titles', 'notes_on_person', 'editors_notes'],
+    'ints': ['date_of_birth_year', 'date_of_death_year', 'flourished_year', 'flourished2_year'],
+    'bools': ['date_of_birth_inferred', 'date_of_birth_uncertain', 'date_of_birth_approx',
+              'date_of_death_inferred', 'date_of_death_uncertain', 'date_of_death_approx',
+              'flourished_is_range'],
+    'years': ['date_of_birth_year', 'date_of_death_year', 'flourished_year', 'flourished2_year'],
+}
+
+# Column definitions for bulk Locations upload (BULKnewLOCATIONrecordsTEMPLATE format).
+# Columns are mapped by position (index) rather than by matching header text.
+BULK_LOCATIONS_SHEET = {
+    'columns': [
+        'element_4_eg_city',    # 1  Name of City/town/village
+        'element_5_eg_county',  # 2  Name of County
+        'element_6_eg_country', # 3  Name of Country
+        'element_3_eg_parish',  # 4  Name of District of city
+        'element_2_eg_building',# 5  Name of Building
+        'element_1_eg_room',    # 6  Name of Room
+        'element_7_eg_empire',  # 7  Name of Empire
+        'location_synonyms',    # 8  Synonyms / Alternative names
+        'latitude',             # 9  LATITUDE
+        'longitude',            # 10 LONGITUDE
+        'notes_on_place',       # 11 GENERAL NOTES ON PLACE
+        'editors_notes',        # 12 EDITORS' NOTES AND QUERIES
+        'resource_name',        # 13 RELATED RESOURCE NAME
+        'resource_url',         # 14 RELATED RESOURCE URL
+    ],
+    'required': [],
+    'strings': [('element_4_eg_city', 100), ('element_5_eg_county', 100), ('element_6_eg_country', 100),
+                ('element_3_eg_parish', 100), ('element_2_eg_building', 100), ('element_1_eg_room', 100),
+                ('element_7_eg_empire', 100), 'location_synonyms', 'notes_on_place', 'editors_notes'],
+}

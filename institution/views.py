@@ -268,12 +268,12 @@ class InstCsvHeaderValues(HeaderValues):
     def get_header_list(self) -> list[str]:
         return [
             "Repository ID",
-            "Institution name",
-            "Alternative institution  names",
+            "Repository name",
+            "Alternative repository names",
             "City name",
-            "Alternative city  names",
+            "Alternative city names",
             "Country name",
-            "Alternative country  names",
+            "Alternative country names",
             "Related resources",
             "Editors' notes",
             "Images",

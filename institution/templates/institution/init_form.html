@@ -1,5 +1,6 @@
 {% extends "core/emlo_common_form.html" %}
 {% load static %}
+{% load cl_filters %}
 
 {% block head %}
     {{ block.super }}
@@ -8,9 +9,8 @@
 
         $(function () {
             setup_url_checker()
-            setup_standtext([
-                'Online catalogue', 'Repository Homepage', 'Wikidata ID', 'Wikipeda',
-            ]);
+            {% resource_descriptors_json 'Repositories' as repo_descriptors %}
+            setup_standtext({{ repo_descriptors }});
         })
     </script>
 {% endblock %}
@@ -30,68 +30,76 @@
             <form method="post">
                 {% csrf_token %}
 
-                {% include "core/component/form_descriptor.html" with descriptor=form_descriptor %}
+                {% include "institution/component/form_descriptor.html" with descriptor=form_descriptor %}
                 <fieldset>
-                    <legend id="header_inst" class="toc-item">Institution</legend>
-                    <div class="margin-bottom">
-                        <label>Institution name</label>
+                    <legend id="header_inst" class="toc-item">Repository</legend>
+                    <div class="flex flex-label margin-bottom">
+                        <label>Repository name:</label>
                         {{ inst_form.institution_name }}
                         {{ inst_form.institution_name.errors }}
                     </div>
 
-                    <div class="margin-bottom">
-                        <label>Alternative institution names</label>
+                    <div class="flex flex-label">
+                        <label>Alternative repository names:</label>
                         {{ inst_form.institution_synonyms }}
                         {{ inst_form.institution_synonyms.errors }}
-                        <small>(Please use this field for different variations of the institution name, e.g. BL for
+                    </div>
+                    <div class="margin-bottom flex flex-help-text">
+                        <small>Please use this field for different variations of the repository name, e.g. BL for
                             British Library.
                             You can also use this field to translate the name into different languages.
-                            Please put each alternative institution name on a separate line.)</small>
+                            Please put each alternative repository name on a separate line.</small>
                     </div>
 
-                    <div class="margin-bottom">
-                        <label>Editors' notes</label>
+                    <div class="flex flex-label">
+                        <label>Editors' notes:</label>
                         {{ inst_form.editors_notes }}
                         {{ inst_form.editors_notes.errors }}
-                        <small>(Notes for internal use.)</small>
-
-                        <div class="ref-publication-row" textbox_id="id_editors_notes"></div>
-
                     </div>
+                    <div class="margin-bottom flex flex-help-text">
+                        <small>Notes for internal use.</small>
+                    </div>
+
+                    <div class="ref-publication-row" textbox_id="id_editors_notes"></div>
+
                 </fieldset>
 
                 <fieldset>
                     <legend id="header_city" class="toc-item">City</legend>
-                    <div class="margin-bottom">
-                        <label>City name</label>
+                    <div class="flex flex-label margin-bottom">
+                        <label>City name:</label>
                         {{ inst_form.institution_city }}
                         {{ inst_form.institution_city.errors }}
                     </div>
 
-                    <div class="margin-bottom">
-                        <label>Alternative city names</label>
+                    <div class="flex flex-label">
+                        <label>Alternative city names:</label>
                         {{ inst_form.institution_city_synonyms }}
                         {{ inst_form.institution_city_synonyms.errors }}
-                        <small>(Please use this field to give the city name in other languages, if required.
-                            Please put each alternative city name on a separate line.)</small>
+                    </div>
+                    <div class="flex flex-help-text">
+                        <small>Please use this field to give the city name in other languages, if required.
+                            Please put each alternative city name on a separate line.</small>
                     </div>
 
                 </fieldset>
 
                 <fieldset>
                     <legend id="header_country" class="toc-item">Country</legend>
-                    <div class="margin-bottom">
-                        <label>Country name</label>
+                    <div class="flex flex-label margin-bottom">
+                        <label>Country name:</label>
                         {{ inst_form.institution_country }}
                         {{ inst_form.institution_country.errors }}
                     </div>
 
-                    <div class="margin-bottom">
-                        <label>Alternative city names</label>
+                    <div class="flex flex-label">
+                        <label>Alternative country names:</label>
                         {{ inst_form.institution_country_synonyms }}
                         {{ inst_form.institution_country_synonyms.errors }}
-                        <small>(Please use this field to give the country name in other languages, if required.
-                            Please put each alternative country name on a separate line.)</small>
+                    </div>
+                    <div class="flex flex-help-text">
+                        <small>Please use this field to give the country name in other languages, if required.
+                            Please put each alternative country name on a separate line.</small>
                     </div>
 
                 </fieldset>
@@ -101,7 +109,15 @@
                 {% endif %}
 
                 {% if img_handler %}
-                    {% include "core/component/image_formset.html" with img_handler=img_handler %}
+                    <fieldset>
+                        <legend id="header_images" class="toc-item">Images</legend>
+                        {% include "core/component/image_formset.html" with img_handler=img_handler %}
+                    </fieldset>
+                {% endif %}
+
+                {% if inst_form.instance and inst_form.instance.pk and  constant.PM_CHANGE_INST|can_show_for_perm:perms  %}
+                    {% url 'institution:delete' inst_form.instance.pk as del_url %}
+                    {% include "core/component/del_confirm_fieldset.html" with del_url=del_url name='repository' %}
                 {% endif %}
 
                 <div class="bg-white sticky-bottom">

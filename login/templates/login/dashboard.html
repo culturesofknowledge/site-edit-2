@@ -63,6 +63,13 @@
             </a>
         </li>
         {% endif %}
+        {%  if constant.PM_VIEW_RESOURCE_DESC in perms %}
+        <li>
+            <a href="{% url 'list:resources' %}" title="Add or edit resource descriptors" target="_self" tabindex="1">
+                Resources
+            </a>
+        </li>
+        {% endif %}
         {# Use direct membership check to avoid any template parser quirks with filters in if-tag #}
         {% if constant.PM_CHANGE_USER in perms %}
             <li>

@@ -1,9 +1,10 @@
 <!-- remember import lang_service.js and call setup_add_lang() -->
 <small>
     If a language you require is not displayed below, you can add it to the list: <a href="{% url 'lang:search' %}" target="_blank">Add further possible languages</a>
+</small>
 
-    <br/>
-    <br/>
+<div class="margin-bottom-xxs"></div>
+<small>
     If the languages you want are in the dropdown, select as many as required and then click save. You can enter brief notes on the selected languages using the input fields to their right.
 </small>
 
@@ -18,7 +19,7 @@
     </div>
 {% endfor %}
 
-<div class="lang_div multi_rel_recref_container">
+<div class="lang_div multi_rel_recref_container margin-top">
     <label>New language:</label>
     <div>
         {% include "core/component/selectfilter.html" with datalist_field=new_lang_form.language_list %}
