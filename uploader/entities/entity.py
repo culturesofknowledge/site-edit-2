@@ -197,12 +197,14 @@ class CofkEntity:
         ids = None
         names = None
 
+        # Ids are normalised as a list of strings
         if ids_key in entity_dict:
             if isinstance(entity_dict[ids_key], str):
                 ids = entity_dict[ids_key].split(SEPARATOR)
             else:
                 ids = [str(entity_dict[ids_key])]
 
+        # Names are normalised as a list of strings
         if names_key in entity_dict and isinstance(entity_dict[names_key], str):
             names = entity_dict[names_key].split(SEPARATOR)
 

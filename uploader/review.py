@@ -155,7 +155,7 @@ def create_union_people_and_locations(collect_works, username: str):
         collect_locations.extend(get_collect_locations(collect_work.places_mentioned.all(), collect_locations))
 
     for person in collect_people:
-        union_iperson = CofkUnionPerson(foaf_name=person.primary_name)
+        union_iperson = CofkUnionPerson(foaf_name=person.primary_name, init_seq_id=True)
         union_iperson.person_id = create_person_id(union_iperson.iperson_id)
         union_iperson.update_current_user_timestamp(username)
         union_iperson.save()
