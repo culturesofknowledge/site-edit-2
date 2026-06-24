@@ -196,12 +196,10 @@
     <legend id="header_scribe" class="toc-item">Scribe/hand</legend>
 
     {% if scribe_recref_formset.forms %}
-        <div class="multi_rel_recref_container margin-bottom">
+        <div class="multi_rel_recref_container scribe-recref-container margin-bottom">
             {{ scribe_recref_formset.management_form }}
             {% for form in scribe_recref_formset %}
-                <div class="grid-item">
-                    {{ form }}
-                </div>
+                {{ form }}
                 <div class="grid-item">
                     {% include "core/component/common_checkbox.html" with field=form.is_delete name="Delete from 'scribe' list" class_name="recref-del" %}
                 </div>
