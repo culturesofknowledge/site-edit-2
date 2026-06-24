@@ -213,12 +213,13 @@ class RecrefCheckbox:
 class RecrefCheckboxHandler:
 
     def __init__(self, recref_adapter: RecrefFormAdapter, rel_type: str, name: str,
-                 target_class: Type[models.Model],
+                 target_class: Type[models.Model], label_field: str = 'pk',
                  ):
         self.recref_adapter = recref_adapter
         self.rel_type = rel_type
         self.name = name
         self.target_class = target_class
+        self.label_field = label_field
 
     def get_target_id_label(self, target):
         raise NotImplementedError()
@@ -235,7 +236,7 @@ class RecrefCheckboxHandler:
     def create_context(self):
         selected_id_list = set(self.recref_adapter.find_targets_id_list(self.rel_type))
         return {
-            self.name: (self._create_ui_data(s, selected_id_list) for s in self.target_class.objects.all()),
+            self.name: (self._create_ui_data(s, selected_id_list) for s in self.target_class.objects.order_by(self.label_field)),
         }
 
     def get_selected_target_id_list(self, request):
@@ -281,7 +282,7 @@ class SubjectHandler(RecrefCheckboxHandler):
     def __init__(self, recref_adapter: RecrefFormAdapter,
                  rel_type: str = core_constant.REL_TYPE_DEALS_WITH,
                  name: str = 'subjects', ):
-        super().__init__(recref_adapter, rel_type, name, CofkUnionSubject)
+        super().__init__(recref_adapter, rel_type, name, CofkUnionSubject, label_field='subject_desc')
 
     def get_target_id_label(self, target):
         target: CofkUnionSubject
@@ -292,7 +293,7 @@ class RoleCategoryHandler(RecrefCheckboxHandler):
     def __init__(self, recref_adapter: RecrefFormAdapter,
                  rel_type: str = core_constant.REL_TYPE_MEMBER_OF,
                  name: str = 'roles', ):
-        super().__init__(recref_adapter, rel_type, name, CofkUnionRoleCategory)
+        super().__init__(recref_adapter, rel_type, name, CofkUnionRoleCategory, label_field='role_category_desc')
 
     def get_target_id_label(self, target):
         target: CofkUnionRoleCategory
