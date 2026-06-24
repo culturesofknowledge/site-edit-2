@@ -1,12 +1,12 @@
-import datetime
+#import datetime
 
-
+'''
 class CofkValueException(Exception):
     def __init__(self, msg, col):
         self.col = col
         self.msg = msg
         super().__init__(self.msg)
-
+'''
 
 class CofkExcelFileError(Exception):
     msg: str
@@ -15,7 +15,7 @@ class CofkExcelFileError(Exception):
         super().__init__(msg)
         self.msg = msg
 
-
+'''
 class CofkValue:
     def __init__(self, key, value):
         self.key = key
@@ -195,3 +195,4 @@ def validate_manifestation(df):
             errors.append({'sheet': 'Manifestation', 'row': i, 'errors': m_errors})
 
     return errors
+'''
