@@ -142,7 +142,6 @@ class CofkEntity:
         if 'ranges' in self.fields and 'date_of_work_std_is_range' in entity and \
                 entity['date_of_work_std_is_range'] == 1:
             for range_columns in self.fields['ranges'][0]['date_of_work_std_is_range']:
-                log.info(range_columns)
                 if range_columns[0] not in entity:
                     self.add_error(f'Column {range_columns[0]} not present but needed when date of work is a range.')
                 elif range_columns[1] not in entity:

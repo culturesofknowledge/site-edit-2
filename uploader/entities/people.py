@@ -61,7 +61,6 @@ class CofkPeople(CofkEntity, ABC):
                     else:
                         log.warning(f'{_id} duplicated in People sheet.')
                 elif not self.person_exists_by_name(per_dict['primary_name']):
-                    log.info(per_dict['primary_name'] + "  " + str(latest_iperson_id))
                     latest_iperson_id += 1
                     person = {'iperson_id': latest_iperson_id,
                               'primary_name': per_dict['primary_name'],
