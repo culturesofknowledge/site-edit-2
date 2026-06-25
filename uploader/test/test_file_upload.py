@@ -64,7 +64,7 @@ class TestFileUpload(UploadIncludedTestCase):
 
     def test_work_data(self):
         work_data = [
-            [1, "test", "J", 1660, 1, 1, 1660, 1, 2, 1, 1, 1, 1, "test", "newton", 15257, "test", 1, 1, "test", "Wren",
+            [1, "test", "J", 1660, 1, 1, 1660, 1, 2, 1, 1, 1, 1, "Test.", "newton", 15257, "test", 1, 1, "test", "Wren",
              22859, "test", 1, 1, "test", "Burford", 400285, "test", 1, 1, "Carisbrooke", 782, "test", 1, 1, "test",
              "", "fra;eng", '', '', '', '', '', '', "test", "test", "test", "Baskerville", 885, "test",
              "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/", "Early Modern Letters Online test"]]
@@ -106,7 +106,7 @@ class TestFileUpload(UploadIncludedTestCase):
         """
         This test tries to import a work with a non-ISO639 language "aaj", and other invalid data
         """
-        data = {'Work': [[1, "test", "J", 1660, 1, 1, 'sss', 1, 2, 1, 1, 1, 1, "test", "newton", 15257, "test", 1, 1,
+        data = {'Work': [[1, "test", "J", 1660, 1, 1, 'sss', 1, 2, 1, 1, 1, 1, "Test.", "newton", 15257, "test", 1, 1,
                           "test", "Wren", 22859, "test", 1, "s1", "test", "Burford", 1, "test", 1, 1, "Carisbrooke",
                           782, "test", 1, 1, "test", "", "fra;aaj", '', '', '', '', '', '', "test", "test", "test",
                           "Baskerville", 885, "test", "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/",
@@ -140,7 +140,7 @@ class TestFileUpload(UploadIncludedTestCase):
         but two ids neither of which exists in the Union catalogue. The test insures
         that the data is properly parsed and processed from the spreadsheet.
         """
-        data = {'Work': [[1, "test", "J", 1660, 1, 1, 'sss', 1, 2, 1, 1, 1, 1, "test", "newton", 15257, "test", 1, 1,
+        data = {'Work': [[1, "test", "J", 1660, 1, 1, 'sss', 1, 2, 1, 1, 1, 1, "Test.", "newton", 15257, "test", 1, 1,
                           "test", "Wren", 22859, "test", 1, "s1", "test", "Burford", 1, "test", 1, 1, "Carisbrooke",
                           782, "test", 1, 1, "test", "", "fra;aaj", '', '', '', '', '', '', "test", "test", "test",
                           "Baskerville", 885, "test", "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/",
@@ -172,7 +172,7 @@ class TestFileUpload(UploadIncludedTestCase):
         """
         CofkUnionPerson.objects.create(iperson_id=903506, foaf_name='I. et J. Beeckman')
 
-        data = {'Work': [[1, "test", "J", 1660, 1, 1, 'sss', 1, 2, 1, 1, 1, 1, "test", "newton", 15257, "test", 1, 1,
+        data = {'Work': [[1, "test", "J", 1660, 1, 1, 'sss', 1, 2, 1, 1, 1, 1, "Test.", "newton", 15257, "test", 1, 1,
                           "test", "Wren", 22859, "test", 1, "s1", "test", "Burford", 1, "test", 1, 1, "Carisbrooke",
                           782, "test", 1, 1, "test", "", "fra;aaj", '', '', '', '', '', '', "test", "test", "test",
                           "Baskerville", 885, "test", "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/",
@@ -206,7 +206,7 @@ class TestFileUpload(UploadIncludedTestCase):
         CofkUnionInstitution.objects.create(institution_id=2, institution_name='Bodleian')
 
         data = {
-            'Work': [[1, "test", "J", 1660, 1, 1, 'sss', 1, 2, 1, 1, 1, 1, "test", "newton", 15257, "test", 1, 1,
+            'Work': [[1, "test", "J", 1660, 1, 1, 'sss', 1, 2, 1, 1, 1, 1, "Test.", "newton", 15257, "test", 1, 1,
                       "test", "Wren", 22859, "test", 1, "s1", "test", "Burford", 1, "test", 1, 1, "Carisbrooke",
                       782, "test", 1, 1, "test", "", "fra;aaj", '', '', '', '', '', '', "test", "test", "test",
                       "Baskerville", 885, "test", "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/",

@@ -2,6 +2,7 @@ import os
 import re
 import tempfile
 from typing import Dict, List
+from unittest.mock import patch
 
 from django.contrib.auth.models import Group
 from django.test import TestCase, RequestFactory
@@ -19,7 +20,7 @@ from uploader.constants import MANDATORY_SHEETS
 from uploader.models import CofkCollectStatus, CofkCollectUpload
 
 spreadsheet_data = {'Work': [
-    [1, "test", "J", 1660, 1, 1, 1660, 1, 2, 1, 1, 1, 1, "test", "newton", 15257, "test", 1, 1, "test", "Wren",
+    [1, "test", "J", 1660, 1, 1, 1660, 1, 2, 1, 1, 1, 1, "Test.", "newton", 15257, "test", 1, 1, "test", "Wren",
      22859, "test", 1, 1, "test", "Burford", 400285, "test", 1, 1, "Carisbrooke", 782, "test", 1, 1, "test",
      '', "fra;eng", '', '', '', '', '', '', "test", "test", "test", "Baskerville", 885, "test",
      "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/", "Early Modern Letters Online test"]],
@@ -81,6 +82,11 @@ class UploaderTestCase(TestCase):
 class UploadIncludedTestCase(UploaderTestCase):
     def setUp(self) -> None:
         super().setUp()
+        self.doc_type_patcher = patch(
+            'core.helper.query_cache_serv.create_lookup_doc_desc_map',
+            return_value={'ALS': 'Autograph Letter Signed', 'P': 'Printed'},
+        )
+        self.doc_type_patcher.start()
 
         for i, s in enumerate(['Awaiting review', 'Partly reviewed', 'Review complete',
                                'Accepted and saved into main database', 'Rejected']):
@@ -110,6 +116,10 @@ class UploadIncludedTestCase(UploaderTestCase):
         self.new_upload.uploader_email = 'test@user.com'
         self.new_upload.upload_timestamp = timezone.now()
         self.new_upload.save()
+
+    def tearDown(self) -> None:
+        self.doc_type_patcher.stop()
+        super().tearDown()
 
 
 class UploadIncludedFactoryTestCase(UploadIncludedTestCase):
