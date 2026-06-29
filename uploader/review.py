@@ -21,7 +21,8 @@ from location.models import CofkUnionLocation
 from manifestation import manif_serv
 from manifestation.models import CofkUnionManifestation, CofkManifInstMap
 from person.models import CofkUnionPerson, create_person_id
-from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectPerson, CofkCollectLocation
+from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectPerson, CofkCollectLocation, \
+    CofkCollectWorkCorrection
 from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, CofkWorkResourceMap, \
     CofkUnionLanguageOfWork, CofkWorkSubjectMap, CofkWorkCommentMap
 
@@ -510,6 +511,70 @@ def reject_locations(upload: CofkCollectUpload, request=None):
     if request:
         messages.success(request, msg)
     log.info(f'{upload}: rejected (locations bulk upload)')
+
+
+def accept_corrections(upload: CofkCollectUpload, username: str, request=None):
+    """Accept a bulk corrections upload — apply each staged correction to the live CofkUnionWork."""
+    pending = CofkCollectWorkCorrection.objects.filter(
+        upload=upload, upload_status_id=1
+    ).select_related('union_work')
+
+    if not pending.exists():
+        msg = f'No corrections in the upload "{upload.upload_name}" to accept.'
+        if request:
+            messages.warning(request, msg)
+        return
+
+    try:
+        with transaction.atomic():
+            applied = 0
+            for correction in pending:
+                if correction.union_work is None:
+                    log.warning(
+                        f'Skipping correction for iwork_id {correction.iwork_id}: union_work not found.'
+                    )
+                    continue
+
+                work = correction.union_work
+                for field_name, new_value in correction.corrections.items():
+                    if field_name == 'original_catalogue_code':
+                        # catalogue_code is stored as the FK value (to_field='catalogue_code')
+                        setattr(work, 'original_catalogue_id', new_value)
+                    else:
+                        setattr(work, field_name, new_value)
+                work.update_current_user_timestamp(username)
+                work.save()
+
+                correction.upload_status_id = 4  # Accepted and saved into main database
+                correction.save()
+                applied += 1
+
+            upload.works_accepted = applied
+            upload.upload_status_id = 4  # Accepted and saved into main database
+            upload.save()
+
+    except Exception as e:
+        log.error(f'Bulk corrections upload {upload} failed.')
+        log.exception(e)
+        if request:
+            messages.error(request, 'An error occurred while accepting corrections. Please try again.')
+        return
+
+    msg = f'Successfully applied {applied} corrections.'
+    if request:
+        messages.success(request, msg)
+    log.info(f'{upload}: {msg}')
+
+
+def reject_corrections(upload: CofkCollectUpload, request=None):
+    """Reject a bulk corrections upload."""
+    CofkCollectWorkCorrection.objects.filter(upload=upload).update(upload_status_id=5)
+    upload.upload_status_id = 3  # Review complete
+    upload.save()
+    msg = f'Upload "{upload.upload_name}" has been rejected.'
+    if request:
+        messages.success(request, msg)
+    log.info(f'{upload}: rejected (corrections upload)')
 
 
 def reject_works(context: dict, upload: CofkCollectUpload, request):

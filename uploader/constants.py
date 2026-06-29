@@ -118,6 +118,65 @@ MANDATORY_SHEETS = {
 MAX_YEAR = 1900
 MIN_YEAR = 1400
 
+# Column definitions for bulk work corrections upload.
+# Sheet name is lowercase 'work' (distinguishes from the standard 'Work' new-works upload).
+# Keys are the exact spreadsheet column header strings; values are CofkUnionWork field names.
+# 'Original Catalogue name' is a special FK field requiring a CofkLookupCatalogue lookup.
+# Columns not present in this dict (e.g. Author, Recipient full names, Languages) are ignored.
+CORRECTION_WORK_SHEET = {
+    'identifier': 'EMLO Letter ID Number',
+    'command_col': 'Command',
+    'columns': {
+        'Year date': 'date_of_work_std_year',
+        'Month date': 'date_of_work_std_month',
+        'Day date': 'date_of_work_std_day',
+        'Date is range (0=No; 1=Yes)': 'date_of_work_std_is_range',
+        'Year 2nd date (range)': 'date_of_work2_std_year',
+        'Month 2nd date (range)': 'date_of_work2_std_month',
+        'Day 2nd date (range)': 'date_of_work2_std_day',
+        'Calendar of date provided to EMLO (G=Gregorian; JJ=Julian, year start 1 January; JM=Julian, year start March, U=Unknown)': 'original_calendar',
+        'Date as marked on letter': 'date_of_work_as_marked',
+        'Date uncertain (0=No; 1=Yes)': 'date_of_work_uncertain',
+        'Date approximate (0=No; 1=Yes)': 'date_of_work_approx',
+        'Date inferred (0=No; 1=Yes)': 'date_of_work_inferred',
+        'Notes on date': 'notes_on_date_of_work',
+        'Author as marked in body/text of letter': 'authors_as_marked',
+        'Author inferred (0=No; 1=Yes)': 'authors_inferred',
+        'Author uncertain (0=No; 1=Yes)': 'authors_uncertain',
+        'Recipient as marked in body/text of letter': 'addressees_as_marked',
+        'Recipient inferred (0=No; 1=Yes)': 'addressees_inferred',
+        'Recipient uncertain (0=No; 1=Yes)': 'addressees_uncertain',
+        'Origin as marked in body/text of letter': 'origin_as_marked',
+        'Origin inferred (0=No; 1=Yes)': 'origin_inferred',
+        'Origin uncertain (0=No; 1=Yes)': 'origin_uncertain',
+        'Destination as marked in body/text of letter': 'destination_as_marked',
+        'Destination inferred (0=No; 1=Yes)': 'destination_inferred',
+        'Destination uncertain (0=No; 1=Yes)': 'destination_uncertain',
+        'Abstract': 'abstract',
+        'Keywords': 'keywords',
+        'Incipit': 'incipit',
+        'Explicit': 'explicit',
+        'Original Catalogue name': 'original_catalogue',  # FK — resolved via CofkLookupCatalogue
+        'Source': 'accession_code',
+        'General notes for public display': 'notes_on_letter',
+        "Editors' working notes": 'editors_notes',
+    },
+    'ints': [
+        'date_of_work_std_year', 'date_of_work_std_month', 'date_of_work_std_day',
+        'date_of_work2_std_year', 'date_of_work2_std_month', 'date_of_work2_std_day',
+    ],
+    'bools': [
+        'date_of_work_std_is_range', 'date_of_work_uncertain', 'date_of_work_approx',
+        'date_of_work_inferred', 'authors_inferred', 'authors_uncertain',
+        'addressees_inferred', 'addressees_uncertain',
+        'origin_inferred', 'origin_uncertain', 'destination_inferred', 'destination_uncertain',
+    ],
+    'years': ['date_of_work_std_year', 'date_of_work2_std_year'],
+    'months': ['date_of_work_std_month', 'date_of_work2_std_month'],
+    'dates': ['date_of_work_std_day', 'date_of_work2_std_day'],
+    'fk_fields': ['original_catalogue'],
+}
+
 # Column definitions for bulk People upload (BULKnewPEOPLErecordsTEMPLATE format).
 # Columns are mapped by position (index) rather than by matching header text, because the
 # template uses verbose human-readable column headers.
