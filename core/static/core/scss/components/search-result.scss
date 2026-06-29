@@ -228,6 +228,27 @@ td.text-heavy {
   border: 1px solid $light-grey;
 }
 
+/* On result pages the table can be wider than the viewport, causing the page to scroll
+   horizontally. The sticky nav (position:sticky) then scrolls with the content and its
+   background no longer covers the full viewport — white space appears on the right.
+   Fix: use position:fixed for the nav so it is always anchored to the viewport and is
+   never affected by horizontal scroll. padding-top on the body compensates for the fixed
+   element being removed from the document flow.
+   Scoped via :has(.results-scroll) so only result pages are affected. */
+html:has(.results-scroll) .site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  margin: 0;
+  width: 100%;
+  z-index: 150;
+}
+
+html:has(.results-scroll) body {
+  padding-top: var(--nav-height, 100px);
+}
+
 .img-thumbnail {
   width: 60px;
 }
