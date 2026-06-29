@@ -45,10 +45,13 @@
         Note: when entering enclosure details, please treat any work/manifestation on the Cultures of Knowledge system as a letter.
     </span>
 
-    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosure_manif.update_formset new_form=recref_enclosure_manif.new_form add_label='Add enclosed letter:' hide_create_btn=False no_date=True placeholder='Please select or create enclosed letter, then click Save.' %}
+    <br/><br/>
 
-    <label>Other types of enclosure <small> e.g. money, books, samples of minerals</small>:</label>
+    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosure_manif.update_formset new_form=recref_enclosure_manif.new_form add_label='Add enclosed letter:' hide_create_btn=False no_date=True placeholder='Please select or create enclosed letter, then click Save.' header='LETTERS enclosed in this manifestation:'%}
+
+
     <div class="multi_rel_recref_container">
+    <label></label><span>Other types of enclosure <small> e.g. money, books, samples of minerals</small>:</span>
     <label>Details of enclosures other than letters:</label>
     {{ manif_form.non_letter_enclosures }}
     </div>
