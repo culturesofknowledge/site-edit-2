@@ -11,8 +11,7 @@ from cllib_django import email_utils
 from django.urls import reverse
 
 from uploader.models import CofkCollectUpload
-from uploader.spreadsheet import CofkUploadExcelFile
-from uploader.validation import CofkExcelFileError
+from uploader.spreadsheet import CofkUploadExcelFile, CofkExcelFileError
 
 log = logging.getLogger(__name__)
 

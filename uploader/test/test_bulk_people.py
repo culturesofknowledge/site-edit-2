@@ -4,9 +4,8 @@ import tempfile
 from openpyxl.workbook import Workbook
 
 from uploader.models import CofkCollectPerson
-from uploader.spreadsheet import CofkUploadExcelFile
+from uploader.spreadsheet import CofkUploadExcelFile, CofkExcelFileError
 from uploader.test.test_serv import UploadIncludedTestCase
-from uploader.validation import CofkExcelFileError
 
 log = logging.getLogger(__name__)
 
