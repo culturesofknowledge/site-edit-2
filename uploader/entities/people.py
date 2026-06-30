@@ -5,7 +5,7 @@ from typing import List
 from django.db.models import Max
 
 from person.models import CofkUnionPerson
-from uploader.constants import BULK_PEOPLE_SHEET
+from uploader.constants import BULK_PEOPLE_SHEET, BULK_PEOPLE_HEADER_MAP, normalize_header
 from uploader.entities.entity import CofkEntity
 from uploader.models import CofkCollectUpload, CofkCollectPerson
 
@@ -90,8 +90,14 @@ class CofkBulkPeople(CofkEntity, ABC):
         self.people: List[CofkCollectPerson] = []
         latest_iperson_id = CofkCollectPerson.objects.aggregate(Max('iperson_id'))['iperson_id__max'] or 0
 
+        col_to_field = {
+            col: BULK_PEOPLE_HEADER_MAP[normalize_header(header)]
+            for col, header in self.sheet.header_cols.items()
+            if normalize_header(header) in BULK_PEOPLE_HEADER_MAP
+        }
+
         for index, row in enumerate(self.sheet.worksheet.iter_rows(), start=1):
-            row_dict = self.get_row(row, index)
+            row_dict = self.get_row_by_header_map(row, index, col_to_field)
 
             if index <= self.sheet.header_length or row_dict == {}:
                 continue
@@ -115,14 +121,10 @@ class CofkBulkPeople(CofkEntity, ABC):
                 'primary_name': primary_name,
             }
 
-            for field in ['alternative_names', 'roles_or_titles', 'gender', 'is_organisation',
-                          'date_of_birth_year', 'date_of_birth_inferred', 'date_of_birth_uncertain',
-                          'date_of_birth_approx', 'date_of_death_year', 'date_of_death_inferred',
-                          'date_of_death_uncertain', 'date_of_death_approx',
-                          'flourished_year', 'flourished2_year', 'flourished_is_range',
-                          'notes_on_person', 'editors_notes']:
-                if field in row_dict:
-                    person_kwargs[field] = row_dict[field]
+            _system_fields = {'primary_name', 'upload', 'iperson_id', 'union_iperson'}
+            for field, value in row_dict.items():
+                if field not in _system_fields:
+                    person_kwargs[field] = value
 
             self.people.append(CofkCollectPerson(**person_kwargs))
 

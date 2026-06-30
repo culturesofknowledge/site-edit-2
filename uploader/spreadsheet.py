@@ -38,7 +38,9 @@ class CofkSheet:
 
         # Obtain header and row count of non-empty rows
         rows = (row for row in self.worksheet.iter_rows() if any([cell.value is not None for cell in row]))
-        self.header = [cell.value for cell in next(rows) if cell.value is not None]
+        header_row = next(rows)
+        self.header = [cell.value for cell in header_row if cell.value is not None]
+        self.header_cols: dict[int, str] = {cell.column: cell.value for cell in header_row if cell.value is not None}
         next(rows)
         self.rows = sum(1 for _ in rows)
 
@@ -94,8 +96,8 @@ class CofkUploadExcelFile:
             return 'correction'
         else:
             msg = ('Could not determine upload type. File must contain either a Work sheet '
-                   '(standard upload), only a People sheet (bulk people), or only a Places sheet '
-                   '(bulk locations).')
+                   '(standard upload), only a People sheet (bulk people), only a Places sheet '
+                   '(bulk locations) or a Corrections sheet.')
             log.error(msg)
             raise CofkExcelFileError(msg)
 
@@ -201,7 +203,7 @@ class CofkUploadExcelFile:
         except StopIteration:
             raise CofkExcelFileError('People sheet is missing its header rows.')
 
-        is_bulk = 'primary_name' not in sheet.header
+        is_bulk = 'iperson_id' not in sheet.header
 
         if not is_bulk and sheet.missing_columns:
             cols = sheet.missing_columns

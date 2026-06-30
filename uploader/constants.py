@@ -182,59 +182,124 @@ CORRECTION_WORK_SHEET = {
 # template uses verbose human-readable column headers.
 BULK_PEOPLE_SHEET = {
     'columns': [
-        'primary_name',            # 1  Primary name
-        'alternative_names',       # 2  Synonyms
-        'roles_or_titles',         # 3  Occupations / roles / titles
-        'gender',                  # 4  GENDER
-        'is_organisation',         # 5  IS ORGANIZATION
-        'date_of_birth_year',      # 6  BIRTH YEAR / FOUNDATION YEAR IF ORG
-        'date_of_birth_inferred',  # 7  BIRTH YEAR INFERRED
-        'date_of_birth_uncertain', # 8  BIRTH YEAR UNCERTAIN
-        'date_of_birth_approx',    # 9  BIRTH YEAR APPROX
-        'date_of_death_year',      # 10 DEATH YEAR / DISBAND YEAR IF ORG
-        'date_of_death_inferred',  # 11 DEATH YEAR INFERRED
-        'date_of_death_uncertain', # 12 DEATH YEAR UNCERTAIN
-        'date_of_death_approx',    # 13 DEATH YEAR APPROX
-        'flourished_year',         # 14 FLOURISHED EARLIEST YEAR 1
-        'flourished2_year',        # 15 FLOURISHED LATEST YEAR 2
-        'flourished_is_range',     # 16 FLOURISHED IS RANGE
-        '_flourished_inferred',    # 17 FLOURISHED YEAR INFERRED (no model field)
-        '_flourished_uncertain',   # 18 FLOURISHED YEAR UNCERTAIN (no model field)
-        '_flourished_approx',      # 19 FLOURISHED YEAR APPROX (no model field)
-        'notes_on_person',         # 20 GENERAL NOTES ON PERSON
-        'editors_notes',           # 21 EDITORS' NOTES AND QUERIES
-        'resource_name',           # 22 RELATED RESOURCE NAME
-        'resource_url',            # 23 RELATED RESOURCE URL
-        '_further_reading',        # 24 Further reading (no model field)
+        'primary_name',
+        'alternative_names',
+        'roles_or_titles',
+        'gender',
+        'is_organisation',
+        'date_of_birth_year',
+        'date_of_birth_month',
+        'date_of_birth_day',
+        'date_of_birth_is_range',
+        'date_of_birth2_year',
+        'date_of_birth2_month',
+        'date_of_birth2_day',
+        'date_of_birth_inferred',
+        'date_of_birth_uncertain',
+        'date_of_birth_approx',
+        'date_of_death_year',
+        'date_of_death_month',
+        'date_of_death_day',
+        'date_of_death_is_range',
+        'date_of_death2_year',
+        'date_of_death2_month',
+        'date_of_death2_day',
+        'date_of_death_inferred',
+        'date_of_death_uncertain',
+        'date_of_death_approx',
+        'flourished_year',
+        'flourished_month',
+        'flourished_day',
+        'flourished_is_range',
+        'flourished2_year',
+        'flourished2_month',
+        'flourished2_day',
+        'notes_on_person',
+        'editors_notes',
     ],
     'required': ['primary_name'],
     'strings': [('primary_name', 200), ('gender', 1), ('is_organisation', 1),
                 'alternative_names', 'roles_or_titles', 'notes_on_person', 'editors_notes'],
-    'ints': ['date_of_birth_year', 'date_of_death_year', 'flourished_year', 'flourished2_year'],
-    'bools': ['date_of_birth_inferred', 'date_of_birth_uncertain', 'date_of_birth_approx',
-              'date_of_death_inferred', 'date_of_death_uncertain', 'date_of_death_approx',
+    'ints': ['date_of_birth_year', 'date_of_birth_month', 'date_of_birth_day',
+             'date_of_birth2_year', 'date_of_birth2_month', 'date_of_birth2_day',
+             'date_of_death_year', 'date_of_death_month', 'date_of_death_day',
+             'date_of_death2_year', 'date_of_death2_month', 'date_of_death2_day',
+             'flourished_year', 'flourished_month', 'flourished_day',
+             'flourished2_year', 'flourished2_month', 'flourished2_day'],
+    'bools': ['date_of_birth_is_range', 'date_of_birth_inferred', 'date_of_birth_uncertain', 'date_of_birth_approx',
+              'date_of_death_is_range', 'date_of_death_inferred', 'date_of_death_uncertain', 'date_of_death_approx',
               'flourished_is_range'],
-    'years': ['date_of_birth_year', 'date_of_death_year', 'flourished_year', 'flourished2_year'],
+    'years': ['date_of_birth_year', 'date_of_birth2_year', 'date_of_death_year', 'date_of_death2_year',
+              'flourished_year', 'flourished2_year'],
+    'months': ['date_of_birth_month', 'date_of_birth2_month', 'date_of_death_month', 'date_of_death2_month',
+               'flourished_month', 'flourished2_month'],
+    'dates': ['date_of_birth_day', 'date_of_birth2_day', 'date_of_death_day', 'date_of_death2_day',
+              'flourished_day', 'flourished2_day'],
+}
+
+def normalize_header(text) -> str:
+    """Normalize a spreadsheet header for lookup: take the first line and strip whitespace."""
+    if not text:
+        return ''
+    return str(text).split('\n')[0].strip()
+
+
+# Maps verbose header text from BULKnewPEOPLErecordsTEMPLATE to CofkCollectPerson field names.
+# Keys are the normalized first line of each column header (see normalize_header()).
+# Columns with no corresponding model field are omitted (flourished inferred/uncertain/approx,
+# resource_name/url, further reading).
+BULK_PEOPLE_HEADER_MAP = {
+    'Primary name': 'primary_name',
+    'Synonyms (separated by semi-colon)': 'alternative_names',
+    'Occupations, role, titles (separated by semi-colon)': 'roles_or_titles',
+    'GENDER': 'gender',
+    'IS ORGANIZATION': 'is_organisation',
+    'BIRTH YEAR / FOUNDATION YEAR IF ORG': 'date_of_birth_year',
+    'BIRTH/FOUNDATION YEAR INFERRED': 'date_of_birth_inferred',
+    'BIRTH/FOUNDATION YEAR UNCERTAIN': 'date_of_birth_uncertain',
+    'BIRTH/FOUNDATION YEAR APPROX': 'date_of_birth_approx',
+    'DEATH YEAR / DISBAND YEAR IF ORG': 'date_of_death_year',
+    'DEATH/DISBAND YEAR INFERRED': 'date_of_death_inferred',
+    'DEATH/DISBAND YEAR UNCERTAIN': 'date_of_death_uncertain',
+    'DEATH/DISBAND YEAR APPROX.': 'date_of_death_approx',
+    'FLOURISHED EARLIEST YEAR 1': 'flourished_year',
+    'FLOURISHED LATEST YEAR 2': 'flourished2_year',
+    'FLOURISHED IS RANGE': 'flourished_is_range',
+    "GENERAL NOTES ON PERSON (Researcher's note: for public display; full grammatical sentences, please)": 'notes_on_person',
+    "EDITORS' NOTES AND QUERIES (not to be published in public interface; these are working notes)": 'editors_notes',
+}
+
+# Maps verbose header text from BULKnewLOCATIONrecordsTEMPLATE to CofkCollectLocation field names.
+BULK_LOCATIONS_HEADER_MAP = {
+    'Name of City/town/village [human settlement]': 'element_4_eg_city',
+    'Name of County': 'element_5_eg_county',
+    'Name of Country': 'element_6_eg_country',
+    'Name of District of city (if required)': 'element_3_eg_parish',
+    'Name of Building (if required)': 'element_2_eg_building',
+    'Name of Room (if required)': 'element_1_eg_room',
+    'Name of Empire (if required)': 'element_7_eg_empire',
+    'Synonyms/Alternative names for location (separated by semi-colon)': 'location_synonyms',
+    'LATITUDE': 'latitude',
+    'LONGITUDE': 'longitude',
+    'GENERAL NOTES ON PLACE (for public display; full grammatical sentences, please)': 'notes_on_place',
+    "EDITORS' NOTES AND QUERIES (not to be published in public interface; these are working notes)": 'editors_notes',
 }
 
 # Column definitions for bulk Locations upload (BULKnewLOCATIONrecordsTEMPLATE format).
-# Columns are mapped by position (index) rather than by matching header text.
 BULK_LOCATIONS_SHEET = {
     'columns': [
-        'element_4_eg_city',    # 1  Name of City/town/village
-        'element_5_eg_county',  # 2  Name of County
-        'element_6_eg_country', # 3  Name of Country
-        'element_3_eg_parish',  # 4  Name of District of city
-        'element_2_eg_building',# 5  Name of Building
-        'element_1_eg_room',    # 6  Name of Room
-        'element_7_eg_empire',  # 7  Name of Empire
-        'location_synonyms',    # 8  Synonyms / Alternative names
-        'latitude',             # 9  LATITUDE
-        'longitude',            # 10 LONGITUDE
-        'notes_on_place',       # 11 GENERAL NOTES ON PLACE
-        'editors_notes',        # 12 EDITORS' NOTES AND QUERIES
-        'resource_name',        # 13 RELATED RESOURCE NAME
-        'resource_url',         # 14 RELATED RESOURCE URL
+        'element_4_eg_city',
+        'element_5_eg_county',
+        'element_6_eg_country',
+        'element_3_eg_parish',
+        'element_2_eg_building',
+        'element_1_eg_room',
+        'element_7_eg_empire',
+        'location_synonyms',
+        'latitude',
+        'longitude',
+        'notes_on_place',
+        'editors_notes',
     ],
     'required': [],
     'strings': [('element_4_eg_city', 100), ('element_5_eg_county', 100), ('element_6_eg_country', 100),

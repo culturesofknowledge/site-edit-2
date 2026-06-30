@@ -16,7 +16,7 @@ COL_TO_FIELD   = CORRECTION_WORK_SHEET['columns']      # exact header -> CofkUni
 
 class CofkWorkCorrections(CofkEntity):
     """
-    Parses a bulk work corrections spreadsheet (lowercase 'work' sheet, 1 header row).
+    Parses a bulk work corrections spreadsheet ('Corrections' sheet, 1 header row).
 
     Each data row identifies an existing CofkUnionWork via 'EMLO Letter ID Number'
     and supplies one or more correction fields. Corrections are stored as a JSON dict

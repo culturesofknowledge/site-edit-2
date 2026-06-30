@@ -6,7 +6,7 @@ from django.db.models import Max
 from openpyxl.cell import Cell
 
 from location.models import CofkUnionLocation
-from uploader.constants import BULK_LOCATIONS_SHEET
+from uploader.constants import BULK_LOCATIONS_SHEET, BULK_LOCATIONS_HEADER_MAP, normalize_header
 from uploader.entities.entity import CofkEntity
 from uploader.models import CofkCollectUpload, CofkCollectLocation
 
@@ -83,8 +83,14 @@ class CofkBulkLocations(CofkEntity, ABC):
         self.locations: List[CofkCollectLocation] = []
         latest_location_id = CofkCollectLocation.objects.aggregate(Max('location_id'))['location_id__max'] or 0
 
+        col_to_field = {
+            col: BULK_LOCATIONS_HEADER_MAP[normalize_header(header)]
+            for col, header in self.sheet.header_cols.items()
+            if normalize_header(header) in BULK_LOCATIONS_HEADER_MAP
+        }
+
         for index, row in enumerate(self.sheet.worksheet.iter_rows(), start=1):
-            row_dict = self.get_row(row, index)
+            row_dict = self.get_row_by_header_map(row, index, col_to_field)
 
             if index <= self.sheet.header_length or row_dict == {}:
                 continue
@@ -109,16 +115,11 @@ class CofkBulkLocations(CofkEntity, ABC):
                 'location_name': location_name,
             }
 
-            for field in ['element_1_eg_room', 'element_2_eg_building', 'element_3_eg_parish',
-                          'element_4_eg_city', 'element_5_eg_county', 'element_6_eg_country',
-                          'element_7_eg_empire', 'location_synonyms', 'notes_on_place', 'editors_notes']:
-                if field in row_dict:
-                    loc_kwargs[field] = row_dict[field]
-
-            # latitude and longitude are stored as CharField but come from Excel as floats
-            for field in ['latitude', 'longitude']:
-                if field in row_dict:
-                    loc_kwargs[field] = str(row_dict[field])
+            _system_fields = {'upload', 'location_id', 'union_location', 'location_name'}
+            for field, value in row_dict.items():
+                if field not in _system_fields:
+                    # latitude and longitude are stored as CharField but come from Excel as floats
+                    loc_kwargs[field] = str(value) if field in ('latitude', 'longitude') else value
 
             self.locations.append(CofkCollectLocation(**loc_kwargs))
 
