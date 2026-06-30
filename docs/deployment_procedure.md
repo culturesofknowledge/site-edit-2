@@ -119,21 +119,26 @@ Procedure for data migration
 * `-o` and `-t` should be ip and port of old DB, in my case it is 172.17.0.1
   * 172.17.0.1 is ip of docker host, docker host is the machine that run docker
 * `old_audit_data.sql` is file that contain audit data
+* `data_migration` disables PostgreSQL triggers for its session (`session_replication_role = replica`)
+  so that inserting entity data does not create spurious audit rows. The historical audit
+  trail must be imported separately from `old_audit_data.sql` (step 2 below).
 
 ```shell
 
 # after web server is up
 
-docker exec -it site-edit-2_gunicorn_web_1 python3 manage.py data_migration -d ouls -p password -u postgres -o 172.17.0.1 -t 15432
-
-# export audit data from old db
+# step 1: export audit data from old db BEFORE running data_migration
 pg_dump --host 172.17.0.1 --port 15432 -d ouls --password  --username postgres --data-only --table 'cofk_union_audit_literal' > old_audit_data.sql
 
-# copy audit data to new db by sql
+# step 2: migrate all entity data (triggers are disabled during this step)
+docker exec -it site-edit-2_gunicorn_web_1 python3 manage.py data_migration -d ouls -p password -u postgres -o 172.17.0.1 -t 15432
+
+# step 3: import historical audit data with original usernames preserved
 psql --host localhost --port 25432 -d postgres --password  --username postgres  < old_audit_data.sql
 
-# fix audit sequence
-SELECT setval('cofk_union_audit_literal_audit_id_seq', (select max(audit_id) from  cofk_union_audit_literal) + 100, true);
+# step 4: advance the audit sequence past the highest imported audit_id
+psql --host localhost --port 25432 -d postgres --password  --username postgres \
+  -c "SELECT setval('cofk_union_audit_literal_audit_id_seq', (select max(audit_id) from cofk_union_audit_literal) + 100, true);"
 ```
 
 
