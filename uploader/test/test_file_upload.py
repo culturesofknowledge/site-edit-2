@@ -34,8 +34,9 @@ class TestFileUpload(UploadIncludedTestCase):
         tf = tempfile.NamedTemporaryFile(suffix='.xlsx')
         wb.save(tf.name)
 
-        msg = (r"Could not determine upload type. File must contain either a Work sheet (standard upload),"
-               r" only a People sheet (bulk people), or only a Places sheet (bulk locations).")
+        msg = ('Could not determine upload type. File must contain either a Work sheet '
+                   '(standard upload), only a People sheet (bulk people), only a Places sheet '
+                   '(bulk locations) or a Corrections sheet.')
 
         with self.assertRaises(CofkExcelFileError) as ctx:
             CofkUploadExcelFile(self.new_upload, tf.name)

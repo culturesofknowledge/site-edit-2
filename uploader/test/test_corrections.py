@@ -6,9 +6,8 @@ from openpyxl.workbook import Workbook
 from core.models import CofkLookupCatalogue
 from uploader.models import CofkCollectWorkCorrection
 from uploader.review import accept_corrections, reject_corrections
-from uploader.spreadsheet import CofkUploadExcelFile
+from uploader.spreadsheet import CofkUploadExcelFile, CofkExcelFileError
 from uploader.test.test_serv import UploadIncludedFactoryTestCase
-from uploader.validation import CofkExcelFileError
 from work.models import CofkUnionWork
 
 log = logging.getLogger(__name__)

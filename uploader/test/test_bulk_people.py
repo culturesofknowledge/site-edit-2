@@ -9,15 +9,32 @@ from uploader.test.test_serv import UploadIncludedTestCase
 
 log = logging.getLogger(__name__)
 
-# Verbose column headers that trigger bulk detection (no 'primary_name' in row 1)
+# Column headers matching the normalized keys in BULK_PEOPLE_HEADER_MAP.
 BULK_PEOPLE_HEADERS = [
-    'Primary name', 'Synonyms', 'Occupations/roles/titles', 'GENDER', 'IS ORGANIZATION',
-    'BIRTH YEAR', 'BIRTH YEAR INFERRED', 'BIRTH YEAR UNCERTAIN', 'BIRTH YEAR APPROX',
-    'DEATH YEAR', 'DEATH YEAR INFERRED', 'DEATH YEAR UNCERTAIN', 'DEATH YEAR APPROX',
-    'FLOURISHED EARLIEST YEAR 1', 'FLOURISHED LATEST YEAR 2', 'FLOURISHED IS RANGE',
-    'FLOURISHED YEAR INFERRED', 'FLOURISHED YEAR UNCERTAIN', 'FLOURISHED YEAR APPROX',
-    'GENERAL NOTES ON PERSON', "EDITORS' NOTES AND QUERIES",
-    'RELATED RESOURCE NAME', 'RELATED RESOURCE URL', 'Further reading',
+    'Primary name',
+    'Synonyms (separated by semi-colon)',
+    'Occupations, role, titles (separated by semi-colon)',
+    'GENDER',
+    'IS ORGANIZATION',
+    'BIRTH YEAR / FOUNDATION YEAR IF ORG',
+    'BIRTH/FOUNDATION YEAR INFERRED',
+    'BIRTH/FOUNDATION YEAR UNCERTAIN',
+    'BIRTH/FOUNDATION YEAR APPROX',
+    'DEATH YEAR / DISBAND YEAR IF ORG',
+    'DEATH/DISBAND YEAR INFERRED',
+    'DEATH/DISBAND YEAR UNCERTAIN',
+    'DEATH/DISBAND YEAR APPROX.',
+    'FLOURISHED EARLIEST YEAR 1',
+    'FLOURISHED LATEST YEAR 2',
+    'FLOURISHED IS RANGE',
+    'FLOURISHED YEAR INFERRED',
+    'FLOURISHED YEAR UNCERTAIN',
+    'FLOURISHED YEAR APPROX.',
+    "GENERAL NOTES ON PERSON (Researcher's note: for public display; full grammatical sentences, please)",
+    "EDITORS' NOTES AND QUERIES (not to be published in public interface; these are working notes)",
+    'RELATED RESOURCE NAME',
+    'RELATED RESOURCE URL',
+    'Further reading: Bibliographical information (for public display)',
 ]
 
 
