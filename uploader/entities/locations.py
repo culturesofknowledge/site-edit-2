@@ -125,9 +125,9 @@ class CofkBulkLocations(CofkEntity, ABC):
 
     def _build_location_name(self, row_dict: dict) -> str:
         """Build a display name from whichever place component fields are present."""
-        ordered_fields = ['element_4_eg_city', 'element_5_eg_county', 'element_6_eg_country',
-                          'element_3_eg_parish', 'element_2_eg_building',
-                          'element_1_eg_room', 'element_7_eg_empire']
+        ordered_fields = ['element_1_eg_room', 'element_2_eg_building', 'element_3_eg_parish',
+                          'element_4_eg_city', 'element_5_eg_county', 'element_6_eg_country',
+                          'element_7_eg_empire']
         parts = [str(row_dict[f]) for f in ordered_fields if f in row_dict and row_dict[f] is not None]
         return ', '.join(parts)
 
