@@ -17,10 +17,10 @@ from core.constant import REL_TYPE_STORED_IN, REL_TYPE_CREATED, REL_TYPE_WAS_ADD
     REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_MENTION_PLACE
 from core.models import CofkUnionResource, CofkLookupCatalogue, CofkUnionComment, CofkUnionRoleCategory
 from institution.models import CofkUnionInstitution
-from location.models import CofkUnionLocation, CofkLocationCommentMap
+from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap
 from manifestation import manif_serv
 from manifestation.models import CofkUnionManifestation, CofkManifInstMap
-from person.models import CofkUnionPerson, CofkPersonCommentMap, CofkPersonRoleMap, create_person_id
+from person.models import CofkUnionPerson, CofkPersonCommentMap, CofkPersonRoleMap, CofkPersonResourceMap, create_person_id
 from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectPerson, CofkCollectLocation, \
     CofkCollectWorkCorrection
 from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, CofkWorkResourceMap, \
@@ -444,6 +444,18 @@ def accept_people(upload: CofkCollectUpload, username: str, request=None):
                                 person=union_person, role=role,
                                 relationship_type='member_of',
                             )
+                for resource in person.cofkcollectpersonresource_set.all():
+                    union_resource = CofkUnionResource(
+                        resource_name=resource.resource_name,
+                        resource_url=resource.resource_url,
+                        resource_details=resource.resource_details,
+                    )
+                    union_resource.update_current_user_timestamp(username)
+                    union_resource.save()
+                    CofkPersonResourceMap.objects.create(
+                        person=union_person, resource=union_resource,
+                        relationship_type=REL_TYPE_IS_RELATED_TO,
+                    )
                 person.union_iperson = union_person
                 person.save()
                 log.info(f'Created new union person {union_person}')
@@ -510,6 +522,18 @@ def accept_locations(upload: CofkCollectUpload, username: str, request=None):
                     CofkLocationCommentMap.objects.create(
                         location=union_location, comment=comment,
                         relationship_type=REL_TYPE_COMMENT_REFERS_TO,
+                    )
+                for resource in location.cofkcollectlocationresource_set.all():
+                    union_resource = CofkUnionResource(
+                        resource_name=resource.resource_name,
+                        resource_url=resource.resource_url,
+                        resource_details=resource.resource_details,
+                    )
+                    union_resource.update_current_user_timestamp(username)
+                    union_resource.save()
+                    CofkLocationResourceMap.objects.create(
+                        location=union_location, resource=union_resource,
+                        relationship_type=REL_TYPE_IS_RELATED_TO,
                     )
                 location.union_location = union_location
                 location.save()

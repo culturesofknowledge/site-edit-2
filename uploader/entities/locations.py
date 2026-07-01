@@ -8,7 +8,7 @@ from openpyxl.cell import Cell
 from location.models import CofkUnionLocation
 from uploader.constants import BULK_LOCATIONS_SHEET, BULK_LOCATIONS_HEADER_MAP, normalize_header
 from uploader.entities.entity import CofkEntity
-from uploader.models import CofkCollectUpload, CofkCollectLocation
+from uploader.models import CofkCollectUpload, CofkCollectLocation, CofkCollectLocationResource
 
 log = logging.getLogger(__name__)
 
@@ -81,6 +81,8 @@ class CofkBulkLocations(CofkEntity, ABC):
     def __init__(self, upload: CofkCollectUpload, sheet):
         super().__init__(upload, sheet)
         self.locations: List[CofkCollectLocation] = []
+        self.resources: List[CofkCollectLocationResource] = []
+        self._resource_id = 0
         latest_location_id = CofkCollectLocation.objects.aggregate(Max('location_id'))['location_id__max'] or 0
 
         col_to_field = {
@@ -115,18 +117,32 @@ class CofkBulkLocations(CofkEntity, ABC):
                 'location_name': location_name,
             }
 
-            _system_fields = {'upload', 'location_id', 'union_location', 'location_name'}
+            _system_fields = {'upload', 'location_id', 'union_location', 'location_name',
+                             'resource_name', 'resource_url'}
             for field, value in row_dict.items():
                 if field not in _system_fields:
                     if field == 'location_synonyms' and value:
                         loc_kwargs[field] = '\n'.join(p.strip() for p in str(value).split(';') if p.strip())
                     elif field in ('latitude', 'longitude'):
-                        # latitude and longitude are stored as CharField but come from Excel as floats
                         loc_kwargs[field] = str(value)
                     else:
                         loc_kwargs[field] = value
 
-            self.locations.append(CofkCollectLocation(**loc_kwargs))
+            location = CofkCollectLocation(**loc_kwargs)
+            self.locations.append(location)
+
+            resource_name = row_dict.get('resource_name')
+            resource_url = row_dict.get('resource_url')
+            if resource_name or resource_url:
+                self._resource_id += 1
+                self.resources.append(CofkCollectLocationResource(
+                    upload=upload,
+                    resource_id=self._resource_id,
+                    location=location,
+                    resource_name=resource_name or '',
+                    resource_url=resource_url or '',
+                    resource_details='',
+                ))
 
     def _build_location_name(self, row_dict: dict) -> str:
         """Build a display name from whichever place component fields are present."""

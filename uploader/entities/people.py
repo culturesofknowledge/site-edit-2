@@ -8,7 +8,7 @@ from core.models import CofkUnionRoleCategory
 from person.models import CofkUnionPerson
 from uploader.constants import BULK_PEOPLE_SHEET, BULK_PEOPLE_HEADER_MAP, normalize_header
 from uploader.entities.entity import CofkEntity
-from uploader.models import CofkCollectUpload, CofkCollectPerson
+from uploader.models import CofkCollectUpload, CofkCollectPerson, CofkCollectPersonResource
 
 log = logging.getLogger(__name__)
 
@@ -89,6 +89,8 @@ class CofkBulkPeople(CofkEntity, ABC):
     def __init__(self, upload: CofkCollectUpload, sheet):
         super().__init__(upload, sheet)
         self.people: List[CofkCollectPerson] = []
+        self.resources: List[CofkCollectPersonResource] = []
+        self._resource_id = 0
         latest_iperson_id = CofkCollectPerson.objects.aggregate(Max('iperson_id'))['iperson_id__max'] or 0
 
         col_to_field = {
@@ -122,7 +124,8 @@ class CofkBulkPeople(CofkEntity, ABC):
                 'primary_name': primary_name,
             }
 
-            _system_fields = {'primary_name', 'upload', 'iperson_id', 'union_iperson'}
+            _system_fields = {'primary_name', 'upload', 'iperson_id', 'union_iperson',
+                             'resource_name', 'resource_url', 'further_reading'}
             for field, value in row_dict.items():
                 if field not in _system_fields:
                     if field == 'alternative_names' and value:
@@ -135,7 +138,21 @@ class CofkBulkPeople(CofkEntity, ABC):
                     else:
                         person_kwargs[field] = value
 
-            self.people.append(CofkCollectPerson(**person_kwargs))
+            person = CofkCollectPerson(**person_kwargs)
+            self.people.append(person)
+
+            resource_name = row_dict.get('resource_name')
+            resource_url = row_dict.get('resource_url')
+            if resource_name or resource_url:
+                self._resource_id += 1
+                self.resources.append(CofkCollectPersonResource(
+                    upload=upload,
+                    resource_id=self._resource_id,
+                    iperson=person,
+                    resource_name=resource_name or '',
+                    resource_url=resource_url or '',
+                    resource_details=row_dict.get('further_reading') or '',
+                ))
 
     def person_exists_by_name(self, name: str) -> bool:
         return any(p.primary_name and p.primary_name.lower() == name.lower() for p in self.people)

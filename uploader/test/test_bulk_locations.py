@@ -87,10 +87,10 @@ class TestBulkLocations(UploadIncludedTestCase):
 
         self.assertEqual(cuef.errors, {})
         loc = CofkCollectLocation.objects.first()
-        # Order: city, county, country, parish, building, room, empire
+        # Order: room, building, parish, city, county, country, empire (elements 1–7)
         self.assertEqual(
             loc.location_name,
-            'Southwark, Surrey, England, St George, The Bell Inn, Room 3, British Empire'
+            'Room 3, The Bell Inn, St George, Southwark, Surrey, England, British Empire'
         )
 
     def test_bulk_locations_name_from_country_only(self):

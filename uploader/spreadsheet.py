@@ -221,6 +221,9 @@ class CofkUploadExcelFile:
         if self.total_errors == 0:
             people = self.sheets['People'].entities.people
             self.sheets['People'].entities.bulk_create(people)
+            resources = getattr(self.sheets['People'].entities, 'resources', [])
+            if resources:
+                self.sheets['People'].entities.bulk_create(resources)
             fmt = 'bulk people' if is_bulk else 'people'
             log.info(f'{self.upload}: created {len(people)} CofkCollectPerson ({fmt} upload)')
 
@@ -260,6 +263,9 @@ class CofkUploadExcelFile:
         if self.total_errors == 0:
             locations = self.sheets['Places'].entities.locations
             self.sheets['Places'].entities.bulk_create(locations)
+            resources = getattr(self.sheets['Places'].entities, 'resources', [])
+            if resources:
+                self.sheets['Places'].entities.bulk_create(resources)
             fmt = 'bulk locations' if is_bulk else 'locations'
             log.info(f'{self.upload}: created {len(locations)} CofkCollectLocation ({fmt} upload)')
 

@@ -268,6 +268,9 @@ BULK_PEOPLE_HEADER_MAP = {
     'FLOURISHED IS RANGE': 'flourished_is_range',
     "GENERAL NOTES ON PERSON (Researcher's note: for public display; full grammatical sentences, please)": 'notes_on_person',
     "EDITORS' NOTES AND QUERIES (not to be published in public interface; these are working notes)": 'editors_notes',
+    'RELATED RESOURCE NAME': 'resource_name',
+    'RELATED RESOURCE URL': 'resource_url',
+    'Further reading: Bibliographical information (for public display)': 'further_reading',
 }
 
 # Maps verbose header text from BULKnewLOCATIONrecordsTEMPLATE to CofkCollectLocation field names.
@@ -284,6 +287,8 @@ BULK_LOCATIONS_HEADER_MAP = {
     'LONGITUDE': 'longitude',
     'GENERAL NOTES ON PLACE (for public display; full grammatical sentences, please)': 'notes_on_place',
     "EDITORS' NOTES AND QUERIES (not to be published in public interface; these are working notes)": 'editors_notes',
+    'RELATED RESOURCE NAME': 'resource_name',
+    'RELATED RESOURCE URL': 'resource_url',
 }
 
 # Column definitions for bulk Locations upload (BULKnewLOCATIONrecordsTEMPLATE format).

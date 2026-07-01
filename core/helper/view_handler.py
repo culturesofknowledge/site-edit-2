@@ -99,7 +99,7 @@ class FullFormHandler:
         """Check if any form or formset has validation errors."""
         for f in self.every_form_formset:
             if isinstance(f, BaseFormSet):
-                if any(f.errors) or f.non_form_errors():
+                if any(f.errors):
                     return True
             elif hasattr(f, 'errors') and f.errors:
                 return True
