@@ -94,9 +94,9 @@
 
     <div id="form-content" class="margin-top" {% if not manif_id %}style="display:none;"{% endif %}>
         {% if manif_id %}
-            <h3>Edit - {{ manif_form.instance.id_number_or_shelfmark|default:manif_form.instance.printed_edition_details|default:manif_id }}</h3>
+            <h3 class="manif-form-heading">Editing - {{ manif_form.instance.id_number_or_shelfmark|default:manif_form.instance.printed_edition_details|default:manif_id }}</h3>
         {% else %}
-            <h3>New manifestation</h3>
+            <h3 class="manif-form-heading">New manifestation</h3>
         {% endif %}
         {% include "work/component/manif_form.html" %}
     </div>
