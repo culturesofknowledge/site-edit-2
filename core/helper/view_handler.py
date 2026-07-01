@@ -82,6 +82,11 @@ class FullFormHandler:
         for recref_handler in self.all_recref_handlers:
             recref_handler.maintain_record(request, parent_instance)
 
+    def reload_data(self, pk, *args, **kwargs):
+        """Call load_data with a clean recref_formset_handlers list."""
+        self.recref_formset_handlers = []
+        self.load_data(pk, *args, **kwargs)
+
     def add_recref_formset_handler(self, recref_formset_handler: 'RecrefFormsetHandler'):
         self.recref_formset_handlers.append(recref_formset_handler)
 
@@ -93,7 +98,10 @@ class FullFormHandler:
     def has_form_errors(self):
         """Check if any form or formset has validation errors."""
         for f in self.every_form_formset:
-            if hasattr(f, 'errors') and f.errors:
+            if isinstance(f, BaseFormSet):
+                if any(f.errors) or f.non_form_errors():
+                    return True
+            elif hasattr(f, 'errors') and f.errors:
                 return True
         return False
 
