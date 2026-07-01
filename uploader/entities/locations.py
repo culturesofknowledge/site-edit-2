@@ -118,8 +118,13 @@ class CofkBulkLocations(CofkEntity, ABC):
             _system_fields = {'upload', 'location_id', 'union_location', 'location_name'}
             for field, value in row_dict.items():
                 if field not in _system_fields:
-                    # latitude and longitude are stored as CharField but come from Excel as floats
-                    loc_kwargs[field] = str(value) if field in ('latitude', 'longitude') else value
+                    if field == 'location_synonyms' and value:
+                        loc_kwargs[field] = '\n'.join(p.strip() for p in str(value).split(';') if p.strip())
+                    elif field in ('latitude', 'longitude'):
+                        # latitude and longitude are stored as CharField but come from Excel as floats
+                        loc_kwargs[field] = str(value)
+                    else:
+                        loc_kwargs[field] = value
 
             self.locations.append(CofkCollectLocation(**loc_kwargs))
 
