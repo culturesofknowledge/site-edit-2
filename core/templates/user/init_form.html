@@ -31,11 +31,13 @@
                 {% include "core/component/form_descriptor.html" with descriptor=form_descriptor %}
                 <fieldset>
                     <legend id="header_user" class="toc-item">User</legend>
+                    {% if user_id %}
                     <div class="margin-bottom">
                         <label>Username</label>
                         {{ form.username }}
                         {{ form.username.errors }}
                     </div>
+                    {% endif %}
                     <div class="margin-bottom">
                         <label>Email</label>
                         {{ form.email }}

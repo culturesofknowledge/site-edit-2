@@ -57,7 +57,8 @@ INSTALLED_APPS = [
     'audit',
     'list',
     'catalogue',
-    'suggestions'
+    'suggestions',
+    'axes',
 ]
 
 MIDDLEWARE = [
@@ -66,6 +67,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'axes.middleware.AxesMiddleware',
     'audit.middleware.AuditUserMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -287,3 +289,14 @@ SELENIUM_CHROME_HEADLESS = False
 SESSION_COOKIE_AGE = 7200 #(2 hr in seconds); resets on inactivity.
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_SAVE_EVERY_REQUEST = True
+
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+# django-axes: brute-force login protection
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = 1  # hours until lockout expires
+AXES_LOCKOUT_PARAMETERS = ['username', 'ip_address']  # track per username+IP combination
+AXES_RESET_ON_SUCCESS = True

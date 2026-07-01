@@ -34,6 +34,17 @@ class UserForm(ModelForm):
         self.fields['groups'].choices = (
             (group_name_id_map[name], label)
             for name, label in constant.ROLE_DISPLAY_NAMES)
+        if not self.instance.pk:
+            del self.fields['username']
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        if not user.pk:
+            user.username = self.cleaned_data['email']
+        if commit:
+            user.save()
+            self.save_m2m()
+        return user
 
 
 class UserSearchFieldset(BasicSearchFieldset):
