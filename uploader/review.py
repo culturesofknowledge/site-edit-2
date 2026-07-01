@@ -397,6 +397,7 @@ def accept_people(upload: CofkCollectUpload, username: str, request=None):
                 union_person = CofkUnionPerson(
                     init_seq_id=True,
                     foaf_name=person.primary_name,
+                    skos_altlabel=person.alternative_names,
                     gender=person.gender,
                     is_organisation=person.is_organisation,
                     editors_notes=person.editors_notes,
@@ -420,6 +421,9 @@ def accept_people(upload: CofkCollectUpload, username: str, request=None):
                     date_of_death2_year=person.date_of_death2_year,
                     date_of_death2_month=person.date_of_death2_month,
                     date_of_death2_day=person.date_of_death2_day,
+                    flourished_year=person.flourished_year,
+                    flourished2_year=person.flourished2_year,
+                    flourished_is_range=person.flourished_is_range,
                 )
                 union_person.person_id = create_person_id(union_person.iperson_id)
                 union_person.update_current_user_timestamp(username)

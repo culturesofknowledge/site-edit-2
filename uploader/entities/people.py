@@ -124,7 +124,10 @@ class CofkBulkPeople(CofkEntity, ABC):
             _system_fields = {'primary_name', 'upload', 'iperson_id', 'union_iperson'}
             for field, value in row_dict.items():
                 if field not in _system_fields:
-                    person_kwargs[field] = value
+                    if field == 'alternative_names' and value:
+                        person_kwargs[field] = '\n'.join(p.strip() for p in str(value).split(';') if p.strip())
+                    else:
+                        person_kwargs[field] = value
 
             self.people.append(CofkCollectPerson(**person_kwargs))
 
