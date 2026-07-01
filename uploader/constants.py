@@ -214,12 +214,12 @@ BULK_PEOPLE_SHEET = {
         'flourished2_year',
         'flourished2_month',
         'flourished2_day',
-        #'notes_on_person',
+        'notes_on_person',
         'editors_notes',
     ],
     'required': ['primary_name'],
     'strings': [('primary_name', 200), ('gender', 1), ('is_organisation', 1),
-                'alternative_names', 'roles_or_titles', #'notes_on_person',
+                'alternative_names', 'roles_or_titles', 'notes_on_person',
                 'editors_notes'],
     'ints': ['date_of_birth_year', 'date_of_birth_month', 'date_of_birth_day',
              'date_of_birth2_year', 'date_of_birth2_month', 'date_of_birth2_day',
@@ -266,7 +266,7 @@ BULK_PEOPLE_HEADER_MAP = {
     'FLOURISHED EARLIEST YEAR 1': 'flourished_year',
     'FLOURISHED LATEST YEAR 2': 'flourished2_year',
     'FLOURISHED IS RANGE': 'flourished_is_range',
-    #"GENERAL NOTES ON PERSON (Researcher's note: for public display; full grammatical sentences, please)": 'notes_on_person',
+    "GENERAL NOTES ON PERSON (Researcher's note: for public display; full grammatical sentences, please)": 'notes_on_person',
     "EDITORS' NOTES AND QUERIES (not to be published in public interface; these are working notes)": 'editors_notes',
 }
 
@@ -282,7 +282,7 @@ BULK_LOCATIONS_HEADER_MAP = {
     'Synonyms/Alternative names for location (separated by semi-colon)': 'location_synonyms',
     'LATITUDE': 'latitude',
     'LONGITUDE': 'longitude',
-    #'GENERAL NOTES ON PLACE (for public display; full grammatical sentences, please)': 'notes_on_place',
+    'GENERAL NOTES ON PLACE (for public display; full grammatical sentences, please)': 'notes_on_place',
     "EDITORS' NOTES AND QUERIES (not to be published in public interface; these are working notes)": 'editors_notes',
 }
 
@@ -299,12 +299,12 @@ BULK_LOCATIONS_SHEET = {
         'location_synonyms',
         'latitude',
         'longitude',
-        #'notes_on_place',
+        'notes_on_place',
         'editors_notes',
     ],
     'required': [],
     'strings': [('element_4_eg_city', 100), ('element_5_eg_county', 100), ('element_6_eg_country', 100),
                 ('element_3_eg_parish', 100), ('element_2_eg_building', 100), ('element_1_eg_room', 100),
-                ('element_7_eg_empire', 100), 'location_synonyms', #'notes_on_place',
+                ('element_7_eg_empire', 100), 'location_synonyms', 'notes_on_place',
                 'editors_notes'],
 }

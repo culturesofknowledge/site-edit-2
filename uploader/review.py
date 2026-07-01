@@ -15,12 +15,12 @@ from core.constant import REL_TYPE_STORED_IN, REL_TYPE_CREATED, REL_TYPE_WAS_ADD
     REL_TYPE_MENTION, REL_TYPE_DEALS_WITH, REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_COMMENT_DATE, \
     REL_TYPE_COMMENT_ORIGIN, REL_TYPE_COMMENT_DESTINATION, REL_TYPE_COMMENT_PERSON_MENTIONED, \
     REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_MENTION_PLACE
-from core.models import CofkUnionResource, CofkLookupCatalogue, CofkUnionComment
+from core.models import CofkUnionResource, CofkLookupCatalogue, CofkUnionComment, CofkUnionRoleCategory
 from institution.models import CofkUnionInstitution
-from location.models import CofkUnionLocation
+from location.models import CofkUnionLocation, CofkLocationCommentMap
 from manifestation import manif_serv
 from manifestation.models import CofkUnionManifestation, CofkManifInstMap
-from person.models import CofkUnionPerson, create_person_id
+from person.models import CofkUnionPerson, CofkPersonCommentMap, CofkPersonRoleMap, create_person_id
 from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectPerson, CofkCollectLocation, \
     CofkCollectWorkCorrection
 from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, CofkWorkResourceMap, \
@@ -428,6 +428,22 @@ def accept_people(upload: CofkCollectUpload, username: str, request=None):
                 union_person.person_id = create_person_id(union_person.iperson_id)
                 union_person.update_current_user_timestamp(username)
                 union_person.save()
+                if person.notes_on_person:
+                    comment = CofkUnionComment(comment=person.notes_on_person)
+                    comment.update_current_user_timestamp(username)
+                    comment.save()
+                    CofkPersonCommentMap.objects.create(
+                        person=union_person, comment=comment,
+                        relationship_type=REL_TYPE_COMMENT_REFERS_TO,
+                    )
+                if person.roles_or_titles:
+                    for role_name in (r.strip() for r in person.roles_or_titles.split(';') if r.strip()):
+                        role = CofkUnionRoleCategory.objects.filter(role_category_desc__iexact=role_name).first()
+                        if role:
+                            CofkPersonRoleMap.objects.create(
+                                person=union_person, role=role,
+                                relationship_type='member_of',
+                            )
                 person.union_iperson = union_person
                 person.save()
                 log.info(f'Created new union person {union_person}')
@@ -487,6 +503,14 @@ def accept_locations(upload: CofkCollectUpload, username: str, request=None):
                 )
                 union_location.update_current_user_timestamp(username)
                 union_location.save()
+                if location.notes_on_place:
+                    comment = CofkUnionComment(comment=location.notes_on_place)
+                    comment.update_current_user_timestamp(username)
+                    comment.save()
+                    CofkLocationCommentMap.objects.create(
+                        location=union_location, comment=comment,
+                        relationship_type=REL_TYPE_COMMENT_REFERS_TO,
+                    )
                 location.union_location = union_location
                 location.save()
                 log.info(f'Created new union location {union_location}')
