@@ -134,7 +134,7 @@ CORRECTION_WORK_SHEET = {
         'Year 2nd date (range)': 'date_of_work2_std_year',
         'Month 2nd date (range)': 'date_of_work2_std_month',
         'Day 2nd date (range)': 'date_of_work2_std_day',
-        'Calendar of date provided to EMLO (G=Gregorian; JJ=Julian, year start 1 January; JM=Julian, year start March, U=Unknown)': 'original_calendar',
+        'Calendar of date provided to EMLO': 'original_calendar',
         'Date as marked on letter': 'date_of_work_as_marked',
         'Date uncertain (0=No; 1=Yes)': 'date_of_work_uncertain',
         'Date approximate (0=No; 1=Yes)': 'date_of_work_approx',

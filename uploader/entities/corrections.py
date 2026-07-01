@@ -1,6 +1,8 @@
 import logging
 from typing import List
 
+from openpyxl.cell.read_only import EmptyCell
+
 from core.models import CofkLookupCatalogue
 from uploader.constants import CORRECTION_WORK_SHEET, MAX_YEAR, MIN_YEAR
 from uploader.entities.entity import CofkEntity
@@ -43,7 +45,9 @@ class CofkWorkCorrections(CofkEntity):
             row_by_header = {
                 header[cell.column - 1]: cell.value
                 for cell in row
-                if cell.column <= len(header) and cell.value not in (None, '')
+                if not isinstance(cell, EmptyCell)
+                and cell.column <= len(header)
+                and cell.value not in (None, '')
             }
 
             if not row_by_header:
