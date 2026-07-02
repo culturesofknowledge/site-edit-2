@@ -22,7 +22,7 @@
         </div>
 
         {# Only display search rendering selection for work #}
-        {% if form.entity|first in 'work' %}
+        {% if form.entity == 'work,works' %}
             <div class="search-control sc-row">
                 <label class="sc-label">Layout: </label>
 

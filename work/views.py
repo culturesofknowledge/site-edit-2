@@ -1033,6 +1033,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def entity(self) -> str:
+        # If this value changes, update the matching condition in core/templates/core/form/search_components.html
         return 'work,works'
 
     @property
