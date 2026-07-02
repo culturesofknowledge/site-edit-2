@@ -30,7 +30,7 @@ class ManifestationTestCase(TestCase):
         view = ManifSearchView()
         view.setup(request)
 
-        self.assertQuerysetEqual(view.get_queryset(), [])
+        self.assertQuerySetEqual(view.get_queryset(), [])
 
 
 def prepare_manif_records() -> list[CofkUnionManifestation]:
