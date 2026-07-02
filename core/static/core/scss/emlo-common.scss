@@ -352,6 +352,15 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
   margin-right: 20px;
 }
 
+.is-range-div {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  input + label {
+    margin-bottom: 0;
+  }
+}
 
 .recref-list {
   margin-bottom: 1em;
