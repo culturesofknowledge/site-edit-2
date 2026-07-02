@@ -2,6 +2,8 @@ import logging
 from abc import ABC
 from typing import List
 
+from django.db.models import Max
+
 from person.models import CofkUnionPerson
 from uploader.constants import BULK_PEOPLE_SHEET
 from uploader.entities.entity import CofkEntity
@@ -17,8 +19,7 @@ class CofkPeople(CofkEntity, ABC):
     def __init__(self, upload: CofkCollectUpload, sheet):
         super().__init__(upload, sheet)
         self.people: List[CofkCollectPerson] = []
-        iperson_ids = list(CofkCollectPerson.objects.values_list('iperson_id').order_by('-iperson_id')[:1])
-        latest_iperson_id = iperson_ids[0][0] if len(iperson_ids) == 1 else 0
+        latest_iperson_id = CofkCollectPerson.objects.aggregate(Max('iperson_id'))['iperson_id__max'] or 0
 
         for index, row in enumerate(self.sheet.worksheet.iter_rows(), start=1):
             persons = self.get_row(row, index)
@@ -30,7 +31,7 @@ class CofkPeople(CofkEntity, ABC):
             self.check_data_types(persons)
 
             for per_dict in self.clean_lists(persons, 'iperson_id', 'primary_name'):
-                if 'iperson_id' in per_dict and per_dict['iperson_id'] is not None:
+                if per_dict['iperson_id'] is not None:
                     try:
                         _id = int(per_dict['iperson_id'])
                         per_dict['iperson_id'] = _id  # Update dict with integer value
@@ -57,17 +58,9 @@ class CofkPeople(CofkEntity, ABC):
 
                         self.people.append(CofkCollectPerson(**person))
                         self.ids.append(_id)
-                    elif name and not self.person_exists_by_name(name):
-                        latest_iperson_id += 1
-                        person = {'iperson_id': latest_iperson_id,
-                                  'primary_name': name,
-                                  'upload': upload,
-                                  'editors_notes': per_dict[
-                                      'editors_notes'] if 'editors_notes' in per_dict else None}
-                        self.people.append(CofkCollectPerson(**person))
                     else:
                         log.warning(f'{_id} duplicated in People sheet.')
-                elif 'primary_name' in per_dict and not self.person_exists_by_name(per_dict['primary_name']):
+                elif not self.person_exists_by_name(per_dict['primary_name']):
                     latest_iperson_id += 1
                     person = {'iperson_id': latest_iperson_id,
                               'primary_name': per_dict['primary_name'],
@@ -95,8 +88,7 @@ class CofkBulkPeople(CofkEntity, ABC):
     def __init__(self, upload: CofkCollectUpload, sheet):
         super().__init__(upload, sheet)
         self.people: List[CofkCollectPerson] = []
-        iperson_ids = list(CofkCollectPerson.objects.values_list('iperson_id').order_by('-iperson_id')[:1])
-        latest_iperson_id = iperson_ids[0][0] if len(iperson_ids) == 1 else 0
+        latest_iperson_id = CofkCollectPerson.objects.aggregate(Max('iperson_id'))['iperson_id__max'] or 0
 
         for index, row in enumerate(self.sheet.worksheet.iter_rows(), start=1):
             row_dict = self.get_row(row, index)

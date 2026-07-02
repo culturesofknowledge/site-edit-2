@@ -8,4 +8,4 @@ python manage.py migrate
 
 # Start server
 echo "Starting server"
-python manage.py test
+python manage.py test --keepdb

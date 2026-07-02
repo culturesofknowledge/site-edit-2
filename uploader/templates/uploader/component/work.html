@@ -209,12 +209,12 @@ The same does not apply to notes on places mentioned, which is not used at all
                 Shelfmark: {{ manifestation.id_number_or_shelfmark }}<br/>
                 {% endif %}
 
-                {% if manifestation.manifestation_notes %}
-                Document notes: {{ manifestation.manifestation_notes }}<br/>
-                {% endif %}
-
                 {% if manifestation.printed_edition_details %}
                 Printed edition details: {{ manifestation.printed_edition_details }}<br/>
+                {% endif %}
+
+                {% if manifestation.manifestation_notes %}
+                Document notes: {{ manifestation.manifestation_notes }}<br/>
                 {% endif %}
 
                 {{ manifestation.manifestation_type_p }}
@@ -246,7 +246,6 @@ The same does not apply to notes on places mentioned, which is not used at all
     <td>{% for resource in work.resources.all %}
         Description: {{ resource.resource_name }}<br/>
         URL: <a href="{{ resource.resource_url }}">{{ resource.resource_url }}</a><br/>
-        Details: {{ resource.resource_details }}<br/>
         {% endfor %}
     </td>
 </tr>
