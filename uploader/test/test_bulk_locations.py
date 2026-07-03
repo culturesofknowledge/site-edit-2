@@ -9,13 +9,22 @@ from uploader.test.test_serv import UploadIncludedTestCase
 
 log = logging.getLogger(__name__)
 
-# Verbose column headers that trigger bulk detection (no 'location_name' in row 1)
+# Column headers matching the normalized keys in BULK_LOCATIONS_HEADER_MAP.
 BULK_LOCATIONS_HEADERS = [
-    'Name of City/town/village', 'Name of County', 'Name of Country',
-    'Name of District of city', 'Name of Building', 'Name of Room', 'Name of Empire',
-    'Synonyms/Alternative names', 'LATITUDE', 'LONGITUDE',
-    'GENERAL NOTES ON PLACE', "EDITORS' NOTES AND QUERIES",
-    'RELATED RESOURCE NAME', 'RELATED RESOURCE URL',
+    'Name of City/town/village [human settlement]',
+    'Name of County',
+    'Name of Country',
+    'Name of District of city (if required)',
+    'Name of Building (if required)',
+    'Name of Room (if required)',
+    'Name of Empire (if required)',
+    'Synonyms/Alternative names for location (separated by semi-colon)',
+    'LATITUDE',
+    'LONGITUDE',
+    'GENERAL NOTES ON PLACE (for public display; full grammatical sentences, please)',
+    "EDITORS' NOTES AND QUERIES (not to be published in public interface; these are working notes)",
+    'RELATED RESOURCE NAME',
+    'RELATED RESOURCE URL',
 ]
 
 
@@ -78,10 +87,10 @@ class TestBulkLocations(UploadIncludedTestCase):
 
         self.assertEqual(cuef.errors, {})
         loc = CofkCollectLocation.objects.first()
-        # Order: city, county, country, parish, building, room, empire
+        # Order: room, building, parish, city, county, country, empire (elements 1–7)
         self.assertEqual(
             loc.location_name,
-            'Southwark, Surrey, England, St George, The Bell Inn, Room 3, British Empire'
+            'Room 3, The Bell Inn, St George, Southwark, Surrey, England, British Empire'
         )
 
     def test_bulk_locations_name_from_country_only(self):

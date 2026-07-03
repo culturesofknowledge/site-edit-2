@@ -6,9 +6,9 @@ from django.db.models import Max
 from openpyxl.cell import Cell
 
 from location.models import CofkUnionLocation
-from uploader.constants import BULK_LOCATIONS_SHEET
+from uploader.constants import BULK_LOCATIONS_SHEET, BULK_LOCATIONS_HEADER_MAP, normalize_header
 from uploader.entities.entity import CofkEntity
-from uploader.models import CofkCollectUpload, CofkCollectLocation
+from uploader.models import CofkCollectUpload, CofkCollectLocation, CofkCollectLocationResource
 
 log = logging.getLogger(__name__)
 
@@ -81,10 +81,18 @@ class CofkBulkLocations(CofkEntity, ABC):
     def __init__(self, upload: CofkCollectUpload, sheet):
         super().__init__(upload, sheet)
         self.locations: List[CofkCollectLocation] = []
+        self.resources: List[CofkCollectLocationResource] = []
+        self._resource_id = 0
         latest_location_id = CofkCollectLocation.objects.aggregate(Max('location_id'))['location_id__max'] or 0
 
+        col_to_field = {
+            col: BULK_LOCATIONS_HEADER_MAP[normalize_header(header)]
+            for col, header in self.sheet.header_cols.items()
+            if normalize_header(header) in BULK_LOCATIONS_HEADER_MAP
+        }
+
         for index, row in enumerate(self.sheet.worksheet.iter_rows(), start=1):
-            row_dict = self.get_row(row, index)
+            row_dict = self.get_row_by_header_map(row, index, col_to_field)
 
             if index <= self.sheet.header_length or row_dict == {}:
                 continue
@@ -109,24 +117,38 @@ class CofkBulkLocations(CofkEntity, ABC):
                 'location_name': location_name,
             }
 
-            for field in ['element_1_eg_room', 'element_2_eg_building', 'element_3_eg_parish',
-                          'element_4_eg_city', 'element_5_eg_county', 'element_6_eg_country',
-                          'element_7_eg_empire', 'location_synonyms', 'notes_on_place', 'editors_notes']:
-                if field in row_dict:
-                    loc_kwargs[field] = row_dict[field]
+            _system_fields = {'upload', 'location_id', 'union_location', 'location_name',
+                             'resource_name', 'resource_url'}
+            for field, value in row_dict.items():
+                if field not in _system_fields:
+                    if field == 'location_synonyms' and value:
+                        loc_kwargs[field] = '\n'.join(p.strip() for p in str(value).split(';') if p.strip())
+                    elif field in ('latitude', 'longitude'):
+                        loc_kwargs[field] = str(value)
+                    else:
+                        loc_kwargs[field] = value
 
-            # latitude and longitude are stored as CharField but come from Excel as floats
-            for field in ['latitude', 'longitude']:
-                if field in row_dict:
-                    loc_kwargs[field] = str(row_dict[field])
+            location = CofkCollectLocation(**loc_kwargs)
+            self.locations.append(location)
 
-            self.locations.append(CofkCollectLocation(**loc_kwargs))
+            resource_name = row_dict.get('resource_name')
+            resource_url = row_dict.get('resource_url')
+            if resource_name or resource_url:
+                self._resource_id += 1
+                self.resources.append(CofkCollectLocationResource(
+                    upload=upload,
+                    resource_id=self._resource_id,
+                    location=location,
+                    resource_name=resource_name or '',
+                    resource_url=resource_url or '',
+                    resource_details='',
+                ))
 
     def _build_location_name(self, row_dict: dict) -> str:
         """Build a display name from whichever place component fields are present."""
-        ordered_fields = ['element_4_eg_city', 'element_5_eg_county', 'element_6_eg_country',
-                          'element_3_eg_parish', 'element_2_eg_building',
-                          'element_1_eg_room', 'element_7_eg_empire']
+        ordered_fields = ['element_1_eg_room', 'element_2_eg_building', 'element_3_eg_parish',
+                          'element_4_eg_city', 'element_5_eg_county', 'element_6_eg_country',
+                          'element_7_eg_empire']
         parts = [str(row_dict[f]) for f in ordered_fields if f in row_dict and row_dict[f] is not None]
         return ', '.join(parts)
 

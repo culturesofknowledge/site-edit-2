@@ -185,7 +185,7 @@ def full_form(request, location_id):
         fhandler.img_recref_handler.save(fhandler.loc_form.instance, request)
 
         log.info(f'location [{location_id}] have been saved')
-        fhandler.load_data(location_id, request_data=None)
+        fhandler.reload_data(location_id, request_data=None)
         is_save_success = view_serv.mark_callback_save_success(request)
 
     return fhandler.render_form(request, is_save_success=is_save_success)

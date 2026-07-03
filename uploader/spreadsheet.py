@@ -7,6 +7,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from uploader.constants import MANDATORY_SHEETS
 from uploader.entities.entity import CofkEntity
+from uploader.entities.corrections import CofkWorkCorrections
 from uploader.entities.locations import CofkLocations, CofkBulkLocations
 from uploader.entities.manifestations import CofkManifestations
 from uploader.entities.people import CofkPeople, CofkBulkPeople
@@ -37,7 +38,9 @@ class CofkSheet:
 
         # Obtain header and row count of non-empty rows
         rows = (row for row in self.worksheet.iter_rows() if any([cell.value is not None for cell in row]))
-        self.header = [cell.value for cell in next(rows) if cell.value is not None]
+        header_row = next(rows)
+        self.header = [cell.value for cell in header_row if cell.value is not None]
+        self.header_cols: dict[int, str] = {cell.column: cell.value for cell in header_row if cell.value is not None}
         next(rows)
         self.rows = sum(1 for _ in rows)
 
@@ -71,6 +74,8 @@ class CofkUploadExcelFile:
             self._process_people_only()
         elif self.upload_type == 'location':
             self._process_locations_only()
+        elif self.upload_type == 'correction':
+            self._process_correction_upload()
 
     def check_sheets(self) -> str:
         """Determine upload type from sheets present. Returns 'work', 'people', or 'location'."""
@@ -87,10 +92,12 @@ class CofkUploadExcelFile:
             return 'people'
         elif 'Places' in present and 'People' not in present:
             return 'location'
+        elif 'Corrections' in present:
+            return 'correction'
         else:
             msg = ('Could not determine upload type. File must contain either a Work sheet '
-                   '(standard upload), only a People sheet (bulk people), or only a Places sheet '
-                   '(bulk locations).')
+                   '(standard upload), only a People sheet (bulk people), only a Places sheet '
+                   '(bulk locations) or a Corrections sheet.')
             log.error(msg)
             raise CofkExcelFileError(msg)
 
@@ -196,7 +203,7 @@ class CofkUploadExcelFile:
         except StopIteration:
             raise CofkExcelFileError('People sheet is missing its header rows.')
 
-        is_bulk = 'primary_name' not in sheet.header
+        is_bulk = 'iperson_id' not in sheet.header
 
         if not is_bulk and sheet.missing_columns:
             cols = sheet.missing_columns
@@ -214,6 +221,9 @@ class CofkUploadExcelFile:
         if self.total_errors == 0:
             people = self.sheets['People'].entities.people
             self.sheets['People'].entities.bulk_create(people)
+            resources = getattr(self.sheets['People'].entities, 'resources', [])
+            if resources:
+                self.sheets['People'].entities.bulk_create(resources)
             fmt = 'bulk people' if is_bulk else 'people'
             log.info(f'{self.upload}: created {len(people)} CofkCollectPerson ({fmt} upload)')
 
@@ -253,5 +263,34 @@ class CofkUploadExcelFile:
         if self.total_errors == 0:
             locations = self.sheets['Places'].entities.locations
             self.sheets['Places'].entities.bulk_create(locations)
+            resources = getattr(self.sheets['Places'].entities, 'resources', [])
+            if resources:
+                self.sheets['Places'].entities.bulk_create(resources)
             fmt = 'bulk locations' if is_bulk else 'locations'
             log.info(f'{self.upload}: created {len(locations)} CofkCollectLocation ({fmt} upload)')
+
+    def _process_correction_upload(self):
+        """Process a bulk work corrections upload ('Corrections' sheet, 1 header row)."""
+        try:
+            sheet = CofkSheet(self.wb['Corrections'])
+        except StopIteration:
+            raise CofkExcelFileError('Corrections sheet is missing its header row.')
+
+        # Correction spreadsheet has 1 header row; standard uploads have 2.
+        # Override so the entity parser skips only row 1 (the header) not row 2 (first data row).
+        sheet.header_length = 1
+
+        self.sheets['Corrections'] = sheet
+        self.sheets['Corrections'].entities = CofkWorkCorrections(upload=self.upload, sheet=sheet)
+
+        if self.sheets['Corrections'].entities.errors:
+            self.errors['corrections'] = self.sheets['Corrections'].entities.format_errors_for_template()
+            self.total_errors += self.errors['corrections']['total']
+
+        if self.total_errors == 0:
+            corrections = self.sheets['Corrections'].entities.corrections
+            if not corrections:
+                raise CofkExcelFileError('Corrections sheet contains no valid data rows.')
+            self.sheets['Corrections'].entities.bulk_create(corrections)
+            self.upload.total_works = len(corrections)
+            log.info(f'{self.upload}: created {len(corrections)} CofkCollectWorkCorrection')

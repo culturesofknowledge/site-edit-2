@@ -15,13 +15,14 @@ from core.constant import REL_TYPE_STORED_IN, REL_TYPE_CREATED, REL_TYPE_WAS_ADD
     REL_TYPE_MENTION, REL_TYPE_DEALS_WITH, REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_COMMENT_DATE, \
     REL_TYPE_COMMENT_ORIGIN, REL_TYPE_COMMENT_DESTINATION, REL_TYPE_COMMENT_PERSON_MENTIONED, \
     REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_MENTION_PLACE
-from core.models import CofkUnionResource, CofkLookupCatalogue, CofkUnionComment
+from core.models import CofkUnionResource, CofkLookupCatalogue, CofkUnionComment, CofkUnionRoleCategory
 from institution.models import CofkUnionInstitution
-from location.models import CofkUnionLocation
+from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap
 from manifestation import manif_serv
 from manifestation.models import CofkUnionManifestation, CofkManifInstMap
-from person.models import CofkUnionPerson, create_person_id
-from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectPerson, CofkCollectLocation
+from person.models import CofkUnionPerson, CofkPersonCommentMap, CofkPersonRoleMap, CofkPersonResourceMap, create_person_id
+from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectPerson, CofkCollectLocation, \
+    CofkCollectWorkCorrection
 from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, CofkWorkResourceMap, \
     CofkUnionLanguageOfWork, CofkWorkSubjectMap, CofkWorkCommentMap
 
@@ -396,6 +397,7 @@ def accept_people(upload: CofkCollectUpload, username: str, request=None):
                 union_person = CofkUnionPerson(
                     init_seq_id=True,
                     foaf_name=person.primary_name,
+                    skos_altlabel=person.alternative_names,
                     gender=person.gender,
                     is_organisation=person.is_organisation,
                     editors_notes=person.editors_notes,
@@ -419,10 +421,41 @@ def accept_people(upload: CofkCollectUpload, username: str, request=None):
                     date_of_death2_year=person.date_of_death2_year,
                     date_of_death2_month=person.date_of_death2_month,
                     date_of_death2_day=person.date_of_death2_day,
+                    flourished_year=person.flourished_year,
+                    flourished2_year=person.flourished2_year,
+                    flourished_is_range=person.flourished_is_range,
                 )
                 union_person.person_id = create_person_id(union_person.iperson_id)
                 union_person.update_current_user_timestamp(username)
                 union_person.save()
+                if person.notes_on_person:
+                    comment = CofkUnionComment(comment=person.notes_on_person)
+                    comment.update_current_user_timestamp(username)
+                    comment.save()
+                    CofkPersonCommentMap.objects.create(
+                        person=union_person, comment=comment,
+                        relationship_type=REL_TYPE_COMMENT_REFERS_TO,
+                    )
+                if person.roles_or_titles:
+                    for role_name in (r.strip() for r in person.roles_or_titles.split(';') if r.strip()):
+                        role = CofkUnionRoleCategory.objects.filter(role_category_desc__iexact=role_name).first()
+                        if role:
+                            CofkPersonRoleMap.objects.create(
+                                person=union_person, role=role,
+                                relationship_type='member_of',
+                            )
+                for resource in person.cofkcollectpersonresource_set.all():
+                    union_resource = CofkUnionResource(
+                        resource_name=resource.resource_name,
+                        resource_url=resource.resource_url,
+                        resource_details=resource.resource_details,
+                    )
+                    union_resource.update_current_user_timestamp(username)
+                    union_resource.save()
+                    CofkPersonResourceMap.objects.create(
+                        person=union_person, resource=union_resource,
+                        relationship_type=REL_TYPE_IS_RELATED_TO,
+                    )
                 person.union_iperson = union_person
                 person.save()
                 log.info(f'Created new union person {union_person}')
@@ -482,6 +515,26 @@ def accept_locations(upload: CofkCollectUpload, username: str, request=None):
                 )
                 union_location.update_current_user_timestamp(username)
                 union_location.save()
+                if location.notes_on_place:
+                    comment = CofkUnionComment(comment=location.notes_on_place)
+                    comment.update_current_user_timestamp(username)
+                    comment.save()
+                    CofkLocationCommentMap.objects.create(
+                        location=union_location, comment=comment,
+                        relationship_type=REL_TYPE_COMMENT_REFERS_TO,
+                    )
+                for resource in location.cofkcollectlocationresource_set.all():
+                    union_resource = CofkUnionResource(
+                        resource_name=resource.resource_name,
+                        resource_url=resource.resource_url,
+                        resource_details=resource.resource_details,
+                    )
+                    union_resource.update_current_user_timestamp(username)
+                    union_resource.save()
+                    CofkLocationResourceMap.objects.create(
+                        location=union_location, resource=union_resource,
+                        relationship_type=REL_TYPE_IS_RELATED_TO,
+                    )
                 location.union_location = union_location
                 location.save()
                 log.info(f'Created new union location {union_location}')
@@ -510,6 +563,70 @@ def reject_locations(upload: CofkCollectUpload, request=None):
     if request:
         messages.success(request, msg)
     log.info(f'{upload}: rejected (locations bulk upload)')
+
+
+def accept_corrections(upload: CofkCollectUpload, username: str, request=None):
+    """Accept a bulk corrections upload — apply each staged correction to the live CofkUnionWork."""
+    pending = CofkCollectWorkCorrection.objects.filter(
+        upload=upload, upload_status_id=1
+    ).select_related('union_work')
+
+    if not pending.exists():
+        msg = f'No corrections in the upload "{upload.upload_name}" to accept.'
+        if request:
+            messages.warning(request, msg)
+        return
+
+    try:
+        with transaction.atomic():
+            applied = 0
+            for correction in pending:
+                if correction.union_work is None:
+                    log.warning(
+                        f'Skipping correction for iwork_id {correction.iwork_id}: union_work not found.'
+                    )
+                    continue
+
+                work = correction.union_work
+                for field_name, new_value in correction.corrections.items():
+                    if field_name == 'original_catalogue_code':
+                        # catalogue_code is stored as the FK value (to_field='catalogue_code')
+                        setattr(work, 'original_catalogue_id', new_value)
+                    else:
+                        setattr(work, field_name, new_value)
+                work.update_current_user_timestamp(username)
+                work.save()
+
+                correction.upload_status_id = 4  # Accepted and saved into main database
+                correction.save()
+                applied += 1
+
+            upload.works_accepted = applied
+            upload.upload_status_id = 4  # Accepted and saved into main database
+            upload.save()
+
+    except Exception as e:
+        log.error(f'Bulk corrections upload {upload} failed.')
+        log.exception(e)
+        if request:
+            messages.error(request, 'An error occurred while accepting corrections. Please try again.')
+        return
+
+    msg = f'Successfully applied {applied} corrections.'
+    if request:
+        messages.success(request, msg)
+    log.info(f'{upload}: {msg}')
+
+
+def reject_corrections(upload: CofkCollectUpload, request=None):
+    """Reject a bulk corrections upload."""
+    CofkCollectWorkCorrection.objects.filter(upload=upload).update(upload_status_id=5)
+    upload.upload_status_id = 3  # Review complete
+    upload.save()
+    msg = f'Upload "{upload.upload_name}" has been rejected.'
+    if request:
+        messages.success(request, msg)
+    log.info(f'{upload}: rejected (corrections upload)')
 
 
 def reject_works(context: dict, upload: CofkCollectUpload, request):

@@ -4,10 +4,11 @@ from typing import List
 
 from django.db.models import Max
 
+from core.models import CofkUnionRoleCategory
 from person.models import CofkUnionPerson
-from uploader.constants import BULK_PEOPLE_SHEET
+from uploader.constants import BULK_PEOPLE_SHEET, BULK_PEOPLE_HEADER_MAP, normalize_header
 from uploader.entities.entity import CofkEntity
-from uploader.models import CofkCollectUpload, CofkCollectPerson
+from uploader.models import CofkCollectUpload, CofkCollectPerson, CofkCollectPersonResource
 
 log = logging.getLogger(__name__)
 
@@ -88,10 +89,18 @@ class CofkBulkPeople(CofkEntity, ABC):
     def __init__(self, upload: CofkCollectUpload, sheet):
         super().__init__(upload, sheet)
         self.people: List[CofkCollectPerson] = []
+        self.resources: List[CofkCollectPersonResource] = []
+        self._resource_id = 0
         latest_iperson_id = CofkCollectPerson.objects.aggregate(Max('iperson_id'))['iperson_id__max'] or 0
 
+        col_to_field = {
+            col: BULK_PEOPLE_HEADER_MAP[normalize_header(header)]
+            for col, header in self.sheet.header_cols.items()
+            if normalize_header(header) in BULK_PEOPLE_HEADER_MAP
+        }
+
         for index, row in enumerate(self.sheet.worksheet.iter_rows(), start=1):
-            row_dict = self.get_row(row, index)
+            row_dict = self.get_row_by_header_map(row, index, col_to_field)
 
             if index <= self.sheet.header_length or row_dict == {}:
                 continue
@@ -115,16 +124,35 @@ class CofkBulkPeople(CofkEntity, ABC):
                 'primary_name': primary_name,
             }
 
-            for field in ['alternative_names', 'roles_or_titles', 'gender', 'is_organisation',
-                          'date_of_birth_year', 'date_of_birth_inferred', 'date_of_birth_uncertain',
-                          'date_of_birth_approx', 'date_of_death_year', 'date_of_death_inferred',
-                          'date_of_death_uncertain', 'date_of_death_approx',
-                          'flourished_year', 'flourished2_year', 'flourished_is_range',
-                          'notes_on_person', 'editors_notes']:
-                if field in row_dict:
-                    person_kwargs[field] = row_dict[field]
+            _system_fields = {'primary_name', 'upload', 'iperson_id', 'union_iperson',
+                             'resource_name', 'resource_url', 'further_reading'}
+            for field, value in row_dict.items():
+                if field not in _system_fields:
+                    if field == 'alternative_names' and value:
+                        person_kwargs[field] = '\n'.join(p.strip() for p in str(value).split(';') if p.strip())
+                    elif field == 'roles_or_titles' and value:
+                        for role_name in (r.strip() for r in str(value).split(';') if r.strip()):
+                            if not CofkUnionRoleCategory.objects.filter(role_category_desc__iexact=role_name).exists():
+                                self.add_error(f'Role "{role_name}" not found in the role category lookup.')
+                        person_kwargs[field] = value
+                    else:
+                        person_kwargs[field] = value
 
-            self.people.append(CofkCollectPerson(**person_kwargs))
+            person = CofkCollectPerson(**person_kwargs)
+            self.people.append(person)
+
+            resource_name = row_dict.get('resource_name')
+            resource_url = row_dict.get('resource_url')
+            if resource_name or resource_url:
+                self._resource_id += 1
+                self.resources.append(CofkCollectPersonResource(
+                    upload=upload,
+                    resource_id=self._resource_id,
+                    iperson=person,
+                    resource_name=resource_name or '',
+                    resource_url=resource_url or '',
+                    resource_details=row_dict.get('further_reading') or '',
+                ))
 
     def person_exists_by_name(self, name: str) -> bool:
         return any(p.primary_name and p.primary_name.lower() == name.lower() for p in self.people)

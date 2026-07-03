@@ -24,8 +24,9 @@ from core.helper.uploader_serv import handle_upload, file_path_and_size
 from core.helper.view_serv import DefaultSearchView
 from core.models import CofkLookupCatalogue, CofkLookupDocumentType
 from uploader.forms import CofkCollectUploadForm, GeneralSearchFieldset
-from uploader.models import CofkCollectUpload, CofkCollectPerson, CofkCollectLocation
-from uploader.review import reject_works, accept_people, reject_people, accept_locations, reject_locations
+from uploader.models import CofkCollectUpload, CofkCollectPerson, CofkCollectLocation, CofkCollectWorkCorrection
+from uploader.review import reject_works, accept_people, reject_people, accept_locations, reject_locations, \
+    accept_corrections, reject_corrections
 from uploader.uploader_serv import DisplayableCollectWork
 
 log = logging.getLogger(__name__)
@@ -121,6 +122,8 @@ def upload_review(request, upload_id, **kwargs):
         return _upload_review_people(request, upload)
     elif upload.upload_type == 'location':
         return _upload_review_locations(request, upload)
+    elif upload.upload_type == 'correction':
+        return _upload_review_corrections(request, upload)
 
     return _upload_review_works(request, upload)
 
@@ -216,6 +219,48 @@ def _upload_review_locations(request, upload: CofkCollectUpload):
         'locations': locations,
     }
     return render(request, 'uploader/review_locations.html', context)
+
+
+def _upload_review_corrections(request, upload: CofkCollectUpload):
+    if 'confirm' in request.POST and 'action' in request.POST:
+        if request.POST['action'] == 'accept':
+            accept_corrections(upload, request.user.username, request)
+            return redirect(reverse('uploader:upload_list'))
+        elif request.POST['action'] == 'reject':
+            reject_corrections(upload, request)
+            return redirect(reverse('uploader:upload_list'))
+
+    corrections = (
+        CofkCollectWorkCorrection.objects
+        .filter(upload=upload)
+        .select_related('union_work', 'union_work__original_catalogue')
+        .order_by('iwork_id')
+    )
+
+    # Build a flat list of rows for the template: one entry per (correction × field).
+    correction_rows = []
+    for correction in corrections:
+        work_id = correction.union_work.work_id if correction.union_work else None
+        work_desc = (correction.union_work.description or work_id) if correction.union_work else None
+        for field_name, new_value in correction.corrections.items():
+            actual_field = 'original_catalogue_id' if field_name == 'original_catalogue_code' else field_name
+            old_value = getattr(correction.union_work, actual_field, None) if correction.union_work else None
+            correction_rows.append({
+                'iwork_id': correction.iwork_id,
+                'work_id': work_id,
+                'work_desc': work_desc,
+                'field': field_name,
+                'old_value': old_value,
+                'new_value': new_value,
+            })
+
+    context = {
+        'upload': upload,
+        'corrections': corrections,
+        'correction_rows': correction_rows,
+        'corrections_count': corrections.count(),
+    }
+    return render(request, 'uploader/review_corrections.html', context)
 
 
 def lookup_fn_date_of_work(lookup_fn, field_name, value):
