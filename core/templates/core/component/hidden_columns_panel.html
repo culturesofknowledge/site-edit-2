@@ -1,0 +1,38 @@
+<div class="hidden-columns-toggle">
+    <span class="hidden-columns-toggle__label">
+        <span data-feather="eye" class="feather-medium" aria-hidden="true"></span>
+        Columns visibility
+    </span>
+
+    <fieldset class="margin-bottom" id="hidden-columns-fieldset">
+        <p class="hidden-columns-empty-label" id="hidden-columns-empty-label">No columns are hidden</p>
+        <div class="hidden-columns-list" id="hidden_columns"></div>
+    </fieldset>
+</div>
+<script>
+    (function () {
+        function updateHiddenColumnsVisibility() {
+            var list = document.getElementById('hidden_columns');
+            var emptyLabel = document.getElementById('hidden-columns-empty-label');
+            var fieldset = document.getElementById('hidden-columns-fieldset');
+            if (!list || !emptyLabel) return;
+            var isEmpty = list.children.length === 0;
+            emptyLabel.style.display = isEmpty ? '' : 'none';
+            fieldset.style.display = isEmpty ? 'none' : '';
+        }
+
+        function initObserver() {
+            var list = document.getElementById('hidden_columns');
+            if (!list) return;
+            var observer = new MutationObserver(updateHiddenColumnsVisibility);
+            observer.observe(list, { childList: true });
+            updateHiddenColumnsVisibility();
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initObserver);
+        } else {
+            initObserver();
+        }
+    })();
+</script>

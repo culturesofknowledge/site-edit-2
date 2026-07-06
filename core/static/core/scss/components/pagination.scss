@@ -1,7 +1,51 @@
 
 .pagination {
-    padding: $space-sm $space-unit $space-sm 0;
+    padding: $space-sm 0;
     clear: both;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.pagination-nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: $space-sm $space-md;
+}
+
+// Extra breathing room between the first/previous nav links and the
+// numbered pages, and again between the numbered pages and next/last.
+.page-item--nav + .page-item:not(.page-item--nav),
+.page-item:not(.page-item--nav) + .page-item--nav {
+    margin-left: $space-sm;
+}
+
+// Toolbar row combining the search-options toggle, pagination and
+// columns-visibility control on a single line. Wraps to stacked rows
+// when the table column is narrower (e.g. search sidebar left open).
+.pagination-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: $space-sm $space-lg;
+    padding: $space-sm 0;
+}
+
+.pagination-toolbar__left,
+.pagination-toolbar__right {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+}
+
+.pagination-toolbar__center {
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 #hidden_columns span {
@@ -22,23 +66,85 @@
 
 }
 
-.page-item {
-    display: inline-block;
-    text-align: center;
-    min-width: 50px;
-    border: 1px solid $black;
-    transition: all .15s ease-in-out;
-    // add small gaps so when pagination wraps to multiple rows there is
-    // visible spacing between rows and items (helps on half-screen windows)
-    margin: 0 .4em .4em 0;
-
-    &:hover {
-        border-color: $white;
-    }
-
+// "Columns visibility" control, styled to sit in the pagination toolbar
+// as a compact pill/button matching the other toolbar controls.
+.hidden-columns-toggle {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
 }
 
-.active-page {
-    background-color: $black;
-    color: $white;
+.hidden-columns-toggle__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: $space-xxs $space-xs;
+    border: 1px solid $light-grey;
+    border-radius: $space-xxs;
+    white-space: nowrap;
+}
+
+.hidden-columns-toggle #hidden-columns-fieldset {
+    margin-top: $space-xxs;
+    text-align: left;
+}
+
+// Border/padding live on the link itself (like .btn does on a <button>),
+// and every item -- numbered, nav link or ellipsis -- reserves the exact
+// same border width, so they all end up the same height as the toggle
+// button. Only the border colour (visible vs transparent) differs.
+.page-item {
+    display: inline-block;
+    // gaps between rows when pagination wraps on narrower (half) views
+    margin-bottom: $space-xxs;
+
+    a, .page-link {
+        display: inline-block;
+        text-align: center;
+        padding: $space-xxs $space-xs;
+        border: 1px solid $light-grey;
+        border-radius: $space-xxs;
+        line-height: inherit;
+        box-sizing: border-box;
+        transition: all .15s ease-in-out;
+    }
+
+    &:hover a, &:hover .page-link {
+        border-color: $midnight;
+    }
+}
+
+.page-item--nav a {
+    border-color: transparent;
+
+    &:hover {
+        border-color: transparent;
+    }
+}
+
+.page-item--ellipsis .page-link {
+    border-color: transparent;
+}
+
+.active-page .page-link {
+    border-color: $midnight;
+    color: $midnight;
+    font-weight: bold;
+}
+
+// Half view: search sidebar is open and the results column is narrower.
+// Tighten spacing so the toolbar and page numbers still fit comfortably.
+@media (max-width: $mborder-mid) {
+    .pagination-toolbar {
+        justify-content: center;
+    }
+
+    .pagination-toolbar__center {
+        order: 3;
+        flex: 1 1 100%;
+    }
+
+    .hidden-columns-toggle {
+        align-items: center;
+    }
 }
