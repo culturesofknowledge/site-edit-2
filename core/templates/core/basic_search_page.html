@@ -105,7 +105,7 @@
                     <h2>No results</h2>
 
                 {% else %}
-                    <!-- search function toolbar: search options toggle, pagination, columns visibility -->
+                    <!-- search function toolbar: search options toggle, pagination -->
                     <div class="pagination-toolbar margin-bottom">
                         <div class="pagination-toolbar__left">
                             {% if query_fieldset_list and paginator.count %}
@@ -125,10 +125,6 @@
 
                         <div class="pagination-toolbar__center">
                             {% include 'core/component/pagination.html' %}
-                        </div>
-
-                        <div class="pagination-toolbar__right">
-                            {% include 'core/component/hidden_columns_panel.html' %}
                         </div>
                     </div>
 

@@ -25,31 +25,21 @@
 }
 
 // Toolbar row combining the search-options toggle (plus any future
-// left-hand buttons), pagination and columns-visibility control on a
-// single line. Left/right columns share the leftover space equally so
-// the pagination in the middle stays centred between them, however
-// wide either side ends up being. Wraps to stacked rows when the table
-// column is narrower (e.g. search sidebar left open).
+// left-hand buttons) with the pagination. The pagination column takes
+// the remaining space and centres itself within it. Wraps to stacked
+// rows when the table column is narrower (e.g. search sidebar left open).
 .pagination-toolbar {
     display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    grid-template-columns: auto 1fr;
     align-items: center;
     gap: $space-sm $space-lg;
     padding: $space-sm 0;
 }
 
-.pagination-toolbar__left,
-.pagination-toolbar__right {
+.pagination-toolbar__left {
     display: flex;
     align-items: center;
-}
-
-.pagination-toolbar__left {
     justify-self: start;
-}
-
-.pagination-toolbar__right {
-    justify-self: end;
 }
 
 .pagination-toolbar__center {
@@ -75,24 +65,10 @@
 
 }
 
-// "Columns visibility" control: the button itself is a plain
-// .search-form-btn (same as Toggle/Select/Merge), this just stacks the
-// hidden-columns list underneath it.
-.hidden-columns-toggle {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-}
-
-.hidden-columns-toggle #hidden-columns-fieldset {
-    margin-top: $space-xxs;
-    text-align: left;
-}
-
-// Border/padding live on the link itself (like .btn does on a <button>),
-// and every item -- numbered, nav link or ellipsis -- reserves the exact
-// same border width, so they all end up the same height as the toggle
-// button. Only the border colour (visible vs transparent) differs.
+// Plain, unboxed page numbers -- only the current page gets a visible
+// border. Every item still reserves the same 1px transparent border so
+// heights stay identical (numbered pages, nav links, ellipsis and the
+// toggle button all line up), it's just invisible until active/hovered.
 .page-item {
     display: inline-block;
     // gaps between rows when pagination wraps on narrower (half) views
@@ -102,28 +78,16 @@
         display: inline-block;
         text-align: center;
         padding: $space-xxs $space-xs;
-        border: 1px solid $light-grey;
+        border: 1px solid transparent;
         border-radius: $space-xxs;
         line-height: inherit;
         box-sizing: border-box;
         transition: all .15s ease-in-out;
     }
 
-    &:hover a, &:hover .page-link {
-        border-color: $midnight;
+    &:not(.active-page):hover a, &:not(.active-page):hover .page-link {
+        border-color: $light-grey;
     }
-}
-
-.page-item--nav a {
-    border-color: transparent;
-
-    &:hover {
-        border-color: transparent;
-    }
-}
-
-.page-item--ellipsis .page-link {
-    border-color: transparent;
 }
 
 .active-page .page-link {
@@ -133,7 +97,7 @@
 }
 
 // Half view: search sidebar is open and the results column is narrower.
-// Stack the three sections instead of trying to fit them on one line.
+// Stack the two sections instead of trying to fit them on one line.
 @media (max-width: $mborder-mid) {
     .pagination-toolbar {
         grid-template-columns: 1fr;
@@ -141,16 +105,7 @@
     }
 
     .pagination-toolbar__left,
-    .pagination-toolbar__right,
     .pagination-toolbar__center {
         justify-self: center;
-    }
-
-    .pagination-toolbar__center {
-        order: 3;
-    }
-
-    .hidden-columns-toggle {
-        align-items: center;
     }
 }

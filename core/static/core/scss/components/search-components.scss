@@ -7,16 +7,41 @@
     margin-bottom: $space-sm;
 }
 
-// Layout wrapper for the search components (order, sort by, per page, layout)
+// Layout wrapper to place search components on the left and hidden columns on the right
 .search-components-layout {
     display: flex;
     align-items: flex-start;
+    //gap: $space-unit;
 }
 
 .search-components-layout > #search-components {
-    flex: 1 1 auto;
+    // 40% of the horizontal space
+    flex: 0 0 40%;
     min-width: 25em;
     border: none;
+}
+
+.search-components-layout > #hidden-columns-fieldset {
+    // 60% of the horizontal space
+    flex: 0 0 60%;
+    max-width: 60%;
+    border: none;
+}
+
+@media (max-width: 900px) {
+    .search-components-layout {
+        flex-direction: column;
+    }
+    .search-components-layout > #hidden-columns-fieldset {
+        width: 100%;
+        max-width: none;
+        flex: 1 1 auto;
+    }
+    .search-components-layout > #search-components {
+        width: 100%;
+        max-width: none;
+        flex: 1 1 auto;
+    }
 }
 
 #search-components label {
