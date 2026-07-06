@@ -198,7 +198,7 @@ changed_field_choices = [
     ('postage_marks', 'Postage Marks'),
     ('printed_edition_details', 'Printed Edition Details'),
     ('ps', 'Ps'),
-    ('publication_details', 'Publication dsetails'),
+    ('publication_details', 'Publication details'),
     ('publication_id', 'Publication ID'),
     ('recd', 'Recd'),
     ('relevant_to_cofk', 'Relevant To Cofk'),
