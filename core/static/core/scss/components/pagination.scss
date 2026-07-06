@@ -24,14 +24,16 @@
     margin-left: $space-sm;
 }
 
-// Toolbar row combining the search-options toggle, pagination and
-// columns-visibility control on a single line. Wraps to stacked rows
-// when the table column is narrower (e.g. search sidebar left open).
+// Toolbar row combining the search-options toggle (plus any future
+// left-hand buttons), pagination and columns-visibility control on a
+// single line. Left/right columns share the leftover space equally so
+// the pagination in the middle stays centred between them, however
+// wide either side ends up being. Wraps to stacked rows when the table
+// column is narrower (e.g. search sidebar left open).
 .pagination-toolbar {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    justify-content: space-between;
     gap: $space-sm $space-lg;
     padding: $space-sm 0;
 }
@@ -40,11 +42,18 @@
 .pagination-toolbar__right {
     display: flex;
     align-items: center;
-    flex: 0 0 auto;
+}
+
+.pagination-toolbar__left {
+    justify-self: start;
+}
+
+.pagination-toolbar__right {
+    justify-self: end;
 }
 
 .pagination-toolbar__center {
-    flex: 1 1 auto;
+    justify-self: center;
     min-width: 0;
 }
 
@@ -66,22 +75,13 @@
 
 }
 
-// "Columns visibility" control, styled to sit in the pagination toolbar
-// as a compact pill/button matching the other toolbar controls.
+// "Columns visibility" control: the button itself is a plain
+// .search-form-btn (same as Toggle/Select/Merge), this just stacks the
+// hidden-columns list underneath it.
 .hidden-columns-toggle {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-}
-
-.hidden-columns-toggle__label {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4em;
-    padding: $space-xxs $space-xs;
-    border: 1px solid $light-grey;
-    border-radius: $space-xxs;
-    white-space: nowrap;
 }
 
 .hidden-columns-toggle #hidden-columns-fieldset {
@@ -133,15 +133,21 @@
 }
 
 // Half view: search sidebar is open and the results column is narrower.
-// Tighten spacing so the toolbar and page numbers still fit comfortably.
+// Stack the three sections instead of trying to fit them on one line.
 @media (max-width: $mborder-mid) {
     .pagination-toolbar {
-        justify-content: center;
+        grid-template-columns: 1fr;
+        justify-items: center;
+    }
+
+    .pagination-toolbar__left,
+    .pagination-toolbar__right,
+    .pagination-toolbar__center {
+        justify-self: center;
     }
 
     .pagination-toolbar__center {
         order: 3;
-        flex: 1 1 100%;
     }
 
     .hidden-columns-toggle {
