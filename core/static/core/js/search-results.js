@@ -6,8 +6,8 @@ let num_records = $('#num_records').val();
 // otherwise, if there are no results, we have to show the search bar to allow the user to search again.
 
 if (num_records > 0 && localStorage.getItem('fieldset-toggle') !== 'true') {
-    $('#query-fieldset').toggle();
-    $('#query-result').toggleClass('col--3of4');
+    $('#query-fieldset').hide();
+    $('#query-result').removeClass('col--3of4');
 }
 
 function toggle_advanced_search_controls()  {
