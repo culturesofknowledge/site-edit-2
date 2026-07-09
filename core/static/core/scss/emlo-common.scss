@@ -408,6 +408,18 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
 
 }
 
+@media only screen and (min-width: $mborder-mid) {
+  .form-col-left {
+    flex-basis: 310px;
+    min-width: 310px;
+    max-width: 310px;
+  }
+  .form-col-right {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+
 
 @media only screen and (min-width: $mborder-mid) {
   .form-descriptor {
