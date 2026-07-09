@@ -114,20 +114,18 @@ td.text-heavy {
 }
 
 #results_table {
-  /* Size behavior: allow table to be wider than the viewport/container */
-  min-width: 100%;               /* ensure at least full width */
-  width: max-content;            /* expand to fit columns so wrapper can scroll */
-  max-width: none;               /* do not clamp the intrinsic width */
+  width: 100%;
 
-  /* Table visuals */
-  border-collapse: collapse;
-  /* Keep auto layout for natural column sizing */
+  /* border-collapse must stay 'separate' (inherited from the global table rule) —
+     position:sticky on thead cells is broken when border-collapse:collapse is set */
 }
 
 #results_table th {
-  top: 0px;
+  top: var(--nav-height, 100px);
   background-color: $light-grey;
-  border: 1px solid $mid-grey;
+  /* Use directional borders only to avoid doubled borders with border-collapse:separate */
+  border-right: 1px solid $mid-grey;
+  border-bottom: 2px solid $mid-grey;
   padding-left: 5px;
   padding-right: 5px;
 }
@@ -222,16 +220,33 @@ td.text-heavy {
 //  hyphens: auto;
 //}
 
-/* New scroll container placed above/wrapping the table. This holds the scrollbars
-   so the page itself doesn't move. The table element remains unchanged. */
+/* Wrapper for the results table.
+   No overflow set — keeping this free of any overflow value lets CSS position:sticky
+   on the thead cells anchor correctly to the page scroll. */
 .results-scroll {
-  height: 70vh;                 /* match viewport height and adapt on resize */
-  max-height: 70vh;
   width: 100%;
-  overflow: auto;                /* both vertical and horizontal scrolling inside */
-  -webkit-overflow-scrolling: touch; /* smooth scrolling on iOS */
-  overscroll-behavior: contain;  /* prevent scroll chaining to the page */
   border: 1px solid $light-grey;
+}
+
+/* On result pages the table can be wider than the viewport, causing the page to scroll
+   horizontally. The sticky nav (position:sticky) then scrolls with the content and its
+   background no longer covers the full viewport — white space appears on the right.
+   Fix: use position:fixed for the nav so it is always anchored to the viewport and is
+   never affected by horizontal scroll. padding-top on the body compensates for the fixed
+   element being removed from the document flow.
+   Scoped via :has(.results-scroll) so only result pages are affected. */
+html:has(.results-scroll) .site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  margin: 0;
+  width: 100%;
+  z-index: 150;
+}
+
+html:has(.results-scroll) body {
+  padding-top: var(--nav-height, 100px);
 }
 
 .img-thumbnail {
