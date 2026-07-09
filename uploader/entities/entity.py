@@ -54,6 +54,17 @@ class CofkEntity:
         self.row = row_number
         return {self.get_column_name_by_index(cell.column): cell.value for cell in row if self.has_valid_value(cell)}
 
+    def get_row_by_header_map(self, row: Generator[Cell, None, None], row_number: int, col_to_field: dict) -> dict:
+        self.row = row_number
+        return {
+            col_to_field[cell.column]: cell.value
+            for cell in row
+            if not isinstance(cell, EmptyCell)
+            and cell.column in col_to_field
+            and cell.value is not None
+            and cell.value != ''
+        }
+
     def check_required(self, entity: dict):
         for missing in [m for m in self.fields['required'] if m not in entity]:
             self.add_error(f'Column {missing} in {self.sheet.name} is missing.')
