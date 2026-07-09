@@ -29,6 +29,6 @@ class AuditConfig(AppConfig):
             model_signals.handle_update_audit_changed_user(sender, instance)
             model_signals.handle_non_triggered_record(sender, instance, is_create=False)
 
-        pre_save.connect(on_pre_save)
-        post_save.connect(on_post_save)
-        post_delete.connect(on_post_delete)
+        pre_save.connect(on_pre_save, weak=False)
+        post_save.connect(on_post_save, weak=False)
+        post_delete.connect(on_post_delete, weak=False)

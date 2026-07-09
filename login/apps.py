@@ -15,4 +15,4 @@ class LoginConfig(AppConfig):
             user.login_time = timezone.now()
             user.save(update_fields=['prev_login', 'login_time'])
 
-        user_logged_in.connect(update_login_times, sender=CofkUser)
+        user_logged_in.connect(update_login_times, sender=CofkUser, weak=False)
