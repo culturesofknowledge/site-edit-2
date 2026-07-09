@@ -486,6 +486,7 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
   position: relative;
 
   .sf-select {
+    height: 2.5em;
     border: 1px solid;
     padding: 0.5em;
     cursor: pointer;
