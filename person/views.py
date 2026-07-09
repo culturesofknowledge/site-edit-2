@@ -287,7 +287,7 @@ def full_form(request, iperson_id):
         )
 
         # reload all form data for rendering
-        fhandler.load_data(iperson_id, request_data=None)
+        fhandler.reload_data(iperson_id, request_data=None)
         is_save_success = view_serv.mark_callback_save_success(request)
 
     return fhandler.render_form(request, is_save_success=is_save_success)
