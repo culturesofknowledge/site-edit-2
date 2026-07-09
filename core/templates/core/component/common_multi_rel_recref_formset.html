@@ -1,5 +1,5 @@
 {% load cl_filters %}
-<div class="multi_rel_recref_container">
+<div class="multi_rel_recref_container {{ custom_class }}">
     {{ multi_rel_recref_formset.management_form }}
     {% for form in multi_rel_recref_formset %}
             {{ form }}

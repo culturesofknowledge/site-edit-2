@@ -324,6 +324,10 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
 
 }
 
+.info_recref {
+  grid-template-columns: 60% 40%;
+}
+
 .scribe-recref-container {
   grid-template-columns: 45% 35% 20%;
   margin-bottom: 1rem;

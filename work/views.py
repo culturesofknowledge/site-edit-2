@@ -641,7 +641,7 @@ class DetailsFFH(BasicWorkFFH):
     def create_context(self, is_save_success=False):
         context: dict = super().create_context(is_save_success=is_save_success)
         context.update(self.subject_handler.create_context())
-        context['work_category'] = 'Other Details'
+        context['work_category'] = 'Other details'
         return context
 
     def has_changed(self, request):
