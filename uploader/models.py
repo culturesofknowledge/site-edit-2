@@ -51,7 +51,7 @@ class CofkCollectUpload(models.Model):
     _id = models.CharField(max_length=32, blank=True, null=True)
     upload_name = models.CharField(max_length=254, blank=True, null=True)
     upload_file = models.FileField(upload_to=user_directory_path, blank=True, null=True)  # schema changed
-    upload_type = models.CharField(max_length=20, default='work')  # 'work' | 'people' | 'location'
+    upload_type = models.CharField(max_length=20, default='work')  # 'work' | 'people' | 'location' | 'correction'
 
     class Meta:
         db_table = 'cofk_collect_upload'
@@ -506,3 +506,23 @@ class CofkCollectWorkResource(models.Model):
     class Meta:
         db_table = 'cofk_collect_work_resource'
         unique_together = (('upload', 'iwork_id', 'resource_id'),)
+
+
+class CofkCollectWorkCorrection(models.Model):
+    """Staging record for a bulk correction to an existing CofkUnionWork."""
+    upload = models.ForeignKey(
+        'uploader.CofkCollectUpload', on_delete=models.CASCADE, related_name='corrections',
+    )
+    iwork_id = models.IntegerField()
+    union_work = models.ForeignKey(
+        'work.CofkUnionWork', on_delete=models.SET_NULL,
+        blank=True, null=True, to_field='iwork_id', related_name='collect_corrections',
+    )
+    corrections = models.JSONField()  # {field_name: new_value}; catalogue FK stored as 'original_catalogue_code'
+    upload_status = models.ForeignKey(
+        CofkCollectStatus, on_delete=models.SET_NULL, db_column='upload_status', null=True,
+    )
+
+    class Meta:
+        db_table = 'cofk_collect_work_correction'
+        unique_together = (('upload', 'iwork_id'),)
