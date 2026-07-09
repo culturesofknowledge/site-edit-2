@@ -653,6 +653,13 @@ h2, h3 {
   color: #333;
 }
 
+.manif-form-heading {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 1rem;
+}
+
 .multi-rel-recref-container {
   margin-bottom: 15px;
   padding: 10px;

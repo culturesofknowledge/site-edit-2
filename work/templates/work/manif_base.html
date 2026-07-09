@@ -5,92 +5,99 @@
     <div class="margin-bottom margin-top row-no-margin">
         <span>Add new manifestation:</span>
         <button type="button" class="btn margin-left" id="btn-new-manif"
-                onclick="document.getElementById('form-content').style.display='block';">New</button>
+                onclick="document.getElementById('form-content').style.display='block'; build_table_of_content_ui();">New</button>
     </div>
-    Existing manifestations
+    <fieldset>
+        <legend id="header_existing_manif" class="toc-item">Existing manifestations</legend>
 
-    <table id="results_table" class="margin-top">
-        <thead>
-        <tr></tr>
-        <tr>
-            <th>Edit</th>
-            <th>Del</th>
-            <th>Repository</th>
-            <th>ID / shelfmark / printed edition</th>
-            <th>Document type</th>
-            <th>Image</th>
-            <th>Further details</th>
-        </tr>
-        </thead>
-
-        <tbody>
-        {% for manif in manif_set %}
+        <table id="results_table" class="margin-top">
+            <thead>
+            <tr></tr>
             <tr>
-                <td>
-
-                    {% if manif_id == manif.manifestation_id %}
-                        <strong>Editing --> </strong>
-                    {% else %}
-                        <a class="btn" href="{% url 'work:manif_update' iwork_id manif.manifestation_id %}">
-                            Edit
-                        </a>
-                    {% endif %}
-                </td>
-                <td>
-                    <input id="del_manif_{{ manif.manifestation_id }}" name="del_manif_id_list" type="checkbox"
-                           value="{{ manif.manifestation_id }}"/>
-                    <label for="del_manif_{{ manif.manifestation_id }}"></label>
-                </td>
-                <td>
-                    {% if manif.inst_display_name %}
-                        {{ manif.inst_display_name }}
-                    {% endif %}
-                </td>
-                <td>
-                    {% if manif.id_number_or_shelfmark %}
-                        {{ manif.id_number_or_shelfmark }}
-                    {% endif %}
-
-                    {% if manif.id_number_or_shelfmark and manif.printed_edition_details %}
-                        <br/>
-                    {% endif %}
-
-                    {% if manif.printed_edition_details %}
-                        {{ manif.printed_edition_details }}
-                    {% endif %}
-
-                </td>
-                <td>
-                    {{ manif.type_display_name }}
-                    {% for letter in manif.enclosed_letters %}
-                        <br/><a href="{% url 'work:manif_update' letter.work_id letter.manif_id %}" target="_blank">{{ letter.label }}</a>
-                    {% endfor %}
-                </td>
-                <td>
-                    {% with images=manif.images %}
-                        {% include "core/component/search_table_layout/img_result.html" %}
-                    {% endwith %}
-                </td>
-                <td>
-                    {% if manif.lang_list_str %}
-                        <span>Language of this manifestation: </span>
-                        {{ manif.lang_list_str }}
-                    {% endif %}
-                    {% if manif.manifestation_is_translation %}
-                        <span>Manifestation is translation.</span>
-                    {% endif %}
-                </td>
+                <th>Edit</th>
+                <th>Del</th>
+                <th>Repository</th>
+                <th>ID / shelfmark / printed edition</th>
+                <th>Document type</th>
+                <th>Image</th>
+                <th>Further details</th>
             </tr>
+            </thead>
 
-        {% endfor %}
+            <tbody>
+            {% for manif in manif_set %}
+                <tr>
+                    <td>
 
-        </tbody>
+                        {% if manif_id == manif.manifestation_id %}
+                            <strong>Editing --> </strong>
+                        {% else %}
+                            <a class="btn" href="{% url 'work:manif_update' iwork_id manif.manifestation_id %}">
+                                Edit
+                            </a>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <input id="del_manif_{{ manif.manifestation_id }}" name="del_manif_id_list" type="checkbox"
+                               value="{{ manif.manifestation_id }}"/>
+                        <label for="del_manif_{{ manif.manifestation_id }}"></label>
+                    </td>
+                    <td>
+                        {% if manif.inst_display_name %}
+                            {{ manif.inst_display_name }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if manif.id_number_or_shelfmark %}
+                            {{ manif.id_number_or_shelfmark }}
+                        {% endif %}
 
-    </table>
+                        {% if manif.id_number_or_shelfmark and manif.printed_edition_details %}
+                            <br/>
+                        {% endif %}
+
+                        {% if manif.printed_edition_details %}
+                            {{ manif.printed_edition_details }}
+                        {% endif %}
+
+                    </td>
+                    <td>
+                        {{ manif.type_display_name }}
+                        {% for letter in manif.enclosed_letters %}
+                            <br/><a href="{% url 'work:manif_update' letter.work_id letter.manif_id %}" target="_blank">{{ letter.label }}</a>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% with images=manif.images %}
+                            {% include "core/component/search_table_layout/img_result.html" %}
+                        {% endwith %}
+                    </td>
+                    <td>
+                        {% if manif.lang_list_str %}
+                            <span>Language of this manifestation: </span>
+                            {{ manif.lang_list_str }}
+                        {% endif %}
+                        {% if manif.manifestation_is_translation %}
+                            <span>Manifestation is translation.</span>
+                        {% endif %}
+                    </td>
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+    </fieldset>
 
 
 
     <div id="form-content" class="margin-top" {% if not manif_id %}style="display:none;"{% endif %}>
+        {% if manif_id %}
+            <h3 class="manif-form-heading">Editing - {{ manif_form.instance.id_number_or_shelfmark|default:manif_form.instance.printed_edition_details|default:manif_id }}</h3>
+        {% else %}
+            <h3 class="manif-form-heading">New manifestation</h3>
+        {% endif %}
         {% include "work/component/manif_form.html" %}
     </div>
 
