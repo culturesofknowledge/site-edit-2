@@ -14,9 +14,16 @@ from uploader.entities.people import CofkPeople, CofkBulkPeople
 from uploader.entities.repositories import CofkRepositories
 from uploader.entities.work import CofkWork
 from uploader.models import CofkCollectUpload
-from uploader.validation import CofkExcelFileError
 
 log = logging.getLogger(__name__)
+
+
+class CofkExcelFileError(Exception):
+    msg: str
+
+    def __init__(self, msg: str):
+        super().__init__(msg)
+        self.msg = msg
 
 
 class CofkSheet:

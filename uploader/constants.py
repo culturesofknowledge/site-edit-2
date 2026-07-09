@@ -78,7 +78,9 @@ MANDATORY_SHEETS = {
         'years': ['date_of_work_std_year', 'date_of_work2_std_year'],
         'months': ['date_of_work_std_month', 'date_of_work2_std_month'],
         'dates': ['date_of_work_std_day', 'date_of_work2_std_day'],
-        'ranges': [{'date_of_work_std_is_range': [('date_of_work_std_year', 'date_of_work2_std_year')]}]
+        'ranges': [{'date_of_work_std_is_range': [('date_of_work_std_year', 'date_of_work2_std_year')]}],
+        'notes': ['notes_on_date_of_work'],
+        'keywords': ['keywords'],
     },
     'Manifestation': {
         'columns': ['manifestation_id', 'iwork_id', 'manifestation_type', 'repository_id', 'repository_name',
@@ -87,7 +89,9 @@ MANDATORY_SHEETS = {
         'ids': ['manifestation_id', 'repository_id'],
         'ints': ['manifestation_id', 'repository_id'],
         'strings': [('manifestation_type', 3), ('id_number_or_shelfmark', 500), 'manifestation_notes'],
-        'required': ['iwork_id']
+        'required': ['iwork_id'],
+        'shelfmarks': ['id_number_or_shelfmark'],
+        'bibliographies': ['printed_edition_details'],
     },
     'People': {
         'columns': ['primary_name', 'iperson_id', 'editors_notes'],

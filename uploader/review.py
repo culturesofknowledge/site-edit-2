@@ -29,10 +29,15 @@ from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, C
 log = logging.getLogger(__name__)
 
 
-def create_union_work(union_work_dict: dict, collect_work: CofkCollectWork, username: str) -> CofkUnionWork:
-    # work_id is primary key in CofkUnionWork
-    # note that work_serv.create_work_id uses a different less detailed format
-    union_work_dict['work_id'] = f'work_{datetime.now().strftime("%Y%m%d%H%M%S%f")}_{collect_work.iwork_id}'
+def create_union_work(collect_work: CofkCollectWork, username: str,
+                      accession_code=None, original_catalogue=None) -> CofkUnionWork:
+    work_dict = {
+        'work_id': f'work_{datetime.now().strftime("%Y%m%d%H%M%S%f")}_{collect_work.iwork_id}',
+    }
+    if accession_code is not None:
+        work_dict['accession_code'] = accession_code
+    if original_catalogue is not None:
+        work_dict['original_catalogue'] = original_catalogue
     exclude = ['iwork_id', 'subjects']
 
     for field in [f for f in collect_work._meta.get_fields() if f.name not in exclude]:
@@ -40,7 +45,7 @@ def create_union_work(union_work_dict: dict, collect_work: CofkCollectWork, user
             CofkUnionWork._meta.get_field(field.name)
 
             if value := getattr(collect_work, field.name):
-                union_work_dict[field.name] = value
+                work_dict[field.name] = value
 
         except FieldDoesNotExist:
             # log.warning(f'Field {field} does not exist')
@@ -51,9 +56,9 @@ def create_union_work(union_work_dict: dict, collect_work: CofkCollectWork, user
     # for the second date.
     # Note that this makes it a minimum requirement that the year be set for the second date.
     if not collect_work.date_of_work_std_is_range and collect_work.date_of_work2_std_year:
-        union_work_dict['date_of_work_std_is_range'] = 1
+        work_dict['date_of_work_std_is_range'] = 1
 
-    union_work = CofkUnionWork(**union_work_dict, init_seq_id=True)
+    union_work = CofkUnionWork(**work_dict, init_seq_id=True)
     union_work.update_current_user_timestamp(username)
 
     return union_work
@@ -156,7 +161,7 @@ def create_union_people_and_locations(collect_works, username: str):
         collect_locations.extend(get_collect_locations(collect_work.places_mentioned.all(), collect_locations))
 
     for person in collect_people:
-        union_iperson = CofkUnionPerson(foaf_name=person.primary_name)
+        union_iperson = CofkUnionPerson(foaf_name=person.primary_name, init_seq_id=True)
         union_iperson.person_id = create_person_id(union_iperson.iperson_id)
         union_iperson.update_current_user_timestamp(username)
         union_iperson.save()
@@ -227,7 +232,9 @@ def create_works(collect_works, username, union_work_dict, upload, request):
     for collect_work in collect_works:
         log.debug(f'Processing work: {collect_work}')
         # Create work
-        union_work = create_union_work(union_work_dict, collect_work, username)
+        union_work = create_union_work(collect_work, username,
+                                       accession_code=union_work_dict.get('accession_code'),
+                                       original_catalogue=union_work_dict.get('original_catalogue'))
         union_works.append(union_work)
 
         # Link comments

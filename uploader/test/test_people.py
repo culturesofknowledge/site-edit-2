@@ -15,7 +15,7 @@ class TestPeople(UploadIncludedTestCase):
         database.
         """
         data = {'Work': [
-            [1, "test", "J", 1660, 1, 1, 1660, 1, 2, 1, 1, 1, 1, "test", "newton", "15257", "test", 1, 1,
+            [1, "test", "J", 1660, 1, 1, 1660, 1, 2, 1, 1, 1, 1, "Test.", "newton", "15257", "test", 1, 1,
              "test", "Wren", 22859, "test", 1, 1, "test", "Burford", 400285, "test", 1, 1, "Carisbrooke", 782,
              "test", 1, 1, "test", "", "fra;eng", '', '', '', '', '', '', "test", "test", "test", "Baskerville",
              2, "test", "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/", "Early Modern Letters Online test"]],
@@ -40,7 +40,7 @@ class TestPeople(UploadIncludedTestCase):
         semi-colon for the id. This should raise an error.
         """
         data = {'Work': [
-            [1, "test", "J", 1660, 1, 1, 1660, 1, 2, 1, 1, 1, 1, "test", "newton;Someone", "15257", "test", 1, 1,
+            [1, "test", "J", 1660, 1, 1, 1660, 1, 2, 1, 1, 1, 1, "Test.", "newton;Someone", "15257", "test", 1, 1,
              "test", "Wren", 22859, "test", 1, 1, "test", "Burford", 400285, "test", 1, 1, "Carisbrooke", 782,
              "test", 1, 1, "test", "", "fra;eng", '', '', '', '', '', '', "test", "test", "test", "Baskerville",
              885, "test", "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/", "Early Modern Letters Online test"]],
@@ -66,7 +66,7 @@ class TestPeople(UploadIncludedTestCase):
         This should raise an error.
         """
         data = {'Work': [
-            [1, "test", "J", 1660, 1, 1, 1660, 1, 2, 1, 1, 1, 1, "test", "newton;Someone", "15257;x", "test", 1, 1,
+            [1, "test", "J", 1660, 1, 1, 1660, 1, 2, 1, 1, 1, 1, "Test.", "newton;Someone", "15257;x", "test", 1, 1,
              "test", "Wren", 22859, "test", 1, 1, "test", "Burford", 400285, "test", 1, 1, "Carisbrooke", 782,
              "test", 1, 1, "test", "", "fra;eng", '', '', '', '', '', '', "test", "test", "test", "Baskerville",
              885, "test", "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/", "Early Modern Letters Online test"]],
@@ -95,7 +95,7 @@ class TestPeople(UploadIncludedTestCase):
         This should not raise an error.
         """
         data = {'Work': [
-            [1, "test", "J", 1660, 1, 1, 1660, 1, 2, 1, 1, 1, 1, "test", "newton;Someone", "15257;", "test", 1, 1,
+            [1, "test", "J", 1660, 1, 1, 1660, 1, 2, 1, 1, 1, 1, "Test.", "newton;Someone", "15257;", "test", 1, 1,
              "test", "Wren", 22859, "test", 1, 1, "test", "Burford", 400285, "test", 1, 1, "Carisbrooke", 782,
              "test", 1, 1, "test", "", "fra;eng", '', '', '', '', '', '', "test", "test", "test", "Baskerville",
              885, "test", "test", "EMLO", "http://emlo.bodleian.ox.ac.uk/", "Early Modern Letters Online test"]],

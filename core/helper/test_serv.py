@@ -338,9 +338,19 @@ class FieldValTester:
                     self.test_case.js_click(f'label[for={ele.get_attribute("id")}]')
 
             elif ele_type == 'text' or ele.tag_name == 'textarea':
-                ele.send_keys(val)
+                if ele.is_displayed():
+                    ele.send_keys(val)
+                else:
+                    self.test_case.selenium.execute_script(
+                        'arguments[0].value = arguments[1];', ele, str(val)
+                    )
             elif ele.tag_name == 'select':
-                Select(ele).select_by_value(str(val))
+                if ele.is_displayed():
+                    Select(ele).select_by_value(str(val))
+                else:
+                    self.test_case.selenium.execute_script(
+                        'arguments[0].value = arguments[1];', ele, str(val)
+                    )
             else:
                 log.warning(f'unexpected input element [{ele.tag_name}][{ele_type}]')
                 ele.send_keys(val)
