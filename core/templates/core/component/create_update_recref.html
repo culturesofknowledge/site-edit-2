@@ -9,7 +9,7 @@
             {{ form.target_id }}
             <label class="recref-title">
                 <a href="{{ form.target_url }}" target="_blank">
-                    {{ form.initial_target_id }}, {{ form.rec_name.value }}
+                    [{{ form.initial_target_id }}] {{ form.rec_name.value }}
                 </a>
             </label>
             {% include "core/component/common_checkbox.html" with field=form.is_delete name='Delete' class_name="recref-del" %}
