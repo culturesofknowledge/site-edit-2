@@ -304,7 +304,7 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
 
 .multi_rel_recref_container {
   display: grid;
-  grid-template-columns: 60% 40%;
+  grid-template-columns: 12fr 75fr;
   grid-row-gap: 8px;
   width: 100%;
   font-size: $typescale-7;
@@ -331,7 +331,7 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
 
 .sub-recref-form {
   display: grid;
-  grid-template-columns: 60% 40%;
+  grid-template-columns: 1fr 2fr;
   width: 100%;
 
   input[type=date] {
