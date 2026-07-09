@@ -14,12 +14,12 @@
 
         <div class="row-no-margin">
             <div class="margin-right">
-                {% include "core/component/common_checkbox.html" with field=corr_form.authors_inferred name='Authors/senders inferred' %}
+                {% include "core/component/common_checkbox.html" with field=corr_form.authors_inferred name='Authors/senders inferred' is_normal_size=True %}
             </div>
 
 
             <div class="margin-right">
-                {% include "core/component/common_checkbox.html" with field=corr_form.authors_uncertain  name='Authors/senders uncertain' %}
+                {% include "core/component/common_checkbox.html" with field=corr_form.authors_uncertain  name='Authors/senders uncertain' is_normal_size=True %}
             </div>
         </div>
         </div>
@@ -41,10 +41,10 @@
 
         <div class="row-no-margin">
             <div class="margin-right">
-                {% include "core/component/common_checkbox.html" with field=corr_form.addressees_inferred name='Addressees inferred' %}
+                {% include "core/component/common_checkbox.html" with field=corr_form.addressees_inferred name='Addressees inferred' is_normal_size=True %}
             </div>
             <div class="margin-right">
-                {% include "core/component/common_checkbox.html" with field=corr_form.addressees_uncertain  name='Addressees uncertain' %}
+                {% include "core/component/common_checkbox.html" with field=corr_form.addressees_uncertain  name='Addressees uncertain' is_normal_size=True %}
             </div>
         </div>
         </div>
