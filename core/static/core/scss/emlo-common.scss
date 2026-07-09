@@ -304,7 +304,7 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
 
 .multi_rel_recref_container {
   display: grid;
-  grid-template-columns: 12fr 75fr;
+  grid-template-columns: 60% 40%;
   grid-row-gap: 8px;
   width: 100%;
   font-size: $typescale-7;
@@ -325,13 +325,13 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
 }
 
 .scribe-recref-container {
-  grid-template-columns: 2fr 2fr 1fr;
+  grid-template-columns: 45% 35% 20%;
   margin-bottom: 1rem;
 }
 
 .sub-recref-form {
   display: grid;
-  grid-template-columns: 1fr 2fr;
+  grid-template-columns: 60% 40%;
   width: 100%;
 
   input[type=date] {
