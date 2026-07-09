@@ -17,7 +17,6 @@ from django.db.models import Model, fields
 from django.db.models.fields.related_descriptors import ForwardManyToOneDescriptor
 from psycopg2.extras import DictCursor
 
-from audit.models import CofkUnionAuditLiteral, CofkUnionAuditRelationship
 from cllib import iter_utils
 from core import constant
 from core.helper import model_serv, recref_serv, perm_serv
@@ -685,12 +684,15 @@ def data_migration(user, password, database, host, port):
     warnings.filterwarnings('ignore',
                             '.*DateTimeField .+ received a naive datetime .+ while time zone support is active.*')
 
+    # Disable all triggers for this session so that inserting entity data does not
+    # create spurious __unknown_user audit rows. The historical audit trail is imported
+    # separately from old_audit_data.sql after this command completes.
+    cur_conn.cursor().execute("SET session_replication_role = 'replica'")
+
     # old db connection
     conn = psycopg2.connect(database=database, password=password,
                             user=user, host=host, port=port)
     print(conn)
-    max_audit_literal_id = model_serv.find_max_id(CofkUnionAuditLiteral, 'audit_id') or 0
-    max_audit_relationship_id = model_serv.find_max_id(CofkUnionAuditRelationship, 'audit_id') or 0
 
     clone_rows_by_model_class(conn, CofkLookupCatalogue)
     clone_rows_by_model_class(conn, CofkLookupDocumentType)
@@ -827,12 +829,6 @@ def data_migration(user, password, database, host, port):
 
     # clone recref records
     clone_recref_simple_by_field_pairs(conn)
-
-    # remove all audit records created by data_migrations
-    print('remove all audit records created by data_migrations')
-    CofkUnionAuditLiteral.objects.filter(audit_id__gt=max_audit_literal_id).delete()
-    CofkUnionAuditRelationship.objects.filter(audit_id__gt=max_audit_relationship_id).delete()
-    print('[END] remove all audit')
 
     conn.close()
 

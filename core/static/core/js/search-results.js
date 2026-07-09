@@ -212,10 +212,18 @@ function setup_fieldset_toggle() {
 }
 
 function setup_advanced_search_toggle() {
+    let searchParams = new URLSearchParams(window.location.search);
+    let hasLookupParam = Array.from(searchParams.entries()).some(
+        ([key, value]) => key.endsWith('_lookup') && value !== ''
+    );
+    if (hasLookupParam) {
+        $('#advanced_search').prop('checked', true);
+        toggle_advanced_search_controls();
+    }
+
     $('#advanced_search').on('click', function () {
         toggle_advanced_search_controls();
     });
-
 }
 
 function show_column(show_tag, column_index) {

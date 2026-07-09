@@ -343,6 +343,15 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
   margin-right: 20px;
 }
 
+.is-range-div {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  input + label {
+    margin-bottom: 0;
+  }
+}
 
 .recref-list {
   margin-bottom: 1em;
@@ -358,7 +367,8 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
     margin-bottom: auto;
     width: 70%;
     background-color: #f2f2f2;
-    padding: 0.8em;
+    padding: 0.2em;
+    font-size: 15px;
   }
 
   .recref-del {
@@ -406,6 +416,18 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
     display: block;
   }
 
+}
+
+@media only screen and (min-width: $mborder-mid) {
+  .form-col-left {
+    flex-basis: 310px;
+    min-width: 310px;
+    max-width: 310px;
+  }
+  .form-col-right {
+    flex: 1 1 0;
+    min-width: 0;
+  }
 }
 
 
@@ -629,6 +651,13 @@ h2, h3 {
   margin: 0;
   font-size: 1.5em;
   color: #333;
+}
+
+.manif-form-heading {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 1rem;
 }
 
 .multi-rel-recref-container {

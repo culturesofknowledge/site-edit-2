@@ -1,4 +1,4 @@
-@media only screen and (min-width: $mborder-small) and (max-width: $mborder-mid) {
+@media only screen and (min-width: $mborder-small) and (max-width: calc(#{$mborder-mid} - 1px)) {
   #toc-div {
     width: 400px;
     position: relative;
@@ -6,7 +6,7 @@
   }
 }
 
-@media only screen and (min-width: $mborder-mid-p1) {
+@media only screen and (min-width: $mborder-mid) {
   #toc-div {
     position: fixed;
     max-height: 70%;
