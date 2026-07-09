@@ -23,7 +23,7 @@ class LocationForm(ModelForm):
     element_5_eg_county = CharField(required=False, label='County', help_text='e.g. Oxfordshire')
     element_6_eg_country = CharField(required=False, label='Country', help_text='e.g. England')
     element_7_eg_empire = CharField(required=False, label='Larger political entity', help_text='e.g. United Kingdom')
-    location_synonyms = form_serv.CommonTextareaField(required=False, label='Alternative names for location')
+    location_synonyms = form_serv.CommonTextareaField(required=False, n_rows=7, label='Alternative names for location')
     latitude = CharField(required=False , widget=forms.TextInput(attrs={"class": "lat-long-field"}))
     longitude = CharField(required=False , widget=forms.TextInput(attrs={"class": "lat-long-field"}))
 
