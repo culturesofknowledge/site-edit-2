@@ -20,7 +20,8 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_ROUTE, REL_TYPE_FORMERLY_OWNED, \
     REL_TYPE_ENCLOSED_IN, REL_TYPE_COMMENT_RECEIPT_DATE, REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_STORED_IN, \
     REL_TYPE_COMMENT_PERSON_MENTIONED, REL_TYPE_MENTION, REL_TYPE_MENTION_PLACE, \
-    REL_TYPE_MENTION_WORK, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_IS_RELATED_TO
+    REL_TYPE_MENTION_WORK, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_IS_RELATED_TO, \
+    REL_TYPE_HANDWROTE
 from core.export_data import excel_maker, cell_values
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, LocRecrefForm
 from core.helper import view_serv, lang_serv, model_serv, query_serv, renderer_serv, date_serv, general_model_serv
@@ -909,6 +910,7 @@ def to_overview_manif(manif: CofkUnionManifestation):
         manif.repo_name = repo.inst.institution_name
 
     manif.type_display_name = dict(manif_type_choices).get(manif.manifestation_type, '')
+    manif.manifestation_creation_calendar_display = date_serv.decode_calendar(manif.manifestation_creation_calendar)
     manif.manifestation_receipt_calendar_display = date_serv.decode_calendar(manif.manifestation_receipt_calendar)
 
     # Find enclosed letters for this manifestation
@@ -931,6 +933,24 @@ def to_overview_manif(manif: CofkUnionManifestation):
             })
     manif.enclosed_letters = enclosed_letters
 
+    # Notes on manifestation
+    manif.manif_notes = list(c.comment for c in manif.cofkmanifcommentmap_set.filter(
+        relationship_type=REL_TYPE_COMMENT_REFERS_TO).select_related('comment'))
+
+    # Former owners
+    manif.former_owners = list(r.person for r in manif.cofkmanifpersonmap_set.filter(
+        relationship_type=REL_TYPE_FORMERLY_OWNED).select_related('person'))
+
+    # Scribes
+    manif.scribes = list(r.person for r in manif.cofkmanifpersonmap_set.filter(
+        relationship_type=REL_TYPE_HANDWROTE).select_related('person'))
+
+    # Language of manifestation
+    manif.manif_languages = list(manif.language_set.select_related('language_code'))
+
+    # Images
+    manif.manif_images = list(manif.cofkmanifimagemap_set.select_related('image'))
+
     return manif
 
 
@@ -948,11 +968,11 @@ def overview_view(request, iwork_id):
         date_for_ordering=work.date_for_ordering,
         work_display_name=work_serv.get_recref_display_name(work),
 
-        notes_work=work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_DATE),
-        notes_author=work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_AUTHOR),
-        notes_addressee=work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_ADDRESSEE),
-        notes_people=work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_PERSON_MENTIONED),
-        notes_general=work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_REFERS_TO),
+        notes_work=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_DATE)),
+        notes_author=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_AUTHOR)),
+        notes_addressee=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_ADDRESSEE)),
+        notes_people=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_PERSON_MENTIONED)),
+        notes_general=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_REFERS_TO)),
 
         author_link_list=to_person_link_list(work, constant.REL_TYPE_CREATED),
         author_link_count=to_person_link_count(work, constant.REL_TYPE_CREATED),
