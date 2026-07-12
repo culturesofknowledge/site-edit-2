@@ -592,6 +592,8 @@
         <span> {{ work.change_timestamp|standard_datetime }} </span>
         <span class="col-label">Changed by user:</span>
         <span> {{ work.change_user }} </span>
+        <span class="col-label"></span>
+        <span><a href="{% url 'audit:search' %}?table_name=cofk_union_work&key_value_integer={{ work.iwork_id }}&key_value_integer_lookup=equals">Display audit trail</a></span>
     </div>
 
 
