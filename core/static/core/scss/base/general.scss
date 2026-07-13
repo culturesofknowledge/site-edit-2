@@ -225,7 +225,7 @@ input[type="radio"] {
 
   + label {
     display: inline-flex;
-    align-items: center;
+    align-items: flex-start; // aligns box to the first line of label/help text, not the vertical centre of wrapped multi-line content
     cursor: pointer;
     user-select: none;
     gap: $checkbox-gap; // 🟢 This adds space between box and label text
@@ -237,8 +237,10 @@ input[type="radio"] {
     &::before {
       content: '';
       display: inline-block;
+      flex-shrink: 0;
       width: $checkbox-size;
       height: $checkbox-size;
+      margin-top: 0.15em; // nudges box down to align with the cap-height of the first text line
       border: 2px solid $border-color;
       border-radius: 3px; // Square by default
       background-color: $background-color;
