@@ -146,7 +146,7 @@ class BasicWorkFFH(FullFormHandler):
         self.common_work_form = CommonWorkForm(request_data, initial={
             'catalogue': self.safe_work.original_catalogue_id,
             'work_to_be_deleted': self.safe_work.work_to_be_deleted,
-        }, user=request.user)
+        }, user=request.user, is_new_work=self.work is None)
 
         catalogue_list = [('', None)] + [(c.catalogue_name, c.catalogue_code) for c in get_user_catalogues(request)]
         self.common_work_form.fields['catalogue_list'].widget.choices = catalogue_list

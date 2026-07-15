@@ -342,9 +342,9 @@ class CommonWorkForm(forms.Form):
 
     work_to_be_deleted = form_serv.DeleteCheckboxField(is_str=False, initial=0)
 
-    def __init__(self, *args, user=None, **kwargs):
+    def __init__(self, *args, user=None, is_new_work=False, **kwargs):
         super().__init__(*args, **kwargs)
-        if user and not utils.is_user_supervisor(user):
+        if user and not is_new_work and not utils.is_user_supervisor(user):
             self.fields['catalogue'].widget.attrs['readonly'] = True
             self.fields['catalogue'].widget.attrs['disabled'] = True
 
