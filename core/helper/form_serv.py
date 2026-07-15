@@ -277,6 +277,14 @@ class MultiRelRecrefForm(forms.Form):
     target_id = forms.CharField(required=False, widget=forms.HiddenInput())
     is_delete = DeleteCheckboxField()
 
+    @property
+    def initial_target_id(self):
+        target_id = str(self.initial.get('target_id', ''))
+        # Extract numeric ID from values like 'cofk_import_ead-ead_c01_id:000012345'
+        if ':' in target_id:
+            target_id = target_id.split(':')[-1]
+        return target_id.lstrip('0') or '0'
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
