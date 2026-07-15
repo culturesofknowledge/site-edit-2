@@ -27,6 +27,6 @@ class AuditConfig(AppConfig):
         def on_post_delete(sender: ModelBase, instance: models.Model, using, **kwargs):
             model_signals.handle_non_triggered_record(sender, instance, is_create=False)
 
-        pre_save.connect(on_pre_save)
-        post_save.connect(on_post_save)
-        post_delete.connect(on_post_delete)
+        pre_save.connect(on_pre_save, weak=False)
+        post_save.connect(on_post_save, weak=False)
+        post_delete.connect(on_post_delete, weak=False)
