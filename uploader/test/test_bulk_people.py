@@ -3,26 +3,48 @@ import tempfile
 
 from openpyxl.workbook import Workbook
 
+from core.models import CofkUnionRoleCategory
 from uploader.models import CofkCollectPerson
-from uploader.spreadsheet import CofkUploadExcelFile
+from uploader.spreadsheet import CofkUploadExcelFile, CofkExcelFileError
 from uploader.test.test_serv import UploadIncludedTestCase
-from uploader.validation import CofkExcelFileError
 
 log = logging.getLogger(__name__)
 
-# Verbose column headers that trigger bulk detection (no 'primary_name' in row 1)
+# Column headers matching the normalized keys in BULK_PEOPLE_HEADER_MAP.
 BULK_PEOPLE_HEADERS = [
-    'Primary name', 'Synonyms', 'Occupations/roles/titles', 'GENDER', 'IS ORGANIZATION',
-    'BIRTH YEAR', 'BIRTH YEAR INFERRED', 'BIRTH YEAR UNCERTAIN', 'BIRTH YEAR APPROX',
-    'DEATH YEAR', 'DEATH YEAR INFERRED', 'DEATH YEAR UNCERTAIN', 'DEATH YEAR APPROX',
-    'FLOURISHED EARLIEST YEAR 1', 'FLOURISHED LATEST YEAR 2', 'FLOURISHED IS RANGE',
-    'FLOURISHED YEAR INFERRED', 'FLOURISHED YEAR UNCERTAIN', 'FLOURISHED YEAR APPROX',
-    'GENERAL NOTES ON PERSON', "EDITORS' NOTES AND QUERIES",
-    'RELATED RESOURCE NAME', 'RELATED RESOURCE URL', 'Further reading',
+    'Primary name',
+    'Synonyms (separated by semi-colon)',
+    'Occupations, role, titles (separated by semi-colon)',
+    'GENDER',
+    'IS ORGANIZATION',
+    'BIRTH YEAR / FOUNDATION YEAR IF ORG',
+    'BIRTH/FOUNDATION YEAR INFERRED',
+    'BIRTH/FOUNDATION YEAR UNCERTAIN',
+    'BIRTH/FOUNDATION YEAR APPROX',
+    'DEATH YEAR / DISBAND YEAR IF ORG',
+    'DEATH/DISBAND YEAR INFERRED',
+    'DEATH/DISBAND YEAR UNCERTAIN',
+    'DEATH/DISBAND YEAR APPROX.',
+    'FLOURISHED EARLIEST YEAR 1',
+    'FLOURISHED LATEST YEAR 2',
+    'FLOURISHED IS RANGE',
+    'FLOURISHED YEAR INFERRED',
+    'FLOURISHED YEAR UNCERTAIN',
+    'FLOURISHED YEAR APPROX.',
+    "GENERAL NOTES ON PERSON (Researcher's note: for public display; full grammatical sentences, please)",
+    "EDITORS' NOTES AND QUERIES (not to be published in public interface; these are working notes)",
+    'RELATED RESOURCE NAME',
+    'RELATED RESOURCE URL',
+    'Further reading: Bibliographical information (for public display)',
 ]
 
 
 class TestBulkPeople(UploadIncludedTestCase):
+
+    @staticmethod
+    def _people_error_messages(cuef) -> list[str]:
+        """Flatten all error message strings out of cuef.errors['people']."""
+        return [msg for row in cuef.errors['people']['errors'] for msg in row['errors']]
 
     def create_bulk_people_file(self, data_rows: list) -> str:
         wb = Workbook()
@@ -186,6 +208,64 @@ class TestBulkPeople(UploadIncludedTestCase):
         cuef = CofkUploadExcelFile(self.new_upload, filename)
 
         self.assertEqual(cuef.upload_type, 'people')
+
+    def test_bulk_people_valid_role(self):
+        """A role that exists in CofkUnionRoleCategory produces no error."""
+        CofkUnionRoleCategory.objects.create(role_category_desc='Physician')
+        row = self._row(primary_name='John Doe', roles='Physician')
+        filename = self.create_bulk_people_file([row])
+
+        cuef = CofkUploadExcelFile(self.new_upload, filename)
+
+        self.assertEqual(cuef.errors, {})
+        person = CofkCollectPerson.objects.first()
+        self.assertEqual(person.roles_or_titles, 'Physician')
+
+    def test_bulk_people_invalid_role_adds_error(self):
+        """A role not in CofkUnionRoleCategory adds an error and blocks record creation."""
+        row = self._row(primary_name='John Doe', roles='UnknownRole')
+        filename = self.create_bulk_people_file([row])
+
+        cuef = CofkUploadExcelFile(self.new_upload, filename)
+
+        self.assertIn('people', cuef.errors)
+        msgs = self._people_error_messages(cuef)
+        self.assertTrue(any('UnknownRole' in m for m in msgs))
+        self.assertEqual(CofkCollectPerson.objects.count(), 0)
+
+    def test_bulk_people_multiple_roles_one_invalid(self):
+        """Only the unknown role name appears in the error; valid roles are not flagged."""
+        CofkUnionRoleCategory.objects.create(role_category_desc='Physician')
+        row = self._row(primary_name='John Doe', roles='Physician; UnknownRole')
+        filename = self.create_bulk_people_file([row])
+
+        cuef = CofkUploadExcelFile(self.new_upload, filename)
+
+        self.assertIn('people', cuef.errors)
+        msgs = self._people_error_messages(cuef)
+        self.assertTrue(any('UnknownRole' in m for m in msgs))
+        self.assertFalse(any('Physician' in m for m in msgs))
+
+    def test_bulk_people_multiple_roles_all_valid(self):
+        """Multiple semicolon-separated roles that all exist produce no errors."""
+        CofkUnionRoleCategory.objects.create(role_category_desc='Physician')
+        CofkUnionRoleCategory.objects.create(role_category_desc='Mathematician')
+        row = self._row(primary_name='John Doe', roles='Physician; Mathematician')
+        filename = self.create_bulk_people_file([row])
+
+        cuef = CofkUploadExcelFile(self.new_upload, filename)
+
+        self.assertEqual(cuef.errors, {})
+
+    def test_bulk_people_role_lookup_case_insensitive(self):
+        """Role lookup is case-insensitive."""
+        CofkUnionRoleCategory.objects.create(role_category_desc='Physician')
+        row = self._row(primary_name='John Doe', roles='physician')
+        filename = self.create_bulk_people_file([row])
+
+        cuef = CofkUploadExcelFile(self.new_upload, filename)
+
+        self.assertEqual(cuef.errors, {})
 
     def test_both_people_and_places_without_work_raises_error(self):
         """A file with both People and Places sheets but no Work sheet raises CofkExcelFileError."""

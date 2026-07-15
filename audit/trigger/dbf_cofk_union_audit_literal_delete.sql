@@ -1,4 +1,4 @@
-create function dbf_cofk_union_audit_literal_delete(input_table_name character varying, input_key_value_text character varying, input_key_value_integer integer, input_key_decode text, input_column_name character varying, input_old_column_value text) returns void
+create or replace function dbf_cofk_union_audit_literal_delete(input_table_name character varying, input_key_value_text character varying, input_key_value_integer integer, input_key_decode text, input_column_name character varying, input_old_column_value text) returns void
     language plpgsql
 as
 $$
@@ -12,6 +12,7 @@ begin
   then
 
     insert into cofk_union_audit_literal(
+      change_user,
       change_type,
       table_name,
       key_value_text      ,
@@ -21,6 +22,7 @@ begin
       old_column_value
     )
     values (
+      coalesce(nullif(current_setting('app.current_user', true), ''), '__unknown_user'),
       'Del',
       input_table_name          ,
       input_key_value_text      ,

@@ -323,6 +323,9 @@
                     <strong>
                         {{ m.type_display_name }}
                     </strong>
+                    {% for letter in m.enclosed_letters %}
+                        <br/><a href="{% url 'work:manif_update' letter.work_id letter.manif_id %}" target="_blank">{{ letter.label }}</a>
+                    {% endfor %}
                 </span>
                 {% if m.repo_name %}
                     <span class="col-label">Repository:</span>

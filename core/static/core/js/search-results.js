@@ -1,12 +1,13 @@
 
 let num_records = $('#num_records').val();
 
-// If there are records and the fieldset has been toggled to be closed, keep it closed.
+// The search fieldset is closed (full view) by default. If there are records
+// and the user hasn't explicitly toggled it open, keep it closed.
 // otherwise, if there are no results, we have to show the search bar to allow the user to search again.
 
-if (num_records > 0 && localStorage.getItem('fieldset-toggle') === 'false') {
-    $('#query-fieldset').toggle();
-    $('#query-result').toggleClass('col--3of4');
+if (num_records > 0 && localStorage.getItem('fieldset-toggle') !== 'true') {
+    $('#query-fieldset').hide();
+    $('#query-result').removeClass('col--3of4');
 }
 
 function toggle_advanced_search_controls()  {
@@ -206,16 +207,24 @@ function setup_fieldset_toggle() {
         }
     });
 
-    if (localStorage.getItem('fieldset-toggle') === 'false') {
+    if (localStorage.getItem('fieldset-toggle') !== 'true') {
         $('footer').hide();
     }
 }
 
 function setup_advanced_search_toggle() {
+    let searchParams = new URLSearchParams(window.location.search);
+    let hasLookupParam = Array.from(searchParams.entries()).some(
+        ([key, value]) => key.endsWith('_lookup') && value !== ''
+    );
+    if (hasLookupParam) {
+        $('#advanced_search').prop('checked', true);
+        toggle_advanced_search_controls();
+    }
+
     $('#advanced_search').on('click', function () {
         toggle_advanced_search_controls();
     });
-
 }
 
 function show_column(show_tag, column_index) {
@@ -302,6 +311,17 @@ function reset_form(form) {
 }
 
 $(function () {
+    // Keep sticky table header anchored just below the navigation bar.
+    const siteHeader = document.querySelector('.site-header');
+    if (siteHeader) {
+        const updateNavHeight = () => {
+            document.documentElement.style.setProperty('--nav-height', siteHeader.offsetHeight + 'px');
+        };
+        updateNavHeight();
+        window.addEventListener('resize', updateNavHeight);
+        window.addEventListener('load', updateNavHeight);
+    }
+
     emlojs.selectable_service.setup_all()
     setup_merge_btn();
     setup_fieldset_toggle();

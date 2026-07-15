@@ -7,8 +7,8 @@ from django.core.paginator import Paginator
 from core.constant import REL_TYPE_CREATED
 from location.models import CofkUnionLocation
 from person.models import CofkUnionPerson
-from uploader.models import CofkCollectLocation, CofkCollectPerson
-from uploader.review import accept_works, accept_locations, accept_people
+from uploader.models import CofkCollectLocation, CofkCollectPerson, CofkCollectWork
+from uploader.review import accept_works, accept_locations, accept_people, create_union_work
 from uploader.spreadsheet import CofkUploadExcelFile
 from uploader.test.test_serv import UploadIncludedFactoryTestCase, UploadIncludedTestCase, \
     spreadsheet_data, upload_status, MockMessages
@@ -235,3 +235,27 @@ class TestReview(UploadIncludedFactoryTestCase):
         self.assertEqual(match.group('works'), '1')
         self.assertEqual(match.group('accepted'), '0')
         self.assertEqual(match.group('rejected'), '1')
+
+
+class TestCreateUnionWork(UploadIncludedTestCase):
+
+    def _make_collect_work(self, iwork_id, **kwargs):
+        return CofkCollectWork.objects.create(
+            upload=self.new_upload,
+            iwork_id=iwork_id,
+            upload_status_id=1,
+            **kwargs,
+        )
+
+    def test_fields_not_carried_over_between_works(self):
+        """Fields set on one work must not bleed into the next work processed in the same batch."""
+        work1 = self._make_collect_work(1, date_of_work_as_marked='circa 1660', origin_as_marked='London')
+        work2 = self._make_collect_work(2)
+
+        union_work1 = create_union_work(work1, 'admin')
+        union_work2 = create_union_work(work2, 'admin')
+
+        self.assertEqual(union_work1.date_of_work_as_marked, 'circa 1660')
+        self.assertEqual(union_work1.origin_as_marked, 'London')
+        self.assertIsNone(union_work2.date_of_work_as_marked)
+        self.assertIsNone(union_work2.origin_as_marked)

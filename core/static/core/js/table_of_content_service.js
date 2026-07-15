@@ -15,7 +15,9 @@ function isElementInViewpoint(ele) {
 
 
 function build_table_of_content_ui() {
-    let toc_items = $('.toc-item, .toc-sub-item');
+    let toc_items = $('.toc-item:visible, .toc-sub-item:visible');
+
+    $('.toc-host').empty();
 
     if (toc_items.length === 0) {
         // Publications has no toc items
@@ -47,7 +49,7 @@ function build_table_of_content_ui() {
 
 
 function find_new_cur_toc_item() {
-    for (let toc_item_jqe of $('.toc-item, .toc-sub-item')) {
+    for (let toc_item_jqe of $('.toc-item:visible, .toc-sub-item:visible')) {
         if (isElementInViewpoint(toc_item_jqe)) {
             return toc_item_jqe
         }
@@ -98,7 +100,8 @@ function setup_table_of_content() {
         }
     });
 
-    $('#toc-body a').on('click', function (e) {
+    // event delegation so click handlers survive TOC rebuilds
+    $('.toc-host').on('click', '#toc-body a', function (e) {
         /* scrolling to target element with offset */
         e.preventDefault();
         let y_offset = 130;

@@ -501,6 +501,14 @@ class ManifFFH(BasicWorkFFH):
                             'manif_id': enclosed_manif.manifestation_id,
                             'label': label,
                         })
+                for encloser_manif in _manif.find_enclosed_in():
+                    if encloser_manif.work:
+                        label = 'Enclosed in: ' + manif_serv.get_rich_display_name(encloser_manif)
+                        enclosed_letters.append({
+                            'work_id': encloser_manif.work.iwork_id,
+                            'manif_id': encloser_manif.manifestation_id,
+                            'label': label,
+                        })
                 _manif.enclosed_letters = enclosed_letters
                 manif_set.append(_manif)
 
@@ -641,7 +649,7 @@ class DetailsFFH(BasicWorkFFH):
     def create_context(self, is_save_success=False):
         context: dict = super().create_context(is_save_success=is_save_success)
         context.update(self.subject_handler.create_context())
-        context['work_category'] = 'Other Details'
+        context['work_category'] = 'Other details'
         return context
 
     def has_changed(self, request):
@@ -903,6 +911,26 @@ def to_overview_manif(manif: CofkUnionManifestation):
     manif.type_display_name = dict(manif_type_choices).get(manif.manifestation_type, '')
     manif.manifestation_receipt_calendar_display = date_serv.decode_calendar(manif.manifestation_receipt_calendar)
 
+    # Find enclosed letters for this manifestation
+    enclosed_letters = []
+    for enclosed_manif in manif.find_encloses():
+        if enclosed_manif.work:
+            label = 'Enclosure: ' + manif_serv.get_rich_display_name(enclosed_manif)
+            enclosed_letters.append({
+                'work_id': enclosed_manif.work.iwork_id,
+                'manif_id': enclosed_manif.manifestation_id,
+                'label': label,
+            })
+    for encloser_manif in manif.find_enclosed_in():
+        if encloser_manif.work:
+            label = 'Enclosed in: ' + manif_serv.get_rich_display_name(encloser_manif)
+            enclosed_letters.append({
+                'work_id': encloser_manif.work.iwork_id,
+                'manif_id': encloser_manif.manifestation_id,
+                'label': label,
+            })
+    manif.enclosed_letters = enclosed_letters
+
     return manif
 
 
@@ -1005,6 +1033,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
     @property
     def entity(self) -> str:
+        # If this value changes, update the matching condition in core/templates/core/form/search_components.html
         return 'work,works'
 
     @property

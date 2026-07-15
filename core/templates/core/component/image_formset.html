@@ -5,10 +5,9 @@
 
 {% with header_id=header_id|default:'header_image' %}
     <div>
-        <div>
-            <i>Copyright law</i> must be respected at all times. You must ensure that all necessary permissions
-            have been
-            obtained before uploading or attempting to display images.
+        <div class="margin-bottom">
+            <i>Copyright law must be respected at all times. You must ensure that all necessary permissions
+            have been obtained before uploading or attempting to display images.</i>
         </div>
         <div class="margin-bottom">
             You can associate images with a manifestation in two different ways:
@@ -55,18 +54,18 @@
                 {% endif %}
 
                 {% if not forloop.first and form.thumbnail.value %}
-                    <div class="margin-bottom">
+                    <div class="margin-bottom margin-top">
                         <img src="{{ form.thumbnail.value }}" alt="Thumbnail preview"
                              style="max-width: 200px; max-height: 200px; border: 1px solid #ccc; padding: 4px;">
                     </div>
                 {% elif not forloop.first and form.image_filename.value %}
-                    <div class="margin-bottom">
+                    <div class="margin-bottom margin-top">
                         <img src="{{ form.image_filename.value }}" alt="Thumbnail preview"
                              style="max-width: 200px; max-height: 200px; border: 1px solid #ccc; padding: 4px;">
                     </div>
                 {% endif %}
 
-                <div class="multi_rel_recref_container">
+                <div class="multi_rel_recref_container margin-top">
                     <label>{{ form.image_filename.label }}:</label>
                     <div class="{% if not forloop.first %}image-url-field{% endif %}">{{ form.image_filename.errors }}{{ form.image_filename }}</div>
                 </div>
@@ -101,8 +100,8 @@
                     <label>{{ form.display_order.label }}:</label>
                     {{ form.display_order.errors }}{{ form.display_order }}
                 </div>
-                <div class="flex flex-help-text">
-                    <small>Please enter a number greater than or equal to 1. If multiple images have the same number, they will be ordered by filename.</small>
+                <div class="flex flex-help-text margin-bottom">
+                    <small><i>(Please enter a number greater than or equal to 1. If multiple images have the same number, they will be ordered by filename.)</i></small>
                 </div>
 
                 {% if not forloop.first %}

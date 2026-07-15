@@ -9,7 +9,7 @@
             {{ form.target_id }}
             <label class="recref-title">
                 <a href="{{ form.target_url }}" target="_blank">
-                    {{ form.initial_target_id }}, {{ form.rec_name.value }}
+                    [{{ form.initial_target_id }}] {{ form.rec_name.value }}
                 </a>
             </label>
             {% include "core/component/common_checkbox.html" with field=form.is_delete name='Delete' class_name="recref-del" %}
@@ -38,7 +38,11 @@
         </div>
     {% endfor %}
 </div>
-
+{% if header %}
+<div class="multi_rel_recref_container">
+    <label></label><span>{{ header }}</span>
+</div>
+{% endif %}
 {% if recref_formset.forms %}
     {% with add_label|add_another_if_startswith as label_text %}
         {% include "core/component/recref.html" with recref_type=recref_type id_field=new_form.target_id label=label_text hide_create_btn=hide_create_btn placeholder=placeholder %}

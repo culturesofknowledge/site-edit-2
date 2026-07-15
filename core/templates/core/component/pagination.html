@@ -2,11 +2,11 @@
 
 {% if page_obj.paginator.num_pages > 1 or page_obj.has_other_pages %}
 
-<div class="row row--centered pagination">
+<nav class="pagination-nav row row--centered pagination" aria-label="Pagination">
     <ul>
         {% if page_obj.has_previous %}
-            <a href="?{% url_replace request 'page' 1 %}">&laquo; first</a>
-            <a href="?{% url_replace request 'page' page_obj.previous_page_number %}">previous</a>
+            <li class="page-item page-item--nav"><a href="?{% url_replace request 'page' 1 %}">&laquo; first</a></li>
+            <li class="page-item page-item--nav"><a href="?{% url_replace request 'page' page_obj.previous_page_number %}">&lsaquo; previous</a></li>
         {% endif %}
 
         {% for i in page_obj|get_elided_page_range %}
@@ -15,18 +15,18 @@
             </li>
         {% else %}
             {% if i == page_obj.paginator.ELLIPSIS %}
-                <li class="page-item">{{ i }}</li>
+                <li class="page-item page-item--ellipsis"><span class="page-link">{{ i }}</span></li>
             {% else %}
-                <a class="page-link" href="?{% url_replace request 'page' i %}"><li class="page-item">{{ i }}</li></a>
+                <li class="page-item"><a class="page-link" href="?{% url_replace request 'page' i %}">{{ i }}</a></li>
             {% endif %}
         {% endif %}
         {% endfor %}
 
         {% if page_obj.has_next %}
-            <a href="?{% url_replace request 'page' page_obj.next_page_number %}">next</a>
-            <a href="?{% url_replace request 'page' page_obj.paginator.num_pages %}">last &raquo;</a>
+            <li class="page-item page-item--nav"><a href="?{% url_replace request 'page' page_obj.next_page_number %}">next &rsaquo;</a></li>
+            <li class="page-item page-item--nav"><a href="?{% url_replace request 'page' page_obj.paginator.num_pages %}">last &raquo;</a></li>
         {% endif %}
     </ul>
-</div>
+</nav>
 
 {% endif %}

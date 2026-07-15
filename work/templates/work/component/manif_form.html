@@ -45,10 +45,13 @@
         Note: when entering enclosure details, please treat any work/manifestation on the Cultures of Knowledge system as a letter.
     </span>
 
-    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosure_manif.update_formset new_form=recref_enclosure_manif.new_form add_label='Add enclosed letter:' hide_create_btn=False no_date=True placeholder='Please select or create enclosed letter, then click Save.' %}
+    <br/><br/>
 
-    <label>Other types of enclosure <small> e.g. money, books, samples of minerals</small>:</label>
+    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosure_manif.update_formset new_form=recref_enclosure_manif.new_form add_label='Add enclosed letter:' hide_create_btn=True no_date=True placeholder='Please select enclosed letter, then click Save.' header='LETTERS enclosed in this manifestation:'%}
+
+
     <div class="multi_rel_recref_container">
+    <label></label><span>Other types of enclosure <small> e.g. money, books, samples of minerals</small>:</span>
     <label>Details of enclosures other than letters:</label>
     {{ manif_form.non_letter_enclosures }}
     </div>
@@ -64,7 +67,7 @@
 <fieldset>
     <legend id="header_letters" class="toc-item">Letters in which this one was enclosed</legend>
 
-    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosed_manif.update_formset new_form=recref_enclosed_manif.new_form add_label='Add enclosing letter:' hide_create_btn=False no_date=True placeholder='Please select or craate enclosing letter, then click Save.' %}
+    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosed_manif.update_formset new_form=recref_enclosed_manif.new_form add_label='Add enclosing letter:' hide_create_btn=True no_date=True placeholder='Please select enclosing letter, then click Save.' %}
 
 </fieldset>
 
@@ -198,12 +201,10 @@
     <legend id="header_scribe" class="toc-item">Scribe/hand</legend>
 
     {% if scribe_recref_formset.forms %}
-        <div class="multi_rel_recref_container margin-bottom">
+        <div class="multi_rel_recref_container scribe-recref-container margin-bottom">
             {{ scribe_recref_formset.management_form }}
             {% for form in scribe_recref_formset %}
-                <div class="grid-item">
-                    {{ form }}
-                </div>
+                {{ form }}
                 <div class="grid-item">
                     {% include "core/component/common_checkbox.html" with field=form.is_delete name="Delete from 'scribe' list" class_name="recref-del" %}
                 </div>

@@ -1,3 +1,4 @@
+import datetime
 import logging
 from typing import List, Generator
 
@@ -52,6 +53,17 @@ class CofkEntity:
     def get_row(self, row: Generator[Cell, None, None], row_number: int) -> dict:
         self.row = row_number
         return {self.get_column_name_by_index(cell.column): cell.value for cell in row if self.has_valid_value(cell)}
+
+    def get_row_by_header_map(self, row: Generator[Cell, None, None], row_number: int, col_to_field: dict) -> dict:
+        self.row = row_number
+        return {
+            col_to_field[cell.column]: cell.value
+            for cell in row
+            if not isinstance(cell, EmptyCell)
+            and cell.column in col_to_field
+            and cell.value is not None
+            and cell.value != ''
+        }
 
     def check_required(self, entity: dict):
         for missing in [m for m in self.fields['required'] if m not in entity]:
@@ -135,19 +147,40 @@ class CofkEntity:
 
         if 'dates' in self.fields:
             for date_field in [m for m in self.fields['dates'] if m in entity]:
-                self.check_date(date_field, entity[date_field])
+                month_field = date_field.replace('_day', '_month')
+                self.check_date(date_field, entity[date_field], entity.get(month_field))
 
-        if 'ranges' in self.fields and 'date_of_work_std_is_range' in entity and\
+        if 'ranges' in self.fields and 'date_of_work_std_is_range' in entity and \
                 entity['date_of_work_std_is_range'] == 1:
-
             for range_columns in self.fields['ranges'][0]['date_of_work_std_is_range']:
                 if range_columns[0] not in entity:
                     self.add_error(f'Column {range_columns[0]} not present but needed when date of work is a range.')
                 elif range_columns[1] not in entity:
                     self.add_error(f'Column {range_columns[1]} not present but needed when date of work is a range.')
-                elif isinstance(entity[range_columns[0]], int) and isinstance(entity[range_columns[1]], int)\
+                elif isinstance(entity[range_columns[0]], int) and isinstance(entity[range_columns[1]], int) \
                         and entity[range_columns[0]] > entity[range_columns[1]]:
                     self.add_error(f'Column {range_columns[0]} can not be greater than {range_columns[1]}.')
+            self.check_date_range(entity)
+
+        if 'notes' in self.fields:
+            for notes_field in [n for n in self.fields['notes'] if n in entity and entity[n]]:
+                self.check_notes(notes_field, entity[notes_field])
+
+        if 'place_pairs' in self.fields:
+            for id_field, name_field in self.fields['place_pairs']:
+                self.check_place(id_field, name_field, entity)
+
+        if 'keywords' in self.fields:
+            for kw_field in [k for k in self.fields['keywords'] if k in entity and entity[k]]:
+                self.check_keywords(kw_field, entity[kw_field])
+
+        if 'shelfmarks' in self.fields:
+            for shelfmark_field in [s for s in self.fields['shelfmarks'] if s in entity and entity[s]]:
+                self.check_shelfmark(shelfmark_field, entity[shelfmark_field])
+
+        if 'bibliographies' in self.fields:
+            for bib_field in [b for b in self.fields['bibliographies'] if b in entity and entity[b]]:
+                self.check_bibliography(bib_field, entity[bib_field])
 
     def add_error(self, error_msg: str | None, entity=None, row=None):
         if not row:
@@ -197,12 +230,14 @@ class CofkEntity:
         ids = None
         names = None
 
+        # Ids are normalised as a list of strings
         if ids_key in entity_dict:
             if isinstance(entity_dict[ids_key], str):
                 ids = entity_dict[ids_key].split(SEPARATOR)
             else:
                 ids = [str(entity_dict[ids_key])]
 
+        # Names are normalised as a list of strings
         if names_key in entity_dict and isinstance(entity_dict[names_key], str):
             names = entity_dict[names_key].split(SEPARATOR)
 
@@ -234,14 +269,63 @@ class CofkEntity:
         if isinstance(month, int) and not 1 <= month <= 12:
             self.add_error(f'{month_field}: is {month} but must be between 1 and 12.')
 
-    def check_date(self, date_field: str, date: int):
+    def check_date(self, date_field: str, date: int, month: int = None):
         if date > 31:
             self.add_error(f'{date_field}: is {date} but can not be greater than 31.')
+        elif month is not None and isinstance(month, int):
+            if month in [4, 6, 9, 11] and date > 30:
+                self.add_error(f'{date_field}: is {date} but must be 30 or less for April, June, September or November.')
+            elif month == 2 and date > 29:
+                self.add_error(f'{date_field}: is {date} but must be 29 or less for February.')
 
-        # If month is April, June, September or November then day must be not more than 30
-        '''elif month in [4, 6, 9, 11] and field > 30:
-            self.add_error('%(field)s: can not be more than 30 for April, June, September or November',
-                           {'field': field_name})
-        # For February not more than 29
-        elif month == 2 and field > 29:
-            self.add_error('%(field)s: can not be more than 29 for February', {'field': field_name})'''
+    def check_date_range(self, entity: dict):
+        y1 = entity.get('date_of_work_std_year')
+        m1 = entity.get('date_of_work_std_month')
+        d1 = entity.get('date_of_work_std_day')
+        y2 = entity.get('date_of_work2_std_year')
+        m2 = entity.get('date_of_work2_std_month')
+        d2 = entity.get('date_of_work2_std_day')
+
+        if not (isinstance(y1, int) and isinstance(y2, int)):
+            return
+
+        if all(isinstance(v, int) for v in [m1, d1, m2, d2]):
+            try:
+                if datetime.datetime(y1, m1, d1) >= datetime.datetime(y2, m2, d2):
+                    self.add_error('The start date in a date range can not be after the end date.')
+            except ValueError:
+                pass
+        elif isinstance(m1, int) and isinstance(m2, int):
+            if (y1, m1) > (y2, m2):
+                self.add_error('The start date in a date range can not be after the end date.')
+
+    def check_notes(self, field: str, value: str):
+        if value[0].islower():
+            self.add_error(f'{field}: Notes must start with an upper case letter.')
+        if value[-1] != '.':
+            self.add_error(f'{field}: Notes must end with a full stop.')
+
+    def check_place(self, id_field: str, name_field: str, entity: dict):
+        place_id = entity.get(id_field)
+        place_name = entity.get(name_field)
+
+        if not (place_id or place_name):
+            self.add_error(f'There is neither a {id_field} nor a {name_field}.')
+        elif place_name and not place_id and place_name.strip().lower() == 'unknown':
+            self.add_error(f'{name_field}: must not be "unknown" without a corresponding id.')
+
+    def check_keywords(self, field: str, value: str):
+        if len(value.split('; ')) - 1 != value.count(';'):
+            self.add_error(f'{field}: Keywords must be separated with "; " (semicolon followed by a space).')
+
+    def check_shelfmark(self, field: str, value: str):
+        if '-' in value:
+            self.add_error(f'{field}: Use an en dash between folio numbers, not a hyphen.')
+        if value.endswith('.'):
+            self.add_error(f'{field}: There should not be a full stop at the end of a shelfmark.')
+
+    def check_bibliography(self, field: str, value: str):
+        if value.endswith('.'):
+            self.add_error(f'{field}: There should not be a full stop at the end of bibliographic details.')
+        if '-' in value and '–' not in value:
+            self.add_error(f'{field}: Use en dashes for page ranges, not hyphens.')
