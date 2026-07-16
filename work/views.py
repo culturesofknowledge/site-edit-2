@@ -20,7 +20,8 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_ROUTE, REL_TYPE_FORMERLY_OWNED, \
     REL_TYPE_ENCLOSED_IN, REL_TYPE_COMMENT_RECEIPT_DATE, REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_STORED_IN, \
     REL_TYPE_COMMENT_PERSON_MENTIONED, REL_TYPE_MENTION, REL_TYPE_MENTION_PLACE, \
-    REL_TYPE_MENTION_WORK, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_IS_RELATED_TO
+    REL_TYPE_MENTION_WORK, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_IS_RELATED_TO, \
+    REL_TYPE_HANDWROTE
 from core.export_data import excel_maker, cell_values
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, LocRecrefForm
 from core.helper import view_serv, lang_serv, model_serv, query_serv, renderer_serv, date_serv, general_model_serv
@@ -909,6 +910,7 @@ def to_overview_manif(manif: CofkUnionManifestation):
         manif.repo_name = repo.inst.institution_name
 
     manif.type_display_name = dict(manif_type_choices).get(manif.manifestation_type, '')
+    manif.manifestation_creation_calendar_display = date_serv.decode_calendar(manif.manifestation_creation_calendar)
     manif.manifestation_receipt_calendar_display = date_serv.decode_calendar(manif.manifestation_receipt_calendar)
 
     # Find enclosed letters for this manifestation
@@ -931,6 +933,24 @@ def to_overview_manif(manif: CofkUnionManifestation):
             })
     manif.enclosed_letters = enclosed_letters
 
+    # Notes on manifestation
+    manif.manif_notes = list(c.comment for c in manif.cofkmanifcommentmap_set.filter(
+        relationship_type=REL_TYPE_COMMENT_REFERS_TO).select_related('comment'))
+
+    # Former owners
+    manif.former_owners = list(r.person for r in manif.cofkmanifpersonmap_set.filter(
+        relationship_type=REL_TYPE_FORMERLY_OWNED).select_related('person'))
+
+    # Scribes
+    manif.scribes = list(r.person for r in manif.cofkmanifpersonmap_set.filter(
+        relationship_type=REL_TYPE_HANDWROTE).select_related('person'))
+
+    # Language of manifestation
+    manif.manif_languages = list(manif.language_set.select_related('language_code'))
+
+    # Images
+    manif.manif_images = list(manif.cofkmanifimagemap_set.select_related('image'))
+
     return manif
 
 
@@ -948,11 +968,11 @@ def overview_view(request, iwork_id):
         date_for_ordering=work.date_for_ordering,
         work_display_name=work_serv.get_recref_display_name(work),
 
-        notes_work=work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_DATE),
-        notes_author=work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_AUTHOR),
-        notes_addressee=work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_ADDRESSEE),
-        notes_people=work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_PERSON_MENTIONED),
-        notes_general=work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_REFERS_TO),
+        notes_work=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_DATE)),
+        notes_author=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_AUTHOR)),
+        notes_addressee=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_ADDRESSEE)),
+        notes_people=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_PERSON_MENTIONED)),
+        notes_general=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_REFERS_TO)),
 
         author_link_list=to_person_link_list(work, constant.REL_TYPE_CREATED),
         author_link_count=to_person_link_count(work, constant.REL_TYPE_CREATED),
@@ -1118,8 +1138,30 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
         return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
 
+    # Mapping from PK fields to their corresponding text search fields.
+    # When a PK field is present, the text field query should be skipped
+    # to avoid redundant AND-ed filtering that can eliminate results.
+    _pk_to_text_field = {
+        'person_sent_pk': 'creators_searchable',
+        'person_rec_pk': 'addressees_searchable',
+        'person_sent_rec_pk': 'sender_or_recipient',
+        'person_mention_pk': 'mentioned_searchable',
+        'location_sent_pk': 'places_from_searchable',
+        'location_rec_pk': 'places_to_searchable',
+        'location_sent_rec_pk': 'origin_or_destination',
+        'location_mention_pk': 'places_mentioned_searchable',
+    }
+
     def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:
         queries = query_serv.create_queries_by_field_fn_maps(request_data, self.search_field_fn_maps)
+
+        # When a PK field is present, exclude the corresponding text field
+        # from lookup queries to avoid redundant AND filtering that can
+        # cause results to disappear (PK search is already more precise).
+        text_fields_to_skip = set()
+        for pk_field, text_field in self._pk_to_text_field.items():
+            if request_data.get(pk_field):
+                text_fields_to_skip.add(text_field)
 
         search_fields_maps = {
             'language_of_work': [
@@ -1141,9 +1183,11 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         }
 
         # Exclude fields already handled by search_field_fn_maps to avoid
-        # treating them as direct model fields in create_queries_by_lookup_field
+        # treating them as direct model fields in create_queries_by_lookup_field.
+        # Also exclude text fields whose corresponding PK field is present.
         fn_map_keys = set(self.search_field_fn_maps.keys())
-        lookup_search_fields = [f for f in self.search_fields if f not in fn_map_keys]
+        lookup_search_fields = [f for f in self.search_fields
+                                if f not in fn_map_keys and f not in text_fields_to_skip]
 
         queries.extend(
             query_serv.create_queries_by_lookup_field(
@@ -1223,17 +1267,17 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
         # Handle PK fields
         pk_fields = [
-            ('person_sent_pk', CofkUnionPerson, 'Author/sender'),
-            ('person_rec_pk', CofkUnionPerson, 'Addressee/recipient'),
-            ('person_sent_rec_pk', CofkUnionPerson, 'Sender or recipient'),
-            ('person_mention_pk', CofkUnionPerson, 'People mentioned'),
-            ('location_sent_pk', CofkUnionLocation, 'Location sent'),
-            ('location_rec_pk', CofkUnionLocation, 'Location received'),
-            ('location_sent_rec_pk', CofkUnionLocation, 'Location sent or received'),
-            ('location_mention_pk', CofkUnionLocation, 'Places mentioned'),
+            ('person_sent_pk', CofkUnionPerson, 'Author/sender', 'creators_searchable'),
+            ('person_rec_pk', CofkUnionPerson, 'Addressee/recipient', 'addressees_searchable'),
+            ('person_sent_rec_pk', CofkUnionPerson, 'Sender or recipient', 'sender_or_recipient'),
+            ('person_mention_pk', CofkUnionPerson, 'People mentioned', 'mentioned_searchable'),
+            ('location_sent_pk', CofkUnionLocation, 'Origin (standardized)', 'places_from_searchable'),
+            ('location_rec_pk', CofkUnionLocation, 'Destination (standardized)', 'places_to_searchable'),
+            ('location_sent_rec_pk', CofkUnionLocation, 'Origin or destination', 'origin_or_destination'),
+            ('location_mention_pk', CofkUnionLocation, 'Places mentioned', 'places_mentioned_searchable'),
         ]
 
-        for field_name, model_class, label in pk_fields:
+        for field_name, model_class, label, text_field in pk_fields:
             if val := self.request_data.get(field_name):
                 obj = model_class.objects.filter(pk=val).first()
                 if obj:
@@ -1241,6 +1285,9 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                     # Remove the default PK-based entry if it exists
                     pk_label = self.search_field_label_map.get(field_name, field_name)
                     simplified_query = [s for s in simplified_query if not s.startswith(f'{pk_label} ')]
+                    # Remove the corresponding text field entry to avoid duplication
+                    text_label = self.search_field_label_map.get(text_field, text_field)
+                    simplified_query = [s for s in simplified_query if not s.startswith(f'{text_label} ')]
                     simplified_query.append(f'{label} contains \'{name}\'')
 
         if self.search_field_fn_maps:

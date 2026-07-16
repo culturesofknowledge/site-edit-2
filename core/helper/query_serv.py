@@ -207,6 +207,8 @@ some lookup key may only apply in first or last element,
 None == all element
 """
 lookup_idx_map = {
+    'starts_with': 0,
+    'ends_with': 0
 }
 
 """

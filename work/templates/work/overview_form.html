@@ -335,7 +335,13 @@
                     <span class="col-label">Id number or shelfmark:</span>
                     <span> {{ m.id_number_or_shelfmark }} </span>
                 {% endif %}
+                {% if m.printed_edition_details %}
+                    <span class="col-label">Printed edition details:</span>
+                    <span> {{ m.printed_edition_details }} </span>
+                {% endif %}
                 {% if m.manifestation_creation_date  %}
+                    <span class="col-label">Manifestation creation calendar:</span>
+                    <span> {{ m.manifestation_creation_calendar_display }} </span>
                     <span class="col-label">Manifestation creation date:</span>
                     <span> {{ m.manifestation_creation_date }} </span>
                 {% endif %}
@@ -354,6 +360,108 @@
                 {% if m.manifestation_creation_date_day %}
                     <span class="col-label">Manifestation creation date day:</span>
                     <span> {{ m.manifestation_creation_date_day|default_if_none:''  }} </span>
+                {% endif %}
+                {% if m.manifestation_creation_date %}
+                    <span class="col-label">Manifestation creation date inferred:</span>
+                    <span>
+                        {% include 'core/component/strong_yes_no.html' with val=m.manifestation_creation_date_inferred %}
+                    </span>
+                    <span class="col-label">Manifestation creation date uncertain:</span>
+                    <span>
+                        {% include 'core/component/strong_yes_no.html' with val=m.manifestation_creation_date_uncertain %}
+                    </span>
+                    <span class="col-label">Manifestation creation date approx:</span>
+                    <span>
+                        {% include 'core/component/strong_yes_no.html' with val=m.manifestation_creation_date_approx %}
+                    </span>
+                {% endif %}
+                {% if m.manifestation_creation_date_as_marked %}
+                    <span class="col-label">Manifestation creation date as marked:</span>
+                    <span> {{ m.manifestation_creation_date_as_marked }} </span>
+                {% endif %}
+                {% if m.former_owners|length > 0 %}
+                    <span class="col-label">Former owners:</span>
+                    <ul class="no-margin overview-list">
+                        {% for owner in m.former_owners %}
+                            <li>{{ owner }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+                {% if m.non_letter_enclosures %}
+                    <span class="col-label">Non-letter enclosures:</span>
+                    <span> {{ m.non_letter_enclosures }} </span>
+                {% endif %}
+                {% if m.accompaniments %}
+                    <span class="col-label">Accompaniments:</span>
+                    <span> {{ m.accompaniments }} </span>
+                {% endif %}
+                {% if m.opened %}
+                    <span class="col-label">Letter opened:</span>
+                    <span> {{ m.opened }} </span>
+                {% endif %}
+                {% if m.paper_size %}
+                    <span class="col-label">Paper size:</span>
+                    <span> {{ m.paper_size }} </span>
+                {% endif %}
+                {% if m.stored_folded %}
+                    <span class="col-label">Stored folded:</span>
+                    <span> {{ m.stored_folded }} </span>
+                {% endif %}
+                {% if m.paper_type_or_watermark %}
+                    <span class="col-label">Paper type, watermark:</span>
+                    <span> {{ m.paper_type_or_watermark }} </span>
+                {% endif %}
+                {% if m.number_of_pages_of_document %}
+                    <span class="col-label">Number of pages of document:</span>
+                    <span> {{ m.number_of_pages_of_document }} </span>
+                {% endif %}
+                {% if m.number_of_pages_of_text %}
+                    <span class="col-label">Number of pages of text:</span>
+                    <span> {{ m.number_of_pages_of_text }} </span>
+                {% endif %}
+                {% if m.seal %}
+                    <span class="col-label">Seal:</span>
+                    <span> {{ m.seal }} </span>
+                {% endif %}
+                {% if m.postage_marks %}
+                    <span class="col-label">Postage marks:</span>
+                    <span> {{ m.postage_marks }} </span>
+                {% endif %}
+                {% if m.postage_costs_as_marked %}
+                    <span class="col-label">Postage costs as marked:</span>
+                    <span> {{ m.postage_costs_as_marked }} </span>
+                {% endif %}
+                {% if m.postage_costs %}
+                    <span class="col-label">Postage cost(s):</span>
+                    <span> {{ m.postage_costs }} </span>
+                {% endif %}
+                {% if m.address %}
+                    <span class="col-label">Address:</span>
+                    <span> {{ m.address }} </span>
+                {% endif %}
+                {% if m.routing_mark_stamp %}
+                    <span class="col-label">Routing mark (stamp):</span>
+                    <span> {{ m.routing_mark_stamp }} </span>
+                {% endif %}
+                {% if m.routing_mark_ms %}
+                    <span class="col-label">Routing mark (MS):</span>
+                    <span> {{ m.routing_mark_ms }} </span>
+                {% endif %}
+                {% if m.handling_instructions %}
+                    <span class="col-label">Handling instructions:</span>
+                    <span> {{ m.handling_instructions }} </span>
+                {% endif %}
+                {% if m.endorsements %}
+                    <span class="col-label">Endorsements:</span>
+                    <span> {{ m.endorsements }} </span>
+                {% endif %}
+                {% if m.non_delivery_reason %}
+                    <span class="col-label">Reason for non-delivery:</span>
+                    <span> {{ m.non_delivery_reason }} </span>
+                {% endif %}
+                {% if m.date_of_receipt_as_marked %}
+                    <span class="col-label">Date of receipt as marked:</span>
+                    <span> {{ m.date_of_receipt_as_marked }} </span>
                 {% endif %}
                 {% if m.manifestation_receipt_date %}
                     <span class="col-label">Manifestation receipt calendar:</span>
@@ -388,6 +496,56 @@
                     <span>
                         {% include 'core/component/strong_yes_no.html' with val=m.manifestation_receipt_date_approx %}
                     </span>
+                {% endif %}
+                <span class="col-label">Manifestation is translation:</span>
+                <span>
+                    {% include 'core/component/strong_yes_no.html' with val=m.manifestation_is_translation %}
+                </span>
+                {% if m.manif_languages|length > 0 %}
+                    <span class="col-label">Language of manifestation:</span>
+                    <span>
+                        {% for lang in m.manif_languages %}{{ lang.language_code.language_name }}{% if lang.notes %} ({{ lang.notes }}){% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}
+                    </span>
+                {% endif %}
+                {% if m.manifestation_incipit %}
+                    <span class="col-label">Manifestation incipit:</span>
+                    <span> {{ m.manifestation_incipit }} </span>
+                {% endif %}
+                {% if m.manifestation_excipit %}
+                    <span class="col-label">Manifestation excipit:</span>
+                    <span> {{ m.manifestation_excipit }} </span>
+                {% endif %}
+                {% if m.manifestation_ps %}
+                    <span class="col-label">Manifestation postscript:</span>
+                    <span> {{ m.manifestation_ps }} </span>
+                {% endif %}
+                {% if m.manif_notes|length > 0 %}
+                    <span class="col-label">Notes on manifestation:</span>
+                    <ul class="no-margin overview-list">
+                        {% for note in m.manif_notes %}
+                            <li>{{ note.comment }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+                {% if m.scribes|length > 0 %}
+                    <span class="col-label">Scribe/hand:</span>
+                    <ul class="no-margin overview-list">
+                        {% for scribe in m.scribes %}
+                            <li>{{ scribe }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+                {% if m.manif_images|length > 0 %}
+                    <span class="col-label">Images:</span>
+                    <ul class="no-margin overview-list">
+                        {% for img_map in m.manif_images %}
+                            <li>
+                                {% if img_map.image.image_filename %}
+                                    <a href="{{ img_map.image.image_filename }}" target="_blank">{{ img_map.image.image_filename }}</a>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
                 {% endif %}
             </div>
         {% endfor %}
@@ -434,6 +592,8 @@
         <span> {{ work.change_timestamp|standard_datetime }} </span>
         <span class="col-label">Changed by user:</span>
         <span> {{ work.change_user }} </span>
+        <span class="col-label"></span>
+        <span><a href="{% url 'audit:search' %}?table_name=cofk_union_work&key_value_integer={{ work.iwork_id }}&key_value_integer_lookup=equals">Display audit trail</a></span>
     </div>
 
 
