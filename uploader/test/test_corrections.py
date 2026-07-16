@@ -391,6 +391,26 @@ class TestCorrectionUpload(UploadIncludedFactoryTestCase):
         self.test_work.refresh_from_db()
         self.assertEqual(self.test_work.date_of_work_std, '1700-01-01')
 
+    def test_accept_corrections_resyncs_previously_unknown_date_year_only(self):
+        """Reproduces the reported work ID 3441 case: a work with a previously
+        unknown date (no year/month/day, no calendar) gets a correction that adds
+        only a year. date_of_work_std and date_of_work_std_gregorian must both
+        resync from the unset sentinel to reflect the new year, using the
+        month/day defaults (end of year) since none were supplied."""
+        self.assertIsNone(self.test_work.date_of_work_std_year)
+        CofkCollectWorkCorrection.objects.create(
+            upload=self.new_upload,
+            iwork_id=9901,
+            union_work=self.test_work,
+            corrections={'date_of_work_std_year': 1661},
+            upload_status_id=1,
+        )
+        accept_corrections(self.new_upload, username='testuser')
+        self.test_work.refresh_from_db()
+        self.assertEqual(self.test_work.date_of_work_std_year, 1661)
+        self.assertEqual(self.test_work.date_of_work_std, '1661-12-31')
+        self.assertEqual(self.test_work.date_of_work_std_gregorian, '1661-12-31')
+
     def test_accept_corrections_resyncs_gregorian_for_gregorian_calendar(self):
         """When original_calendar is 'G' (already Gregorian), date_of_work_std_gregorian
         matches date_of_work_std exactly - no offset applied."""

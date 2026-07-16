@@ -198,7 +198,7 @@ class WorkExcelHeaderValues(HeaderValues):
             "Year date",
             "Month date",
             "Day date",
-            "Standard gregorian date",
+            "Date for ordering",
             "Date is range (0=No; 1=Yes)",
             "Year 2nd date (range)",
             "Month 2nd date (range)",
