@@ -20,12 +20,13 @@ class AuditConfig(AppConfig):
         def on_post_save(sender: ModelBase, instance: models.Model, created: bool,
                          raw: bool, using, update_fields, **kwargs):
             model_signals.handle_create_recref_date(sender, instance)
-            model_signals.add_relation_audit_to_literal(sender, instance)
             if created:
+                model_signals.add_relation_audit_to_literal(sender, instance)
                 model_signals.handle_non_triggered_record(sender, instance, is_create=True)
 
         def on_post_delete(sender: ModelBase, instance: models.Model, using, **kwargs):
             model_signals.handle_non_triggered_record(sender, instance, is_create=False)
+            model_signals.add_relation_audit_to_literal_on_delete(sender, instance)
 
         pre_save.connect(on_pre_save, weak=False)
         post_save.connect(on_post_save, weak=False)
