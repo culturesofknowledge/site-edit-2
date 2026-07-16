@@ -155,7 +155,11 @@
 
       {% for inst in form.institution_names %}
       { label: "{{ inst|escapejs }}", category: "Repository" },
-      {% endfor %}];
+      {% endfor %}
+
+      { label: "Had enclosure", category: "Enclosure" },
+      { label: "Was enclosed in", category: "Enclosure" },
+      ];
 
     var subjects_autocomplete = [{% for subject in form.subject_names %}
       '{{ subject|escapejs }}',

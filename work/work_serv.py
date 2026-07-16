@@ -467,6 +467,7 @@ def lookup_manifestations_searchable(lookup_fn, field_name: str, value: str) -> 
 
     from manifestation.models import CofkUnionManifestation
     from core.models import CofkLookupDocumentType
+    from core.constant import REL_TYPE_ENCLOSED_IN
     from django.db.models import Exists, OuterRef
 
     manif_fields = [
@@ -476,9 +477,14 @@ def lookup_manifestations_searchable(lookup_fn, field_name: str, value: str) -> 
         'printed_edition_details',
         'manifestation_incipit',
         'manifestation_excipit',
-        'manif_from_set__manif_to__id_number_or_shelfmark',
-        'manif_to_set__manif_from__id_number_or_shelfmark',
     ]
+
+    # Labels used for enclosure relationships – must stay in sync with
+    # the prefixes produced by subqueries._prefixed_enclosure_field().
+    _ENCLOSURE_LABELS = {
+        'had enclosure': 'manif_from_set__manif_to__id_number_or_shelfmark',
+        'was enclosed in': 'manif_to_set__manif_from__id_number_or_shelfmark',
+    }
 
     # All segments must match within the SAME manifestation for a work.
     manif_q = Q()
@@ -486,6 +492,29 @@ def lookup_manifestations_searchable(lookup_fn, field_name: str, value: str) -> 
         segment_q = Q()
         for field in manif_fields:
             segment_q |= Q(**{f'{field}__icontains': segment})
+
+        # Check if the segment matches an enclosure label (with or without
+        # a trailing shelfmark).  E.g. "Had enclosure" or
+        # "Had enclosure: MS 1234".
+        seg_lower = segment.lower().strip()
+        for label, shelfmark_field in _ENCLOSURE_LABELS.items():
+            if label.startswith(seg_lower) or seg_lower.startswith(label):
+                # The segment is (part of) an enclosure label – match any
+                # manifestation that has the corresponding enclosure
+                # relationship.
+                enclosure_fk = shelfmark_field.rsplit('__', 2)[0]  # e.g. manif_from_set
+                enclosure_q = Q(**{f'{enclosure_fk}__relationship_type': REL_TYPE_ENCLOSED_IN})
+                # If the user typed more than just the label (e.g.
+                # "Had enclosure: MS 1234"), also filter on the shelfmark.
+                extra = seg_lower[len(label):].lstrip(':').strip()
+                if extra:
+                    enclosure_q &= Q(**{f'{shelfmark_field}__icontains': extra})
+                segment_q |= enclosure_q
+
+        # Also search raw enclosure shelfmarks (without label) so that
+        # plain shelfmark searches still work.
+        segment_q |= Q(**{'manif_from_set__manif_to__id_number_or_shelfmark__icontains': segment})
+        segment_q |= Q(**{'manif_to_set__manif_from__id_number_or_shelfmark__icontains': segment})
 
         segment_q |= Q(manifestation_type__in=CofkLookupDocumentType.objects.filter(
             document_type_desc__icontains=segment
