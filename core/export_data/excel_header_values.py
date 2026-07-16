@@ -273,8 +273,10 @@ class WorkExcelHeaderValues(HeaderValues):
         person_mentioned_name, person_mentioned_id = cell_values.name_id(
             obj.find_persons_by_rel_type(constant.REL_TYPE_MENTION))
 
-        match_work_name, match_work_id = cell_values.name_id(
-            obj.find_matching_works_by_rel_type(constant.REL_TYPE_WORK_MATCHES))
+        matched_work_ids_str, matched_work_position = cell_values.matching_letter_ids_and_position(
+            obj.iwork_id,
+            (w.iwork_id for w in obj.find_matching_works_by_rel_type(constant.REL_TYPE_WORK_MATCHES)),
+        )
 
         original_catalogue = obj.original_catalogue
         original_catalogue = original_catalogue and original_catalogue.catalogue_name
@@ -328,8 +330,8 @@ class WorkExcelHeaderValues(HeaderValues):
             cell_values.notes(obj.person_comments),
             original_catalogue,
             obj.accession_code,
-            match_work_name,
-            match_work_id,
+            matched_work_ids_str,
+            matched_work_position,
             cell_values.resources_id(obj.cofkworkresourcemap_set.all()),
             cell_values.notes(obj.general_comments),
             obj.editors_notes,
