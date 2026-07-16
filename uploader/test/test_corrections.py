@@ -3,12 +3,13 @@ import tempfile
 
 from openpyxl.workbook import Workbook
 
-from core.models import CofkLookupCatalogue
+from core.constant import REL_TYPE_COMMENT_DATE, REL_TYPE_COMMENT_REFERS_TO
+from core.models import CofkLookupCatalogue, CofkUnionComment
 from uploader.models import CofkCollectWorkCorrection
 from uploader.review import accept_corrections, reject_corrections
 from uploader.spreadsheet import CofkUploadExcelFile, CofkExcelFileError
 from uploader.test.test_serv import UploadIncludedFactoryTestCase
-from work.models import CofkUnionWork
+from work.models import CofkUnionWork, CofkWorkCommentMap
 
 log = logging.getLogger(__name__)
 
@@ -273,6 +274,67 @@ class TestCorrectionUpload(UploadIncludedFactoryTestCase):
         accept_corrections(self.new_upload, username='testuser')
         self.test_work.refresh_from_db()
         self.assertEqual(self.test_work.original_catalogue_id, 'TESTCAT')
+
+    def test_accept_corrections_creates_date_note_comment(self):
+        """notes_on_date_of_work in corrections creates a CofkUnionComment linked via
+        CofkWorkCommentMap with relationship_type=REL_TYPE_COMMENT_DATE, when the work
+        has no existing date note."""
+        CofkCollectWorkCorrection.objects.create(
+            upload=self.new_upload,
+            iwork_id=9901,
+            union_work=self.test_work,
+            corrections={'notes_on_date_of_work': 'Date is approximate, see letter margin.'},
+            upload_status_id=1,
+        )
+        accept_corrections(self.new_upload, username='testuser')
+        comment_map = CofkWorkCommentMap.objects.get(
+            work=self.test_work, relationship_type=REL_TYPE_COMMENT_DATE
+        )
+        self.assertEqual(comment_map.comment.comment, 'Date is approximate, see letter margin.')
+
+    def test_accept_corrections_creates_general_note_comment(self):
+        """notes_on_letter in corrections creates a CofkUnionComment linked via
+        CofkWorkCommentMap with relationship_type=REL_TYPE_COMMENT_REFERS_TO."""
+        CofkCollectWorkCorrection.objects.create(
+            upload=self.new_upload,
+            iwork_id=9901,
+            union_work=self.test_work,
+            corrections={'notes_on_letter': 'General public-facing note.'},
+            upload_status_id=1,
+        )
+        accept_corrections(self.new_upload, username='testuser')
+        comment_map = CofkWorkCommentMap.objects.get(
+            work=self.test_work, relationship_type=REL_TYPE_COMMENT_REFERS_TO
+        )
+        self.assertEqual(comment_map.comment.comment, 'General public-facing note.')
+
+    def test_accept_corrections_updates_existing_date_note_comment(self):
+        """If the work already has a date note, applying a correction updates it in
+        place rather than creating a duplicate comment map."""
+        existing_comment = CofkUnionComment.objects.create(
+            comment='Old date note.', creation_user='test', change_user='test',
+        )
+        CofkWorkCommentMap.objects.create(
+            work=self.test_work, comment=existing_comment,
+            relationship_type=REL_TYPE_COMMENT_DATE,
+            creation_user='test', change_user='test',
+        )
+        CofkCollectWorkCorrection.objects.create(
+            upload=self.new_upload,
+            iwork_id=9901,
+            union_work=self.test_work,
+            corrections={'notes_on_date_of_work': 'Updated date note.'},
+            upload_status_id=1,
+        )
+        accept_corrections(self.new_upload, username='testuser')
+        self.assertEqual(
+            CofkWorkCommentMap.objects.filter(
+                work=self.test_work, relationship_type=REL_TYPE_COMMENT_DATE
+            ).count(),
+            1,
+        )
+        existing_comment.refresh_from_db()
+        self.assertEqual(existing_comment.comment, 'Updated date note.')
 
     def test_accept_corrections_sets_upload_status_accepted(self):
         """After accept_corrections(), upload.upload_status_id == 4."""

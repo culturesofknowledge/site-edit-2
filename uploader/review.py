@@ -565,6 +565,40 @@ def reject_locations(upload: CofkCollectUpload, request=None):
     log.info(f'{upload}: rejected (locations bulk upload)')
 
 
+# Correction fields that resolve to a work's CofkUnionComment/CofkWorkCommentMap
+# relationship_type, rather than a plain CofkUnionWork field (see _apply_comment_correction).
+_CORRECTION_COMMENT_REL_TYPES = {
+    'notes_on_date_of_work': REL_TYPE_COMMENT_DATE,
+    'notes_on_letter': REL_TYPE_COMMENT_REFERS_TO,
+}
+
+
+def _apply_comment_correction(work: CofkUnionWork, rel_type: str, new_value: str, username: str) -> None:
+    """Update (or create) the work's comment for the given relationship_type.
+
+    Work notes are stored via CofkUnionComment/CofkWorkCommentMap, not as plain
+    fields on CofkUnionWork (see link_comments_to_work for the equivalent create
+    path used for brand-new works), so corrections to them can't be applied with
+    a plain setattr() the way other correction fields are.
+    """
+    existing_map = CofkWorkCommentMap.objects.filter(
+        work=work, relationship_type=rel_type
+    ).select_related('comment').first()
+
+    if existing_map:
+        existing_map.comment.comment = new_value
+        existing_map.comment.update_current_user_timestamp(username)
+        existing_map.comment.save()
+    else:
+        comment = CofkUnionComment(comment=new_value)
+        comment.update_current_user_timestamp(username)
+        comment.save()
+
+        cwcm = CofkWorkCommentMap(comment=comment, work=work, relationship_type=rel_type)
+        cwcm.update_current_user_timestamp(username)
+        cwcm.save()
+
+
 def accept_corrections(upload: CofkCollectUpload, username: str, request=None):
     """Accept a bulk corrections upload — apply each staged correction to the live CofkUnionWork."""
     pending = CofkCollectWorkCorrection.objects.filter(
@@ -592,6 +626,10 @@ def accept_corrections(upload: CofkCollectUpload, username: str, request=None):
                     if field_name == 'original_catalogue_code':
                         # catalogue_code is stored as the FK value (to_field='catalogue_code')
                         setattr(work, 'original_catalogue_id', new_value)
+                    elif field_name in _CORRECTION_COMMENT_REL_TYPES:
+                        _apply_comment_correction(
+                            work, _CORRECTION_COMMENT_REL_TYPES[field_name], new_value, username
+                        )
                     else:
                         setattr(work, field_name, new_value)
                 work.update_current_user_timestamp(username)
