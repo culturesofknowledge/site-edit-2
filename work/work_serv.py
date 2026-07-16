@@ -33,6 +33,36 @@ def _format_work_date(year, month, day) -> str:
     return 'Unknown date'
 
 
+def compute_date_of_work_std(work: CofkUnionWork) -> str:
+    """Compute the sortable YYYY-MM-DD value date_of_work_std should hold, derived
+    fresh from the work's granular date fields (mirrors the derivation logic in
+    DisplayableWork.date_for_ordering, but always recomputes from the parts rather
+    than trusting whatever is currently stored in date_of_work_std).
+
+    date_of_work_std is a separate, precomputed column that WorkSearchView sorts and
+    date-range-filters against directly at the SQL level - it is not derived
+    automatically on save, so any code that changes the date fields (e.g. bulk
+    corrections) must call this and persist the result, or search results will
+    reflect a stale date.
+    """
+    if work.date_of_work2_std_year:
+        import calendar
+        year = int(work.date_of_work2_std_year)
+        # For "to" date, default blank month to 12 (end of year)
+        month = int(work.date_of_work2_std_month or 12)
+        # Default blank day to last day of the month (handles leap years)
+        day = int(work.date_of_work2_std_day or calendar.monthrange(year, month)[1])
+        return f"{year:04d}-{month:02d}-{day:02d}"
+
+    if not work.date_of_work_std_year:
+        return DEFAULT_EMPTY_DATE_STR
+
+    year = int(work.date_of_work_std_year)
+    month = int(work.date_of_work_std_month or DEFAULT_MONTH)
+    day = int(work.date_of_work_std_day or DEFAULT_DAY)
+    return f"{year:04d}-{month:02d}-{day:02d}"
+
+
 def get_recref_display_name(work: CofkUnionWork) -> str:
     if not work:
         return ''

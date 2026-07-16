@@ -25,6 +25,7 @@ from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectPerso
     CofkCollectWorkCorrection
 from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, CofkWorkResourceMap, \
     CofkUnionLanguageOfWork, CofkWorkSubjectMap, CofkWorkCommentMap
+from work.work_serv import compute_date_of_work_std
 
 log = logging.getLogger(__name__)
 
@@ -572,6 +573,14 @@ _CORRECTION_COMMENT_REL_TYPES = {
     'notes_on_letter': REL_TYPE_COMMENT_REFERS_TO,
 }
 
+# Correction fields that feed into the precomputed date_of_work_std column
+# (see compute_date_of_work_std) - changing any of these means date_of_work_std
+# needs resyncing too.
+_DATE_OF_WORK_STD_SOURCE_FIELDS = {
+    'date_of_work_std_year', 'date_of_work_std_month', 'date_of_work_std_day',
+    'date_of_work2_std_year', 'date_of_work2_std_month', 'date_of_work2_std_day',
+}
+
 
 def _apply_comment_correction(work: CofkUnionWork, rel_type: str, new_value: str, username: str) -> None:
     """Update (or create) the work's comment for the given relationship_type.
@@ -622,6 +631,7 @@ def accept_corrections(upload: CofkCollectUpload, username: str, request=None):
                     continue
 
                 work = correction.union_work
+                date_fields_changed = False
                 for field_name, new_value in correction.corrections.items():
                     if field_name == 'original_catalogue_code':
                         # catalogue_code is stored as the FK value (to_field='catalogue_code')
@@ -632,6 +642,16 @@ def accept_corrections(upload: CofkCollectUpload, username: str, request=None):
                         )
                     else:
                         setattr(work, field_name, new_value)
+                        if field_name in _DATE_OF_WORK_STD_SOURCE_FIELDS:
+                            date_fields_changed = True
+
+                if date_fields_changed:
+                    # date_of_work_std is a separate precomputed column that search
+                    # sorts/filters against directly - it isn't derived automatically
+                    # on save, so it must be explicitly resynced when its source
+                    # fields change, or search results show a stale date.
+                    work.date_of_work_std = compute_date_of_work_std(work)
+
                 work.update_current_user_timestamp(username)
                 work.save()
 

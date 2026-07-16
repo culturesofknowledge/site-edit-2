@@ -336,6 +336,61 @@ class TestCorrectionUpload(UploadIncludedFactoryTestCase):
         existing_comment.refresh_from_db()
         self.assertEqual(existing_comment.comment, 'Updated date note.')
 
+    def test_accept_corrections_resyncs_date_of_work_std(self):
+        """Correcting the granular date fields resyncs the precomputed
+        date_of_work_std column, which search sorts/filters against directly."""
+        CofkCollectWorkCorrection.objects.create(
+            upload=self.new_upload,
+            iwork_id=9901,
+            union_work=self.test_work,
+            corrections={
+                'date_of_work_std_year': 1650,
+                'date_of_work_std_month': 3,
+                'date_of_work_std_day': 15,
+            },
+            upload_status_id=1,
+        )
+        accept_corrections(self.new_upload, username='testuser')
+        self.test_work.refresh_from_db()
+        self.assertEqual(self.test_work.date_of_work_std, '1650-03-15')
+
+    def test_accept_corrections_resyncs_date_of_work_std_for_range(self):
+        """When a 2nd (range/'to') date is present, date_of_work_std is derived
+        from the 'to' date, matching DisplayableWork.date_for_ordering."""
+        CofkCollectWorkCorrection.objects.create(
+            upload=self.new_upload,
+            iwork_id=9901,
+            union_work=self.test_work,
+            corrections={
+                'date_of_work_std_year': 1650,
+                'date_of_work_std_month': 3,
+                'date_of_work_std_day': 15,
+                'date_of_work2_std_year': 1651,
+                'date_of_work2_std_month': 6,
+                'date_of_work2_std_day': 1,
+            },
+            upload_status_id=1,
+        )
+        accept_corrections(self.new_upload, username='testuser')
+        self.test_work.refresh_from_db()
+        self.assertEqual(self.test_work.date_of_work_std, '1651-06-01')
+
+    def test_accept_corrections_leaves_date_of_work_std_untouched_when_unrelated(self):
+        """A correction that doesn't touch any date field doesn't recompute
+        date_of_work_std."""
+        self.test_work.date_of_work_std = '1700-01-01'
+        self.test_work.save()
+        CofkCollectWorkCorrection.objects.create(
+            upload=self.new_upload,
+            iwork_id=9901,
+            union_work=self.test_work,
+            corrections={'abstract': 'Unrelated change'},
+            upload_status_id=1,
+        )
+        accept_corrections(self.new_upload, username='testuser')
+        self.test_work.refresh_from_db()
+        self.assertEqual(self.test_work.date_of_work_std, '1700-01-01')
+
     def test_accept_corrections_sets_upload_status_accepted(self):
         """After accept_corrections(), upload.upload_status_id == 4."""
         CofkCollectWorkCorrection.objects.create(
