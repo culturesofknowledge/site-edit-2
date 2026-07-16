@@ -13,7 +13,7 @@ from work.models import CofkUnionWork
 log = logging.getLogger(__name__)
 
 CORRECTION_HEADERS = ['EMLO Letter ID Number', 'Command', 'Original Catalogue name']
-CORRECTION_ROW = [9901, 'UPDATE', 'TESTCAT']  # TESTCAT is the catalogue_code, not the name
+CORRECTION_ROW = [9901, 'UPDATE', 'Test Catalogue']  # 'Test Catalogue' is the catalogue_name, not the code
 
 
 class TestCorrectionUpload(UploadIncludedFactoryTestCase):
@@ -134,7 +134,8 @@ class TestCorrectionUpload(UploadIncludedFactoryTestCase):
     # --- Parsing: catalogue FK lookup ---
 
     def test_valid_catalogue_lookup_stores_code(self):
-        """'Original Catalogue name' is resolved to catalogue_code stored as original_catalogue_code."""
+        """'Original Catalogue name' is matched by catalogue_name, then resolved to
+        catalogue_code stored as original_catalogue_code."""
         path = self._make_file(
             CORRECTION_HEADERS,
             [CORRECTION_ROW],
@@ -149,7 +150,7 @@ class TestCorrectionUpload(UploadIncludedFactoryTestCase):
         """An unrecognised catalogue name produces a validation error."""
         path = self._make_file(
             CORRECTION_HEADERS,
-            [[9901, 'UPDATE', 'BADCODE']],
+            [[9901, 'UPDATE', 'Not A Real Catalogue']],
         )
         cuef = CofkUploadExcelFile(self.new_upload, path)
         self.assertGreater(cuef.total_errors, 0)
