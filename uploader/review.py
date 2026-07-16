@@ -25,7 +25,7 @@ from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectPerso
     CofkCollectWorkCorrection
 from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, CofkWorkResourceMap, \
     CofkUnionLanguageOfWork, CofkWorkSubjectMap, CofkWorkCommentMap
-from work.work_serv import compute_date_of_work_std
+from work.work_serv import compute_date_of_work_std, compute_date_of_work_std_gregorian
 
 log = logging.getLogger(__name__)
 
@@ -581,6 +581,11 @@ _DATE_OF_WORK_STD_SOURCE_FIELDS = {
     'date_of_work2_std_year', 'date_of_work2_std_month', 'date_of_work2_std_day',
 }
 
+# date_of_work_std_gregorian additionally depends on original_calendar (see
+# compute_date_of_work_std_gregorian), since it's the same date converted
+# according to that field.
+_DATE_OF_WORK_STD_GREGORIAN_SOURCE_FIELDS = _DATE_OF_WORK_STD_SOURCE_FIELDS | {'original_calendar'}
+
 
 def _apply_comment_correction(work: CofkUnionWork, rel_type: str, new_value: str, username: str) -> None:
     """Update (or create) the work's comment for the given relationship_type.
@@ -632,6 +637,7 @@ def accept_corrections(upload: CofkCollectUpload, username: str, request=None):
 
                 work = correction.union_work
                 date_fields_changed = False
+                gregorian_fields_changed = False
                 for field_name, new_value in correction.corrections.items():
                     if field_name == 'original_catalogue_code':
                         # catalogue_code is stored as the FK value (to_field='catalogue_code')
@@ -644,6 +650,8 @@ def accept_corrections(upload: CofkCollectUpload, username: str, request=None):
                         setattr(work, field_name, new_value)
                         if field_name in _DATE_OF_WORK_STD_SOURCE_FIELDS:
                             date_fields_changed = True
+                        if field_name in _DATE_OF_WORK_STD_GREGORIAN_SOURCE_FIELDS:
+                            gregorian_fields_changed = True
 
                 if date_fields_changed:
                     # date_of_work_std is a separate precomputed column that search
@@ -651,6 +659,9 @@ def accept_corrections(upload: CofkCollectUpload, username: str, request=None):
                     # on save, so it must be explicitly resynced when its source
                     # fields change, or search results show a stale date.
                     work.date_of_work_std = compute_date_of_work_std(work)
+
+                if gregorian_fields_changed:
+                    work.date_of_work_std_gregorian = compute_date_of_work_std_gregorian(work)
 
                 work.update_current_user_timestamp(username)
                 work.save()

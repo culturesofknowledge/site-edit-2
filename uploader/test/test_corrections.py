@@ -391,6 +391,103 @@ class TestCorrectionUpload(UploadIncludedFactoryTestCase):
         self.test_work.refresh_from_db()
         self.assertEqual(self.test_work.date_of_work_std, '1700-01-01')
 
+    def test_accept_corrections_resyncs_gregorian_for_gregorian_calendar(self):
+        """When original_calendar is 'G' (already Gregorian), date_of_work_std_gregorian
+        matches date_of_work_std exactly - no offset applied."""
+        CofkCollectWorkCorrection.objects.create(
+            upload=self.new_upload,
+            iwork_id=9901,
+            union_work=self.test_work,
+            corrections={
+                'date_of_work_std_year': 1650,
+                'date_of_work_std_month': 3,
+                'date_of_work_std_day': 15,
+                'original_calendar': 'G',
+            },
+            upload_status_id=1,
+        )
+        accept_corrections(self.new_upload, username='testuser')
+        self.test_work.refresh_from_db()
+        self.assertEqual(self.test_work.date_of_work_std, '1650-03-15')
+        self.assertEqual(self.test_work.date_of_work_std_gregorian, '1650-03-15')
+
+    def test_accept_corrections_resyncs_gregorian_for_julian_before_1700(self):
+        """A Julian date before 1700 is converted to Gregorian with a 10-day offset."""
+        CofkCollectWorkCorrection.objects.create(
+            upload=self.new_upload,
+            iwork_id=9901,
+            union_work=self.test_work,
+            corrections={
+                'date_of_work_std_year': 1650,
+                'date_of_work_std_month': 3,
+                'date_of_work_std_day': 15,
+                'original_calendar': 'JJ',
+            },
+            upload_status_id=1,
+        )
+        accept_corrections(self.new_upload, username='testuser')
+        self.test_work.refresh_from_db()
+        self.assertEqual(self.test_work.date_of_work_std, '1650-03-15')
+        self.assertEqual(self.test_work.date_of_work_std_gregorian, '1650-03-25')
+
+    def test_accept_corrections_resyncs_gregorian_for_julian_after_1700(self):
+        """A Julian date after February 1700 is converted with an 11-day offset."""
+        CofkCollectWorkCorrection.objects.create(
+            upload=self.new_upload,
+            iwork_id=9901,
+            union_work=self.test_work,
+            corrections={
+                'date_of_work_std_year': 1700,
+                'date_of_work_std_month': 3,
+                'date_of_work_std_day': 15,
+                'original_calendar': 'JJ',
+            },
+            upload_status_id=1,
+        )
+        accept_corrections(self.new_upload, username='testuser')
+        self.test_work.refresh_from_db()
+        self.assertEqual(self.test_work.date_of_work_std_gregorian, '1700-03-26')
+
+    def test_accept_corrections_resyncs_gregorian_with_month_rollover(self):
+        """A Julian day offset that pushes past the end of the month rolls over
+        into the next month correctly."""
+        CofkCollectWorkCorrection.objects.create(
+            upload=self.new_upload,
+            iwork_id=9901,
+            union_work=self.test_work,
+            corrections={
+                'date_of_work_std_year': 1650,
+                'date_of_work_std_month': 3,
+                'date_of_work_std_day': 25,
+                'original_calendar': 'JJ',
+            },
+            upload_status_id=1,
+        )
+        accept_corrections(self.new_upload, username='testuser')
+        self.test_work.refresh_from_db()
+        # 25 Mar + 10 days = 4 Apr
+        self.assertEqual(self.test_work.date_of_work_std_gregorian, '1650-04-04')
+
+    def test_accept_corrections_resyncs_gregorian_when_only_calendar_changes(self):
+        """Correcting original_calendar alone (no date fields) still resyncs
+        date_of_work_std_gregorian, matching the JS behaviour of recomputing on
+        calendar-type change."""
+        self.test_work.date_of_work_std_year = 1650
+        self.test_work.date_of_work_std_month = 3
+        self.test_work.date_of_work_std_day = 15
+        self.test_work.save()
+
+        CofkCollectWorkCorrection.objects.create(
+            upload=self.new_upload,
+            iwork_id=9901,
+            union_work=self.test_work,
+            corrections={'original_calendar': 'JJ'},
+            upload_status_id=1,
+        )
+        accept_corrections(self.new_upload, username='testuser')
+        self.test_work.refresh_from_db()
+        self.assertEqual(self.test_work.date_of_work_std_gregorian, '1650-03-25')
+
     def test_accept_corrections_sets_upload_status_accepted(self):
         """After accept_corrections(), upload.upload_status_id == 4."""
         CofkCollectWorkCorrection.objects.create(
