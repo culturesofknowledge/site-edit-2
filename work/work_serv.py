@@ -649,3 +649,118 @@ def lookup_location_searchable(lookup_fn, field_name: str, value: str, rel_types
             pre_filter_q &= exists_q
 
     return pre_filter_q
+
+
+def lookup_related_resources(lookup_fn, field_name: str, value: str) -> Q:
+    """
+    Search the 'Related resources' column which displays both actual resources
+    (via CofkWorkResourceMap) and related works such as 'Reply to', 'Answered by',
+    and 'Matching letter' (via CofkWorkWorkMap).
+
+    This function combines searches across both resource names and related work
+    descriptions so that e.g. searching for 'match' finds works with a
+    'Matching letter' relationship.
+    """
+    from core.constant import REL_TYPE_IS_RELATED_TO, REL_TYPE_WORK_IS_REPLY_TO, REL_TYPE_WORK_MATCHES
+    from work.models import CofkWorkResourceMap, CofkWorkWorkMap
+    from django.db.models import Exists, OuterRef
+
+    if not isinstance(value, str):
+        return query_serv.run_lookup_fn(lookup_fn, field_name, value)
+
+    negate = _is_negated_lookup(lookup_fn)
+    lookup_key = query_serv.get_lookup_key_by_lookup_fn(lookup_fn)
+
+    # For is_blank / not_blank, check whether ANY related resource or related work exists
+    if lookup_key in ('is_blank', 'not_blank'):
+        resource_exists = Exists(CofkWorkResourceMap.objects.filter(
+            work_id=OuterRef('pk'),
+            relationship_type=REL_TYPE_IS_RELATED_TO,
+        ))
+        work_rel_types = [REL_TYPE_WORK_IS_REPLY_TO, REL_TYPE_WORK_MATCHES]
+        work_from_exists = Exists(CofkWorkWorkMap.objects.filter(
+            work_from_id=OuterRef('pk'),
+            relationship_type__in=work_rel_types,
+        ))
+        work_to_exists = Exists(CofkWorkWorkMap.objects.filter(
+            work_to_id=OuterRef('pk'),
+            relationship_type__in=work_rel_types,
+        ))
+        any_exists = resource_exists | work_from_exists | work_to_exists
+        if lookup_key == 'is_blank':
+            return ~Q(any_exists)
+        else:
+            return Q(any_exists)
+
+    # For text-based lookups, search resource_name and related work descriptions
+    # Resources: search resource_name via CofkWorkResourceMap
+    resource_q = Exists(CofkWorkResourceMap.objects.filter(
+        work_id=OuterRef('pk'),
+        relationship_type=REL_TYPE_IS_RELATED_TO,
+        resource__resource_name__icontains=value,
+    ))
+
+    # Related works: the column displays labels like "Reply to: ...",
+    # "Answered by: ...", "Matching letter: ..." followed by the work
+    # description.  Match the search term against both the
+    # label text AND the related work's description
+    _LABEL_REL_TYPES = {
+        'reply to': REL_TYPE_WORK_IS_REPLY_TO,
+        'answered by': REL_TYPE_WORK_IS_REPLY_TO,
+        'matching letter': REL_TYPE_WORK_MATCHES,
+    }
+
+    work_rel_types = [REL_TYPE_WORK_IS_REPLY_TO, REL_TYPE_WORK_MATCHES]
+
+    # Check if the search value matches any of the display labels.
+    # If so, include ALL works that have that relationship type.
+    label_matched_types = set()
+    val_lower = value.lower().strip()
+    for label, rel_type in _LABEL_REL_TYPES.items():
+        if val_lower in label or label in val_lower:
+            label_matched_types.add((label, rel_type))
+
+    combined = resource_q
+
+    if label_matched_types:
+        # The search term matches a label — return works that have the
+        # corresponding relationship type in either direction.
+        for label, rel_type in label_matched_types:
+            if label == 'answered by':
+                # "Answered by" shows in work_to_set (this work is the target)
+                combined = combined | Exists(CofkWorkWorkMap.objects.filter(
+                    work_to_id=OuterRef('pk'),
+                    relationship_type=rel_type,
+                ))
+            elif label == 'reply to':
+                # "Reply to" shows in work_from_set (this work is the source)
+                combined = combined | Exists(CofkWorkWorkMap.objects.filter(
+                    work_from_id=OuterRef('pk'),
+                    relationship_type=rel_type,
+                ))
+            else:
+                # "Matching letter" is bidirectional
+                combined = combined | Exists(CofkWorkWorkMap.objects.filter(
+                    work_from_id=OuterRef('pk'),
+                    relationship_type=rel_type,
+                )) | Exists(CofkWorkWorkMap.objects.filter(
+                    work_to_id=OuterRef('pk'),
+                    relationship_type=rel_type,
+                ))
+
+    # Also search the related work's description text (both directions)
+    work_from_q = Exists(CofkWorkWorkMap.objects.filter(
+        work_from_id=OuterRef('pk'),
+        relationship_type__in=work_rel_types,
+        work_to__description__icontains=value,
+    ))
+    work_to_q = Exists(CofkWorkWorkMap.objects.filter(
+        work_to_id=OuterRef('pk'),
+        relationship_type__in=work_rel_types,
+        work_from__description__icontains=value,
+    ))
+
+    combined = combined | work_from_q | work_to_q
+    if negate:
+        return ~Q(combined)
+    return Q(combined)

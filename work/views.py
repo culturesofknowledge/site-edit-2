@@ -20,7 +20,7 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_ROUTE, REL_TYPE_FORMERLY_OWNED, \
     REL_TYPE_ENCLOSED_IN, REL_TYPE_COMMENT_RECEIPT_DATE, REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_STORED_IN, \
     REL_TYPE_COMMENT_PERSON_MENTIONED, REL_TYPE_MENTION, REL_TYPE_MENTION_PLACE, \
-    REL_TYPE_MENTION_WORK, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_IS_RELATED_TO, \
+    REL_TYPE_MENTION_WORK, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, \
     REL_TYPE_HANDWROTE
 from core.export_data import excel_maker, cell_values
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, LocRecrefForm
@@ -1196,11 +1196,9 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                 search_fields_fn_maps={
                     'notes_on_authors': create_lookup_fn_by_comment([REL_TYPE_COMMENT_AUTHOR]),
                     'notes_on_addressees': create_lookup_fn_by_comment([REL_TYPE_COMMENT_ADDRESSEE]),
-                    # Related resources search in Works must only target the resource title/brief description
-                    # and exclude 'Further details of resource'. Therefore, search only on 'resource_name'.
-                    'related_resources': create_recref_lookup_fn([REL_TYPE_IS_RELATED_TO],
-                                                                 'cofkworkresourcemap__resource',
-                                                                 ['resource_name']),
+                    # Related resources column displays both actual resources and related works
+                    # (Reply to, Answered by, Matching letter). Search across all of them.
+                    'related_resources': work_serv.lookup_related_resources,
                     'general_notes': create_lookup_fn_by_comment([REL_TYPE_COMMENT_REFERS_TO]),
                     'flags': lookup_fn_flags,
                     # Support combined search such as "Draft%Royal Society" on manifestations summary
