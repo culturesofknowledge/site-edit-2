@@ -432,6 +432,15 @@ def _val_handler_work_drop_language_of_work(row: dict, conn) -> dict:
     return row
 
 
+def _val_handler_work_zero_date_to_null(row: dict, conn) -> dict:
+    # legacy system stored an unknown day as 0 instead of NULL, which fails the
+    # day-must-be->=1 form validation the moment any other field on the work is edited
+    for field in ('date_of_work_std_day',):
+        if row.get(field) == 0:
+            row[field] = None
+    return row
+
+
 def _correct_work(row: dict, upload_id) -> dict:
     iwork_id = row['iwork_id']
 
@@ -532,6 +541,18 @@ def _val_handler_manif__work_id(row: dict, conn):
         row['work_id'] = results[0][0]
     elif len(results) > 1:
         log.warning(f'one manif should have one work relationship {vals} -- {results} ')
+    return row
+
+
+def _val_handler_manif_zero_date_to_null(row: dict, conn) -> dict:
+    # legacy system stored an unknown day/month as 0 instead of NULL, which fails the
+    # day-must-be->=1 form validation the moment any other field on the manifestation is edited
+    for field in ('manifestation_creation_date_day', 'manifestation_creation_date_month',
+                 'manifestation_creation_date2_day', 'manifestation_creation_date2_month',
+                 'manifestation_receipt_date_day', 'manifestation_receipt_date_month',
+                 'manifestation_receipt_date2_day', 'manifestation_receipt_date2_month'):
+        if row.get(field) == 0:
+            row[field] = None
     return row
 
 
@@ -776,6 +797,7 @@ def data_migration(user, password, database, host, port):
     clone_rows_by_model_class(conn, CofkUnionWork,
                               col_val_handler_fn_list=[_val_handler_work__catalogue,
                                                        _val_handler_work_drop_language_of_work,
+                                                       _val_handler_work_zero_date_to_null,
                                                        ],
                               seq_name=work_models.SEQ_NAME_COFKUNIONWORK__IWORK_ID,
                               int_pk_col_name='iwork_id', )
@@ -817,7 +839,9 @@ def data_migration(user, password, database, host, port):
 
     # ### manif
     clone_rows_by_model_class(conn, CofkUnionManifestation,
-                              col_val_handler_fn_list=[_val_handler_manif__work_id],
+                              col_val_handler_fn_list=[_val_handler_manif__work_id,
+                                                       _val_handler_manif_zero_date_to_null,
+                                                       ],
                               seq_name=None)
     clone_rows_by_model_class(conn, CofkCollectManifestation,
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectManifestation),
