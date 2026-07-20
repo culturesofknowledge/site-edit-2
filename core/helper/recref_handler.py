@@ -59,7 +59,11 @@ class SingleRecrefHandler:
 
     def upsert_recref_if_field_exist(self, form: forms.BaseForm, parent, username) -> Recref | None:
         if not (target_id := form.cleaned_data.get(self.form_field_name)):
-            log.debug(f'value of form_field_name not found [{self.form_field_name=}] ')
+            # empty field means the user cleared the selection (e.g. clicked "Clear" on
+            # the recref widget), so the existing recref must be removed here -- otherwise
+            # it silently survives and reappears on the next page load/save.
+            if org_recref := self._find_recref_by_parent(parent):
+                org_recref.delete()
             return
 
         recref_adapter = self.create_recref_adapter(parent)
