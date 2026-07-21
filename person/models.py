@@ -37,9 +37,9 @@ class CofkUnionPerson(models.Model, RecordTracker):
     is_organisation = models.CharField(max_length=1)
     iperson_id = models.IntegerField(unique=True, )
     creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
-    creation_user = models.CharField(max_length=50)
+    creation_user = models.CharField(max_length=254)
     change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
-    change_user = models.CharField(max_length=50)
+    change_user = models.CharField(max_length=254)
     editors_notes = models.TextField(blank=True, null=True)
     further_reading = models.TextField(blank=True, null=True)
     organisation_type = models.ForeignKey('core.CofkUnionOrgType', models.DO_NOTHING, db_column='organisation_type',
