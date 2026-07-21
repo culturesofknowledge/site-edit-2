@@ -5,6 +5,8 @@ as
 $$
 declare
   statement varchar(500);
+  v_work_key_decode varchar;
+  v_work_key_decode_old varchar;
 begin
 
   if TG_RELNAME = 'cofk_union_comment' then
@@ -2432,12 +2434,24 @@ begin
 
   if TG_RELNAME = 'cofk_union_work' then
 
+    -- build a hyperlinked key_decode for this work, matching WorkAuditAdapter.key_decode()
+    -- in audit/audit_recref_adapter.py, so literal audit rows link to the work like
+    -- relationship audit rows already do.
+    if TG_OP = 'UPDATE' or TG_OP = 'INSERT' then
+      v_work_key_decode := 'xxxCofkLinkStartxxxxxxCofkHrefStartxxx/work/form/overview/' || new.iwork_id::text || 'xxxCofkHrefEndxxx' || coalesce(new.description, '') || 'xxxCofkLinkEndxxx';
+    end if;
+
+    if TG_OP = 'DELETE' then
+      v_work_key_decode_old := 'xxxCofkLinkStartxxxxxxCofkHrefStartxxx/work/form/overview/' || old.iwork_id::text || 'xxxCofkHrefEndxxx' || coalesce(old.description, '') || 'xxxCofkLinkEndxxx';
+    end if;
+
     -- cofk_union_work 1. work_id
     if TG_OP = 'DELETE' then
       perform dbf_cofk_union_audit_literal_delete( 'cofk_union_work',
         old.work_id,
         old.iwork_id,
         old.description,
+        v_work_key_decode_old,
         'work_id',
         old.work_id::text );
     end if;
@@ -2448,6 +2462,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'description',
         new.description::text,
         old.description::text );
@@ -2458,6 +2473,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'description',
         new.description::text );
     end if;
@@ -2468,6 +2484,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work_as_marked',
         new.date_of_work_as_marked::text,
         old.date_of_work_as_marked::text );
@@ -2478,6 +2495,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work_as_marked',
         new.date_of_work_as_marked::text );
     end if;
@@ -2488,6 +2506,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'original_calendar',
         new.original_calendar::text,
         old.original_calendar::text );
@@ -2498,6 +2517,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'original_calendar',
         new.original_calendar::text );
     end if;
@@ -2508,6 +2528,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work_std',
         new.date_of_work_std::text,
         old.date_of_work_std::text );
@@ -2518,6 +2539,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work_std',
         new.date_of_work_std::text );
     end if;
@@ -2528,6 +2550,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work_std_gregorian',
         new.date_of_work_std_gregorian::text,
         old.date_of_work_std_gregorian::text );
@@ -2538,6 +2561,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work_std_gregorian',
         new.date_of_work_std_gregorian::text );
     end if;
@@ -2548,6 +2572,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work_std_year',
         new.date_of_work_std_year::text,
         old.date_of_work_std_year::text );
@@ -2558,6 +2583,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work_std_year',
         new.date_of_work_std_year::text );
     end if;
@@ -2568,6 +2594,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work_std_month',
         new.date_of_work_std_month::text,
         old.date_of_work_std_month::text );
@@ -2578,6 +2605,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work_std_month',
         new.date_of_work_std_month::text );
     end if;
@@ -2588,6 +2616,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work_std_day',
         new.date_of_work_std_day::text,
         old.date_of_work_std_day::text );
@@ -2598,6 +2627,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work_std_day',
         new.date_of_work_std_day::text );
     end if;
@@ -2608,6 +2638,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work2_std_year',
         new.date_of_work2_std_year::text,
         old.date_of_work2_std_year::text );
@@ -2618,6 +2649,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work2_std_year',
         new.date_of_work2_std_year::text );
     end if;
@@ -2628,6 +2660,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work2_std_month',
         new.date_of_work2_std_month::text,
         old.date_of_work2_std_month::text );
@@ -2638,6 +2671,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work2_std_month',
         new.date_of_work2_std_month::text );
     end if;
@@ -2648,6 +2682,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work2_std_day',
         new.date_of_work2_std_day::text,
         old.date_of_work2_std_day::text );
@@ -2658,6 +2693,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work2_std_day',
         new.date_of_work2_std_day::text );
     end if;
@@ -2668,6 +2704,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work_std_is_range',
         new.date_of_work_std_is_range::text,
         old.date_of_work_std_is_range::text );
@@ -2678,6 +2715,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work_std_is_range',
         new.date_of_work_std_is_range::text );
     end if;
@@ -2688,6 +2726,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work_inferred',
         new.date_of_work_inferred::text,
         old.date_of_work_inferred::text );
@@ -2698,6 +2737,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work_inferred',
         new.date_of_work_inferred::text );
     end if;
@@ -2708,6 +2748,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work_uncertain',
         new.date_of_work_uncertain::text,
         old.date_of_work_uncertain::text );
@@ -2718,6 +2759,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work_uncertain',
         new.date_of_work_uncertain::text );
     end if;
@@ -2728,6 +2770,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work_approx',
         new.date_of_work_approx::text,
         old.date_of_work_approx::text );
@@ -2738,6 +2781,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'date_of_work_approx',
         new.date_of_work_approx::text );
     end if;
@@ -2748,6 +2792,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'authors_as_marked',
         new.authors_as_marked::text,
         old.authors_as_marked::text );
@@ -2758,6 +2803,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'authors_as_marked',
         new.authors_as_marked::text );
     end if;
@@ -2768,6 +2814,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'addressees_as_marked',
         new.addressees_as_marked::text,
         old.addressees_as_marked::text );
@@ -2778,6 +2825,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'addressees_as_marked',
         new.addressees_as_marked::text );
     end if;
@@ -2788,6 +2836,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'authors_inferred',
         new.authors_inferred::text,
         old.authors_inferred::text );
@@ -2798,6 +2847,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'authors_inferred',
         new.authors_inferred::text );
     end if;
@@ -2808,6 +2858,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'authors_uncertain',
         new.authors_uncertain::text,
         old.authors_uncertain::text );
@@ -2818,6 +2869,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'authors_uncertain',
         new.authors_uncertain::text );
     end if;
@@ -2828,6 +2880,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'addressees_inferred',
         new.addressees_inferred::text,
         old.addressees_inferred::text );
@@ -2838,6 +2891,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'addressees_inferred',
         new.addressees_inferred::text );
     end if;
@@ -2848,6 +2902,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'addressees_uncertain',
         new.addressees_uncertain::text,
         old.addressees_uncertain::text );
@@ -2858,6 +2913,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'addressees_uncertain',
         new.addressees_uncertain::text );
     end if;
@@ -2868,6 +2924,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'destination_as_marked',
         new.destination_as_marked::text,
         old.destination_as_marked::text );
@@ -2878,6 +2935,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'destination_as_marked',
         new.destination_as_marked::text );
     end if;
@@ -2888,6 +2946,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'origin_as_marked',
         new.origin_as_marked::text,
         old.origin_as_marked::text );
@@ -2898,6 +2957,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'origin_as_marked',
         new.origin_as_marked::text );
     end if;
@@ -2908,6 +2968,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'destination_inferred',
         new.destination_inferred::text,
         old.destination_inferred::text );
@@ -2918,6 +2979,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'destination_inferred',
         new.destination_inferred::text );
     end if;
@@ -2928,6 +2990,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'destination_uncertain',
         new.destination_uncertain::text,
         old.destination_uncertain::text );
@@ -2938,6 +3001,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'destination_uncertain',
         new.destination_uncertain::text );
     end if;
@@ -2948,6 +3012,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'origin_inferred',
         new.origin_inferred::text,
         old.origin_inferred::text );
@@ -2958,6 +3023,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'origin_inferred',
         new.origin_inferred::text );
     end if;
@@ -2968,6 +3034,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'origin_uncertain',
         new.origin_uncertain::text,
         old.origin_uncertain::text );
@@ -2978,6 +3045,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'origin_uncertain',
         new.origin_uncertain::text );
     end if;
@@ -2988,6 +3056,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'abstract',
         new.abstract::text,
         old.abstract::text );
@@ -2998,6 +3067,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'abstract',
         new.abstract::text );
     end if;
@@ -3008,6 +3078,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'keywords',
         new.keywords::text,
         old.keywords::text );
@@ -3018,6 +3089,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'keywords',
         new.keywords::text );
     end if;
@@ -3028,6 +3100,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'work_is_translation',
         new.work_is_translation::text,
         old.work_is_translation::text );
@@ -3038,6 +3111,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'work_is_translation',
         new.work_is_translation::text );
     end if;
@@ -3048,6 +3122,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'incipit',
         new.incipit::text,
         old.incipit::text );
@@ -3058,6 +3133,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'incipit',
         new.incipit::text );
     end if;
@@ -3068,6 +3144,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'explicit',
         new.explicit::text,
         old.explicit::text );
@@ -3078,6 +3155,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'explicit',
         new.explicit::text );
     end if;
@@ -3088,6 +3166,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'ps',
         new.ps::text,
         old.ps::text );
@@ -3098,6 +3177,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'ps',
         new.ps::text );
     end if;
@@ -3108,6 +3188,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'accession_code',
         new.accession_code::text,
         old.accession_code::text );
@@ -3118,6 +3199,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'accession_code',
         new.accession_code::text );
     end if;
@@ -3128,6 +3210,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'work_to_be_deleted',
         new.work_to_be_deleted::text,
         old.work_to_be_deleted::text );
@@ -3138,6 +3221,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'work_to_be_deleted',
         new.work_to_be_deleted::text );
     end if;
@@ -3148,6 +3232,7 @@ begin
         old.work_id,
         old.iwork_id,
         old.description,
+        v_work_key_decode_old,
         'iwork_id',
         old.iwork_id::text );
     end if;
@@ -3158,6 +3243,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'editors_notes',
         new.editors_notes::text,
         old.editors_notes::text );
@@ -3168,6 +3254,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'editors_notes',
         new.editors_notes::text );
     end if;
@@ -3178,6 +3265,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'edit_status',
         new.edit_status::text,
         old.edit_status::text );
@@ -3188,6 +3276,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'edit_status',
         new.edit_status::text );
     end if;
@@ -3198,6 +3287,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'relevant_to_cofk',
         new.relevant_to_cofk::text,
         old.relevant_to_cofk::text );
@@ -3208,6 +3298,7 @@ begin
         new.work_id,
         new.iwork_id,
         new.description,
+        v_work_key_decode,
         'relevant_to_cofk',
         new.relevant_to_cofk::text );
     end if;
