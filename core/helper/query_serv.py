@@ -207,6 +207,8 @@ some lookup key may only apply in first or last element,
 None == all element
 """
 lookup_idx_map = {
+    'starts_with': 0,
+    'ends_with': 0
 }
 
 """
@@ -493,7 +495,7 @@ def convert_queryset_to_sql(queryset: QuerySet) -> str:
     >>> from login.models import CofkUser
     >>> queryset = CofkUser.objects.filter().values('email').filter(email='x')
     >>> convert_queryset_to_sql(queryset)
-    'SELECT "cofk_user"."email" FROM "cofk_user" WHERE "cofk_user"."email" = x'
+    'SELECT "cofk_user"."email" AS "email" FROM "cofk_user" WHERE "cofk_user"."email" = x'
 
     Parameters
     ----------

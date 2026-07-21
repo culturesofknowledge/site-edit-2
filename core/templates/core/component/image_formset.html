@@ -94,7 +94,8 @@
                     <label>{{ form.licence_url.label }}:*</label>
                     <div>{{ form.licence_url.errors }}{{ form.licence_url }}</div>
                 </div>
-                {% include "core/component/common_checkbox.html" with field=form.can_be_displayed name='Can be displayed to public <small><i>(If this box is not ticked, the image will not be displayed in the \'front-end\'.)</i></small>' is_normal_size=True %}
+                {% include "core/component/common_checkbox.html" with field=form.can_be_displayed name='Can be displayed to public' is_normal_size=True %}
+                <small>If this box is not ticked, the image will not be displayed in the 'front-end'.</small>
                 <div class="flex flex-label">
                     <label>{{ form.display_order.label }}:</label>
                     {{ form.display_order.errors }}{{ form.display_order }}
@@ -104,7 +105,8 @@
                 </div>
 
                 {% if not forloop.first %}
-                    {% include "core/component/common_checkbox.html" with field=form.is_delete name='Delete image from manifestation <small><i>(Tick then click Save to remove this image from the manifestation.)</i></small>' is_normal_size=True %}
+                    {% include "core/component/common_checkbox.html" with field=form.is_delete name='Delete image from manifestation' is_normal_size=True %}
+                    <small>Tick then click Save to remove this image from the manifestation.</small>
                 {% endif %}
 
             </fieldset>

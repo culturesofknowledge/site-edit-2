@@ -147,8 +147,6 @@
     <!-- Last changed by-->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.change_user field_lookup=form.change_user_lookup %}
 
-    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
-
     <script>
 
       var manif_autocomplete = [{% for mtype in form.manif_type %}

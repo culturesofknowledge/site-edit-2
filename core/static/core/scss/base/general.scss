@@ -104,7 +104,7 @@ thead tr {
     th {
       font-weight: 700;
       position: sticky;
-      top: 100px;
+      top: var(--nav-height, 100px);
       z-index: 99;
       border-bottom: 1px solid $black;
       background-color: $white;
@@ -231,7 +231,7 @@ input[type="radio"] {
     gap: $checkbox-gap; // 🟢 This adds space between box and label text
     margin-bottom: 0.5rem;
     margin-right: 0.5rem;
-    font-size: 0.95rem;
+    font-size: 15px;
     font-weight: 400;
 
     &::before {

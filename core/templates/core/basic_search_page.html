@@ -105,12 +105,9 @@
                     <h2>No results</h2>
 
                 {% else %}
-                    <!-- Upper pagination -->
-                    {% include 'core/component/pagination.html' %}
-
-                    <!-- search function toolbar (e.g. download output, compact, expanded)  -->
-                    <aside class="margin-bottom row">
-                        <div class="col col--1of2">
+                    <!-- search function toolbar: search options toggle, pagination -->
+                    <div class="pagination-toolbar">
+                        <div class="pagination-toolbar__left">
                             {% if query_fieldset_list and paginator.count %}
                                 <button id="fieldset-toggle-btn" class="search-form-btn" type="button">
                                     Toggle
@@ -125,7 +122,11 @@
                                 </button>
                             {% endif %}
                         </div>
-                    </aside>
+
+                        <div class="pagination-toolbar__center">
+                            {% include 'core/component/pagination.html' %}
+                        </div>
+                    </div>
 
                     {{ results_renderer | safe }}
 

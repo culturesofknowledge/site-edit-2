@@ -10,9 +10,9 @@
 
         {% include "core/component/recref.html" with recref_type='location' id_field=selected_id label=cap_name|add:' (standard format):' placeholder='Please select or create '|add:name|add:'.' %}
 
-        {% include "core/component/common_checkbox.html" with field=inferred name=cap_name|add:' inferred' %}
+        {% include "core/component/common_checkbox.html" with field=inferred name=cap_name|add:' inferred' is_normal_size=True %}
 
-        {% include "core/component/common_checkbox.html" with field=uncertain  name=cap_name|add:' uncertain' %}
+        {% include "core/component/common_checkbox.html" with field=uncertain  name=cap_name|add:' uncertain' is_normal_size=True %}
 
         {% include "core/component/comment_publication_formset.html" with comment_formset=comment_formset comment_title='Notes on '|add:name  header_id=header_id|add:'_comment' header_class='toc-sub-item' %}
     </fieldset>
