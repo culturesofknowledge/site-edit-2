@@ -80,6 +80,9 @@
                         {% if manif.manifestation_is_translation %}
                             <span>Manifestation is translation.</span>
                         {% endif %}
+                        {% for note in manif.manif_notes %}
+                            <br/><span>{{ note.comment }}</span>
+                        {% endfor %}
                     </td>
                 </tr>
 

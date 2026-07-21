@@ -511,6 +511,10 @@ class ManifFFH(BasicWorkFFH):
                             'label': label,
                         })
                 _manif.enclosed_letters = enclosed_letters
+                _manif.manif_notes = list(
+                    c.comment for c in _manif.cofkmanifcommentmap_set.filter(
+                        relationship_type=REL_TYPE_COMMENT_REFERS_TO).select_related('comment')
+                )
                 manif_set.append(_manif)
 
             context['manif_set'] = manif_set
