@@ -16,12 +16,18 @@
                 {{ form.errors }}
             </div>
 
-            {% if new_password %}
+            {% if reset_email_sent is not None %}
                 <div class="margin-bottom new-password-box">
-                    The user <strong>{{ form.instance.username }}</strong> has been allocated the password
-                    <span class="new-password-value">{{ new_password }}</span>
-                    <br><span> Please inform the user of their initial password, and ask them to change their password on their first login.</span>
-                    <br><small> (Alternatively you could change the user's password yourself using the 'Edit' and 'Reset Password' options)</small>
+                    {% if reset_email_sent %}
+                        An email has been sent to <strong>{{ form.instance.email }}</strong> with a link for
+                        <strong>{{ form.instance.username }}</strong> to set their own password. The password is
+                        never visible to a Supervisor.
+                    {% else %}
+                        <strong>The password reset email could not be sent</strong> to
+                        {{ form.instance.email }}. The account has been created, but
+                        {{ form.instance.username }} will not be able to log in until they set a password --
+                        use the 'Reset Password' option once the underlying issue is resolved.
+                    {% endif %}
                 </div>
             {% endif %}
 

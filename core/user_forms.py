@@ -10,8 +10,8 @@ from login.models import CofkUser
 
 class UserForm(ModelForm):
     username = form_serv.CharField(required=True)
-    email = forms.CharField(required=False, max_length=200)
-    forename = forms.CharField(required=False, max_length=200)
+    email = forms.EmailField(required=True, max_length=200)
+    forename = forms.CharField(required=True, max_length=200)
     surname = forms.CharField(required=True, max_length=200)
     is_active = form_serv.ZeroOneCheckboxField(is_str=False, required=False, initial=1)
     is_staff = form_serv.ZeroOneCheckboxField(is_str=False, required=False, initial=0)
@@ -36,6 +36,19 @@ class UserForm(ModelForm):
             for name, label in constant.ROLE_DISPLAY_NAMES)
         if not self.instance.pk:
             del self.fields['username']
+
+    def clean_email(self):
+        # the email becomes the username on creation (see save()), which is a
+        # CharField(max_length=30) primary key -- reject upfront rather than
+        # fail with a raw DB error or a silently truncated username
+        email = self.cleaned_data['email']
+        username_max_length = CofkUser._meta.get_field('username').max_length
+        if not self.instance.pk and len(email) > username_max_length:
+            raise forms.ValidationError(
+                f'Email is too long to use as a username '
+                f'(max {username_max_length} characters, got {len(email)}).'
+            )
+        return email
 
     def save(self, commit=True):
         user = super().save(commit=False)
