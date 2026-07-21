@@ -3,17 +3,18 @@ import tempfile
 
 from openpyxl.workbook import Workbook
 
-from core.models import CofkLookupCatalogue
+from core.constant import REL_TYPE_COMMENT_DATE, REL_TYPE_COMMENT_REFERS_TO
+from core.models import CofkLookupCatalogue, CofkUnionComment
 from uploader.models import CofkCollectWorkCorrection
 from uploader.review import accept_corrections, reject_corrections
 from uploader.spreadsheet import CofkUploadExcelFile, CofkExcelFileError
 from uploader.test.test_serv import UploadIncludedFactoryTestCase
-from work.models import CofkUnionWork
+from work.models import CofkUnionWork, CofkWorkCommentMap
 
 log = logging.getLogger(__name__)
 
 CORRECTION_HEADERS = ['EMLO Letter ID Number', 'Command', 'Original Catalogue name']
-CORRECTION_ROW = [9901, 'UPDATE', 'TESTCAT']  # TESTCAT is the catalogue_code, not the name
+CORRECTION_ROW = [9901, 'UPDATE', 'Test Catalogue']  # 'Test Catalogue' is the catalogue_name, not the code
 
 
 class TestCorrectionUpload(UploadIncludedFactoryTestCase):
@@ -134,7 +135,8 @@ class TestCorrectionUpload(UploadIncludedFactoryTestCase):
     # --- Parsing: catalogue FK lookup ---
 
     def test_valid_catalogue_lookup_stores_code(self):
-        """'Original Catalogue name' is resolved to catalogue_code stored as original_catalogue_code."""
+        """'Original Catalogue name' is matched by catalogue_name, then resolved to
+        catalogue_code stored as original_catalogue_code."""
         path = self._make_file(
             CORRECTION_HEADERS,
             [CORRECTION_ROW],
@@ -149,7 +151,7 @@ class TestCorrectionUpload(UploadIncludedFactoryTestCase):
         """An unrecognised catalogue name produces a validation error."""
         path = self._make_file(
             CORRECTION_HEADERS,
-            [[9901, 'UPDATE', 'BADCODE']],
+            [[9901, 'UPDATE', 'Not A Real Catalogue']],
         )
         cuef = CofkUploadExcelFile(self.new_upload, path)
         self.assertGreater(cuef.total_errors, 0)
@@ -272,6 +274,239 @@ class TestCorrectionUpload(UploadIncludedFactoryTestCase):
         accept_corrections(self.new_upload, username='testuser')
         self.test_work.refresh_from_db()
         self.assertEqual(self.test_work.original_catalogue_id, 'TESTCAT')
+
+    def test_accept_corrections_creates_date_note_comment(self):
+        """notes_on_date_of_work in corrections creates a CofkUnionComment linked via
+        CofkWorkCommentMap with relationship_type=REL_TYPE_COMMENT_DATE, when the work
+        has no existing date note."""
+        CofkCollectWorkCorrection.objects.create(
+            upload=self.new_upload,
+            iwork_id=9901,
+            union_work=self.test_work,
+            corrections={'notes_on_date_of_work': 'Date is approximate, see letter margin.'},
+            upload_status_id=1,
+        )
+        accept_corrections(self.new_upload, username='testuser')
+        comment_map = CofkWorkCommentMap.objects.get(
+            work=self.test_work, relationship_type=REL_TYPE_COMMENT_DATE
+        )
+        self.assertEqual(comment_map.comment.comment, 'Date is approximate, see letter margin.')
+
+    def test_accept_corrections_creates_general_note_comment(self):
+        """notes_on_letter in corrections creates a CofkUnionComment linked via
+        CofkWorkCommentMap with relationship_type=REL_TYPE_COMMENT_REFERS_TO."""
+        CofkCollectWorkCorrection.objects.create(
+            upload=self.new_upload,
+            iwork_id=9901,
+            union_work=self.test_work,
+            corrections={'notes_on_letter': 'General public-facing note.'},
+            upload_status_id=1,
+        )
+        accept_corrections(self.new_upload, username='testuser')
+        comment_map = CofkWorkCommentMap.objects.get(
+            work=self.test_work, relationship_type=REL_TYPE_COMMENT_REFERS_TO
+        )
+        self.assertEqual(comment_map.comment.comment, 'General public-facing note.')
+
+    def test_accept_corrections_updates_existing_date_note_comment(self):
+        """If the work already has a date note, applying a correction updates it in
+        place rather than creating a duplicate comment map."""
+        existing_comment = CofkUnionComment.objects.create(
+            comment='Old date note.', creation_user='test', change_user='test',
+        )
+        CofkWorkCommentMap.objects.create(
+            work=self.test_work, comment=existing_comment,
+            relationship_type=REL_TYPE_COMMENT_DATE,
+            creation_user='test', change_user='test',
+        )
+        CofkCollectWorkCorrection.objects.create(
+            upload=self.new_upload,
+            iwork_id=9901,
+            union_work=self.test_work,
+            corrections={'notes_on_date_of_work': 'Updated date note.'},
+            upload_status_id=1,
+        )
+        accept_corrections(self.new_upload, username='testuser')
+        self.assertEqual(
+            CofkWorkCommentMap.objects.filter(
+                work=self.test_work, relationship_type=REL_TYPE_COMMENT_DATE
+            ).count(),
+            1,
+        )
+        existing_comment.refresh_from_db()
+        self.assertEqual(existing_comment.comment, 'Updated date note.')
+
+    def test_accept_corrections_resyncs_date_of_work_std(self):
+        """Correcting the granular date fields resyncs the precomputed
+        date_of_work_std column, which search sorts/filters against directly."""
+        CofkCollectWorkCorrection.objects.create(
+            upload=self.new_upload,
+            iwork_id=9901,
+            union_work=self.test_work,
+            corrections={
+                'date_of_work_std_year': 1650,
+                'date_of_work_std_month': 3,
+                'date_of_work_std_day': 15,
+            },
+            upload_status_id=1,
+        )
+        accept_corrections(self.new_upload, username='testuser')
+        self.test_work.refresh_from_db()
+        self.assertEqual(self.test_work.date_of_work_std, '1650-03-15')
+
+    def test_accept_corrections_resyncs_date_of_work_std_for_range(self):
+        """When a 2nd (range/'to') date is present, date_of_work_std is derived
+        from the 'to' date, matching DisplayableWork.date_for_ordering."""
+        CofkCollectWorkCorrection.objects.create(
+            upload=self.new_upload,
+            iwork_id=9901,
+            union_work=self.test_work,
+            corrections={
+                'date_of_work_std_year': 1650,
+                'date_of_work_std_month': 3,
+                'date_of_work_std_day': 15,
+                'date_of_work2_std_year': 1651,
+                'date_of_work2_std_month': 6,
+                'date_of_work2_std_day': 1,
+            },
+            upload_status_id=1,
+        )
+        accept_corrections(self.new_upload, username='testuser')
+        self.test_work.refresh_from_db()
+        self.assertEqual(self.test_work.date_of_work_std, '1651-06-01')
+
+    def test_accept_corrections_leaves_date_of_work_std_untouched_when_unrelated(self):
+        """A correction that doesn't touch any date field doesn't recompute
+        date_of_work_std."""
+        self.test_work.date_of_work_std = '1700-01-01'
+        self.test_work.save()
+        CofkCollectWorkCorrection.objects.create(
+            upload=self.new_upload,
+            iwork_id=9901,
+            union_work=self.test_work,
+            corrections={'abstract': 'Unrelated change'},
+            upload_status_id=1,
+        )
+        accept_corrections(self.new_upload, username='testuser')
+        self.test_work.refresh_from_db()
+        self.assertEqual(self.test_work.date_of_work_std, '1700-01-01')
+
+    def test_accept_corrections_resyncs_previously_unknown_date_year_only(self):
+        """Reproduces the reported work ID 3441 case: a work with a previously
+        unknown date (no year/month/day, no calendar) gets a correction that adds
+        only a year. date_of_work_std and date_of_work_std_gregorian must both
+        resync from the unset sentinel to reflect the new year, using the
+        month/day defaults (end of year) since none were supplied."""
+        self.assertIsNone(self.test_work.date_of_work_std_year)
+        CofkCollectWorkCorrection.objects.create(
+            upload=self.new_upload,
+            iwork_id=9901,
+            union_work=self.test_work,
+            corrections={'date_of_work_std_year': 1661},
+            upload_status_id=1,
+        )
+        accept_corrections(self.new_upload, username='testuser')
+        self.test_work.refresh_from_db()
+        self.assertEqual(self.test_work.date_of_work_std_year, 1661)
+        self.assertEqual(self.test_work.date_of_work_std, '1661-12-31')
+        self.assertEqual(self.test_work.date_of_work_std_gregorian, '1661-12-31')
+
+    def test_accept_corrections_resyncs_gregorian_for_gregorian_calendar(self):
+        """When original_calendar is 'G' (already Gregorian), date_of_work_std_gregorian
+        matches date_of_work_std exactly - no offset applied."""
+        CofkCollectWorkCorrection.objects.create(
+            upload=self.new_upload,
+            iwork_id=9901,
+            union_work=self.test_work,
+            corrections={
+                'date_of_work_std_year': 1650,
+                'date_of_work_std_month': 3,
+                'date_of_work_std_day': 15,
+                'original_calendar': 'G',
+            },
+            upload_status_id=1,
+        )
+        accept_corrections(self.new_upload, username='testuser')
+        self.test_work.refresh_from_db()
+        self.assertEqual(self.test_work.date_of_work_std, '1650-03-15')
+        self.assertEqual(self.test_work.date_of_work_std_gregorian, '1650-03-15')
+
+    def test_accept_corrections_resyncs_gregorian_for_julian_before_1700(self):
+        """A Julian date before 1700 is converted to Gregorian with a 10-day offset."""
+        CofkCollectWorkCorrection.objects.create(
+            upload=self.new_upload,
+            iwork_id=9901,
+            union_work=self.test_work,
+            corrections={
+                'date_of_work_std_year': 1650,
+                'date_of_work_std_month': 3,
+                'date_of_work_std_day': 15,
+                'original_calendar': 'JJ',
+            },
+            upload_status_id=1,
+        )
+        accept_corrections(self.new_upload, username='testuser')
+        self.test_work.refresh_from_db()
+        self.assertEqual(self.test_work.date_of_work_std, '1650-03-15')
+        self.assertEqual(self.test_work.date_of_work_std_gregorian, '1650-03-25')
+
+    def test_accept_corrections_resyncs_gregorian_for_julian_after_1700(self):
+        """A Julian date after February 1700 is converted with an 11-day offset."""
+        CofkCollectWorkCorrection.objects.create(
+            upload=self.new_upload,
+            iwork_id=9901,
+            union_work=self.test_work,
+            corrections={
+                'date_of_work_std_year': 1700,
+                'date_of_work_std_month': 3,
+                'date_of_work_std_day': 15,
+                'original_calendar': 'JJ',
+            },
+            upload_status_id=1,
+        )
+        accept_corrections(self.new_upload, username='testuser')
+        self.test_work.refresh_from_db()
+        self.assertEqual(self.test_work.date_of_work_std_gregorian, '1700-03-26')
+
+    def test_accept_corrections_resyncs_gregorian_with_month_rollover(self):
+        """A Julian day offset that pushes past the end of the month rolls over
+        into the next month correctly."""
+        CofkCollectWorkCorrection.objects.create(
+            upload=self.new_upload,
+            iwork_id=9901,
+            union_work=self.test_work,
+            corrections={
+                'date_of_work_std_year': 1650,
+                'date_of_work_std_month': 3,
+                'date_of_work_std_day': 25,
+                'original_calendar': 'JJ',
+            },
+            upload_status_id=1,
+        )
+        accept_corrections(self.new_upload, username='testuser')
+        self.test_work.refresh_from_db()
+        # 25 Mar + 10 days = 4 Apr
+        self.assertEqual(self.test_work.date_of_work_std_gregorian, '1650-04-04')
+
+    def test_accept_corrections_resyncs_gregorian_when_only_calendar_changes(self):
+        """Correcting original_calendar alone (no date fields) still resyncs
+        date_of_work_std_gregorian, matching the JS behaviour of recomputing on
+        calendar-type change."""
+        self.test_work.date_of_work_std_year = 1650
+        self.test_work.date_of_work_std_month = 3
+        self.test_work.date_of_work_std_day = 15
+        self.test_work.save()
+
+        CofkCollectWorkCorrection.objects.create(
+            upload=self.new_upload,
+            iwork_id=9901,
+            union_work=self.test_work,
+            corrections={'original_calendar': 'JJ'},
+            upload_status_id=1,
+        )
+        accept_corrections(self.new_upload, username='testuser')
+        self.test_work.refresh_from_db()
+        self.assertEqual(self.test_work.date_of_work_std_gregorian, '1650-03-25')
 
     def test_accept_corrections_sets_upload_status_accepted(self):
         """After accept_corrections(), upload.upload_status_id == 4."""
