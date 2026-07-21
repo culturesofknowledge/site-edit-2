@@ -344,9 +344,9 @@ class MergeHistory(models.Model, RecordTracker):
     old_display_id = models.CharField(max_length=100)
     model_class_name = models.CharField(max_length=100)
     creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
-    creation_user = models.CharField(max_length=50)
+    creation_user = models.CharField(max_length=254)
     change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
-    change_user = models.CharField(max_length=50)
+    change_user = models.CharField(max_length=254)
 
     class Meta:
         db_table = 'merge_history'
