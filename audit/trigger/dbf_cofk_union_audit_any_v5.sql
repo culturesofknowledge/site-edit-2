@@ -1290,6 +1290,206 @@ begin
         new.non_delivery_reason::text );
     end if;
 
+    -- cofk_union_manifestation 36. date_of_receipt_as_marked
+    if TG_OP = 'UPDATE' then
+      perform dbf_cofk_union_audit_literal_update( 'cofk_union_manifestation',
+        new.manifestation_id,
+        null,
+        coalesce( new.id_number_or_shelfmark, '' ) || coalesce( new.printed_edition_details, '' ),
+        'date_of_receipt_as_marked',
+        new.date_of_receipt_as_marked::text,
+        old.date_of_receipt_as_marked::text );
+    end if;
+
+    if TG_OP = 'INSERT' then
+      perform dbf_cofk_union_audit_literal_insert( 'cofk_union_manifestation',
+        new.manifestation_id,
+        null,
+        coalesce( new.id_number_or_shelfmark, '' ) || coalesce( new.printed_edition_details, '' ),
+        'date_of_receipt_as_marked',
+        new.date_of_receipt_as_marked::text );
+    end if;
+
+    -- cofk_union_manifestation 37. manifestation_receipt_calendar
+    if TG_OP = 'UPDATE' then
+      perform dbf_cofk_union_audit_literal_update( 'cofk_union_manifestation',
+        new.manifestation_id,
+        null,
+        coalesce( new.id_number_or_shelfmark, '' ) || coalesce( new.printed_edition_details, '' ),
+        'manifestation_receipt_calendar',
+        new.manifestation_receipt_calendar::text,
+        old.manifestation_receipt_calendar::text );
+    end if;
+
+    if TG_OP = 'INSERT' then
+      perform dbf_cofk_union_audit_literal_insert( 'cofk_union_manifestation',
+        new.manifestation_id,
+        null,
+        coalesce( new.id_number_or_shelfmark, '' ) || coalesce( new.printed_edition_details, '' ),
+        'manifestation_receipt_calendar',
+        new.manifestation_receipt_calendar::text );
+    end if;
+
+    -- cofk_union_manifestation 38. manifestation_receipt_date
+    if TG_OP = 'UPDATE' then
+      perform dbf_cofk_union_audit_literal_update( 'cofk_union_manifestation',
+        new.manifestation_id,
+        null,
+        coalesce( new.id_number_or_shelfmark, '' ) || coalesce( new.printed_edition_details, '' ),
+        'manifestation_receipt_date',
+        new.manifestation_receipt_date::text,
+        old.manifestation_receipt_date::text );
+    end if;
+
+    if TG_OP = 'INSERT' then
+      perform dbf_cofk_union_audit_literal_insert( 'cofk_union_manifestation',
+        new.manifestation_id,
+        null,
+        coalesce( new.id_number_or_shelfmark, '' ) || coalesce( new.printed_edition_details, '' ),
+        'manifestation_receipt_date',
+        new.manifestation_receipt_date::text );
+    end if;
+
+    -- cofk_union_manifestation 39. manifestation_receipt_date_gregorian
+    if TG_OP = 'UPDATE' then
+      perform dbf_cofk_union_audit_literal_update( 'cofk_union_manifestation',
+        new.manifestation_id,
+        null,
+        coalesce( new.id_number_or_shelfmark, '' ) || coalesce( new.printed_edition_details, '' ),
+        'manifestation_receipt_date_gregorian',
+        new.manifestation_receipt_date_gregorian::text,
+        old.manifestation_receipt_date_gregorian::text );
+    end if;
+
+    if TG_OP = 'INSERT' then
+      perform dbf_cofk_union_audit_literal_insert( 'cofk_union_manifestation',
+        new.manifestation_id,
+        null,
+        coalesce( new.id_number_or_shelfmark, '' ) || coalesce( new.printed_edition_details, '' ),
+        'manifestation_receipt_date_gregorian',
+        new.manifestation_receipt_date_gregorian::text );
+    end if;
+
+    -- cofk_union_manifestation 40. manifestation_receipt_date_year
+    if TG_OP = 'UPDATE' then
+      perform dbf_cofk_union_audit_literal_update( 'cofk_union_manifestation',
+        new.manifestation_id,
+        null,
+        coalesce( new.id_number_or_shelfmark, '' ) || coalesce( new.printed_edition_details, '' ),
+        'manifestation_receipt_date_year',
+        new.manifestation_receipt_date_year::text,
+        old.manifestation_receipt_date_year::text );
+    end if;
+
+    if TG_OP = 'INSERT' then
+      perform dbf_cofk_union_audit_literal_insert( 'cofk_union_manifestation',
+        new.manifestation_id,
+        null,
+        coalesce( new.id_number_or_shelfmark, '' ) || coalesce( new.printed_edition_details, '' ),
+        'manifestation_receipt_date_year',
+        new.manifestation_receipt_date_year::text );
+    end if;
+
+    -- cofk_union_manifestation 41. manifestation_receipt_date_month
+    if TG_OP = 'UPDATE' then
+      perform dbf_cofk_union_audit_literal_update( 'cofk_union_manifestation',
+        new.manifestation_id,
+        null,
+        coalesce( new.id_number_or_shelfmark, '' ) || coalesce( new.printed_edition_details, '' ),
+        'manifestation_receipt_date_month',
+        new.manifestation_receipt_date_month::text,
+        old.manifestation_receipt_date_month::text );
+    end if;
+
+    if TG_OP = 'INSERT' then
+      perform dbf_cofk_union_audit_literal_insert( 'cofk_union_manifestation',
+        new.manifestation_id,
+        null,
+        coalesce( new.id_number_or_shelfmark, '' ) || coalesce( new.printed_edition_details, '' ),
+        'manifestation_receipt_date_month',
+        new.manifestation_receipt_date_month::text );
+    end if;
+
+    -- cofk_union_manifestation 42. manifestation_receipt_date_day
+    if TG_OP = 'UPDATE' then
+      perform dbf_cofk_union_audit_literal_update( 'cofk_union_manifestation',
+        new.manifestation_id,
+        null,
+        coalesce( new.id_number_or_shelfmark, '' ) || coalesce( new.printed_edition_details, '' ),
+        'manifestation_receipt_date_day',
+        new.manifestation_receipt_date_day::text,
+        old.manifestation_receipt_date_day::text );
+    end if;
+
+    if TG_OP = 'INSERT' then
+      perform dbf_cofk_union_audit_literal_insert( 'cofk_union_manifestation',
+        new.manifestation_id,
+        null,
+        coalesce( new.id_number_or_shelfmark, '' ) || coalesce( new.printed_edition_details, '' ),
+        'manifestation_receipt_date_day',
+        new.manifestation_receipt_date_day::text );
+    end if;
+
+    -- cofk_union_manifestation 43. manifestation_receipt_date_inferred
+    if TG_OP = 'UPDATE' then
+      perform dbf_cofk_union_audit_literal_update( 'cofk_union_manifestation',
+        new.manifestation_id,
+        null,
+        coalesce( new.id_number_or_shelfmark, '' ) || coalesce( new.printed_edition_details, '' ),
+        'manifestation_receipt_date_inferred',
+        new.manifestation_receipt_date_inferred::text,
+        old.manifestation_receipt_date_inferred::text );
+    end if;
+
+    if TG_OP = 'INSERT' then
+      perform dbf_cofk_union_audit_literal_insert( 'cofk_union_manifestation',
+        new.manifestation_id,
+        null,
+        coalesce( new.id_number_or_shelfmark, '' ) || coalesce( new.printed_edition_details, '' ),
+        'manifestation_receipt_date_inferred',
+        new.manifestation_receipt_date_inferred::text );
+    end if;
+
+    -- cofk_union_manifestation 44. manifestation_receipt_date_uncertain
+    if TG_OP = 'UPDATE' then
+      perform dbf_cofk_union_audit_literal_update( 'cofk_union_manifestation',
+        new.manifestation_id,
+        null,
+        coalesce( new.id_number_or_shelfmark, '' ) || coalesce( new.printed_edition_details, '' ),
+        'manifestation_receipt_date_uncertain',
+        new.manifestation_receipt_date_uncertain::text,
+        old.manifestation_receipt_date_uncertain::text );
+    end if;
+
+    if TG_OP = 'INSERT' then
+      perform dbf_cofk_union_audit_literal_insert( 'cofk_union_manifestation',
+        new.manifestation_id,
+        null,
+        coalesce( new.id_number_or_shelfmark, '' ) || coalesce( new.printed_edition_details, '' ),
+        'manifestation_receipt_date_uncertain',
+        new.manifestation_receipt_date_uncertain::text );
+    end if;
+
+    -- cofk_union_manifestation 45. manifestation_receipt_date_approx
+    if TG_OP = 'UPDATE' then
+      perform dbf_cofk_union_audit_literal_update( 'cofk_union_manifestation',
+        new.manifestation_id,
+        null,
+        coalesce( new.id_number_or_shelfmark, '' ) || coalesce( new.printed_edition_details, '' ),
+        'manifestation_receipt_date_approx',
+        new.manifestation_receipt_date_approx::text,
+        old.manifestation_receipt_date_approx::text );
+    end if;
+
+    if TG_OP = 'INSERT' then
+      perform dbf_cofk_union_audit_literal_insert( 'cofk_union_manifestation',
+        new.manifestation_id,
+        null,
+        coalesce( new.id_number_or_shelfmark, '' ) || coalesce( new.printed_edition_details, '' ),
+        'manifestation_receipt_date_approx',
+        new.manifestation_receipt_date_approx::text );
+    end if;
+
   end if; -- End of cofk_union_manifestation
 
 -------------------
