@@ -16,6 +16,7 @@ class AuditConfig(AppConfig):
         def on_pre_save(sender: ModelBase, instance: models.Model,
                         raw: bool, using, update_fields, **kwargs):
             model_signals.handle_update_recref_date(sender, instance)
+            model_signals.handle_update_language_notes(sender, instance)
 
         def on_post_save(sender: ModelBase, instance: models.Model, created: bool,
                          raw: bool, using, update_fields, **kwargs):
@@ -23,6 +24,9 @@ class AuditConfig(AppConfig):
             if created:
                 model_signals.add_relation_audit_to_literal(sender, instance)
                 model_signals.handle_non_triggered_record(sender, instance, is_create=True)
+            elif (old_notes := getattr(instance, 'old_notes_for_audit', model_signals._NO_OLD_NOTES)) \
+                    is not model_signals._NO_OLD_NOTES:
+                model_signals.handle_non_triggered_record(sender, instance, is_create=None, old_notes=old_notes)
 
         def on_post_delete(sender: ModelBase, instance: models.Model, using, **kwargs):
             model_signals.handle_non_triggered_record(sender, instance, is_create=False)
