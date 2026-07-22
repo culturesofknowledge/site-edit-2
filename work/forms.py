@@ -23,12 +23,12 @@ log = logging.getLogger(__name__)
 
 manif_type_choices = [
     ('ALS', 'Letter'),
-    ('D', 'Draft'),
-    ('DC', 'Digital copy'),
-    ('E', 'Extract'),
-    ('O', 'Other'),
-    ('P', 'Printed copy'),
     ('S', 'Scribal copy'),
+    ('D', 'Draft'),
+    ('E', 'Extract'),
+    ('P', 'Printed copy'),
+    ('DC', 'Digital copy'),
+    ('O', 'Other'),
 ]
 
 manif_letter_opened_choices = [
