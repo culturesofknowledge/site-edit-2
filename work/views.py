@@ -517,6 +517,8 @@ class ManifFFH(BasicWorkFFH):
                 )
                 manif_set.append(_manif)
 
+            manif_type_order = {t[0]: i for i, t in enumerate(manif_type_choices)}
+            manif_set.sort(key=lambda m: manif_type_order.get(m.manifestation_type, len(manif_type_order)))
             context['manif_set'] = manif_set
 
         return context
@@ -1021,7 +1023,9 @@ def overview_view(request, iwork_id):
         work_be_mention_link_list=(WorkLinkData(r.work_from) for r in
                                    work.work_to_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
         work_be_mention_link_count=len(work.work_to_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
-        manif_set=list(map(to_overview_manif, work.manif_set.iterator())),
+        manif_set=sorted(map(to_overview_manif, work.manif_set.iterator()),
+                        key=lambda m: {t[0]: i for i, t in enumerate(manif_type_choices)}.get(
+                            m.manifestation_type, len(manif_type_choices))),
         original_calendar_display=date_serv.decode_calendar(work.original_calendar),
         work_category='Overview'
     )
