@@ -25,6 +25,7 @@ from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectPerso
     CofkCollectWorkCorrection
 from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, CofkWorkResourceMap, \
     CofkUnionLanguageOfWork, CofkWorkSubjectMap, CofkWorkCommentMap
+from work.work_serv import compute_date_of_work_std, compute_date_of_work_std_gregorian
 
 log = logging.getLogger(__name__)
 
@@ -565,6 +566,53 @@ def reject_locations(upload: CofkCollectUpload, request=None):
     log.info(f'{upload}: rejected (locations bulk upload)')
 
 
+# Correction fields that resolve to a work's CofkUnionComment/CofkWorkCommentMap
+# relationship_type, rather than a plain CofkUnionWork field (see _apply_comment_correction).
+_CORRECTION_COMMENT_REL_TYPES = {
+    'notes_on_date_of_work': REL_TYPE_COMMENT_DATE,
+    'notes_on_letter': REL_TYPE_COMMENT_REFERS_TO,
+}
+
+# Correction fields that feed into the precomputed date_of_work_std column
+# (see compute_date_of_work_std) - changing any of these means date_of_work_std
+# needs resyncing too.
+_DATE_OF_WORK_STD_SOURCE_FIELDS = {
+    'date_of_work_std_year', 'date_of_work_std_month', 'date_of_work_std_day',
+    'date_of_work2_std_year', 'date_of_work2_std_month', 'date_of_work2_std_day',
+}
+
+# date_of_work_std_gregorian additionally depends on original_calendar (see
+# compute_date_of_work_std_gregorian), since it's the same date converted
+# according to that field.
+_DATE_OF_WORK_STD_GREGORIAN_SOURCE_FIELDS = _DATE_OF_WORK_STD_SOURCE_FIELDS | {'original_calendar'}
+
+
+def _apply_comment_correction(work: CofkUnionWork, rel_type: str, new_value: str, username: str) -> None:
+    """Update (or create) the work's comment for the given relationship_type.
+
+    Work notes are stored via CofkUnionComment/CofkWorkCommentMap, not as plain
+    fields on CofkUnionWork (see link_comments_to_work for the equivalent create
+    path used for brand-new works), so corrections to them can't be applied with
+    a plain setattr() the way other correction fields are.
+    """
+    existing_map = CofkWorkCommentMap.objects.filter(
+        work=work, relationship_type=rel_type
+    ).select_related('comment').first()
+
+    if existing_map:
+        existing_map.comment.comment = new_value
+        existing_map.comment.update_current_user_timestamp(username)
+        existing_map.comment.save()
+    else:
+        comment = CofkUnionComment(comment=new_value)
+        comment.update_current_user_timestamp(username)
+        comment.save()
+
+        cwcm = CofkWorkCommentMap(comment=comment, work=work, relationship_type=rel_type)
+        cwcm.update_current_user_timestamp(username)
+        cwcm.save()
+
+
 def accept_corrections(upload: CofkCollectUpload, username: str, request=None):
     """Accept a bulk corrections upload — apply each staged correction to the live CofkUnionWork."""
     pending = CofkCollectWorkCorrection.objects.filter(
@@ -588,12 +636,33 @@ def accept_corrections(upload: CofkCollectUpload, username: str, request=None):
                     continue
 
                 work = correction.union_work
+                date_fields_changed = False
+                gregorian_fields_changed = False
                 for field_name, new_value in correction.corrections.items():
                     if field_name == 'original_catalogue_code':
                         # catalogue_code is stored as the FK value (to_field='catalogue_code')
                         setattr(work, 'original_catalogue_id', new_value)
+                    elif field_name in _CORRECTION_COMMENT_REL_TYPES:
+                        _apply_comment_correction(
+                            work, _CORRECTION_COMMENT_REL_TYPES[field_name], new_value, username
+                        )
                     else:
                         setattr(work, field_name, new_value)
+                        if field_name in _DATE_OF_WORK_STD_SOURCE_FIELDS:
+                            date_fields_changed = True
+                        if field_name in _DATE_OF_WORK_STD_GREGORIAN_SOURCE_FIELDS:
+                            gregorian_fields_changed = True
+
+                if date_fields_changed:
+                    # date_of_work_std is a separate precomputed column that search
+                    # sorts/filters against directly - it isn't derived automatically
+                    # on save, so it must be explicitly resynced when its source
+                    # fields change, or search results show a stale date.
+                    work.date_of_work_std = compute_date_of_work_std(work)
+
+                if gregorian_fields_changed:
+                    work.date_of_work_std_gregorian = compute_date_of_work_std_gregorian(work)
+
                 work.update_current_user_timestamp(username)
                 work.save()
 

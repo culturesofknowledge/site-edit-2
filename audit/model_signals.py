@@ -190,6 +190,28 @@ def handle_create_recref_date(sender: ModelBase, instance: models.Model):
 
 
 def add_relation_audit_to_literal(sender: ModelBase, instance: models.Model):
+    """add "Relation: " New records to cofk_union_audit_literal for a newly
+    created relationship. Only call this when the relationship was actually
+    just created (e.g. from post_save with created=True) - it does not
+    diff against a previous state, so calling it on every save would write
+    spurious duplicate "New" rows for what are really just date edits on an
+    already-existing relationship (see save_audit_records for that case).
+    """
+    _write_relation_audit_pair(sender, instance, constant.CHANGE_TYPE_NEW)
+
+
+def add_relation_audit_to_literal_on_delete(sender: ModelBase, instance: models.Model):
+    """add "Relation: " Del records to cofk_union_audit_literal for a
+    relationship that was just removed (e.g. unticking a role checkbox,
+    removing a location/related-person entry). Mirrors
+    add_relation_audit_to_literal but for the opposite event - see that
+    function's docstring for why deletion needed its own entry point rather
+    than reusing insert's code path unconditionally.
+    """
+    _write_relation_audit_pair(sender, instance, constant.CHANGE_TYPE_DELETE)
+
+
+def _write_relation_audit_pair(sender: ModelBase, instance: models.Model, change_type: str):
     """
     add "Relation: " records to cofk_union_audit_literal
     """
@@ -197,35 +219,45 @@ def add_relation_audit_to_literal(sender: ModelBase, instance: models.Model):
     if not issubclass(sender, Recref):
         return
 
-    # define left, right column
-    left_rel_obj, right_rel_obj = get_left_right_rel_obj(instance)
-
     instance: Recref
 
-    # define rel description
-    rel_type = CofkUnionRelationshipType.objects.filter(relationship_code=instance.relationship_type).first()
-    if rel_type:
-        from_left_desc = rel_type.desc_left_to_right
-        from_right_desc = rel_type.desc_right_to_left
-    else:
-        from_left_desc = f'{instance.relationship_type} < '
-        from_right_desc = f'{instance.relationship_type} > '
+    try:
+        # define left, right column
+        left_rel_obj, right_rel_obj = get_left_right_rel_obj(instance)
 
-    # save two (both ways) relation audit records
-    for cur_left_rel, cur_right_rel, rel_desc in [
-        (left_rel_obj, right_rel_obj, from_left_desc),
-        (right_rel_obj, left_rel_obj, from_right_desc),
-    ]:
-        left_adapter = to_audit_adapter(cur_left_rel)
-        right_adapter = to_audit_adapter(cur_right_rel)
-        literal = CofkUnionAuditLiteral(
-            change_user=getattr(instance, 'change_user', constant.DEFAULT_CHANGE_USER),
-            change_type='New',
-            table_name=cur_left_rel._meta.db_table,
-            key_value_text=left_adapter.key_value_text(),
-            key_value_integer=instance.recref_id,
-            key_decode=left_adapter.key_decode(),
-            column_name=f'Relationship: {rel_desc}',
-            new_column_value=right_adapter.key_decode(),
-        )
-        literal.save()
+        # define rel description
+        rel_type = CofkUnionRelationshipType.objects.filter(relationship_code=instance.relationship_type).first()
+        if rel_type:
+            from_left_desc = rel_type.desc_left_to_right
+            from_right_desc = rel_type.desc_right_to_left
+        else:
+            from_left_desc = f'{instance.relationship_type} < '
+            from_right_desc = f'{instance.relationship_type} > '
+
+        # save two (both ways) relation audit records
+        for cur_left_rel, cur_right_rel, rel_desc in [
+            (left_rel_obj, right_rel_obj, from_left_desc),
+            (right_rel_obj, left_rel_obj, from_right_desc),
+        ]:
+            left_adapter = to_audit_adapter(cur_left_rel)
+            right_adapter = to_audit_adapter(cur_right_rel)
+            literal = CofkUnionAuditLiteral(
+                change_user=getattr(instance, 'change_user', constant.DEFAULT_CHANGE_USER),
+                change_type=change_type,
+                table_name=cur_left_rel._meta.db_table,
+                key_value_text=left_adapter.key_value_text(),
+                key_value_integer=instance.recref_id,
+                key_decode=left_adapter.key_decode(),
+                column_name=f'Relationship: {rel_desc}',
+            )
+            if change_type == constant.CHANGE_TYPE_DELETE:
+                literal.old_column_value = right_adapter.key_decode()
+            else:
+                literal.new_column_value = right_adapter.key_decode()
+            literal.save()
+    except Exception:
+        # e.g. the related record (person/location/role...) on either side
+        # is itself mid-cascade-delete (this recref row being removed as a
+        # side effect of deleting its parent) and no longer resolvable -
+        # audit logging must never block the actual data change
+        log.exception(f'failed to write relationship audit record [{instance}][{change_type}]')

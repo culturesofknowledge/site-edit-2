@@ -1399,12 +1399,8 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                     constant.PM_EXPORT_FILE_WORK,
                     )
 
-        def create_expanded_work_excel(queryable_works, file_path=None):
-            return excel_maker.create_excel_from_header_values(
-                queryable_works, file_path, WorkCsvHeaderValues(), 'Work'
-            )
         return (lambda: view_serv.create_export_file_name('work', 'xlsx'),
-                lambda: create_expanded_work_excel,
+                lambda: excel_maker.create_work_excel,
                 constant.PM_EXPORT_FILE_WORK,
                 )
 
@@ -1458,7 +1454,7 @@ class CompactWorkCsvHeaderValues(HeaderValues):
             "Year date",
             "Month date",
             "Day date",
-            "Date in original calendar",
+            "Date for ordering",
             "Author",
             "Notes on Author in relation to letter",
             "Recipient",
@@ -1522,7 +1518,7 @@ class WorkCsvHeaderValues(HeaderValues):
             "Year date",
             "Month date",
             "Day date",
-            "Date in original calendar",
+            "Date for ordering",
             "Author",
             "Notes on Author in relation to letter",
             "Origin name",

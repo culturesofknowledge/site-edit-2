@@ -35,7 +35,8 @@ from core.helper.renderer_serv import DemoCompactSearchResultsRenderer, \
     demo_table_search_results_renderer, RendererFactory
 from core.helper.url_serv import VNAME_FULL_FORM, VNAME_SEARCH
 from core.helper.view_components import DownloadCsvHandler
-from core.models import CofkUnionResource, CofkUnionComment, CofkUserSavedQuery, CofkUserSavedQuerySelection
+from core.models import CofkUnionResource, CofkUnionComment, CofkUserSavedQuery, CofkUserSavedQuerySelection, \
+    MergeHistory
 from work.models import CofkUnionWork
 
 if TYPE_CHECKING:
@@ -508,7 +509,7 @@ class BasicSearchView(ListView):
         def file_fn():
             file_name = file_name_factory()
             tmp_path = media_serv.FILE_DOWNLOAD_PATH.joinpath(file_name)
-            file_factory()(self.get_queryset().iterator(), tmp_path)
+            file_factory()(self.get_queryset(), tmp_path)
             return file_name
 
         return self.resp_file_download(request, file_fn, *args, **kwargs)
@@ -875,6 +876,24 @@ class MergeActionViews(View):
                 old_ids, new_id, outdated_records.count()
             ))
             outdated_records.update(**{foreign_field.attname: new_id})
+
+        # record merge history before the losing records are deleted, so
+        # there's a trace of where a "removed" record in the audit trail
+        # actually went
+        new_name = general_model_serv.get_display_name(selected_model)
+        new_display_id = general_model_serv.get_display_id(selected_model)
+        for m in other_models:
+            merge_history = MergeHistory(
+                new_id=str(selected_model.pk),
+                new_name=new_name,
+                new_display_id=str(new_display_id),
+                old_id=str(m.pk),
+                old_name=general_model_serv.get_display_name(m),
+                old_display_id=str(general_model_serv.get_display_id(m)),
+                model_class_name=m.__class__.__name__,
+            )
+            merge_history.update_current_user_timestamp(username or '')
+            merge_history.save()
 
         # remove other_models
         for m in other_models:
