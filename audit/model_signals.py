@@ -10,7 +10,7 @@ from audit.audit_recref_adapter import AuditRecrefAdapter
 from audit.models import CofkUnionAuditLiteral
 from core import constant
 from core.helper import model_serv
-from core.helper.recref_serv import get_left_right_rel_obj
+from core.helper.recref_serv import get_left_right_rel_obj, find_relationship_type
 from core.models import CofkUnionComment, CofkUnionRelationshipType, CofkUnionResource, Recref, \
     CofkUnionNationality, CofkUnionImage, CofkUnionRoleCategory, CofkUnionSubject
 from institution.models import CofkUnionInstitution
@@ -111,6 +111,16 @@ def handle_non_triggered_record(sender: ModelBase, instance: models.Model, is_cr
 
 
 
+def build_recref_key_decode(instance: Recref, adapters) -> str:
+    """'X was former owner of Y' style sentence describing a recref, using the
+    relationship type's own left-to-right description as the connecting verb.
+    """
+    left_adapter, right_adapter = adapters
+    rel_type = find_relationship_type(instance.relationship_type)
+    verb = rel_type.desc_left_to_right if rel_type else instance.relationship_type
+    return f'{left_adapter.key_decode()} {verb} {right_adapter.key_decode()}'
+
+
 def save_audit_records(instance: Recref, old_instance: Recref = None, ):
     adapters = get_left_right_adapters(instance)
     columns = ['from_date', 'to_date']
@@ -122,6 +132,8 @@ def save_audit_records(instance: Recref, old_instance: Recref = None, ):
         columns = (c for c in columns
                    if getattr(instance, c, None) is not None)
 
+    key_decode = build_recref_key_decode(instance, adapters)
+
     for column_name in columns:
         # handle date fields
         literal = CofkUnionAuditLiteral(
@@ -130,7 +142,7 @@ def save_audit_records(instance: Recref, old_instance: Recref = None, ):
             table_name=instance._meta.db_table,
             key_value_text=' '.join(adapter.key_value_text() for adapter in adapters),
             key_value_integer=instance.recref_id,
-            key_decode=' '.join(adapter.key_decode() for adapter in adapters),
+            key_decode=key_decode,
             column_name=column_name,
             new_column_value=getattr(instance, column_name),
         )

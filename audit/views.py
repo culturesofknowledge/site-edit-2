@@ -221,7 +221,9 @@ def create_display_key(record: CofkUnionAuditLiteral) -> str:
     elif record.table_name in text_id_tables:
         result = f'{text_id_tables[record.table_name]} {record.key_value_text}'
     else:
+        # every other audited table is a recref/relationship join table (person <-> work,
+        # manif <-> institution, etc.) -- record.key_value_integer there is the recref_id.
         key_value = record.key_value_integer if record.key_value_integer else record.key_value_text
-        result = f'{record.table_name} {key_value}'
+        result = f'Relationship ID {key_value}'
 
     return result
