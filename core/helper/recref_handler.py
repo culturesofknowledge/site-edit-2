@@ -447,6 +447,19 @@ class MultiRecrefAdapterHandler(MultiRecrefHandler):
         return self.recref_adapter.recref_class()
 
     def create_recref_by_new_form(self, target_id, parent_instance) -> Optional[Recref]:
+        # the "add new" field re-posts whatever target it currently holds on every
+        # save of the page, not just when the user actually picks something new
+        # (e.g. it survives a validation-error re-render of an unrelated field, or
+        # a resubmitted form) -- without this check we'd create (and audit-log) a
+        # duplicate recref to the same already-linked target on every such save.
+        target_id_name = self.recref_adapter.target_id_name()
+        already_linked = any(
+            str(getattr(r, target_id_name, None)) == str(target_id)
+            for r in self.recref_adapter.find_recref_records(self.rel_type)
+        )
+        if already_linked:
+            return None
+
         return recref_serv.upsert_recref_by_target_id(
             target_id, self.recref_adapter.find_target_instance,
             rel_type=self.rel_type,

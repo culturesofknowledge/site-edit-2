@@ -10,7 +10,7 @@ from audit.audit_recref_adapter import AuditRecrefAdapter
 from audit.models import CofkUnionAuditLiteral
 from core import constant
 from core.helper import model_serv
-from core.helper.recref_serv import get_left_right_rel_obj
+from core.helper.recref_serv import get_left_right_rel_obj, find_relationship_type
 from core.models import CofkUnionComment, CofkUnionRelationshipType, CofkUnionResource, Recref, \
     CofkUnionNationality, CofkUnionImage, CofkUnionRoleCategory, CofkUnionSubject
 from institution.models import CofkUnionInstitution
@@ -23,7 +23,11 @@ from work.models import CofkUnionWork, CofkUnionLanguageOfWork
 log = logging.getLogger(__name__)
 
 
-def handle_non_triggered_record(sender: ModelBase, instance: models.Model, is_create: bool = True):
+_NO_OLD_NOTES = object()
+
+
+def handle_non_triggered_record(sender: ModelBase, instance: models.Model, is_create: bool | None = True,
+                                old_notes=_NO_OLD_NOTES):
     """
     Some records like CofkUnionLanguageOfWork, will not create audit record when created by DB trigger.
     This function will create audit record for such records.
@@ -33,13 +37,22 @@ def handle_non_triggered_record(sender: ModelBase, instance: models.Model, is_cr
     sender
     instance
     is_create
+        True for a newly added language row, False for a removed one, None for
+        an in-place edit to an existing row's notes (no language added/removed)
+    old_notes
+        for is_create=None only: this row's notes value before the edit, so the
+        "old" side of the audit record can be reconstructed even though the DB
+        row already reflects the new note by the time this runs
 
     Returns
     -------
 
     """
-    def _to_column_value(names):
-        return ', '.join(sorted(names))
+    def _format_lang_entry(name, notes):
+        return f'{name} ({notes})' if notes else name
+
+    def _to_column_value(entries):
+        return ', '.join(sorted(_format_lang_entry(name, notes) for name, notes in entries))
 
     if sender not in {
         CofkUnionLanguageOfWork,
@@ -60,10 +73,23 @@ def handle_non_triggered_record(sender: ModelBase, instance: models.Model, is_cr
     table_name = parent_instance._meta.db_table
     key_value_integer = audit_adapter.key_value_integer()
 
+    # column_name
+    if isinstance(instance, CofkUnionLanguageOfWork):
+        column_name = 'language_of_work'
+    elif isinstance(instance, CofkUnionLanguageOfManifestation):
+        column_name = 'language_of_manifestation'
+    else:
+        raise NotImplementedError(f'unsupported instance type {instance}')
+
+    # only coalesce with a recent audit row for this *same* column -- without the
+    # column_name filter this would also match (and overwrite) an unrelated audit
+    # row for the same manifestation written moments earlier in the same save
+    # (e.g. the "manifestation_is_translation" checkbox), destroying that record.
     org_audit = CofkUnionAuditLiteral.objects.filter(
         change_timestamp__gt=django.utils.timezone.now() - datetime.timedelta(seconds=30),
         table_name=table_name,
         key_value_integer=key_value_integer,
+        column_name=column_name,
     ).first()
 
     _languages = []
@@ -71,8 +97,8 @@ def handle_non_triggered_record(sender: ModelBase, instance: models.Model, is_cr
         _languages = instance.work.language_set.all()
     elif isinstance(instance, CofkUnionLanguageOfManifestation):
         _languages = instance.manifestation.language_set.all()
-    cur_lang_names = {l.language_code.language_name for l in _languages}
-    new_column_value = _to_column_value(cur_lang_names)
+    cur_entries = {(l.language_code.language_name, l.notes) for l in _languages}
+    new_column_value = _to_column_value(cur_entries)
     if org_audit:
         # update existing audit for language change
         org_audit.new_column_value = new_column_value
@@ -81,20 +107,16 @@ def handle_non_triggered_record(sender: ModelBase, instance: models.Model, is_cr
 
     # prepare for new audit record for language change
 
-    changed_lang_name = instance.language_code.language_name
+    changed_entry = (instance.language_code.language_name, instance.notes)
 
     if is_create:
-        org_lang_names = cur_lang_names - {changed_lang_name}
+        org_entries = cur_entries - {changed_entry}
+    elif is_create is None:
+        # in-place note edit: same languages, just this row's note reverts
+        old_notes = None if old_notes is _NO_OLD_NOTES else old_notes
+        org_entries = (cur_entries - {changed_entry}) | {(changed_entry[0], old_notes)}
     else:
-        org_lang_names = cur_lang_names | {changed_lang_name}
-
-    # column_name
-    if isinstance(instance, CofkUnionLanguageOfWork):
-        column_name = 'language_of_work'
-    elif isinstance(instance, CofkUnionLanguageOfManifestation):
-        column_name = 'language_of_manifestation'
-    else:
-        raise NotImplementedError(f'unsupported instance type {instance}')
+        org_entries = cur_entries | {changed_entry}
 
     CofkUnionAuditLiteral.objects.create(
         change_timestamp=model_serv.default_current_timestamp(),
@@ -106,9 +128,40 @@ def handle_non_triggered_record(sender: ModelBase, instance: models.Model, is_cr
         key_decode=audit_adapter.key_decode(),
         column_name=column_name,
         new_column_value=new_column_value,
-        old_column_value=_to_column_value(org_lang_names),
+        old_column_value=_to_column_value(org_entries),
     )
 
+
+def handle_update_language_notes(sender: ModelBase, instance: models.Model):
+    """pre_save: capture a language row's notes value before it's overwritten,
+    so handle_non_triggered_record can still build the "old" audit value for an
+    in-place note edit (no language added/removed) once post_save fires --
+    without this, such an edit currently produces no audit record at all, since
+    handle_non_triggered_record is otherwise only invoked on create/delete.
+    """
+    if sender not in {
+        CofkUnionLanguageOfWork,
+        CofkUnionLanguageOfManifestation,
+    }:
+        return
+
+    if not instance.pk:
+        return  # this is a create, not an update -- handled on post_save instead
+
+    old_instance = model_serv.get_safe(sender, pk=instance.pk)
+    if old_instance is not None and old_instance.notes != instance.notes:
+        instance.old_notes_for_audit = old_instance.notes
+
+
+
+def build_recref_key_decode(instance: Recref, adapters) -> str:
+    """'X was former owner of Y' style sentence describing a recref, using the
+    relationship type's own left-to-right description as the connecting verb.
+    """
+    left_adapter, right_adapter = adapters
+    rel_type = find_relationship_type(instance.relationship_type)
+    verb = rel_type.desc_left_to_right if rel_type else instance.relationship_type
+    return f'{left_adapter.key_decode()} {verb} {right_adapter.key_decode()}'
 
 
 def save_audit_records(instance: Recref, old_instance: Recref = None, ):
@@ -122,6 +175,8 @@ def save_audit_records(instance: Recref, old_instance: Recref = None, ):
         columns = (c for c in columns
                    if getattr(instance, c, None) is not None)
 
+    key_decode = build_recref_key_decode(instance, adapters)
+
     for column_name in columns:
         # handle date fields
         literal = CofkUnionAuditLiteral(
@@ -130,7 +185,7 @@ def save_audit_records(instance: Recref, old_instance: Recref = None, ):
             table_name=instance._meta.db_table,
             key_value_text=' '.join(adapter.key_value_text() for adapter in adapters),
             key_value_integer=instance.recref_id,
-            key_decode=' '.join(adapter.key_decode() for adapter in adapters),
+            key_decode=key_decode,
             column_name=column_name,
             new_column_value=getattr(instance, column_name),
         )
