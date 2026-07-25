@@ -7,7 +7,7 @@ from core import constant
 
 
 class CofkUser(AbstractBaseUser, PermissionsMixin):
-    username = models.CharField(max_length=30, primary_key=True)
+    username = models.CharField(max_length=254, primary_key=True)
 
     surname = models.CharField(max_length=30, null=False, default='')
     forename = models.CharField(max_length=30, null=False, default='')

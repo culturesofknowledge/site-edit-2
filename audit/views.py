@@ -14,9 +14,20 @@ from core import constant
 from core.helper import renderer_serv, query_serv
 from core.helper.renderer_serv import RendererFactory
 from core.helper.view_serv import DefaultSearchView
+from core.models import MergeHistory
 from work.templatetags import work_util_tags
 
 log = logging.getLogger(__name__)
+
+# table_name (as stored on CofkUnionAuditLiteral) -> model_class_name (as
+# stored on MergeHistory) for the record types that support merging. Used to
+# show a "merged into" pointer on a deleted record's audit row, since the
+# delete audit row on its own has no trace of where the record went.
+MERGEABLE_TABLE_MODEL_MAP = {
+    'cofk_union_person': 'CofkUnionPerson',
+    'cofk_union_location': 'CofkUnionLocation',
+    'cofk_union_institution': 'CofkUnionInstitution',
+}
 
 
 class AuditSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearchView):
@@ -124,6 +135,7 @@ class AuditSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearch
             record.old_column_value = display_resources_safe(record.old_column_value)
 
             record.record_display_key = create_display_key(record)
+            record.merged_into = find_merge_target(record)
             return record
 
         return renderer_serv.create_table_search_results_renderer('audit/search_table_layout.html',
@@ -165,6 +177,21 @@ def replace_old_url(value: str) -> str:
     return value
 
 
+def find_merge_target(record: CofkUnionAuditLiteral) -> MergeHistory | None:
+    """If this audit row records the deletion of a record as part of a merge,
+    return the MergeHistory row saying where it was merged into. Only
+    person/location/institution deletes are ever produced by a merge.
+    """
+    model_class_name = MERGEABLE_TABLE_MODEL_MAP.get(record.table_name)
+    if record.change_type != 'Del' or not model_class_name:
+        return None
+
+    return MergeHistory.objects.filter(
+        model_class_name=model_class_name,
+        old_id=record.key_value_text,
+    ).order_by('-change_timestamp').first()
+
+
 def create_display_key(record: CofkUnionAuditLiteral) -> str:
     integer_id_tables = {
         'cofk_union_work': 'Work ID',
@@ -194,7 +221,9 @@ def create_display_key(record: CofkUnionAuditLiteral) -> str:
     elif record.table_name in text_id_tables:
         result = f'{text_id_tables[record.table_name]} {record.key_value_text}'
     else:
+        # every other audited table is a recref/relationship join table (person <-> work,
+        # manif <-> institution, etc.) -- record.key_value_integer there is the recref_id.
         key_value = record.key_value_integer if record.key_value_integer else record.key_value_text
-        result = f'{record.table_name} {key_value}'
+        result = f'Relationship ID {key_value}'
 
     return result

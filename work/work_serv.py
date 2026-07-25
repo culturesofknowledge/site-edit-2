@@ -1,3 +1,4 @@
+import calendar
 import logging
 from datetime import date
 from typing import Any, List
@@ -31,6 +32,99 @@ def _format_work_date(year, month, day) -> str:
     elif year:
         return str(year)
     return 'Unknown date'
+
+
+def compute_date_of_work_std(work: CofkUnionWork) -> str:
+    """Compute the sortable YYYY-MM-DD value date_of_work_std should hold, derived
+    fresh from the work's granular date fields (mirrors the derivation logic in
+    DisplayableWork.date_for_ordering, but always recomputes from the parts rather
+    than trusting whatever is currently stored in date_of_work_std).
+
+    date_of_work_std is a separate, precomputed column that WorkSearchView sorts and
+    date-range-filters against directly at the SQL level - it is not derived
+    automatically on save, so any code that changes the date fields (e.g. bulk
+    corrections) must call this and persist the result, or search results will
+    reflect a stale date.
+    """
+    if work.date_of_work2_std_year:
+        year = int(work.date_of_work2_std_year)
+        # For "to" date, default blank month to 12 (end of year)
+        month = int(work.date_of_work2_std_month or 12)
+        # Default blank day to last day of the month (handles leap years)
+        day = int(work.date_of_work2_std_day or calendar.monthrange(year, month)[1])
+        return f"{year:04d}-{month:02d}-{day:02d}"
+
+    if not work.date_of_work_std_year:
+        return DEFAULT_EMPTY_DATE_STR
+
+    year = int(work.date_of_work_std_year)
+    month = int(work.date_of_work_std_month or DEFAULT_MONTH)
+    day = int(work.date_of_work_std_day or DEFAULT_DAY)
+    return f"{year:04d}-{month:02d}-{day:02d}"
+
+
+def _julian_gregorian_day_offset(calendar_code: str, year: int, month: int, day: int) -> int:
+    """Direct port of cal_diff_days_by_calendar_code() in
+    core/static/core/js/auto_date_calendar.js - keep the two in sync if this rule
+    ever changes. Julian dates ran 10 days behind Gregorian, widening to 11 days
+    after February 1700 (a Julian leap year that Gregorian's century rule skips)."""
+    if calendar_code not in ('JM', 'JJ'):
+        return 0
+    if year > 1700:
+        return 11
+    if year == 1700 and month > 2:
+        return 11
+    if year == 1700 and month == 2 and day == 29:
+        return 11
+    return 10
+
+
+def _convert_date_by_calendar_code(calendar_code: str, year: int, month: int, day: int) \
+        -> tuple[int, int, int]:
+    """Direct port of convert_date_by_calendar_code() in
+    core/static/core/js/auto_date_calendar.js - keep the two in sync."""
+    offset = _julian_gregorian_day_offset(calendar_code, year, month, day)
+    new_day = day + offset
+    new_month = month
+    new_year = year
+
+    max_day_of_month = calendar.monthrange(year, month)[1]
+    if new_day > max_day_of_month:
+        new_day -= max_day_of_month
+        new_month += 1
+        if new_month > 12:
+            new_month = 1
+            new_year += 1
+            if new_year > 9999:
+                new_year = 9999
+
+    return new_year, new_month, new_day
+
+
+def compute_date_of_work_std_gregorian(work: CofkUnionWork) -> str:
+    """Compute the sortable YYYY-MM-DD value date_of_work_std_gregorian should hold:
+    the same date used for date_of_work_std, converted to the Gregorian calendar
+    based on original_calendar. Like date_of_work_std, this is a separate
+    precomputed column normally only set by the manual-edit web form's JS
+    (auto_date_calendar.js), so it must be explicitly resynced whenever the source
+    date fields - or original_calendar itself - change outside that form (e.g. via
+    corrections).
+    """
+    if work.date_of_work2_std_year:
+        year = int(work.date_of_work2_std_year)
+        month = int(work.date_of_work2_std_month or 12)
+        day = int(work.date_of_work2_std_day or calendar.monthrange(year, month)[1])
+    elif work.date_of_work_std_year:
+        year = int(work.date_of_work_std_year)
+        month = int(work.date_of_work_std_month or DEFAULT_MONTH)
+        day = int(work.date_of_work_std_day or DEFAULT_DAY)
+    else:
+        return DEFAULT_EMPTY_DATE_STR
+
+    new_year, new_month, new_day = _convert_date_by_calendar_code(
+        work.original_calendar, year, month, day
+    )
+    return f"{new_year:04d}-{new_month:02d}-{new_day:02d}"
 
 
 def get_recref_display_name(work: CofkUnionWork) -> str:

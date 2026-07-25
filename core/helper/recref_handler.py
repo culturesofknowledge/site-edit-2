@@ -59,10 +59,23 @@ class SingleRecrefHandler:
 
     def upsert_recref_if_field_exist(self, form: forms.BaseForm, parent, username) -> Recref | None:
         if not (target_id := form.cleaned_data.get(self.form_field_name)):
-            log.debug(f'value of form_field_name not found [{self.form_field_name=}] ')
+            # empty field means the user cleared the selection (e.g. clicked "Clear" on
+            # the recref widget), so the existing recref must be removed here -- otherwise
+            # it silently survives and reappears on the next page load/save.
+            if org_recref := self._find_recref_by_parent(parent):
+                org_recref.delete()
             return
 
         recref_adapter = self.create_recref_adapter(parent)
+        org_recref = self._find_recref_by_parent(parent, recref_adapter)
+
+        # selection unchanged from what's already saved -- skip the resave. Every save on
+        # any tab re-posts this field with the current target id, so without this check
+        # we'd re-save (and re-audit) the same recref on every save, not just when the
+        # user actually picks a different target.
+        if org_recref and str(recref_adapter.get_target_id(org_recref)) == str(target_id):
+            return org_recref
+
         recref_adapter.target_id_name()
         recref = recref_serv.upsert_recref_by_target_id(
             target_id, recref_adapter.find_target_instance,
@@ -70,7 +83,7 @@ class SingleRecrefHandler:
             parent_instance=parent,
             create_recref_fn=recref_adapter.recref_class(),
             set_parent_target_instance_fn=recref_adapter.set_parent_target_instance,
-            org_recref=self._find_recref_by_parent(parent, recref_adapter),
+            org_recref=org_recref,
             username=username,
         )
         if recref:
@@ -434,6 +447,19 @@ class MultiRecrefAdapterHandler(MultiRecrefHandler):
         return self.recref_adapter.recref_class()
 
     def create_recref_by_new_form(self, target_id, parent_instance) -> Optional[Recref]:
+        # the "add new" field re-posts whatever target it currently holds on every
+        # save of the page, not just when the user actually picks something new
+        # (e.g. it survives a validation-error re-render of an unrelated field, or
+        # a resubmitted form) -- without this check we'd create (and audit-log) a
+        # duplicate recref to the same already-linked target on every such save.
+        target_id_name = self.recref_adapter.target_id_name()
+        already_linked = any(
+            str(getattr(r, target_id_name, None)) == str(target_id)
+            for r in self.recref_adapter.find_recref_records(self.rel_type)
+        )
+        if already_linked:
+            return None
+
         return recref_serv.upsert_recref_by_target_id(
             target_id, self.recref_adapter.find_target_instance,
             rel_type=self.rel_type,

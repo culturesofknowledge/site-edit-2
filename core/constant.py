@@ -19,7 +19,7 @@ REL_TYPE_COMMENT_DATE = 'refers_to_date'
 REL_TYPE_COMMENT_ORIGIN = 'refers_to_origin'
 REL_TYPE_COMMENT_DESTINATION = 'refers_to_destination'
 REL_TYPE_COMMENT_ROUTE = 'route'
-REL_TYPE_COMMENT_RECEIPT_DATE = 'refers_to_recept_date'
+REL_TYPE_COMMENT_RECEIPT_DATE = 'refers_to_receipt_date'
 REL_TYPE_COMMENT_PERSON_MENTIONED = 'refers_to_people_mentioned_in_work'
 
 REL_TYPE_MENTION_WORK = 'mentions_work'

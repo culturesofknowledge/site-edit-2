@@ -1,5 +1,5 @@
 {% load cl_filters %}
-{% if descriptor and descriptor.name %}
+{% if descriptor and descriptor.name and descriptor.name != 'None' %}
     <div class="form-descriptor">
         <div class="desc-name">
             <h3> {{ descriptor.model_name }}: {{ descriptor.name }}</h3>

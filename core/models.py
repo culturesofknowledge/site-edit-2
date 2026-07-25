@@ -26,9 +26,9 @@ class Recref(models.Model, RecordTracker):
     relationship_type = models.CharField(max_length=100)
 
     creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
-    creation_user = models.CharField(max_length=50)
+    creation_user = models.CharField(max_length=254)
     change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
-    change_user = models.CharField(max_length=50)
+    change_user = models.CharField(max_length=254)
 
     class Meta:
         abstract = True
@@ -47,9 +47,9 @@ class CofkUnionComment(models.Model, RecordTracker):
     comment_id = models.AutoField(primary_key=True)
     comment = models.TextField(blank=True, null=True)
     creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
-    creation_user = models.CharField(max_length=50)
+    creation_user = models.CharField(max_length=254)
     change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
-    change_user = models.CharField(max_length=50)
+    change_user = models.CharField(max_length=254)
     uuid = models.UUIDField(blank=True, null=True)
 
     class Meta:
@@ -69,9 +69,9 @@ class CofkUnionRelationshipType(models.Model, RecordTracker):
     desc_left_to_right = models.CharField(max_length=200)
     desc_right_to_left = models.CharField(max_length=200)
     creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
-    creation_user = models.CharField(max_length=50)
+    creation_user = models.CharField(max_length=254)
     change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
-    change_user = models.CharField(max_length=50)
+    change_user = models.CharField(max_length=254)
 
     class Meta:
         db_table = 'cofk_union_relationship_type'
@@ -83,9 +83,9 @@ class CofkUnionResource(models.Model, RecordTracker):
     resource_details = models.TextField()
     resource_url = models.TextField()
     creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
-    creation_user = models.CharField(max_length=50)
+    creation_user = models.CharField(max_length=254)
     change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
-    change_user = models.CharField(max_length=50)
+    change_user = models.CharField(max_length=254)
     uuid = models.UUIDField(blank=True, null=True)
 
     class Meta:
@@ -105,9 +105,9 @@ class CofkUnionImage(models.Model, RecordTracker):
     image_id = models.AutoField(primary_key=True)
     image_filename = models.TextField(blank=True, null=True)
     creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
-    creation_user = models.CharField(max_length=50)
+    creation_user = models.CharField(max_length=254)
     change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
-    change_user = models.CharField(max_length=50)
+    change_user = models.CharField(max_length=254)
     thumbnail = models.TextField(blank=True, null=True)
     can_be_displayed = models.CharField(max_length=1)
     display_order = models.IntegerField(default=1)
@@ -317,3 +317,39 @@ class CofkUserSavedQuerySelection(models.Model):
 
     class Meta:
         db_table = 'cofk_user_saved_query_selection'
+
+
+class MergeHistory(models.Model, RecordTracker):
+    """Records that a record was merged into another (the losing record is
+    then deleted by the merge action, which is why this needs to exist
+    separately - there would otherwise be no trace of where it went once the
+    delete lands in the audit trail).
+
+    model_class_name (e.g. "CofkUnionPerson") plus old_id is how a merge is
+    looked up for a given audit "removed" entry - see
+    core.helper.merge_serv.MERGE_HISTORY_TABLE_NAMES for the model-class-name
+    to audit-table-name mapping used to do that lookup.
+
+    NOTE: this table already existed in the database from an earlier, never
+    -finished attempt at this same feature (core.helper.merge_serv.merge(),
+    which is unused dead code) - the model fields here match that pre-existing
+    table exactly, they were not chosen freely.
+    """
+    merge_history_id = models.AutoField(primary_key=True)
+    new_id = models.CharField(max_length=100)
+    new_name = models.TextField()
+    new_display_id = models.CharField(max_length=100)
+    old_id = models.CharField(max_length=100)
+    old_name = models.TextField()
+    old_display_id = models.CharField(max_length=100)
+    model_class_name = models.CharField(max_length=100)
+    creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
+    creation_user = models.CharField(max_length=254)
+    change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
+    change_user = models.CharField(max_length=254)
+
+    class Meta:
+        db_table = 'merge_history'
+        indexes = [
+            models.Index(fields=['model_class_name', 'old_id']),
+        ]
