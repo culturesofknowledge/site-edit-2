@@ -386,6 +386,9 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
                 elif _from:
                     simplified_query.append(f'{_range[2]} after {date_serv.normalize_search_display_start(_from)}')
 
+            if self.request_data.get('roles_include_titles'):
+                simplified_query.append('Include titles/roles')
+
         return simplified_query
 
     def get_queryset(self):
@@ -421,14 +424,57 @@ class PersonSearchView(LoginRequiredMixin, BasicSearchView):
             'other_details': lookup_other_details,
         }
 
-        queries.extend(
-            query_serv.create_queries_by_lookup_field(
-                request_data,
-                search_field_names=self.search_fields,
+        roles_include_titles = request_data.get('roles_include_titles')
+
+        if roles_include_titles:
+            # When checkbox is ticked, the roles search value should also be
+            # searched in names_and_titles fields (OR).
+            or_fields = {'roles', 'names_and_titles'}
+            remaining_fields = [f for f in self.search_fields if f not in or_fields]
+
+            # Build queries for non-OR fields
+            queries.extend(
+                query_serv.create_queries_by_lookup_field(
+                    request_data,
+                    search_field_names=remaining_fields,
+                    search_fields_maps=self.search_field_combines,
+                    search_fields_fn_maps=search_field_fn_maps,
+                )
+            )
+
+            # Ensure names_and_titles is populated with the roles value so
+            # both field groups produce queries that can be ORed together.
+            roles_val = request_data.get('roles')
+            roles_lookup_val = request_data.get('roles_lookup')
+            if hasattr(request_data, 'dict'):
+                or_request_data = request_data.dict()
+            else:
+                or_request_data = dict(request_data)
+            if roles_val and not or_request_data.get('names_and_titles'):
+                or_request_data['names_and_titles'] = roles_val
+                or_request_data['names_and_titles_lookup'] = roles_lookup_val or 'contains'
+
+            # Build OR query for roles and names_and_titles
+            or_queries = list(query_serv.create_queries_by_lookup_field(
+                or_request_data,
+                search_field_names=[f for f in self.search_fields if f in or_fields],
                 search_fields_maps=self.search_field_combines,
                 search_fields_fn_maps=search_field_fn_maps,
+            ))
+            if or_queries:
+                combined_or = or_queries[0]
+                for q in or_queries[1:]:
+                    combined_or = combined_or | q
+                queries.append(combined_or)
+        else:
+            queries.extend(
+                query_serv.create_queries_by_lookup_field(
+                    request_data,
+                    search_field_names=self.search_fields,
+                    search_fields_maps=self.search_field_combines,
+                    search_fields_fn_maps=search_field_fn_maps,
+                )
             )
-        )
         return create_queryset_by_queries(SearchResultPerson, queries, sort_by=sort_by)
 
     @property
