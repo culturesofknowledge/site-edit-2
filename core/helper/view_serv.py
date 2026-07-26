@@ -79,14 +79,23 @@ class CachedCountPaginator(Paginator):
 
 
 
-def send_email_file_by_url(file_name, to_email, base_url):
+def send_email_file_by_url(file_name, to_email, base_url, search_info=None):
     if not to_email:
         log.error(f'unknown user email -- [{to_email}]')
         return
 
     download_path = reverse('file-download', kwargs={'file_path': file_name})
     download_url = urljoin(base_url, download_path)
-    content = f'file can be download from this url: {download_url}'
+
+    content_lines = ['Results are attached from your query on EMLO']
+    if search_info:
+        if search_info.get('menu_option'):
+            content_lines.append(f'Menu option was: {search_info["menu_option"]}')
+        if search_info.get('selection'):
+            content_lines.append(f'Selection: {search_info["selection"]}')
+    content_lines.append(f'\nFile can be downloaded from this url: {download_url}')
+    content = '\n'.join(content_lines)
+
     resp = email_utils.send_email(to_email,
                                   subject='Search result',
                                   content=content, )
@@ -449,15 +458,35 @@ class BasicSearchView(ListView):
     def get_search_results_context(self, context):
         return context[self.context_object_name]
 
+    def _build_search_info(self):
+        """Build search information dict for inclusion in export emails."""
+        entity_parts = self.entity.split(',') if self.entity else []
+        entity_label = entity_parts[1].title() if len(entity_parts) > 1 else (entity_parts[0].title() if entity_parts else '')
+
+        #is_compact = (self.request_data.get('display-style', core_constant.SEARCH_LAYOUT_TABLE)
+        #              == core_constant.SEARCH_LAYOUT_GRID)
+        #view_type = 'compact view' if is_compact else 'expanded view'
+        menu_option = f'Search {entity_label.lower()}'
+
+        selection_parts = self.simplified_query
+        selection = '; '.join(selection_parts) if selection_parts else ''
+
+        return {
+            'menu_option': menu_option,
+            'selection': selection,
+        }
+
     def resp_file_download(self, request,
                            file_fn: Callable[[], str],
                            *args, **kwargs):
+
+        search_info = self._build_search_info()
 
         def _fn(user_email, base_url):
             try:
                 log.debug(f'start send email[{user_email}]....')
                 file_name = file_fn()
-                send_email_file_by_url(file_name, user_email, base_url=base_url)
+                send_email_file_by_url(file_name, user_email, base_url=base_url, search_info=search_info)
             except Exception as e:
                 log.error('send email fail....')
                 log.exception(e)
