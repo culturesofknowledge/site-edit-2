@@ -1376,9 +1376,9 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         if not self.has_perms([constant.PM_EXPORT_FILE_WORK]):
             return None
 
-        is_compact = (self.request_data.get('display-style', constant.SEARCH_LAYOUT_TABLE)
-                      == constant.SEARCH_LAYOUT_GRID)
-        header_values = CompactWorkCsvHeaderValues() if is_compact else WorkCsvHeaderValues()
+        # As per issue https://github.com/culturesofknowledge/emlo-project/issues/764
+        # export expanded values always
+        header_values = WorkCsvHeaderValues()
 
         return (lambda: view_serv.create_export_file_name('work', 'csv'),
                 lambda: DownloadCsvHandler(header_values).create_csv_file,
