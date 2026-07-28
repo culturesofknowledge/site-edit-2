@@ -172,7 +172,9 @@
         It is not necessary to enter language of manifestation if they are the same as those of
         the original work.
     </small><br/>
-    {% include "core/component/lang_section.html" with lang_formset=edit_lang_formset new_lang_form=new_lang_form %}
+    <div class="manif-lang-section">
+        {% include "core/component/lang_section.html" with lang_formset=edit_lang_formset new_lang_form=new_lang_form %}
+    </div>
 
 </fieldset>
 
