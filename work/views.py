@@ -124,6 +124,19 @@ def create_search_fn_location_recref(rel_types: list) -> Callable:
     return _fn
 
 
+def build_common_work_form(request, work: CofkUnionWork, request_data=None) -> CommonWorkForm:
+    common_work_form = CommonWorkForm(request_data, initial={
+        'catalogue': work.original_catalogue_id,
+        'work_to_be_deleted': work.work_to_be_deleted,
+    }, user=request.user)
+
+    catalogue_list = [('', None)] + [(c.catalogue_name, c.catalogue_code) for c in get_user_catalogues(request)]
+    common_work_form.fields['catalogue_list'].widget.choices = catalogue_list
+    common_work_form.fields['catalogue'].widget.choices = [(i[1], i[0]) for i in catalogue_list]
+
+    return common_work_form
+
+
 class BasicWorkFFH(FullFormHandler):
     def __init__(self, pk, template_name, *args, request_data=None, request=None, **kwargs):
         self.request_iwork_id = None
@@ -144,14 +157,7 @@ class BasicWorkFFH(FullFormHandler):
 
         self.safe_work = self.work or CofkUnionWork(init_seq_id=False)
 
-        self.common_work_form = CommonWorkForm(request_data, initial={
-            'catalogue': self.safe_work.original_catalogue_id,
-            'work_to_be_deleted': self.safe_work.work_to_be_deleted,
-        }, user=request.user)
-
-        catalogue_list = [('', None)] + [(c.catalogue_name, c.catalogue_code) for c in get_user_catalogues(request)]
-        self.common_work_form.fields['catalogue_list'].widget.choices = catalogue_list
-        self.common_work_form.fields['catalogue'].widget.choices = [(i[1], i[0]) for i in catalogue_list]
+        self.common_work_form = build_common_work_form(request, self.safe_work, request_data=request_data)
 
     def create_context(self, is_save_success=False):
         context = super().create_context()
@@ -1027,7 +1033,8 @@ def overview_view(request, iwork_id):
                         key=lambda m: {t[0]: i for i, t in enumerate(manif_type_choices)}.get(
                             m.manifestation_type, len(manif_type_choices))),
         original_calendar_display=date_serv.decode_calendar(work.original_calendar),
-        work_category='Overview'
+        work_category='Overview',
+        common_work_form=build_common_work_form(request, work),
     )
 
     context.update(WorkFormDescriptor(work).create_context())
