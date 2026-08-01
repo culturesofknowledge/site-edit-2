@@ -419,7 +419,10 @@ class MultiRecrefHandler:
             recref_id = f.cleaned_data['recref_id']
             if f.cleaned_data['is_delete']:
                 log.info(f'remove recref [{recref_id=}]')
-                self.recref_class.objects.filter(pk=recref_id).delete()
+                db_recref = self.recref_class.objects.filter(pk=recref_id).first()
+                if db_recref:
+                    db_recref.change_user = request.user.username
+                    db_recref.delete()
             else:
                 log.info(f'update recref [{recref_id=}]')
                 ps_loc = self.recref_class.objects.get(pk=recref_id)

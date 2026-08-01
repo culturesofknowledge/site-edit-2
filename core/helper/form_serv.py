@@ -371,6 +371,7 @@ class MultiRelRecrefForm(forms.Form):
                 if recref_data.get('recref_id'):
                     db_recref = recref_adapter.find_recref_by_id(recref_data['recref_id'])
                     if db_recref:
+                        db_recref.change_user = username
                         log.info(f'delete (is_delete) [{db_recref.relationship_type}][{db_recref}]')
                         db_recref.delete()
             return
@@ -381,6 +382,7 @@ class MultiRelRecrefForm(forms.Form):
         for recref_data in del_recref_list:
             db_recref = recref_adapter.find_recref_by_id(recref_data['recref_id'])
             if db_recref:
+                db_recref.change_user = username
                 log.info(f'delete [{db_recref.relationship_type}][{db_recref}]')
                 db_recref.delete()
             else:

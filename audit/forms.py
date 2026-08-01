@@ -181,7 +181,7 @@ changed_field_choices = [
     ('org_type_desc', 'Org Type Desc'),
     ('org_type_id', 'Org Type Id'),
     ('original_calendar', 'Original Calendar'),
-    ('original_calendar', 'Original Catalogue'),
+    ('original_catalogue', 'Original Catalogue'),
     ('origin_as_marked', 'Origin As Marked'),
     ('origin_inferred', 'Origin Inferred'),
     ('origin_uncertain', 'Origin Uncertain'),
