@@ -480,13 +480,13 @@ class ManifFFH(BasicWorkFFH):
         # enclosures
         self.enclosure_manif_handler = MultiRecrefAdapterHandler(
             request_data, name='enclosure_manif',
-            recref_adapter=EnclosureManifRecrefAdapter(self.safe_manif),
+            recref_adapter=EnclosedManifRecrefAdapter(self.safe_manif),
             recref_form_class=ManifRecrefForm,
             rel_type=REL_TYPE_ENCLOSED_IN,
         )
         self.enclosed_manif_handler = MultiRecrefAdapterHandler(
             request_data, name='enclosed_manif',
-            recref_adapter=EnclosedManifRecrefAdapter(self.safe_manif),
+            recref_adapter=EnclosureManifRecrefAdapter(self.safe_manif),
             recref_form_class=ManifRecrefForm,
             rel_type=REL_TYPE_ENCLOSED_IN,
         )
