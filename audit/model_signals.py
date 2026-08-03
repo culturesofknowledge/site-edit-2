@@ -184,7 +184,7 @@ def save_audit_records(instance: Recref, old_instance: Recref = None, ):
             change_type=constant.CHANGE_TYPE_NEW if old_instance is None else constant.CHANGE_TYPE_CHANGE,
             table_name=instance._meta.db_table,
             key_value_text=' '.join(adapter.key_value_text() for adapter in adapters),
-            key_value_integer=instance.recref_id,
+            key_value_integer=adapters[0].key_value_integer(),
             key_decode=key_decode,
             column_name=column_name,
             new_column_value=getattr(instance, column_name),
@@ -301,7 +301,7 @@ def _write_relation_audit_pair(sender: ModelBase, instance: models.Model, change
                 change_type=change_type,
                 table_name=cur_left_rel._meta.db_table,
                 key_value_text=left_adapter.key_value_text(),
-                key_value_integer=instance.recref_id,
+                key_value_integer=left_adapter.key_value_integer(),
                 key_decode=left_adapter.key_decode(),
                 column_name=f'Relationship: {rel_desc}',
             )
