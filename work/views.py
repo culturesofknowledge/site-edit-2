@@ -609,7 +609,8 @@ class ResourcesFFH(BasicWorkFFH):
             log.debug('skip save resources when no changed')
             return
 
-        self.save_work(request, self.work)
+        if self.common_work_form.has_changed():
+            self.save_work(request, self.work)
         self.save_all_recref_formset(self.work, request)
 
     def create_context(self, is_save_success=False):
