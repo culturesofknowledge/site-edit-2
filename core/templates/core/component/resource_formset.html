@@ -11,15 +11,15 @@ Remember call setup_url_checker, setup_standtext functions
         </legend>
 
         {{ res_formset.management_form }}
-        {% for form in res_formset|reverse_list %}
+        {% for form in res_formset %}
             <fieldset>
                 <legend id="{{ header_id }}_{{ forloop.counter0 }}"
                         class="toc-sub-item">
 
-                    {% if forloop.first %}
+                    {% if forloop.last %}
                         Add a new resource
                     {% else %}
-                        Resource no. {{ forloop.counter0 }}. {{ form.resource_name.value }}
+                        Resource no. {{ forloop.counter }}. {{ form.resource_name.value }}
                     {% endif %}
                 </legend>
 
