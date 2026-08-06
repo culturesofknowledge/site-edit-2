@@ -13,6 +13,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.views import View
 
+from audit.audit_recref_adapter import WorkAuditAdapter
+from audit.models import CofkUnionAuditLiteral
 from catalogue.utils import get_user_catalogues
 from core import constant
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_WORK_IS_REPLY_TO, \
@@ -183,7 +185,24 @@ class BasicWorkFFH(FullFormHandler):
         if cat_code and work.original_catalogue_id != cat_code:
             log.info('change original_catalogue_id from [{}] to [{}]'.format(
                 work.original_catalogue_id, cat_code))
+            old_catalogue_name = ''
+            if work.original_catalogue:
+                old_catalogue_name = work.original_catalogue.catalogue_name
             work.original_catalogue_id = cat_code
+            new_catalogue = CofkLookupCatalogue.objects.filter(catalogue_code=cat_code).first()
+            new_catalogue_name = new_catalogue.catalogue_name if new_catalogue else cat_code
+            audit_adapter = WorkAuditAdapter(work)
+            CofkUnionAuditLiteral.objects.create(
+                change_user=request.user.username,
+                change_type=constant.CHANGE_TYPE_CHANGE,
+                table_name=work._meta.db_table,
+                key_value_text=audit_adapter.key_value_text(),
+                key_value_integer=audit_adapter.key_value_integer(),
+                key_decode=audit_adapter.key_decode(),
+                column_name='original_catalogue',
+                new_column_value=new_catalogue_name,
+                old_column_value=old_catalogue_name,
+            )
 
         # handle work_to_be_deleted
         work.work_to_be_deleted = self.common_work_form.cleaned_data.get('work_to_be_deleted', 0)
@@ -467,13 +486,13 @@ class ManifFFH(BasicWorkFFH):
         # enclosures
         self.enclosure_manif_handler = MultiRecrefAdapterHandler(
             request_data, name='enclosure_manif',
-            recref_adapter=EnclosureManifRecrefAdapter(self.safe_manif),
+            recref_adapter=EnclosedManifRecrefAdapter(self.safe_manif),
             recref_form_class=ManifRecrefForm,
             rel_type=REL_TYPE_ENCLOSED_IN,
         )
         self.enclosed_manif_handler = MultiRecrefAdapterHandler(
             request_data, name='enclosed_manif',
-            recref_adapter=EnclosedManifRecrefAdapter(self.safe_manif),
+            recref_adapter=EnclosureManifRecrefAdapter(self.safe_manif),
             recref_form_class=ManifRecrefForm,
             rel_type=REL_TYPE_ENCLOSED_IN,
         )
@@ -596,7 +615,8 @@ class ResourcesFFH(BasicWorkFFH):
             log.debug('skip save resources when no changed')
             return
 
-        self.save_work(request, self.work)
+        if self.common_work_form.has_changed():
+            self.save_work(request, self.work)
         self.save_all_recref_formset(self.work, request)
 
     def create_context(self, is_save_success=False):
