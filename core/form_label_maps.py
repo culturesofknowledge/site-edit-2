@@ -166,7 +166,12 @@ field_label_map = {
     },
     'image': {
         'image_url': 'Image URL',
-    }
+    },
+    'manif': common_fields | {
+        'work_id': 'Work ID',
+        'manifestation_type': 'Document type',
+        'id_number_or_shelfmark': 'ID number or shelfmark',
+    },
 
 }
 

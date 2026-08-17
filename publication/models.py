@@ -8,7 +8,7 @@ class CofkUnionPublication(models.Model, RecordTracker):
     publication_id = models.AutoField(primary_key=True)
     publication_details = models.TextField()
     change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
-    change_user = models.CharField(max_length=50)
+    change_user = models.CharField(max_length=254)
     abbrev = models.CharField(max_length=50)
 
     class Meta:

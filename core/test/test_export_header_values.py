@@ -3,6 +3,7 @@ from pathlib import Path
 from django.test import TestCase
 
 from cllib import path_utils
+from core.constant import REL_TYPE_WORK_MATCHES
 from core.export_data.excel_header_values import WorkExcelHeaderValues
 from core.fixtures import fixture_default_lookup_catalogue
 from core.helper.view_components import DownloadCsvHandler
@@ -13,8 +14,14 @@ from location.views import LocationCsvHeaderValues, LocationSearchView
 from person.models import CofkUnionPerson
 from person.views import PersonSearchView, PersonCsvHeaderValues
 from work.fixtures import fixture_work_simple_a
+from work.models import CofkWorkWorkMap
 from work.views import WorkSearchView, WorkCsvHeaderValues
 from work.work_serv import DisplayableWork
+
+# Column indices (0-based) of the "matched letters" pair in
+# WorkExcelHeaderValues.get_header_list() - AX and AY respectively.
+MATCH_IDS_COL = 49
+MATCH_POSITION_COL = 50
 
 
 class TestWorkExcelHeaderValues(TestCase):
@@ -27,6 +34,54 @@ class TestWorkExcelHeaderValues(TestCase):
         values = hv.obj_to_values(work)
 
         self.assertGreater(len(values), 0)
+
+    def test_obj_to_values_no_matches(self):
+        """A letter with no match relationships at all still gets a self-only
+        matched-IDs list and position 1, so analysts can filter on position==1
+        to keep it as its own representative."""
+        fixture_default_lookup_catalogue()
+        hv = WorkExcelHeaderValues()
+        work = DisplayableWork(work_id='work_500728', iwork_id=500728)
+        work.save()
+
+        values = hv.obj_to_values(work)
+
+        self.assertEqual(values[MATCH_IDS_COL], '500728')
+        self.assertEqual(values[MATCH_POSITION_COL], 1)
+
+    def test_obj_to_values_matched_letters(self):
+        """Matches column (AX) lists every letter ID in the group, including
+        self, in ascending order; position column (AY) is self's 1-based
+        position in that list - matching the reported ID 500728 example
+        (31381; 400696; 500728 -> position 3)."""
+        fixture_default_lookup_catalogue()
+
+        work_31381 = DisplayableWork(work_id='work_31381', iwork_id=31381)
+        work_31381.save()
+        work_400696 = DisplayableWork(work_id='work_400696', iwork_id=400696)
+        work_400696.save()
+        work_500728 = DisplayableWork(work_id='work_500728', iwork_id=500728)
+        work_500728.save()
+
+        # Direct pairwise links from 500728, one in each direction, to
+        # exercise both the forward and reverse halves of
+        # find_matching_works_by_rel_type().
+        CofkWorkWorkMap.objects.create(
+            work_from=work_500728, work_to=work_31381,
+            relationship_type=REL_TYPE_WORK_MATCHES,
+            creation_user='test', change_user='test',
+        )
+        CofkWorkWorkMap.objects.create(
+            work_from=work_400696, work_to=work_500728,
+            relationship_type=REL_TYPE_WORK_MATCHES,
+            creation_user='test', change_user='test',
+        )
+
+        hv = WorkExcelHeaderValues()
+        values = hv.obj_to_values(work_500728)
+
+        self.assertEqual(values[MATCH_IDS_COL], '31381; 400696; 500728')
+        self.assertEqual(values[MATCH_POSITION_COL], 3)
 
 
 class MockResolver:

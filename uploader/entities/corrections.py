@@ -24,8 +24,12 @@ class CofkWorkCorrections(CofkEntity):
     and supplies one or more correction fields. Corrections are stored as a JSON dict
     {field_name: new_value} on CofkCollectWorkCorrection.
 
-    'Original Catalogue name' expects a catalogue_code value (e.g. 'EMLO') which is
-    validated against CofkLookupCatalogue and stored under 'original_catalogue_code'.
+    'Original Catalogue name' expects the catalogue's name (e.g. 'Early Modern Letters
+    Online'), looked up against CofkLookupCatalogue.catalogue_name. The matching
+    catalogue's catalogue_code is what actually gets stored, under
+    'original_catalogue_code' - CofkUnionWork.original_catalogue is a FK keyed on
+    catalogue_code (see work.models), not the name, so the code is still required
+    for storage even though the sheet column and lookup are name-based.
     """
 
     @property
@@ -149,11 +153,11 @@ class CofkWorkCorrections(CofkEntity):
 
                 if field_name == 'original_catalogue':
                     catalogue = CofkLookupCatalogue.objects.filter(
-                        catalogue_code__iexact=str(raw).strip()
+                        catalogue_name__iexact=str(raw).strip()
                     ).first()
                     if catalogue is None:
                         self.add_error(
-                            f'Row {row_number}: catalogue "{raw}" not found in the lookup table.'
+                            f'Row {row_number}: catalogue "{raw}" not found by name in the catalogue lookup.'
                         )
                         has_error = True
                         break

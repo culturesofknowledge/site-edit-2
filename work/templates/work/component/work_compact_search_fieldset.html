@@ -110,8 +110,6 @@
     <!-- Last changed by-->
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.change_user field_lookup=form.change_user_lookup %}
 
-    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
-
     <script>
 
       var manif_autocomplete = [{% for mtype in form.manif_type %}
@@ -120,7 +118,11 @@
 
       {% for inst in form.institution_names %}
       { label: "{{ inst|escapejs }}", category: "Repository" },
-      {% endfor %}];
+      {% endfor %}
+
+      { label: "Had enclosure", category: "Enclosure" },
+      { label: "Was enclosed in", category: "Enclosure" },
+      ];
 
     var subjects_autocomplete = [{% for subject in form.subject_names %}
       '{{ subject|escapejs }}',

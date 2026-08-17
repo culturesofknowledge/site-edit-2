@@ -2,6 +2,7 @@ from django.contrib.postgres.aggregates import StringAgg
 from django.db.models import OuterRef, Case, When, Value, BooleanField, Exists, TextField, Q, F
 from django.db.models.functions import Cast, Concat, Coalesce
 
+from core.constant import REL_TYPE_ENCLOSED_IN
 from core.models import CofkLookupDocumentType
 from work.models import CofkUnionWork
 
@@ -86,6 +87,18 @@ def create_joined_location_ann_field(relationship_types, target_fields: list[str
     return subquery
 
 
+def _prefixed_enclosure_field(fk_path, shelfmark_field, label):
+    """Return a Case expression that prepends `label` when an enclosure relationship exists."""
+    return Case(
+        When(
+            **{f'{fk_path}__relationship_type': REL_TYPE_ENCLOSED_IN},
+            then=Concat(Value(label), Cast(shelfmark_field, TextField()), output_field=TextField()),
+        ),
+        default=Value(''),
+        output_field=TextField(),
+    )
+
+
 def create_joined_manif_ann_field():
     subquery = CofkUnionWork.objects.filter(
         manif_set__work_id=OuterRef('pk'),
@@ -93,6 +106,16 @@ def create_joined_manif_ann_field():
         _doctype_desc=(CofkLookupDocumentType.objects
                        .filter(document_type_code=OuterRef('manif_set__manifestation_type'))
                        .values_list('document_type_desc', flat=True)),
+        _had_enclosure=_prefixed_enclosure_field(
+            'manif_set__manif_from_set',
+            'manif_set__manif_from_set__manif_to__id_number_or_shelfmark',
+            'Had enclosure: ',
+        ),
+        _was_enclosed_in=_prefixed_enclosure_field(
+            'manif_set__manif_to_set',
+            'manif_set__manif_to_set__manif_from__id_number_or_shelfmark',
+            'Was enclosed in: ',
+        ),
         manif_detail=_join_values_for_search([
             '_doctype_desc',
             'manif_set__postage_marks',
@@ -101,8 +124,8 @@ def create_joined_manif_ann_field():
             'manif_set__printed_edition_details',
             'manif_set__manifestation_incipit',
             'manif_set__manifestation_excipit',
-            'manif_set__manif_from_set__manif_to__id_number_or_shelfmark',
-            'manif_set__manif_to_set__manif_from__id_number_or_shelfmark',
+            '_had_enclosure',
+            '_was_enclosed_in',
         ], delimiter=' ', agg_delimiter=' ')
     ).values_list('manif_detail', flat=True)
     return subquery

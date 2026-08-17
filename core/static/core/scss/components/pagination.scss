@@ -1,7 +1,51 @@
 
 .pagination {
-    padding: $space-sm $space-unit $space-sm 0;
+    padding: $space-sm 0;
     clear: both;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.pagination-nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: $space-sm $space-md;
+}
+
+// Extra breathing room between the first/previous nav links and the
+// numbered pages, and again between the numbered pages and next/last.
+.page-item--nav + .page-item:not(.page-item--nav),
+.page-item:not(.page-item--nav) + .page-item--nav {
+    margin-left: $space-sm;
+}
+
+// Toolbar row combining the search-options toggle (plus any future
+// left-hand buttons) with the pagination. The pagination column takes
+// the remaining space and centres itself within it. Wraps to stacked
+// rows when the table column is narrower (e.g. search sidebar left open).
+.pagination-toolbar {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: $space-sm $space-lg;
+    padding: 0;
+    font-size: 16px;
+}
+
+.pagination-toolbar__left {
+    display: flex;
+    align-items: center;
+    justify-self: start;
+}
+
+.pagination-toolbar__center {
+    justify-self: center;
+    min-width: 0;
 }
 
 #hidden_columns span {
@@ -22,23 +66,47 @@
 
 }
 
+// Plain, unboxed page numbers -- only the current page gets a visible
+// border. Every item still reserves the same 1px transparent border so
+// heights stay identical (numbered pages, nav links, ellipsis and the
+// toggle button all line up), it's just invisible until active/hovered.
 .page-item {
     display: inline-block;
-    text-align: center;
-    min-width: 50px;
-    border: 1px solid $black;
-    transition: all .15s ease-in-out;
-    // add small gaps so when pagination wraps to multiple rows there is
-    // visible spacing between rows and items (helps on half-screen windows)
-    margin: 0 .4em .4em 0;
+    // gaps between rows when pagination wraps on narrower (half) views
+    margin-bottom: $space-xxs;
 
-    &:hover {
-        border-color: $white;
+    a, .page-link {
+        display: inline-block;
+        text-align: center;
+        padding: $space-xxs $space-xs;
+        border: 1px solid transparent;
+        border-radius: $space-xxs;
+        line-height: inherit;
+        box-sizing: border-box;
+        transition: all .15s ease-in-out;
     }
 
+    &:not(.active-page):hover a, &:not(.active-page):hover .page-link {
+        border-color: $light-grey;
+    }
 }
 
-.active-page {
-    background-color: $black;
-    color: $white;
+.active-page .page-link {
+    border-color: $midnight;
+    color: $midnight;
+    font-weight: bold;
+}
+
+// Half view: search sidebar is open and the results column is narrower.
+// Stack the two sections instead of trying to fit them on one line.
+@media (max-width: $mborder-mid) {
+    .pagination-toolbar {
+        grid-template-columns: 1fr;
+        justify-items: center;
+    }
+
+    .pagination-toolbar__left,
+    .pagination-toolbar__center {
+        justify-self: center;
+    }
 }

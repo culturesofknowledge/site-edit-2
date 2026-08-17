@@ -193,6 +193,10 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
   }
 }
 
+.is-range-div {
+  margin-top: 10px;
+}
+
 .issues-date-ct {
   display: flex;
   flex-direction: row;
@@ -319,9 +323,18 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
   }
 
   & > label, span {
-    font-size: 1.44em;
+    font-size: 18px;
   }
 
+}
+
+.info_recref {
+  grid-template-columns: 60% 40%;
+}
+
+.scribe-recref-container {
+  grid-template-columns: 45% 35% 20%;
+  margin-bottom: 1rem;
 }
 
 .sub-recref-form {
@@ -477,6 +490,7 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
   position: relative;
 
   .sf-select {
+    height: 2.5em;
     border: 1px solid;
     padding: 0.5em;
     cursor: pointer;

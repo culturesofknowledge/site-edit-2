@@ -19,6 +19,13 @@ def password_changed(request):
 class EmloLoginView(LoginView):
     template_name = 'login/login.html'
 
+    def form_valid(self, form):
+        storage = messages.get_messages(self.request)
+        for _ in storage:
+            pass
+        storage.used = True
+        return super().form_valid(form)
+
 
 class EmloLogoutView(LogoutView):
     next_page = 'login:gate'

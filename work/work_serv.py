@@ -1,3 +1,4 @@
+import calendar
 import logging
 from datetime import date
 from typing import Any, List
@@ -31,6 +32,99 @@ def _format_work_date(year, month, day) -> str:
     elif year:
         return str(year)
     return 'Unknown date'
+
+
+def compute_date_of_work_std(work: CofkUnionWork) -> str:
+    """Compute the sortable YYYY-MM-DD value date_of_work_std should hold, derived
+    fresh from the work's granular date fields (mirrors the derivation logic in
+    DisplayableWork.date_for_ordering, but always recomputes from the parts rather
+    than trusting whatever is currently stored in date_of_work_std).
+
+    date_of_work_std is a separate, precomputed column that WorkSearchView sorts and
+    date-range-filters against directly at the SQL level - it is not derived
+    automatically on save, so any code that changes the date fields (e.g. bulk
+    corrections) must call this and persist the result, or search results will
+    reflect a stale date.
+    """
+    if work.date_of_work2_std_year:
+        year = int(work.date_of_work2_std_year)
+        # For "to" date, default blank month to 12 (end of year)
+        month = int(work.date_of_work2_std_month or 12)
+        # Default blank day to last day of the month (handles leap years)
+        day = int(work.date_of_work2_std_day or calendar.monthrange(year, month)[1])
+        return f"{year:04d}-{month:02d}-{day:02d}"
+
+    if not work.date_of_work_std_year:
+        return DEFAULT_EMPTY_DATE_STR
+
+    year = int(work.date_of_work_std_year)
+    month = int(work.date_of_work_std_month or DEFAULT_MONTH)
+    day = int(work.date_of_work_std_day or DEFAULT_DAY)
+    return f"{year:04d}-{month:02d}-{day:02d}"
+
+
+def _julian_gregorian_day_offset(calendar_code: str, year: int, month: int, day: int) -> int:
+    """Direct port of cal_diff_days_by_calendar_code() in
+    core/static/core/js/auto_date_calendar.js - keep the two in sync if this rule
+    ever changes. Julian dates ran 10 days behind Gregorian, widening to 11 days
+    after February 1700 (a Julian leap year that Gregorian's century rule skips)."""
+    if calendar_code not in ('JM', 'JJ'):
+        return 0
+    if year > 1700:
+        return 11
+    if year == 1700 and month > 2:
+        return 11
+    if year == 1700 and month == 2 and day == 29:
+        return 11
+    return 10
+
+
+def _convert_date_by_calendar_code(calendar_code: str, year: int, month: int, day: int) \
+        -> tuple[int, int, int]:
+    """Direct port of convert_date_by_calendar_code() in
+    core/static/core/js/auto_date_calendar.js - keep the two in sync."""
+    offset = _julian_gregorian_day_offset(calendar_code, year, month, day)
+    new_day = day + offset
+    new_month = month
+    new_year = year
+
+    max_day_of_month = calendar.monthrange(year, month)[1]
+    if new_day > max_day_of_month:
+        new_day -= max_day_of_month
+        new_month += 1
+        if new_month > 12:
+            new_month = 1
+            new_year += 1
+            if new_year > 9999:
+                new_year = 9999
+
+    return new_year, new_month, new_day
+
+
+def compute_date_of_work_std_gregorian(work: CofkUnionWork) -> str:
+    """Compute the sortable YYYY-MM-DD value date_of_work_std_gregorian should hold:
+    the same date used for date_of_work_std, converted to the Gregorian calendar
+    based on original_calendar. Like date_of_work_std, this is a separate
+    precomputed column normally only set by the manual-edit web form's JS
+    (auto_date_calendar.js), so it must be explicitly resynced whenever the source
+    date fields - or original_calendar itself - change outside that form (e.g. via
+    corrections).
+    """
+    if work.date_of_work2_std_year:
+        year = int(work.date_of_work2_std_year)
+        month = int(work.date_of_work2_std_month or 12)
+        day = int(work.date_of_work2_std_day or calendar.monthrange(year, month)[1])
+    elif work.date_of_work_std_year:
+        year = int(work.date_of_work_std_year)
+        month = int(work.date_of_work_std_month or DEFAULT_MONTH)
+        day = int(work.date_of_work_std_day or DEFAULT_DAY)
+    else:
+        return DEFAULT_EMPTY_DATE_STR
+
+    new_year, new_month, new_day = _convert_date_by_calendar_code(
+        work.original_calendar, year, month, day
+    )
+    return f"{new_year:04d}-{new_month:02d}-{new_day:02d}"
 
 
 def get_recref_display_name(work: CofkUnionWork) -> str:
@@ -467,6 +561,7 @@ def lookup_manifestations_searchable(lookup_fn, field_name: str, value: str) -> 
 
     from manifestation.models import CofkUnionManifestation
     from core.models import CofkLookupDocumentType
+    from core.constant import REL_TYPE_ENCLOSED_IN
     from django.db.models import Exists, OuterRef
 
     manif_fields = [
@@ -476,9 +571,14 @@ def lookup_manifestations_searchable(lookup_fn, field_name: str, value: str) -> 
         'printed_edition_details',
         'manifestation_incipit',
         'manifestation_excipit',
-        'manif_from_set__manif_to__id_number_or_shelfmark',
-        'manif_to_set__manif_from__id_number_or_shelfmark',
     ]
+
+    # Labels used for enclosure relationships – must stay in sync with
+    # the prefixes produced by subqueries._prefixed_enclosure_field().
+    _ENCLOSURE_LABELS = {
+        'had enclosure': 'manif_from_set__manif_to__id_number_or_shelfmark',
+        'was enclosed in': 'manif_to_set__manif_from__id_number_or_shelfmark',
+    }
 
     # All segments must match within the SAME manifestation for a work.
     manif_q = Q()
@@ -486,6 +586,29 @@ def lookup_manifestations_searchable(lookup_fn, field_name: str, value: str) -> 
         segment_q = Q()
         for field in manif_fields:
             segment_q |= Q(**{f'{field}__icontains': segment})
+
+        # Check if the segment matches an enclosure label (with or without
+        # a trailing shelfmark).  E.g. "Had enclosure" or
+        # "Had enclosure: MS 1234".
+        seg_lower = segment.lower().strip()
+        for label, shelfmark_field in _ENCLOSURE_LABELS.items():
+            if label.startswith(seg_lower) or seg_lower.startswith(label):
+                # The segment is (part of) an enclosure label – match any
+                # manifestation that has the corresponding enclosure
+                # relationship.
+                enclosure_fk = shelfmark_field.rsplit('__', 2)[0]  # e.g. manif_from_set
+                enclosure_q = Q(**{f'{enclosure_fk}__relationship_type': REL_TYPE_ENCLOSED_IN})
+                # If the user typed more than just the label (e.g.
+                # "Had enclosure: MS 1234"), also filter on the shelfmark.
+                extra = seg_lower[len(label):].lstrip(':').strip()
+                if extra:
+                    enclosure_q &= Q(**{f'{shelfmark_field}__icontains': extra})
+                segment_q |= enclosure_q
+
+        # Also search raw enclosure shelfmarks (without label) so that
+        # plain shelfmark searches still work.
+        segment_q |= Q(**{'manif_from_set__manif_to__id_number_or_shelfmark__icontains': segment})
+        segment_q |= Q(**{'manif_to_set__manif_from__id_number_or_shelfmark__icontains': segment})
 
         segment_q |= Q(manifestation_type__in=CofkLookupDocumentType.objects.filter(
             document_type_desc__icontains=segment
@@ -620,3 +743,118 @@ def lookup_location_searchable(lookup_fn, field_name: str, value: str, rel_types
             pre_filter_q &= exists_q
 
     return pre_filter_q
+
+
+def lookup_related_resources(lookup_fn, field_name: str, value: str) -> Q:
+    """
+    Search the 'Related resources' column which displays both actual resources
+    (via CofkWorkResourceMap) and related works such as 'Reply to', 'Answered by',
+    and 'Matching letter' (via CofkWorkWorkMap).
+
+    This function combines searches across both resource names and related work
+    descriptions so that e.g. searching for 'match' finds works with a
+    'Matching letter' relationship.
+    """
+    from core.constant import REL_TYPE_IS_RELATED_TO, REL_TYPE_WORK_IS_REPLY_TO, REL_TYPE_WORK_MATCHES
+    from work.models import CofkWorkResourceMap, CofkWorkWorkMap
+    from django.db.models import Exists, OuterRef
+
+    if not isinstance(value, str):
+        return query_serv.run_lookup_fn(lookup_fn, field_name, value)
+
+    negate = _is_negated_lookup(lookup_fn)
+    lookup_key = query_serv.get_lookup_key_by_lookup_fn(lookup_fn)
+
+    # For is_blank / not_blank, check whether ANY related resource or related work exists
+    if lookup_key in ('is_blank', 'not_blank'):
+        resource_exists = Exists(CofkWorkResourceMap.objects.filter(
+            work_id=OuterRef('pk'),
+            relationship_type=REL_TYPE_IS_RELATED_TO,
+        ))
+        work_rel_types = [REL_TYPE_WORK_IS_REPLY_TO, REL_TYPE_WORK_MATCHES]
+        work_from_exists = Exists(CofkWorkWorkMap.objects.filter(
+            work_from_id=OuterRef('pk'),
+            relationship_type__in=work_rel_types,
+        ))
+        work_to_exists = Exists(CofkWorkWorkMap.objects.filter(
+            work_to_id=OuterRef('pk'),
+            relationship_type__in=work_rel_types,
+        ))
+        any_exists = resource_exists | work_from_exists | work_to_exists
+        if lookup_key == 'is_blank':
+            return ~Q(any_exists)
+        else:
+            return Q(any_exists)
+
+    # For text-based lookups, search resource_name and related work descriptions
+    # Resources: search resource_name via CofkWorkResourceMap
+    resource_q = Exists(CofkWorkResourceMap.objects.filter(
+        work_id=OuterRef('pk'),
+        relationship_type=REL_TYPE_IS_RELATED_TO,
+        resource__resource_name__icontains=value,
+    ))
+
+    # Related works: the column displays labels like "Reply to: ...",
+    # "Answered by: ...", "Matching letter: ..." followed by the work
+    # description.  Match the search term against both the
+    # label text AND the related work's description
+    _LABEL_REL_TYPES = {
+        'reply to': REL_TYPE_WORK_IS_REPLY_TO,
+        'answered by': REL_TYPE_WORK_IS_REPLY_TO,
+        'matching letter': REL_TYPE_WORK_MATCHES,
+    }
+
+    work_rel_types = [REL_TYPE_WORK_IS_REPLY_TO, REL_TYPE_WORK_MATCHES]
+
+    # Check if the search value matches any of the display labels.
+    # If so, include ALL works that have that relationship type.
+    label_matched_types = set()
+    val_lower = value.lower().strip()
+    for label, rel_type in _LABEL_REL_TYPES.items():
+        if val_lower in label or label in val_lower:
+            label_matched_types.add((label, rel_type))
+
+    combined = resource_q
+
+    if label_matched_types:
+        # The search term matches a label — return works that have the
+        # corresponding relationship type in either direction.
+        for label, rel_type in label_matched_types:
+            if label == 'answered by':
+                # "Answered by" shows in work_to_set (this work is the target)
+                combined = combined | Exists(CofkWorkWorkMap.objects.filter(
+                    work_to_id=OuterRef('pk'),
+                    relationship_type=rel_type,
+                ))
+            elif label == 'reply to':
+                # "Reply to" shows in work_from_set (this work is the source)
+                combined = combined | Exists(CofkWorkWorkMap.objects.filter(
+                    work_from_id=OuterRef('pk'),
+                    relationship_type=rel_type,
+                ))
+            else:
+                # "Matching letter" is bidirectional
+                combined = combined | Exists(CofkWorkWorkMap.objects.filter(
+                    work_from_id=OuterRef('pk'),
+                    relationship_type=rel_type,
+                )) | Exists(CofkWorkWorkMap.objects.filter(
+                    work_to_id=OuterRef('pk'),
+                    relationship_type=rel_type,
+                ))
+
+    # Also search the related work's description text (both directions)
+    work_from_q = Exists(CofkWorkWorkMap.objects.filter(
+        work_from_id=OuterRef('pk'),
+        relationship_type__in=work_rel_types,
+        work_to__description__icontains=value,
+    ))
+    work_to_q = Exists(CofkWorkWorkMap.objects.filter(
+        work_to_id=OuterRef('pk'),
+        relationship_type__in=work_rel_types,
+        work_from__description__icontains=value,
+    ))
+
+    combined = combined | work_from_q | work_to_q
+    if negate:
+        return ~Q(combined)
+    return Q(combined)

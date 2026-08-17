@@ -139,7 +139,7 @@ CORRECTION_WORK_SHEET = {
         'Date uncertain (0=No; 1=Yes)': 'date_of_work_uncertain',
         'Date approximate (0=No; 1=Yes)': 'date_of_work_approx',
         'Date inferred (0=No; 1=Yes)': 'date_of_work_inferred',
-        'Notes on date': 'notes_on_date_of_work',
+        'Notes on date': 'notes_on_date_of_work',  # comment map — see accept_corrections()
         'Author as marked in body/text of letter': 'authors_as_marked',
         'Author inferred (0=No; 1=Yes)': 'authors_inferred',
         'Author uncertain (0=No; 1=Yes)': 'authors_uncertain',
@@ -158,7 +158,7 @@ CORRECTION_WORK_SHEET = {
         'Explicit': 'explicit',
         'Original Catalogue name': 'original_catalogue',  # FK — resolved via CofkLookupCatalogue
         'Source': 'accession_code',
-        #'General notes for public display': 'notes_on_letter',
+        'General notes for public display': 'notes_on_letter',  # comment map — see accept_corrections()
         "Editors' working notes": 'editors_notes',
     },
     'ints': [

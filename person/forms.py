@@ -294,8 +294,12 @@ class GeneralSearchFieldset(BasicSearchFieldset):
     roles = SearchCharField(label=field_label_map['person']['roles'],
                             help_text="Professional categories can be problematic for early modern people. "
                                       "To ensure a full search for e.g. 'antiquary', add the term "
-                                      "simultaneously into the 'Names and titles/roles' field above.")
+                                      "simultaneously into the 'Names and titles/roles' field above "
+                                      "and check the box below.")
     roles_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
+
+    roles_include_titles = forms.BooleanField(label='Include titles/roles', required=False,
+                                              widget=forms.CheckboxInput(attrs={'class': 'elcheckbox'}))
 
     editors_notes = SearchCharField(label=field_label_map['person']['editors_notes'],
                                     help_text='Notes for internal use, intended to hold temporary queries etc.')

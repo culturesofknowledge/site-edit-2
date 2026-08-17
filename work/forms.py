@@ -23,12 +23,12 @@ log = logging.getLogger(__name__)
 
 manif_type_choices = [
     ('ALS', 'Letter'),
-    ('D', 'Draft'),
-    ('DC', 'Digital copy'),
-    ('E', 'Extract'),
-    ('O', 'Other'),
-    ('P', 'Printed copy'),
     ('S', 'Scribal copy'),
+    ('D', 'Draft'),
+    ('E', 'Extract'),
+    ('P', 'Printed copy'),
+    ('DC', 'Digital copy'),
+    ('O', 'Other'),
 ]
 
 manif_letter_opened_choices = [
@@ -151,6 +151,25 @@ class DatesForm(forms.ModelForm):
             if self.initial.get('date_of_work_std_day') is None and getattr(instance, 'date_of_work_std_day', None) is not None:
                 self.initial['date_of_work_std_day'] = d
 
+    def clean(self):
+        cleaned_data = super().clean()
+        is_range = cleaned_data.get('date_of_work_std_is_range')
+        if is_range:
+            from_year = cleaned_data.get('date_of_work_std_year')
+            from_month = cleaned_data.get('date_of_work_std_month')
+            from_day = cleaned_data.get('date_of_work_std_day')
+            to_year = cleaned_data.get('date_of_work2_std_year')
+            to_month = cleaned_data.get('date_of_work2_std_month')
+            to_day = cleaned_data.get('date_of_work2_std_day')
+
+            # Only validate if both sides have at least a year
+            if from_year is not None and to_year is not None:
+                from_tuple = (from_year, from_month or 0, from_day or 0)
+                to_tuple = (to_year, to_month or 0, to_day or 0)
+                if to_tuple < from_tuple:
+                    raise forms.ValidationError('Please enter a valid date range.')
+
+        return cleaned_data
 
 
 class PlacesForm(forms.ModelForm):

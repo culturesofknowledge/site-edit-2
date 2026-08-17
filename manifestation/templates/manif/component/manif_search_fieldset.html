@@ -1,0 +1,25 @@
+{% extends "core/component/search_fieldset/fieldset.html" %}
+
+{% block fields %}
+
+    <!-- Work ID -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.work_id field_lookup=form.work_id_lookup %}
+
+    <!-- Document type -->
+    {{ form.manifestation_type.label_tag }}
+    <div class="row-no-margin">
+        <div class="col--4of4 search_input">
+            {{ form.manifestation_type }}
+        </div>
+    </div>
+
+    <!-- ID number or shelfmark -->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.id_number_or_shelfmark field_lookup=form.id_number_or_shelfmark_lookup %}
+
+    <!-- Last edit -->
+    {% include "core/component/search_fieldset/from_to_year.html" with title='Last edit' from_field=form.change_timestamp_from to_field=form.change_timestamp_to field_info=form.change_timestamp_info %}
+
+    <!-- Last changed by-->
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.change_user field_lookup=form.change_user_lookup %}
+
+{% endblock %}

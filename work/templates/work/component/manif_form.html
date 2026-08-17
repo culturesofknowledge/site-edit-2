@@ -47,11 +47,11 @@
 
     <br/><br/>
 
-    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosure_manif.update_formset new_form=recref_enclosure_manif.new_form add_label='Add enclosed letter:' hide_create_btn=False no_date=True placeholder='Please select or create enclosed letter, then click Save.' header='LETTERS enclosed in this manifestation:'%}
+    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosure_manif.update_formset new_form=recref_enclosure_manif.new_form add_label='Add enclosed letter:' hide_create_btn=True no_date=True placeholder='Please select enclosed letter, then click Save.' header='LETTERS enclosed in this manifestation:'%}
 
 
     <div class="multi_rel_recref_container">
-    <label></label><span>Other types of enclosure <small> e.g. money, books, samples of minerals</small>:</span>
+    <label></label><span>OTHER TYPES of enclosure <small> e.g. money, books, samples of minerals</small>:</span>
     <label>Details of enclosures other than letters:</label>
     {{ manif_form.non_letter_enclosures }}
     </div>
@@ -67,7 +67,7 @@
 <fieldset>
     <legend id="header_letters" class="toc-item">Letters in which this one was enclosed</legend>
 
-    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosed_manif.update_formset new_form=recref_enclosed_manif.new_form add_label='Add enclosing letter:' hide_create_btn=False no_date=True placeholder='Please select or craate enclosing letter, then click Save.' %}
+    {% include "core/component/create_update_recref.html" with recref_type='manif' recref_formset=recref_enclosed_manif.update_formset new_form=recref_enclosed_manif.new_form add_label='Add enclosing letter:' hide_create_btn=True no_date=True placeholder='Please select enclosing letter, then click Save.' %}
 
 </fieldset>
 
@@ -82,9 +82,7 @@
     <div class="multi_rel_recref_container">
     <label>Paper size:</label>
     {{ manif_form.paper_size }}
-    </div>
-    <div class="flex flex-help-text margin-bottom">
-        <small>(up to 500 characters)</small>
+    <small class="grid-help-text-inline margin-bottom">(up to 500 characters)</small>
     </div>
 
     <div class="multi_rel_recref_container">
@@ -95,17 +93,13 @@
     <div class="multi_rel_recref_container">
     <label>Paper type, watermark:</label>
     {{ manif_form.paper_type_or_watermark }}
-    </div>
-    <div class="flex flex-help-text margin-bottom">
-        <small>(up to 500 characters)</small>
+    <small class="grid-help-text-inline margin-bottom">(up to 500 characters)</small>
     </div>
 
     <div class="multi_rel_recref_container">
     <label>Number of pages:</label>
     {{ manif_form.number_of_pages_of_document }}
-    </div>
-    <div class="flex flex-help-text margin-bottom">
-        <small>(whole numbers only)</small>
+    <small class="grid-help-text-inline margin-bottom">(whole numbers only)</small>
     </div>
 
     <div class="multi_rel_recref_container">
@@ -167,19 +161,23 @@
 <fieldset>
     <legend id="header_language" class="toc-item">Language of manifestation</legend>
     {{ manif_form.manifestation_is_translation }}
-    <label for="{{ manif_form.manifestation_is_translation.id_for_label }}"> Manifestation is translation
-    <small class="fw-200 type-6">
-        (It is not necessary to enter language, incipit and explicit of manifestation if they are the same as those of
-        the original work.)
-    </small>
-    </label>
-    <br/>
-    {% include "core/component/lang_section.html" with lang_formset=edit_lang_formset new_lang_form=new_lang_form %}
+    <label for="{{ manif_form.manifestation_is_translation.id_for_label }}"> Manifestation is translation</label><br/>
+    <small>
+        It is not necessary to enter language of manifestation if they are the same as those of
+        the original work.
+    </small><br/>
+    <div class="manif-lang-section">
+        {% include "core/component/lang_section.html" with lang_formset=edit_lang_formset new_lang_form=new_lang_form %}
+    </div>
 
 </fieldset>
 
 <fieldset>
     <legend id="header_incipit" class="toc-item">Incipit and explicit</legend>
+    <small>
+        It is not necessary to enter incipit and explicit of manifestation if they are the same as those of
+        the original work.
+    </small><br/><br/>
 
     <div class="multi_rel_recref_container">
         <label>Manifestation incipit: </label>
@@ -199,12 +197,10 @@
     <legend id="header_scribe" class="toc-item">Scribe/hand</legend>
 
     {% if scribe_recref_formset.forms %}
-        <div class="multi_rel_recref_container margin-bottom">
+        <div class="multi_rel_recref_container scribe-recref-container margin-bottom">
             {{ scribe_recref_formset.management_form }}
             {% for form in scribe_recref_formset %}
-                <div class="grid-item">
-                    {{ form }}
-                </div>
+                {{ form }}
                 <div class="grid-item">
                     {% include "core/component/common_checkbox.html" with field=form.is_delete name="Delete from 'scribe' list" class_name="recref-del" %}
                 </div>
