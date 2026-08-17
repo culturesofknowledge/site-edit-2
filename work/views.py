@@ -13,6 +13,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.views import View
 
+from audit.audit_recref_adapter import WorkAuditAdapter
+from audit.models import CofkUnionAuditLiteral
 from catalogue.utils import get_user_catalogues
 from core import constant
 from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_WORK_IS_REPLY_TO, \
@@ -20,7 +22,8 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_COMMENT_DESTINATION, REL_TYPE_WAS_SENT_TO, REL_TYPE_COMMENT_ROUTE, REL_TYPE_FORMERLY_OWNED, \
     REL_TYPE_ENCLOSED_IN, REL_TYPE_COMMENT_RECEIPT_DATE, REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_STORED_IN, \
     REL_TYPE_COMMENT_PERSON_MENTIONED, REL_TYPE_MENTION, REL_TYPE_MENTION_PLACE, \
-    REL_TYPE_MENTION_WORK, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_IS_RELATED_TO
+    REL_TYPE_MENTION_WORK, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, \
+    REL_TYPE_HANDWROTE
 from core.export_data import excel_maker, cell_values
 from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, LocRecrefForm
 from core.helper import view_serv, lang_serv, model_serv, query_serv, renderer_serv, date_serv, general_model_serv
@@ -123,6 +126,19 @@ def create_search_fn_location_recref(rel_types: list) -> Callable:
     return _fn
 
 
+def build_common_work_form(request, work: CofkUnionWork, request_data=None) -> CommonWorkForm:
+    common_work_form = CommonWorkForm(request_data, initial={
+        'catalogue': work.original_catalogue_id,
+        'work_to_be_deleted': work.work_to_be_deleted,
+    }, user=request.user)
+
+    catalogue_list = [('', None)] + [(c.catalogue_name, c.catalogue_code) for c in get_user_catalogues(request)]
+    common_work_form.fields['catalogue_list'].widget.choices = catalogue_list
+    common_work_form.fields['catalogue'].widget.choices = [(i[1], i[0]) for i in catalogue_list]
+
+    return common_work_form
+
+
 class BasicWorkFFH(FullFormHandler):
     def __init__(self, pk, template_name, *args, request_data=None, request=None, **kwargs):
         self.request_iwork_id = None
@@ -143,14 +159,7 @@ class BasicWorkFFH(FullFormHandler):
 
         self.safe_work = self.work or CofkUnionWork(init_seq_id=False)
 
-        self.common_work_form = CommonWorkForm(request_data, initial={
-            'catalogue': self.safe_work.original_catalogue_id,
-            'work_to_be_deleted': self.safe_work.work_to_be_deleted,
-        }, user=request.user)
-
-        catalogue_list = [('', None)] + [(c.catalogue_name, c.catalogue_code) for c in get_user_catalogues(request)]
-        self.common_work_form.fields['catalogue_list'].widget.choices = catalogue_list
-        self.common_work_form.fields['catalogue'].widget.choices = [(i[1], i[0]) for i in catalogue_list]
+        self.common_work_form = build_common_work_form(request, self.safe_work, request_data=request_data)
 
     def create_context(self, is_save_success=False):
         context = super().create_context()
@@ -176,7 +185,24 @@ class BasicWorkFFH(FullFormHandler):
         if cat_code and work.original_catalogue_id != cat_code:
             log.info('change original_catalogue_id from [{}] to [{}]'.format(
                 work.original_catalogue_id, cat_code))
+            old_catalogue_name = ''
+            if work.original_catalogue:
+                old_catalogue_name = work.original_catalogue.catalogue_name
             work.original_catalogue_id = cat_code
+            new_catalogue = CofkLookupCatalogue.objects.filter(catalogue_code=cat_code).first()
+            new_catalogue_name = new_catalogue.catalogue_name if new_catalogue else cat_code
+            audit_adapter = WorkAuditAdapter(work)
+            CofkUnionAuditLiteral.objects.create(
+                change_user=request.user.username,
+                change_type=constant.CHANGE_TYPE_CHANGE,
+                table_name=work._meta.db_table,
+                key_value_text=audit_adapter.key_value_text(),
+                key_value_integer=audit_adapter.key_value_integer(),
+                key_decode=audit_adapter.key_decode(),
+                column_name='original_catalogue',
+                new_column_value=new_catalogue_name,
+                old_column_value=old_catalogue_name,
+            )
 
         # handle work_to_be_deleted
         work.work_to_be_deleted = self.common_work_form.cleaned_data.get('work_to_be_deleted', 0)
@@ -460,13 +486,13 @@ class ManifFFH(BasicWorkFFH):
         # enclosures
         self.enclosure_manif_handler = MultiRecrefAdapterHandler(
             request_data, name='enclosure_manif',
-            recref_adapter=EnclosureManifRecrefAdapter(self.safe_manif),
+            recref_adapter=EnclosedManifRecrefAdapter(self.safe_manif),
             recref_form_class=ManifRecrefForm,
             rel_type=REL_TYPE_ENCLOSED_IN,
         )
         self.enclosed_manif_handler = MultiRecrefAdapterHandler(
             request_data, name='enclosed_manif',
-            recref_adapter=EnclosedManifRecrefAdapter(self.safe_manif),
+            recref_adapter=EnclosureManifRecrefAdapter(self.safe_manif),
             recref_form_class=ManifRecrefForm,
             rel_type=REL_TYPE_ENCLOSED_IN,
         )
@@ -510,8 +536,14 @@ class ManifFFH(BasicWorkFFH):
                             'label': label,
                         })
                 _manif.enclosed_letters = enclosed_letters
+                _manif.manif_notes = list(
+                    c.comment for c in _manif.cofkmanifcommentmap_set.filter(
+                        relationship_type=REL_TYPE_COMMENT_REFERS_TO).select_related('comment')
+                )
                 manif_set.append(_manif)
 
+            manif_type_order = {t[0]: i for i, t in enumerate(manif_type_choices)}
+            manif_set.sort(key=lambda m: manif_type_order.get(m.manifestation_type, len(manif_type_order)))
             context['manif_set'] = manif_set
 
         return context
@@ -583,7 +615,8 @@ class ResourcesFFH(BasicWorkFFH):
             log.debug('skip save resources when no changed')
             return
 
-        self.save_work(request, self.work)
+        if self.common_work_form.has_changed():
+            self.save_work(request, self.work)
         self.save_all_recref_formset(self.work, request)
 
     def create_context(self, is_save_success=False):
@@ -649,7 +682,7 @@ class DetailsFFH(BasicWorkFFH):
     def create_context(self, is_save_success=False):
         context: dict = super().create_context(is_save_success=is_save_success)
         context.update(self.subject_handler.create_context())
-        context['work_category'] = 'Other Details'
+        context['work_category'] = 'Other details'
         return context
 
     def has_changed(self, request):
@@ -909,6 +942,7 @@ def to_overview_manif(manif: CofkUnionManifestation):
         manif.repo_name = repo.inst.institution_name
 
     manif.type_display_name = dict(manif_type_choices).get(manif.manifestation_type, '')
+    manif.manifestation_creation_calendar_display = date_serv.decode_calendar(manif.manifestation_creation_calendar)
     manif.manifestation_receipt_calendar_display = date_serv.decode_calendar(manif.manifestation_receipt_calendar)
 
     # Find enclosed letters for this manifestation
@@ -931,6 +965,24 @@ def to_overview_manif(manif: CofkUnionManifestation):
             })
     manif.enclosed_letters = enclosed_letters
 
+    # Notes on manifestation
+    manif.manif_notes = list(c.comment for c in manif.cofkmanifcommentmap_set.filter(
+        relationship_type=REL_TYPE_COMMENT_REFERS_TO).select_related('comment'))
+
+    # Former owners
+    manif.former_owners = list(r.person for r in manif.cofkmanifpersonmap_set.filter(
+        relationship_type=REL_TYPE_FORMERLY_OWNED).select_related('person'))
+
+    # Scribes
+    manif.scribes = list(r.person for r in manif.cofkmanifpersonmap_set.filter(
+        relationship_type=REL_TYPE_HANDWROTE).select_related('person'))
+
+    # Language of manifestation
+    manif.manif_languages = list(manif.language_set.select_related('language_code'))
+
+    # Images
+    manif.manif_images = list(manif.cofkmanifimagemap_set.select_related('image'))
+
     return manif
 
 
@@ -948,11 +1000,11 @@ def overview_view(request, iwork_id):
         date_for_ordering=work.date_for_ordering,
         work_display_name=work_serv.get_recref_display_name(work),
 
-        notes_work=work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_DATE),
-        notes_author=work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_AUTHOR),
-        notes_addressee=work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_ADDRESSEE),
-        notes_people=work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_PERSON_MENTIONED),
-        notes_general=work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_REFERS_TO),
+        notes_work=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_DATE)),
+        notes_author=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_AUTHOR)),
+        notes_addressee=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_ADDRESSEE)),
+        notes_people=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_PERSON_MENTIONED)),
+        notes_general=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_REFERS_TO)),
 
         author_link_list=to_person_link_list(work, constant.REL_TYPE_CREATED),
         author_link_count=to_person_link_count(work, constant.REL_TYPE_CREATED),
@@ -997,9 +1049,12 @@ def overview_view(request, iwork_id):
         work_be_mention_link_list=(WorkLinkData(r.work_from) for r in
                                    work.work_to_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
         work_be_mention_link_count=len(work.work_to_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
-        manif_set=list(map(to_overview_manif, work.manif_set.iterator())),
+        manif_set=sorted(map(to_overview_manif, work.manif_set.iterator()),
+                        key=lambda m: {t[0]: i for i, t in enumerate(manif_type_choices)}.get(
+                            m.manifestation_type, len(manif_type_choices))),
         original_calendar_display=date_serv.decode_calendar(work.original_calendar),
-        work_category='Overview'
+        work_category='Overview',
+        common_work_form=build_common_work_form(request, work),
     )
 
     context.update(WorkFormDescriptor(work).create_context())
@@ -1118,8 +1173,30 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
         return self.get_queryset_by_request_data(self.request_data, sort_by=self.get_sort_by())
 
+    # Mapping from PK fields to their corresponding text search fields.
+    # When a PK field is present, the text field query should be skipped
+    # to avoid redundant AND-ed filtering that can eliminate results.
+    _pk_to_text_field = {
+        'person_sent_pk': 'creators_searchable',
+        'person_rec_pk': 'addressees_searchable',
+        'person_sent_rec_pk': 'sender_or_recipient',
+        'person_mention_pk': 'mentioned_searchable',
+        'location_sent_pk': 'places_from_searchable',
+        'location_rec_pk': 'places_to_searchable',
+        'location_sent_rec_pk': 'origin_or_destination',
+        'location_mention_pk': 'places_mentioned_searchable',
+    }
+
     def get_queryset_by_request_data(self, request_data, sort_by=None) -> Iterable:
         queries = query_serv.create_queries_by_field_fn_maps(request_data, self.search_field_fn_maps)
+
+        # When a PK field is present, exclude the corresponding text field
+        # from lookup queries to avoid redundant AND filtering that can
+        # cause results to disappear (PK search is already more precise).
+        text_fields_to_skip = set()
+        for pk_field, text_field in self._pk_to_text_field.items():
+            if request_data.get(pk_field):
+                text_fields_to_skip.add(text_field)
 
         search_fields_maps = {
             'language_of_work': [
@@ -1141,9 +1218,11 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         }
 
         # Exclude fields already handled by search_field_fn_maps to avoid
-        # treating them as direct model fields in create_queries_by_lookup_field
+        # treating them as direct model fields in create_queries_by_lookup_field.
+        # Also exclude text fields whose corresponding PK field is present.
         fn_map_keys = set(self.search_field_fn_maps.keys())
-        lookup_search_fields = [f for f in self.search_fields if f not in fn_map_keys]
+        lookup_search_fields = [f for f in self.search_fields
+                                if f not in fn_map_keys and f not in text_fields_to_skip]
 
         queries.extend(
             query_serv.create_queries_by_lookup_field(
@@ -1152,11 +1231,9 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                 search_fields_fn_maps={
                     'notes_on_authors': create_lookup_fn_by_comment([REL_TYPE_COMMENT_AUTHOR]),
                     'notes_on_addressees': create_lookup_fn_by_comment([REL_TYPE_COMMENT_ADDRESSEE]),
-                    # Related resources search in Works must only target the resource title/brief description
-                    # and exclude 'Further details of resource'. Therefore, search only on 'resource_name'.
-                    'related_resources': create_recref_lookup_fn([REL_TYPE_IS_RELATED_TO],
-                                                                 'cofkworkresourcemap__resource',
-                                                                 ['resource_name']),
+                    # Related resources column displays both actual resources and related works
+                    # (Reply to, Answered by, Matching letter). Search across all of them.
+                    'related_resources': work_serv.lookup_related_resources,
                     'general_notes': create_lookup_fn_by_comment([REL_TYPE_COMMENT_REFERS_TO]),
                     'flags': lookup_fn_flags,
                     # Support combined search such as "Draft%Royal Society" on manifestations summary
@@ -1223,17 +1300,17 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
 
         # Handle PK fields
         pk_fields = [
-            ('person_sent_pk', CofkUnionPerson, 'Author/sender'),
-            ('person_rec_pk', CofkUnionPerson, 'Addressee/recipient'),
-            ('person_sent_rec_pk', CofkUnionPerson, 'Sender or recipient'),
-            ('person_mention_pk', CofkUnionPerson, 'People mentioned'),
-            ('location_sent_pk', CofkUnionLocation, 'Location sent'),
-            ('location_rec_pk', CofkUnionLocation, 'Location received'),
-            ('location_sent_rec_pk', CofkUnionLocation, 'Location sent or received'),
-            ('location_mention_pk', CofkUnionLocation, 'Places mentioned'),
+            ('person_sent_pk', CofkUnionPerson, 'Author/sender', 'creators_searchable'),
+            ('person_rec_pk', CofkUnionPerson, 'Addressee/recipient', 'addressees_searchable'),
+            ('person_sent_rec_pk', CofkUnionPerson, 'Sender or recipient', 'sender_or_recipient'),
+            ('person_mention_pk', CofkUnionPerson, 'People mentioned', 'mentioned_searchable'),
+            ('location_sent_pk', CofkUnionLocation, 'Origin (standardized)', 'places_from_searchable'),
+            ('location_rec_pk', CofkUnionLocation, 'Destination (standardized)', 'places_to_searchable'),
+            ('location_sent_rec_pk', CofkUnionLocation, 'Origin or destination', 'origin_or_destination'),
+            ('location_mention_pk', CofkUnionLocation, 'Places mentioned', 'places_mentioned_searchable'),
         ]
 
-        for field_name, model_class, label in pk_fields:
+        for field_name, model_class, label, text_field in pk_fields:
             if val := self.request_data.get(field_name):
                 obj = model_class.objects.filter(pk=val).first()
                 if obj:
@@ -1241,6 +1318,9 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                     # Remove the default PK-based entry if it exists
                     pk_label = self.search_field_label_map.get(field_name, field_name)
                     simplified_query = [s for s in simplified_query if not s.startswith(f'{pk_label} ')]
+                    # Remove the corresponding text field entry to avoid duplication
+                    text_label = self.search_field_label_map.get(text_field, text_field)
+                    simplified_query = [s for s in simplified_query if not s.startswith(f'{text_label} ')]
                     simplified_query.append(f'{label} contains \'{name}\'')
 
         if self.search_field_fn_maps:
@@ -1323,9 +1403,9 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         if not self.has_perms([constant.PM_EXPORT_FILE_WORK]):
             return None
 
-        is_compact = (self.request_data.get('display-style', constant.SEARCH_LAYOUT_TABLE)
-                      == constant.SEARCH_LAYOUT_GRID)
-        header_values = CompactWorkCsvHeaderValues() if is_compact else WorkCsvHeaderValues()
+        # As per issue https://github.com/culturesofknowledge/emlo-project/issues/764
+        # export expanded values always
+        header_values = WorkCsvHeaderValues()
 
         return (lambda: view_serv.create_export_file_name('work', 'csv'),
                 lambda: DownloadCsvHandler(header_values).create_csv_file,
@@ -1352,12 +1432,8 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                     constant.PM_EXPORT_FILE_WORK,
                     )
 
-        def create_expanded_work_excel(queryable_works, file_path=None):
-            return excel_maker.create_excel_from_header_values(
-                queryable_works, file_path, WorkCsvHeaderValues(), 'Work'
-            )
         return (lambda: view_serv.create_export_file_name('work', 'xlsx'),
-                lambda: create_expanded_work_excel,
+                lambda: excel_maker.create_work_excel,
                 constant.PM_EXPORT_FILE_WORK,
                 )
 
@@ -1411,7 +1487,7 @@ class CompactWorkCsvHeaderValues(HeaderValues):
             "Year date",
             "Month date",
             "Day date",
-            "Date in original calendar",
+            "Date for ordering",
             "Author",
             "Notes on Author in relation to letter",
             "Recipient",
@@ -1475,7 +1551,7 @@ class WorkCsvHeaderValues(HeaderValues):
             "Year date",
             "Month date",
             "Day date",
-            "Date in original calendar",
+            "Date for ordering",
             "Author",
             "Notes on Author in relation to letter",
             "Origin name",

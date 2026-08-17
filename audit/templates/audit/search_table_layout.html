@@ -29,6 +29,11 @@
                         [{{ r.record_display_key }}]
                     {% endif %}
                 </div>
+                {% if r.merged_into %}
+                    <div>
+                        Merged into: {{ r.merged_into.new_name }} [{{ r.merged_into.new_display_id }}]
+                    </div>
+                {% endif %}
 
             </td>
 

@@ -99,9 +99,14 @@ class FullFormHandler:
         """Check if any form or formset has validation errors."""
         for f in self.every_form_formset:
             if isinstance(f, BaseFormSet):
-                if any(f.errors):
+                if any(f.errors) or f.non_form_errors():
+                    log.warning(f'has_form_errors: formset [{f.__class__.__name__}] '
+                               f'prefix=[{getattr(f, "prefix", None)}] '
+                               f'errors={f.errors!r} non_form_errors={f.non_form_errors()!r}')
                     return True
             elif hasattr(f, 'errors') and f.errors:
+                log.warning(f'has_form_errors: form [{f.__class__.__name__}] '
+                           f'prefix=[{getattr(f, "prefix", None)}] errors={f.errors!r}')
                 return True
         return False
 

@@ -33,6 +33,8 @@
 
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.roles field_lookup=form.roles_lookup %}
 
+    {% include "core/component/search_fieldset/zero_one_checkbox.html" with field=form.roles_include_titles %}
+
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.editors_notes field_lookup=form.editors_notes_lookup %}
 
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.researchers_notes field_lookup=form.researchers_notes_lookup %}

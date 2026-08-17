@@ -4,7 +4,6 @@ from typing import List
 
 from django.db.models import Max
 
-from core.models import CofkUnionRoleCategory
 from person.models import CofkUnionPerson
 from uploader.constants import BULK_PEOPLE_SHEET, BULK_PEOPLE_HEADER_MAP, normalize_header
 from uploader.entities.entity import CofkEntity
@@ -130,11 +129,6 @@ class CofkBulkPeople(CofkEntity, ABC):
                 if field not in _system_fields:
                     if field == 'alternative_names' and value:
                         person_kwargs[field] = '\n'.join(p.strip() for p in str(value).split(';') if p.strip())
-                    elif field == 'roles_or_titles' and value:
-                        for role_name in (r.strip() for r in str(value).split(';') if r.strip()):
-                            if not CofkUnionRoleCategory.objects.filter(role_category_desc__iexact=role_name).exists():
-                                self.add_error(f'Role "{role_name}" not found in the role category lookup.')
-                        person_kwargs[field] = value
                     else:
                         person_kwargs[field] = value
 

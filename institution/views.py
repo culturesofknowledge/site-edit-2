@@ -197,6 +197,11 @@ def full_form(request, pk):
         inst_form.save()
         is_save_success = view_serv.mark_callback_save_success(request)
 
+        # Recreate handlers from DB so the form reflects the saved state
+        inst_form = InstitutionForm(instance=inst)
+        res_handler = InstResourceFormsetHandler(request_data=None, parent=inst)
+        img_recref_handler = InstImageRecrefHandler(None, None, parent=inst)
+
     return _render_form()
 
 

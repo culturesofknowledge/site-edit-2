@@ -77,16 +77,7 @@ class ManifAuditAdapter(AuditRecrefAdapter):
         decode = self.instance.id_number_or_shelfmark or ''
         decode += ' '
         decode += self.instance.printed_edition_details or ''
-        date = self.instance.manifestation_creation_date
-        if date or date != constant.STD_DATE_FORMAT:
-            if self.instance.manifestation_creation_date_approx:
-                date = f'c.{date}'
-            if self.instance.manifestation_creation_date_uncertain:
-                date = f'{date}?'
-            if self.instance.manifestation_creation_date_inferred:
-                date = f'[{date}]'
-        decode = f'{date}: {decode}'
-        return decode
+        return decode.strip()
 
 
 class RelTypeAuditAdapter(AuditRecrefAdapter):

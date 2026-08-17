@@ -41,11 +41,6 @@ BULK_PEOPLE_HEADERS = [
 
 class TestBulkPeople(UploadIncludedTestCase):
 
-    @staticmethod
-    def _people_error_messages(cuef) -> list[str]:
-        """Flatten all error message strings out of cuef.errors['people']."""
-        return [msg for row in cuef.errors['people']['errors'] for msg in row['errors']]
-
     def create_bulk_people_file(self, data_rows: list) -> str:
         wb = Workbook()
         ws = wb.create_sheet('People')
@@ -209,63 +204,31 @@ class TestBulkPeople(UploadIncludedTestCase):
 
         self.assertEqual(cuef.upload_type, 'people')
 
-    def test_bulk_people_valid_role(self):
-        """A role that exists in CofkUnionRoleCategory produces no error."""
-        CofkUnionRoleCategory.objects.create(role_category_desc='Physician')
-        row = self._row(primary_name='John Doe', roles='Physician')
+    def test_bulk_people_role_free_text_stored_verbatim(self):
+        """'Occupations, role, titles' is free text: arbitrary values not in
+        CofkUnionRoleCategory are stored as-is and never raise an error."""
+        row = self._row(primary_name='John Doe', roles='Another test')
         filename = self.create_bulk_people_file([row])
 
         cuef = CofkUploadExcelFile(self.new_upload, filename)
 
         self.assertEqual(cuef.errors, {})
         person = CofkCollectPerson.objects.first()
-        self.assertEqual(person.roles_or_titles, 'Physician')
+        self.assertEqual(person.roles_or_titles, 'Another test')
 
-    def test_bulk_people_invalid_role_adds_error(self):
-        """A role not in CofkUnionRoleCategory adds an error and blocks record creation."""
-        row = self._row(primary_name='John Doe', roles='UnknownRole')
-        filename = self.create_bulk_people_file([row])
-
-        cuef = CofkUploadExcelFile(self.new_upload, filename)
-
-        self.assertIn('people', cuef.errors)
-        msgs = self._people_error_messages(cuef)
-        self.assertTrue(any('UnknownRole' in m for m in msgs))
-        self.assertEqual(CofkCollectPerson.objects.count(), 0)
-
-    def test_bulk_people_multiple_roles_one_invalid(self):
-        """Only the unknown role name appears in the error; valid roles are not flagged."""
+    def test_bulk_people_multiple_free_text_roles_stored_verbatim(self):
+        """Multiple semicolon-separated free-text roles/titles are stored as
+        the raw joined string, regardless of whether any of them match
+        CofkUnionRoleCategory."""
         CofkUnionRoleCategory.objects.create(role_category_desc='Physician')
-        row = self._row(primary_name='John Doe', roles='Physician; UnknownRole')
-        filename = self.create_bulk_people_file([row])
-
-        cuef = CofkUploadExcelFile(self.new_upload, filename)
-
-        self.assertIn('people', cuef.errors)
-        msgs = self._people_error_messages(cuef)
-        self.assertTrue(any('UnknownRole' in m for m in msgs))
-        self.assertFalse(any('Physician' in m for m in msgs))
-
-    def test_bulk_people_multiple_roles_all_valid(self):
-        """Multiple semicolon-separated roles that all exist produce no errors."""
-        CofkUnionRoleCategory.objects.create(role_category_desc='Physician')
-        CofkUnionRoleCategory.objects.create(role_category_desc='Mathematician')
-        row = self._row(primary_name='John Doe', roles='Physician; Mathematician')
+        row = self._row(primary_name='John Doe', roles='Physician; Another test; woman')
         filename = self.create_bulk_people_file([row])
 
         cuef = CofkUploadExcelFile(self.new_upload, filename)
 
         self.assertEqual(cuef.errors, {})
-
-    def test_bulk_people_role_lookup_case_insensitive(self):
-        """Role lookup is case-insensitive."""
-        CofkUnionRoleCategory.objects.create(role_category_desc='Physician')
-        row = self._row(primary_name='John Doe', roles='physician')
-        filename = self.create_bulk_people_file([row])
-
-        cuef = CofkUploadExcelFile(self.new_upload, filename)
-
-        self.assertEqual(cuef.errors, {})
+        person = CofkCollectPerson.objects.first()
+        self.assertEqual(person.roles_or_titles, 'Physician; Another test; woman')
 
     def test_both_people_and_places_without_work_raises_error(self):
         """A file with both People and Places sheets but no Work sheet raises CofkExcelFileError."""

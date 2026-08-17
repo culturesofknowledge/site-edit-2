@@ -59,9 +59,9 @@ class CofkUnionWork(models.Model, RecordTracker):
     edit_status = models.CharField(max_length=3, default='')
     relevant_to_cofk = models.CharField(max_length=3, default='Y')
     creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
-    creation_user = models.CharField(max_length=50)
+    creation_user = models.CharField(max_length=254)
     change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
-    change_user = models.CharField(max_length=50)
+    change_user = models.CharField(max_length=254)
     uuid = models.UUIDField(blank=True, null=True, default=model_serv.default_uuid)
     subjects = models.ManyToManyField(to='core.CofkUnionSubject',
                                       through='CofkWorkSubjectMap', related_name='work', )

@@ -21,11 +21,11 @@ import core.fixtures
 import location.fixtures
 import person.fixtures
 from core.constant import REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_IS_RELATED_TO
-from core.helper import model_serv, recref_serv, url_serv, webdriver_actions
+from core.helper import model_serv, recref_serv, url_serv, webdriver_actions, general_model_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.model_serv import ModelLike
 from core.helper.view_serv import BasicSearchView
-from core.models import CofkLookupCatalogue, CofkUnionComment, CofkUnionResource
+from core.models import CofkLookupCatalogue, CofkUnionComment, CofkUnionResource, MergeHistory
 from location.models import CofkUnionLocation
 from login.fixtures import create_test_user__a
 from person.models import CofkUnionPerson
@@ -525,6 +525,34 @@ class MergeTests(LoginTestCase):
             m._meta.model.objects.filter(pk=m.pk).exists()
             for m in other_models
         ))
+
+    def test_merge_action_records_history(self):
+        """Merging records a MergeHistory row for each merged-away record, so
+        an audit trail "removed" entry can be traced to where it went."""
+        other_models = self.prepare_data()
+        loc_a = other_models.pop()
+
+        self.client.post(reverse(f'{self.app_name}:merge_action'), data={
+            'selected_pk': loc_a.pk,
+            'merge_pk': [m.pk for m in other_models],
+            'action_type': 'confirm',
+        })
+
+        self.assertEqual(
+            MergeHistory.objects.filter(
+                model_class_name=loc_a.__class__.__name__,
+                old_id__in=[str(m.pk) for m in other_models],
+            ).count(),
+            len(other_models),
+        )
+        for m in other_models:
+            merge_history = MergeHistory.objects.get(
+                model_class_name=m.__class__.__name__, old_id=str(m.pk),
+            )
+            self.assertEqual(merge_history.new_id, str(loc_a.pk))
+            self.assertEqual(merge_history.new_name, general_model_serv.get_display_name(loc_a))
+            self.assertTrue(merge_history.old_name)
+            self.assertTrue(merge_history.creation_user)
 
     def test_merge_choice(self):
         objs = self.prepare_data()

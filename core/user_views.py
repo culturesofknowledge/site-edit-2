@@ -1,6 +1,9 @@
+import logging
 from typing import Iterable
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.http import Http404
 from django.shortcuts import render, redirect
@@ -15,6 +18,8 @@ from core.helper.view_serv import FormDescriptor
 from core.user_forms import UserSearchFieldset, UserForm
 from login.models import CofkUser
 
+log = logging.getLogger(__name__)
+
 
 class UserFormDescriptor(FormDescriptor):
 
@@ -27,20 +32,39 @@ class UserFormDescriptor(FormDescriptor):
         return 'User'
 
 
+def send_password_reset_email(request, user: CofkUser) -> bool:
+    """Email the user a link to set their own password, reusing the same
+    token-based flow as the self-service 'forgot password' page (see
+    login/urls.py). The supervisor never sees or sets the password."""
+    reset_form = PasswordResetForm({'email': user.email})
+    if not reset_form.is_valid():
+        log.warning(f'could not send password reset email to [{user.username}] -- {reset_form.errors}')
+        return False
+
+    reset_form.save(
+        request=request,
+        use_https=request.is_secure(),
+        from_email=settings.EMAIL_FROM_EMAIL,
+        email_template_name='login/password-reset-email.txt',
+    )
+    log.info(f'password reset email sent to [{user.username}]')
+    return True
+
+
 @login_required
 @permission_required(constant.PM_CHANGE_USER)
 def full_form(request, pk=None):
     instance: CofkUser = CofkUser.objects.filter(pk=pk).first()
     form = UserForm(request.POST or None, instance=instance)
 
-    new_password = request.session.pop(pk + '_new_password', None) if pk else None
+    reset_email_sent = request.session.pop(pk + '_reset_email_sent', None) if pk else None
 
     def _render_form():
         return render(request, 'user/init_form.html',
                       ({
                            'form': form,
                            'user_id': instance and instance.pk,
-                           'new_password': new_password,
+                           'reset_email_sent': reset_email_sent,
                        }
                        | UserFormDescriptor(instance).create_context()
                        | view_serv.create_is_save_success_context(is_save_success)
@@ -59,11 +83,12 @@ def full_form(request, pk=None):
         is_save_success = view_serv.mark_callback_save_success(request)
 
         if pk is None:
-            # generate password for new user and display it
-            new_password = str_utils.create_random_str(12)
-            form.instance.set_password(new_password)
+            # give the new account an initial password nobody (including the
+            # supervisor) ever sees, then email the user a link to set their own
+            form.instance.set_password(str_utils.create_random_str(32))
             form.instance.save()
-            request.session[form.instance.pk + '_new_password'] = new_password
+            email_sent = send_password_reset_email(request, form.instance)
+            request.session[form.instance.pk + '_reset_email_sent'] = email_sent
             return redirect(reverse('user:full_form', kwargs={'pk': form.instance.pk}))
 
     return _render_form()
@@ -134,13 +159,10 @@ def reset_password(request, pk):
         # raise not found 404
         raise Http404()
 
-
     if request.POST:
-        new_password = str_utils.create_random_str(12)
-        user.set_password(new_password)
-        user.save()
+        email_sent = send_password_reset_email(request, user)
         return render(request, 'user/reset_password_completed.html',
-                      {'user': user, 'new_password': new_password})
+                      {'user': user, 'email_sent': email_sent})
     else:
         return render(request, 'user/reset_password.html', {'user': user})
 

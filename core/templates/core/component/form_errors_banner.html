@@ -2,4 +2,12 @@
 <div class="alert danger form-errors-banner">
     <strong>There are errors in the form.</strong> Correct the errors and try again.
 </div>
+<script>
+    $(function () {
+        var errorBanner = document.querySelector('.form-errors-banner');
+        if (errorBanner) {
+            errorBanner.scrollIntoView({behavior: 'smooth', block: 'center'});
+        }1
+    });
+</script>
 {% endif %}
