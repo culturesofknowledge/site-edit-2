@@ -283,7 +283,7 @@ class MultiRelRecrefForm(forms.Form):
         # Extract numeric ID from values like 'cofk_import_ead-ead_c01_id:000012345'
         if ':' in target_id:
             target_id = target_id.split(':')[-1]
-        return target_id.lstrip('0') or '0'
+        return target_id.lstrip('0') or ''
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
