@@ -14,6 +14,7 @@ from django.template import loader
 from django.utils.http import urlsafe_base64_encode
 
 from core.helper import exporter_serv
+from login.forms import CustomAuthenticationForm
 
 UserModel = get_user_model()
 
@@ -35,6 +36,7 @@ def _consume_pending_messages(request):
 
 class EmloLoginView(LoginView):
     template_name = 'login/login.html'
+    form_class = CustomAuthenticationForm
 
     def form_valid(self, form):
         _consume_pending_messages(self.request)
