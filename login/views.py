@@ -88,6 +88,7 @@ class EmloPasswordResetForm(forms.Form):
         that prevent inactive users and users with unusable passwords from
         resetting their password.
         """
+        email_field_name = UserModel.get_email_field_name()
         active_users = UserModel._default_manager.filter(
             **{
                 "%s__iexact" % UserModel.USERNAME_FIELD: username,
@@ -98,6 +99,7 @@ class EmloPasswordResetForm(forms.Form):
             u
             for u in active_users
             if u.has_usable_password()
+            and getattr(u, email_field_name)
             and _unicode_ci_compare(username, getattr(u, UserModel.USERNAME_FIELD))
         )
 

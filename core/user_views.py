@@ -41,6 +41,11 @@ def send_password_reset_email(request, user: CofkUser) -> bool:
         log.warning(f'could not send password reset email to [{user.username}] -- {reset_form.errors}')
         return False
 
+    if not list(reset_form.get_users(user.username)):
+        log.warning(f'password reset email not sent to [{user.username}] '
+                    f'-- no matching active user with a usable password and email address')
+        return False
+
     reset_form.save(
         request=request,
         use_https=request.is_secure(),
