@@ -12,7 +12,7 @@ class InstitutionForm(ModelForm):
     institution_city = forms.CharField()
     institution_country = forms.CharField()
     institution_synonyms = form_serv.CommonTextareaField()
-    editors_notes = form_serv.CommonTextareaField()
+    editors_notes = form_serv.CommonTextareaField(label=field_label_map['institution']['editors_notes'])
     institution_city_synonyms = form_serv.CommonTextareaField()
     institution_country_synonyms = form_serv.CommonTextareaField()
 
