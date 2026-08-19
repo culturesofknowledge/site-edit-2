@@ -158,6 +158,7 @@ class ImageFrontendCsv(HeaderValues):
 
     def _is_published(self, obj):
         check_list = [
+            ('can_be_displayed', lambda: obj.can_be_displayed != 'N'),
             ('work', lambda: is_published_by_filter_work(obj, 'cofkmanifimagemap__manif__work')),
             ('url', lambda: is_url_for_published(obj.image_filename, self.url_alive_checker)),
         ]
