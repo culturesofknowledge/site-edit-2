@@ -293,7 +293,7 @@ CSRF_COOKIE_SECURE = False
 # export
 # root url for generate url in export
 EXPORT_ROOT_URL = 'http://localhost:8020'
-EXPORTER_SCHEDULE_TYPE = 'D'  # D: Daily, I: Minutes, H: Hourly, W: Weekly, M: Monthly, Q: Quarterly, Y: Yearly
+EXPORTER_SCHEDULE_TYPE = 'W'  # D: Daily, I: Minutes, H: Hourly, W: Weekly, M: Monthly, Q: Quarterly, Y: Yearly
 
 # Test
 SELENIUM_CHROME_LOCAL_DRIVER = False
