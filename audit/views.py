@@ -122,7 +122,7 @@ class AuditSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSearch
                 'change_made', 'audit_id',
             ], search_fields_maps={
                 'change_made': ['new_column_value', 'old_column_value'],
-            })
+            }, numeric_field_names=['key_value_integer', 'audit_id'])
         )
 
         return self.create_queryset_by_queries(CofkUnionAuditLiteral, queries)

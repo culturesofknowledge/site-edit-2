@@ -57,6 +57,7 @@ def create_queries_by_lookup_field(request_data: dict,
                                    search_field_names: list[str],
                                    search_fields_maps: dict[str, Iterable[str]] = None,
                                    search_fields_fn_maps: dict[str, 'LookupFn'] = None,
+                                   numeric_field_names: Iterable[str] = (),
                                    ) -> Iterable[Q]:
     """
 
@@ -76,6 +77,11 @@ def create_queries_by_lookup_field(request_data: dict,
         allow to define more complex lookup function, for example multi relationship query
         Lookupfn is Callable and return a Q object
 
+    numeric_field_names
+        fields in here use a case-sensitive `equals`/`not_equal_to` (plain Exact) instead of
+        the default IExact -- case-insensitivity is meaningless for a number, and IExact's
+        UPPER(col::text) wrapping prevents any index on the column from being used
+
     Returns
     -------
 
@@ -93,7 +99,8 @@ def create_queries_by_lookup_field(request_data: dict,
         if not field_val and lookup_key not in nullable_lookup_keys:
             continue
 
-        if (lookup_fn := choices_lookup_map.get(lookup_key)) is None:
+        lookup_map = numeric_choices_lookup_map if field_name in numeric_field_names else choices_lookup_map
+        if (lookup_fn := lookup_map.get(lookup_key)) is None:
             log.warning(f'lookup fn not found -- [{field_name}][{lookup_key}]')
             continue
 
@@ -198,7 +205,17 @@ choices_lookup_map = {
     '': lookups.IExact,
 }
 
-""" 
+# same as choices_lookup_map, but 'equals'/'not_equal_to' use plain (case-sensitive)
+# Exact instead of IExact -- see numeric_field_names on create_queries_by_lookup_field
+numeric_choices_lookup_map = {
+    **choices_lookup_map,
+    'equals': Exact,
+    'not_equal_to': cond_not(Exact),
+    None: Exact,
+    '': Exact,
+}
+
+"""
 if value of search_fields_maps have more than one element,
 some lookup key may only apply in first or last element,
 
