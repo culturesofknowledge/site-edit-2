@@ -121,9 +121,12 @@ def clone_rows_by_model_class(conn, model_class: Type[ModelLike],
         if isinstance(max_pk, str):
             raise ValueError(f'max_pk should be int -- [{max_pk}][{type(max_pk)}]')
 
-        new_val = 10_000_000
-        if max_pk > new_val:
-            new_val = max_pk + new_val
+        # new_val = 10_000_000
+        # if max_pk > new_val:
+        #     new_val = max_pk + new_val
+        # setval's default is_called=true means the given value counts as already
+        # used, so the next nextval() returns max_pk + 1 -- not max_pk.
+        new_val = max_pk
 
         cur_conn.cursor().execute(f"select setval('{seq_name}', {new_val})")
 

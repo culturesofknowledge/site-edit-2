@@ -3,7 +3,6 @@ from typing import Iterable
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.http import Http404
 from django.shortcuts import render, redirect
@@ -17,6 +16,7 @@ from core.helper.view_serv import DefaultSearchView
 from core.helper.view_serv import FormDescriptor
 from core.user_forms import UserSearchFieldset, UserForm
 from login.models import CofkUser
+from login.views import EmloPasswordResetForm
 
 log = logging.getLogger(__name__)
 
@@ -36,9 +36,14 @@ def send_password_reset_email(request, user: CofkUser) -> bool:
     """Email the user a link to set their own password, reusing the same
     token-based flow as the self-service 'forgot password' page (see
     login/urls.py). The supervisor never sees or sets the password."""
-    reset_form = PasswordResetForm({'email': user.email})
+    reset_form = EmloPasswordResetForm({'username': user.username})
     if not reset_form.is_valid():
         log.warning(f'could not send password reset email to [{user.username}] -- {reset_form.errors}')
+        return False
+
+    if not list(reset_form.get_users(user.username)):
+        log.warning(f'password reset email not sent to [{user.username}] '
+                    f'-- no matching active user with a usable password and email address')
         return False
 
     reset_form.save(

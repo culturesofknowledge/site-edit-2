@@ -1,5 +1,4 @@
 import logging
-import re
 from collections.abc import Callable
 from typing import Iterable, Any, Type
 
@@ -268,7 +267,7 @@ class PlacesFFH(BasicWorkFFH):
         ))
 
     def save(self, request):
-        if not self.is_any_changed():
+        if self.work and not self.is_any_changed():
             log.debug('skip save places when no changed')
             return
 
@@ -308,7 +307,7 @@ class DatesFFH(BasicWorkFFH):
         ))
 
     def save(self, request):
-        if not self.is_any_changed():
+        if self.work and not self.is_any_changed():
             log.debug('skip save dates when no changed')
             return
 
@@ -380,7 +379,7 @@ class CorrFFH(BasicWorkFFH):
         )
 
     def save(self, request):
-        if not self.is_any_changed():
+        if self.work and not self.is_any_changed():
             log.debug('skip save corr when no changed')
             return
 
