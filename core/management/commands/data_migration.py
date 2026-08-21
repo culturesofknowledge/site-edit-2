@@ -415,7 +415,8 @@ def migrate_groups_and_permissions(conn):
         old_id_groups[r['role_id']].user_set.add(CofkUser.objects.get_by_natural_key(r['username']))
 
     # is_staff
-    CofkUser.objects.with_perm(constant.PM_CHANGE_USER).update(is_staff=True)
+    CofkUser.objects.with_perm(constant.PM_CHANGE_USER,
+                               backend='django.contrib.auth.backends.ModelBackend').update(is_staff=True)
 
     log_save_records('group & permission', -1, time.time() - start_sec)
 
