@@ -15,12 +15,12 @@ from core.constant import REL_TYPE_STORED_IN, REL_TYPE_CREATED, REL_TYPE_WAS_ADD
     REL_TYPE_MENTION, REL_TYPE_DEALS_WITH, REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_COMMENT_DATE, \
     REL_TYPE_COMMENT_ORIGIN, REL_TYPE_COMMENT_DESTINATION, REL_TYPE_COMMENT_PERSON_MENTIONED, \
     REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_MENTION_PLACE
-from core.models import CofkUnionResource, CofkLookupCatalogue, CofkUnionComment, CofkUnionRoleCategory
+from core.models import CofkUnionResource, CofkLookupCatalogue, CofkUnionComment
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap
 from manifestation import manif_serv
 from manifestation.models import CofkUnionManifestation, CofkManifInstMap
-from person.models import CofkUnionPerson, CofkPersonCommentMap, CofkPersonRoleMap, CofkPersonResourceMap, create_person_id
+from person.models import CofkUnionPerson, CofkPersonCommentMap, CofkPersonResourceMap, create_person_id
 from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectPerson, CofkCollectLocation, \
     CofkCollectWorkCorrection
 from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, CofkWorkResourceMap, \
@@ -399,6 +399,7 @@ def accept_people(upload: CofkCollectUpload, username: str, request=None):
                     init_seq_id=True,
                     foaf_name=person.primary_name,
                     skos_altlabel=person.alternative_names,
+                    person_aliases=person.roles_or_titles,
                     gender=person.gender,
                     is_organisation=person.is_organisation,
                     editors_notes=person.editors_notes,
@@ -437,14 +438,6 @@ def accept_people(upload: CofkCollectUpload, username: str, request=None):
                         person=union_person, comment=comment,
                         relationship_type=REL_TYPE_COMMENT_REFERS_TO,
                     )
-                if person.roles_or_titles:
-                    for role_name in (r.strip() for r in person.roles_or_titles.split(';') if r.strip()):
-                        role = CofkUnionRoleCategory.objects.filter(role_category_desc__iexact=role_name).first()
-                        if role:
-                            CofkPersonRoleMap.objects.create(
-                                person=union_person, role=role,
-                                relationship_type='member_of',
-                            )
                 for resource in person.cofkcollectpersonresource_set.all():
                     union_resource = CofkUnionResource(
                         resource_name=resource.resource_name,
