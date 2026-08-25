@@ -37,7 +37,15 @@
                 <label>Original catalogue:</label>
                 <div>
                     <div class="catalogue-div">
-                        {% include "core/component/selectfilter.html" with select_field=common_work_form.catalogue  datalist_field=common_work_form.catalogue_list %}
+                        {% if common_work_form.catalogue.value and not user.is_supervisor %}
+                            <div class="selectfilter-root">
+                                <input class="sf-select" type="text" value="{{ catalogue_name }}" readonly disabled>
+                                <div class="sf-search-div" style="display: none"></div>
+                            </div>
+                            <input type="hidden" name="{{ common_work_form.catalogue.html_name }}" value="{{ common_work_form.catalogue.value }}">
+                        {% else %}
+                            {% include "core/component/selectfilter.html" with select_field=common_work_form.catalogue  datalist_field=common_work_form.catalogue_list %}
+                        {% endif %}
                     </div>
 
                     {% include "core/component/common_checkbox.html" with field=common_work_form.work_to_be_deleted name='Work marked for deletion' is_normal_size=True %}
