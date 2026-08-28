@@ -94,8 +94,10 @@
                     <label>{{ form.licence_url.label }}:*</label>
                     <div>{{ form.licence_url.errors }}{{ form.licence_url }}</div>
                 </div>
-                {% include "core/component/common_checkbox.html" with field=form.can_be_displayed name='Can be displayed to public' is_normal_size=True %}
-                <small>If this box is not ticked, the image will not be displayed in the 'front-end'.</small>
+                <div style="display: flex; gap: 0.5rem;">
+                    {% include "core/component/common_checkbox.html" with field=form.can_be_displayed name='Can be displayed to public' is_normal_size=True %}
+                    <small>If this box is not ticked, the image will not be displayed in the 'front-end'.</small>
+                </div>
                 <div class="flex flex-label">
                     <label>{{ form.display_order.label }}:</label>
                     {{ form.display_order.errors }}{{ form.display_order }}
