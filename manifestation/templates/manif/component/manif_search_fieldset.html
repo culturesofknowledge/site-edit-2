@@ -14,7 +14,7 @@
     </div>
 
     <!-- ID number or shelfmark -->
-    {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.id_number_or_shelfmark field_lookup=form.id_number_or_shelfmark_lookup %}
+    {% include "core/component/search_fieldset/field_with_lookup.html" with field_title="Shelfmark" field=form.id_number_or_shelfmark field_lookup=form.id_number_or_shelfmark_lookup %}
 
     <!-- Last edit -->
     {% include "core/component/search_fieldset/from_to_year.html" with title='Last edit' from_field=form.change_timestamp_from to_field=form.change_timestamp_to field_info=form.change_timestamp_info %}
