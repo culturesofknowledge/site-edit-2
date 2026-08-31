@@ -44,16 +44,18 @@ def editor_url(url_path: str) -> str:
     return '{}{}'.format(settings.EXPORT_ROOT_URL, url_path, )
 
 
-def matching_letter_ids_and_position(self_id: int, matched_ids: Iterable[int]) -> [str, int]:
+def matching_letter_ids_and_position(self_id: int, matched_ids: Iterable[int]) -> [str, int | str]:
     """For the "matched letters" export columns: a semicolon-joined, ascending list
     of every letter ID in the match group INCLUDING self_id, and self_id's 1-based
     position within that list.
 
-    A letter with no matches at all still returns a single-item list containing
-    just self_id, at position 1 - this is what lets data analysts filter the
-    position column down to 1 to get one representative per group (matched or not)
-    and discard the rest as duplicates.
+    A letter with no matches at all has no match group to report, so both
+    columns are left blank rather than reporting a single-item group of self.
     """
+    matched_ids = list(matched_ids)
+    if not matched_ids:
+        return '', ''
+
     all_ids = sorted({self_id, *matched_ids})
     ids_str = common_join_text(str(i) for i in all_ids)
     position = all_ids.index(self_id) + 1

@@ -121,9 +121,12 @@ def clone_rows_by_model_class(conn, model_class: Type[ModelLike],
         if isinstance(max_pk, str):
             raise ValueError(f'max_pk should be int -- [{max_pk}][{type(max_pk)}]')
 
-        new_val = 10_000_000
-        if max_pk > new_val:
-            new_val = max_pk + new_val
+        # new_val = 10_000_000
+        # if max_pk > new_val:
+        #     new_val = max_pk + new_val
+        # setval's default is_called=true means the given value counts as already
+        # used, so the next nextval() returns max_pk + 1 -- not max_pk.
+        new_val = max_pk
 
         cur_conn.cursor().execute(f"select setval('{seq_name}', {new_val})")
 
@@ -412,7 +415,8 @@ def migrate_groups_and_permissions(conn):
         old_id_groups[r['role_id']].user_set.add(CofkUser.objects.get_by_natural_key(r['username']))
 
     # is_staff
-    CofkUser.objects.with_perm(constant.PM_CHANGE_USER).update(is_staff=True)
+    CofkUser.objects.with_perm(constant.PM_CHANGE_USER,
+                               backend='django.contrib.auth.backends.ModelBackend').update(is_staff=True)
 
     log_save_records('group & permission', -1, time.time() - start_sec)
 

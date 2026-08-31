@@ -32,18 +32,18 @@
                 {% include "core/component/form_errors_banner.html" %}
                 {% include "core/component/form_descriptor.html" with descriptor=form_descriptor %}
 
+                {% if common_work_form %}
                 <div class="multi_rel_recref_container">
                 <label>Original catalogue:</label>
                 <div>
-                {% if common_work_form %}
                     <div class="catalogue-div">
                         {% include "core/component/selectfilter.html" with select_field=common_work_form.catalogue  datalist_field=common_work_form.catalogue_list %}
                     </div>
 
                     {% include "core/component/common_checkbox.html" with field=common_work_form.work_to_be_deleted name='Work marked for deletion' is_normal_size=True %}
+                </div>
+                </div>
                 {% endif %}
-                </div>
-                </div>
 
                 <div class="row-no-margin margin-bottom">
                     {% include "work/component/tab_link.html" with name='Correspondents' vname='work:corr_form' iwork_id=iwork_id %}

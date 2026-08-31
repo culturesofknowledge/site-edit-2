@@ -286,6 +286,23 @@
     margin: -10px 0 0 190px;
 }
 
+// Help-text caption living inside a .multi_rel_recref_container grid row, placed in the
+// same column (2) as the input above it. Any fixed or percentage offset approximating
+// that column's position breaks because the column isn't purely proportional to
+// container width -- long labels force it wider via min-content sizing. Being an actual
+// grid item in column 2 ties it to the browser's real computed column boundary, so it
+// stays aligned at any zoom level, viewport width, or label length.
+.multi_rel_recref_container > .grid-help-text-inline {
+    grid-column: 2;
+    text-align: left;
+    margin: -4px 0 0;
+    // .multi_rel_recref_container sets font-size: 0.694em on itself, which compounds
+    // with the global `small { font-size: $typescale-6 }` (0.833em) rule and shrinks
+    // this caption well below normal help-text size. rem sizes it against the root
+    // font-size instead, matching what a <small> renders as everywhere else on the site.
+    font-size: 0.833rem;
+}
+
 // 📱 Responsive fallback
 @media (max-width: 640px) {
   .flex-label {

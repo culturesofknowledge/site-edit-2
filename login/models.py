@@ -1,5 +1,6 @@
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin, UserManager
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from core.models import CofkUserSavedQuery
@@ -33,6 +34,21 @@ class CofkUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return f"{self.forename} {self.surname}"
+
+    def save(self, *args, **kwargs):
+        # username is the PK -- normalise it here so every creation path (the
+        # web form, management commands, `createsuperuser`) is protected, not
+        # just the ones that happen to run it through a form field first.
+        if self.username:
+            self.username = self.username.strip()
+
+        # a fresh instance whose (stripped) username already exists would
+        # otherwise silently UPDATE that row instead of failing, since save()
+        # treats an explicit PK match as an update rather than a conflict.
+        if self._state.adding and CofkUser.objects.filter(pk=self.username).exists():
+            raise ValidationError(f'A user with the username "{self.username}" already exists.')
+
+        super().save(*args, **kwargs)
 
     class Meta:
         db_table = 'cofk_user'

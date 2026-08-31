@@ -321,11 +321,7 @@ class CofkEntity:
     def check_shelfmark(self, field: str, value: str):
         if '-' in value:
             self.add_error(f'{field}: Use an en dash between folio numbers, not a hyphen.')
-        if value.endswith('.'):
-            self.add_error(f'{field}: There should not be a full stop at the end of a shelfmark.')
 
     def check_bibliography(self, field: str, value: str):
-        if value.endswith('.'):
-            self.add_error(f'{field}: There should not be a full stop at the end of bibliographic details.')
         if '-' in value and '–' not in value:
             self.add_error(f'{field}: Use en dashes for page ranges, not hyphens.')

@@ -51,7 +51,7 @@
 
 
     <div class="multi_rel_recref_container">
-    <label></label><span>Other types of enclosure <small> e.g. money, books, samples of minerals</small>:</span>
+    <label></label><span>OTHER TYPES of enclosure <small> e.g. money, books, samples of minerals</small>:</span>
     <label>Details of enclosures other than letters:</label>
     {{ manif_form.non_letter_enclosures }}
     </div>
@@ -82,9 +82,7 @@
     <div class="multi_rel_recref_container">
     <label>Paper size:</label>
     {{ manif_form.paper_size }}
-    </div>
-    <div class="flex flex-help-text margin-bottom">
-        <small>(up to 500 characters)</small>
+    <small class="grid-help-text-inline margin-bottom">(up to 500 characters)</small>
     </div>
 
     <div class="multi_rel_recref_container">
@@ -95,17 +93,13 @@
     <div class="multi_rel_recref_container">
     <label>Paper type, watermark:</label>
     {{ manif_form.paper_type_or_watermark }}
-    </div>
-    <div class="flex flex-help-text margin-bottom">
-        <small>(up to 500 characters)</small>
+    <small class="grid-help-text-inline margin-bottom">(up to 500 characters)</small>
     </div>
 
     <div class="multi_rel_recref_container">
     <label>Number of pages:</label>
     {{ manif_form.number_of_pages_of_document }}
-    </div>
-    <div class="flex flex-help-text margin-bottom">
-        <small>(whole numbers only)</small>
+    <small class="grid-help-text-inline margin-bottom">(whole numbers only)</small>
     </div>
 
     <div class="multi_rel_recref_container">
@@ -172,7 +166,9 @@
         It is not necessary to enter language of manifestation if they are the same as those of
         the original work.
     </small><br/>
-    {% include "core/component/lang_section.html" with lang_formset=edit_lang_formset new_lang_form=new_lang_form %}
+    <div class="manif-lang-section">
+        {% include "core/component/lang_section.html" with lang_formset=edit_lang_formset new_lang_form=new_lang_form %}
+    </div>
 
 </fieldset>
 

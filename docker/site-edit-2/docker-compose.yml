@@ -31,6 +31,7 @@ services:
     volumes:
       - ../../:/code
       - emlo_home:${EMLO_APP_HOME}
+      - ../../exporter_output:${EMLO_APP_HOME}exporter
     ports:
       - "8000:8000"
     env_file:
@@ -46,6 +47,7 @@ services:
     volumes:
       - ../../:/code
       - emlo_home:${EMLO_APP_HOME}
+      - ../../exporter_output:${EMLO_APP_HOME}exporter
     env_file:
       - .env
     depends_on:

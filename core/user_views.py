@@ -3,8 +3,8 @@ from typing import Iterable
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.core.exceptions import ValidationError
 from django.http import Http404
 from django.shortcuts import render, redirect
 from django.urls import reverse
@@ -17,6 +17,7 @@ from core.helper.view_serv import DefaultSearchView
 from core.helper.view_serv import FormDescriptor
 from core.user_forms import UserSearchFieldset, UserForm
 from login.models import CofkUser
+from login.views import EmloPasswordResetForm
 
 log = logging.getLogger(__name__)
 
@@ -36,9 +37,14 @@ def send_password_reset_email(request, user: CofkUser) -> bool:
     """Email the user a link to set their own password, reusing the same
     token-based flow as the self-service 'forgot password' page (see
     login/urls.py). The supervisor never sees or sets the password."""
-    reset_form = PasswordResetForm({'email': user.email})
+    reset_form = EmloPasswordResetForm({'username': user.username})
     if not reset_form.is_valid():
         log.warning(f'could not send password reset email to [{user.username}] -- {reset_form.errors}')
+        return False
+
+    if not list(reset_form.get_users(user.username)):
+        log.warning(f'password reset email not sent to [{user.username}] '
+                    f'-- no matching active user with a usable password and email address')
         return False
 
     reset_form.save(
@@ -79,7 +85,14 @@ def full_form(request, pk=None):
         ]):
             return _render_form()
 
-        form.save()
+        try:
+            form.save()
+        except ValidationError as e:
+            # e.g. CofkUser.save() rejecting a username (email) that's
+            # already taken -- report it on the form instead of a 500
+            form.add_error('email', e)
+            return _render_form()
+
         is_save_success = view_serv.mark_callback_save_success(request)
 
         if pk is None:

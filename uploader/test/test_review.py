@@ -151,6 +151,16 @@ class TestAcceptPeople(UploadIncludedTestCase):
         collect_person.refresh_from_db()
         self.assertIsNotNone(collect_person.union_iperson)
 
+    def test_accept_people_roles_or_titles_copied_to_person_aliases(self):
+        """accept_people copies free-text roles_or_titles onto person_aliases,
+        the field the person-edit form labels 'Details of roles / titles'."""
+        self._make_collect_person(roles_or_titles='Astronomer; correspondent of the Royal Society')
+
+        accept_people(self.new_upload, username='admin')
+
+        union_person = CofkUnionPerson.objects.exclude(iperson_id__in=[15257, 885, 22859]).get()
+        self.assertEqual(union_person.person_aliases, 'Astronomer; correspondent of the Royal Society')
+
     def test_accept_people_name_only(self):
         """accept_people works when only primary_name is set."""
         CofkCollectPerson.objects.create(

@@ -22,6 +22,11 @@
                         An email has been sent to <strong>{{ form.instance.email }}</strong> with a link for
                         <strong>{{ form.instance.username }}</strong> to set their own password. The password is
                         never visible to a Supervisor.
+                    {% elif not form.instance.email %}
+                        <strong>{{ form.instance.username }}</strong> does not have an email address on file, so
+                        no password reset email could be sent. The account has been created, but they will not
+                        be able to log in until they set a password -- add an email address for this user and
+                        use the 'Reset Password' option once resolved.
                     {% else %}
                         <strong>The password reset email could not be sent</strong> to
                         {{ form.instance.email }}. The account has been created, but
