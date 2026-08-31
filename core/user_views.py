@@ -4,6 +4,7 @@ from typing import Iterable
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.core.exceptions import ValidationError
 from django.http import Http404
 from django.shortcuts import render, redirect
 from django.urls import reverse
@@ -84,7 +85,14 @@ def full_form(request, pk=None):
         ]):
             return _render_form()
 
-        form.save()
+        try:
+            form.save()
+        except ValidationError as e:
+            # e.g. CofkUser.save() rejecting a username (email) that's
+            # already taken -- report it on the form instead of a 500
+            form.add_error('email', e)
+            return _render_form()
+
         is_save_success = view_serv.mark_callback_save_success(request)
 
         if pk is None:
