@@ -6,6 +6,7 @@ This module and package `export_data` is designed for web search page export.
 """
 import itertools
 import logging
+import re
 from typing import Iterable, NoReturn, Callable
 
 from xlsxwriter import Workbook
@@ -73,8 +74,22 @@ def fill_location_sheet(sheet, rows, header_hormat=None):
                       )
 
 
+def manif_id_sort_key(manif: CofkUnionManifestation):
+    """Sort manifestation_id numerically before alphabetically, chunk by
+    chunk (e.g. '1234-a', '1234-b', '1234-c', '1235-a'), rather than as a
+    single opaque string -- which would sort '1235-a' before '999-a'.
+
+    manifestation_id is free-text (legacy imports and newly-created ids
+    don't share one shape), so each chunk is tagged with a type marker
+    (0=numeric, 1=text) to keep comparisons between differently-shaped ids
+    from raising a TypeError.
+    """
+    chunks = re.findall(r'\d+|\D+', manif.manifestation_id or '')
+    return [(0, int(c)) if c.isdigit() else (1, c.lower()) for c in chunks]
+
+
 def fill_manif_sheet(sheet, rows, header_hormat=None):
-    return fill_sheet(sheet, rows=rows,
+    return fill_sheet(sheet, rows=sorted(rows, key=manif_id_sort_key),
                       header_values=excel_header_values.ManifExcelHeaderValues(),
                       sheet_name='Manifestation',
                       header_format=header_hormat,
