@@ -134,7 +134,7 @@ class CofkUnionPerson(models.Model, RecordTracker):
             person += f', also known as: {self.skos_altlabel}'
 
         if self.person_aliases:
-            person += f' (titles/roles: {self.person_aliases}'
+            person += f' (titles/roles: {self.person_aliases})'
 
         return person
 
