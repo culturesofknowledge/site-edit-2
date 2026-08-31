@@ -107,13 +107,13 @@ def create_joined_manif_ann_field():
                        .filter(document_type_code=OuterRef('manif_set__manifestation_type'))
                        .values_list('document_type_desc', flat=True)),
         _had_enclosure=_prefixed_enclosure_field(
-            'manif_set__manif_from_set',
-            'manif_set__manif_from_set__manif_to__id_number_or_shelfmark',
+           'manif_set__manif_to_set',
+            'manif_set__manif_to_set__manif_from__id_number_or_shelfmark',
             'Had enclosure: ',
         ),
         _was_enclosed_in=_prefixed_enclosure_field(
-            'manif_set__manif_to_set',
-            'manif_set__manif_to_set__manif_from__id_number_or_shelfmark',
+            'manif_set__manif_from_set',
+            'manif_set__manif_from_set__manif_to__id_number_or_shelfmark',
             'Was enclosed in: ',
         ),
         manif_detail=_join_values_for_search([

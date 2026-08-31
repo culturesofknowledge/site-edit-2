@@ -576,8 +576,8 @@ def lookup_manifestations_searchable(lookup_fn, field_name: str, value: str) -> 
     # Labels used for enclosure relationships – must stay in sync with
     # the prefixes produced by subqueries._prefixed_enclosure_field().
     _ENCLOSURE_LABELS = {
-        'had enclosure': 'manif_from_set__manif_to__id_number_or_shelfmark',
-        'was enclosed in': 'manif_to_set__manif_from__id_number_or_shelfmark',
+        'had enclosure': 'manif_to_set__manif_from__id_number_or_shelfmark',
+        'was enclosed in': 'manif_from_set__manif_to__id_number_or_shelfmark',
     }
 
     # All segments must match within the SAME manifestation for a work.
