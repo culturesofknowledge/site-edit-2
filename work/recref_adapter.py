@@ -244,22 +244,8 @@ class ManifManifRecrefAdapter(RecrefFormAdapter, ABC):
 
 
 class EnclosureManifRecrefAdapter(ManifManifRecrefAdapter):
-    def __init__(self, manif=None):
-        self.manif: CofkUnionManifestation = manif
+    """The current manifestation encloses the target (e.g. 'Had enclosure: X')."""
 
-    def find_recref_records(self, rel_type):
-        return self.manif.manif_from_set.filter(relationship_type=rel_type).iterator()
-
-    @classmethod
-    def parent_field(cls) -> ForwardManyToOneDescriptor:
-        return CofkManifManifMap.manif_from
-
-    @classmethod
-    def target_field(cls) -> ForwardManyToOneDescriptor:
-        return CofkManifManifMap.manif_to
-
-
-class EnclosedManifRecrefAdapter(ManifManifRecrefAdapter):
     def __init__(self, manif=None):
         self.manif: CofkUnionManifestation = manif
 
@@ -273,3 +259,21 @@ class EnclosedManifRecrefAdapter(ManifManifRecrefAdapter):
     @classmethod
     def target_field(cls) -> ForwardManyToOneDescriptor:
         return CofkManifManifMap.manif_from
+
+
+class EnclosedManifRecrefAdapter(ManifManifRecrefAdapter):
+    """The current manifestation was enclosed in the target (e.g. 'Was enclosed in: Y')."""
+
+    def __init__(self, manif=None):
+        self.manif: CofkUnionManifestation = manif
+
+    def find_recref_records(self, rel_type):
+        return self.manif.manif_from_set.filter(relationship_type=rel_type).iterator()
+
+    @classmethod
+    def parent_field(cls) -> ForwardManyToOneDescriptor:
+        return CofkManifManifMap.manif_from
+
+    @classmethod
+    def target_field(cls) -> ForwardManyToOneDescriptor:
+        return CofkManifManifMap.manif_to
