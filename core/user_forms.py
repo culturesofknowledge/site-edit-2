@@ -43,21 +43,11 @@ class UserForm(ModelForm):
         # fail with a raw DB error or a silently truncated username
         email = self.cleaned_data['email']
         username_max_length = CofkUser._meta.get_field('username').max_length
-        if not self.instance.pk:
-            if len(email) > username_max_length:
-                raise forms.ValidationError(
-                    f'Email is too long to use as a username '
-                    f'(max {username_max_length} characters, got {len(email)}).'
-                )
-
-            # username is the PK and is excluded from this form on creation, so
-            # Django's usual uniqueness validation never runs -- without this,
-            # save() would silently overwrite the existing user instead of
-            # erroring, since it's just an UPDATE on an existing PK.
-            if CofkUser.objects.filter(username=email).exists():
-                raise forms.ValidationError(
-                    f'A user with the email "{email}" already exists.'
-                )
+        if not self.instance.pk and len(email) > username_max_length:
+            raise forms.ValidationError(
+                f'Email is too long to use as a username '
+                f'(max {username_max_length} characters, got {len(email)}).'
+            )
         return email
 
     def save(self, commit=True):
