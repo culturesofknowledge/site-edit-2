@@ -182,12 +182,16 @@ def create_month_field(required=False):
 
 
 def create_year_field(required=False, _class=''):
-    return forms.IntegerField(required=required, min_value=1, max_value=9999,
+    return forms.IntegerField(required=required, min_value=1000, max_value=9999,
+                              error_messages={
+                                  'min_value': 'Value must contain four digits.',
+                                  'max_value': 'Value must contain four digits.',
+                              },
                               widget=forms.TextInput(
                                   attrs={
                                       'placeholder': 'YYYY',
                                       'type': 'number',
-                                      'min': 1,
+                                      'min': 1000,
                                       'max': 9999,
                                       'class': f'ad-year {_class}',
                                   }
