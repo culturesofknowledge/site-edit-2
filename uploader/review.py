@@ -21,6 +21,7 @@ from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocat
 from manifestation import manif_serv
 from manifestation.models import CofkUnionManifestation, CofkManifInstMap
 from person.models import CofkUnionPerson, CofkPersonCommentMap, CofkPersonResourceMap, create_person_id
+from uploader.constants import CORRECTION_WORK_SHEET
 from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectPerson, CofkCollectLocation, \
     CofkCollectWorkCorrection
 from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, CofkWorkResourceMap, \
@@ -580,19 +581,30 @@ _DATE_OF_WORK_STD_SOURCE_FIELDS = {
 _DATE_OF_WORK_STD_GREGORIAN_SOURCE_FIELDS = _DATE_OF_WORK_STD_SOURCE_FIELDS | {'original_calendar'}
 
 
-def _apply_comment_correction(work: CofkUnionWork, rel_type: str, new_value: str, username: str) -> None:
+def _apply_comment_correction(work: CofkUnionWork, rel_type: str, new_value: str, username: str) -> bool:
     """Update (or create) the work's comment for the given relationship_type.
 
     Work notes are stored via CofkUnionComment/CofkWorkCommentMap, not as plain
     fields on CofkUnionWork (see link_comments_to_work for the equivalent create
     path used for brand-new works), so corrections to them can't be applied with
     a plain setattr() the way other correction fields are.
-    """
-    existing_map = CofkWorkCommentMap.objects.filter(
-        work=work, relationship_type=rel_type
-    ).select_related('comment').first()
 
-    if existing_map:
+    Returns False (and applies nothing) if the work already has more than one
+    comment of this relationship_type: a correction only carries the intended
+    new text, not which of several existing notes it's meant to replace, so
+    picking one (e.g. via an unordered .first()) would silently overwrite an
+    arbitrary note instead of the one the editor meant. The caller reports
+    this back to the editor so it can be resolved manually in EMLO-edit.
+    """
+    existing_maps = list(CofkWorkCommentMap.objects.filter(
+        work=work, relationship_type=rel_type
+    ).select_related('comment'))
+
+    if len(existing_maps) > 1:
+        return False
+
+    if existing_maps:
+        existing_map = existing_maps[0]
         existing_map.comment.comment = new_value
         existing_map.comment.update_current_user_timestamp(username)
         existing_map.comment.save()
@@ -604,6 +616,8 @@ def _apply_comment_correction(work: CofkUnionWork, rel_type: str, new_value: str
         cwcm = CofkWorkCommentMap(comment=comment, work=work, relationship_type=rel_type)
         cwcm.update_current_user_timestamp(username)
         cwcm.save()
+
+    return True
 
 
 def accept_corrections(upload: CofkCollectUpload, username: str, request=None):
@@ -618,9 +632,14 @@ def accept_corrections(upload: CofkCollectUpload, username: str, request=None):
             messages.warning(request, msg)
         return
 
+    # Field name -> its spreadsheet column header, for editor-facing messages
+    # (e.g. 'notes_on_date_of_work' -> 'Notes on date').
+    field_labels = {v: k for k, v in CORRECTION_WORK_SHEET['columns'].items()}
+
     try:
         with transaction.atomic():
             applied = 0
+            skipped_notes = []  # [(iwork_id, field_name), ...] - see _apply_comment_correction
             for correction in pending:
                 if correction.union_work is None:
                     log.warning(
@@ -636,9 +655,11 @@ def accept_corrections(upload: CofkCollectUpload, username: str, request=None):
                         # catalogue_code is stored as the FK value (to_field='catalogue_code')
                         setattr(work, 'original_catalogue_id', new_value)
                     elif field_name in _CORRECTION_COMMENT_REL_TYPES:
-                        _apply_comment_correction(
+                        applied_comment = _apply_comment_correction(
                             work, _CORRECTION_COMMENT_REL_TYPES[field_name], new_value, username
                         )
+                        if not applied_comment:
+                            skipped_notes.append((correction.iwork_id, field_name))
                     else:
                         setattr(work, field_name, new_value)
                         if field_name in _DATE_OF_WORK_STD_SOURCE_FIELDS:
@@ -677,6 +698,20 @@ def accept_corrections(upload: CofkCollectUpload, username: str, request=None):
     msg = f'Successfully applied {applied} corrections.'
     if request:
         messages.success(request, msg)
+
+    if skipped_notes:
+        skipped_desc = '; '.join(
+            f'iwork_id {iwork_id} ({field_labels.get(field_name, field_name)})'
+            for iwork_id, field_name in skipped_notes
+        )
+        skipped_msg = (
+            f'{len(skipped_notes)} note correction(s) were NOT applied because the letter already had '
+            f'more than one note of that type, so the correction could not tell which one to replace - '
+            f'please update these manually in EMLO-edit: {skipped_desc}'
+        )
+        if request:
+            messages.warning(request, skipped_msg)
+        log.warning(f'{upload}: {skipped_msg}')
     log.info(f'{upload}: {msg}')
 
 
