@@ -66,7 +66,7 @@ class UserSearchFieldset(BasicSearchFieldset):
 
     username = SearchCharField(
         label=field_label_map['user']['username'],
-        help_text='The user name is used to log in to the system.')
+        help_text='The username is used to log in to the system.')
     username_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
     surname = SearchCharField(
         label=field_label_map['user']['surname'],

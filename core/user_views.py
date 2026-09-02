@@ -114,7 +114,7 @@ class UserSearchView(PermissionRequiredMixin, LoginRequiredMixin,  DefaultSearch
     @property
     def sort_by_choices(self) -> list[tuple[str, str]]:
         return [
-            ('username', 'User name',),
+            ('username', 'Username',),
             ('email', 'Email',),
         ]
 
