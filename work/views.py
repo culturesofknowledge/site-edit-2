@@ -485,13 +485,13 @@ class ManifFFH(BasicWorkFFH):
         # enclosures
         self.enclosure_manif_handler = MultiRecrefAdapterHandler(
             request_data, name='enclosure_manif',
-            recref_adapter=EnclosedManifRecrefAdapter(self.safe_manif),
+            recref_adapter=EnclosureManifRecrefAdapter(self.safe_manif),
             recref_form_class=ManifRecrefForm,
             rel_type=REL_TYPE_ENCLOSED_IN,
         )
         self.enclosed_manif_handler = MultiRecrefAdapterHandler(
             request_data, name='enclosed_manif',
-            recref_adapter=EnclosureManifRecrefAdapter(self.safe_manif),
+            recref_adapter=EnclosedManifRecrefAdapter(self.safe_manif),
             recref_form_class=ManifRecrefForm,
             rel_type=REL_TYPE_ENCLOSED_IN,
         )
@@ -855,6 +855,17 @@ class DetailsView(BasicWorkFormView):
         return 'work:details_form'
 
 
+class OverviewView(BasicWorkFormView):
+
+    @staticmethod
+    def create_fhandler(request, *args, iwork_id=None, **kwargs):
+        return OverviewFFH(iwork_id, request_data=request.POST, request=request)
+
+    @property
+    def cur_vname(self):
+        return 'work:overview_form'
+
+
 def get_overview_persons_names_by_rel_type(work: CofkUnionWork, rel_type):
     return (person_serv.get_recref_display_name(p) for p in
             work.cofkworkpersonmap_set.filter(relationship_type=rel_type))
@@ -985,80 +996,86 @@ def to_overview_manif(manif: CofkUnionManifestation):
     return manif
 
 
-@login_required
-@permission_required(constant.PM_CHANGE_WORK)
-def overview_view(request, iwork_id):
-    if request.POST:
-        return redirect('work:overview_form', iwork_id=iwork_id)
+class OverviewFFH(BasicWorkFFH):
+    """The Overview tab: mostly a read-only summary, but shares the
+    catalogue/work_to_be_deleted checkbox rendered by basic_form.html on
+    every tab, so it needs real save handling like the other tabs."""
 
-    work = get_object_or_404(DisplayableWork, iwork_id=iwork_id) # Use DisplayableWork here
+    def __init__(self, pk, *args, request_data=None, request=None, **kwargs):
+        super().__init__(pk, 'work/overview_form.html', *args,
+                         request_data=request_data, request=request, **kwargs)
 
-    context = dict(
-        iwork_id=work.iwork_id,
-        work=work,
-        date_for_ordering=work.date_for_ordering,
-        work_display_name=work_serv.get_recref_display_name(work),
+    def save(self, request):
+        if self.common_work_form.has_changed():
+            self.save_work(request, self.work)
 
-        notes_work=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_DATE)),
-        notes_author=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_AUTHOR)),
-        notes_addressee=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_ADDRESSEE)),
-        notes_people=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_PERSON_MENTIONED)),
-        notes_general=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_REFERS_TO)),
+    def create_context(self, is_save_success=False):
+        context: dict = super().create_context(is_save_success=is_save_success)
 
-        author_link_list=to_person_link_list(work, constant.REL_TYPE_CREATED),
-        author_link_count=to_person_link_count(work, constant.REL_TYPE_CREATED),
-        sender_link_list=to_person_link_list(work, constant.REL_TYPE_SENT),
-        sender_link_count=to_person_link_count(work, constant.REL_TYPE_SENT),
-        signed_link_list=to_person_link_list(work, constant.REL_TYPE_SIGNED),
-        signed_link_count=to_person_link_count(work, constant.REL_TYPE_SIGNED),
+        work = get_object_or_404(DisplayableWork, iwork_id=self.request_iwork_id)  # Use DisplayableWork here
 
-        recipient_link_list=to_person_link_list(work, constant.REL_TYPE_WAS_ADDRESSED_TO),
-        recipient_link_count=to_person_link_count(work, constant.REL_TYPE_WAS_ADDRESSED_TO),
-        intended_link_list=to_person_link_list(work, constant.REL_TYPE_INTENDED_FOR),
-        intended_link_count=to_person_link_count(work, constant.REL_TYPE_INTENDED_FOR),
+        context.update(dict(
+            work=work,
+            date_for_ordering=work.date_for_ordering,
+            work_display_name=work_serv.get_recref_display_name(work),
 
-        reply_to_link_list=[WorkLinkData(r.work_to) for r in
-                            work.work_from_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)],
-        reply_to_link_count=len(work.work_from_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)),
-        answered_link_list=[WorkLinkData(r.work_from) for r in
-                            work.work_to_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)],
-        answered_link_count=len(work.work_to_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)),
-        matches_link_list=[WorkLinkData(r.work_to) for r in
-                           work.work_from_set.filter(relationship_type=constant.REL_TYPE_WORK_MATCHES)]
-                         + [WorkLinkData(r.work_from) for r in
-                            work.work_to_set.filter(relationship_type=constant.REL_TYPE_WORK_MATCHES)],
-        matches_link_count=len(work.work_from_set.filter(relationship_type=constant.REL_TYPE_WORK_MATCHES))
-                          + len(work.work_to_set.filter(relationship_type=constant.REL_TYPE_WORK_MATCHES)),
+            notes_work=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_DATE)),
+            notes_author=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_AUTHOR)),
+            notes_addressee=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_ADDRESSEE)),
+            notes_people=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_PERSON_MENTIONED)),
+            notes_general=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_REFERS_TO)),
 
-        origin_link_list=to_location_link_list(work, constant.REL_TYPE_WAS_SENT_FROM),
-        origin_link_count=to_location_link_count(work, constant.REL_TYPE_WAS_SENT_FROM),
-        destination_link_list=to_location_link_list(work, constant.REL_TYPE_WAS_SENT_TO),
-        destination_link_count=to_location_link_count(work, constant.REL_TYPE_WAS_SENT_TO),
+            author_link_list=to_person_link_list(work, constant.REL_TYPE_CREATED),
+            author_link_count=to_person_link_count(work, constant.REL_TYPE_CREATED),
+            sender_link_list=to_person_link_list(work, constant.REL_TYPE_SENT),
+            sender_link_count=to_person_link_count(work, constant.REL_TYPE_SENT),
+            signed_link_list=to_person_link_list(work, constant.REL_TYPE_SIGNED),
+            signed_link_count=to_person_link_count(work, constant.REL_TYPE_SIGNED),
 
-        language=', '.join(map(_to_lang_str, work.language_set.iterator())),
-        subjects=', '.join(w.subject.subject_desc for w in work.cofkworksubjectmap_set.iterator()),
+            recipient_link_list=to_person_link_list(work, constant.REL_TYPE_WAS_ADDRESSED_TO),
+            recipient_link_count=to_person_link_count(work, constant.REL_TYPE_WAS_ADDRESSED_TO),
+            intended_link_list=to_person_link_list(work, constant.REL_TYPE_INTENDED_FOR),
+            intended_link_count=to_person_link_count(work, constant.REL_TYPE_INTENDED_FOR),
 
-        people_link_list=to_person_link_list(work, constant.REL_TYPE_MENTION),
-        people_link_count=to_person_link_count(work, constant.REL_TYPE_MENTION),
-        places_link_list=to_location_link_list(work, constant.REL_TYPE_MENTION_PLACE),
-        places_link_count=to_location_link_count(work, constant.REL_TYPE_MENTION_PLACE),
-        work_mention_link_list=(WorkLinkData(r.work_to) for r in
-                                work.work_from_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
-        work_mention_link_count=len(work.work_from_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
-        work_be_mention_link_list=(WorkLinkData(r.work_from) for r in
-                                   work.work_to_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
-        work_be_mention_link_count=len(work.work_to_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
-        manif_set=sorted(map(to_overview_manif, work.manif_set.iterator()),
-                        key=lambda m: {t[0]: i for i, t in enumerate(manif_type_choices)}.get(
-                            m.manifestation_type, len(manif_type_choices))),
-        original_calendar_display=date_serv.decode_calendar(work.original_calendar),
-        work_category='Overview',
-        common_work_form=build_common_work_form(request, work),
-    )
+            reply_to_link_list=[WorkLinkData(r.work_to) for r in
+                                work.work_from_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)],
+            reply_to_link_count=len(work.work_from_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)),
+            answered_link_list=[WorkLinkData(r.work_from) for r in
+                                work.work_to_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)],
+            answered_link_count=len(work.work_to_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)),
+            matches_link_list=[WorkLinkData(r.work_to) for r in
+                               work.work_from_set.filter(relationship_type=constant.REL_TYPE_WORK_MATCHES)]
+                             + [WorkLinkData(r.work_from) for r in
+                                work.work_to_set.filter(relationship_type=constant.REL_TYPE_WORK_MATCHES)],
+            matches_link_count=len(work.work_from_set.filter(relationship_type=constant.REL_TYPE_WORK_MATCHES))
+                              + len(work.work_to_set.filter(relationship_type=constant.REL_TYPE_WORK_MATCHES)),
 
-    context.update(WorkFormDescriptor(work).create_context())
+            origin_link_list=to_location_link_list(work, constant.REL_TYPE_WAS_SENT_FROM),
+            origin_link_count=to_location_link_count(work, constant.REL_TYPE_WAS_SENT_FROM),
+            destination_link_list=to_location_link_list(work, constant.REL_TYPE_WAS_SENT_TO),
+            destination_link_count=to_location_link_count(work, constant.REL_TYPE_WAS_SENT_TO),
 
-    return render(request, 'work/overview_form.html', context)
+            language=', '.join(map(_to_lang_str, work.language_set.iterator())),
+            subjects=', '.join(w.subject.subject_desc for w in work.cofkworksubjectmap_set.iterator()),
+
+            people_link_list=to_person_link_list(work, constant.REL_TYPE_MENTION),
+            people_link_count=to_person_link_count(work, constant.REL_TYPE_MENTION),
+            places_link_list=to_location_link_list(work, constant.REL_TYPE_MENTION_PLACE),
+            places_link_count=to_location_link_count(work, constant.REL_TYPE_MENTION_PLACE),
+            work_mention_link_list=(WorkLinkData(r.work_to) for r in
+                                    work.work_from_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
+            work_mention_link_count=len(work.work_from_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
+            work_be_mention_link_list=(WorkLinkData(r.work_from) for r in
+                                       work.work_to_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
+            work_be_mention_link_count=len(work.work_to_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
+            manif_set=sorted(map(to_overview_manif, work.manif_set.iterator()),
+                            key=lambda m: {t[0]: i for i, t in enumerate(manif_type_choices)}.get(
+                                m.manifestation_type, len(manif_type_choices))),
+            original_calendar_display=date_serv.decode_calendar(work.original_calendar),
+            work_category='Overview',
+        ))
+
+        return context
 
 
 class WorkQuickInitView(CorrView):
