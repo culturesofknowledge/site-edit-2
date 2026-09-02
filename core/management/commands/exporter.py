@@ -12,6 +12,10 @@ class Command(BaseCommand):
         parser.add_argument('-s', '--skip-url-check', action='store_true', default=False)
         parser.add_argument('-t', '--type', type=str, default='flat', choices=['flat', 'excel'],
                             help='Type of export: flat (default) or excel-style CSV')
+        parser.add_argument('-m', '--module', type=str, default=None,
+                            help='Export only a specific module, e.g. work, person, location, '
+                                 'manifestation, institution, comment, image, resource, '
+                                 'relationship_type, relationship')
 
     def handle(self, *args, **options):
         if options['type'] == 'excel':
@@ -19,4 +23,5 @@ class Command(BaseCommand):
             exporter_csv.export_all_excel_style(options['output_dir'])
         else:
             from core import exporter
-            exporter.export_all(options['output_dir'], skip_url_check=options['skip_url_check'])
+            exporter.export_all(options['output_dir'], skip_url_check=options['skip_url_check'],
+                                module=options['module'])

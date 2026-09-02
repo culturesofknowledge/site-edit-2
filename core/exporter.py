@@ -13,7 +13,6 @@ from typing import Iterable, Callable
 import requests
 from django.db import models
 from django.db.models import Count, Q
-from django.utils.html import strip_tags
 from urllib3.exceptions import InsecureRequestWarning
 
 import person.subqueries
@@ -590,7 +589,6 @@ class WorkFrontendCsv(HeaderValues):
                                                                          o.date_of_work_std_gregorian),
                           'original_catalogue': lambda o: self.catalogue_map.get(o.original_catalogue_id,
                                                                                  'No catalogue specified'),
-                          'abstract': lambda o: strip_tags(o.abstract),
                       } | creation_change_user_settings()
         return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
 
@@ -712,7 +710,7 @@ def find_all_recrefs():
         }
 
 
-def export_all(output_dir: str = '.', skip_url_check=False):
+def export_all(output_dir: str = '.', skip_url_check=False, module: str = None):
     if skip_url_check:
         log.warning('skip_url_check is True, will not check if url is alive')
 
@@ -750,7 +748,7 @@ def export_all(output_dir: str = '.', skip_url_check=False):
          LocationFrontendCsv, CofkUnionLocation),
         (lambda: CofkUnionManifestation.objects.iterator(),
          ManifFrontendCsv, CofkUnionManifestation),
-        (lambda: person.views.create_queryset_by_queries(CofkUnionPerson, ).iterator(),
+        (lambda: person.views.create_queryset_by_queries(CofkUnionPerson, ).iterator(chunk_size=2000),
          PersonFrontendCsv, CofkUnionPerson),
         (lambda: CofkUnionRelationshipType.objects.iterator(),
          RelTypeFrontendCsv, CofkUnionRelationshipType),
@@ -779,6 +777,10 @@ def export_all(output_dir: str = '.', skip_url_check=False):
             filename = name_item if isinstance(name_item, str) else name_item._meta.db_table
             if filename.startswith('cofk_union_'):
                 filename = filename[len('cofk_union_'):]
+
+            if module and filename != module:
+                log.info(f'skipping {filename} (filtering for module={module})')
+                continue
 
             csv_path = staging_dir / f'{filename}.csv'
             log.info(f'exporting to {csv_path}')
