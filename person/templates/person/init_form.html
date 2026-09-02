@@ -9,10 +9,16 @@
         function setup_is_org_checkbox() {
             $('#id_is_organisation').change(function (e) {
                 let org_type_div_jqe = $('.org-type-div');
+                let members_form = $('#members-form-div');
+                let members_msg = $('#members-not-org-msg');
                 if ($(e.target).is(":checked")) {
                     org_type_div_jqe.show()
+                    members_form.show()
+                    members_msg.hide()
                 } else {
                     org_type_div_jqe.hide()
+                    members_form.hide()
+                    members_msg.show()
                 }
             })
 

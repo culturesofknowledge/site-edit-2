@@ -24,13 +24,18 @@
 
     <fieldset>
         <legend id="header_member" class="toc-item">Members</legend>
-        {% if person_form.is_organisation.value == 'Y' %}
+        <div id="members-form-div"
+            {% if person_form.is_organisation.value != 'Y' %}
+                style="display: none"
+            {% endif %}>
             {% include "core/component/create_update_recref.html" with recref_type='person' recref_formset=recref_member.update_formset new_form=recref_member.new_form add_label='Add member:' %}
-        {% else %}
-            <span>
+        </div>
+        <span id="members-not-org-msg"
+            {% if person_form.is_organisation.value == 'Y' %}
+                style="display: none"
+            {% endif %}>
             This record refers to a person not an organization. Members can only be entered for organizations.
         </span>
-        {% endif %}
     </fieldset>
 
     <fieldset>
