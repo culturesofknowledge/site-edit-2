@@ -178,6 +178,7 @@ class PersonForm(ModelForm):
             'date_of_death_inferred',
             'date_of_death_uncertain',
             'date_of_death_approx',
+            'date_of_death_calendar',
 
             'flourished_year',
             'flourished_month',
@@ -189,6 +190,7 @@ class PersonForm(ModelForm):
             'flourished_inferred',
             'flourished_uncertain',
             'flourished_approx',
+            'flourished_calendar',
 
             'further_reading',
 

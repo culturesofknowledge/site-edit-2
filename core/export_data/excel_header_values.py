@@ -87,8 +87,9 @@ class ManifExcelHeaderValues(HeaderValues):
 
     def obj_to_values(self, obj: CofkUnionManifestation) -> Iterable:
         inst = obj.inst
+        work = obj.work
         return [
-            obj.work.iwork_id,
+            work and work.iwork_id,
             obj.manifestation_id,
             obj.manifestation_type,
             inst and inst.institution_name,

@@ -89,8 +89,8 @@ function AutoCalendar(year_jqe,
 
     this.get_selected_date = function () {
         let year = this.year_jqe.val() || 9999;
-        let month = this.month_jqe.val() || 1;
-        let day = this.day_jqe.val() || 1;
+        let month = this.month_jqe.val() || 12;
+        let day = this.day_jqe.val() || cal_max_day_of_month(parseInt(year), parseInt(month));
         return [year, month, day]
     }
 

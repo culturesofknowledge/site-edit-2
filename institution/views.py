@@ -18,7 +18,7 @@ from core.helper.recref_handler import ImageRecrefHandler, TargetResourceFormset
 from core.helper.renderer_serv import RendererFactory
 from core.helper.view_components import HeaderValues, DownloadCsvHandler
 from core.helper.view_serv import CommonInitFormViewTemplate, DefaultSearchView, MergeChoiceViews, MergeActionViews, \
-    MergeConfirmViews
+    MergeConfirmViews, DeleteConfirmView
 from core.models import Recref
 from institution import inst_serv, models
 from institution.forms import InstitutionForm, GeneralSearchFieldset
@@ -267,6 +267,25 @@ class InstMergeActionView(PermissionRequiredMixin, LoginRequiredMixin, MergeActi
     @property
     def target_model_class(self) -> Type[ModelLike]:
         return CofkUnionInstitution
+
+
+class InstDeleteConfirmView(PermissionRequiredMixin, LoginRequiredMixin, DeleteConfirmView):
+    permission_required = constant.PM_CHANGE_INST
+    raise_exception = True
+
+    def get_model_class(self) -> Type[ModelLike]:
+        return CofkUnionInstitution
+
+    def get_obj_desc_list(self, obj: CofkUnionInstitution) -> list[str]:
+        desc_list = [
+            obj.institution_name,
+            obj.institution_synonyms,
+            obj.institution_city,
+            obj.institution_country,
+        ]
+        desc_list = filter(None, desc_list)
+        desc_list = list(desc_list)
+        return desc_list
 
 
 class InstCsvHeaderValues(HeaderValues):

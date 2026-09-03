@@ -153,17 +153,19 @@ def validate_search_date_str(date_str: str) -> str | None:
 
     try:
         if len(parts) == 1:
+            if len(parts[0]) != 4:
+                return 'Value must contain four digits.'
             year = int(parts[0])
-            if year < 1 or year > 9999:
-                return 'Invalid date format. Please use dd/mm/yyyy, mm/yyyy, or yyyy.'
         elif len(parts) == 2:
+            if len(parts[1]) != 4:
+                return 'Value must contain four digits.'
             month, year = int(parts[0]), int(parts[1])
-            if not (1 <= month <= 12) or year < 1 or year > 9999:
+            if not (1 <= month <= 12):
                 return 'Invalid date format. Please use dd/mm/yyyy, mm/yyyy, or yyyy.'
         elif len(parts) == 3:
+            if len(parts[2]) != 4:
+                return 'Value must contain four digits.'
             day, month, year = int(parts[0]), int(parts[1]), int(parts[2])
-            if year < 1 or year > 9999:
-                return 'Invalid date format. Please use dd/mm/yyyy, mm/yyyy, or yyyy.'
             # Validate the actual date
             datetime.date(year, month, day)
         else:

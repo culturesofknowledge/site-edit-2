@@ -4,8 +4,12 @@
 {% block tabcontent %}
     <div class="margin-bottom margin-top row-no-margin">
         <span>Add new manifestation:</span>
-        <button type="button" class="btn margin-left" id="btn-new-manif"
-                onclick="document.getElementById('form-content').style.display='block'; build_table_of_content_ui();">New</button>
+        {% if manif_id %}
+            <a class="btn margin-left" id="btn-new-manif" href="{% url 'work:manif_init' iwork_id %}?new=1">New</a>
+        {% else %}
+            <button type="button" class="btn margin-left" id="btn-new-manif"
+                    onclick="showNewManifForm();">New</button>
+        {% endif %}
     </div>
     <fieldset>
         <legend id="header_existing_manif" class="toc-item">Existing manifestations</legend>
@@ -103,5 +107,19 @@
         {% endif %}
         {% include "work/component/manif_form.html" %}
     </div>
+
+    {% if not manif_id %}
+    <script>
+        function showNewManifForm() {
+            document.getElementById('form-content').style.display = 'block';
+            if (typeof build_table_of_content_ui === 'function') {
+                build_table_of_content_ui();
+            }
+        }
+        if (new URLSearchParams(window.location.search).get('new') === '1') {
+            showNewManifForm();
+        }
+    </script>
+    {% endif %}
 
 {% endblock %}

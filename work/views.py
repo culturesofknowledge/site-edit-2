@@ -565,6 +565,12 @@ class ManifFFH(BasicWorkFFH):
             log.debug(f'current manif[{manif.manifestation_id}] removed[{del_manif_id_list}] no need to save')
             return
 
+        # Skip creating a new manifestation when no existing one is being edited
+        # and the manifestation form itself hasn't changed
+        if self.manif is None and not self.manif_form.has_changed():
+            log.debug('skip manif save -- no existing manif and manif form unchanged')
+            return
+
         log.debug(f'changed_data : {self.manif_form.changed_data}')
         manif.work = get_object_or_404(CofkUnionWork, iwork_id=self.request_iwork_id)
         if not manif.manifestation_id:

@@ -21,7 +21,7 @@ class NewDateInput(widgets.Input):
         default_attrs = {
             'placeholder': 'DD/MM/YYYY',
             'style': 'width: 10em',
-            'pattern': r'(\d{1,2}/\d{1,2}/\d{4}|\d{1,2}/\d{4}|\d{4})',
+            'pattern': r'(\d{1,2}/\d{1,2}/\d+|\d{1,2}/\d+|\d+)',
             'title': 'Enter a date as DD/MM/YYYY, MM/YYYY, or YYYY',
         }
         if attrs:
@@ -46,9 +46,11 @@ class FlexibleDateField(forms.Field):
         format_type is 'full', 'month_year', or 'year'.
         """
         # Try DD/MM/YYYY
-        m = re.fullmatch(r'(\d{1,2})/(\d{1,2})/(\d{4})', value)
+        m = re.fullmatch(r'(\d{1,2})/(\d{1,2})/(\d+)', value)
         if m:
             day, month, year = int(m.group(1)), int(m.group(2)), int(m.group(3))
+            if len(m.group(3)) != 4:
+                raise ValidationError('Year must contain four digits.')
             if month < 1 or month > 12:
                 raise ValidationError('Month must be between 1 and 12.')
             if day < 1 or day > 31:
@@ -60,16 +62,20 @@ class FlexibleDateField(forms.Field):
             return year, month, day, 'full'
 
         # Try MM/YYYY
-        m = re.fullmatch(r'(\d{1,2})/(\d{4})', value)
+        m = re.fullmatch(r'(\d{1,2})/(\d+)', value)
         if m:
             month, year = int(m.group(1)), int(m.group(2))
+            if len(m.group(2)) != 4:
+                raise ValidationError('Year must contain four digits.')
             if month < 1 or month > 12:
                 raise ValidationError('Month must be between 1 and 12.')
             return year, month, None, 'month_year'
 
-        # Try YYYY
-        m = re.fullmatch(r'(\d{4})', value)
+        # Try YYYY (exactly 4 digits)
+        m = re.fullmatch(r'(\d+)', value)
         if m:
+            if len(m.group(1)) != 4:
+                raise ValidationError('Year must contain four digits.')
             year = int(m.group(1))
             return year, None, None, 'year'
 
