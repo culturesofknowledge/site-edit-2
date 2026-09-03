@@ -69,6 +69,21 @@ function setup_table_of_content() {
     // build table of content UI
     build_table_of_content_ui()
 
+    // Restore scroll position after form save instead of using the URL hash
+    var savedScrollPos = sessionStorage.getItem('formScrollPosition');
+    if (savedScrollPos !== null) {
+        sessionStorage.removeItem('formScrollPosition');
+        // Clear hash to prevent browser from scrolling to the anchor
+        history.replaceState(null, null, window.location.pathname + window.location.search);
+        window.scrollTo(0, parseInt(savedScrollPos, 10));
+    }
+
+    // Save scroll position and clear hash on form submit
+    $('form').on('submit', function () {
+        sessionStorage.setItem('formScrollPosition', String(window.scrollY));
+        history.replaceState(null, null, window.location.pathname + window.location.search);
+    });
+
 
     // setup scroll behavior
     $(document).on('scroll', function () {
