@@ -33,7 +33,7 @@ def get_people(queryset: Union[QuerySet, List[CofkCollectAuthorOfWork | CofkColl
             p = f'{person.iperson.to_string()} [new]'
 
             if person.iperson.editors_notes:
-                p += f' [editor\'s notes: {person.iperson.editors_notes}]'
+                p += f' [editors\' notes: {person.iperson.editors_notes}]'
 
             people.append(p)
     return ', '.join(people)

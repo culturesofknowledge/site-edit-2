@@ -199,7 +199,7 @@ class PlacesForm(forms.ModelForm):
 
 class DetailsForm(forms.ModelForm):
     accession_code = CharField(required=False)
-    editors_notes = form_serv.CommonTextareaField()
+    editors_notes = form_serv.CommonTextareaField(label=field_label_map['work']['editors_notes'])
     incipit = form_serv.CommonTextareaField()
     explicit = form_serv.CommonTextareaField()
     ps = form_serv.CommonTextareaField()

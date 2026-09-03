@@ -380,7 +380,7 @@ class ColWorkSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSear
             ('source', 'Source',),
             ('contact', 'Contact',),
             ('status', 'Status of work'),
-            ('editors_notes', 'Editors\'s notes',),
+            ('editors_notes', 'Editors\' notes',),
             ('date_of_work_sort', 'Date of work'),
             ('date_of_work_as_marked', 'Date of work as marked'),
             ('original_calendar', 'Original calendar'),

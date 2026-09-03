@@ -97,7 +97,7 @@ class CofkCollectLocation(models.Model):
             location += f' [ID {self.union_location_id}]'
 
         if self.editors_notes:
-            location += f' [editor\'s notes: {self.editors_notes}]'
+            location += f' [editors\' notes: {self.editors_notes}]'
 
         return location
 

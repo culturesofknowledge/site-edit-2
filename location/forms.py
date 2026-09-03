@@ -15,7 +15,7 @@ class LocationForm(ModelForm):
     location_name = CharField(required=False,
                               widget=forms.TextInput(attrs=dict(readonly=True)),
                               label='Full name of location')
-    editors_notes = form_serv.CommonTextareaField()
+    editors_notes = form_serv.CommonTextareaField(label=field_label_map['location']['editors_notes'])
     element_1_eg_room = CharField(required=False, label='Room', help_text='e.g. Porters\' lodge')
     element_2_eg_building = CharField(required=False, label='Building', help_text='e.g. New College')
     element_3_eg_parish = CharField(required=False, label='Parish, district, or street', help_text='e.g. Holywell Street')
