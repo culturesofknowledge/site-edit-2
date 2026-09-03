@@ -295,12 +295,39 @@
 .multi_rel_recref_container > .grid-help-text-inline {
     grid-column: 2;
     text-align: left;
-    margin: -4px 0 0;
+    // The caption is its own grid row, so .multi_rel_recref_container's
+    // grid-row-gap (8px) sits between the input and this caption. Pull it back by
+    // the full gap so the caption sits flush under the field it describes. (The
+    // preceding input's margin-bottom is also dropped -- see the rule below.)
+    // Bottom spacing before the next row is left to the .margin-bottom utility
+    // class on the element.
+    margin-top: -8px;
+    // Recede visually so it reads as a caption for the field above rather than
+    // as body text competing with the next label. $dark-grey keeps AA contrast
+    // and the regular weight sets it apart from the bold labels.
+    color: $dark-grey;
+    font-style: normal;
     // .multi_rel_recref_container sets font-size: 0.694em on itself, which compounds
     // with the global `small { font-size: $typescale-6 }` (0.833em) rule and shrinks
     // this caption well below normal help-text size. rem sizes it against the root
     // font-size instead, matching what a <small> renders as everywhere else on the site.
     font-size: 0.833rem;
+}
+
+// The field sitting directly above an inline help caption already has the grid's
+// row-gap beneath it; the global `input, select, textarea { margin-bottom }` on
+// top of that just opens a gap between the field and its caption. Drop it so the
+// caption sits snug under the input.
+//
+// align-self: end pins the field to the bottom of its grid row. When the label in
+// column 1 wraps to two lines the row grows taller than the 30px field; without
+// this the field stays at the top of the row and a ragged gap opens between it and
+// the caption on the row below. Pinning it to the bottom keeps the caption flush
+// under the field regardless of how many lines the label takes. Single-line labels
+// are unaffected -- the row is already the field's height.
+.multi_rel_recref_container > :is(input, select, textarea):has(+ .grid-help-text-inline) {
+    margin-bottom: 0;
+    align-self: end;
 }
 
 // 📱 Responsive fallback
