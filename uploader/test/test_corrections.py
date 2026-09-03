@@ -336,6 +336,51 @@ class TestCorrectionUpload(UploadIncludedFactoryTestCase):
         existing_comment.refresh_from_db()
         self.assertEqual(existing_comment.comment, 'Updated date note.')
 
+    def test_accept_corrections_skips_when_multiple_notes_exist(self):
+        """If the work already has more than one date note, a correction can't
+        tell which one it's meant to replace -- it should be skipped (neither
+        note touched, no new note created) and logged as a warning, rather than
+        silently overwriting whichever one an unordered query happens to pick."""
+        first_comment = CofkUnionComment.objects.create(
+            comment='First date note.', creation_user='test', change_user='test',
+        )
+        second_comment = CofkUnionComment.objects.create(
+            comment='Second date note.', creation_user='test', change_user='test',
+        )
+        CofkWorkCommentMap.objects.create(
+            work=self.test_work, comment=first_comment,
+            relationship_type=REL_TYPE_COMMENT_DATE,
+            creation_user='test', change_user='test',
+        )
+        CofkWorkCommentMap.objects.create(
+            work=self.test_work, comment=second_comment,
+            relationship_type=REL_TYPE_COMMENT_DATE,
+            creation_user='test', change_user='test',
+        )
+        CofkCollectWorkCorrection.objects.create(
+            upload=self.new_upload,
+            iwork_id=9901,
+            union_work=self.test_work,
+            corrections={'notes_on_date_of_work': 'Which one should this replace?'},
+            upload_status_id=1,
+        )
+
+        with self.assertLogs('uploader.review', level='WARNING') as cm:
+            accept_corrections(self.new_upload, username='testuser')
+
+        self.assertTrue(any('9901' in msg and 'Notes on date' in msg for msg in cm.output))
+
+        self.assertEqual(
+            CofkWorkCommentMap.objects.filter(
+                work=self.test_work, relationship_type=REL_TYPE_COMMENT_DATE
+            ).count(),
+            2,
+        )
+        first_comment.refresh_from_db()
+        second_comment.refresh_from_db()
+        self.assertEqual(first_comment.comment, 'First date note.')
+        self.assertEqual(second_comment.comment, 'Second date note.')
+
     def test_accept_corrections_resyncs_date_of_work_std(self):
         """Correcting the granular date fields resyncs the precomputed
         date_of_work_std column, which search sorts/filters against directly."""

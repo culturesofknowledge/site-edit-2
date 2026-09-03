@@ -13,7 +13,7 @@ urlpatterns = [
     path('form/manif/<int:iwork_id>/<str:manif_id>', views.ManifView.as_view(), name='manif_update'),
     re_path('form/resources/(?P<iwork_id>[0-9]+)?\\Z', views.ResourcesView.as_view(), name='resources_form'),
     re_path('form/details/(?P<iwork_id>[0-9]+)?\\Z', views.DetailsView.as_view(), name='details_form'),
-    path('form/overview/<int:iwork_id>', views.overview_view, name='overview_form'),
+    path('form/overview/<int:iwork_id>', views.OverviewView.as_view(), name='overview_form'),
 ]
 urlpatterns.extend(
     url_serv.create_common_urls_for_section(

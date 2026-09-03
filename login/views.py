@@ -53,7 +53,7 @@ class EmloLogoutView(LogoutView):
 
 class EmloPasswordResetForm(forms.Form):
     username = forms.fields.CharField(
-        label=_("User name"),
+        label=_("Username"),
         max_length=254,
     )
 
