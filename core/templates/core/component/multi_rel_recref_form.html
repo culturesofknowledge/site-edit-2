@@ -3,7 +3,7 @@
 <div class="grid-item">
     <label class="name">
         <a href="{{ form.target_url }}" target="_blank">
-            {{ form.name.value }}
+            {% if form.initial_target_id %}[{{ form.initial_target_id }}] {% endif %}{{ form.name.value }}
         </a>
     </label>
 </div>
