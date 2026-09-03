@@ -104,7 +104,7 @@ class PersonForm(ModelForm):
     date_of_birth_approx = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_birth_is_range = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_birth_calendar = forms.CharField(required=False,
-                                             widget=forms.RadioSelect(choices=date_serv.calendar_choices, ))
+                                             widget=forms.RadioSelect(choices=date_serv.calendar_choices_person, ))
 
     date_of_death_year = form_serv.create_year_field()
     date_of_death_month = form_serv.create_month_field()
@@ -117,7 +117,7 @@ class PersonForm(ModelForm):
     date_of_death_approx = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_death_is_range = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_death_calendar = forms.CharField(required=False,
-                                             widget=forms.RadioSelect(choices=date_serv.calendar_choices, ))
+                                             widget=forms.RadioSelect(choices=date_serv.calendar_choices_person, ))
 
     flourished_year = form_serv.create_year_field()
     flourished_month = form_serv.create_month_field()
@@ -130,7 +130,7 @@ class PersonForm(ModelForm):
     flourished_approx = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
     flourished_is_range = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
     flourished_calendar = forms.CharField(required=False,
-                                          widget=forms.RadioSelect(choices=date_serv.calendar_choices, ))
+                                          widget=forms.RadioSelect(choices=date_serv.calendar_choices_person, ))
 
     organisation_type = OrgTypeField(required=False, label=field_label_map['person']['organisation_type'])
 

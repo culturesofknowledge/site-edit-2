@@ -182,6 +182,14 @@ calendar_choices = [
     ('O', 'Other'),
 ]
 
+calendar_choices_person = [
+    ('', 'Unknown'),
+    ('G', 'Gregorian'),
+    ('JJ', 'Julian (year starting 1st Jan)'),
+    ('JM', 'Julian (year starting 25th Mar)'),
+    ('O', 'Other'),
+]
+
 
 def decode_calendar(calendar_code, default='Unknown') -> str:
     for code, name in calendar_choices:
