@@ -91,7 +91,6 @@ MANDATORY_SHEETS = {
         'strings': [('manifestation_type', 3), ('id_number_or_shelfmark', 500), 'manifestation_notes'],
         'required': ['iwork_id'],
         'shelfmarks': ['id_number_or_shelfmark'],
-        'bibliographies': ['printed_edition_details'],
     },
     'People': {
         'columns': ['primary_name', 'iperson_id', 'editors_notes'],

@@ -178,10 +178,6 @@ class CofkEntity:
             for shelfmark_field in [s for s in self.fields['shelfmarks'] if s in entity and entity[s]]:
                 self.check_shelfmark(shelfmark_field, entity[shelfmark_field])
 
-        if 'bibliographies' in self.fields:
-            for bib_field in [b for b in self.fields['bibliographies'] if b in entity and entity[b]]:
-                self.check_bibliography(bib_field, entity[bib_field])
-
     def add_error(self, error_msg: str | None, entity=None, row=None):
         if not row:
             row = self.row
@@ -321,7 +317,3 @@ class CofkEntity:
     def check_shelfmark(self, field: str, value: str):
         if '-' in value:
             self.add_error(f'{field}: Use an en dash between folio numbers, not a hyphen.')
-
-    def check_bibliography(self, field: str, value: str):
-        if '-' in value and '–' not in value:
-            self.add_error(f'{field}: Use en dashes for page ranges, not hyphens.')
