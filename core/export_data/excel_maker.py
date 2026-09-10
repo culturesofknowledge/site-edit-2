@@ -47,7 +47,8 @@ def fill_sheet(sheet: 'Worksheet',
     rows = map(excel_serv.escape_xlsx_char_by_row, rows)
     for row_idx, row in enumerate(rows, start=1):
         for col_idx, col_val in enumerate(row):
-            sheet.write_string(row_idx, col_idx, col_val)
+            if col_val:
+                sheet.write_string(row_idx, col_idx, col_val)
 
 
 def fill_work_sheet(sheet, rows, header_format=None):
