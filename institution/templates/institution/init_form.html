@@ -27,7 +27,7 @@
             </div>
 
 
-            <form method="post">
+            <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
 
                 {% include "institution/component/form_descriptor.html" with descriptor=form_descriptor %}
