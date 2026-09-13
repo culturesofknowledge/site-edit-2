@@ -2,16 +2,20 @@ $del-red: #940025;
 
 .url_checker_div {
   display: flex;
+  align-items: stretch;
 
   input {
     flex: 1;
-    min-width: 0;
+    margin-bottom: 0;
   }
 
-  .btn {
-    white-space: nowrap;
+  button {
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
     margin-left: 10px;
-    flex-shrink: 0;
   }
 }
 
