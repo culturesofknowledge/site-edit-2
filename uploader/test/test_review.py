@@ -247,6 +247,41 @@ class TestReview(UploadIncludedFactoryTestCase):
         self.assertEqual(match.group('rejected'), '1')
 
 
+class TestReviewPagination(UploadIncludedFactoryTestCase):
+    """
+    A hand-edited ?per_page=<n> used to be passed straight through to
+    Paginator with no validation, so an arbitrarily large value (e.g.
+    per_page=99999) forced the review page to fetch every one of the
+    upload's works -- with its 15-relation prefetch_related -- in one page.
+    See _upload_review_works() / core.constant.MAX_UPLOAD_REVIEW_PER_PAGE.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.client.force_login(self.admin)
+        self.review_url = f'/upload/{self.new_upload.upload_id}/'
+
+    def test_per_page_is_capped_at_max(self):
+        response = self.client.get(self.review_url, {'per_page': 99999})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['works_page'].paginator.per_page, 1000)
+
+    def test_valid_per_page_is_respected(self):
+        response = self.client.get(self.review_url, {'per_page': 50})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['works_page'].paginator.per_page, 50)
+
+    def test_non_numeric_per_page_falls_back_to_default(self):
+        response = self.client.get(self.review_url, {'per_page': 'not-a-number'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['works_page'].paginator.per_page, 1000)
+
+    def test_non_positive_per_page_falls_back_to_default(self):
+        response = self.client.get(self.review_url, {'per_page': -5})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['works_page'].paginator.per_page, 1000)
+
+
 class TestCreateUnionWork(UploadIncludedTestCase):
 
     def _make_collect_work(self, iwork_id, **kwargs):

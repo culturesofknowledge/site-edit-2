@@ -141,8 +141,11 @@ def _upload_review_works(request, upload: CofkCollectUpload):
 
     try:
         per_page = int(per_page)
-    except ValueError:
+    except (TypeError, ValueError):
         per_page = 1000
+    if per_page <= 0:
+        per_page = 1000
+    per_page = min(per_page, constant.MAX_UPLOAD_REVIEW_PER_PAGE)
 
     works_paginator = Paginator(DisplayableCollectWork.objects.filter(upload=upload)
                                 .prefetch_related(*prefetch).order_by('pk'), per_page)
