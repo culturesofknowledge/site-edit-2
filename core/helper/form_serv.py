@@ -8,6 +8,7 @@ from django.forms import BoundField, CharField, Form, formset_factory
 from django.template.loader import render_to_string
 
 from cllib import data_utils
+from core import constant
 from core.helper import widgets_serv, recref_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.models import Recref
@@ -503,13 +504,9 @@ def build_search_components(sort_by_choices: list[tuple[str, str]], entity: str)
                                 required=False)
 
         num_record = forms.IntegerField(label='Per page',
-                                        widget=forms.Select(choices=[
-                                            (10, 10),
-                                            (50, 50),
-                                            (100, 100),
-                                            (250, 250),
-                                            (500, 500)
-                                        ], attrs={'class': 'searchcontrol'}),
+                                        widget=forms.Select(
+                                            choices=[(n, n) for n in constant.NUM_RECORD_CHOICES],
+                                            attrs={'class': 'searchcontrol'}),
                                         required=False, )
         page = forms.IntegerField(widget=forms.HiddenInput())
 

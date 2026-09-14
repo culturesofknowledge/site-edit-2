@@ -12,6 +12,11 @@ ENTITIES = {
 SEARCH_LAYOUT_GRID = 'grid'
 SEARCH_LAYOUT_TABLE = 'table'
 
+# choices offered by the "Per page" (num_record) dropdown on search pages
+# (see core/helper/form_serv.py build_search_components)
+NUM_RECORD_CHOICES = [10, 50, 100, 250, 500]
+MAX_NUM_RECORD = max(NUM_RECORD_CHOICES)
+
 REL_TYPE_COMMENT_REFERS_TO = 'refers_to'
 REL_TYPE_COMMENT_AUTHOR = 'refers_to_author'
 REL_TYPE_COMMENT_ADDRESSEE = 'refers_to_addressee'
