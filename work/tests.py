@@ -511,7 +511,7 @@ class WorkSearchTests(EmloSeleniumTestCase, CommonSearchTests):
         self.find_element_by_css(f'label[for={table_type_id}]').click()
 
         for k, v in search_field_values.items():
-            self.find_element_by_css('.actionbox button[type=button]').click()
+            self.find_clear_search_btn().click()
             self.find_element_by_css(f'input[name={k}]').send_keys(v)
             self.find_search_btn().click()
 
@@ -561,7 +561,7 @@ class WorkSearchTests(EmloSeleniumTestCase, CommonSearchTests):
 
         for flag_string, expected_work in test_cases:
             with self.subTest(flag_string=flag_string):
-                self.find_element_by_css('.actionbox button[type=button]').click()  # Clear previous search
+                self.find_clear_search_btn().click()  # Clear previous search
                 flags_input = self.find_element_by_css('input[name="flags"]')
                 flags_input.send_keys(flag_string)
                 self.find_search_btn().click()
@@ -581,7 +581,7 @@ class WorkSearchTests(EmloSeleniumTestCase, CommonSearchTests):
 
         for flag_string in invalid_test_cases:
             with self.subTest(flag_string=flag_string):
-                self.find_element_by_css('.actionbox button[type=button]').click()  # Clear previous search
+                self.find_clear_search_btn().click()  # Clear previous search
                 flags_input = self.find_element_by_css('input[name="flags"]')
                 flags_input.send_keys(flag_string)
                 self.find_search_btn().click()
