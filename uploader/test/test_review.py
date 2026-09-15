@@ -142,6 +142,20 @@ class TestAcceptPeople(UploadIncludedTestCase):
         self.assertEqual(union_person.date_of_death_approx, 0)
         self.assertEqual(union_person.date_of_death_is_range, 0)
 
+    def test_accept_people_derives_precomputed_dates(self):
+        """Regression test: date_of_birth/date_of_death/flourished have no
+        matching field on CofkCollectPerson (only the granular year/month/day
+        parts do), so they must be explicitly derived rather than left None."""
+        from datetime import date
+        self._make_collect_person(flourished_year=1670, flourished_month=5, flourished_day=2)
+
+        accept_people(self.new_upload, username='admin')
+
+        union_person = CofkUnionPerson.objects.exclude(iperson_id__in=[15257, 885, 22859]).get()
+        self.assertEqual(union_person.date_of_birth, date(1643, 1, 4))
+        self.assertEqual(union_person.date_of_death, date(1727, 3, 31))
+        self.assertEqual(union_person.flourished, date(1670, 5, 2))
+
     def test_accept_people_links_collect_to_union(self):
         """accept_people sets union_iperson FK on the collect record."""
         collect_person = self._make_collect_person()
@@ -304,3 +318,21 @@ class TestCreateUnionWork(UploadIncludedTestCase):
         self.assertEqual(union_work1.origin_as_marked, 'London')
         self.assertIsNone(union_work2.date_of_work_as_marked)
         self.assertIsNone(union_work2.origin_as_marked)
+
+    def test_date_of_work_std_is_derived_not_left_as_sentinel(self):
+        """Regression test for #863: date_of_work_std(_gregorian) have no
+        matching field on CofkCollectWork, so the generic field-copy loop
+        never sets them and they must be derived from the granular
+        year/month/day fields instead of being left at the '9999-12-31'
+        model default."""
+        work = self._make_collect_work(
+            1,
+            date_of_work_std_year=1660,
+            date_of_work_std_month=6,
+            date_of_work_std_day=15,
+        )
+
+        union_work = create_union_work(work, 'admin')
+
+        self.assertEqual(union_work.date_of_work_std, '1660-06-15')
+        self.assertEqual(union_work.date_of_work_std_gregorian, '1660-06-15')
