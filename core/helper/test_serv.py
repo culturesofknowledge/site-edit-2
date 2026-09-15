@@ -11,11 +11,13 @@ from django.db.models import Model, Lookup, Value
 from django.test import TestCase
 from django.urls import reverse
 from selenium import webdriver
-from selenium.common import NoSuchElementException
+from selenium.common import NoSuchElementException, TimeoutException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.select import Select
+from selenium.webdriver.support.ui import WebDriverWait
 
 import core.fixtures
 import location.fixtures
@@ -83,6 +85,12 @@ class EmloSeleniumTestCase(StaticLiveServerTestCase):
             self.login_user.save()
             self.goto_vname('login:gate')
             webdriver_actions.login(self.selenium, self.login_user.username, self.login_user.raw_password)
+
+            # search-results.js auto-collapses the search sidebar once a search
+            # returns results, unless the user has previously pinned it open.
+            # Pin it open for the whole test so the search/reset buttons stay
+            # clickable across repeated searches.
+            self.selenium.execute_script("localStorage.setItem('fieldset-toggle', 'true');")
 
     @classmethod
     def tearDownClass(cls):
@@ -239,7 +247,17 @@ class MultiM2MTester:
 
 
 def find_search_btn(selenium):
-    return selenium.find_element(By.CSS_SELECTOR, 'button[type=submit]')
+    webdriver_actions.ensure_search_panel_open(selenium)
+    return WebDriverWait(selenium, 10).until(
+        EC.element_to_be_clickable((By.CSS_SELECTOR, 'button[type=submit]'))
+    )
+
+
+def find_clear_search_btn(selenium):
+    webdriver_actions.ensure_search_panel_open(selenium)
+    return WebDriverWait(selenium, 10).until(
+        EC.element_to_be_clickable((By.CSS_SELECTOR, '.actionbox button[type=button]'))
+    )
 
 
 class CommonSearchTests:
@@ -262,6 +280,9 @@ class CommonSearchTests:
 
     def find_search_btn(self):
         return find_search_btn(self.test_case.selenium)
+
+    def find_clear_search_btn(self):
+        return find_clear_search_btn(self.test_case.selenium)
 
     def find_table_rows(self):
         return self.test_case.selenium.find_elements(By.CSS_SELECTOR, 'tbody tr.selectable_entry')
@@ -395,6 +416,7 @@ def run_recref_test(test_case: EmloSeleniumTestCase, recref_form_name,
     org_id_list = {i.pk for i in related_manager.all()}
 
     test_case.selenium.get(form_url)
+    main_window = test_case.selenium.current_window_handle
 
     # select record
     try:
@@ -405,8 +427,22 @@ def run_recref_test(test_case: EmloSeleniumTestCase, recref_form_name,
     with test_case.switch_to_new_window_on_completed():
         test_case.js_click(_selector)
     test_case.find_element_by_css('.selectable_entry').click()
-    test_case.find_element_by_css('#ok_btn').click()
-    test_case.selenium.switch_to.window(test_case.selenium.window_handles[0])
+    # #ok_btn's jQuery click handler is attached on document-ready; very
+    # occasionally (old Chrome/Selenium grid) a click lands right before
+    # that handler is wired up and is silently dropped -- no visible error,
+    # the popup just never closes. Retry the click a few times rather than
+    # fail outright on that rare miss.
+    for attempt in range(3):
+        test_case.find_element_by_css('#ok_btn').click()
+        try:
+            WebDriverWait(test_case.selenium, 5).until(EC.number_of_windows_to_be(1))
+            break
+        except TimeoutException:
+            if attempt == 2:
+                raise
+    # switch to the actual main-window handle rather than assuming index 0,
+    # since window_handles order isn't guaranteed while a window is closing.
+    test_case.selenium.switch_to.window(main_window)
 
     # check item selected
     try:
@@ -430,8 +466,17 @@ def run_recref_test(test_case: EmloSeleniumTestCase, recref_form_name,
 
 
 def run_recref_test_by_test_cases(emlo_test: EmloSeleniumTestCase, test_cases: Iterable[dict]):
+    main_window = emlo_test.selenium.current_window_handle
     for test_case in test_cases:
         with emlo_test.subTest(recref=test_case['recref_form_name']):
+            # recover from any popup left dangling by a previous failed
+            # subTest, so one bad iteration doesn't cascade into every
+            # later one (they'd all otherwise fail the "closed" wait below)
+            for handle in emlo_test.selenium.window_handles:
+                if handle != main_window:
+                    emlo_test.selenium.switch_to.window(handle)
+                    emlo_test.selenium.close()
+            emlo_test.selenium.switch_to.window(main_window)
             run_recref_test(emlo_test, **test_case)
 
 
