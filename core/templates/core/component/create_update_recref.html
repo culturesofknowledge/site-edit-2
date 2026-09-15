@@ -1,5 +1,6 @@
 {% load cl_filters %}
 <div class="recref-list">
+    {{ recref_formset.management_form }}
     {% if recref_formset.management_form %}
         {% if header and recref_formset.forms %}
             <div class="multi_rel_recref_container margin-bottom">
