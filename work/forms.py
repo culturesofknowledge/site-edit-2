@@ -458,7 +458,11 @@ del_help_text = "Yes or No. If 'Yes', the record is marked for deletion."
 id_help_text = 'The unique ID for the record within this database.'
 change_help_text = 'Username of the person who last changed the record.'
 
-work_to_be_deleted_choices = [(0, 'No'), (1, 'Yes')]
+work_to_be_deleted_choices = [
+    ('', 'Include works marked for deletion'),
+    ('exclude', 'Exclude works marked for deletion'),
+    ('only', 'Show only works marked for deletion'),
+]
 
 
 class CompactSearchFieldset(BasicSearchFieldset):
@@ -578,7 +582,10 @@ class CompactSearchFieldset(BasicSearchFieldset):
     accession_code = SearchCharField(label=field_label_map['work']['accession_code'], help_text=acc_help_text)
     accession_code_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
 
-    work_to_be_deleted = form_serv.ZeroOneCheckboxField(required=False)
+    work_to_be_deleted = SearchCharField(
+        label='Works to be deleted',
+        widget=forms.Select(choices=work_to_be_deleted_choices),
+    )
 
     iwork_id = SearchCharField(label=field_label_map['work']['iwork_id'], help_text=id_help_text)
     iwork_id_lookup = form_serv.create_lookup_field(form_serv.IntLookupChoices.choices)

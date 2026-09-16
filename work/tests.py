@@ -19,7 +19,10 @@ from manifestation import fixtures as manif_fixtures
 from manifestation.models import CofkUnionManifestation
 from person import fixtures as person_fixtures
 from work import fixtures as work_fixtures, work_serv
-from django.test import TestCase
+from django.contrib.auth.models import AnonymousUser
+from django.test import TestCase, RequestFactory
+from work.forms import CompactSearchFieldset, ExpandedSearchFieldset
+from work.views import WorkSearchView
 from work.work_serv import DisplayableWork
 from work.models import CofkUnionWork, CofkUnionLanguageOfWork
 from work.recref_adapter import WorkLocRecrefAdapter, WorkResourceRecrefAdapter, WorkCommentRecrefAdapter, \
@@ -616,3 +619,91 @@ class DisplayableWorkTests(TestCase):
         work = CofkUnionWork(date_of_work_std=None, date_of_work_std_year=None)
         displayable_work = DisplayableWork(work)
         self.assertEqual(displayable_work.date_for_ordering, constant.DEFAULT_EMPTY_DATE_STR)
+
+
+class WorkSearchToBeDeletedTests(TestCase):
+    def setUp(self):
+        fixture_default_lookup_catalogue()
+        self.work_active = CofkUnionWork.objects.create(
+            work_id='w_active_1',
+            iwork_id=9001,
+            description='test active',
+            work_to_be_deleted=0,
+        )
+        self.work_deleted = CofkUnionWork.objects.create(
+            work_id='w_deleted_1',
+            iwork_id=9002,
+            description='test deleted',
+            work_to_be_deleted=1,
+        )
+
+    def test_form_choices(self):
+        form = CompactSearchFieldset()
+        self.assertIn('work_to_be_deleted', form.fields)
+        choices = list(form.fields['work_to_be_deleted'].widget.choices)
+        self.assertEqual(choices, [
+            ('', 'Include works marked for deletion'),
+            ('exclude', 'Exclude works marked for deletion'),
+            ('only', 'Show only works marked for deletion'),
+        ])
+
+        expanded_form = ExpandedSearchFieldset()
+        self.assertIn('work_to_be_deleted', expanded_form.fields)
+        exp_choices = list(expanded_form.fields['work_to_be_deleted'].widget.choices)
+        self.assertEqual(exp_choices, choices)
+
+    def test_search_include_marked_for_deletion(self):
+        rf = RequestFactory()
+        req = rf.get('/work', {'description': 'test', 'description_lookup': 'contains'})
+        req.user = AnonymousUser()
+        view = WorkSearchView()
+        view.setup(req)
+        qs = view.get_queryset_by_request_data({'description': 'test', 'description_lookup': 'contains'})
+        self.assertIn(self.work_active, qs)
+        self.assertIn(self.work_deleted, qs)
+
+        req_empty = rf.get('/work', {'work_to_be_deleted': ''})
+        req_empty.user = AnonymousUser()
+        view.setup(req_empty)
+        qs_empty = view.get_queryset_by_request_data({'work_to_be_deleted': ''})
+        self.assertIn(self.work_active, qs_empty)
+        self.assertIn(self.work_deleted, qs_empty)
+
+    def test_search_exclude_marked_for_deletion(self):
+        rf = RequestFactory()
+        req = rf.get('/work', {'work_to_be_deleted': 'exclude'})
+        req.user = AnonymousUser()
+        view = WorkSearchView()
+        view.setup(req)
+        qs = view.get_queryset_by_request_data({'work_to_be_deleted': 'exclude'})
+        self.assertIn(self.work_active, qs)
+        self.assertNotIn(self.work_deleted, qs)
+
+    def test_search_only_marked_for_deletion(self):
+        rf = RequestFactory()
+        req = rf.get('/work', {'work_to_be_deleted': 'only'})
+        req.user = AnonymousUser()
+        view = WorkSearchView()
+        view.setup(req)
+        qs = view.get_queryset_by_request_data({'work_to_be_deleted': 'only'})
+        self.assertNotIn(self.work_active, qs)
+        self.assertIn(self.work_deleted, qs)
+
+    def test_simplified_query(self):
+        rf = RequestFactory()
+        req = rf.get('/work', {'work_to_be_deleted': 'only'})
+        req.user = AnonymousUser()
+        view = WorkSearchView()
+        view.setup(req)
+        self.assertIn('Show only works marked for deletion', view.simplified_query)
+
+        req = rf.get('/work', {'work_to_be_deleted': 'exclude'})
+        req.user = AnonymousUser()
+        view.setup(req)
+        self.assertIn('Exclude works marked for deletion', view.simplified_query)
+
+        req = rf.get('/work', {'work_to_be_deleted': ''})
+        req.user = AnonymousUser()
+        view.setup(req)
+        self.assertNotIn('Show only works marked for deletion', view.simplified_query)
+        self.assertNotIn('Exclude works marked for deletion', view.simplified_query)
