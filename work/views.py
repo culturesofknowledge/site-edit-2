@@ -1152,7 +1152,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def search_field_fn_maps(self) -> dict[str, Lookup]:
         return {
-            'work_to_be_deleted': lambda f, v: Exact(F(f), '1' if v.lower() == 'on' or v == '1' else '0'),
+            'work_to_be_deleted': lambda f, v: Exact(F(f), 1) if v in ('only', '1', 'on') else (Exact(F(f), 0) if v in ('exclude', '0') else Q()),
             'person_sent_pk': create_search_fn_person_recref(AuthorRelationChoices.values),
             'person_rec_pk': create_search_fn_person_recref(AddresseeRelationChoices.values),
             'person_sent_rec_pk': create_search_fn_person_recref(AuthorRelationChoices.values
@@ -1350,8 +1350,10 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                                   if 'work_to_be_deleted' in self.request_data else None)
 
             if work_to_be_deleted:
-                if work_to_be_deleted == 'on':
-                    simplified_query.append('Is to be deleted')
+                if work_to_be_deleted in ('only', '1', 'on'):
+                    simplified_query.append('Show only works marked for deletion')
+                elif work_to_be_deleted in ('exclude', '0'):
+                    simplified_query.append('Exclude works marked for deletion')
 
             _from = self.request_data['date_of_work_std_from'] if 'date_of_work_std_from' in self.request_data else None
             _to = self.request_data['date_of_work_std_to'] if 'date_of_work_std_to' in self.request_data else None

@@ -193,6 +193,8 @@ def create_year_field(required=False, _class=''):
                                       'type': 'number',
                                       'min': 1000,
                                       'max': 9999,
+                                      'oninvalid': "this.setCustomValidity('Value must contain four digits.')",
+                                      'oninput': "this.setCustomValidity('')",
                                       'class': f'ad-year {_class}',
                                   }
                               ))
