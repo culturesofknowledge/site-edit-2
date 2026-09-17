@@ -20,6 +20,7 @@ from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap
 from manifestation import manif_serv
 from manifestation.models import CofkUnionManifestation, CofkManifInstMap
+from person import person_serv
 from person.models import CofkUnionPerson, CofkPersonCommentMap, CofkPersonResourceMap, create_person_id
 from uploader.constants import CORRECTION_WORK_SHEET
 from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectPerson, CofkCollectLocation, \
@@ -62,6 +63,8 @@ def create_union_work(collect_work: CofkCollectWork, username: str,
 
     union_work = CofkUnionWork(**work_dict, init_seq_id=True)
     union_work.update_current_user_timestamp(username)
+    union_work.date_of_work_std = compute_date_of_work_std(union_work)
+    union_work.date_of_work_std_gregorian = compute_date_of_work_std_gregorian(union_work)
 
     return union_work
 
@@ -425,11 +428,24 @@ def accept_people(upload: CofkCollectUpload, username: str, request=None):
                     date_of_death2_month=person.date_of_death2_month,
                     date_of_death2_day=person.date_of_death2_day,
                     flourished_year=person.flourished_year,
+                    flourished_month=person.flourished_month,
+                    flourished_day=person.flourished_day,
                     flourished2_year=person.flourished2_year,
+                    flourished2_month=person.flourished2_month,
+                    flourished2_day=person.flourished2_day,
                     flourished_is_range=person.flourished_is_range,
                 )
                 union_person.person_id = create_person_id(union_person.iperson_id)
                 union_person.update_current_user_timestamp(username)
+
+                # date_of_birth/date_of_death/flourished have no matching field on
+                # CofkCollectPerson (only the granular year/month/day parts do), so
+                # they're never set above and must be derived here - see
+                # person_serv.compute_date_of_birth for why.
+                union_person.date_of_birth = person_serv.compute_date_of_birth(union_person)
+                union_person.date_of_death = person_serv.compute_date_of_death(union_person)
+                union_person.flourished = person_serv.compute_flourished(union_person)
+
                 union_person.save()
                 if person.notes_on_person:
                     comment = CofkUnionComment(comment=person.notes_on_person)

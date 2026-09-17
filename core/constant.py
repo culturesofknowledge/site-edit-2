@@ -12,6 +12,18 @@ ENTITIES = {
 SEARCH_LAYOUT_GRID = 'grid'
 SEARCH_LAYOUT_TABLE = 'table'
 
+# choices offered by the "Per page" (num_record) dropdown on search pages
+# (see core/helper/form_serv.py build_search_components)
+NUM_RECORD_CHOICES = [10, 50, 100, 250, 500]
+MAX_NUM_RECORD = max(NUM_RECORD_CHOICES)
+
+# cap for the ?per_page= GET param on the upload review page
+# (see uploader/views.py _upload_review_works), same value as its existing
+# default so normal usage is unaffected -- only guards against a hand-edited
+# huge value forcing the whole upload's rows through the page's heavy
+# prefetch_related in one go
+MAX_UPLOAD_REVIEW_PER_PAGE = 1000
+
 REL_TYPE_COMMENT_REFERS_TO = 'refers_to'
 REL_TYPE_COMMENT_AUTHOR = 'refers_to_author'
 REL_TYPE_COMMENT_ADDRESSEE = 'refers_to_addressee'

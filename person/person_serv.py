@@ -1,14 +1,62 @@
+import calendar
 import collections
 import logging
+from datetime import date
 
 from django.urls import reverse
 
+from core.constant import DEFAULT_MONTH
 from core.helper import recref_serv
 from location import location_serv
 from manifestation import manif_serv
 from person.models import CofkUnionPerson
 
 log = logging.getLogger(__name__)
+
+
+def _compute_std_date(year, month, day, year2, month2, day2) -> date | None:
+    """Derive the sortable date a precomputed *_std-style DateField should hold
+    from its granular year/month/day (and, for a range, year2/month2/day2)
+    parts. Mirrors work_serv.compute_date_of_work_std's precedence (prefer the
+    "to" date of a range when present), adapted to build a real date object
+    (person's fields are DateFields, not CharFields with a string sentinel
+    default) so blank-day defaults must stay within the target month.
+    """
+    if year2:
+        y = int(year2)
+        m = int(month2 or 12)
+        d = int(day2 or calendar.monthrange(y, m)[1])
+        return date(y, m, d)
+
+    if not year:
+        return None
+
+    y = int(year)
+    m = int(month or DEFAULT_MONTH)
+    d = int(day or calendar.monthrange(y, m)[1])
+    return date(y, m, d)
+
+
+def compute_date_of_birth(person: CofkUnionPerson) -> date | None:
+    """Compute the value date_of_birth should hold, derived fresh from the
+    person's granular date fields (see _compute_std_date). date_of_birth is a
+    separate, precomputed column that PersonSearchView sorts against directly
+    - it is not derived automatically on save, so any code that changes the
+    date fields (e.g. bulk uploads) must call this and persist the result."""
+    return _compute_std_date(person.date_of_birth_year, person.date_of_birth_month, person.date_of_birth_day,
+                             person.date_of_birth2_year, person.date_of_birth2_month, person.date_of_birth2_day)
+
+
+def compute_date_of_death(person: CofkUnionPerson) -> date | None:
+    """See compute_date_of_birth."""
+    return _compute_std_date(person.date_of_death_year, person.date_of_death_month, person.date_of_death_day,
+                             person.date_of_death2_year, person.date_of_death2_month, person.date_of_death2_day)
+
+
+def compute_flourished(person: CofkUnionPerson) -> date | None:
+    """See compute_date_of_birth."""
+    return _compute_std_date(person.flourished_year, person.flourished_month, person.flourished_day,
+                             person.flourished2_year, person.flourished2_month, person.flourished2_day)
 
 
 def get_recref_display_name(person: CofkUnionPerson):

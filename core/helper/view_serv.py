@@ -115,6 +115,7 @@ class BasicSearchView(ListView):
     Helper for you to build common style of search page for emlo editor
     """
     paginate_by = 100
+    max_paginate_by = core_constant.MAX_NUM_RECORD
     paginator_class = CachedCountPaginator
     template_name = 'core/basic_search_page.html'
     context_object_name = 'records'
@@ -565,7 +566,12 @@ class BasicSearchView(ListView):
             return resp_fn(request, *args, **kwargs)
 
         if num_record := request.GET.get('num_record'):
-            self.paginate_by = num_record
+            try:
+                num_record = int(num_record)
+            except (TypeError, ValueError):
+                num_record = None
+            if num_record and num_record > 0:
+                self.paginate_by = min(num_record, self.max_paginate_by)
 
         # response for search query
         return super().get(request, *args, **kwargs)

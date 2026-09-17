@@ -1,5 +1,5 @@
 from django.test import TestCase, RequestFactory
-from django.contrib.auth.signals import user_logged_in
+from django.contrib.auth.signals import user_logged_in, user_login_failed
 from django.urls import reverse
 from django.utils import timezone
 
@@ -35,6 +35,39 @@ class LoginTimesTest(TestCase):
 
         self.assertEqual(self.user.prev_login, first_login)
         self.assertGreater(self.user.login_time, first_login)
+
+
+class FailedLoginsTest(TestCase):
+
+    def setUp(self):
+        self.user = create_test_user('test_failed_logins')
+        self.request = RequestFactory().get('/')
+
+    def test_failed_login_increments_counter(self):
+        self.assertEqual(self.user.failed_logins, 0)
+
+        user_login_failed.send(sender=__name__, credentials={'username': self.user.username},
+                               request=self.request)
+        self.user.refresh_from_db()
+
+        self.assertEqual(self.user.failed_logins, 1)
+
+    def test_repeated_failed_logins_accumulate(self):
+        for _ in range(3):
+            user_login_failed.send(sender=__name__, credentials={'username': self.user.username},
+                                   request=self.request)
+        self.user.refresh_from_db()
+
+        self.assertEqual(self.user.failed_logins, 3)
+
+    def test_failed_login_for_unknown_username_does_not_raise(self):
+        # credentials.username won't always match a real account (e.g. a
+        # typo'd or made-up login attempt) -- this must not error out.
+        user_login_failed.send(sender=__name__, credentials={'username': 'no_such_user'},
+                               request=self.request)
+
+    def test_failed_login_without_username_does_not_raise(self):
+        user_login_failed.send(sender=__name__, credentials={}, request=self.request)
 
 
 class TestPermission(EmloSeleniumTestCase):

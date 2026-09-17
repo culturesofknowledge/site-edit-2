@@ -15,6 +15,7 @@ from core.helper.test_serv import EmloSeleniumTestCase, FieldValTester, CommonSe
 from core.models import Iso639LanguageCode, CofkUnionResource, CofkUnionSubject, CofkUnionComment, \
     CofkUnionFavouriteLanguage
 from location import fixtures as location_fixtures
+from login.fixtures import create_test_user__a
 from manifestation import fixtures as manif_fixtures
 from manifestation.models import CofkUnionManifestation
 from person import fixtures as person_fixtures
@@ -591,6 +592,40 @@ class WorkSearchTests(EmloSeleniumTestCase, CommonSearchTests):
 
                 results = self.find_elements_by_css('#results_table tr[entry_id]')
                 self.assertEqual(len(results), 0, f"Expected 0 results for invalid flag '{flag_string}', got {len(results)}")
+
+
+class WorkSearchPaginationTests(TestCase):
+    """
+    A hand-edited ?num_record=<n> used to be passed straight through to
+    ListView.paginate_by with no validation, so an arbitrarily large value
+    (e.g. num_record=99999) forced the view to fetch and render every
+    matching row in one page -- slow enough on a real dataset to time out
+    the request. See BasicSearchView.get() / max_paginate_by.
+    """
+
+    def setUp(self):
+        self.client.force_login(create_test_user__a())
+        prepare_works_for_search()
+
+    def test_num_record_is_capped_at_max_paginate_by(self):
+        response = self.client.get('/work/search', {'num_record': 99999})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['paginator'].per_page, 500)
+
+    def test_valid_num_record_is_respected(self):
+        response = self.client.get('/work/search', {'num_record': 50})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['paginator'].per_page, 50)
+
+    def test_non_numeric_num_record_falls_back_to_default(self):
+        response = self.client.get('/work/search', {'num_record': 'not-a-number'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['paginator'].per_page, 100)
+
+    def test_non_positive_num_record_falls_back_to_default(self):
+        response = self.client.get('/work/search', {'num_record': -5})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['paginator'].per_page, 100)
 
 
 class DisplayableWorkTests(TestCase):
