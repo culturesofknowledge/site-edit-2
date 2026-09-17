@@ -15,6 +15,7 @@ from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.form_serv import TargetPersonMRRForm, LocationRecrefField, BasicSearchFieldset, SearchCharField, \
     SearchIntField, EmloLineboxField, YesEmptyCheckboxField
 from core.models import CofkUnionOrgType, CofkUnionRoleCategory, Recref
+from person import person_serv
 from person.models import CofkUnionPerson
 from person.recref_adapter import ActivePersonRecrefAdapter, PassivePersonRecrefAdapter
 
@@ -221,6 +222,18 @@ class PersonForm(ModelForm):
         ], 0)
 
         return super().clean()
+
+    def _post_clean(self):
+        """date_of_birth/date_of_death/flourished are listed in Meta.fields for
+        model validation, but (unlike work's date_of_work_std) have no visible
+        widget anywhere in the person templates, so ModelForm's own field ->
+        instance assignment always sets them to None. Recompute them from the
+        granular year/month/day fields construct_instance just populated,
+        after model validation of those parts has run."""
+        super()._post_clean()
+        self.instance.date_of_birth = person_serv.compute_date_of_birth(self.instance)
+        self.instance.date_of_death = person_serv.compute_date_of_death(self.instance)
+        self.instance.flourished = person_serv.compute_flourished(self.instance)
 
 
 search_gender_choices = [
