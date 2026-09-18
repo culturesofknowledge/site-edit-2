@@ -4,7 +4,7 @@ from typing import Iterable, Any, Type
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import F, Q, Model
 from django.db.models.lookups import Exact, Lookup
 from django.forms import BaseForm
@@ -1443,19 +1443,9 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         if not self.has_perms([constant.PM_EXPORT_FILE_WORK]):
             return None
 
-        is_compact = (self.request_data.get('display-style', constant.SEARCH_LAYOUT_TABLE)
-                      == constant.SEARCH_LAYOUT_GRID)
-
-        if is_compact:
-            def create_compact_work_excel(queryable_works, file_path=None):
-                return excel_maker.create_excel_from_header_values(
-                    queryable_works, file_path, CompactWorkCsvHeaderValues(), 'Work'
-                )
-            return (lambda: view_serv.create_export_file_name('work', 'xlsx'),
-                    lambda: create_compact_work_excel,
-                    constant.PM_EXPORT_FILE_WORK,
-                    )
-
+        # As per issue https://github.com/culturesofknowledge/emlo-project/issues/764
+        # (and its Excel-export twin, #870) always export expanded/full results,
+        # regardless of the search page's display-style layout toggle.
         return (lambda: view_serv.create_export_file_name('work', 'xlsx'),
                 lambda: excel_maker.create_work_excel,
                 constant.PM_EXPORT_FILE_WORK,
@@ -1501,69 +1491,6 @@ class ManifImageRecrefHandler(ImageRecrefHandler):
 
     def find_org_recref_fn(self, parent, target) -> Recref | None:
         return CofkManifImageMap.objects.filter(manif=parent, image=target).first()
-
-
-class CompactWorkCsvHeaderValues(HeaderValues):
-    def get_header_list(self) -> list[str]:
-        return [
-            "Description",
-            "Date as marked on letter",
-            "Year date",
-            "Month date",
-            "Day date",
-            "Date for ordering",
-            "Author",
-            "Notes on Author in relation to letter",
-            "Recipient",
-            "Origin name",
-            "Destination name",
-            "Flags",
-            "Images",
-            "Manifestations",
-            "Related resources",
-            "Language(s)",
-            "Subjects",
-            "Abstract",
-            "General notes for public display",
-            "Source of record",
-            "Original Catalogue name",
-            "Record to be deleted",
-            "EMLO Letter ID Number",
-            "Date/time of last change",
-            "Changed by user",
-        ]
-
-    def obj_to_values(self, obj) -> Iterable[str]:
-        obj: DisplayableWork
-        values = (
-            obj.description,
-            obj.date_of_work_as_marked,
-            obj.date_of_work_std_year,
-            obj.date_of_work_std_month,
-            obj.date_of_work_std_day,
-            obj.date_of_work_std_gregorian,
-            obj.queryable_people(REL_TYPE_CREATED, is_details=True),
-            cell_values.notes(obj.author_comments),
-            obj.queryable_people(REL_TYPE_WAS_ADDRESSED_TO, is_details=True),
-            obj.places_from_for_display,
-            obj.places_to_for_display,
-            work_serv.flags(obj),
-            obj.images,
-            ' -- '.join(' '.join(manif_serv.get_manif_details(m))
-                        for m in obj.manif_set.all()),
-            cell_values.resource_str_by_list(wrm.resource for wrm in obj.cofkworkresourcemap_set.all()),
-            obj.language_of_work,
-            obj.subjects_for_display,
-            obj.abstract,
-            obj.general_notes,
-            obj.accession_code,
-            obj.original_catalogue and obj.original_catalogue.catalogue_name,
-            obj.work_to_be_deleted,
-            obj.iwork_id,
-            cell_values.simple_datetime(obj.change_timestamp),
-            obj.change_user,
-        )
-        return values
 
 
 class WorkCsvHeaderValues(HeaderValues):
