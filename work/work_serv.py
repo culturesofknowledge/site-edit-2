@@ -518,6 +518,37 @@ def is_hidden_work(work: CofkUnionWork, cached_catalogue_status: dict[Any, int] 
             not is_catalogue_published or
             work.date_of_work_std == HIDDEN_DATE_STD)
 
+# 'starts with' / 'ends with' / 'equals' only make sense against the primary name of a related
+# person or place (as in the people and places searches), not e.g. synonyms (emlo-project#873)
+PRIMARY_NAME_LOOKUPS = {
+    'starts_with': 'istartswith',
+    'not_start_with': 'istartswith',
+    'ends_with': 'iendswith',
+    'not_end_with': 'iendswith',
+    'equals': 'iexact',
+    'not_equal_to': 'iexact',
+}
+
+
+def _lookup_primary_name(lookup_fn, value: str, map_model, name_field: str, rel_types: List[str]) -> Q | None:
+    """
+    Q for works with a related person/place (via map_model) whose primary name starts/ends with or
+    equals value, or None if lookup_fn isn't one of PRIMARY_NAME_LOOKUPS.
+    """
+    from django.db.models import Exists, OuterRef
+
+    lookup = PRIMARY_NAME_LOOKUPS.get(query_serv.get_lookup_key_by_lookup_fn(lookup_fn))
+    if lookup is None:
+        return None
+
+    exists_q = Exists(map_model.objects.filter(
+        **{f'{name_field}__{lookup}': value.strip()},
+        work_id=OuterRef('pk'),
+        relationship_type__in=rel_types,
+    ))
+    return ~exists_q if _is_negated_lookup(lookup_fn) else exists_q
+
+
 def _is_negated_lookup(lookup_fn) -> bool:
     """Return True if lookup_fn corresponds to a negation search operator."""
     lookup_key = query_serv.get_lookup_key_by_lookup_fn(lookup_fn)
@@ -647,6 +678,10 @@ def lookup_person_searchable(lookup_fn, field_name: str, value: str, rel_types: 
     from work.models import CofkWorkPersonMap
     from django.db.models import Exists, OuterRef
 
+    if (primary_name_q := _lookup_primary_name(lookup_fn, value, CofkWorkPersonMap, 'person__foaf_name',
+                                               rel_types)) is not None:
+        return primary_name_q
+
     person_fields = [
         'person__foaf_name',
         'person__skos_altlabel',
@@ -698,6 +733,10 @@ def lookup_location_searchable(lookup_fn, field_name: str, value: str, rel_types
     from location.models import CofkUnionLocation
     from work.models import CofkWorkLocationMap
     from django.db.models import Exists, OuterRef
+
+    if (primary_name_q := _lookup_primary_name(lookup_fn, value, CofkWorkLocationMap, 'location__location_name',
+                                               rel_types)) is not None:
+        return primary_name_q
 
     location_fields = [
         'location__location_name',

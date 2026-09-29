@@ -10,7 +10,7 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_CREATED, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_ADDRESSED_TO, \
     REL_TYPE_WAS_SENT_TO, REL_TYPE_IS_RELATED_TO
 from core.fixtures import fixture_default_lookup_catalogue, res_dict_a, res_dict_b
-from core.helper import test_serv
+from core.helper import test_serv, query_serv
 from core.helper.test_serv import EmloSeleniumTestCase, FieldValTester, CommonSearchTests
 from core.models import Iso639LanguageCode, CofkUnionResource, CofkUnionSubject, CofkUnionComment, \
     CofkUnionFavouriteLanguage
@@ -655,6 +655,60 @@ class WorkOverviewDateTests(TestCase):
         self.assertContains(response, 'Date for ordering (in original calendar)')
         self.assertContains(response, '1650-03-01')
         self.assertContains(response, '1650-03-11')
+
+
+class WorkSearchPrimaryNameTests(TestCase):
+    """ emlo-project#873: starts/ends with on related people and places match the primary name """
+
+    def setUp(self):
+        from location.models import CofkUnionLocation
+        from person.models import CofkUnionPerson
+        from work.models import CofkWorkLocationMap, CofkWorkPersonMap
+
+        self.work = CofkUnionWork.objects.create(work_id='work_primary_name', iwork_id=9951)
+        person = person_fixtures.create_person_obj()
+        person.foaf_name = 'Russis, Sigismundus'
+        person.skos_altlabel = 'Rossi, Sigismondo'
+        person.save()
+        CofkWorkPersonMap.objects.create(work=self.work, person=person,
+                                         relationship_type=constant.REL_TYPE_CREATED)
+        location = CofkUnionLocation.objects.create(
+            location_name="St John's College, University of Cambridge, Cambridge, Cambridgeshire, England",
+            location_synonyms='Cambridge St Johns')
+        CofkWorkLocationMap.objects.create(work=self.work, location=location,
+                                           relationship_type=constant.REL_TYPE_WAS_SENT_FROM)
+
+    def matches(self, lookup_fn_fn, lookup_key, value) -> bool:
+        lookup_fn = query_serv.choices_lookup_map[lookup_key]
+        q = lookup_fn_fn(lookup_fn, 'x', value,
+                         [constant.REL_TYPE_CREATED, constant.REL_TYPE_WAS_SENT_FROM])
+        return CofkUnionWork.objects.filter(q, pk=self.work.pk).exists()
+
+    def test_person_starts_and_ends_with_primary_name_only(self):
+        person_lookup = work_serv.lookup_person_searchable
+        self.assertTrue(self.matches(person_lookup, 'starts_with', 'Russis'))
+        self.assertFalse(self.matches(person_lookup, 'starts_with', 'Rossi'))  # synonym only
+        self.assertTrue(self.matches(person_lookup, 'ends_with', 'Sigismundus'))
+        self.assertFalse(self.matches(person_lookup, 'ends_with', 'Sigismondo'))
+        self.assertTrue(self.matches(person_lookup, 'not_start_with', 'Rossi'))
+        self.assertFalse(self.matches(person_lookup, 'not_start_with', 'Russis'))
+        self.assertTrue(self.matches(person_lookup, 'equals', 'russis, sigismundus'))
+        self.assertFalse(self.matches(person_lookup, 'equals', 'Russis'))
+        self.assertFalse(self.matches(person_lookup, 'equals', 'Rossi, Sigismondo'))  # synonym only
+        self.assertTrue(self.matches(person_lookup, 'not_equal_to', 'Russis'))
+        # contains still searches synonyms
+        self.assertTrue(self.matches(person_lookup, 'contains', 'Rossi'))
+
+    def test_location_starts_and_ends_with_primary_name_only(self):
+        location_lookup = work_serv.lookup_location_searchable
+        self.assertFalse(self.matches(location_lookup, 'starts_with', 'Cambridge'))
+        self.assertTrue(self.matches(location_lookup, 'starts_with', "St John's"))
+        self.assertTrue(self.matches(location_lookup, 'ends_with', 'England'))
+        self.assertFalse(self.matches(location_lookup, 'ends_with', 'Johns'))  # synonym only
+        self.assertTrue(self.matches(location_lookup, 'equals',
+                                     "St John's College, University of Cambridge, Cambridge, Cambridgeshire, England"))
+        self.assertFalse(self.matches(location_lookup, 'equals', 'Cambridge'))
+        self.assertTrue(self.matches(location_lookup, 'contains', 'Cambridge'))
 
 
 class WorkSearchPaginationTests(TestCase):
