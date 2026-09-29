@@ -1,6 +1,5 @@
 from django import forms
 from .models import CofkSuggestions
-from core.helper import form_serv
 
 # Form to getting suggestion text
 class SuggestionForm(forms.Form):
@@ -14,8 +13,8 @@ class SuggestionForm(forms.Form):
 class SuggestionFilterForm(forms.Form):
     person       = forms.BooleanField(required=True, initial=True, label="Person")
     location     = forms.BooleanField(required=True, initial=True, label="Location")
-    publication  = forms.BooleanField(required=True, initial=True, label="Repository")
-    institution  = forms.BooleanField(required=True, initial=True, label="Publication")
+    publication  = forms.BooleanField(required=True, initial=True, label="Publication")
+    institution  = forms.BooleanField(required=True, initial=True, label="Repository")
     showNew      = forms.BooleanField(required=True, initial=True, label="Show New")
     showExisting = forms.BooleanField(required=True, initial=True, label="Show Existing")
 

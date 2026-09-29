@@ -1,6 +1,4 @@
 from django.db import models
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
 import datetime
 from suggestions import utils as sug_utils
 from person      import person_suggestion_fields

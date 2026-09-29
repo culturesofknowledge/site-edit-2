@@ -18,7 +18,7 @@ class CofkUnionInstitution(models.Model, RecordTracker):
     change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     change_user = models.CharField(max_length=254)
     editors_notes = models.TextField(blank=True, null=True)
-    uuid = models.UUIDField(blank=True, null=True)
+    uuid = models.UUIDField(blank=True, null=True, default=model_serv.default_uuid)
     address = models.CharField(max_length=1000, blank=True, null=True)
     latitude = models.CharField(max_length=20, blank=True, null=True)
     longitude = models.CharField(max_length=20, blank=True, null=True)

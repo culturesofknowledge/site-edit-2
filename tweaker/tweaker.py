@@ -175,6 +175,10 @@ class DatabaseTweaker:
 
     def connect(self, connection_url: str):
         """Connect to the database using SQLAlchemy."""
+        # Without an explicit driver SQLAlchemy picks its default, which is psycopg (3) from
+        # SQLAlchemy 2.1 on; this project depends on psycopg2.
+        if connection_url.startswith('postgresql://'):
+            connection_url = 'postgresql+psycopg2://' + connection_url[len('postgresql://'):]
         try:
             self.engine = create_engine(
                 connection_url,

@@ -96,6 +96,9 @@ def lookup_fn_flags(lookup_fn, field_name, value):
         'date of work approximate': lambda: Q(date_of_work_approx=1),
         'author/sender inferred': lambda: Q(authors_inferred=1),
         'author/sender uncertain': lambda: Q(authors_uncertain=1),
+        'addressee/recipient inferred': lambda: Q(addressees_inferred=1),
+        'addressee/recipient uncertain': lambda: Q(addressees_uncertain=1),
+        # older wording, kept so existing saved queries still work (emlo-project#874)
         'recipient/addressee inferred': lambda: Q(addressees_inferred=1),
         'recipient/addressee uncertain': lambda: Q(addressees_uncertain=1),
         'origin inferred': lambda: Q(origin_inferred=1),

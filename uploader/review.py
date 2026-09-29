@@ -19,7 +19,7 @@ from core.models import CofkUnionResource, CofkLookupCatalogue, CofkUnionComment
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap
 from manifestation import manif_serv
-from manifestation.models import CofkUnionManifestation, CofkManifInstMap
+from manifestation.models import CofkUnionManifestation, CofkManifInstMap, CofkManifCommentMap
 from person import person_serv
 from person.models import CofkUnionPerson, CofkPersonCommentMap, CofkPersonResourceMap, create_person_id
 from uploader.constants import CORRECTION_WORK_SHEET
@@ -27,7 +27,8 @@ from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectPerso
     CofkCollectWorkCorrection
 from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, CofkWorkResourceMap, \
     CofkUnionLanguageOfWork, CofkWorkSubjectMap, CofkWorkCommentMap
-from work.work_serv import compute_date_of_work_std, compute_date_of_work_std_gregorian
+from work.work_serv import compute_date_of_work_std, compute_date_of_work_std_gregorian, \
+    get_recref_display_name
 
 log = logging.getLogger(__name__)
 
@@ -299,6 +300,17 @@ def create_works(collect_works, username, union_work_dict, upload, request):
             union_manif = CofkUnionManifestation(**union_manif_dict)
             union_manifs.append(union_manif)
 
+            # CofkUnionManifestation has no notes field; like in the manifestation form, the notes
+            # are a comment on the manifestation (emlo-project#866)
+            if manif.manifestation_notes:
+                union_comment = CofkUnionComment(comment=manif.manifestation_notes)
+                union_comment.update_current_user_timestamp(username)
+                union_comment.save()
+                cmcm = CofkManifCommentMap(comment=union_comment, manifestation=union_manif,
+                                           relationship_type=REL_TYPE_COMMENT_REFERS_TO)
+                cmcm.update_current_user_timestamp(username)
+                add_rel_maps(rel_maps, [cmcm])
+
             if manif.repository_id is not None:
                 inst = manif.repository
                 union_inst = CofkUnionInstitution.objects.filter(pk=inst.institution_id).first()
@@ -347,6 +359,12 @@ def create_works(collect_works, username, union_work_dict, upload, request):
         if len(rel_maps[rel_map]) > 0:
             bulk_create(rel_maps[rel_map])
             log_msg.append(f'{len(rel_maps[rel_map])} {type(rel_maps[rel_map][0]).__name__}')
+
+    # The description is derived from the work's dates, people and places, so it
+    # can only be computed once the relation maps above exist in the database.
+    for union_work in union_works:
+        union_work.description = get_recref_display_name(union_work)
+    CofkUnionWork.objects.bulk_update(union_works, ['description'], batch_size=500)
 
     # Update upload status of collect works
     CofkCollectWork.objects.bulk_update(collect_works, ['upload_status'])
@@ -434,6 +452,9 @@ def accept_people(upload: CofkCollectUpload, username: str, request=None):
                     flourished2_month=person.flourished2_month,
                     flourished2_day=person.flourished2_day,
                     flourished_is_range=person.flourished_is_range,
+                    flourished_inferred=person.flourished_inferred,
+                    flourished_uncertain=person.flourished_uncertain,
+                    flourished_approx=person.flourished_approx,
                 )
                 union_person.person_id = create_person_id(union_person.iperson_id)
                 union_person.update_current_user_timestamp(username)
@@ -692,6 +713,9 @@ def accept_corrections(upload: CofkCollectUpload, username: str, request=None):
 
                 if gregorian_fields_changed:
                     work.date_of_work_std_gregorian = compute_date_of_work_std_gregorian(work)
+
+                # description is derived from the dates (among others), so keep it in sync
+                work.description = get_recref_display_name(work)
 
                 work.update_current_user_timestamp(username)
                 work.save()

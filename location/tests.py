@@ -2,17 +2,20 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Type
 
 from django.test import TestCase
+from django.urls import reverse
 from selenium.webdriver.common.by import By
 
 import location.fixtures
 from cllib import path_utils
-from core.helper import model_serv, test_serv
+from core import constant
+from core.helper import model_serv, test_serv, perm_serv
 from core.helper.test_serv import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
     CommentM2MTester, CommonSearchTests, MergeTests
 from core.helper.view_components import DownloadCsvHandler
 from location.models import CofkUnionLocation, CofkLocationResourceMap
 from location.recref_adapter import LocationResourceRecrefAdapter
 from location.views import LocationMergeChoiceView, LocationCsvHeaderValues
+from login.fixtures import create_test_user
 
 if TYPE_CHECKING:
     from core.helper.common_recref_adapter import TargetResourceRecrefAdapter
@@ -114,3 +117,53 @@ class LocationDownloadCsvHandlerTests(TestCase):
 
         csv_text = Path(csv_path).read_text()
         self.assertGreater(len(csv_text.splitlines()), record_size)
+
+
+class LocationCsvExportTests(TestCase):
+
+    def location_name_cell(self, location: CofkUnionLocation) -> str:
+        location.save()
+        location.sent = location.recd = location.all_works = location.mentioned = 0
+        return list(LocationCsvHeaderValues().obj_to_values(location))[0]
+
+    def test_location_name_includes_synonyms(self):
+        # emlo-project#857: as in old EMLO edit, alternative names in brackets on the next line
+        location = CofkUnionLocation(location_name='Oxford', location_synonyms='Oxon\nOxonia')
+        self.assertEqual(self.location_name_cell(location), 'Oxford\n(Oxon\nOxonia)')
+
+    def test_location_name_without_synonyms(self):
+        location = CofkUnionLocation(location_name='Oxford')
+        self.assertEqual(self.location_name_cell(location), 'Oxford')
+
+
+class LocationDeletePermissionTests(TestCase):
+
+    def setUp(self):
+        self.location = location.fixtures.create_location_a()
+        self.location.save()
+        self.delete_url = reverse('location:delete', args=[self.location.location_id])
+
+    def test_delete_requires_login(self):
+        response = self.client.post(self.delete_url)
+
+        self.assertNotEqual(response.status_code, 200)
+        self.assertTrue(CofkUnionLocation.objects.filter(pk=self.location.pk).exists())
+
+    def test_delete_requires_change_location_permission(self):
+        self.client.force_login(create_test_user('viewer'))
+
+        response = self.client.post(self.delete_url)
+
+        # permission denied is handled by redirecting to the dashboard (see handler403)
+        self.assertRedirects(response, reverse('login:dashboard'), fetch_redirect_response=False)
+        self.assertTrue(CofkUnionLocation.objects.filter(pk=self.location.pk).exists())
+
+    def test_delete_with_change_location_permission(self):
+        editor = create_test_user('editor')
+        editor.user_permissions.add(perm_serv.get_perm_by_full_name(constant.PM_CHANGE_LOCATION))
+        self.client.force_login(editor)
+
+        response = self.client.post(self.delete_url)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(CofkUnionLocation.objects.filter(pk=self.location.pk).exists())

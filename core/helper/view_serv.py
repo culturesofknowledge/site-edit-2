@@ -10,9 +10,8 @@ from typing import NoReturn
 from urllib.parse import urljoin
 
 from django import template
-from django.conf import settings
 from django.db import models
-from django.db.models import Q, ForeignKey, QuerySet, Lookup
+from django.db.models import Q, ForeignKey, Lookup
 from django.db.models.query_utils import DeferredAttribute
 from django.forms import ModelForm
 from django.http import HttpResponseNotFound
