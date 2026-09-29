@@ -441,6 +441,9 @@ def accept_people(upload: CofkCollectUpload, username: str, request=None):
                     flourished2_month=person.flourished2_month,
                     flourished2_day=person.flourished2_day,
                     flourished_is_range=person.flourished_is_range,
+                    flourished_inferred=person.flourished_inferred,
+                    flourished_uncertain=person.flourished_uncertain,
+                    flourished_approx=person.flourished_approx,
                 )
                 union_person.person_id = create_person_id(union_person.iperson_id)
                 union_person.update_current_user_timestamp(username)

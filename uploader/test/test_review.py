@@ -157,6 +157,17 @@ class TestAcceptPeople(UploadIncludedTestCase):
         self.assertEqual(union_person.date_of_death, date(1727, 3, 31))
         self.assertEqual(union_person.flourished, date(1670, 5, 2))
 
+    def test_accept_people_copies_flourished_flags(self):
+        # emlo-project#516
+        self._make_collect_person(flourished_year=1650, flourished_inferred=1, flourished_uncertain=1,
+                                  flourished_approx=1)
+
+        accept_people(self.new_upload, username='admin')
+
+        union_person = CofkUnionPerson.objects.exclude(iperson_id__in=[15257, 885, 22859]).get()
+        self.assertEqual((union_person.flourished_inferred, union_person.flourished_uncertain,
+                          union_person.flourished_approx), (1, 1, 1))
+
     def test_accept_people_links_collect_to_union(self):
         """accept_people sets union_iperson FK on the collect record."""
         collect_person = self._make_collect_person()
