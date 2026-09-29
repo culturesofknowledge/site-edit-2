@@ -119,6 +119,23 @@ class LocationDownloadCsvHandlerTests(TestCase):
         self.assertGreater(len(csv_text.splitlines()), record_size)
 
 
+class LocationCsvExportTests(TestCase):
+
+    def location_name_cell(self, location: CofkUnionLocation) -> str:
+        location.save()
+        location.sent = location.recd = location.all_works = location.mentioned = 0
+        return list(LocationCsvHeaderValues().obj_to_values(location))[0]
+
+    def test_location_name_includes_synonyms(self):
+        # emlo-project#857: as in old EMLO edit, alternative names in brackets on the next line
+        location = CofkUnionLocation(location_name='Oxford', location_synonyms='Oxon\nOxonia')
+        self.assertEqual(self.location_name_cell(location), 'Oxford\n(Oxon\nOxonia)')
+
+    def test_location_name_without_synonyms(self):
+        location = CofkUnionLocation(location_name='Oxford')
+        self.assertEqual(self.location_name_cell(location), 'Oxford')
+
+
 class LocationDeletePermissionTests(TestCase):
 
     def setUp(self):

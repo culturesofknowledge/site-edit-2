@@ -550,7 +550,7 @@ class PersonCsvHeaderValues(HeaderValues):
             obj.editors_notes,
             obj.further_reading,
             download_csv_serv.join_image_lines(obj.images.iterator()),
-            obj.other_details_for_display(),
+            obj.other_details_for_display(with_links=False),
             cell_values.simple_datetime(obj.change_timestamp),
             obj.change_user,
         ]

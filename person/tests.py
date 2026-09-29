@@ -12,9 +12,10 @@ from core.helper import model_serv, test_serv, query_serv
 from core.helper.test_serv import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
     CommentM2MTester, CommonSearchTests, MergeTests
 from person.forms import PersonForm
-from person.models import CofkUnionPerson, CofkPersonResourceMap
+from person.models import CofkUnionPerson, CofkPersonResourceMap, CofkPersonPersonMap
+from person.person_serv import DisplayablePerson
 from person.recref_adapter import PersonResourceRecrefAdapter
-from person.views import PersonMergeChoiceView, PersonSearchView
+from person.views import PersonMergeChoiceView, PersonSearchView, PersonCsvHeaderValues
 
 
 class PersonFormTest(EmloSeleniumTestCase):
@@ -329,3 +330,48 @@ class PersonMergeTests(MergeTests):
     @property
     def create_obj_fn(self):
         return person.fixtures.create_person_obj
+
+
+class PersonCsvExportTests(TestCase):
+    """ emlo-project#857 """
+
+    def create_person(self, foaf_name, **kwargs) -> CofkUnionPerson:
+        obj = person.fixtures.create_person_obj_by_dict(dict(foaf_name=foaf_name, **kwargs))
+        obj.save()
+        return DisplayablePerson.objects.get(pk=obj.pk)
+
+    def csv_values(self, obj) -> dict:
+        obj.sent = obj.recd = obj.all_works = obj.mentioned = 0
+        header_values = PersonCsvHeaderValues()
+        return dict(zip(header_values.get_header_list(), header_values.obj_to_values(obj)))
+
+    def test_no_flourished_date_is_blank(self):
+        values = self.csv_values(self.create_person('Smith, John', date_of_birth_year=1600))
+
+        self.assertEqual(values['Flourished'], '')
+        self.assertEqual(values['Date of death'], '')
+        self.assertEqual(values['Date of birth'], '1600-12-31')
+
+    def test_other_details_without_link_markup(self):
+        child = self.create_person('Smith, John')
+        parent = self.create_person('Ayscough, Hannah', date_of_birth_year=1623, date_of_death_year=1679)
+        CofkPersonPersonMap.objects.create(person=parent, related=child,
+                                           relationship_type=constant.REL_TYPE_PARENT_OF)
+
+        other_details = self.csv_values(child)['Other details']
+
+        self.assertIn('~Ayscough, Hannah, 1623-1679', other_details)
+        self.assertNotIn('__@_', other_details)
+        self.assertNotIn('_@__', other_details)
+        # search results page still gets links
+        self.assertIn('__@_[', child.other_details_for_display())
+
+    def test_organisation_formed_and_disbanded(self):
+        self.assertEqual(
+            self.create_person('The Royal Society', is_organisation='Y', date_of_birth_year=1660).to_string(),
+            'The Royal Society, formed 1660')
+        self.assertEqual(
+            self.create_person('Some Club', is_organisation='Y', date_of_death_year=1700).to_string(),
+            'Some Club, disbanded 1700')
+        self.assertEqual(self.create_person('Smith, John', date_of_birth_year=1660).to_string(),
+                         'Smith, John, b. 1660')

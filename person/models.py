@@ -110,11 +110,11 @@ class CofkUnionPerson(models.Model, RecordTracker):
         elif dob:
             if self.date_of_birth_is_range == 1:
                 dob += ' or before'
-            date_str = f'b. {dob}'
+            date_str = f'formed {dob}' if self.is_organisation == 'Y' else f'b. {dob}'
         elif dod:
             if self.date_of_death_is_range == 1:
                 dod += ' or after'
-            date_str = f'd. {dod}'
+            date_str = f'disbanded {dod}' if self.is_organisation == 'Y' else f'd. {dod}'
         elif fl_start:
             if fl_end and fl_end != fl_start:
                 date_str = f'fl. {fl_start}-{fl_end}'

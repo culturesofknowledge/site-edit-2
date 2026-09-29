@@ -113,7 +113,11 @@ def get_name_details(person: CofkUnionPerson) -> list[str]:
     return name_details
 
 
-def get_display_dict_other_details(person: CofkUnionPerson, new_line='\n') -> str:
+def get_display_dict_other_details(person: CofkUnionPerson, new_line='\n', with_links=True) -> str:
+    """
+    with_links: encode links to related records and resources with encode_display_link,
+    for the search results page. Without, e.g. for the csv export, the output is plain text.
+    """
     query_name_map = [
         # person's active relationships
         (lambda: person.active_relationships.all(),
@@ -160,12 +164,17 @@ def get_display_dict_other_details(person: CofkUnionPerson, new_line='\n') -> st
                 else:
                     display_str = f'From {mmap.from_date.year}: {display_str}'
 
-            if url_fn:
+            if url_fn and with_links:
                 display_str = encode_display_link(url_fn(mmap), display_str)
             result_map[display_name].append(display_str)
 
     # add resources
-    if _resources := [encode_display_link(r.resource_url, r.resource_name) for r in person.resources.all()]:
+    if with_links:
+        _resources = [encode_display_link(r.resource_url, r.resource_name) for r in person.resources.all()]
+    else:
+        _resources = [' '.join(filter(None, [r.resource_name, r.resource_url and f'({r.resource_url})']))
+                      for r in person.resources.all()]
+    if _resources:
         result_map['Related resources'] = _resources
 
     title_value_list = []
@@ -185,8 +194,8 @@ class DisplayablePerson(CofkUnionPerson):
     class Meta:
         proxy = True
 
-    def other_details_for_display(self, new_line='\n'):
-        return get_display_dict_other_details(self, new_line=new_line)
+    def other_details_for_display(self, new_line='\n', with_links=True):
+        return get_display_dict_other_details(self, new_line=new_line, with_links=with_links)
 
 
 class SearchResultPerson(DisplayablePerson):

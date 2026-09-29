@@ -344,7 +344,7 @@ class LocationCsvHeaderValues(HeaderValues):
     def obj_to_values(self, obj) -> Iterable[str]:
         obj: CofkUnionLocation
         values = (
-            obj.location_name,
+            cell_values.location_name_with_synonyms(obj),
             obj.location_id,
             obj.editors_notes,
             obj.sent,

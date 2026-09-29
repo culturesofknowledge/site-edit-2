@@ -22,6 +22,7 @@ from person import fixtures as person_fixtures
 from work import fixtures as work_fixtures, work_serv
 from django.contrib.auth.models import AnonymousUser
 from django.test import TestCase, RequestFactory
+from django.urls import reverse
 from work.forms import CompactSearchFieldset, ExpandedSearchFieldset
 from work.views import WorkSearchView
 from work.work_serv import DisplayableWork
@@ -628,6 +629,32 @@ class WorkFlagsTests(TestCase):
 
     def test_as_marked_without_flag_is_left_out(self):
         self.assertEqual(work_serv.flags(CofkUnionWork(origin_as_marked='Oxon')), '')
+
+
+class WorkOverviewDateTests(TestCase):
+
+    def setUp(self):
+        self.client.force_login(create_test_user__a())
+
+    def get_overview(self, work: CofkUnionWork):
+        work.save()
+        return self.client.get(reverse('work:overview_form', args=[work.iwork_id]))
+
+    def test_undated_work_hides_placeholder_date(self):
+        response = self.get_overview(CofkUnionWork(work_id='overview_undated', iwork_id=201))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, constant.DEFAULT_EMPTY_DATE_STR)
+        self.assertNotContains(response, 'Date for ordering')
+
+    def test_dated_work_shows_ordering_dates(self):
+        response = self.get_overview(CofkUnionWork(work_id='overview_dated', iwork_id=202,
+                                                   date_of_work_std='1650-03-01',
+                                                   date_of_work_std_gregorian='1650-03-11'))
+
+        self.assertContains(response, 'Date for ordering (in original calendar)')
+        self.assertContains(response, '1650-03-01')
+        self.assertContains(response, '1650-03-11')
 
 
 class WorkSearchPaginationTests(TestCase):
