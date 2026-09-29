@@ -12,5 +12,6 @@ urlpatterns = url_serv.create_common_urls_for_section(
     search_view=user_views.UserSearchView.as_view(),
 ) + [
     path('reset-password/<pk>', user_views.reset_password, name='reset-password'),
+    path('delete/<obj_id>', user_views.UserDeleteConfirmView.as_view(), name=url_serv.VNAME_DELETE),
     # path('reset-password/<pk>/success', quick_init_view, name='reset_password_success'),
 ]

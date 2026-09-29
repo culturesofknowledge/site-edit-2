@@ -233,7 +233,7 @@ def get_sort_by_label(url: str, query_order_by: str, pk) -> str:
 
 class CofkUserSavedQuery(models.Model):
     query_id = models.AutoField(primary_key=True)
-    username = models.ForeignKey('login.CofkUser', models.DO_NOTHING, db_column='username')
+    username = models.ForeignKey('login.CofkUser', models.CASCADE, db_column='username')
     query_class = models.CharField(max_length=100)
     query_method = models.CharField(max_length=100)  # what does this do?
     query_title = models.TextField()  # this field is not used atm, instead use the dynamic property title
