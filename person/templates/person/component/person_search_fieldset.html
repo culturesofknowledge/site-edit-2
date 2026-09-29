@@ -54,7 +54,7 @@
     {% include "core/component/search_fieldset/field_with_lookup.html" with field=form.change_user field_lookup=form.change_user_lookup %}
 
     <script>
-        var roles_autocomplete = [{% for role in form.role_category_names %}"{{ role|safe }}", {% endfor %}];
+        var roles_autocomplete = [{% for role in form.role_category_names %}"{{ role|escapejs }}", {% endfor %}];
 
         $( "#id_roles" ).autocomplete({
             source: roles_autocomplete,
@@ -67,7 +67,7 @@
             $(this).autocomplete('search', '');
         });
 
-        var org_types_autocomplete = [{% for orgtype in form.org_types %}"{{ orgtype|safe }}", {% endfor %}];
+        var org_types_autocomplete = [{% for orgtype in form.org_types %}"{{ orgtype|escapejs }}", {% endfor %}];
 
         $( "#id_organisation_type" ).autocomplete({
             source: org_types_autocomplete,

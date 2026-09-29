@@ -6,6 +6,7 @@ import re
 
 from django.db.models import Q, F
 from django.urls import reverse
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
 from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, \
@@ -383,24 +384,24 @@ class DisplayableWork(CofkUnionWork):
         _other_details = []
 
         if self.keywords:
-            _other_details.append(f'<strong>Keywords</strong>: {self.keywords}')
+            _other_details.append(format_html('<strong>Keywords</strong>: {}', self.keywords))
 
         if self.abstract:
-            _other_details.append(f'<strong>Abstract</strong>: {self.abstract}')
+            _other_details.append(format_html('<strong>Abstract</strong>: {}', self.abstract))
 
         language_of_work = self.language_of_work
         if language_of_work:
             label = 'Languages' if len(language_of_work.split(',')) else 'Language'
-            _other_details.append(f'<strong>{label}</strong>: {language_of_work}')
+            _other_details.append(format_html('<strong>{}</strong>: {}', label, language_of_work))
 
         if general_notes := self.general_notes:
-            _other_details.append(f'<strong>Notes</strong>: {general_notes}')
+            _other_details.append(format_html('<strong>Notes</strong>: {}', general_notes))
 
         if people_mentioned := self.people_mentioned:
-            _other_details.append(f'<strong>People mentioned</strong>: {people_mentioned}')
+            _other_details.append(format_html('<strong>People mentioned</strong>: {}', people_mentioned))
 
         if places_mentioned := self.places_mentioned:
-            _other_details.append(f'<strong>Places mentioned</strong>: {places_mentioned}')
+            _other_details.append(format_html('<strong>Places mentioned</strong>: {}', places_mentioned))
 
         return mark_safe('<br/><br/>'.join(_other_details))
 
