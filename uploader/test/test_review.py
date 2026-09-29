@@ -15,6 +15,7 @@ from uploader.test.test_serv import UploadIncludedFactoryTestCase, UploadInclude
 from uploader.uploader_serv import DisplayableCollectWork
 from uploader.views import upload_review
 from work.models import CofkUnionWork
+from work.work_serv import get_recref_display_name
 
 log = logging.getLogger(__name__)
 
@@ -240,6 +241,10 @@ class TestReview(UploadIncludedFactoryTestCase):
         self.assertEqual(self.new_upload.works_accepted, 1)
         self.assertEqual(self.new_upload.works_rejected, 0)
         self.assertEqual(name_of_first_author, 'Newton')
+
+        union_work = CofkUnionWork.objects.first()
+        self.assertTrue(union_work.description)
+        self.assertEqual(union_work.description, get_recref_display_name(union_work))
 
     def test_reject_upload(self):
         filename = self.create_excel_file(spreadsheet_data)

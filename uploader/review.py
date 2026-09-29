@@ -27,7 +27,8 @@ from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectPerso
     CofkCollectWorkCorrection
 from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, CofkWorkResourceMap, \
     CofkUnionLanguageOfWork, CofkWorkSubjectMap, CofkWorkCommentMap
-from work.work_serv import compute_date_of_work_std, compute_date_of_work_std_gregorian
+from work.work_serv import compute_date_of_work_std, compute_date_of_work_std_gregorian, \
+    get_recref_display_name
 
 log = logging.getLogger(__name__)
 
@@ -347,6 +348,12 @@ def create_works(collect_works, username, union_work_dict, upload, request):
         if len(rel_maps[rel_map]) > 0:
             bulk_create(rel_maps[rel_map])
             log_msg.append(f'{len(rel_maps[rel_map])} {type(rel_maps[rel_map][0]).__name__}')
+
+    # The description is derived from the work's dates, people and places, so it
+    # can only be computed once the relation maps above exist in the database.
+    for union_work in union_works:
+        union_work.description = get_recref_display_name(union_work)
+    CofkUnionWork.objects.bulk_update(union_works, ['description'], batch_size=500)
 
     # Update upload status of collect works
     CofkCollectWork.objects.bulk_update(collect_works, ['upload_status'])
@@ -692,6 +699,9 @@ def accept_corrections(upload: CofkCollectUpload, username: str, request=None):
 
                 if gregorian_fields_changed:
                     work.date_of_work_std_gregorian = compute_date_of_work_std_gregorian(work)
+
+                # description is derived from the dates (among others), so keep it in sync
+                work.description = get_recref_display_name(work)
 
                 work.update_current_user_timestamp(username)
                 work.save()
