@@ -291,7 +291,12 @@ function reset_form(form) {
     let sort_by = form.elements['sort_by'] ? form.elements['sort_by'].value : null;
     let order = form.elements['order'] ? form.elements['order'].value : null;
 
+    // Reset the search, but keep whether the search fields are shown or hidden
+    let fieldset_toggle = localStorage.getItem('fieldset-toggle');
     localStorage.clear();
+    if (fieldset_toggle !== null) {
+        localStorage.setItem('fieldset-toggle', fieldset_toggle);
+    }
 
     let url = window.location.pathname;
     let params = new URLSearchParams();
