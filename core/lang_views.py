@@ -1,9 +1,11 @@
 from typing import Iterable
 
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db.models import Q
-from django.http import JsonResponse
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404
+from django.views.decorators.http import require_POST
 
 from core import constant
 from core.helper import renderer_serv, query_serv
@@ -68,14 +70,22 @@ class LanguageSearchView(PermissionRequiredMixin, LoginRequiredMixin, DefaultSea
         return [LangSearchFieldset(self.request_data.dict())]
 
 
+@login_required
+@permission_required(constant.PM_CHANGE_LANGUAGE, raise_exception=True)
+@require_POST
 def fav_remove(request):
-    data = request.POST
-    CofkUnionFavouriteLanguage.objects.filter(language_code=data['code_639_3']).delete()
+    if not (code := request.POST.get('code_639_3')):
+        return HttpResponseBadRequest()
+    CofkUnionFavouriteLanguage.objects.filter(language_code=code).delete()
     return JsonResponse({})
 
 
+@login_required
+@permission_required(constant.PM_CHANGE_LANGUAGE, raise_exception=True)
+@require_POST
 def fav_add(request):
-    data = request.POST
-    lang = get_object_or_404(Iso639LanguageCode, code_639_3=data['code_639_3'])
+    if not (code := request.POST.get('code_639_3')):
+        return HttpResponseBadRequest()
+    lang = get_object_or_404(Iso639LanguageCode, code_639_3=code)
     CofkUnionFavouriteLanguage(language_code=lang).save()
     return JsonResponse({})
