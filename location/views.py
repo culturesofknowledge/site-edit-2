@@ -393,7 +393,10 @@ class LocationImageRecrefHandler(ImageRecrefHandler):
         return CofkLocationImageMap.objects.filter(location=parent, image=target).first()
 
 
-class LocationDeleteConfirmView(DeleteConfirmView):
+class LocationDeleteConfirmView(PermissionRequiredMixin, LoginRequiredMixin, DeleteConfirmView):
+    permission_required = constant.PM_CHANGE_LOCATION
+    raise_exception = True
+
     def get_model_class(self) -> Type[ModelLike]:
         return CofkUnionLocation
 
