@@ -144,7 +144,7 @@ class ImageForm(ModelForm):
                                                        initial='1', )
     display_order = forms.IntegerField(required=False, label='Order for front-end display', initial=1)
 
-    is_delete = ZeroOneCheckboxField(is_str=False, label='Delete image from manifestation')
+    is_delete = ZeroOneCheckboxField(is_str=False, label='Delete image')
     is_delete.widget.attrs.update({'class': 'warn-checked'})
 
     def clean_display_order(self):
