@@ -1,7 +1,6 @@
 from django.db import models
 from django.urls import reverse
 
-from core import constant
 from core.helper import data_serv
 from location.models import CofkUnionLocation
 from manifestation.models import CofkUnionManifestation

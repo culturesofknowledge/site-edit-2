@@ -4,7 +4,7 @@ from datetime import date
 from typing import Any, List
 import re
 
-from django.db.models import Q, F
+from django.db.models import Q
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -17,7 +17,6 @@ from location import location_serv
 from person import person_serv
 from work.models import CofkUnionWork
 from core.helper import query_cache_serv
-from manifestation import manif_serv
 
 log = logging.getLogger(__name__)
 HIDDEN_DATE_STD = '1900-01-01'
@@ -674,7 +673,6 @@ def lookup_person_searchable(lookup_fn, field_name: str, value: str, rel_types: 
     if not segments:
         return query_serv.run_lookup_fn(lookup_fn, field_name, value)
 
-    from person.models import CofkUnionPerson
     from work.models import CofkWorkPersonMap
     from django.db.models import Exists, OuterRef
 
@@ -730,7 +728,6 @@ def lookup_location_searchable(lookup_fn, field_name: str, value: str, rel_types
     if not segments:
         return query_serv.run_lookup_fn(lookup_fn, field_name, value)
 
-    from location.models import CofkUnionLocation
     from work.models import CofkWorkLocationMap
     from django.db.models import Exists, OuterRef
 

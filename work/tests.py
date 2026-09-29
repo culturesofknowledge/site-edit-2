@@ -662,7 +662,6 @@ class WorkSearchPrimaryNameTests(TestCase):
 
     def setUp(self):
         from location.models import CofkUnionLocation
-        from person.models import CofkUnionPerson
         from work.models import CofkWorkLocationMap, CofkWorkPersonMap
 
         self.work = CofkUnionWork.objects.create(work_id='work_primary_name', iwork_id=9951)

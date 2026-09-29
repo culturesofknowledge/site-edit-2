@@ -1,6 +1,5 @@
 from django import forms
 from .models import CofkSuggestions
-from core.helper import form_serv
 
 # Form to getting suggestion text
 class SuggestionForm(forms.Form):

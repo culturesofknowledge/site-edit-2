@@ -231,7 +231,6 @@ class PersonQueryTests(TestCase):
         assert queryset is not None
 
         from django.db.models.sql.where import WhereNode
-        from django.db.models.lookups import IsNull
         where_childrens = query_serv.extract_sub_query(queryset).where.children
 
         # Filter to simple Lookup nodes (not compound WhereNodes)

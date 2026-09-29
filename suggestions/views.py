@@ -1,9 +1,5 @@
-import time
-from functools import reduce
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.fields import GenericForeignKey
 from django.db.models import Q
 from django.contrib import messages
 

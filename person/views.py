@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db import models, transaction
 from django.db.models import F, Q, OuterRef
-from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual, Exact, Lookup
+from django.db.models.lookups import Exact, Lookup
 from django.forms import BaseForm
 from django.shortcuts import render, redirect, get_object_or_404
 

@@ -17,8 +17,7 @@ from unittest.mock import MagicMock, patch
 
 # Try to import Django test classes - they're optional for unit tests
 try:
-    from django.test import TestCase, TransactionTestCase
-    from django.conf import settings
+    from django.test import TransactionTestCase
     DJANGO_AVAILABLE = True
 except ImportError:
     # Create dummy classes if Django isn't available

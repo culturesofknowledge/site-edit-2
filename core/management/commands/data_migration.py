@@ -19,7 +19,7 @@ from psycopg2.extras import DictCursor
 
 from cllib import iter_utils
 from core import constant
-from core.helper import model_serv, recref_serv, perm_serv
+from core.helper import model_serv, recref_serv
 from core.helper.model_serv import ModelLike
 from core.models import CofkUnionResource, CofkUnionComment, CofkLookupDocumentType, CofkUnionRelationshipType, \
     CofkUnionImage, CofkUnionOrgType, CofkUnionRoleCategory, CofkUnionSubject, Iso639LanguageCode, CofkLookupCatalogue, \
