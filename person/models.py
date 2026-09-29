@@ -63,7 +63,7 @@ class CofkUnionPerson(models.Model, RecordTracker):
     flourished2_year = models.IntegerField(blank=True, null=True)
     flourished2_month = models.IntegerField(blank=True, null=True)
     flourished2_day = models.IntegerField(blank=True, null=True)
-    uuid = models.UUIDField(blank=True, null=True)
+    uuid = models.UUIDField(blank=True, null=True, default=model_serv.default_uuid)
     flourished_inferred = models.SmallIntegerField(default=0)
     flourished_uncertain = models.SmallIntegerField(default=0)
     flourished_approx = models.SmallIntegerField(default=0)

@@ -4,7 +4,7 @@ import re
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 
-from core.constant import REL_TYPE_CREATED
+from core.constant import REL_TYPE_CREATED, REL_TYPE_COMMENT_REFERS_TO
 from location.models import CofkUnionLocation
 from person.models import CofkUnionPerson
 from uploader.models import CofkCollectLocation, CofkCollectPerson, CofkCollectWork
@@ -256,6 +256,12 @@ class TestReview(UploadIncludedFactoryTestCase):
         union_work = CofkUnionWork.objects.first()
         self.assertTrue(union_work.description)
         self.assertEqual(union_work.description, get_recref_display_name(union_work))
+
+        # emlo-project#866: manifestation notes are kept, as a comment like in the manifestation form
+        for manif in union_work.manif_set.all():
+            self.assertEqual([c.comment for c in manif.find_comments_by_rel_type(REL_TYPE_COMMENT_REFERS_TO)],
+                             ['test'])
+            self.assertIsNotNone(manif.uuid)
 
     def test_reject_upload(self):
         filename = self.create_excel_file(spreadsheet_data)

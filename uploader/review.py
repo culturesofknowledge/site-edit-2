@@ -19,7 +19,7 @@ from core.models import CofkUnionResource, CofkLookupCatalogue, CofkUnionComment
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap
 from manifestation import manif_serv
-from manifestation.models import CofkUnionManifestation, CofkManifInstMap
+from manifestation.models import CofkUnionManifestation, CofkManifInstMap, CofkManifCommentMap
 from person import person_serv
 from person.models import CofkUnionPerson, CofkPersonCommentMap, CofkPersonResourceMap, create_person_id
 from uploader.constants import CORRECTION_WORK_SHEET
@@ -299,6 +299,17 @@ def create_works(collect_works, username, union_work_dict, upload, request):
 
             union_manif = CofkUnionManifestation(**union_manif_dict)
             union_manifs.append(union_manif)
+
+            # CofkUnionManifestation has no notes field; like in the manifestation form, the notes
+            # are a comment on the manifestation (emlo-project#866)
+            if manif.manifestation_notes:
+                union_comment = CofkUnionComment(comment=manif.manifestation_notes)
+                union_comment.update_current_user_timestamp(username)
+                union_comment.save()
+                cmcm = CofkManifCommentMap(comment=union_comment, manifestation=union_manif,
+                                           relationship_type=REL_TYPE_COMMENT_REFERS_TO)
+                cmcm.update_current_user_timestamp(username)
+                add_rel_maps(rel_maps, [cmcm])
 
             if manif.repository_id is not None:
                 inst = manif.repository

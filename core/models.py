@@ -50,7 +50,7 @@ class CofkUnionComment(models.Model, RecordTracker):
     creation_user = models.CharField(max_length=254)
     change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     change_user = models.CharField(max_length=254)
-    uuid = models.UUIDField(blank=True, null=True)
+    uuid = models.UUIDField(blank=True, null=True, default=model_serv.default_uuid)
 
     class Meta:
         db_table = 'cofk_union_comment'
@@ -86,7 +86,7 @@ class CofkUnionResource(models.Model, RecordTracker):
     creation_user = models.CharField(max_length=254)
     change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     change_user = models.CharField(max_length=254)
-    uuid = models.UUIDField(blank=True, null=True)
+    uuid = models.UUIDField(blank=True, null=True, default=model_serv.default_uuid)
 
     class Meta:
         db_table = 'cofk_union_resource'
@@ -114,7 +114,7 @@ class CofkUnionImage(models.Model, RecordTracker):
     licence_details = models.TextField()
     licence_url = models.CharField(max_length=2000)
     credits = models.CharField(max_length=2000)
-    uuid = models.UUIDField(blank=True, null=True)
+    uuid = models.UUIDField(blank=True, null=True, default=model_serv.default_uuid)
 
     class Meta:
         db_table = 'cofk_union_image'
