@@ -431,60 +431,39 @@ def format_language(lang: 'CofkUnionLanguageOfWork') -> str:
     return lang.language_code.language_name
 
 
+# (label, flag fields, as marked field) in the order and wording used by the flags column of
+# old EMLO edit (dbf_cofk_union_refresh_queryable_work)
+FLAG_GROUPS = [
+    ('Date of work', [('date_of_work_inferred', 'INFERRED'),
+                      ('date_of_work_uncertain', 'UNCERTAIN'),
+                      ('date_of_work_approx', 'APPROXIMATE')], 'date_of_work_as_marked'),
+    ('Author/sender', [('authors_inferred', 'INFERRED'),
+                       ('authors_uncertain', 'UNCERTAIN')], 'authors_as_marked'),
+    ('Addressee', [('addressees_inferred', 'INFERRED'),
+                   ('addressees_uncertain', 'UNCERTAIN')], 'addressees_as_marked'),
+    ('Origin', [('origin_inferred', 'INFERRED'),
+                ('origin_uncertain', 'UNCERTAIN')], 'origin_as_marked'),
+    ('Destination', [('destination_inferred', 'INFERRED'),
+                     ('destination_uncertain', 'UNCERTAIN')], 'destination_as_marked'),
+]
+
+
 def flags(work: CofkUnionWork) -> str:
-    tooltip = []
+    """
+    e.g. 'Date of work INFERRED. Date of work APPROXIMATE. ~ Addressee UNCERTAIN.'
+    Flags of the same group are separated by a space, groups by ' ~ '.
+    """
+    groups = []
+    for label, flag_fields, as_marked_field in FLAG_GROUPS:
+        group = [f'{label} {flag_name}.' for field, flag_name in flag_fields if getattr(work, field)]
+        if not group:
+            continue
 
-    if work.date_of_work_inferred or work.date_of_work_uncertain:
-        if work.date_of_work_inferred:
-            tooltip.append('Date of work INFERRED')
+        if as_marked := getattr(work, as_marked_field):
+            group.append(f'({label} as marked: {as_marked})')
+        groups.append(' '.join(group))
 
-        if work.date_of_work_uncertain:
-            tooltip.append('Date of work UNCERTAIN')
-
-        if work.date_of_work_as_marked:
-            tooltip.append(f'(Date of work as marked: {work.date_of_work_as_marked})')
-
-    if work.origin_inferred or work.origin_uncertain:
-        if work.origin_inferred:
-            tooltip.append('Origin INFERRED')
-
-        if work.origin_uncertain:
-            tooltip.append('Origin UNCERTAIN')
-
-        if work.origin_as_marked:
-            tooltip.append(f'(Origin as marked: {work.origin_as_marked})')
-
-    if work.authors_inferred or work.authors_uncertain:
-        if work.authors_inferred:
-            tooltip.append('Author INFERRED')
-
-        if work.authors_uncertain:
-            tooltip.append('Author UNCERTAIN')
-
-        if work.authors_as_marked:
-            tooltip.append(f'(Author as marked: {work.authors_as_marked})')
-
-    if work.addressees_inferred or work.addressees_uncertain:
-        if work.addressees_inferred:
-            tooltip.append('Addressee INFERRED')
-
-        if work.addressees_uncertain:
-            tooltip.append('Addressee UNCERTAIN')
-
-        if work.addressees_as_marked:
-            tooltip.append(f'(Addressee as marked: {work.addressees_as_marked})')
-
-    if work.destination_inferred or work.destination_uncertain:
-        if work.destination_inferred:
-            tooltip.append('Destination INFERRED')
-
-        if work.destination_uncertain:
-            tooltip.append('Destination UNCERTAIN')
-
-        if work.destination_as_marked:
-            tooltip.append(f'(Destination as marked: {work.destination_as_marked})')
-
-    return ', '.join(tooltip)
+    return ' ~ '.join(groups)
 
 
 def q_hidden_works(prefix=None, check_hidden_date=True) -> Q:

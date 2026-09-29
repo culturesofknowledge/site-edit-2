@@ -594,6 +594,42 @@ class WorkSearchTests(EmloSeleniumTestCase, CommonSearchTests):
                 self.assertEqual(len(results), 0, f"Expected 0 results for invalid flag '{flag_string}', got {len(results)}")
 
 
+class WorkFlagsTests(TestCase):
+    """ flags() is the flags column of the CSV export, and should match old EMLO edit's format """
+
+    def test_no_flags(self):
+        self.assertEqual(work_serv.flags(CofkUnionWork()), '')
+
+    def test_issue_example(self):
+        # iwork_id 1008354 in emlo-project#855
+        work = CofkUnionWork(date_of_work_inferred=1, date_of_work_uncertain=1, date_of_work_approx=1,
+                             addressees_uncertain=1)
+
+        self.assertEqual(work_serv.flags(work),
+                         'Date of work INFERRED. Date of work UNCERTAIN. Date of work APPROXIMATE.'
+                         ' ~ Addressee UNCERTAIN.')
+
+    def test_date_approximate_only(self):
+        self.assertEqual(work_serv.flags(CofkUnionWork(date_of_work_approx=1)), 'Date of work APPROXIMATE.')
+
+    def test_all_groups_in_old_order_with_as_marked(self):
+        work = CofkUnionWork(date_of_work_uncertain=1, date_of_work_as_marked='1 May',
+                             authors_inferred=1, authors_as_marked='JL',
+                             addressees_inferred=1,
+                             origin_uncertain=1, origin_as_marked='Oxon',
+                             destination_inferred=1, destination_uncertain=1)
+
+        self.assertEqual(work_serv.flags(work),
+                         'Date of work UNCERTAIN. (Date of work as marked: 1 May)'
+                         ' ~ Author/sender INFERRED. (Author/sender as marked: JL)'
+                         ' ~ Addressee INFERRED.'
+                         ' ~ Origin UNCERTAIN. (Origin as marked: Oxon)'
+                         ' ~ Destination INFERRED. Destination UNCERTAIN.')
+
+    def test_as_marked_without_flag_is_left_out(self):
+        self.assertEqual(work_serv.flags(CofkUnionWork(origin_as_marked='Oxon')), '')
+
+
 class WorkSearchPaginationTests(TestCase):
     """
     A hand-edited ?num_record=<n> used to be passed straight through to
