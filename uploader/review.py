@@ -284,8 +284,14 @@ def create_works(collect_works, username, union_work_dict, upload, request):
 
         union_maps = []
 
+        # Manifestations are bulk created later, so ids handed out within this
+        # work have to be reserved to keep the '-a', '-b', '-c' sequence unique
+        work_manif_ids = []
+
         for manif in collect_work.manifestations.all():
-            union_manif_dict = {'manifestation_id': manif_serv.create_manif_id(union_work.iwork_id),
+            new_manif_id = manif_serv.create_manif_id(union_work.iwork_id, used_manif_ids=work_manif_ids)
+            work_manif_ids.append(new_manif_id)
+            union_manif_dict = {'manifestation_id': new_manif_id,
                                 'work': union_work}
             for field in [f for f in manif._meta.get_fields() if f.name != 'manifestation_id']:
                 try:

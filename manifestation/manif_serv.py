@@ -1,8 +1,8 @@
-from typing import Union
+from typing import Iterable, Union
 
 from django.urls import reverse
 
-from core.helper import model_serv, query_cache_serv, data_serv
+from core.helper import query_cache_serv, data_serv
 from manifestation.models import CofkUnionManifestation
 from work.forms import manif_type_choices
 
@@ -45,8 +45,32 @@ def get_recref_target_id(manif: CofkUnionManifestation):
     return manif and manif.manifestation_id
 
 
-def create_manif_id(iwork_id) -> str:
-    return f'W{iwork_id}-{model_serv.next_seq_safe("cofk_union_manif_manif_id_seq")}'
+def to_letter_suffix(index: int) -> str:
+    """Convert a zero based index to a letter suffix: 0 -> 'a', 25 -> 'z', 26 -> 'aa'."""
+    letters = ''
+    index += 1
+    while index > 0:
+        index, remainder = divmod(index - 1, 26)
+        letters = chr(ord('a') + remainder) + letters
+    return letters
+
+
+def create_manif_id(iwork_id, used_manif_ids: Iterable[str] = None) -> str:
+    """Create a manifestation id in the form 'W[iwork_id]-a', restarting from '-a' for each work.
+
+    Suffixes already taken by existing manifestations of the work are skipped.
+    `used_manif_ids` allows callers to also reserve ids which have been handed
+    out but not saved to the database yet (e.g. bulk created uploads).
+    """
+    prefix = f'W{iwork_id}-'
+    used = set(used_manif_ids or [])
+    used.update(CofkUnionManifestation.objects
+                .filter(manifestation_id__startswith=prefix)
+                .values_list('manifestation_id', flat=True))
+    index = 0
+    while (manif_id := prefix + to_letter_suffix(index)) in used:
+        index += 1
+    return manif_id
 
 
 def get_doctype_desc(manif: Union['CofkUnionManifestation', 'CofkCollectManifestation']) -> str:
