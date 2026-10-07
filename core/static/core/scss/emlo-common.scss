@@ -556,16 +556,38 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
 // for lang_section
 .lang-item {
   @extend .row-no-margin;
-  align-items: baseline;
+  align-items: center;
+  gap: $space-sm;
 
   & > .lang-label {
-    width: 190px;
+    flex-shrink: 0;
+    // 190px column minus the row gap, so the note box lines up with the "New language" field below
+    width: calc(190px - #{$space-sm});
   }
 
   & > input[type=text] {
     @extend .col--2of5;
   }
 
+  // the global input/checkbox bottom margins push items off the row's centre line
+  & > input,
+  & > button,
+  & > .margin-bottom,
+  & > .margin-bottom > label {
+    margin-bottom: 0;
+  }
+
+  // match the height of the note box beside it
+  & > .lang_del_btn {
+    padding-top: 0;
+    padding-bottom: 0;
+    align-self: stretch;
+  }
+}
+
+// rows added from the "New language" dropdown
+.new_lang_div > .lang-item {
+  margin-top: $space-sm;
 }
 
 .search-form-btn {
