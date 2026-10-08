@@ -107,8 +107,10 @@
                 </div>
 
                 {% if not forloop.first %}
-                    {% include "core/component/common_checkbox.html" with field=form.is_delete name='Delete image from manifestation' is_normal_size=True %}
-                    <small>Tick then click Save to remove this image from the manifestation.</small>
+                    <div style="display: flex; gap: 0.5rem;">
+                        {% include "core/component/common_checkbox.html" with field=form.is_delete name='Delete image from manifestation' is_normal_size=True %}
+                        <small>Tick then click Save to remove this image from the manifestation.</small>
+                    </div>
                 {% endif %}
 
             </fieldset>
