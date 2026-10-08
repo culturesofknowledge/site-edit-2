@@ -43,10 +43,20 @@ class PersonRecrefForm(RecrefForm):
         return person_serv.get_checked_form_url_by_pk(self.initial.get('target_id'))
 
 
+class PersonMentionedRecrefForm(PersonRecrefForm):
+    person_mentioned_inferred = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
+    person_mentioned_uncertain = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
+
+
 class LocRecrefForm(RecrefForm):
     @property
     def target_url(self) -> str:
         return reverse('location:full_form', args=[self.initial.get('target_id')])
+
+
+class PlaceMentionedRecrefForm(LocRecrefForm):
+    place_mentioned_inferred = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
+    place_mentioned_uncertain = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
 
 
 class WorkRecrefForm(RecrefForm):

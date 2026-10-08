@@ -42,6 +42,12 @@
                  {{ form.to_date.errors.0 }}
             </div>
             {% endif %}
+            {% if person_mentioned_issues %}
+                {% include "core/component/person_mentioned_issues.html" with form=form %}
+            {% endif %}
+            {% if place_mentioned_issues %}
+                {% include "core/component/place_mentioned_issues.html" with form=form %}
+            {% endif %}
         </div>
     {% endfor %}
 </div>
@@ -51,6 +57,14 @@
     {% endwith %}
 {% else %}
     {% include "core/component/recref.html" with recref_type=recref_type id_field=new_form.target_id label=add_label hide_create_btn=hide_create_btn placeholder=placeholder %}
+{% endif %}
+
+{% if person_mentioned_issues %}
+    {% include "core/component/person_mentioned_issues.html" with form=new_form %}
+{% endif %}
+
+{% if place_mentioned_issues %}
+    {% include "core/component/place_mentioned_issues.html" with form=new_form %}
 {% endif %}
 
 {% if not no_date %}

@@ -24,7 +24,8 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_MENTION_WORK, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, \
     REL_TYPE_HANDWROTE
 from core.export_data import excel_maker, cell_values
-from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, LocRecrefForm
+from core.forms import WorkRecrefForm, PersonRecrefForm, PersonMentionedRecrefForm, ManifRecrefForm, CommentForm, \
+    LocRecrefForm, PlaceMentionedRecrefForm
 from core.helper import view_serv, lang_serv, model_serv, query_serv, renderer_serv, date_serv, general_model_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.form_serv import save_multi_rel_recref_formset
@@ -658,13 +659,13 @@ class DetailsFFH(BasicWorkFFH):
         self.people_recref_handler = MultiRecrefAdapterHandler(
             request_data, name='people',
             recref_adapter=WorkPersonRecrefAdapter(self.safe_work),
-            recref_form_class=PersonRecrefForm,
+            recref_form_class=PersonMentionedRecrefForm,
             rel_type=REL_TYPE_MENTION,
         )
         self.place_recref_handler = MultiRecrefAdapterHandler(
             request_data, name='place',
             recref_adapter=WorkLocRecrefAdapter(self.safe_work),
-            recref_form_class=LocRecrefForm,
+            recref_form_class=PlaceMentionedRecrefForm,
             rel_type=REL_TYPE_MENTION_PLACE,
         )
         self.work_recref_handler = MultiRecrefAdapterHandler(
