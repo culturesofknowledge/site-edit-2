@@ -48,6 +48,11 @@ How to create superuser
 ```shell
 python3 manage.py createsuperuser
 ```
+The command prompts for username, forename (first name), surname (last name), email and password.
+They can also be given as options, which is the only way when running non-interactively:
+```shell
+python3 manage.py createsuperuser --username admin --forename Jane --surname Doe --email jane.doe@example.com
+```
 
 
 How to run export tool
