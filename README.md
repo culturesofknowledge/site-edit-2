@@ -17,6 +17,25 @@ Dependencies (see `pyproject.toml` and `requirements.txt`):
 * Django 4.0.6
 * django-sass-processor -- https://github.com/jrief/django-sass-processor
 
+Documentation
+------------------------------------
+* [Administrator Tasks](docs/admin_tasks.md) -- step-by-step guide for admin tasks: export, import (upload and
+  review), tweaker, superuser creation, user creation / role changes / deletion on the admin page, data migration
+* [Admin Managed Commands](docs/admin_managed_commands.md) -- reference for the custom Django management commands
+* [Deployment Procedure](docs/deployment_procedure.md)
+* [Running Site Edit-2 using Docker](docs/running_site-edit-2_using_docker.md)
+
+How to run local development environment with docker
+------------------------------------
+```shell
+export EMLO_CODE_HOME=/path/to/emlo-site-edit-2/docker/site-edit-2/
+docker-compose -f $EMLO_CODE_HOM# EMLO Site Edit-2
+
+Dependencies (see `pyproject.toml` and `requirements.txt`):
+* Postgres 14
+* Django 4.0.6
+* django-sass-processor -- https://github.com/jrief/django-sass-processor
+
 How to run local development environment with docker
 ------------------------------------
 ```shell
@@ -24,7 +43,41 @@ export EMLO_CODE_HOME=/path/to/emlo-site-edit-2/docker/site-edit-2/
 docker-compose -f $EMLO_CODE_HOME/docker-compose.yml up
 ```
 
-How to run all unitest with docker 
+How to use data migration tool
+--------------------------------------
+
+```shell
+python3 manage.py data_migration -d ouls -p password -u postgres -o 172.17.0.1 -t 15432
+```
+* all input parameter is for connecting to old database (old db name, old password, old db host....  )
+
+### if you need to use your own *settings* you can use --settings
+```shell
+python3 manage.py data_migration --settings=siteedit2.settings.local_dev -d ouls -p password -u postgres -o 172.17.0.1 -t 15432
+```
+
+How to create superuser
+----------------------------------
+```shell
+python3 manage.py createsuperuser
+```
+The command prompts for username, forename (first name), surname (last name), email and password.
+They can also be given as options, which is the only way when running non-interactively:
+```shell
+python3 manage.py createsuperuser --username admin --forename Jane --surname Doe --email jane.doe@example.com
+```
+
+# Configuration
+
+The configuration files are in the `siteedit2/settings` folder. The `base.py` file holds the common settings.
+Values are overridden in `gunweb.py`.
+
+The configuration variable `UPLOAD_ASYNCHRONOUS_FILESIZE_LIMIT` controls the cutoff size in kilobytes for
+asynchronous uploads. Giving it the value `0` means that all uploads are handled asynchronously. This is the
+safer option. It means that all feedback arrives through email.                                                                                                                                                                                                                                                                                                                                                                                                    | Dropped                                           | Mapping relationships between entities              | This table had ~1.5 million rows. It has been broken down into dedicated relationship tables managed by Django such as `cofk_institution_resource_map` that links institutions to resources.                                                                                                                                                                                               |
+```
+
+How to run all unitest with docker
 ------------------------------------
 ```shell
 docker-compose -f $EMLO_CODE_HOME/docker-compose.yml -f $EMLO_CODE_HOME/docker-compose-dev.yml up pycharm-py
@@ -43,7 +96,7 @@ python3 manage.py data_migration -d ouls -p password -u postgres -o 172.17.0.1 -
 python3 manage.py data_migration --settings=siteedit2.settings.local_dev -d ouls -p password -u postgres -o 172.17.0.1 -t 15432
 ```
 
-How to create superuser 
+How to create superuser
 ----------------------------------
 ```shell
 python3 manage.py createsuperuser
