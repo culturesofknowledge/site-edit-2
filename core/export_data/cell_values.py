@@ -80,10 +80,19 @@ def simple_datetime(dt) -> str:
 
 
 def year_month_day(year, month, day) -> str:
-    year = year or constant.DEFAULT_YEAR
+    if not year:
+        # no date without a year -- rather than a 9999-12-31 placeholder
+        return ''
     month = month or constant.DEFAULT_MONTH
     day = day or constant.DEFAULT_DAY
     return f'{year}-{month}-{day}'
+
+
+def location_name_with_synonyms(location) -> str:
+    # same as old EMLO edit: alternative names in brackets on the line after the name
+    if location.location_synonyms:
+        return f'{location.location_name}\n({location.location_synonyms})'
+    return location.location_name
 
 
 def person_roles(obj: CofkUnionPerson) -> str:

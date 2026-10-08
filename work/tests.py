@@ -10,7 +10,7 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_CREATED, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_ADDRESSED_TO, \
     REL_TYPE_WAS_SENT_TO, REL_TYPE_IS_RELATED_TO
 from core.fixtures import fixture_default_lookup_catalogue, res_dict_a, res_dict_b
-from core.helper import test_serv
+from core.helper import test_serv, query_serv
 from core.helper.test_serv import EmloSeleniumTestCase, FieldValTester, CommonSearchTests
 from core.models import Iso639LanguageCode, CofkUnionResource, CofkUnionSubject, CofkUnionComment, \
     CofkUnionFavouriteLanguage
@@ -22,6 +22,7 @@ from person import fixtures as person_fixtures
 from work import fixtures as work_fixtures, work_serv
 from django.contrib.auth.models import AnonymousUser
 from django.test import TestCase, RequestFactory
+from django.urls import reverse
 from work.forms import CompactSearchFieldset, ExpandedSearchFieldset
 from work.views import WorkSearchView
 from work.work_serv import DisplayableWork
@@ -552,8 +553,8 @@ class WorkSearchTests(EmloSeleniumTestCase, CommonSearchTests):
             ("Date of work APPROXIMATE", work_date_approximate),
             ("Author/sender INFERRED", work_author_inferred),
             ("Author/sender UNCERTAIN", work_author_uncertain),
-            ("Recipient/Addressee INFERRED", work_addressee_inferred),
-            ("Recipient/Addressee UNCERTAIN", work_addressee_uncertain),
+            ("Addressee/recipient INFERRED", work_addressee_inferred),
+            ("Addressee/recipient UNCERTAIN", work_addressee_uncertain),
             ("Origin INFERRED", work_origin_inferred),
             ("Origin UNCERTAIN", work_origin_uncertain),
             ("Destination INFERRED", work_destination_inferred),
@@ -592,6 +593,121 @@ class WorkSearchTests(EmloSeleniumTestCase, CommonSearchTests):
 
                 results = self.find_elements_by_css('#results_table tr[entry_id]')
                 self.assertEqual(len(results), 0, f"Expected 0 results for invalid flag '{flag_string}', got {len(results)}")
+
+
+class WorkFlagsTests(TestCase):
+    """ flags() is the flags column of the CSV export, and should match old EMLO edit's format """
+
+    def test_no_flags(self):
+        self.assertEqual(work_serv.flags(CofkUnionWork()), '')
+
+    def test_issue_example(self):
+        # iwork_id 1008354 in emlo-project#855
+        work = CofkUnionWork(date_of_work_inferred=1, date_of_work_uncertain=1, date_of_work_approx=1,
+                             addressees_uncertain=1)
+
+        self.assertEqual(work_serv.flags(work),
+                         'Date of work INFERRED. Date of work UNCERTAIN. Date of work APPROXIMATE.'
+                         ' ~ Addressee UNCERTAIN.')
+
+    def test_date_approximate_only(self):
+        self.assertEqual(work_serv.flags(CofkUnionWork(date_of_work_approx=1)), 'Date of work APPROXIMATE.')
+
+    def test_all_groups_in_old_order_with_as_marked(self):
+        work = CofkUnionWork(date_of_work_uncertain=1, date_of_work_as_marked='1 May',
+                             authors_inferred=1, authors_as_marked='JL',
+                             addressees_inferred=1,
+                             origin_uncertain=1, origin_as_marked='Oxon',
+                             destination_inferred=1, destination_uncertain=1)
+
+        self.assertEqual(work_serv.flags(work),
+                         'Date of work UNCERTAIN. (Date of work as marked: 1 May)'
+                         ' ~ Author/sender INFERRED. (Author/sender as marked: JL)'
+                         ' ~ Addressee INFERRED.'
+                         ' ~ Origin UNCERTAIN. (Origin as marked: Oxon)'
+                         ' ~ Destination INFERRED. Destination UNCERTAIN.')
+
+    def test_as_marked_without_flag_is_left_out(self):
+        self.assertEqual(work_serv.flags(CofkUnionWork(origin_as_marked='Oxon')), '')
+
+
+class WorkOverviewDateTests(TestCase):
+
+    def setUp(self):
+        self.client.force_login(create_test_user__a())
+
+    def get_overview(self, work: CofkUnionWork):
+        work.save()
+        return self.client.get(reverse('work:overview_form', args=[work.iwork_id]))
+
+    def test_undated_work_hides_placeholder_date(self):
+        response = self.get_overview(CofkUnionWork(work_id='overview_undated', iwork_id=201))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, constant.DEFAULT_EMPTY_DATE_STR)
+        self.assertNotContains(response, 'Date for ordering')
+
+    def test_dated_work_shows_ordering_dates(self):
+        response = self.get_overview(CofkUnionWork(work_id='overview_dated', iwork_id=202,
+                                                   date_of_work_std='1650-03-01',
+                                                   date_of_work_std_gregorian='1650-03-11'))
+
+        self.assertContains(response, 'Date for ordering (in original calendar)')
+        self.assertContains(response, '1650-03-01')
+        self.assertContains(response, '1650-03-11')
+
+
+class WorkSearchPrimaryNameTests(TestCase):
+    """ emlo-project#873: starts/ends with on related people and places match the primary name """
+
+    def setUp(self):
+        from location.models import CofkUnionLocation
+        from work.models import CofkWorkLocationMap, CofkWorkPersonMap
+
+        self.work = CofkUnionWork.objects.create(work_id='work_primary_name', iwork_id=9951)
+        person = person_fixtures.create_person_obj()
+        person.foaf_name = 'Russis, Sigismundus'
+        person.skos_altlabel = 'Rossi, Sigismondo'
+        person.save()
+        CofkWorkPersonMap.objects.create(work=self.work, person=person,
+                                         relationship_type=constant.REL_TYPE_CREATED)
+        location = CofkUnionLocation.objects.create(
+            location_name="St John's College, University of Cambridge, Cambridge, Cambridgeshire, England",
+            location_synonyms='Cambridge St Johns')
+        CofkWorkLocationMap.objects.create(work=self.work, location=location,
+                                           relationship_type=constant.REL_TYPE_WAS_SENT_FROM)
+
+    def matches(self, lookup_fn_fn, lookup_key, value) -> bool:
+        lookup_fn = query_serv.choices_lookup_map[lookup_key]
+        q = lookup_fn_fn(lookup_fn, 'x', value,
+                         [constant.REL_TYPE_CREATED, constant.REL_TYPE_WAS_SENT_FROM])
+        return CofkUnionWork.objects.filter(q, pk=self.work.pk).exists()
+
+    def test_person_starts_and_ends_with_primary_name_only(self):
+        person_lookup = work_serv.lookup_person_searchable
+        self.assertTrue(self.matches(person_lookup, 'starts_with', 'Russis'))
+        self.assertFalse(self.matches(person_lookup, 'starts_with', 'Rossi'))  # synonym only
+        self.assertTrue(self.matches(person_lookup, 'ends_with', 'Sigismundus'))
+        self.assertFalse(self.matches(person_lookup, 'ends_with', 'Sigismondo'))
+        self.assertTrue(self.matches(person_lookup, 'not_start_with', 'Rossi'))
+        self.assertFalse(self.matches(person_lookup, 'not_start_with', 'Russis'))
+        self.assertTrue(self.matches(person_lookup, 'equals', 'russis, sigismundus'))
+        self.assertFalse(self.matches(person_lookup, 'equals', 'Russis'))
+        self.assertFalse(self.matches(person_lookup, 'equals', 'Rossi, Sigismondo'))  # synonym only
+        self.assertTrue(self.matches(person_lookup, 'not_equal_to', 'Russis'))
+        # contains still searches synonyms
+        self.assertTrue(self.matches(person_lookup, 'contains', 'Rossi'))
+
+    def test_location_starts_and_ends_with_primary_name_only(self):
+        location_lookup = work_serv.lookup_location_searchable
+        self.assertFalse(self.matches(location_lookup, 'starts_with', 'Cambridge'))
+        self.assertTrue(self.matches(location_lookup, 'starts_with', "St John's"))
+        self.assertTrue(self.matches(location_lookup, 'ends_with', 'England'))
+        self.assertFalse(self.matches(location_lookup, 'ends_with', 'Johns'))  # synonym only
+        self.assertTrue(self.matches(location_lookup, 'equals',
+                                     "St John's College, University of Cambridge, Cambridge, Cambridgeshire, England"))
+        self.assertFalse(self.matches(location_lookup, 'equals', 'Cambridge'))
+        self.assertTrue(self.matches(location_lookup, 'contains', 'Cambridge'))
 
 
 class WorkSearchPaginationTests(TestCase):

@@ -1,9 +1,5 @@
-import time
-from functools import reduce
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.fields import GenericForeignKey
 from django.db.models import Q
 from django.contrib import messages
 
@@ -206,7 +202,6 @@ def suggestion_all(request):
     # First set up the full query
     query_null = Q()
     query_s = query_null
-    combined_q = None
     # Special query - Limit data to only the current user if user is not editor or supervisor
     if not utils.is_user_editor_or_supervisor(request.user):
         query_s = Q(suggestion_author=request.user)
@@ -225,17 +220,11 @@ def suggestion_all(request):
             else:
                 print(f"Unknown search type : {field.name}")
 
-    if query_s:
-        combined_q = query_s
-    if query_r != query_null:
-        combined_q = combined_q & query_r
-    if query_t != query_null:
-        combined_q = combined_q & query_t
+    # An empty Q() is falsy but combines as a no-op, so there's no need to special-case it
+    # (editors/supervisors have an empty query_s -- checking `if query_s` left combined_q None)
+    combined_q = query_s & query_r & query_t
     # Now we have the filtering query, actually use it
     context = {'form' : f_form}
-    if combined_q:
-        context['query_results'] = CofkSuggestions.objects.filter(combined_q).order_by('-suggestion_id')
-    else:
-        context['query_results'] = CofkSuggestions.objects.all().order_by('-suggestion_id')
+    context['query_results'] = CofkSuggestions.objects.filter(combined_q).order_by('-suggestion_id')
 
     return render(request, template_list, context)

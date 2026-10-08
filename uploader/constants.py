@@ -213,6 +213,9 @@ BULK_PEOPLE_SHEET = {
         'flourished2_year',
         'flourished2_month',
         'flourished2_day',
+        'flourished_inferred',
+        'flourished_uncertain',
+        'flourished_approx',
         'notes_on_person',
         'editors_notes',
     ],
@@ -228,7 +231,7 @@ BULK_PEOPLE_SHEET = {
              'flourished2_year', 'flourished2_month', 'flourished2_day'],
     'bools': ['date_of_birth_is_range', 'date_of_birth_inferred', 'date_of_birth_uncertain', 'date_of_birth_approx',
               'date_of_death_is_range', 'date_of_death_inferred', 'date_of_death_uncertain', 'date_of_death_approx',
-              'flourished_is_range'],
+              'flourished_is_range', 'flourished_inferred', 'flourished_uncertain', 'flourished_approx'],
     'years': ['date_of_birth_year', 'date_of_birth2_year', 'date_of_death_year', 'date_of_death2_year',
               'flourished_year', 'flourished2_year'],
     'months': ['date_of_birth_month', 'date_of_birth2_month', 'date_of_death_month', 'date_of_death2_month',
@@ -246,8 +249,8 @@ def normalize_header(text) -> str:
 
 # Maps verbose header text from BULKnewPEOPLErecordsTEMPLATE to CofkCollectPerson field names.
 # Keys are the normalized first line of each column header (see normalize_header()).
-# Columns with no corresponding model field are omitted (flourished inferred/uncertain/approx,
-# resource_name/url, further reading).
+# resource_name/url and further reading are not CofkCollectPerson fields; they're stored as a
+# CofkCollectPersonResource (see CofkBulkPeople).
 BULK_PEOPLE_HEADER_MAP = {
     'Primary name': 'primary_name',
     'Synonyms (separated by semi-colon)': 'alternative_names',
@@ -265,6 +268,9 @@ BULK_PEOPLE_HEADER_MAP = {
     'FLOURISHED EARLIEST YEAR 1': 'flourished_year',
     'FLOURISHED LATEST YEAR 2': 'flourished2_year',
     'FLOURISHED IS RANGE': 'flourished_is_range',
+    'FLOURISHED YEAR INFERRED': 'flourished_inferred',
+    'FLOURISHED YEAR UNCERTAIN': 'flourished_uncertain',
+    'FLOURISHED YEAR APPROX.': 'flourished_approx',
     "GENERAL NOTES ON PERSON (Researcher's note: for public display; full grammatical sentences, please)": 'notes_on_person',
     "EDITORS' NOTES AND QUERIES (not to be published in public interface; these are working notes)": 'editors_notes',
     'RELATED RESOURCE NAME': 'resource_name',

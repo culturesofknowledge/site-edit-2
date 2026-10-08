@@ -2,14 +2,12 @@ from django import forms
 from django.conf import settings
 from django.forms import ModelForm, HiddenInput, IntegerField, Form
 from django.urls import reverse
-from django.utils.safestring import mark_safe
 
 from core.helper import form_serv, model_serv
 from core.helper import widgets_serv
 from core.helper.form_serv import CommonTextareaField, ZeroOneCheckboxField
 from core.models import CofkUnionComment, CofkUnionResource, CofkUnionImage, CofkLookupCatalogue, CofkUnionRoleCategory, \
     CofkUnionSubject, CofkUnionOrgType, CofkResourceDescriptor
-from login.models import CofkUser
 from login import utils
 from manifestation.models import CofkUnionManifestation
 from person import person_serv
@@ -154,7 +152,7 @@ class ImageForm(ModelForm):
                                                        initial='1', )
     display_order = forms.IntegerField(required=False, label='Order for front-end display', initial=1)
 
-    is_delete = ZeroOneCheckboxField(is_str=False, label='Delete image from manifestation')
+    is_delete = ZeroOneCheckboxField(is_str=False, label='Delete image')
     is_delete.widget.attrs.update({'class': 'warn-checked'})
 
     def clean_display_order(self):

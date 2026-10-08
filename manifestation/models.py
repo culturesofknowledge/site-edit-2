@@ -68,7 +68,7 @@ class CofkUnionManifestation(models.Model, RecordTracker):
     manifestation_creation_date_is_range = models.SmallIntegerField(default=0)
     manifestation_creation_date_as_marked = models.CharField(max_length=250, blank=True, null=True)
     opened = models.CharField(max_length=3, default='o')
-    uuid = models.UUIDField(blank=True, null=True)
+    uuid = models.UUIDField(blank=True, null=True, default=model_serv.default_uuid)
     routing_mark_stamp = models.TextField(blank=True, null=True)
     routing_mark_ms = models.TextField(blank=True, null=True)
     handling_instructions = models.TextField(blank=True, null=True)

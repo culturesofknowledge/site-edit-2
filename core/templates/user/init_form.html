@@ -79,6 +79,10 @@
                         <legend id="header_roles" class="toc-item">Reset password</legend>
                         <a href="{% url 'user:reset-password' user_id %}" class="btn btn-primary">Reset password</a>
                     </fieldset>
+                    {% if user_id != request.user.username %}
+                        {% url 'user:delete' user_id as del_url %}
+                        {% include "core/component/del_confirm_fieldset.html" with del_url=del_url name='user' %}
+                    {% endif %}
                 {% endif %}
                 <div class="bg-white sticky-bottom">
                     <hr>

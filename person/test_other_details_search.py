@@ -1,7 +1,6 @@
 from django.test import TestCase, RequestFactory
 from person.models import CofkUnionPerson, CofkPersonPersonMap
 from person.views import PersonSearchView
-from core import constant
 
 class PersonOtherDetailsSearchTest(TestCase):
     def setUp(self):

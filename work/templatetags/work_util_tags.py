@@ -1,6 +1,8 @@
+import html
 import re
 
 from django import template
+from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 
 from core.helper import data_serv
@@ -15,9 +17,13 @@ register = template.Library()
 img_pattern = re.compile(r'(xxxCofkImageIDStartxxx)(.*?)(xxxCofkImageIDEndxxx)')
 
 
+# The two filters below feed data-tippy-content attributes, and tippy is set up with
+# allowHTML (see emlo_base.html), so the attribute value is parsed as HTML. Escape the
+# record data here, on top of the template's attribute escaping, so it shows as text.
+
 @register.filter
 def exclamation(work: CofkUnionWork):
-    return work_serv.flags(work)
+    return html.escape(work_serv.flags(work))
 
 
 @register.filter
@@ -42,7 +48,7 @@ def more_info(work: DisplayableWork):
     if work.general_notes:
         tooltip.append(f'Notes: {work.general_notes}\n')
 
-    return ', '.join(tooltip)
+    return html.escape(', '.join(tooltip))
 
 
 @register.filter
@@ -58,40 +64,48 @@ def display_resources(values: str) -> str:
 
     # Split on the full encoded-link pattern, keeping separators
     segments = re.split(r'(xxxCofkLinkStartxxx.*?xxxCofkLinkEndxxx)', values)
-    html = '<ul>'
+    html_str = '<ul>'
     has_content = False
     for segment in segments:
         m = re.match(link_pattern, segment)
         if m:
             link, text = m.group(3), m.group(5)
-            html += f'<li><a href="{link}" target="_blank">{text}</a></li>'
+            html_str += format_html('<li>{}</li>', data_serv.render_link(link, text))
             has_content = True
         else:
             # Plain text between links — may contain labels like "Reply to:"
             for piece in re.split(r'\s*\|\s*', segment):
                 piece = piece.strip(' ,')
                 if piece:
-                    html += f'<li style="list-style:none;"><strong>{piece}</strong></li>'
+                    html_str += format_html('<li style="list-style:none;"><strong>{}</strong></li>', piece)
                     has_content = True
-    html += '</ul>'
+    html_str += '</ul>'
 
-    return mark_safe(html) if has_content else ''
+    return mark_safe(html_str) if has_content else ''
 
 
 @register.filter
 def render_queryable_manif(values: str):
-    result = re.sub(link_pattern, r'<a href="\3" target="_blank">\5</a>', values)
+    result = ''
+    last_end = 0
+    for m in re.finditer(link_pattern, values):
+        result += conditional_escape(values[last_end:m.start()])
+        result += data_serv.render_link(m.group(3), m.group(5))
+        last_end = m.end()
+    result += conditional_escape(values[last_end:])
     result = result.replace('\n', '<br>')
     return mark_safe(result)
 
 
 @register.filter
 def render_queryable_images(values: str):
-    html = ''
+    html_str = ''
     for img in re.findall(img_pattern, values):
-        html += f'<a href="{img[1]}" target="_blank"><img src="{img[1]}" class="search_result_img"></a>'
+        if data_serv.is_safe_url(img[1]):
+            html_str += format_html('<a href="{0}" target="_blank"><img src="{0}" class="search_result_img"></a>',
+                                    img[1])
 
-    return mark_safe(html)
+    return mark_safe(html_str)
 
 @register.filter
 def format_group_name(group_name):
