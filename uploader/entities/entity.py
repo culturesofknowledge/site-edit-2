@@ -13,6 +13,21 @@ from uploader.models import CofkCollectUpload
 log = logging.getLogger(__name__)
 
 
+def split_list(value, keep_empty=False) -> List[str]:
+    """
+    Split a SEPARATOR separated spreadsheet value into its stripped parts, so "a;b", "a; b"
+    and "a ; b" are all read the same way. keep_empty keeps empty parts, for lists that
+    are paired by position (e.g. ids with names, where an empty id means a new record).
+    """
+    parts = [p.strip() for p in str(value).split(SEPARATOR)]
+    return parts if keep_empty else [p for p in parts if p]
+
+
+def join_list(value) -> str:
+    """ Normalise a SEPARATOR separated value to the "a; b" form used by EMLO, e.g. for keywords """
+    return f'{SEPARATOR} '.join(split_list(value))
+
+
 def int_or_empty_string(value) -> bool:
     try:
         int(value)
@@ -101,7 +116,7 @@ class CofkEntity:
                     self.add_error(f'Column {id_field} in {self.sheet.name} sheet is not'
                                    f' a valid positive integer (value: {entity[id_field]}).')
                 elif isinstance(entity[id_field], str):
-                    for int_value in [i for i in entity[id_field].split(SEPARATOR) if i != '']:
+                    for int_value in split_list(entity[id_field]):
                         try:
                             if int(int_value) < 1:
                                 self.add_error(f'Column {id_field} in {self.sheet.name}'
@@ -172,7 +187,7 @@ class CofkEntity:
 
         if 'keywords' in self.fields:
             for kw_field in [k for k in self.fields['keywords'] if k in entity and entity[k]]:
-                self.check_keywords(kw_field, entity[kw_field])
+                entity[kw_field] = join_list(entity[kw_field])
 
         if 'shelfmarks' in self.fields:
             for shelfmark_field in [s for s in self.fields['shelfmarks'] if s in entity and entity[s]]:
@@ -229,13 +244,13 @@ class CofkEntity:
         # Ids are normalised as a list of strings
         if ids_key in entity_dict:
             if isinstance(entity_dict[ids_key], str):
-                ids = entity_dict[ids_key].split(SEPARATOR)
+                ids = split_list(entity_dict[ids_key], keep_empty=True)
             else:
                 ids = [str(entity_dict[ids_key])]
 
         # Names are normalised as a list of strings
         if names_key in entity_dict and isinstance(entity_dict[names_key], str):
-            names = entity_dict[names_key].split(SEPARATOR)
+            names = split_list(entity_dict[names_key], keep_empty=True)
 
         if names is None:
             return [{ids_key: _id, names_key: None} for _id in ids]
@@ -309,10 +324,6 @@ class CofkEntity:
             self.add_error(f'There is neither a {id_field} nor a {name_field}.')
         elif place_name and not place_id and place_name.strip().lower() == 'unknown':
             self.add_error(f'{name_field}: must not be "unknown" without a corresponding id.')
-
-    def check_keywords(self, field: str, value: str):
-        if len(value.split('; ')) - 1 != value.count(';'):
-            self.add_error(f'{field}: Keywords must be separated with "; " (semicolon followed by a space).')
 
     def check_shelfmark(self, field: str, value: str):
         if '-' in value:

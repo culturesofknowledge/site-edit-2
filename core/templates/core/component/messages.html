@@ -3,7 +3,7 @@
         {% for message in messages %}
             <div class="alert {% if message.tags %}{{ message.tags }}{% else %}info{% endif %}">
                 <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
-                {{ message|safe }}
+                {{ message }}
             </div>
         {% endfor %}
     </div>

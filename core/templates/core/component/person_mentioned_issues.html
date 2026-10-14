@@ -1,0 +1,13 @@
+<div class="multi_rel_recref_container">
+    <label> Issues with person mentioned: </label>
+
+    <div class="row-no-margin">
+        <div class="margin-right">
+            {% include "core/component/common_checkbox.html" with field=form.person_mentioned_inferred name='Person mentioned inferred' is_normal_size=True %}
+        </div>
+
+        <div class="margin-right">
+            {% include "core/component/common_checkbox.html" with field=form.person_mentioned_uncertain name='Person mentioned uncertain' is_normal_size=True %}
+        </div>
+    </div>
+</div>

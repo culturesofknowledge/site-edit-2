@@ -1,5 +1,5 @@
 from django.db import models
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html_join
 
 from core.helper import model_serv
 from core.helper.model_serv import RecordTracker
@@ -63,7 +63,7 @@ class CofkUnionPerson(models.Model, RecordTracker):
     flourished2_year = models.IntegerField(blank=True, null=True)
     flourished2_month = models.IntegerField(blank=True, null=True)
     flourished2_day = models.IntegerField(blank=True, null=True)
-    uuid = models.UUIDField(blank=True, null=True)
+    uuid = models.UUIDField(blank=True, null=True, default=model_serv.default_uuid)
     flourished_inferred = models.SmallIntegerField(default=0)
     flourished_uncertain = models.SmallIntegerField(default=0)
     flourished_approx = models.SmallIntegerField(default=0)
@@ -88,8 +88,7 @@ class CofkUnionPerson(models.Model, RecordTracker):
     @property
     def names_and_roles(self) -> str:
         from person import person_serv
-        names_and_roles = ''.join(f'<p>{s}</p>' for s in person_serv.get_name_details(self))
-        return mark_safe(names_and_roles)
+        return format_html_join('', '<p>{}</p>', ((s,) for s in person_serv.get_name_details(self)))
 
     def to_string(self, is_details=False) -> str:
         """
@@ -111,11 +110,11 @@ class CofkUnionPerson(models.Model, RecordTracker):
         elif dob:
             if self.date_of_birth_is_range == 1:
                 dob += ' or before'
-            date_str = f'b. {dob}'
+            date_str = f'formed {dob}' if self.is_organisation == 'Y' else f'b. {dob}'
         elif dod:
             if self.date_of_death_is_range == 1:
                 dod += ' or after'
-            date_str = f'd. {dod}'
+            date_str = f'disbanded {dod}' if self.is_organisation == 'Y' else f'd. {dod}'
         elif fl_start:
             if fl_end and fl_end != fl_start:
                 date_str = f'fl. {fl_start}-{fl_end}'

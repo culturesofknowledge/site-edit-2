@@ -50,7 +50,7 @@ class CofkUnionComment(models.Model, RecordTracker):
     creation_user = models.CharField(max_length=254)
     change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     change_user = models.CharField(max_length=254)
-    uuid = models.UUIDField(blank=True, null=True)
+    uuid = models.UUIDField(blank=True, null=True, default=model_serv.default_uuid)
 
     class Meta:
         db_table = 'cofk_union_comment'
@@ -86,7 +86,7 @@ class CofkUnionResource(models.Model, RecordTracker):
     creation_user = models.CharField(max_length=254)
     change_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)
     change_user = models.CharField(max_length=254)
-    uuid = models.UUIDField(blank=True, null=True)
+    uuid = models.UUIDField(blank=True, null=True, default=model_serv.default_uuid)
 
     class Meta:
         db_table = 'cofk_union_resource'
@@ -114,7 +114,7 @@ class CofkUnionImage(models.Model, RecordTracker):
     licence_details = models.TextField()
     licence_url = models.CharField(max_length=2000)
     credits = models.CharField(max_length=2000)
-    uuid = models.UUIDField(blank=True, null=True)
+    uuid = models.UUIDField(blank=True, null=True, default=model_serv.default_uuid)
 
     class Meta:
         db_table = 'cofk_union_image'
@@ -233,7 +233,7 @@ def get_sort_by_label(url: str, query_order_by: str, pk) -> str:
 
 class CofkUserSavedQuery(models.Model):
     query_id = models.AutoField(primary_key=True)
-    username = models.ForeignKey('login.CofkUser', models.DO_NOTHING, db_column='username')
+    username = models.ForeignKey('login.CofkUser', models.CASCADE, db_column='username')
     query_class = models.CharField(max_length=100)
     query_method = models.CharField(max_length=100)  # what does this do?
     query_title = models.TextField()  # this field is not used atm, instead use the dynamic property title

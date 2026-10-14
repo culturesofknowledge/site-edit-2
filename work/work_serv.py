@@ -4,8 +4,9 @@ from datetime import date
 from typing import Any, List
 import re
 
-from django.db.models import Q, F
+from django.db.models import Q
 from django.urls import reverse
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
 from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, \
@@ -16,7 +17,6 @@ from location import location_serv
 from person import person_serv
 from work.models import CofkUnionWork
 from core.helper import query_cache_serv
-from manifestation import manif_serv
 
 log = logging.getLogger(__name__)
 HIDDEN_DATE_STD = '1900-01-01'
@@ -383,24 +383,24 @@ class DisplayableWork(CofkUnionWork):
         _other_details = []
 
         if self.keywords:
-            _other_details.append(f'<strong>Keywords</strong>: {self.keywords}')
+            _other_details.append(format_html('<strong>Keywords</strong>: {}', self.keywords))
 
         if self.abstract:
-            _other_details.append(f'<strong>Abstract</strong>: {self.abstract}')
+            _other_details.append(format_html('<strong>Abstract</strong>: {}', self.abstract))
 
         language_of_work = self.language_of_work
         if language_of_work:
             label = 'Languages' if len(language_of_work.split(',')) else 'Language'
-            _other_details.append(f'<strong>{label}</strong>: {language_of_work}')
+            _other_details.append(format_html('<strong>{}</strong>: {}', label, language_of_work))
 
         if general_notes := self.general_notes:
-            _other_details.append(f'<strong>Notes</strong>: {general_notes}')
+            _other_details.append(format_html('<strong>Notes</strong>: {}', general_notes))
 
         if people_mentioned := self.people_mentioned:
-            _other_details.append(f'<strong>People mentioned</strong>: {people_mentioned}')
+            _other_details.append(format_html('<strong>People mentioned</strong>: {}', people_mentioned))
 
         if places_mentioned := self.places_mentioned:
-            _other_details.append(f'<strong>Places mentioned</strong>: {places_mentioned}')
+            _other_details.append(format_html('<strong>Places mentioned</strong>: {}', places_mentioned))
 
         return mark_safe('<br/><br/>'.join(_other_details))
 
@@ -430,60 +430,39 @@ def format_language(lang: 'CofkUnionLanguageOfWork') -> str:
     return lang.language_code.language_name
 
 
+# (label, flag fields, as marked field) in the order and wording used by the flags column of
+# old EMLO edit (dbf_cofk_union_refresh_queryable_work)
+FLAG_GROUPS = [
+    ('Date of work', [('date_of_work_inferred', 'INFERRED'),
+                      ('date_of_work_uncertain', 'UNCERTAIN'),
+                      ('date_of_work_approx', 'APPROXIMATE')], 'date_of_work_as_marked'),
+    ('Author/sender', [('authors_inferred', 'INFERRED'),
+                       ('authors_uncertain', 'UNCERTAIN')], 'authors_as_marked'),
+    ('Addressee', [('addressees_inferred', 'INFERRED'),
+                   ('addressees_uncertain', 'UNCERTAIN')], 'addressees_as_marked'),
+    ('Origin', [('origin_inferred', 'INFERRED'),
+                ('origin_uncertain', 'UNCERTAIN')], 'origin_as_marked'),
+    ('Destination', [('destination_inferred', 'INFERRED'),
+                     ('destination_uncertain', 'UNCERTAIN')], 'destination_as_marked'),
+]
+
+
 def flags(work: CofkUnionWork) -> str:
-    tooltip = []
+    """
+    e.g. 'Date of work INFERRED. Date of work APPROXIMATE. ~ Addressee UNCERTAIN.'
+    Flags of the same group are separated by a space, groups by ' ~ '.
+    """
+    groups = []
+    for label, flag_fields, as_marked_field in FLAG_GROUPS:
+        group = [f'{label} {flag_name}.' for field, flag_name in flag_fields if getattr(work, field)]
+        if not group:
+            continue
 
-    if work.date_of_work_inferred or work.date_of_work_uncertain:
-        if work.date_of_work_inferred:
-            tooltip.append('Date of work INFERRED')
+        if as_marked := getattr(work, as_marked_field):
+            group.append(f'({label} as marked: {as_marked})')
+        groups.append(' '.join(group))
 
-        if work.date_of_work_uncertain:
-            tooltip.append('Date of work UNCERTAIN')
-
-        if work.date_of_work_as_marked:
-            tooltip.append(f'(Date of work as marked: {work.date_of_work_as_marked})')
-
-    if work.origin_inferred or work.origin_uncertain:
-        if work.origin_inferred:
-            tooltip.append('Origin INFERRED')
-
-        if work.origin_uncertain:
-            tooltip.append('Origin UNCERTAIN')
-
-        if work.origin_as_marked:
-            tooltip.append(f'(Origin as marked: {work.origin_as_marked})')
-
-    if work.authors_inferred or work.authors_uncertain:
-        if work.authors_inferred:
-            tooltip.append('Author INFERRED')
-
-        if work.authors_uncertain:
-            tooltip.append('Author UNCERTAIN')
-
-        if work.authors_as_marked:
-            tooltip.append(f'(Author as marked: {work.authors_as_marked})')
-
-    if work.addressees_inferred or work.addressees_uncertain:
-        if work.addressees_inferred:
-            tooltip.append('Addressee INFERRED')
-
-        if work.addressees_uncertain:
-            tooltip.append('Addressee UNCERTAIN')
-
-        if work.addressees_as_marked:
-            tooltip.append(f'(Addressee as marked: {work.addressees_as_marked})')
-
-    if work.destination_inferred or work.destination_uncertain:
-        if work.destination_inferred:
-            tooltip.append('Destination INFERRED')
-
-        if work.destination_uncertain:
-            tooltip.append('Destination UNCERTAIN')
-
-        if work.destination_as_marked:
-            tooltip.append(f'(Destination as marked: {work.destination_as_marked})')
-
-    return ', '.join(tooltip)
+    return ' ~ '.join(groups)
 
 
 def q_hidden_works(prefix=None, check_hidden_date=True) -> Q:
@@ -537,6 +516,37 @@ def is_hidden_work(work: CofkUnionWork, cached_catalogue_status: dict[Any, int] 
     return (work.work_to_be_deleted or
             not is_catalogue_published or
             work.date_of_work_std == HIDDEN_DATE_STD)
+
+# 'starts with' / 'ends with' / 'equals' only make sense against the primary name of a related
+# person or place (as in the people and places searches), not e.g. synonyms (emlo-project#873)
+PRIMARY_NAME_LOOKUPS = {
+    'starts_with': 'istartswith',
+    'not_start_with': 'istartswith',
+    'ends_with': 'iendswith',
+    'not_end_with': 'iendswith',
+    'equals': 'iexact',
+    'not_equal_to': 'iexact',
+}
+
+
+def _lookup_primary_name(lookup_fn, value: str, map_model, name_field: str, rel_types: List[str]) -> Q | None:
+    """
+    Q for works with a related person/place (via map_model) whose primary name starts/ends with or
+    equals value, or None if lookup_fn isn't one of PRIMARY_NAME_LOOKUPS.
+    """
+    from django.db.models import Exists, OuterRef
+
+    lookup = PRIMARY_NAME_LOOKUPS.get(query_serv.get_lookup_key_by_lookup_fn(lookup_fn))
+    if lookup is None:
+        return None
+
+    exists_q = Exists(map_model.objects.filter(
+        **{f'{name_field}__{lookup}': value.strip()},
+        work_id=OuterRef('pk'),
+        relationship_type__in=rel_types,
+    ))
+    return ~exists_q if _is_negated_lookup(lookup_fn) else exists_q
+
 
 def _is_negated_lookup(lookup_fn) -> bool:
     """Return True if lookup_fn corresponds to a negation search operator."""
@@ -663,9 +673,12 @@ def lookup_person_searchable(lookup_fn, field_name: str, value: str, rel_types: 
     if not segments:
         return query_serv.run_lookup_fn(lookup_fn, field_name, value)
 
-    from person.models import CofkUnionPerson
     from work.models import CofkWorkPersonMap
     from django.db.models import Exists, OuterRef
+
+    if (primary_name_q := _lookup_primary_name(lookup_fn, value, CofkWorkPersonMap, 'person__foaf_name',
+                                               rel_types)) is not None:
+        return primary_name_q
 
     person_fields = [
         'person__foaf_name',
@@ -715,9 +728,12 @@ def lookup_location_searchable(lookup_fn, field_name: str, value: str, rel_types
     if not segments:
         return query_serv.run_lookup_fn(lookup_fn, field_name, value)
 
-    from location.models import CofkUnionLocation
     from work.models import CofkWorkLocationMap
     from django.db.models import Exists, OuterRef
+
+    if (primary_name_q := _lookup_primary_name(lookup_fn, value, CofkWorkLocationMap, 'location__location_name',
+                                               rel_types)) is not None:
+        return primary_name_q
 
     location_fields = [
         'location__location_name',

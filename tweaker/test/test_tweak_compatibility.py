@@ -20,7 +20,6 @@ from unittest.mock import patch
 # Try to import Django test classes - optional for unit tests
 try:
     from django.test import TransactionTestCase
-    from django.conf import settings
     DJANGO_AVAILABLE = True
 except ImportError:
     TransactionTestCase = unittest.TestCase

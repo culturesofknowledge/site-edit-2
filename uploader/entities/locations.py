@@ -7,7 +7,7 @@ from openpyxl.cell import Cell
 
 from location.models import CofkUnionLocation
 from uploader.constants import BULK_LOCATIONS_SHEET, BULK_LOCATIONS_HEADER_MAP, normalize_header
-from uploader.entities.entity import CofkEntity
+from uploader.entities.entity import CofkEntity, split_list
 from uploader.models import CofkCollectUpload, CofkCollectLocation, CofkCollectLocationResource
 
 log = logging.getLogger(__name__)
@@ -122,7 +122,7 @@ class CofkBulkLocations(CofkEntity, ABC):
             for field, value in row_dict.items():
                 if field not in _system_fields:
                     if field == 'location_synonyms' and value:
-                        loc_kwargs[field] = '\n'.join(p.strip() for p in str(value).split(';') if p.strip())
+                        loc_kwargs[field] = '\n'.join(split_list(value))
                     elif field in ('latitude', 'longitude'):
                         loc_kwargs[field] = str(value)
                     else:

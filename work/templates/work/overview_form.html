@@ -21,7 +21,8 @@
 
     <h2 id="header_date" class="toc-item margin-bottom">Date of work</h2>
     <div class="overview-table">
-        {% if date_for_ordering|length > 0 %}
+        {# undated works get the DEFAULT_EMPTY_DATE_STR placeholder (9999-12-31) for ordering; don't show it #}
+        {% if date_for_ordering and date_for_ordering != constant.DEFAULT_EMPTY_DATE_STR %}
             <span class="col-label">Date for ordering:</span>
             <span> {{ date_for_ordering }} </span>
         {% endif %}
@@ -92,13 +93,13 @@
                 {% include 'core/component/li_list.html' with values=notes_work %}
             </ul>
         {% endif %}
-        {% if work.date_of_work_std|length > 0 %}
+        {% if work.date_of_work_std and work.date_of_work_std != constant.DEFAULT_EMPTY_DATE_STR %}
             <span class="col-label">Date for ordering (in original calendar):</span>
             <span> {{ work.date_of_work_std }} </span>
-        {% endif %}
-        {% if work.date_of_work_std_gregorian|length > 0 %}
-            <span class="col-label">Date for ordering (Gregorian):</span>
-            <span> {{ work.date_of_work_std_gregorian }}</span>
+            {% if work.date_of_work_std_gregorian %}
+                <span class="col-label">Date for ordering (Gregorian):</span>
+                <span> {{ work.date_of_work_std_gregorian }}</span>
+            {% endif %}
         {% endif %}
     </div>
 

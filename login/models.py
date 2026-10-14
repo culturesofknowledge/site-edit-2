@@ -23,9 +23,15 @@ class CofkUser(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'username'
+    # prompted for (interactively) or required as --forename/--surname/--email
+    # by `manage.py createsuperuser`
+    REQUIRED_FIELDS = ['forename', 'surname', 'email']
 
     @property
     def is_supervisor(self):
+        # a superuser is meant to have access to every feature
+        if self.is_active and self.is_superuser:
+            return True
         return self.groups.filter(name=constant.ROLE_SUPER).exists()
 
     @property

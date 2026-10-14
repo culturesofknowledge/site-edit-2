@@ -1,10 +1,15 @@
 import logging
+import operator
+import urllib.parse
+from functools import reduce
 from typing import Iterable
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import render, redirect
 from django.urls import reverse
@@ -13,11 +18,18 @@ from cllib import str_utils
 from core import constant
 from core.helper import renderer_serv, query_serv, view_serv, perm_serv
 from core.helper.renderer_serv import RendererFactory
-from core.helper.view_serv import DefaultSearchView
+from core.helper.view_serv import DefaultSearchView, DeleteConfirmView
 from core.helper.view_serv import FormDescriptor
 from core.user_forms import UserSearchFieldset, UserForm
+from institution.models import CofkUnionInstitution
+from location.models import CofkUnionLocation
 from login.models import CofkUser
 from login.views import EmloPasswordResetForm
+from manifestation.models import CofkUnionManifestation
+from person.models import CofkUnionPerson
+from publication.models import CofkUnionPublication
+from uploader.models import CofkCollectUpload
+from work.models import CofkUnionWork
 
 log = logging.getLogger(__name__)
 
@@ -180,3 +192,69 @@ def reset_password(request, pk):
         return render(request, 'user/reset_password.html', {'user': user})
 
 
+
+
+# record types listed on the delete confirmation page, with the label to show them under
+USER_RECORD_MODELS = [
+    (CofkUnionWork, 'works'),
+    (CofkUnionPerson, 'people'),
+    (CofkUnionLocation, 'places'),
+    (CofkUnionManifestation, 'manifestations'),
+    (CofkUnionInstitution, 'repositories'),
+    (CofkUnionPublication, 'publications'),
+]
+
+
+def count_user_records(username: str) -> list[tuple[str, int]]:
+    """Number of records of each type that were created or last changed by the user.
+    Records only store the username as text, so they are unaffected by deleting the user."""
+    counts = []
+    for model, label in USER_RECORD_MODELS:
+        user_fields = [f.name for f in model._meta.get_fields() if f.name in ('creation_user', 'change_user')]
+        query = reduce(operator.or_, (Q(**{f: username}) for f in user_fields))
+        counts.append((label, model.objects.filter(query).count()))
+    counts.append(('uploads', CofkCollectUpload.objects.filter(upload_username=username).count()))
+    return counts
+
+
+class UserDeleteConfirmView(PermissionRequiredMixin, LoginRequiredMixin, DeleteConfirmView):
+    permission_required = constant.PM_CHANGE_USER
+    raise_exception = True
+
+    def get_model_class(self):
+        return CofkUser
+
+    def get_name(self):
+        return 'user'
+
+    def get_obj_desc_list(self, obj: CofkUser) -> list[str]:
+        if obj is None:
+            return ['unknown']
+
+        desc_list = [f'{obj} ({obj.username})']
+        counts = [f'{count} {label}' for label, count in count_user_records(obj.username) if count]
+        if counts:
+            desc_list.append(f'This user created or last changed: {", ".join(counts)}. These records are kept, '
+                             f'and will still show {obj.username} in their history.')
+        if obj.has_saved_queries:
+            desc_list.append('The saved queries of this user will be deleted.')
+        return desc_list
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and kwargs.get('obj_id') == request.user.username:
+            messages.error(request, 'You cannot delete your own account.')
+            return redirect(reverse('user:full_form', args=[request.user.username]))
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request, obj_id, *args, **kwargs):
+        user = self.find_obj_by_obj_id(obj_id)
+        if user is None:
+            raise Http404()
+
+        # saved queries are removed along with the user (CASCADE); records only
+        # reference the username as text, so they are left untouched
+        user.delete()
+        log.info(f'user [{obj_id}] deleted by [{request.user.username}]')
+
+        msg = urllib.parse.quote(f'User "{obj_id}" deleted successfully')
+        return redirect(f'{reverse("user:search")}?to_user_messages={msg}')

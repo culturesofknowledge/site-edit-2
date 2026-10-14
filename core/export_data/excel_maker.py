@@ -100,7 +100,7 @@ def fill_manif_sheet(sheet, rows, header_hormat=None):
 def fill_inst_sheet(sheet, rows, header_hormat=None):
     return fill_sheet(sheet, rows=rows,
                       header_values=excel_header_values.InstExcelHeaderValues(),
-                      sheet_name='Institution',
+                      sheet_name='Repository',
                       header_format=header_hormat,
                       )
 

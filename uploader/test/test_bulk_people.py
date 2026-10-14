@@ -230,6 +230,36 @@ class TestBulkPeople(UploadIncludedTestCase):
         person = CofkCollectPerson.objects.first()
         self.assertEqual(person.roles_or_titles, 'Physician; Another test; woman')
 
+    def upload_one(self, **row_kwargs) -> CofkCollectPerson:
+        cuef = CofkUploadExcelFile(self.new_upload, self.create_bulk_people_file([self._row(**row_kwargs)]))
+        self.assertEqual(cuef.errors, {})
+        return CofkCollectPerson.objects.get()
+
+    def test_bulk_people_flourished_flags(self):
+        # emlo-project#516: columns Q, R and S used to be dropped
+        person = self.upload_one(primary_name='Beckler, Peter', fl_year=1650, fl2_year=1660,
+                                 fl_inferred=1, fl_uncertain=1, fl_approx=1)
+
+        self.assertEqual((person.flourished_inferred, person.flourished_uncertain, person.flourished_approx),
+                         (1, 1, 1))
+
+    def test_bulk_people_is_organisation_stored_as_y(self):
+        # emlo-project#516: the template uses 1, the person form expects 'Y'
+        self.assertEqual(self.upload_one(primary_name='Some Chapter', is_org=1).is_organisation, 'Y')
+
+    def test_bulk_people_not_organisation(self):
+        self.assertEqual(self.upload_one(primary_name='John Doe', is_org=0).is_organisation, '')
+        CofkCollectPerson.objects.all().delete()
+        self.assertEqual(self.upload_one(primary_name='Jane Doe').is_organisation, '')
+
+    def test_bulk_people_separator_with_or_without_space(self):
+        person = self.upload_one(primary_name='Pešina z Čechorodu, Tomáš',
+                                 roles='Deacon; bishop;historian ;  canon',
+                                 alternative_names='Tomáš Pešina;Thomas Pessina ; T. Pessina')
+
+        self.assertEqual(person.roles_or_titles, 'Deacon; bishop; historian; canon')
+        self.assertEqual(person.alternative_names, 'Tomáš Pešina\nThomas Pessina\nT. Pessina')
+
     def test_both_people_and_places_without_work_raises_error(self):
         """A file with both People and Places sheets but no Work sheet raises CofkExcelFileError."""
         wb = Workbook()

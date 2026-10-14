@@ -1,5 +1,3 @@
-from lib2to3.fixes.fix_input import context
-
 from django.core.management.base import BaseCommand
 from django.core.cache import cache
 from django.contrib.auth.models import Group

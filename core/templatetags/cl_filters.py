@@ -1,3 +1,4 @@
+import html
 import json
 import re
 
@@ -5,9 +6,10 @@ from django import template
 from django.core.paginator import Page
 from django.template.defaultfilters import date as date_filter
 from django.utils.safestring import mark_safe
-from django.utils.html import escape
+from django.utils.html import conditional_escape, escape
 
 from core.constant import ENTITIES
+from core.helper import data_serv
 
 STANDARD_DATETIME_FORMAT = "d M Y H:i"
 
@@ -92,8 +94,15 @@ def can_show_for_perm(perm, perms):
 
 @register.filter
 def render_display_link(value):
-    value = re.sub(r'__@_\[(.+?)\](.+?)_@__', r'<a href="\1" target="_blank">\2</a>', value)
-    return mark_safe(value)
+    # value is escaped first (a no-op if an earlier filter such as linebreaksbr already did),
+    # so the url and text captured below are HTML-escaped already
+    value = conditional_escape(value)
+
+    def _to_link(m):
+        url, text = html.unescape(m.group(1)), html.unescape(m.group(2))
+        return data_serv.render_link(url, text)
+
+    return mark_safe(re.sub(r'__@_\[(.+?)\](.+?)_@__', _to_link, value))
 
 
 @register.filter
