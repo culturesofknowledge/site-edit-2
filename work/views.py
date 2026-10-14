@@ -133,7 +133,7 @@ def build_common_work_form(request, work: CofkUnionWork, request_data=None) -> C
     common_work_form = CommonWorkForm(request_data, initial={
         'catalogue': work.original_catalogue_id,
         'work_to_be_deleted': work.work_to_be_deleted,
-    }, user=request.user)
+    })
 
     catalogue_list = [('', None)] + [(c.catalogue_name, c.catalogue_code) for c in get_user_catalogues(request)]
     common_work_form.fields['catalogue_list'].widget.choices = catalogue_list
@@ -167,7 +167,11 @@ class BasicWorkFFH(FullFormHandler):
     def create_context(self, is_save_success=False):
         context = super().create_context()
         context.update({
-                           'iwork_id': self.request_iwork_id
+                           'iwork_id': self.request_iwork_id,
+                           'catalogue_name': (
+                               self.work.original_catalogue.catalogue_name
+                               if self.work and self.work.original_catalogue_id else ''
+                           ),
                        } | WorkFormDescriptor(self.work).create_context()
                        | view_serv.create_is_save_success_context(is_save_success)
                        )
