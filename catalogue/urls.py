@@ -1,7 +1,6 @@
 from core.helper import url_serv
 
 from . import views
-from list.views import CatalogueListView
 
 app_name = 'catalogue'
 

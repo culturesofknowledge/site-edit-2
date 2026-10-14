@@ -1,6 +1,6 @@
 from django.contrib.postgres.aggregates import StringAgg
-from django.db.models import OuterRef, Case, When, Value, BooleanField, Exists, TextField, Q, F
-from django.db.models.functions import Cast, Concat, Coalesce
+from django.db.models import OuterRef, Case, When, Value, BooleanField, TextField, Q, F
+from django.db.models.functions import Cast, Concat
 
 from core.constant import REL_TYPE_ENCLOSED_IN
 from core.models import CofkLookupDocumentType

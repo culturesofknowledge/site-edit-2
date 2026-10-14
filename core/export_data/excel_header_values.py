@@ -113,7 +113,7 @@ class LocationExcelHeaderValues(HeaderValues):
             "Primary place name (city, town, village)",
             "County, State, or Province",
             "Country",
-            "Empire",
+            "Larger political entity",
             "Place name synonyms",
             "Coordinates: Latitude",
             "Coordinates: Longitude",

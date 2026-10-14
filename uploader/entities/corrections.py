@@ -5,7 +5,7 @@ from openpyxl.cell.read_only import EmptyCell
 
 from core.models import CofkLookupCatalogue
 from uploader.constants import CORRECTION_WORK_SHEET, MAX_YEAR, MIN_YEAR
-from uploader.entities.entity import CofkEntity
+from uploader.entities.entity import CofkEntity, join_list
 from uploader.models import CofkCollectUpload, CofkCollectWorkCorrection
 from work.models import CofkUnionWork
 
@@ -102,6 +102,9 @@ class CofkWorkCorrections(CofkEntity):
                 if col_header not in row_by_header:
                     continue
                 raw = row_by_header[col_header]
+
+                if field_name == 'keywords' and raw:
+                    raw = join_list(raw)
 
                 if field_name in CORRECTION_WORK_SHEET.get('ints', []):
                     try:

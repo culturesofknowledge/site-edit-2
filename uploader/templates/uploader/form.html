@@ -87,7 +87,7 @@ If there are any issues with the upload they will be listed below.</p>
                 </details>
                 {% else %}
                     {% for error in properties.error %}
-                        <span style="color: #f00;">{{ error|safe }}</span><br/>
+                        <span style="color: #f00;">{{ error }}</span><br/>
                     {% endfor %}
                 {% endif %}
             {% endfor %}

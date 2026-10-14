@@ -200,6 +200,8 @@ class CofkWorkPersonMap(Recref):
                              on_delete=models.CASCADE)
     person = models.ForeignKey("person.CofkUnionPerson",
                                on_delete=models.CASCADE)
+    person_mentioned_inferred = models.SmallIntegerField(default=0)
+    person_mentioned_uncertain = models.SmallIntegerField(default=0)
 
     class Meta(Recref.Meta):
         db_table = 'cofk_work_person_map'
@@ -213,6 +215,8 @@ class CofkWorkLocationMap(Recref):
                              on_delete=models.CASCADE)
     location = models.ForeignKey("location.CofkUnionLocation",
                                  on_delete=models.CASCADE)
+    place_mentioned_inferred = models.SmallIntegerField(default=0)
+    place_mentioned_uncertain = models.SmallIntegerField(default=0)
 
     class Meta(Recref.Meta):
         db_table = 'cofk_work_location_map'

@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db import models, transaction
 from django.db.models import F, Q, OuterRef
-from django.db.models.lookups import LessThanOrEqual, GreaterThanOrEqual, Exact, Lookup
+from django.db.models.lookups import Exact, Lookup
 from django.forms import BaseForm
 from django.shortcuts import render, redirect, get_object_or_404
 
@@ -550,7 +550,7 @@ class PersonCsvHeaderValues(HeaderValues):
             obj.editors_notes,
             obj.further_reading,
             download_csv_serv.join_image_lines(obj.images.iterator()),
-            obj.other_details_for_display(),
+            obj.other_details_for_display(with_links=False),
             cell_values.simple_datetime(obj.change_timestamp),
             obj.change_user,
         ]

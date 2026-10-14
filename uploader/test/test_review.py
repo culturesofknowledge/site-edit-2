@@ -4,7 +4,7 @@ import re
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 
-from core.constant import REL_TYPE_CREATED
+from core.constant import REL_TYPE_CREATED, REL_TYPE_COMMENT_REFERS_TO
 from location.models import CofkUnionLocation
 from person.models import CofkUnionPerson
 from uploader.models import CofkCollectLocation, CofkCollectPerson, CofkCollectWork
@@ -15,6 +15,7 @@ from uploader.test.test_serv import UploadIncludedFactoryTestCase, UploadInclude
 from uploader.uploader_serv import DisplayableCollectWork
 from uploader.views import upload_review
 from work.models import CofkUnionWork
+from work.work_serv import get_recref_display_name
 
 log = logging.getLogger(__name__)
 
@@ -156,6 +157,17 @@ class TestAcceptPeople(UploadIncludedTestCase):
         self.assertEqual(union_person.date_of_death, date(1727, 3, 31))
         self.assertEqual(union_person.flourished, date(1670, 5, 2))
 
+    def test_accept_people_copies_flourished_flags(self):
+        # emlo-project#516
+        self._make_collect_person(flourished_year=1650, flourished_inferred=1, flourished_uncertain=1,
+                                  flourished_approx=1)
+
+        accept_people(self.new_upload, username='admin')
+
+        union_person = CofkUnionPerson.objects.exclude(iperson_id__in=[15257, 885, 22859]).get()
+        self.assertEqual((union_person.flourished_inferred, union_person.flourished_uncertain,
+                          union_person.flourished_approx), (1, 1, 1))
+
     def test_accept_people_links_collect_to_union(self):
         """accept_people sets union_iperson FK on the collect record."""
         collect_person = self._make_collect_person()
@@ -240,6 +252,16 @@ class TestReview(UploadIncludedFactoryTestCase):
         self.assertEqual(self.new_upload.works_accepted, 1)
         self.assertEqual(self.new_upload.works_rejected, 0)
         self.assertEqual(name_of_first_author, 'Newton')
+
+        union_work = CofkUnionWork.objects.first()
+        self.assertTrue(union_work.description)
+        self.assertEqual(union_work.description, get_recref_display_name(union_work))
+
+        # emlo-project#866: manifestation notes are kept, as a comment like in the manifestation form
+        for manif in union_work.manif_set.all():
+            self.assertEqual([c.comment for c in manif.find_comments_by_rel_type(REL_TYPE_COMMENT_REFERS_TO)],
+                             ['test'])
+            self.assertIsNotNone(manif.uuid)
 
     def test_reject_upload(self):
         filename = self.create_excel_file(spreadsheet_data)

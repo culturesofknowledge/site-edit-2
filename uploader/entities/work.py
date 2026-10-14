@@ -4,7 +4,7 @@ from typing import List, Type, Any
 from django.db import models
 
 from core.models import Iso639LanguageCode
-from uploader.entities.entity import CofkEntity
+from uploader.entities.entity import CofkEntity, split_list
 from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectAddresseeOfWork, \
     CofkCollectAuthorOfWork, CofkCollectDestinationOfWork, CofkCollectLanguageOfWork, CofkCollectOriginOfWork, \
     CofkCollectPersonMentionedInWork, CofkCollectWorkResource, CofkCollectLocation, CofkCollectPerson, \
@@ -170,7 +170,7 @@ class CofkWork(CofkEntity):
                                    f' but is not present in the Places sheet.')
 
     def process_languages(self, work_dict: dict, work: CofkCollectWork):
-        work_languages = work_dict['language_id'].split(';')
+        work_languages = split_list(work_dict['language_id'])
 
         if 'hashebrew' in work_dict:
             work_languages.append("heb")

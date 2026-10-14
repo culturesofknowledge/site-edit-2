@@ -1,5 +1,5 @@
-from core import constant
 from core.models import CofkLookupCatalogue
+from login.utils import is_user_editor_or_supervisor
 
 
 def get_user_catalogues(request):
@@ -10,7 +10,8 @@ def get_user_catalogues(request):
     :return: QuerySet of catalogues.
     """
     # Check if the user belongs to 'editor' or 'supervisor' groups
-    user_in_privileged_group = request.user.groups.filter(name__in=[constant.ROLE_EDITOR, constant.ROLE_SUPER]).exists()
+    # (a superuser is always treated as privileged)
+    user_in_privileged_group = is_user_editor_or_supervisor(request.user)
 
     # Query based on the group check
     if user_in_privileged_group:

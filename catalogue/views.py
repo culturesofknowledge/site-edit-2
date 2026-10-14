@@ -8,10 +8,9 @@ from django.forms import ModelForm
 from django.shortcuts import render, redirect
 from django.urls import reverse
 
-from catalogue.forms import CatalogueSearchFieldset
 from core import constant
 from core.forms import CatalogueForm
-from core.helper import renderer_serv, query_serv, perm_serv
+from core.helper import renderer_serv, query_serv
 from core.helper.renderer_serv import RendererFactory
 from core.helper.view_serv import DefaultSearchView, CommonInitFormViewTemplate
 from core.models import CofkLookupCatalogue
