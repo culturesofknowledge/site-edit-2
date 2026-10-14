@@ -8,6 +8,7 @@ from django.forms import BoundField, CharField, Form, formset_factory
 from django.template.loader import render_to_string
 
 from cllib import data_utils
+from core import constant
 from core.helper import widgets_serv, recref_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.models import Recref
@@ -182,13 +183,19 @@ def create_month_field(required=False):
 
 
 def create_year_field(required=False, _class=''):
-    return forms.IntegerField(required=required, min_value=1, max_value=9999,
+    return forms.IntegerField(required=required, min_value=1000, max_value=9999,
+                              error_messages={
+                                  'min_value': 'Value must contain four digits.',
+                                  'max_value': 'Value must contain four digits.',
+                              },
                               widget=forms.TextInput(
                                   attrs={
                                       'placeholder': 'YYYY',
                                       'type': 'number',
-                                      'min': 1,
+                                      'min': 1000,
                                       'max': 9999,
+                                      'oninvalid': "this.setCustomValidity('Value must contain four digits.')",
+                                      'oninput': "this.setCustomValidity('')",
                                       'class': f'ad-year {_class}',
                                   }
                               ))
@@ -276,6 +283,14 @@ class MultiRelRecrefForm(forms.Form):
     name = forms.CharField(required=False)
     target_id = forms.CharField(required=False, widget=forms.HiddenInput())
     is_delete = DeleteCheckboxField()
+
+    @property
+    def initial_target_id(self):
+        target_id = str(self.initial.get('target_id', ''))
+        # Extract numeric ID from values like 'cofk_import_ead-ead_c01_id:000012345'
+        if ':' in target_id:
+            target_id = target_id.split(':')[-1]
+        return target_id.lstrip('0') or ''
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -491,13 +506,9 @@ def build_search_components(sort_by_choices: list[tuple[str, str]], entity: str)
                                 required=False)
 
         num_record = forms.IntegerField(label='Per page',
-                                        widget=forms.Select(choices=[
-                                            (10, 10),
-                                            (50, 50),
-                                            (100, 100),
-                                            (250, 250),
-                                            (500, 500)
-                                        ], attrs={'class': 'searchcontrol'}),
+                                        widget=forms.Select(
+                                            choices=[(n, n) for n in constant.NUM_RECORD_CHOICES],
+                                            attrs={'class': 'searchcontrol'}),
                                         required=False, )
         page = forms.IntegerField(widget=forms.HiddenInput())
 

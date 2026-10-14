@@ -53,10 +53,47 @@ def create_queries_by_field_fn_maps(request_data: dict, field_fn_maps: dict) -> 
     return queries
 
 
+# search fields holding a plain number (year / month / day parts of a date).
+# Values of those fields are compared as text by the default `IExact` lookup, so a
+# zero padded input such as '09' would never match the stored number 9.
+numeric_search_field_name_pattern = re.compile(r'(^|_)(year|month|day)\d*$')
+
+
+def normalize_numeric_search_value(field_name: str, field_val):
+    """
+    Remove leading zeros from numeric search values, so that users can search
+    year / month / day either with or without a leading zero, e.g. '09' and '9'
+    give the same results.
+
+    Examples
+    --------
+    >>> normalize_numeric_search_value('date_of_work_std_month', '09')
+    '9'
+    >>> normalize_numeric_search_value('date_of_work_std_day', '02')
+    '2'
+    >>> normalize_numeric_search_value('date_of_work_std_month', '9')
+    '9'
+    >>> normalize_numeric_search_value('date_of_work_std_day', '00')
+    '0'
+    >>> normalize_numeric_search_value('description', '09')
+    '09'
+    """
+    if not isinstance(field_val, str):
+        return field_val
+    if not numeric_search_field_name_pattern.search(field_name):
+        return field_val
+
+    stripped_val = field_val.strip()
+    if not stripped_val.isdigit():
+        return field_val
+    return str(int(stripped_val))
+
+
 def create_queries_by_lookup_field(request_data: dict,
                                    search_field_names: list[str],
                                    search_fields_maps: dict[str, Iterable[str]] = None,
                                    search_fields_fn_maps: dict[str, 'LookupFn'] = None,
+                                   numeric_field_names: Iterable[str] = (),
                                    ) -> Iterable[Q]:
     """
 
@@ -76,6 +113,11 @@ def create_queries_by_lookup_field(request_data: dict,
         allow to define more complex lookup function, for example multi relationship query
         Lookupfn is Callable and return a Q object
 
+    numeric_field_names
+        fields in here use a case-sensitive `equals`/`not_equal_to` (plain Exact) instead of
+        the default IExact -- case-insensitivity is meaningless for a number, and IExact's
+        UPPER(col::text) wrapping prevents any index on the column from being used
+
     Returns
     -------
 
@@ -87,13 +129,14 @@ def create_queries_by_lookup_field(request_data: dict,
 
     """
     for field_name in search_field_names:
-        field_val = request_data.get(field_name)
+        field_val = normalize_numeric_search_value(field_name, request_data.get(field_name))
         lookup_key = request_data.get(f'{field_name}_lookup')
 
         if not field_val and lookup_key not in nullable_lookup_keys:
             continue
 
-        if (lookup_fn := choices_lookup_map.get(lookup_key)) is None:
+        lookup_map = numeric_choices_lookup_map if field_name in numeric_field_names else choices_lookup_map
+        if (lookup_fn := lookup_map.get(lookup_key)) is None:
             log.warning(f'lookup fn not found -- [{field_name}][{lookup_key}]')
             continue
 
@@ -198,7 +241,17 @@ choices_lookup_map = {
     '': lookups.IExact,
 }
 
-""" 
+# same as choices_lookup_map, but 'equals'/'not_equal_to' use plain (case-sensitive)
+# Exact instead of IExact -- see numeric_field_names on create_queries_by_lookup_field
+numeric_choices_lookup_map = {
+    **choices_lookup_map,
+    'equals': Exact,
+    'not_equal_to': cond_not(Exact),
+    None: Exact,
+    '': Exact,
+}
+
+"""
 if value of search_fields_maps have more than one element,
 some lookup key may only apply in first or last element,
 

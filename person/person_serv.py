@@ -1,14 +1,62 @@
+import calendar
 import collections
 import logging
+from datetime import date
 
 from django.urls import reverse
 
+from core.constant import DEFAULT_MONTH
 from core.helper import recref_serv
 from location import location_serv
 from manifestation import manif_serv
 from person.models import CofkUnionPerson
 
 log = logging.getLogger(__name__)
+
+
+def _compute_std_date(year, month, day, year2, month2, day2) -> date | None:
+    """Derive the sortable date a precomputed *_std-style DateField should hold
+    from its granular year/month/day (and, for a range, year2/month2/day2)
+    parts. Mirrors work_serv.compute_date_of_work_std's precedence (prefer the
+    "to" date of a range when present), adapted to build a real date object
+    (person's fields are DateFields, not CharFields with a string sentinel
+    default) so blank-day defaults must stay within the target month.
+    """
+    if year2:
+        y = int(year2)
+        m = int(month2 or 12)
+        d = int(day2 or calendar.monthrange(y, m)[1])
+        return date(y, m, d)
+
+    if not year:
+        return None
+
+    y = int(year)
+    m = int(month or DEFAULT_MONTH)
+    d = int(day or calendar.monthrange(y, m)[1])
+    return date(y, m, d)
+
+
+def compute_date_of_birth(person: CofkUnionPerson) -> date | None:
+    """Compute the value date_of_birth should hold, derived fresh from the
+    person's granular date fields (see _compute_std_date). date_of_birth is a
+    separate, precomputed column that PersonSearchView sorts against directly
+    - it is not derived automatically on save, so any code that changes the
+    date fields (e.g. bulk uploads) must call this and persist the result."""
+    return _compute_std_date(person.date_of_birth_year, person.date_of_birth_month, person.date_of_birth_day,
+                             person.date_of_birth2_year, person.date_of_birth2_month, person.date_of_birth2_day)
+
+
+def compute_date_of_death(person: CofkUnionPerson) -> date | None:
+    """See compute_date_of_birth."""
+    return _compute_std_date(person.date_of_death_year, person.date_of_death_month, person.date_of_death_day,
+                             person.date_of_death2_year, person.date_of_death2_month, person.date_of_death2_day)
+
+
+def compute_flourished(person: CofkUnionPerson) -> date | None:
+    """See compute_date_of_birth."""
+    return _compute_std_date(person.flourished_year, person.flourished_month, person.flourished_day,
+                             person.flourished2_year, person.flourished2_month, person.flourished2_day)
 
 
 def get_recref_display_name(person: CofkUnionPerson):
@@ -65,7 +113,11 @@ def get_name_details(person: CofkUnionPerson) -> list[str]:
     return name_details
 
 
-def get_display_dict_other_details(person: CofkUnionPerson, new_line='\n') -> str:
+def get_display_dict_other_details(person: CofkUnionPerson, new_line='\n', with_links=True) -> str:
+    """
+    with_links: encode links to related records and resources with encode_display_link,
+    for the search results page. Without, e.g. for the csv export, the output is plain text.
+    """
     query_name_map = [
         # person's active relationships
         (lambda: person.active_relationships.all(),
@@ -112,12 +164,17 @@ def get_display_dict_other_details(person: CofkUnionPerson, new_line='\n') -> st
                 else:
                     display_str = f'From {mmap.from_date.year}: {display_str}'
 
-            if url_fn:
+            if url_fn and with_links:
                 display_str = encode_display_link(url_fn(mmap), display_str)
             result_map[display_name].append(display_str)
 
     # add resources
-    if _resources := [encode_display_link(r.resource_url, r.resource_name) for r in person.resources.all()]:
+    if with_links:
+        _resources = [encode_display_link(r.resource_url, r.resource_name) for r in person.resources.all()]
+    else:
+        _resources = [' '.join(filter(None, [r.resource_name, r.resource_url and f'({r.resource_url})']))
+                      for r in person.resources.all()]
+    if _resources:
         result_map['Related resources'] = _resources
 
     title_value_list = []
@@ -137,8 +194,8 @@ class DisplayablePerson(CofkUnionPerson):
     class Meta:
         proxy = True
 
-    def other_details_for_display(self, new_line='\n'):
-        return get_display_dict_other_details(self, new_line=new_line)
+    def other_details_for_display(self, new_line='\n', with_links=True):
+        return get_display_dict_other_details(self, new_line=new_line, with_links=with_links)
 
 
 class SearchResultPerson(DisplayablePerson):

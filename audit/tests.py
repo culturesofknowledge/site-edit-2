@@ -6,6 +6,8 @@ from audit.views import find_merge_target
 from core import constant
 from core.helper import test_serv
 from core.models import CofkUnionRoleCategory, MergeHistory
+from institution.models import CofkUnionInstitution
+from manifestation.models import CofkUnionManifestation, CofkManifInstMap
 from person.models import CofkPersonRoleMap
 
 
@@ -139,17 +141,24 @@ class RecrefRelationAuditTests(TestCase):
         recref.save()
         return recref
 
-    def _relation_literals(self, recref_id, change_type):
+    def _relation_literals(self, change_type):
+        # NOTE: deliberately not filtered by key_value_integer -- that's the
+        # LEFT side object's own key (see _write_relation_audit_pair), e.g. the
+        # person's iperson_id or the role's pk, never the recref's own
+        # recref_id, so filtering on recref_id only ever matched by coincidence
+        # of the two sequences lining up. table_name is enough to scope this to
+        # the pair written for this relationship, since each test runs in its
+        # own isolated (rolled-back) transaction.
         return CofkUnionAuditLiteral.objects.filter(
-            key_value_integer=recref_id,
+            table_name__in=['cofk_union_person', 'cofk_union_role_category'],
             change_type=change_type,
             column_name__startswith='Relationship: ',
         )
 
     def test_adding_role_records_two_new_relation_audit_records(self):
-        recref = self._create_role_recref()
+        self._create_role_recref()
 
-        literals = self._relation_literals(recref.recref_id, constant.CHANGE_TYPE_NEW)
+        literals = self._relation_literals(constant.CHANGE_TYPE_NEW)
         self.assertEqual(literals.count(), 2)
         self.assertEqual(
             {l.table_name for l in literals},
@@ -160,11 +169,10 @@ class RecrefRelationAuditTests(TestCase):
 
     def test_removing_role_records_two_del_relation_audit_records(self):
         recref = self._create_role_recref()
-        recref_id = recref.recref_id
 
         recref.delete()
 
-        literals = self._relation_literals(recref_id, constant.CHANGE_TYPE_DELETE)
+        literals = self._relation_literals(constant.CHANGE_TYPE_DELETE)
         self.assertEqual(literals.count(), 2)
         self.assertEqual(
             {l.table_name for l in literals},
@@ -172,3 +180,64 @@ class RecrefRelationAuditTests(TestCase):
         for literal in literals:
             self.assertTrue(literal.old_column_value)
             self.assertFalse(literal.new_column_value)
+
+
+class ManifInstAuditTests(TestCase):
+    """A manifestation's repository (CofkManifInstMap, a single-select recref)
+    is "changed" by reusing the existing row's PK and repointing its inst FK
+    in place, rather than deleting the old row and creating a new one (see
+    SingleRecrefHandler.upsert_recref_if_field_exist). The generic Recref
+    from_date/to_date diffing in model_signals.save_audit_records can't see
+    this kind of change, so it needs its own Del+New relation-audit pair
+    (model_signals._relation_target_changed), matching what would have been
+    written had the row genuinely been recreated - see
+    https://github.com/culturesofknowledge/emlo-project/issues/839.
+    """
+
+    def _create_institution(self, name):
+        return CofkUnionInstitution.objects.create(
+            institution_name=name, institution_city='', institution_country='',
+            creation_user='tester', change_user='tester',
+        )
+
+    def _relation_literals(self, change_type):
+        return CofkUnionAuditLiteral.objects.filter(
+            table_name__in=['cofk_union_manifestation', 'cofk_union_institution'],
+            change_type=change_type,
+            column_name__startswith='Relationship: ',
+        )
+
+    def test_changing_repository_in_place_records_del_and_new_pairs(self):
+        manif = CofkUnionManifestation.objects.create(
+            manifestation_id='manif_audit_test_a',
+            creation_user='tester', change_user='tester',
+        )
+        old_inst = self._create_institution('Old Repository')
+        new_inst = self._create_institution('New Repository')
+
+        recref = CofkManifInstMap.objects.create(
+            manif=manif, inst=old_inst, relationship_type=constant.REL_TYPE_STORED_IN,
+            creation_user='tester', change_user='tester',
+        )
+
+        before_new = set(self._relation_literals(constant.CHANGE_TYPE_NEW).values_list('pk', flat=True))
+        before_del = set(self._relation_literals(constant.CHANGE_TYPE_DELETE).values_list('pk', flat=True))
+
+        # reuse the existing row's PK and repoint it, exactly as
+        # SingleRecrefHandler does when the user picks a different repository
+        recref.inst = new_inst
+        recref.change_user = 'tester2'
+        recref.save()
+
+        new_literals = self._relation_literals(constant.CHANGE_TYPE_NEW).exclude(pk__in=before_new)
+        del_literals = self._relation_literals(constant.CHANGE_TYPE_DELETE).exclude(pk__in=before_del)
+
+        self.assertEqual(new_literals.count(), 2)
+        self.assertEqual(del_literals.count(), 2)
+        self.assertEqual(
+            {l.table_name for l in new_literals}, {'cofk_union_manifestation', 'cofk_union_institution'})
+        self.assertEqual(
+            {l.table_name for l in del_literals}, {'cofk_union_manifestation', 'cofk_union_institution'})
+
+        self.assertTrue(any(l.new_column_value == 'New Repository' for l in new_literals))
+        self.assertTrue(any(l.old_column_value == 'Old Repository' for l in del_literals))

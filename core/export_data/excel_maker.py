@@ -6,6 +6,7 @@ This module and package `export_data` is designed for web search page export.
 """
 import itertools
 import logging
+import re
 from typing import Iterable, NoReturn, Callable
 
 from xlsxwriter import Workbook
@@ -46,7 +47,8 @@ def fill_sheet(sheet: 'Worksheet',
     rows = map(excel_serv.escape_xlsx_char_by_row, rows)
     for row_idx, row in enumerate(rows, start=1):
         for col_idx, col_val in enumerate(row):
-            sheet.write_string(row_idx, col_idx, col_val)
+            if col_val:
+                sheet.write_string(row_idx, col_idx, col_val)
 
 
 def fill_work_sheet(sheet, rows, header_format=None):
@@ -73,8 +75,22 @@ def fill_location_sheet(sheet, rows, header_hormat=None):
                       )
 
 
+def manif_id_sort_key(manif: CofkUnionManifestation):
+    """Sort manifestation_id numerically before alphabetically, chunk by
+    chunk (e.g. '1234-a', '1234-b', '1234-c', '1235-a'), rather than as a
+    single opaque string -- which would sort '1235-a' before '999-a'.
+
+    manifestation_id is free-text (legacy imports and newly-created ids
+    don't share one shape), so each chunk is tagged with a type marker
+    (0=numeric, 1=text) to keep comparisons between differently-shaped ids
+    from raising a TypeError.
+    """
+    chunks = re.findall(r'\d+|\D+', manif.manifestation_id or '')
+    return [(0, int(c)) if c.isdigit() else (1, c.lower()) for c in chunks]
+
+
 def fill_manif_sheet(sheet, rows, header_hormat=None):
-    return fill_sheet(sheet, rows=rows,
+    return fill_sheet(sheet, rows=sorted(rows, key=manif_id_sort_key),
                       header_values=excel_header_values.ManifExcelHeaderValues(),
                       sheet_name='Manifestation',
                       header_format=header_hormat,
@@ -84,7 +100,7 @@ def fill_manif_sheet(sheet, rows, header_hormat=None):
 def fill_inst_sheet(sheet, rows, header_hormat=None):
     return fill_sheet(sheet, rows=rows,
                       header_values=excel_header_values.InstExcelHeaderValues(),
-                      sheet_name='Institution',
+                      sheet_name='Repository',
                       header_format=header_hormat,
                       )
 
@@ -109,25 +125,6 @@ def _create_excel_by_fill_fn(fill_fn: Callable[[Workbook], NoReturn],
     fill_fn(wb)
     wb.close()
     log.info(f'[Completed] create excel [{file_path=}] ')
-
-
-@debug_utils.Timer(name='create_excel_from_header_values').measure_fn
-def create_excel_from_header_values(rows: Iterable, file_path: str,
-                                    header_values: HeaderValues, sheet_name: str) -> 'Workbook':
-    """Create a simple single-sheet Excel file using the given HeaderValues."""
-    rows = list(rows)
-
-    def _fill_fn(workbook: Workbook):
-        header_format = workbook.add_format({
-            'bold': True,
-            'bg_color': 'D3D3D3',
-        })
-        fill_sheet(workbook.add_worksheet(), rows,
-                   header_values=header_values,
-                   sheet_name=sheet_name,
-                   header_format=header_format)
-
-    return _create_excel_by_fill_fn(_fill_fn, file_path=file_path)
 
 
 @debug_utils.Timer(name='create_work_excel').measure_fn

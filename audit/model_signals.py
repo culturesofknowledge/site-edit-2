@@ -10,7 +10,7 @@ from audit.audit_recref_adapter import AuditRecrefAdapter
 from audit.models import CofkUnionAuditLiteral
 from core import constant
 from core.helper import model_serv
-from core.helper.recref_serv import get_left_right_rel_obj, find_relationship_type
+from core.helper.recref_serv import get_left_right_rel_obj, find_relationship_type, get_bounded_members
 from core.models import CofkUnionComment, CofkUnionRelationshipType, CofkUnionResource, Recref, \
     CofkUnionNationality, CofkUnionImage, CofkUnionRoleCategory, CofkUnionSubject
 from institution.models import CofkUnionInstitution
@@ -225,6 +225,22 @@ def get_left_right_adapters(instance: Recref):
     return adapters
 
 
+def _relation_target_changed(sender: ModelBase, instance: models.Model, old_instance: models.Model) -> bool:
+    """True if either side of the relationship -- the actual related records a
+    recref row points to, not its from_date/to_date -- was repointed to a
+    different record. This happens when a single-select recref field (e.g.
+    a manifestation's repository) is "changed" by reusing the existing row's
+    PK and updating its target FK in place, rather than deleting the old row
+    and creating a new one (see SingleRecrefHandler.upsert_recref_if_field_exist
+    / recref_serv.upsert_recref).
+    """
+    bounded_members = get_bounded_members(sender)
+    return any(
+        getattr(instance, f.field.attname, None) != getattr(old_instance, f.field.attname, None)
+        for f in bounded_members
+    )
+
+
 def handle_update_recref_date(sender: ModelBase, instance: models.Model):
     if not issubclass(sender, Recref):
         return
@@ -233,6 +249,17 @@ def handle_update_recref_date(sender: ModelBase, instance: models.Model):
         # since pk not exist yet, create audit record created by handle_create_audit_relation for new record
         instance.todo_audit = True
         return
+
+    if _relation_target_changed(sender, instance, old_instance):
+        # from_date/to_date diffing below can't see this kind of change -- record
+        # it as removing the old relationship and adding the new one, matching
+        # what would have been written had the row actually been recreated
+        # rather than repointed in place.
+        # Use the *current* user (from `instance`) for both the Del and New
+        current_user = getattr(instance, 'change_user', None)
+        _write_relation_audit_pair(sender, old_instance, constant.CHANGE_TYPE_DELETE,
+                                   change_user_override=current_user)
+        _write_relation_audit_pair(sender, instance, constant.CHANGE_TYPE_NEW)
 
     save_audit_records(instance, old_instance=old_instance)
 
@@ -266,7 +293,8 @@ def add_relation_audit_to_literal_on_delete(sender: ModelBase, instance: models.
     _write_relation_audit_pair(sender, instance, constant.CHANGE_TYPE_DELETE)
 
 
-def _write_relation_audit_pair(sender: ModelBase, instance: models.Model, change_type: str):
+def _write_relation_audit_pair(sender: ModelBase, instance: models.Model, change_type: str,
+                               change_user_override: str = None):
     """
     add "Relation: " records to cofk_union_audit_literal
     """
@@ -289,6 +317,8 @@ def _write_relation_audit_pair(sender: ModelBase, instance: models.Model, change
             from_left_desc = f'{instance.relationship_type} < '
             from_right_desc = f'{instance.relationship_type} > '
 
+        audit_user = change_user_override or getattr(instance, 'change_user', constant.DEFAULT_CHANGE_USER)
+
         # save two (both ways) relation audit records
         for cur_left_rel, cur_right_rel, rel_desc in [
             (left_rel_obj, right_rel_obj, from_left_desc),
@@ -297,7 +327,7 @@ def _write_relation_audit_pair(sender: ModelBase, instance: models.Model, change
             left_adapter = to_audit_adapter(cur_left_rel)
             right_adapter = to_audit_adapter(cur_right_rel)
             literal = CofkUnionAuditLiteral(
-                change_user=getattr(instance, 'change_user', constant.DEFAULT_CHANGE_USER),
+                change_user=audit_user,
                 change_type=change_type,
                 table_name=cur_left_rel._meta.db_table,
                 key_value_text=left_adapter.key_value_text(),

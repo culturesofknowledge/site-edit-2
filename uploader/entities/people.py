@@ -6,7 +6,7 @@ from django.db.models import Max
 
 from person.models import CofkUnionPerson
 from uploader.constants import BULK_PEOPLE_SHEET, BULK_PEOPLE_HEADER_MAP, normalize_header
-from uploader.entities.entity import CofkEntity
+from uploader.entities.entity import CofkEntity, split_list, join_list
 from uploader.models import CofkCollectUpload, CofkCollectPerson, CofkCollectPersonResource
 
 log = logging.getLogger(__name__)
@@ -128,7 +128,13 @@ class CofkBulkPeople(CofkEntity, ABC):
             for field, value in row_dict.items():
                 if field not in _system_fields:
                     if field == 'alternative_names' and value:
-                        person_kwargs[field] = '\n'.join(p.strip() for p in str(value).split(';') if p.strip())
+                        person_kwargs[field] = '\n'.join(split_list(value))
+                    elif field == 'roles_or_titles' and value:
+                        # stored as "a; b", which the person form shows one per line
+                        person_kwargs[field] = join_list(value)
+                    elif field == 'is_organisation':
+                        # the template uses 1, the person form and search expect 'Y'
+                        person_kwargs[field] = 'Y' if str(value).strip().lower() in ('1', 'y', 'yes') else ''
                     else:
                         person_kwargs[field] = value
 

@@ -46,6 +46,7 @@ logs/
 staticfiles/
 data/
 files/
+exporter_output/
 
 # dev environment file
 siteedit2/settings/local_dev.py

@@ -374,6 +374,10 @@ class MultiRecrefHandler:
                  initial_list=None):
 
         self.name = name
+        # fields added by a specific recref form (e.g. person mentioned inferred/uncertain)
+        # are stored on the recref record itself, so they have to be saved as well
+        self.extra_recref_fields = [f for f in recref_form_class.base_fields
+                                    if f not in RecrefForm.base_fields]
         self.new_form = recref_form_class(request_data or None, prefix=f'new_{name}')
         self.update_formset = create_formset(recref_form_class, post_data=request_data,
                                              prefix=f'recref_{name}',
@@ -395,6 +399,12 @@ class MultiRecrefHandler:
     def create_recref_by_new_form(self, target_id, parent_instance) -> Optional[Recref]:
         raise NotImplementedError()
 
+    def _fill_extra_recref_fields(self, recref: Recref, cleaned_data: dict):
+        for field in self.extra_recref_fields:
+            if field in cleaned_data and hasattr(recref, field):
+                setattr(recref, field, cleaned_data[field])
+        return recref
+
     def maintain_record(self, request, parent_instance):
         """
         workflow for handle:
@@ -407,11 +417,13 @@ class MultiRecrefHandler:
             if recref := self.create_recref_by_new_form(target_id, parent_instance):
                 recref = recref_serv.fill_common_recref_field(recref, self.new_form.cleaned_data,
                                                                request.user.username)
+                self._fill_extra_recref_fields(recref, self.new_form.cleaned_data)
                 recref.save()
                 log.info(f'create new recref [{recref}]')
 
         # update update_formset
         target_changed_fields = {'to_date', 'from_date', 'is_delete'}
+        target_changed_fields.update(self.extra_recref_fields)
         _forms = (f for f in self.update_formset if not target_changed_fields.isdisjoint(f.changed_data))
         for f in _forms:
             if not f.is_valid():
@@ -427,6 +439,7 @@ class MultiRecrefHandler:
                 log.info(f'update recref [{recref_id=}]')
                 ps_loc = self.recref_class.objects.get(pk=recref_id)
                 ps_loc = recref_serv.fill_common_recref_field(ps_loc, f.cleaned_data, request.user.username)
+                self._fill_extra_recref_fields(ps_loc, f.cleaned_data)
                 ps_loc.save()
 
 

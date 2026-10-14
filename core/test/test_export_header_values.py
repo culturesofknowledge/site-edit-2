@@ -36,9 +36,9 @@ class TestWorkExcelHeaderValues(TestCase):
         self.assertGreater(len(values), 0)
 
     def test_obj_to_values_no_matches(self):
-        """A letter with no match relationships at all still gets a self-only
-        matched-IDs list and position 1, so analysts can filter on position==1
-        to keep it as its own representative."""
+        """A letter with no match relationships at all has no match group to
+        report, so both the IDs column (AX) and the position column (AY) are
+        left blank."""
         fixture_default_lookup_catalogue()
         hv = WorkExcelHeaderValues()
         work = DisplayableWork(work_id='work_500728', iwork_id=500728)
@@ -46,8 +46,8 @@ class TestWorkExcelHeaderValues(TestCase):
 
         values = hv.obj_to_values(work)
 
-        self.assertEqual(values[MATCH_IDS_COL], '500728')
-        self.assertEqual(values[MATCH_POSITION_COL], 1)
+        self.assertEqual(values[MATCH_IDS_COL], '')
+        self.assertEqual(values[MATCH_POSITION_COL], '')
 
     def test_obj_to_values_matched_letters(self):
         """Matches column (AX) lists every letter ID in the group, including

@@ -39,7 +39,7 @@ class UserForm(ModelForm):
 
     def clean_email(self):
         # the email becomes the username on creation (see save()), which is a
-        # CharField(max_length=30) primary key -- reject upfront rather than
+        # CharField(max_length=254) primary key -- reject upfront rather than
         # fail with a raw DB error or a silently truncated username
         email = self.cleaned_data['email']
         username_max_length = CofkUser._meta.get_field('username').max_length
@@ -66,7 +66,7 @@ class UserSearchFieldset(BasicSearchFieldset):
 
     username = SearchCharField(
         label=field_label_map['user']['username'],
-        help_text='The user name is used to log in to the system.')
+        help_text='The username is used to log in to the system.')
     username_lookup = form_serv.create_lookup_field(form_serv.StrLookupChoices.choices)
     surname = SearchCharField(
         label=field_label_map['user']['surname'],

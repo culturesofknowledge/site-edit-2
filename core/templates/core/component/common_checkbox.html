@@ -4,9 +4,11 @@
        class="{{ class_name }}"
         {% endif %}
 >
+    <span class="checkbox-label-text">
     {% if is_normal_size %}
-        {{ name }}
+        {{ name|safe }}
     {% else %}
-        <small> {{ name }} </small>
+        <small> {{ name|safe }} </small>
     {% endif %}
+    </span>
 </label>

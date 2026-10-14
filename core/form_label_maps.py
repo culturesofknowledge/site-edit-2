@@ -4,7 +4,7 @@ common_fields = {'change_user': 'Last edited by',
 
 field_label_map = {
     'user': common_fields | {
-        'username': 'User name',
+        'username': 'Username',
         'surname': 'Surname',
         'forename': 'Forename',
         'email': 'Email',

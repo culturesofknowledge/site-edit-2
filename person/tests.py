@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.db.models.lookups import Exact, IContains
 from django.test import RequestFactory
 from django.test import TestCase
@@ -9,9 +11,11 @@ from core import constant
 from core.helper import model_serv, test_serv, query_serv
 from core.helper.test_serv import EmloSeleniumTestCase, simple_test_create_form, MultiM2MTester, ResourceM2MTester, \
     CommentM2MTester, CommonSearchTests, MergeTests
-from person.models import CofkUnionPerson, CofkPersonResourceMap
+from person.forms import PersonForm
+from person.models import CofkUnionPerson, CofkPersonResourceMap, CofkPersonPersonMap
+from person.person_serv import DisplayablePerson
 from person.recref_adapter import PersonResourceRecrefAdapter
-from person.views import PersonMergeChoiceView, PersonSearchView
+from person.views import PersonMergeChoiceView, PersonSearchView, PersonCsvHeaderValues
 
 
 class PersonFormTest(EmloSeleniumTestCase):
@@ -227,7 +231,6 @@ class PersonQueryTests(TestCase):
         assert queryset is not None
 
         from django.db.models.sql.where import WhereNode
-        from django.db.models.lookups import IsNull
         where_childrens = query_serv.extract_sub_query(queryset).where.children
 
         # Filter to simple Lookup nodes (not compound WhereNodes)
@@ -257,6 +260,66 @@ class PersonQueryTests(TestCase):
         assert len(complex_childrens) > 0, "Expected a WhereNode for death year overlap filter"
 
 
+class PersonFormDateFieldsTests(TestCase):
+    """Regression tests: date_of_birth/date_of_death/flourished are listed in
+    PersonForm.Meta.fields but have no rendered widget anywhere in the person
+    templates, so plain ModelForm field->instance assignment always set them
+    to None on save. PersonForm._post_clean() now recomputes them from the
+    granular year/month/day fields instead."""
+
+    def _valid_data(self, **overrides):
+        data = {
+            'foaf_name': 'Isaac Newton',
+            'date_of_birth_year': '1643',
+            'date_of_birth_month': '1',
+            'date_of_birth_day': '4',
+            'date_of_death_year': '1727',
+            'date_of_death_month': '3',
+            'date_of_death_day': '31',
+            'flourished_year': '1670',
+            'flourished_month': '5',
+            'flourished_day': '2',
+        }
+        data.update(overrides)
+        return data
+
+    def test_save_derives_date_of_birth_and_death(self):
+        form = PersonForm(data=self._valid_data())
+        self.assertTrue(form.is_valid(), form.errors)
+
+        person = form.save()
+
+        self.assertEqual(person.date_of_birth, date(1643, 1, 4))
+        self.assertEqual(person.date_of_death, date(1727, 3, 31))
+        self.assertEqual(person.flourished, date(1670, 5, 2))
+
+    def test_editing_existing_person_does_not_wipe_dates(self):
+        """The bug this guards against: saving the form for an existing
+        person - e.g. just to change editors_notes - used to silently null
+        out date_of_birth/date_of_death/flourished because those fields are
+        never part of the submitted POST data."""
+        person = CofkUnionPerson(
+            init_seq_id=True, foaf_name='Isaac Newton', gender='M', is_organisation='',
+            date_of_birth_year=1643, date_of_birth_month=1, date_of_birth_day=4,
+            date_of_birth=date(1643, 1, 4),
+            date_of_death_year=1727, date_of_death_month=3, date_of_death_day=31,
+            date_of_death=date(1727, 3, 31),
+        )
+        person.person_id = f'person_{person.iperson_id}'
+        person.update_current_user_timestamp('admin')
+        person.save()
+
+        form = PersonForm(
+            data=self._valid_data(editors_notes='updated notes only'),
+            instance=CofkUnionPerson.objects.get(pk=person.pk),
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        saved = form.save()
+
+        self.assertEqual(saved.date_of_birth, date(1643, 1, 4))
+        self.assertEqual(saved.date_of_death, date(1727, 3, 31))
+
+
 class PersonMergeTests(MergeTests):
     ResourceRecrefAdapter = PersonResourceRecrefAdapter
     RecrefResourceMap = CofkPersonResourceMap
@@ -266,3 +329,48 @@ class PersonMergeTests(MergeTests):
     @property
     def create_obj_fn(self):
         return person.fixtures.create_person_obj
+
+
+class PersonCsvExportTests(TestCase):
+    """ emlo-project#857 """
+
+    def create_person(self, foaf_name, **kwargs) -> CofkUnionPerson:
+        obj = person.fixtures.create_person_obj_by_dict(dict(foaf_name=foaf_name, **kwargs))
+        obj.save()
+        return DisplayablePerson.objects.get(pk=obj.pk)
+
+    def csv_values(self, obj) -> dict:
+        obj.sent = obj.recd = obj.all_works = obj.mentioned = 0
+        header_values = PersonCsvHeaderValues()
+        return dict(zip(header_values.get_header_list(), header_values.obj_to_values(obj)))
+
+    def test_no_flourished_date_is_blank(self):
+        values = self.csv_values(self.create_person('Smith, John', date_of_birth_year=1600))
+
+        self.assertEqual(values['Flourished'], '')
+        self.assertEqual(values['Date of death'], '')
+        self.assertEqual(values['Date of birth'], '1600-12-31')
+
+    def test_other_details_without_link_markup(self):
+        child = self.create_person('Smith, John')
+        parent = self.create_person('Ayscough, Hannah', date_of_birth_year=1623, date_of_death_year=1679)
+        CofkPersonPersonMap.objects.create(person=parent, related=child,
+                                           relationship_type=constant.REL_TYPE_PARENT_OF)
+
+        other_details = self.csv_values(child)['Other details']
+
+        self.assertIn('~Ayscough, Hannah, 1623-1679', other_details)
+        self.assertNotIn('__@_', other_details)
+        self.assertNotIn('_@__', other_details)
+        # search results page still gets links
+        self.assertIn('__@_[', child.other_details_for_display())
+
+    def test_organisation_formed_and_disbanded(self):
+        self.assertEqual(
+            self.create_person('The Royal Society', is_organisation='Y', date_of_birth_year=1660).to_string(),
+            'The Royal Society, formed 1660')
+        self.assertEqual(
+            self.create_person('Some Club', is_organisation='Y', date_of_death_year=1700).to_string(),
+            'Some Club, disbanded 1700')
+        self.assertEqual(self.create_person('Smith, John', date_of_birth_year=1660).to_string(),
+                         'Smith, John, b. 1660')

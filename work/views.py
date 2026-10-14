@@ -1,11 +1,10 @@
 import logging
-import re
 from collections.abc import Callable
 from typing import Iterable, Any, Type
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import F, Q, Model
 from django.db.models.lookups import Exact, Lookup
 from django.forms import BaseForm
@@ -25,7 +24,8 @@ from core.constant import REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, R
     REL_TYPE_MENTION_WORK, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, \
     REL_TYPE_HANDWROTE
 from core.export_data import excel_maker, cell_values
-from core.forms import WorkRecrefForm, PersonRecrefForm, ManifRecrefForm, CommentForm, LocRecrefForm
+from core.forms import WorkRecrefForm, PersonRecrefForm, PersonMentionedRecrefForm, ManifRecrefForm, CommentForm, \
+    LocRecrefForm, PlaceMentionedRecrefForm
 from core.helper import view_serv, lang_serv, model_serv, query_serv, renderer_serv, date_serv, general_model_serv
 from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.form_serv import save_multi_rel_recref_formset
@@ -97,6 +97,9 @@ def lookup_fn_flags(lookup_fn, field_name, value):
         'date of work approximate': lambda: Q(date_of_work_approx=1),
         'author/sender inferred': lambda: Q(authors_inferred=1),
         'author/sender uncertain': lambda: Q(authors_uncertain=1),
+        'addressee/recipient inferred': lambda: Q(addressees_inferred=1),
+        'addressee/recipient uncertain': lambda: Q(addressees_uncertain=1),
+        # older wording, kept so existing saved queries still work (emlo-project#874)
         'recipient/addressee inferred': lambda: Q(addressees_inferred=1),
         'recipient/addressee uncertain': lambda: Q(addressees_uncertain=1),
         'origin inferred': lambda: Q(origin_inferred=1),
@@ -272,7 +275,7 @@ class PlacesFFH(BasicWorkFFH):
         ))
 
     def save(self, request):
-        if not self.is_any_changed():
+        if self.work and not self.is_any_changed():
             log.debug('skip save places when no changed')
             return
 
@@ -312,7 +315,7 @@ class DatesFFH(BasicWorkFFH):
         ))
 
     def save(self, request):
-        if not self.is_any_changed():
+        if self.work and not self.is_any_changed():
             log.debug('skip save dates when no changed')
             return
 
@@ -384,7 +387,7 @@ class CorrFFH(BasicWorkFFH):
         )
 
     def save(self, request):
-        if not self.is_any_changed():
+        if self.work and not self.is_any_changed():
             log.debug('skip save corr when no changed')
             return
 
@@ -490,13 +493,13 @@ class ManifFFH(BasicWorkFFH):
         # enclosures
         self.enclosure_manif_handler = MultiRecrefAdapterHandler(
             request_data, name='enclosure_manif',
-            recref_adapter=EnclosedManifRecrefAdapter(self.safe_manif),
+            recref_adapter=EnclosureManifRecrefAdapter(self.safe_manif),
             recref_form_class=ManifRecrefForm,
             rel_type=REL_TYPE_ENCLOSED_IN,
         )
         self.enclosed_manif_handler = MultiRecrefAdapterHandler(
             request_data, name='enclosed_manif',
-            recref_adapter=EnclosureManifRecrefAdapter(self.safe_manif),
+            recref_adapter=EnclosedManifRecrefAdapter(self.safe_manif),
             recref_form_class=ManifRecrefForm,
             rel_type=REL_TYPE_ENCLOSED_IN,
         )
@@ -568,6 +571,12 @@ class ManifFFH(BasicWorkFFH):
         manif: CofkUnionManifestation = self.manif_form.instance
         if manif.manifestation_id in del_manif_id_list:
             log.debug(f'current manif[{manif.manifestation_id}] removed[{del_manif_id_list}] no need to save')
+            return
+
+        # Skip creating a new manifestation when no existing one is being edited
+        # and the manifestation form itself hasn't changed
+        if self.manif is None and not self.manif_form.has_changed():
+            log.debug('skip manif save -- no existing manif and manif form unchanged')
             return
 
         log.debug(f'changed_data : {self.manif_form.changed_data}')
@@ -657,13 +666,13 @@ class DetailsFFH(BasicWorkFFH):
         self.people_recref_handler = MultiRecrefAdapterHandler(
             request_data, name='people',
             recref_adapter=WorkPersonRecrefAdapter(self.safe_work),
-            recref_form_class=PersonRecrefForm,
+            recref_form_class=PersonMentionedRecrefForm,
             rel_type=REL_TYPE_MENTION,
         )
         self.place_recref_handler = MultiRecrefAdapterHandler(
             request_data, name='place',
             recref_adapter=WorkLocRecrefAdapter(self.safe_work),
-            recref_form_class=LocRecrefForm,
+            recref_form_class=PlaceMentionedRecrefForm,
             rel_type=REL_TYPE_MENTION_PLACE,
         )
         self.work_recref_handler = MultiRecrefAdapterHandler(
@@ -860,6 +869,17 @@ class DetailsView(BasicWorkFormView):
         return 'work:details_form'
 
 
+class OverviewView(BasicWorkFormView):
+
+    @staticmethod
+    def create_fhandler(request, *args, iwork_id=None, **kwargs):
+        return OverviewFFH(iwork_id, request_data=request.POST, request=request)
+
+    @property
+    def cur_vname(self):
+        return 'work:overview_form'
+
+
 def get_overview_persons_names_by_rel_type(work: CofkUnionWork, rel_type):
     return (person_serv.get_recref_display_name(p) for p in
             work.cofkworkpersonmap_set.filter(relationship_type=rel_type))
@@ -990,81 +1010,86 @@ def to_overview_manif(manif: CofkUnionManifestation):
     return manif
 
 
-@login_required
-@permission_required(constant.PM_CHANGE_WORK)
-def overview_view(request, iwork_id):
-    if request.POST:
-        return redirect('work:overview_form', iwork_id=iwork_id)
+class OverviewFFH(BasicWorkFFH):
+    """The Overview tab: mostly a read-only summary, but shares the
+    catalogue/work_to_be_deleted checkbox rendered by basic_form.html on
+    every tab, so it needs real save handling like the other tabs."""
 
-    work = get_object_or_404(DisplayableWork, iwork_id=iwork_id) # Use DisplayableWork here
+    def __init__(self, pk, *args, request_data=None, request=None, **kwargs):
+        super().__init__(pk, 'work/overview_form.html', *args,
+                         request_data=request_data, request=request, **kwargs)
 
-    context = dict(
-        iwork_id=work.iwork_id,
-        work=work,
-        date_for_ordering=work.date_for_ordering,
-        work_display_name=work_serv.get_recref_display_name(work),
+    def save(self, request):
+        if self.common_work_form.has_changed():
+            self.save_work(request, self.work)
 
-        notes_work=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_DATE)),
-        notes_author=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_AUTHOR)),
-        notes_addressee=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_ADDRESSEE)),
-        notes_people=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_PERSON_MENTIONED)),
-        notes_general=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_REFERS_TO)),
+    def create_context(self, is_save_success=False):
+        context: dict = super().create_context(is_save_success=is_save_success)
 
-        author_link_list=to_person_link_list(work, constant.REL_TYPE_CREATED),
-        author_link_count=to_person_link_count(work, constant.REL_TYPE_CREATED),
-        sender_link_list=to_person_link_list(work, constant.REL_TYPE_SENT),
-        sender_link_count=to_person_link_count(work, constant.REL_TYPE_SENT),
-        signed_link_list=to_person_link_list(work, constant.REL_TYPE_SIGNED),
-        signed_link_count=to_person_link_count(work, constant.REL_TYPE_SIGNED),
+        work = get_object_or_404(DisplayableWork, iwork_id=self.request_iwork_id)  # Use DisplayableWork here
 
-        recipient_link_list=to_person_link_list(work, constant.REL_TYPE_WAS_ADDRESSED_TO),
-        recipient_link_count=to_person_link_count(work, constant.REL_TYPE_WAS_ADDRESSED_TO),
-        intended_link_list=to_person_link_list(work, constant.REL_TYPE_INTENDED_FOR),
-        intended_link_count=to_person_link_count(work, constant.REL_TYPE_INTENDED_FOR),
+        context.update(dict(
+            work=work,
+            date_for_ordering=work.date_for_ordering,
+            work_display_name=work_serv.get_recref_display_name(work),
 
-        reply_to_link_list=[WorkLinkData(r.work_to) for r in
-                            work.work_from_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)],
-        reply_to_link_count=len(work.work_from_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)),
-        answered_link_list=[WorkLinkData(r.work_from) for r in
-                            work.work_to_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)],
-        answered_link_count=len(work.work_to_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)),
-        matches_link_list=[WorkLinkData(r.work_to) for r in
-                           work.work_from_set.filter(relationship_type=constant.REL_TYPE_WORK_MATCHES)]
-                         + [WorkLinkData(r.work_from) for r in
-                            work.work_to_set.filter(relationship_type=constant.REL_TYPE_WORK_MATCHES)],
-        matches_link_count=len(work.work_from_set.filter(relationship_type=constant.REL_TYPE_WORK_MATCHES))
-                          + len(work.work_to_set.filter(relationship_type=constant.REL_TYPE_WORK_MATCHES)),
+            notes_work=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_DATE)),
+            notes_author=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_AUTHOR)),
+            notes_addressee=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_ADDRESSEE)),
+            notes_people=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_PERSON_MENTIONED)),
+            notes_general=list(work_serv.find_related_comment_names(work, REL_TYPE_COMMENT_REFERS_TO)),
 
-        origin_link_list=to_location_link_list(work, constant.REL_TYPE_WAS_SENT_FROM),
-        origin_link_count=to_location_link_count(work, constant.REL_TYPE_WAS_SENT_FROM),
-        destination_link_list=to_location_link_list(work, constant.REL_TYPE_WAS_SENT_TO),
-        destination_link_count=to_location_link_count(work, constant.REL_TYPE_WAS_SENT_TO),
+            author_link_list=to_person_link_list(work, constant.REL_TYPE_CREATED),
+            author_link_count=to_person_link_count(work, constant.REL_TYPE_CREATED),
+            sender_link_list=to_person_link_list(work, constant.REL_TYPE_SENT),
+            sender_link_count=to_person_link_count(work, constant.REL_TYPE_SENT),
+            signed_link_list=to_person_link_list(work, constant.REL_TYPE_SIGNED),
+            signed_link_count=to_person_link_count(work, constant.REL_TYPE_SIGNED),
 
-        language=', '.join(map(_to_lang_str, work.language_set.iterator())),
-        subjects=', '.join(w.subject.subject_desc for w in work.cofkworksubjectmap_set.iterator()),
+            recipient_link_list=to_person_link_list(work, constant.REL_TYPE_WAS_ADDRESSED_TO),
+            recipient_link_count=to_person_link_count(work, constant.REL_TYPE_WAS_ADDRESSED_TO),
+            intended_link_list=to_person_link_list(work, constant.REL_TYPE_INTENDED_FOR),
+            intended_link_count=to_person_link_count(work, constant.REL_TYPE_INTENDED_FOR),
 
-        people_link_list=to_person_link_list(work, constant.REL_TYPE_MENTION),
-        people_link_count=to_person_link_count(work, constant.REL_TYPE_MENTION),
-        places_link_list=to_location_link_list(work, constant.REL_TYPE_MENTION_PLACE),
-        places_link_count=to_location_link_count(work, constant.REL_TYPE_MENTION_PLACE),
-        work_mention_link_list=(WorkLinkData(r.work_to) for r in
-                                work.work_from_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
-        work_mention_link_count=len(work.work_from_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
-        work_be_mention_link_list=(WorkLinkData(r.work_from) for r in
-                                   work.work_to_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
-        work_be_mention_link_count=len(work.work_to_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
-        manif_set=sorted(map(to_overview_manif, work.manif_set.iterator()),
-                        key=lambda m: {t[0]: i for i, t in enumerate(manif_type_choices)}.get(
-                            m.manifestation_type, len(manif_type_choices))),
-        original_calendar_display=date_serv.decode_calendar(work.original_calendar),
-        work_category='Overview',
-        common_work_form=build_common_work_form(request, work),
-        catalogue_name=work.original_catalogue.catalogue_name if work.original_catalogue_id else '',
-    )
+            reply_to_link_list=[WorkLinkData(r.work_to) for r in
+                                work.work_from_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)],
+            reply_to_link_count=len(work.work_from_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)),
+            answered_link_list=[WorkLinkData(r.work_from) for r in
+                                work.work_to_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)],
+            answered_link_count=len(work.work_to_set.filter(relationship_type=constant.REL_TYPE_WORK_IS_REPLY_TO)),
+            matches_link_list=[WorkLinkData(r.work_to) for r in
+                               work.work_from_set.filter(relationship_type=constant.REL_TYPE_WORK_MATCHES)]
+                             + [WorkLinkData(r.work_from) for r in
+                                work.work_to_set.filter(relationship_type=constant.REL_TYPE_WORK_MATCHES)],
+            matches_link_count=len(work.work_from_set.filter(relationship_type=constant.REL_TYPE_WORK_MATCHES))
+                              + len(work.work_to_set.filter(relationship_type=constant.REL_TYPE_WORK_MATCHES)),
 
-    context.update(WorkFormDescriptor(work).create_context())
+            origin_link_list=to_location_link_list(work, constant.REL_TYPE_WAS_SENT_FROM),
+            origin_link_count=to_location_link_count(work, constant.REL_TYPE_WAS_SENT_FROM),
+            destination_link_list=to_location_link_list(work, constant.REL_TYPE_WAS_SENT_TO),
+            destination_link_count=to_location_link_count(work, constant.REL_TYPE_WAS_SENT_TO),
 
-    return render(request, 'work/overview_form.html', context)
+            language=', '.join(map(_to_lang_str, work.language_set.iterator())),
+            subjects=', '.join(w.subject.subject_desc for w in work.cofkworksubjectmap_set.iterator()),
+
+            people_link_list=to_person_link_list(work, constant.REL_TYPE_MENTION),
+            people_link_count=to_person_link_count(work, constant.REL_TYPE_MENTION),
+            places_link_list=to_location_link_list(work, constant.REL_TYPE_MENTION_PLACE),
+            places_link_count=to_location_link_count(work, constant.REL_TYPE_MENTION_PLACE),
+            work_mention_link_list=(WorkLinkData(r.work_to) for r in
+                                    work.work_from_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
+            work_mention_link_count=len(work.work_from_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
+            work_be_mention_link_list=(WorkLinkData(r.work_from) for r in
+                                       work.work_to_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
+            work_be_mention_link_count=len(work.work_to_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
+            manif_set=sorted(map(to_overview_manif, work.manif_set.iterator()),
+                            key=lambda m: {t[0]: i for i, t in enumerate(manif_type_choices)}.get(
+                                m.manifestation_type, len(manif_type_choices))),
+            original_calendar_display=date_serv.decode_calendar(work.original_calendar),
+            work_category='Overview',
+        ))
+
+        return context
 
 
 class WorkQuickInitView(CorrView):
@@ -1135,7 +1160,7 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
     @property
     def search_field_fn_maps(self) -> dict[str, Lookup]:
         return {
-            'work_to_be_deleted': lambda f, v: Exact(F(f), '1' if v.lower() == 'on' or v == '1' else '0'),
+            'work_to_be_deleted': lambda f, v: Exact(F(f), 1) if v in ('only', '1', 'on') else (Exact(F(f), 0) if v in ('exclude', '0') else Q()),
             'person_sent_pk': create_search_fn_person_recref(AuthorRelationChoices.values),
             'person_rec_pk': create_search_fn_person_recref(AddresseeRelationChoices.values),
             'person_sent_rec_pk': create_search_fn_person_recref(AuthorRelationChoices.values
@@ -1333,8 +1358,10 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
                                   if 'work_to_be_deleted' in self.request_data else None)
 
             if work_to_be_deleted:
-                if work_to_be_deleted == 'on':
-                    simplified_query.append('Is to be deleted')
+                if work_to_be_deleted in ('only', '1', 'on'):
+                    simplified_query.append('Show only works marked for deletion')
+                elif work_to_be_deleted in ('exclude', '0'):
+                    simplified_query.append('Exclude works marked for deletion')
 
             _from = self.request_data['date_of_work_std_from'] if 'date_of_work_std_from' in self.request_data else None
             _to = self.request_data['date_of_work_std_to'] if 'date_of_work_std_to' in self.request_data else None
@@ -1424,19 +1451,9 @@ class WorkSearchView(LoginRequiredMixin, DefaultSearchView):
         if not self.has_perms([constant.PM_EXPORT_FILE_WORK]):
             return None
 
-        is_compact = (self.request_data.get('display-style', constant.SEARCH_LAYOUT_TABLE)
-                      == constant.SEARCH_LAYOUT_GRID)
-
-        if is_compact:
-            def create_compact_work_excel(queryable_works, file_path=None):
-                return excel_maker.create_excel_from_header_values(
-                    queryable_works, file_path, CompactWorkCsvHeaderValues(), 'Work'
-                )
-            return (lambda: view_serv.create_export_file_name('work', 'xlsx'),
-                    lambda: create_compact_work_excel,
-                    constant.PM_EXPORT_FILE_WORK,
-                    )
-
+        # As per issue https://github.com/culturesofknowledge/emlo-project/issues/764
+        # (and its Excel-export twin, #870) always export expanded/full results,
+        # regardless of the search page's display-style layout toggle.
         return (lambda: view_serv.create_export_file_name('work', 'xlsx'),
                 lambda: excel_maker.create_work_excel,
                 constant.PM_EXPORT_FILE_WORK,
@@ -1482,69 +1499,6 @@ class ManifImageRecrefHandler(ImageRecrefHandler):
 
     def find_org_recref_fn(self, parent, target) -> Recref | None:
         return CofkManifImageMap.objects.filter(manif=parent, image=target).first()
-
-
-class CompactWorkCsvHeaderValues(HeaderValues):
-    def get_header_list(self) -> list[str]:
-        return [
-            "Description",
-            "Date as marked on letter",
-            "Year date",
-            "Month date",
-            "Day date",
-            "Date for ordering",
-            "Author",
-            "Notes on Author in relation to letter",
-            "Recipient",
-            "Origin name",
-            "Destination name",
-            "Flags",
-            "Images",
-            "Manifestations",
-            "Related resources",
-            "Language(s)",
-            "Subjects",
-            "Abstract",
-            "General notes for public display",
-            "Source of record",
-            "Original Catalogue name",
-            "Record to be deleted",
-            "EMLO Letter ID Number",
-            "Date/time of last change",
-            "Changed by user",
-        ]
-
-    def obj_to_values(self, obj) -> Iterable[str]:
-        obj: DisplayableWork
-        values = (
-            obj.description,
-            obj.date_of_work_as_marked,
-            obj.date_of_work_std_year,
-            obj.date_of_work_std_month,
-            obj.date_of_work_std_day,
-            obj.date_of_work_std_gregorian,
-            obj.queryable_people(REL_TYPE_CREATED, is_details=True),
-            cell_values.notes(obj.author_comments),
-            obj.queryable_people(REL_TYPE_WAS_ADDRESSED_TO, is_details=True),
-            obj.places_from_for_display,
-            obj.places_to_for_display,
-            work_serv.flags(obj),
-            obj.images,
-            ' -- '.join(' '.join(manif_serv.get_manif_details(m))
-                        for m in obj.manif_set.all()),
-            cell_values.resource_str_by_list(wrm.resource for wrm in obj.cofkworkresourcemap_set.all()),
-            obj.language_of_work,
-            obj.subjects_for_display,
-            obj.abstract,
-            obj.general_notes,
-            obj.accession_code,
-            obj.original_catalogue and obj.original_catalogue.catalogue_name,
-            obj.work_to_be_deleted,
-            obj.iwork_id,
-            cell_values.simple_datetime(obj.change_timestamp),
-            obj.change_user,
-        )
-        return values
 
 
 class WorkCsvHeaderValues(HeaderValues):

@@ -1,7 +1,5 @@
 from django.contrib import admin
-from django.contrib.admin.forms import AdminAuthenticationForm
 from django.contrib.auth.admin import UserAdmin
-from django.contrib.auth.forms import AuthenticationForm
 
 from core import constant
 # Register your models here.

@@ -4,7 +4,7 @@ import re
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 
-from core.constant import REL_TYPE_CREATED
+from core.constant import REL_TYPE_CREATED, REL_TYPE_COMMENT_REFERS_TO
 from location.models import CofkUnionLocation
 from person.models import CofkUnionPerson
 from uploader.models import CofkCollectLocation, CofkCollectPerson, CofkCollectWork
@@ -15,6 +15,7 @@ from uploader.test.test_serv import UploadIncludedFactoryTestCase, UploadInclude
 from uploader.uploader_serv import DisplayableCollectWork
 from uploader.views import upload_review
 from work.models import CofkUnionWork
+from work.work_serv import get_recref_display_name
 
 log = logging.getLogger(__name__)
 
@@ -142,6 +143,31 @@ class TestAcceptPeople(UploadIncludedTestCase):
         self.assertEqual(union_person.date_of_death_approx, 0)
         self.assertEqual(union_person.date_of_death_is_range, 0)
 
+    def test_accept_people_derives_precomputed_dates(self):
+        """Regression test: date_of_birth/date_of_death/flourished have no
+        matching field on CofkCollectPerson (only the granular year/month/day
+        parts do), so they must be explicitly derived rather than left None."""
+        from datetime import date
+        self._make_collect_person(flourished_year=1670, flourished_month=5, flourished_day=2)
+
+        accept_people(self.new_upload, username='admin')
+
+        union_person = CofkUnionPerson.objects.exclude(iperson_id__in=[15257, 885, 22859]).get()
+        self.assertEqual(union_person.date_of_birth, date(1643, 1, 4))
+        self.assertEqual(union_person.date_of_death, date(1727, 3, 31))
+        self.assertEqual(union_person.flourished, date(1670, 5, 2))
+
+    def test_accept_people_copies_flourished_flags(self):
+        # emlo-project#516
+        self._make_collect_person(flourished_year=1650, flourished_inferred=1, flourished_uncertain=1,
+                                  flourished_approx=1)
+
+        accept_people(self.new_upload, username='admin')
+
+        union_person = CofkUnionPerson.objects.exclude(iperson_id__in=[15257, 885, 22859]).get()
+        self.assertEqual((union_person.flourished_inferred, union_person.flourished_uncertain,
+                          union_person.flourished_approx), (1, 1, 1))
+
     def test_accept_people_links_collect_to_union(self):
         """accept_people sets union_iperson FK on the collect record."""
         collect_person = self._make_collect_person()
@@ -150,6 +176,16 @@ class TestAcceptPeople(UploadIncludedTestCase):
 
         collect_person.refresh_from_db()
         self.assertIsNotNone(collect_person.union_iperson)
+
+    def test_accept_people_roles_or_titles_copied_to_person_aliases(self):
+        """accept_people copies free-text roles_or_titles onto person_aliases,
+        the field the person-edit form labels 'Details of roles / titles'."""
+        self._make_collect_person(roles_or_titles='Astronomer; correspondent of the Royal Society')
+
+        accept_people(self.new_upload, username='admin')
+
+        union_person = CofkUnionPerson.objects.exclude(iperson_id__in=[15257, 885, 22859]).get()
+        self.assertEqual(union_person.person_aliases, 'Astronomer; correspondent of the Royal Society')
 
     def test_accept_people_name_only(self):
         """accept_people works when only primary_name is set."""
@@ -217,6 +253,16 @@ class TestReview(UploadIncludedFactoryTestCase):
         self.assertEqual(self.new_upload.works_rejected, 0)
         self.assertEqual(name_of_first_author, 'Newton')
 
+        union_work = CofkUnionWork.objects.first()
+        self.assertTrue(union_work.description)
+        self.assertEqual(union_work.description, get_recref_display_name(union_work))
+
+        # emlo-project#866: manifestation notes are kept, as a comment like in the manifestation form
+        for manif in union_work.manif_set.all():
+            self.assertEqual([c.comment for c in manif.find_comments_by_rel_type(REL_TYPE_COMMENT_REFERS_TO)],
+                             ['test'])
+            self.assertIsNotNone(manif.uuid)
+
     def test_reject_upload(self):
         filename = self.create_excel_file(spreadsheet_data)
 
@@ -235,6 +281,41 @@ class TestReview(UploadIncludedFactoryTestCase):
         self.assertEqual(match.group('works'), '1')
         self.assertEqual(match.group('accepted'), '0')
         self.assertEqual(match.group('rejected'), '1')
+
+
+class TestReviewPagination(UploadIncludedFactoryTestCase):
+    """
+    A hand-edited ?per_page=<n> used to be passed straight through to
+    Paginator with no validation, so an arbitrarily large value (e.g.
+    per_page=99999) forced the review page to fetch every one of the
+    upload's works -- with its 15-relation prefetch_related -- in one page.
+    See _upload_review_works() / core.constant.MAX_UPLOAD_REVIEW_PER_PAGE.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.client.force_login(self.admin)
+        self.review_url = f'/upload/{self.new_upload.upload_id}/'
+
+    def test_per_page_is_capped_at_max(self):
+        response = self.client.get(self.review_url, {'per_page': 99999})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['works_page'].paginator.per_page, 1000)
+
+    def test_valid_per_page_is_respected(self):
+        response = self.client.get(self.review_url, {'per_page': 50})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['works_page'].paginator.per_page, 50)
+
+    def test_non_numeric_per_page_falls_back_to_default(self):
+        response = self.client.get(self.review_url, {'per_page': 'not-a-number'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['works_page'].paginator.per_page, 1000)
+
+    def test_non_positive_per_page_falls_back_to_default(self):
+        response = self.client.get(self.review_url, {'per_page': -5})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['works_page'].paginator.per_page, 1000)
 
 
 class TestCreateUnionWork(UploadIncludedTestCase):
@@ -259,3 +340,21 @@ class TestCreateUnionWork(UploadIncludedTestCase):
         self.assertEqual(union_work1.origin_as_marked, 'London')
         self.assertIsNone(union_work2.date_of_work_as_marked)
         self.assertIsNone(union_work2.origin_as_marked)
+
+    def test_date_of_work_std_is_derived_not_left_as_sentinel(self):
+        """Regression test for #863: date_of_work_std(_gregorian) have no
+        matching field on CofkCollectWork, so the generic field-copy loop
+        never sets them and they must be derived from the granular
+        year/month/day fields instead of being left at the '9999-12-31'
+        model default."""
+        work = self._make_collect_work(
+            1,
+            date_of_work_std_year=1660,
+            date_of_work_std_month=6,
+            date_of_work_std_day=15,
+        )
+
+        union_work = create_union_work(work, 'admin')
+
+        self.assertEqual(union_work.date_of_work_std, '1660-06-15')
+        self.assertEqual(union_work.date_of_work_std_gregorian, '1660-06-15')

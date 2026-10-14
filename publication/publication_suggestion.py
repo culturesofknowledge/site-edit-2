@@ -1,6 +1,4 @@
-import dateutil.parser
 import logging
-from dateutil.parser import ParserError
 from django.core.exceptions import ObjectDoesNotExist
 from suggestions.models import CofkSuggestions
 from suggestions import utils as sug_utils

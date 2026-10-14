@@ -309,7 +309,7 @@ class ResourceDescriptorListView(PermissionRequiredMixin, LoginRequiredMixin, Li
         return super().get(self, request, *args, **kwargs)
 
 
-class SavedQueries(ListView):
+class SavedQueries(LoginRequiredMixin, ListView):
     model = CofkUserSavedQuery
     template_name = 'list/saved_queries.html'
     paginate_by = 20
@@ -323,7 +323,7 @@ class SavedQueries(ListView):
         if 'save' in request.POST and pk_name in request.POST:
             # Update
             pk = request.POST[pk_name]
-            list_obj = self.model.objects.filter(pk=pk).first()
+            list_obj = self.get_queryset().filter(pk=pk).first()
 
             if list_obj:
                 list_obj.query_title = request.POST['query_title']
@@ -332,7 +332,7 @@ class SavedQueries(ListView):
                 messages.success(request, f'Successfully updated saved query ({pk})')
         elif 'delete' in request.POST and pk_name in request.POST:
             pk = request.POST[pk_name]
-            list_obj = self.model.objects.filter(pk=pk).first()
+            list_obj = self.get_queryset().filter(pk=pk).first()
 
             if list_obj:
                 list_obj.delete()

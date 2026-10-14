@@ -1,3 +1,12 @@
 .date-gap {
   margin-bottom: 10px; // Adjust as needed for the desired gap
 }
+
+/* Manifestation tab table (issue #892): reuses #results_table styling for column
+   widths, but it lives inside a tab panel rather than the page-level scroll that
+   the site-wide sticky header rules (base/general.scss, search-result.scss)
+   assume — so here the header should scroll with the table body, not stick. */
+#results_table.manif-table th {
+  position: static;
+  top: auto;
+}

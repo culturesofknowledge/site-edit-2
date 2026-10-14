@@ -15,17 +15,20 @@ from core.constant import REL_TYPE_STORED_IN, REL_TYPE_CREATED, REL_TYPE_WAS_ADD
     REL_TYPE_MENTION, REL_TYPE_DEALS_WITH, REL_TYPE_COMMENT_AUTHOR, REL_TYPE_COMMENT_ADDRESSEE, REL_TYPE_COMMENT_DATE, \
     REL_TYPE_COMMENT_ORIGIN, REL_TYPE_COMMENT_DESTINATION, REL_TYPE_COMMENT_PERSON_MENTIONED, \
     REL_TYPE_COMMENT_REFERS_TO, REL_TYPE_MENTION_PLACE
-from core.models import CofkUnionResource, CofkLookupCatalogue, CofkUnionComment, CofkUnionRoleCategory
+from core.models import CofkUnionResource, CofkLookupCatalogue, CofkUnionComment
 from institution.models import CofkUnionInstitution
 from location.models import CofkUnionLocation, CofkLocationCommentMap, CofkLocationResourceMap
 from manifestation import manif_serv
-from manifestation.models import CofkUnionManifestation, CofkManifInstMap
-from person.models import CofkUnionPerson, CofkPersonCommentMap, CofkPersonRoleMap, CofkPersonResourceMap, create_person_id
+from manifestation.models import CofkUnionManifestation, CofkManifInstMap, CofkManifCommentMap
+from person import person_serv
+from person.models import CofkUnionPerson, CofkPersonCommentMap, CofkPersonResourceMap, create_person_id
+from uploader.constants import CORRECTION_WORK_SHEET
 from uploader.models import CofkCollectUpload, CofkCollectWork, CofkCollectPerson, CofkCollectLocation, \
     CofkCollectWorkCorrection
 from work.models import CofkUnionWork, CofkWorkLocationMap, CofkWorkPersonMap, CofkWorkResourceMap, \
     CofkUnionLanguageOfWork, CofkWorkSubjectMap, CofkWorkCommentMap
-from work.work_serv import compute_date_of_work_std, compute_date_of_work_std_gregorian
+from work.work_serv import compute_date_of_work_std, compute_date_of_work_std_gregorian, \
+    get_recref_display_name
 
 log = logging.getLogger(__name__)
 
@@ -61,6 +64,8 @@ def create_union_work(collect_work: CofkCollectWork, username: str,
 
     union_work = CofkUnionWork(**work_dict, init_seq_id=True)
     union_work.update_current_user_timestamp(username)
+    union_work.date_of_work_std = compute_date_of_work_std(union_work)
+    union_work.date_of_work_std_gregorian = compute_date_of_work_std_gregorian(union_work)
 
     return union_work
 
@@ -280,8 +285,14 @@ def create_works(collect_works, username, union_work_dict, upload, request):
 
         union_maps = []
 
+        # Manifestations are bulk created later, so ids handed out within this
+        # work have to be reserved to keep the '-a', '-b', '-c' sequence unique
+        work_manif_ids = []
+
         for manif in collect_work.manifestations.all():
-            union_manif_dict = {'manifestation_id': manif_serv.create_manif_id(union_work.iwork_id),
+            new_manif_id = manif_serv.create_manif_id(union_work.iwork_id, used_manif_ids=work_manif_ids)
+            work_manif_ids.append(new_manif_id)
+            union_manif_dict = {'manifestation_id': new_manif_id,
                                 'work': union_work}
             for field in [f for f in manif._meta.get_fields() if f.name != 'manifestation_id']:
                 try:
@@ -294,6 +305,17 @@ def create_works(collect_works, username, union_work_dict, upload, request):
 
             union_manif = CofkUnionManifestation(**union_manif_dict)
             union_manifs.append(union_manif)
+
+            # CofkUnionManifestation has no notes field; like in the manifestation form, the notes
+            # are a comment on the manifestation (emlo-project#866)
+            if manif.manifestation_notes:
+                union_comment = CofkUnionComment(comment=manif.manifestation_notes)
+                union_comment.update_current_user_timestamp(username)
+                union_comment.save()
+                cmcm = CofkManifCommentMap(comment=union_comment, manifestation=union_manif,
+                                           relationship_type=REL_TYPE_COMMENT_REFERS_TO)
+                cmcm.update_current_user_timestamp(username)
+                add_rel_maps(rel_maps, [cmcm])
 
             if manif.repository_id is not None:
                 inst = manif.repository
@@ -343,6 +365,12 @@ def create_works(collect_works, username, union_work_dict, upload, request):
         if len(rel_maps[rel_map]) > 0:
             bulk_create(rel_maps[rel_map])
             log_msg.append(f'{len(rel_maps[rel_map])} {type(rel_maps[rel_map][0]).__name__}')
+
+    # The description is derived from the work's dates, people and places, so it
+    # can only be computed once the relation maps above exist in the database.
+    for union_work in union_works:
+        union_work.description = get_recref_display_name(union_work)
+    CofkUnionWork.objects.bulk_update(union_works, ['description'], batch_size=500)
 
     # Update upload status of collect works
     CofkCollectWork.objects.bulk_update(collect_works, ['upload_status'])
@@ -399,6 +427,7 @@ def accept_people(upload: CofkCollectUpload, username: str, request=None):
                     init_seq_id=True,
                     foaf_name=person.primary_name,
                     skos_altlabel=person.alternative_names,
+                    person_aliases=person.roles_or_titles,
                     gender=person.gender,
                     is_organisation=person.is_organisation,
                     editors_notes=person.editors_notes,
@@ -423,11 +452,27 @@ def accept_people(upload: CofkCollectUpload, username: str, request=None):
                     date_of_death2_month=person.date_of_death2_month,
                     date_of_death2_day=person.date_of_death2_day,
                     flourished_year=person.flourished_year,
+                    flourished_month=person.flourished_month,
+                    flourished_day=person.flourished_day,
                     flourished2_year=person.flourished2_year,
+                    flourished2_month=person.flourished2_month,
+                    flourished2_day=person.flourished2_day,
                     flourished_is_range=person.flourished_is_range,
+                    flourished_inferred=person.flourished_inferred,
+                    flourished_uncertain=person.flourished_uncertain,
+                    flourished_approx=person.flourished_approx,
                 )
                 union_person.person_id = create_person_id(union_person.iperson_id)
                 union_person.update_current_user_timestamp(username)
+
+                # date_of_birth/date_of_death/flourished have no matching field on
+                # CofkCollectPerson (only the granular year/month/day parts do), so
+                # they're never set above and must be derived here - see
+                # person_serv.compute_date_of_birth for why.
+                union_person.date_of_birth = person_serv.compute_date_of_birth(union_person)
+                union_person.date_of_death = person_serv.compute_date_of_death(union_person)
+                union_person.flourished = person_serv.compute_flourished(union_person)
+
                 union_person.save()
                 if person.notes_on_person:
                     comment = CofkUnionComment(comment=person.notes_on_person)
@@ -437,14 +482,6 @@ def accept_people(upload: CofkCollectUpload, username: str, request=None):
                         person=union_person, comment=comment,
                         relationship_type=REL_TYPE_COMMENT_REFERS_TO,
                     )
-                if person.roles_or_titles:
-                    for role_name in (r.strip() for r in person.roles_or_titles.split(';') if r.strip()):
-                        role = CofkUnionRoleCategory.objects.filter(role_category_desc__iexact=role_name).first()
-                        if role:
-                            CofkPersonRoleMap.objects.create(
-                                person=union_person, role=role,
-                                relationship_type='member_of',
-                            )
                 for resource in person.cofkcollectpersonresource_set.all():
                     union_resource = CofkUnionResource(
                         resource_name=resource.resource_name,
@@ -587,19 +624,30 @@ _DATE_OF_WORK_STD_SOURCE_FIELDS = {
 _DATE_OF_WORK_STD_GREGORIAN_SOURCE_FIELDS = _DATE_OF_WORK_STD_SOURCE_FIELDS | {'original_calendar'}
 
 
-def _apply_comment_correction(work: CofkUnionWork, rel_type: str, new_value: str, username: str) -> None:
+def _apply_comment_correction(work: CofkUnionWork, rel_type: str, new_value: str, username: str) -> bool:
     """Update (or create) the work's comment for the given relationship_type.
 
     Work notes are stored via CofkUnionComment/CofkWorkCommentMap, not as plain
     fields on CofkUnionWork (see link_comments_to_work for the equivalent create
     path used for brand-new works), so corrections to them can't be applied with
     a plain setattr() the way other correction fields are.
-    """
-    existing_map = CofkWorkCommentMap.objects.filter(
-        work=work, relationship_type=rel_type
-    ).select_related('comment').first()
 
-    if existing_map:
+    Returns False (and applies nothing) if the work already has more than one
+    comment of this relationship_type: a correction only carries the intended
+    new text, not which of several existing notes it's meant to replace, so
+    picking one (e.g. via an unordered .first()) would silently overwrite an
+    arbitrary note instead of the one the editor meant. The caller reports
+    this back to the editor so it can be resolved manually in EMLO-edit.
+    """
+    existing_maps = list(CofkWorkCommentMap.objects.filter(
+        work=work, relationship_type=rel_type
+    ).select_related('comment'))
+
+    if len(existing_maps) > 1:
+        return False
+
+    if existing_maps:
+        existing_map = existing_maps[0]
         existing_map.comment.comment = new_value
         existing_map.comment.update_current_user_timestamp(username)
         existing_map.comment.save()
@@ -611,6 +659,8 @@ def _apply_comment_correction(work: CofkUnionWork, rel_type: str, new_value: str
         cwcm = CofkWorkCommentMap(comment=comment, work=work, relationship_type=rel_type)
         cwcm.update_current_user_timestamp(username)
         cwcm.save()
+
+    return True
 
 
 def accept_corrections(upload: CofkCollectUpload, username: str, request=None):
@@ -625,9 +675,14 @@ def accept_corrections(upload: CofkCollectUpload, username: str, request=None):
             messages.warning(request, msg)
         return
 
+    # Field name -> its spreadsheet column header, for editor-facing messages
+    # (e.g. 'notes_on_date_of_work' -> 'Notes on date').
+    field_labels = {v: k for k, v in CORRECTION_WORK_SHEET['columns'].items()}
+
     try:
         with transaction.atomic():
             applied = 0
+            skipped_notes = []  # [(iwork_id, field_name), ...] - see _apply_comment_correction
             for correction in pending:
                 if correction.union_work is None:
                     log.warning(
@@ -643,9 +698,11 @@ def accept_corrections(upload: CofkCollectUpload, username: str, request=None):
                         # catalogue_code is stored as the FK value (to_field='catalogue_code')
                         setattr(work, 'original_catalogue_id', new_value)
                     elif field_name in _CORRECTION_COMMENT_REL_TYPES:
-                        _apply_comment_correction(
+                        applied_comment = _apply_comment_correction(
                             work, _CORRECTION_COMMENT_REL_TYPES[field_name], new_value, username
                         )
+                        if not applied_comment:
+                            skipped_notes.append((correction.iwork_id, field_name))
                     else:
                         setattr(work, field_name, new_value)
                         if field_name in _DATE_OF_WORK_STD_SOURCE_FIELDS:
@@ -662,6 +719,9 @@ def accept_corrections(upload: CofkCollectUpload, username: str, request=None):
 
                 if gregorian_fields_changed:
                     work.date_of_work_std_gregorian = compute_date_of_work_std_gregorian(work)
+
+                # description is derived from the dates (among others), so keep it in sync
+                work.description = get_recref_display_name(work)
 
                 work.update_current_user_timestamp(username)
                 work.save()
@@ -684,6 +744,20 @@ def accept_corrections(upload: CofkCollectUpload, username: str, request=None):
     msg = f'Successfully applied {applied} corrections.'
     if request:
         messages.success(request, msg)
+
+    if skipped_notes:
+        skipped_desc = '; '.join(
+            f'iwork_id {iwork_id} ({field_labels.get(field_name, field_name)})'
+            for iwork_id, field_name in skipped_notes
+        )
+        skipped_msg = (
+            f'{len(skipped_notes)} note correction(s) were NOT applied because the letter already had '
+            f'more than one note of that type, so the correction could not tell which one to replace - '
+            f'please update these manually in EMLO-edit: {skipped_desc}'
+        )
+        if request:
+            messages.warning(request, skipped_msg)
+        log.warning(f'{upload}: {skipped_msg}')
     log.info(f'{upload}: {msg}')
 
 

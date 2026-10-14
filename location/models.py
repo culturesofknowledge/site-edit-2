@@ -23,7 +23,7 @@ class CofkUnionLocation(models.Model, RecordTracker):
     element_5_eg_county = models.CharField(max_length=100)
     element_6_eg_country = models.CharField(max_length=100)
     element_7_eg_empire = models.CharField(max_length=100)
-    uuid = models.UUIDField(blank=True, null=True)
+    uuid = models.UUIDField(blank=True, null=True, default=model_serv.default_uuid)
     comments = models.ManyToManyField('core.CofkUnionComment', through='CofkLocationCommentMap')
     resources = models.ManyToManyField('core.CofkUnionResource', through='CofkLocationResourceMap')
     images = models.ManyToManyField('core.CofkUnionImage', through='CofkLocationImageMap')

@@ -1,7 +1,6 @@
 import csv
 import logging
 from pathlib import Path
-from typing import Type
 
 from core.export_data import excel_header_values
 from core.helper.view_components import HeaderValues

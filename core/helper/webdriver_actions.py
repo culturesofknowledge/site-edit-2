@@ -12,11 +12,31 @@ def login(driver, username, raw_password):
     find_element_by_css(driver, 'button').click()
 
 
+def ensure_search_panel_open(driver):
+    """
+    search-results.js auto-collapses #query-fieldset once a search returns
+    results, unless localStorage['fieldset-toggle'] == 'true' -- and its
+    Reset button wipes localStorage entirely (see reset_form()), undoing
+    that pin on the very next results page. Force it back open (and
+    re-pin it) before looking up any element, so search/reset/search-field
+    lookups stay reliable across repeated searches within a test.
+    """
+    driver.execute_script(
+        "localStorage.setItem('fieldset-toggle', 'true');"
+        "var e = document.getElementById('query-fieldset');"
+        "if (e) { e.style.display = ''; }"
+        "var r = document.getElementById('query-result');"
+        "if (r) { r.classList.add('col--3of4'); }"
+    )
+
+
 def find_elements_by_css(driver, css_selector):
+    ensure_search_panel_open(driver)
     return driver.find_elements(by=By.CSS_SELECTOR, value=css_selector)
 
 
 def find_element_by_css(driver, css_selector):
+    ensure_search_panel_open(driver)
     return driver.find_element(by=By.CSS_SELECTOR, value=css_selector)
 
 

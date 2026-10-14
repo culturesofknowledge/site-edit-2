@@ -7,7 +7,7 @@
             <div>{{ date_as_marked }}</div>
         </div>
 
-        <div class="margin-bottom calendar-div">
+        <div class="margin-bottom calendar-div{% if is_manifestation %} calendar-div--spaced{% endif %}">
             {% with new_label_text="Calendar used for the date supplied below in 'Date of "|add:name|add:" in standard format'" %}
                 {% include "core/component/common_form_choices.html" with label_text=new_label_text choices_field=calendar_used as_col=True %}
             {% endwith %}
@@ -22,15 +22,19 @@
                     {{ is_range }}
                     <label for="{{ is_range.id_for_label }}">Date range?</label>
                 </div>
-                Tick the 'Date range' box in either of the following cases:
-                <ul>
-                    <li>
-                        The {{ name }} is known to have been written over a period of two or more days
-                    </li>
-                    <li>
-                        The {{ name }} cannot be precisely dated even to a single year
-                    </li>
-                </ul>
+                {% if hide_range_bullets %}
+                    <i>Tick if the {{ name }} cannot be precisely dated</i>
+                {% else %}
+                    Tick the 'Date range' box in either of the following cases:
+                    <ul>
+                        <li>
+                            The {{ name }} is known to have been written over a period of two or more days
+                        </li>
+                        <li>
+                            The {{ name }} cannot be precisely dated even to a single year
+                        </li>
+                    </ul>
+                {% endif %}
             </div>
 
             <div class="margin-bottom">

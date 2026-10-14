@@ -97,7 +97,7 @@ class CofkCollectLocation(models.Model):
             location += f' [ID {self.union_location_id}]'
 
         if self.editors_notes:
-            location += f' [editor\'s notes: {self.editors_notes}]'
+            location += f' [editors\' notes: {self.editors_notes}]'
 
         return location
 
@@ -205,6 +205,9 @@ class CofkCollectPerson(models.Model):
     flourished2_year = models.IntegerField(blank=True, null=True)
     flourished2_month = models.IntegerField(blank=True, null=True)
     flourished2_day = models.IntegerField(blank=True, null=True)
+    flourished_inferred = models.SmallIntegerField(default=0)
+    flourished_uncertain = models.SmallIntegerField(default=0)
+    flourished_approx = models.SmallIntegerField(default=0)
     notes_on_person = models.TextField(blank=True, null=True)
     editors_notes = models.TextField(blank=True, null=True)
     upload_name = models.CharField(max_length=254, blank=True, null=True)

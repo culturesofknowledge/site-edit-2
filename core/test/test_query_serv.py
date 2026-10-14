@@ -104,6 +104,32 @@ class QuerySetUpdateTest(TestCase):
             }
         )
 
+    def test_create_queries_by_lookup_field__leading_zero_month_day(self):
+        """ searching month/day with a leading zero gives the same query as without it """
+        query_list = query_serv.create_queries_by_lookup_field(
+            {'date_of_work_std_month': '09', 'date_of_work_std_day': '02'},
+            ['date_of_work_std_month', 'date_of_work_std_day'],
+        )
+        self.assertSequenceEqual(
+            set(query_list),
+            {
+                IExact(F('date_of_work_std_month'), '9'),
+                IExact(F('date_of_work_std_day'), '2'),
+            }
+        )
+
+    def test_normalize_numeric_search_value(self):
+        self.assertEqual(query_serv.normalize_numeric_search_value('date_of_work_std_month', '09'), '9')
+        self.assertEqual(query_serv.normalize_numeric_search_value('date_of_work_std_day', '02'), '2')
+        self.assertEqual(query_serv.normalize_numeric_search_value('date_of_work_std_year', '0900'), '900')
+        self.assertEqual(query_serv.normalize_numeric_search_value('date_of_work2_std_month', '09'), '9')
+        self.assertEqual(query_serv.normalize_numeric_search_value('date_of_work_std_month', '9'), '9')
+        self.assertEqual(query_serv.normalize_numeric_search_value('date_of_work_std_day', '00'), '0')
+        # non numeric values and non numeric fields are kept as they are
+        self.assertEqual(query_serv.normalize_numeric_search_value('date_of_work_std_month', '0a'), '0a')
+        self.assertEqual(query_serv.normalize_numeric_search_value('description', '09'), '09')
+        self.assertEqual(query_serv.normalize_numeric_search_value('date_of_work_std_month', 9), 9)
+
     @patch('work.models.CofkUnionWork')
     @patch('core.models.CofkUnionResource')
     @patch('work.models.CofkWorkResourceMap')

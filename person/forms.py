@@ -15,6 +15,7 @@ from core.helper.common_recref_adapter import RecrefFormAdapter
 from core.helper.form_serv import TargetPersonMRRForm, LocationRecrefField, BasicSearchFieldset, SearchCharField, \
     SearchIntField, EmloLineboxField, YesEmptyCheckboxField
 from core.models import CofkUnionOrgType, CofkUnionRoleCategory, Recref
+from person import person_serv
 from person.models import CofkUnionPerson
 from person.recref_adapter import ActivePersonRecrefAdapter, PassivePersonRecrefAdapter
 
@@ -91,7 +92,7 @@ class PersonForm(ModelForm):
     skos_altlabel = EmloLineboxField()
     person_aliases = EmloLineboxField()
 
-    editors_notes = form_serv.CommonTextareaField()
+    editors_notes = form_serv.CommonTextareaField(label=field_label_map['person']['editors_notes'])
 
     date_of_birth_year = form_serv.create_year_field()
     date_of_birth_month = form_serv.create_month_field()
@@ -104,7 +105,7 @@ class PersonForm(ModelForm):
     date_of_birth_approx = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_birth_is_range = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_birth_calendar = forms.CharField(required=False,
-                                             widget=forms.RadioSelect(choices=date_serv.calendar_choices, ))
+                                             widget=forms.RadioSelect(choices=date_serv.calendar_choices_person, ))
 
     date_of_death_year = form_serv.create_year_field()
     date_of_death_month = form_serv.create_month_field()
@@ -117,7 +118,7 @@ class PersonForm(ModelForm):
     date_of_death_approx = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_death_is_range = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
     date_of_death_calendar = forms.CharField(required=False,
-                                             widget=forms.RadioSelect(choices=date_serv.calendar_choices, ))
+                                             widget=forms.RadioSelect(choices=date_serv.calendar_choices_person, ))
 
     flourished_year = form_serv.create_year_field()
     flourished_month = form_serv.create_month_field()
@@ -130,7 +131,7 @@ class PersonForm(ModelForm):
     flourished_approx = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
     flourished_is_range = form_serv.ZeroOneCheckboxField(is_str=False, initial=0)
     flourished_calendar = forms.CharField(required=False,
-                                          widget=forms.RadioSelect(choices=date_serv.calendar_choices, ))
+                                          widget=forms.RadioSelect(choices=date_serv.calendar_choices_person, ))
 
     organisation_type = OrgTypeField(required=False, label=field_label_map['person']['organisation_type'])
 
@@ -178,6 +179,7 @@ class PersonForm(ModelForm):
             'date_of_death_inferred',
             'date_of_death_uncertain',
             'date_of_death_approx',
+            'date_of_death_calendar',
 
             'flourished_year',
             'flourished_month',
@@ -189,6 +191,7 @@ class PersonForm(ModelForm):
             'flourished_inferred',
             'flourished_uncertain',
             'flourished_approx',
+            'flourished_calendar',
 
             'further_reading',
 
@@ -219,6 +222,18 @@ class PersonForm(ModelForm):
         ], 0)
 
         return super().clean()
+
+    def _post_clean(self):
+        """date_of_birth/date_of_death/flourished are listed in Meta.fields for
+        model validation, but (unlike work's date_of_work_std) have no visible
+        widget anywhere in the person templates, so ModelForm's own field ->
+        instance assignment always sets them to None. Recompute them from the
+        granular year/month/day fields construct_instance just populated,
+        after model validation of those parts has run."""
+        super()._post_clean()
+        self.instance.date_of_birth = person_serv.compute_date_of_birth(self.instance)
+        self.instance.date_of_death = person_serv.compute_date_of_death(self.instance)
+        self.instance.flourished = person_serv.compute_flourished(self.instance)
 
 
 search_gender_choices = [

@@ -4,6 +4,7 @@ export data to csv for Emlo-frontend
 import csv
 import logging
 import re
+import shutil
 import time
 import warnings
 from pathlib import Path
@@ -12,7 +13,6 @@ from typing import Iterable, Callable
 import requests
 from django.db import models
 from django.db.models import Count, Q
-from django.utils.html import strip_tags
 from urllib3.exceptions import InsecureRequestWarning
 
 import person.subqueries
@@ -158,6 +158,7 @@ class ImageFrontendCsv(HeaderValues):
 
     def _is_published(self, obj):
         check_list = [
+            ('can_be_displayed', lambda: obj.can_be_displayed != 'N'),
             ('work', lambda: is_published_by_filter_work(obj, 'cofkmanifimagemap__manif__work')),
             ('url', lambda: is_url_for_published(obj.image_filename, self.url_alive_checker)),
         ]
@@ -588,7 +589,6 @@ class WorkFrontendCsv(HeaderValues):
                                                                          o.date_of_work_std_gregorian),
                           'original_catalogue': lambda o: self.catalogue_map.get(o.original_catalogue_id,
                                                                                  'No catalogue specified'),
-                          'abstract': lambda o: strip_tags(o.abstract),
                       } | creation_change_user_settings()
         return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
 
@@ -710,13 +710,24 @@ def find_all_recrefs():
         }
 
 
-def export_all(output_dir: str = '.', skip_url_check=False):
+def export_all(output_dir: str = '.', skip_url_check=False, module: str = None):
     if skip_url_check:
         log.warning('skip_url_check is True, will not check if url is alive')
 
     start_time = time.time()
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    # write into a staging subdirectory first, and only publish (via atomic
+    # per-file replace) once every file has been generated successfully --
+    # a failed/partial run must never leave output_dir with a mix of fresh
+    # and stale-from-a-previous-run files. Staging must live inside
+    # output_dir (not just alongside it) so the final replace() is on the
+    # same filesystem/mount and therefore atomic and cheap.
+    staging_dir = output_dir / '.staging'
+    if staging_dir.exists():
+        shutil.rmtree(staging_dir)
+    staging_dir.mkdir()
 
     global cache_username_map
     cache_username_map = query_cache_serv.create_username_map()
@@ -737,7 +748,7 @@ def export_all(output_dir: str = '.', skip_url_check=False):
          LocationFrontendCsv, CofkUnionLocation),
         (lambda: CofkUnionManifestation.objects.iterator(),
          ManifFrontendCsv, CofkUnionManifestation),
-        (lambda: person.views.create_queryset_by_queries(CofkUnionPerson, ).iterator(),
+        (lambda: person.views.create_queryset_by_queries(CofkUnionPerson, ).iterator(chunk_size=2000),
          PersonFrontendCsv, CofkUnionPerson),
         (lambda: CofkUnionRelationshipType.objects.iterator(),
          RelTypeFrontendCsv, CofkUnionRelationshipType),
@@ -749,24 +760,38 @@ def export_all(output_dir: str = '.', skip_url_check=False):
             skip_url_check=skip_url_check,
         ),
 
-        # relationship csv must be last, because it uses data from other csvs
+        # relationship csv must be last, because it uses data from other csvs.
+        # it must read them back from staging_dir -- this run's fresh output,
+        # not output_dir's previous run -- since that's the whole point of
+        # building it last.
         (find_all_recrefs,
-         lambda: RelationshipFrontendCsv(output_dir),
+         lambda: RelationshipFrontendCsv(staging_dir),
          'cofk_union_relationship'),
     ]
-    for objects_factory, target_csv_type_factory, name_item in settings:
-        objects_factory: Callable[[], Iterable]
-        target_csv_type_factory: Callable[[], HeaderValues]
-        name_item: str | models.Model
+    try:
+        for objects_factory, target_csv_type_factory, name_item in settings:
+            objects_factory: Callable[[], Iterable]
+            target_csv_type_factory: Callable[[], HeaderValues]
+            name_item: str | models.Model
 
-        filename = name_item if isinstance(name_item, str) else name_item._meta.db_table
-        if filename.startswith('cofk_union_'):
-            filename = filename[len('cofk_union_'):]
+            filename = name_item if isinstance(name_item, str) else name_item._meta.db_table
+            if filename.startswith('cofk_union_'):
+                filename = filename[len('cofk_union_'):]
 
-        csv_path = output_dir / f'{filename}.csv'
-        log.info(f'exporting to {csv_path}')
-        DownloadCsvHandler(target_csv_type_factory()).create_csv_file(
-            objects_factory(),
-            csv_path)
+            if module and filename != module:
+                log.info(f'skipping {filename} (filtering for module={module})')
+                continue
+
+            csv_path = staging_dir / f'{filename}.csv'
+            log.info(f'exporting to {csv_path}')
+            DownloadCsvHandler(target_csv_type_factory()).create_csv_file(
+                objects_factory(),
+                csv_path)
+
+        # every file generated successfully -- publish them all atomically
+        for tmp_file in staging_dir.iterdir():
+            tmp_file.replace(output_dir / tmp_file.name)
+    finally:
+        shutil.rmtree(staging_dir, ignore_errors=True)
 
     log.info(f'exported all in {(time.time() - start_time) / 60:.2f} minutes')

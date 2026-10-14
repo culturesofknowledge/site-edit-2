@@ -8,6 +8,7 @@ urlpatterns.extend(
     url_serv.create_common_urls_for_section(
         init_view=views.InstInitView.as_view(),
         edit_view=views.full_form,
+        delete_view=views.InstDeleteConfirmView.as_view(),
         search_view=views.InstSearchView.as_view(),
         merge_view=views.InstMergeChoiceView.as_view(),
         merge_action_view=views.InstMergeActionView.as_view(),

@@ -33,9 +33,9 @@
 
             {% if form.work_count > 0 %}
                 <label>Number of works:&nbsp;</label>{{ c.work_count }}<br/>
-                <input type="submit" class="btn" value="Save" name="save">
+                <input id="save_btn" type="submit" class="btn" value="Save" name="save">
                 {% else %}
-                <input type="submit" class="btn inline_btn" value="Save" name="save">
+                <input id="save_btn" type="submit" class="btn inline_btn" value="Save" name="save">
                 <input type="submit" class="btn inline_btn" value="Delete" name="delete">
 
             {% endif %}

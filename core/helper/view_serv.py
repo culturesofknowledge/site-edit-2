@@ -10,9 +10,8 @@ from typing import NoReturn
 from urllib.parse import urljoin
 
 from django import template
-from django.conf import settings
 from django.db import models
-from django.db.models import Q, ForeignKey, QuerySet, Lookup
+from django.db.models import Q, ForeignKey, Lookup
 from django.db.models.query_utils import DeferredAttribute
 from django.forms import ModelForm
 from django.http import HttpResponseNotFound
@@ -87,17 +86,17 @@ def send_email_file_by_url(file_name, to_email, base_url, search_info=None):
     download_path = reverse('file-download', kwargs={'file_path': file_name})
     download_url = urljoin(base_url, download_path)
 
-    content_lines = ['Results are attached from your query on EMLO']
+    content_lines = ['Results are attached from your query on the Union Catalogue Editing Interface']
     if search_info:
         if search_info.get('menu_option'):
-            content_lines.append(f'Menu option was: {search_info["menu_option"]}')
+            content_lines.append(f'\nMenu option was: {search_info["menu_option"]}')
         if search_info.get('selection'):
-            content_lines.append(f'Selection: {search_info["selection"]}')
+            content_lines.append(f'\nSelection: {search_info["selection"]}')
     content_lines.append(f'\nFile can be downloaded from this url: {download_url}')
     content = '\n'.join(content_lines)
 
     resp = email_utils.send_email(to_email,
-                                  subject='Search result',
+                                  subject='Union Catalogue Editing Interface query results',
                                   content=content, )
     log.info(f'file email have be send to [{to_email}]')
     log.debug(f'email resp {resp}')
@@ -115,6 +114,7 @@ class BasicSearchView(ListView):
     Helper for you to build common style of search page for emlo editor
     """
     paginate_by = 100
+    max_paginate_by = core_constant.MAX_NUM_RECORD
     paginator_class = CachedCountPaginator
     template_name = 'core/basic_search_page.html'
     context_object_name = 'records'
@@ -565,7 +565,12 @@ class BasicSearchView(ListView):
             return resp_fn(request, *args, **kwargs)
 
         if num_record := request.GET.get('num_record'):
-            self.paginate_by = num_record
+            try:
+                num_record = int(num_record)
+            except (TypeError, ValueError):
+                num_record = None
+            if num_record and num_record > 0:
+                self.paginate_by = min(num_record, self.max_paginate_by)
 
         # response for search query
         return super().get(request, *args, **kwargs)

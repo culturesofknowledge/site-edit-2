@@ -175,14 +175,25 @@ class ComplexFullFormHandlerTest(BasicFullFormHandlerTest):
 
     def build_ffh(self):
 
-        request_data = {
-            'image-TOTAL_FORMS': ['1'], 'image-INITIAL_FORMS': ['0'], 'image-MIN_NUM_FORMS': ['0'],
-            'image-MAX_NUM_FORMS': ['1000'], 'selected_image': [''], 'image-0-image_id': [''],
-            'image-0-image_filename': [''], 'image-0-thumbnail': [''], 'image-0-credits': [''],
-            'image-0-licence_details': [''],
-            'image-0-licence_url': ['http://cofk2.bodleian.ox.ac.uk/culturesofknowledge/licence/terms_of_use.html'],
-            'image-0-can_be_displayed': ['1'], 'image-0-display_order': ['1']
-        }
+        # DumpComplexFullFormHandler binds every formset to this same request_data,
+        # so each formset's own prefix needs valid (if empty) management form data,
+        # otherwise Django reports "ManagementForm data is missing" as a non-form error.
+        # request_data is a plain dict (not a QueryDict), so values must be scalars --
+        # a list value (e.g. ['0']) fails IntegerField parsing and trips that same error.
+        request_data = {}
+        for prefix in ('res', 'comment', 'recref_organisation', 'recref_member'):
+            request_data.update({
+                f'{prefix}-TOTAL_FORMS': '0', f'{prefix}-INITIAL_FORMS': '0',
+                f'{prefix}-MIN_NUM_FORMS': '0', f'{prefix}-MAX_NUM_FORMS': '1000',
+            })
+        request_data.update({
+            'image-TOTAL_FORMS': '1', 'image-INITIAL_FORMS': '0', 'image-MIN_NUM_FORMS': '0',
+            'image-MAX_NUM_FORMS': '1000', 'selected_image': '', 'image-0-image_id': '',
+            'image-0-image_filename': '', 'image-0-thumbnail': '', 'image-0-credits': '',
+            'image-0-licence_details': '',
+            'image-0-licence_url': 'http://cofk2.bodleian.ox.ac.uk/culturesofknowledge/licence/terms_of_use.html',
+            'image-0-can_be_displayed': '1', 'image-0-display_order': '1'
+        })
         return DumpComplexFullFormHandler(pk=9999, request_data=request_data,)
 
     def test_all_named_form_formset(self):

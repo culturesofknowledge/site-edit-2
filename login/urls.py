@@ -1,9 +1,9 @@
 from django.contrib.auth import views as auth_views
-from django.contrib.auth.views import LogoutView, PasswordChangeView
+from django.contrib.auth.views import PasswordChangeView
 from django.urls import path, reverse_lazy
 
 from . import views
-from .views import EmloLoginView, EmloLogoutView, password_changed
+from .views import EmloLoginView, EmloLogoutView, password_changed, EmloPasswordResetView
 
 app_name = 'login'
 urlpatterns = [
@@ -13,7 +13,7 @@ urlpatterns = [
                                       success_url='password-changed'), name='change-password'),
     path('password-changed', password_changed, name='password-changed'),
     path('logout', EmloLogoutView.as_view(), name='logout'),
-    path('password-reset/', auth_views.PasswordResetView.as_view(
+    path('password-reset/', EmloPasswordResetView.as_view(
         template_name='login/password-reset.html',
         email_template_name='login/password-reset-email.txt',
         success_url=reverse_lazy('login:password_reset_done'),

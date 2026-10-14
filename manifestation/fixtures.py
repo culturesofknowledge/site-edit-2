@@ -1,4 +1,3 @@
-from location.models import CofkUnionLocation
 from manifestation.models import CofkUnionManifestation
 
 manif_dict_a = dict(
