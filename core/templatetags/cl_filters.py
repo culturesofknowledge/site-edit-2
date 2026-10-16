@@ -9,7 +9,7 @@ from django.utils.safestring import mark_safe
 from django.utils.html import conditional_escape, escape
 
 from core.constant import ENTITIES
-from core.helper import data_serv
+from core.helper import data_serv, query_cache_serv
 
 STANDARD_DATETIME_FORMAT = "d M Y H:i"
 
@@ -22,6 +22,15 @@ def standard_datetime(value):
     if not value:
         return ''
     return date_filter(value, STANDARD_DATETIME_FORMAT)
+
+
+@register.filter
+def display_user(username):
+    """Translate a username to the user's display name, e.g. 'Tony Langley'."""
+    if not username:
+        return ''
+    username = str(username)
+    return query_cache_serv.create_username_map().get(username, username)
 
 
 @register.filter

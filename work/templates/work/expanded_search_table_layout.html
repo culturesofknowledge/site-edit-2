@@ -121,7 +121,7 @@
                 {{ r.other_details }}
             </td>
             <td class="col-last-edit">
-                {{ r.change_timestamp|standard_datetime }} by {{ r.change_user }}<br/>
+                {{ r.change_timestamp|standard_datetime }} by {{ r.change_user|display_user }}<br/>
                 Source: {{ r.accession_code }}<br/>
                 [{{ r.catalogue }}]
             </td>

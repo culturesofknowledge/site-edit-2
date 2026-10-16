@@ -11,7 +11,7 @@
             <span class="desc-id">{{ descriptor.model_name }} ID {{ descriptor.id }}.</span>
             {% if descriptor.change_timestamp %}
                 Last change {{ descriptor.change_timestamp|standard_datetime }}
-                    by {{ descriptor.change_user }}
+                    by {{ descriptor.change_user|display_user }}
             {% endif %}
             </i>
         </small>
