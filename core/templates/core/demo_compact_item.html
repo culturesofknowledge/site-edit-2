@@ -14,7 +14,7 @@
 
             <dt>Last edited by </dt>
             <dd>
-                {{ record.change_user }}<br/>
+                {{ record.change_user|display_user }}<br/>
                 {{ record.change_timestamp|standard_datetime }}
             </dd>
         </dl>

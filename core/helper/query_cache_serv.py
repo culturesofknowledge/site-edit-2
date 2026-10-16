@@ -8,6 +8,28 @@ from login.models import CofkUser
 ck_all_union_relationship_types = 'all_union_relationship_types'
 
 
+def user_display_name(user: CofkUser) -> str:
+    """Resolve the name to display for a user.
+
+    1. forename and surname -> both, combined
+    2. only one of them -> whichever is available
+    3. neither -> the local part of the email
+    4. nothing usable -> the username
+    """
+    names = [(user.forename or '').strip(), (user.surname or '').strip()]
+    name = ' '.join(n for n in names if n)
+    if name:
+        return name
+
+    email = (user.email or '').strip()
+    if email:
+        local_part = email.split('@')[0].strip()
+        if local_part:
+            return local_part
+
+    return user.username
+
+
 def create_username_map():
     def _fn():
         user_map = {'Initial import': 'Initial import'}
@@ -15,10 +37,7 @@ def create_username_map():
             user_map[val] = 'SysAdmin'
 
         for user in CofkUser.objects.iterator():
-            forename = user.forename or ''
-            surname = user.surname or ''
-            user_map[user.username] = (f'{forename.strip()} {surname.strip()}'
-                                       if forename or surname else user.username)
+            user_map[user.username] = user_display_name(user)
 
         return user_map
 
