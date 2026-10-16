@@ -189,10 +189,6 @@ class CofkEntity:
             for kw_field in [k for k in self.fields['keywords'] if k in entity and entity[k]]:
                 entity[kw_field] = join_list(entity[kw_field])
 
-        if 'shelfmarks' in self.fields:
-            for shelfmark_field in [s for s in self.fields['shelfmarks'] if s in entity and entity[s]]:
-                self.check_shelfmark(shelfmark_field, entity[shelfmark_field])
-
     def add_error(self, error_msg: str | None, entity=None, row=None):
         if not row:
             row = self.row
@@ -324,7 +320,3 @@ class CofkEntity:
             self.add_error(f'There is neither a {id_field} nor a {name_field}.')
         elif place_name and not place_id and place_name.strip().lower() == 'unknown':
             self.add_error(f'{name_field}: must not be "unknown" without a corresponding id.')
-
-    def check_shelfmark(self, field: str, value: str):
-        if '-' in value:
-            self.add_error(f'{field}: Use an en dash between folio numbers, not a hyphen.')
