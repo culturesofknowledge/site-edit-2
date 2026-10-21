@@ -1,0 +1,19 @@
+# extending docker-compose.yml
+# Legacy EMLO database, only needed while migrating data from old emlo to new
+# (see docs/running_site-edit-2_using_docker.md and devscript/docker_fresh_setup.sh)
+
+services:
+  db_old:
+    image: postgres:14
+    environment:
+      PGDATA: /var/lib/postgresql/data/emlo_db/
+    volumes:
+      - old_data:/var/lib/postgresql/data
+      - ../../db_dump/:/db_dump
+    env_file:
+      - .db_old_env
+    ports:
+      - 55432:5432
+
+volumes:
+  old_data:
