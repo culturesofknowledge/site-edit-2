@@ -612,7 +612,9 @@ class RelationshipFrontendCsv(HeaderValues):
             ('cofk_union_manifestation', ('manifestation_id', 'published'),),
         ]:
             table_dict = {}
-            with open(csv_home_dir / f'{table_name}.csv', mode='r') as csvfile:
+            # export_all writes files without the 'cofk_union_' prefix (e.g. work.csv)
+            csv_filename = table_name.removeprefix('cofk_union_')
+            with open(csv_home_dir / f'{csv_filename}.csv', mode='r') as csvfile:
                 for row_dict in csv.DictReader(csvfile):
                     id_val = row_dict[id_field]
                     new_id_val = to_db_pk(table_name, id_val)
