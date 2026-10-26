@@ -12,7 +12,7 @@ from typing import Iterable, Callable
 
 import requests
 from django.db import models
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Exists, OuterRef
 from urllib3.exceptions import InsecureRequestWarning
 
 import person.subqueries
@@ -692,7 +692,18 @@ def preloaded_csv_settings(objects_factory, target_csv_type_factory, model_class
 
 def find_all_recrefs():
     for recref_class in recref_serv.find_all_recref_class():
-        for r in recref_class.objects.iterator():
+        # skip orphan rows whose linked record no longer exists (FK constraints
+        # can be bypassed, e.g. data_migration runs with session_replication_role = 'replica')
+        valid = Q()
+        for member in recref_serv.get_bounded_members(recref_class):
+            field = member.field
+            valid &= Q(Exists(field.related_model.objects.filter(pk=OuterRef(field.attname))))
+
+        n_orphans = recref_class.objects.exclude(valid).count()
+        if n_orphans:
+            log.warning(f'skipping {n_orphans} orphan relationships in [{recref_class._meta.db_table}]')
+
+        for r in recref_class.objects.filter(valid).iterator():
             yield r
 
     # manif, work relationship
