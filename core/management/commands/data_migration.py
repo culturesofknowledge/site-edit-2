@@ -154,6 +154,7 @@ class Command(BaseCommand):
         parser.add_argument('-a', '--include-audit', action='store_true', default=False)
 
     def handle(self, *args, **options):
+
         data_migration(user=options['user'],
                        password=options['password'],
                        database=options['database'],
@@ -434,6 +435,40 @@ def _val_handler_work_drop_language_of_work(row: dict, conn) -> dict:
     if 'language_of_work' in row:
         del row['language_of_work']
     return row
+
+
+def migrate_text_only_language_of_work(conn):
+    """ some legacy works (e.g. the 2018 cofkbot bulk import) only have their language in the
+    legacy cofk_union_work.language_of_work text column, which is dropped during migration,
+    and have no cofk_union_language_of_work rows. Create the missing rows from that text,
+    e.g. 'English, Latin' or 'French (main language)'
+    """
+    start_sec = time.time()
+    name_code_map = dict(Iso639LanguageCode.objects.values_list('language_name', 'code_639_3'))
+    existing_work_ids = set(CofkUnionLanguageOfWork.objects.values_list('work_id', flat=True).distinct())
+    valid_work_ids = set(CofkUnionWork.objects.values_list('work_id', flat=True))
+
+    sql = '''
+        select w.work_id, w.language_of_work from cofk_union_work w
+        where coalesce(w.language_of_work, '') <> ''
+        and not exists (select 1 from cofk_union_language_of_work l where l.work_id = w.work_id)
+    '''
+    langs = []
+    with conn.cursor() as cursor:
+        cursor.execute(sql)
+        for work_id, text in cursor.fetchall():
+            if work_id in existing_work_ids or work_id not in valid_work_ids:
+                continue
+            for token in filter(None, (t.strip() for t in text.split(','))):
+                name, notes = re.fullmatch(r'(.+?)(?:\s*\((.*)\))?', token).groups()
+                if not (code := name_code_map.get(name.strip())):
+                    log.warning(f'unknown language [{token}] for work [{work_id}]')
+                    continue
+                langs.append(CofkUnionLanguageOfWork(work_id=work_id, language_code_id=code, notes=notes))
+
+    CofkUnionLanguageOfWork.objects.bulk_create(langs, ignore_conflicts=True)
+    log_save_records(f'{CofkUnionLanguageOfWork.__module__}.CofkUnionLanguageOfWork (from text language_of_work)',
+                     len(langs), time.time() - start_sec, ' created records')
 
 
 def _val_handler_work_zero_date_to_null(row: dict, conn) -> dict:
@@ -807,6 +842,7 @@ def data_migration(user, password, database, host, port):
                               int_pk_col_name='iwork_id', )
     clone_rows_by_model_class(conn, CofkUnionLanguageOfWork, col_val_handler_fn_list=[_val_handler_language],
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkUnionLanguageOfWork))
+    migrate_text_only_language_of_work(conn)
 
     clone_rows_by_model_class(conn, CofkCollectWork,
                               check_duplicate_fn=create_check_fn_by_unique_together_model(CofkCollectWork),

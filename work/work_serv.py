@@ -406,7 +406,9 @@ class DisplayableWork(CofkUnionWork):
 
     @property
     def language_of_work(self) -> str:
-        return ", ".join([format_language(l) for l in self.language_set.all()])
+        # sorted by language name
+        langs = sorted(self.language_set.all(), key=lambda l: l.language_code.language_name)
+        return ", ".join([format_language(l) for l in langs])
 
     @property
     def general_notes(self) -> str:

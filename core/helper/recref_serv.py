@@ -219,6 +219,13 @@ def find_relationship_type(relationship_code: str) -> CofkUnionRelationshipType 
 
 
 def get_left_right_rel_obj(recref: Recref)-> tuple[Model, Model]:
+    left_col, right_col = get_left_right_rel_cols(recref)
+    left_rel_obj = left_col.get_object(recref)
+    right_rel_obj = right_col.get_object(recref)
+    return left_rel_obj, right_rel_obj
+
+
+def get_left_right_rel_cols(recref: Recref) -> tuple[ForwardManyToOneDescriptor, ForwardManyToOneDescriptor]:
     bounded_members = set(get_bounded_members(recref.__class__)[:2])
     bounded_member_fields = {f.field.name for f in bounded_members}
     left_right_field = ((l, r) for rel_type, l, r in recref_left_right_list
@@ -237,10 +244,7 @@ def get_left_right_rel_obj(recref: Recref)-> tuple[Model, Model]:
             left_col, right_col = col_a, col_b
         else:
             left_col, right_col = col_b, col_a
-
-    left_rel_obj = left_col.get_object(recref)
-    right_rel_obj = right_col.get_object(recref)
-    return left_rel_obj, right_rel_obj
+    return left_col, right_col
 
 
 def get_recref_rel_desc(recref: Recref,

@@ -28,7 +28,7 @@ from location.models import CofkUnionLocation
 from location.subqueries import create_sql_count_work_by_location
 from manifestation.models import CofkUnionManifestation
 from person import person_serv
-from person.models import CofkUnionPerson
+from person.models import CofkUnionPerson, CofkPersonPersonMap
 from work import work_serv
 from work.models import CofkUnionWork
 from work.work_serv import DisplayableWork
@@ -404,11 +404,15 @@ class PersonFrontendCsv(HeaderValues):
         return obj_to_values_by_convert_map(obj, self.get_header_list(), convert_map)
 
 
+def to_display_username(username: str) -> str:
+    # legacy usernames (e.g. cofkbot) have no CofkUser record, export them as they are
+    return cache_username_map.get(username) or username or 'Unknown User'
+
+
 def creation_change_user_settings() -> dict:
-    default_user = 'Unknown User'
     return {
-        'creation_user': lambda o: cache_username_map.get(o.creation_user, default_user),
-        'change_user': lambda o: cache_username_map.get(o.change_user, default_user),
+        'creation_user': lambda o: to_display_username(o.creation_user),
+        'change_user': lambda o: to_display_username(o.change_user),
         'creation_timestamp': lambda o: to_datetime_ms_str(o.creation_timestamp),
         'change_timestamp': lambda o: to_datetime_ms_str(o.change_timestamp),
     }
@@ -435,7 +439,7 @@ class RelTypeFrontendCsv(HeaderValues):
 
 
 def is_http_url(url: str) -> bool:
-    return isinstance(url, str) and url.startswith('http')
+    return isinstance(url, str) and url.strip().startswith('http')
 
 
 class UrlAliveChecker:
@@ -458,7 +462,7 @@ class UrlAliveChecker:
 
         log.info('Loading cache_urls_alive...')
         urls = filter(None, urls)
-        urls = (u for u in urls if is_http_url(u))
+        urls = (u.strip() for u in urls if is_http_url(u))
         urls = set(urls)
         self.cache_urls_alive = self._check_urls(urls, self.n_thread)
 
@@ -478,12 +482,21 @@ class UrlAliveChecker:
         return self.cache_urls_alive.get(url, False)
 
 
-def is_url_for_published(url: str, url_alive_checker: UrlAliveChecker) -> int:
-    if not url:
+def is_url_for_published(url: str, url_alive_checker: UrlAliveChecker,
+                         non_img_url_published=False) -> int:
+    """
+    non_img_url_published
+        if True, a url that is neither http nor an uploaded image (e.g. missing scheme
+        or free text) counts as published instead of being checked as an image file
+    """
+    if not url or not url.strip():
         return 1
+    url = url.strip()
     if is_http_url(url):
         return int(url_alive_checker.is_alive(url))
-    return media_serv.is_img_exists_by_url(url)
+    if non_img_url_published and media_serv.IMG_URL not in url:
+        return 1
+    return int(media_serv.is_img_exists_by_url(url))
 
 
 class ResourceFrontendCsv(HeaderValues):
@@ -520,7 +533,7 @@ class ResourceFrontendCsv(HeaderValues):
         return name
 
     def _get_published(self, obj):
-        return is_url_for_published(obj.resource_url, self.url_alive_checker)
+        return is_url_for_published(obj.resource_url, self.url_alive_checker, non_img_url_published=True)
 
 
 class WorkFrontendCsv(HeaderValues):
@@ -643,11 +656,22 @@ class RelationshipFrontendCsv(HeaderValues):
         db_id = to_db_pk(table_name, id_value)
         return self.cache_published[table_name].get(db_id, False)
 
+    @staticmethod
+    def _get_left_right_cols(obj):
+        # legacy cofk_union_relationship (and data_migration) always has person on the left,
+        # even for the symmetric types that recref_settings orders as (related, person)
+        if isinstance(obj, CofkPersonPersonMap):
+            return CofkPersonPersonMap.person, CofkPersonPersonMap.related
+        return recref_serv.get_left_right_rel_cols(obj)
+
     def obj_to_values(self, obj) -> Iterable:
         if isinstance(obj, dict):
             value_dict = obj
         else:
-            left_obj, right_obj = recref_serv.get_left_right_rel_obj(obj)
+            # only table name and pk are needed, so build unsaved instances from the
+            # FK ids instead of querying both objects for every row
+            left_obj, right_obj = (col.field.related_model(pk=getattr(obj, col.field.attname))
+                                   for col in self._get_left_right_cols(obj))
             convert_map = {
                 'relationship_id': to_csv_pk,
                 'left_table_name': lambda o: model_serv.get_table_name(left_obj),
@@ -707,19 +731,20 @@ def find_all_recrefs():
             yield r
 
     # manif, work relationship
-    for manif in CofkUnionManifestation.objects.iterator():
+    work_exists = Exists(CofkUnionWork.objects.filter(pk=OuterRef('work_id')))
+    for manif in CofkUnionManifestation.objects.annotate(work_exists=work_exists).iterator():
         manif: CofkUnionManifestation
         fake_work = CofkUnionWork(pk=manif.work_id)
         yield {
             'relationship_id': f'{manif.pk}-{manif.work_id}',
             'left_table_name': model_serv.get_table_name(manif),
             'left_id_value': to_csv_pk(manif),
-            'relationship_type': constant.REL_TYPE_IS_MANIF_OF,
+            'relationship_type': f'cofk_union_relationship_type-{constant.REL_TYPE_IS_MANIF_OF}',
             'right_table_name': model_serv.get_table_name(fake_work),
             'right_id_value': to_csv_pk(fake_work),
             'relationship_valid_from': '',
             'relationship_valid_till': '',
-            'published': 1 if CofkUnionWork.objects.filter(pk=manif.work_id).exists() else 0,
+            'published': 1 if manif.work_exists else 0,
         }
 
 
