@@ -19,7 +19,7 @@ import person.subqueries
 import person.views
 from cllib import thread_utils
 from core import constant
-from core.constant import REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE_MENTION
+from core.constant import REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE_MENTION_PLACE
 from core.helper import query_serv, recref_serv, date_serv, query_cache_serv, model_serv, media_serv
 from core.helper.view_components import HeaderValues, DownloadCsvHandler
 from core.models import CofkUnionImage, CofkUnionRelationshipType, CofkUnionComment, CofkUnionResource
@@ -700,7 +700,7 @@ def create_location_queryset():
     annotate = {
         'sent_count': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_FROM]),
         'recd_count': create_sql_count_work_by_location([REL_TYPE_WAS_SENT_TO]),
-        'mentioned_count': create_sql_count_work_by_location([REL_TYPE_MENTION]),
+        'mentioned_count': create_sql_count_work_by_location([REL_TYPE_MENTION_PLACE]),
     }
     queryset = query_serv.update_queryset(queryset, CofkUnionLocation, annotate=annotate)
     return queryset
