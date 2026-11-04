@@ -155,6 +155,12 @@ class ImageForm(ModelForm):
     is_delete = ZeroOneCheckboxField(is_str=False, label='Delete image')
     is_delete.widget.attrs.update({'class': 'warn-checked'})
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'can_be_displayed' in self.initial:
+            is_hidden = self.initial['can_be_displayed'] in CofkUnionImage.NOT_DISPLAYED_VALUES
+            self.initial['can_be_displayed'] = '0' if is_hidden else '1'
+
     def clean_display_order(self):
         display_order = self.cleaned_data.get('display_order')
         try:
