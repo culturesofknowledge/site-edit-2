@@ -309,8 +309,6 @@ class CofkEntity:
     def check_notes(self, field: str, value: str):
         if value[0].islower():
             self.add_error(f'{field}: Notes must start with an upper case letter.')
-        if value[-1] != '.':
-            self.add_error(f'{field}: Notes must end with a full stop.')
 
     def check_place(self, id_field: str, name_field: str, entity: dict):
         place_id = entity.get(id_field)
