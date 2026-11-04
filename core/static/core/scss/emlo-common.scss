@@ -580,35 +580,118 @@ fieldset:has(#header_abstract) .choices-container .choice-item {
   margin-top: $space-unit;
 }
 
+// Delete confirmation page (core/delete_confirm.html)
+.del-confirm-card {
+  max-width: 42rem;
+  margin-top: $space-sm;
+  padding: $space-md;
+  background-color: $white;
+  border: 1px solid $lighter-grey;
+  border-radius: $space-xs;
+  color: $black;
+  font-size: 15px;
+  line-height: 1.5;
+
+  p {
+    margin: 0;
+  }
+}
+
+.del-confirm-summary {
+  padding-bottom: $space-md;
+}
+
+.del-confirm-heading {
+  margin: 0 0 $space-xs;
+  font-family: sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: $dark-grey;
+}
+
+.del-confirm-title {
+  font-size: 18px;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.del-confirm-detail {
+  margin-top: $space-xs !important;
+  color: $dark-grey;
+  word-break: break-word;
+}
+
+// warning panel holding the confirm checkbox
 .del-confirm-div {
-  background-color: #f2f2f2;
-  color: $del-red;
+  padding: $space-sm $space-unit;
+  background-color: #fbeef1;
+  border-left: 4px solid $del-red;
+  border-radius: $space-xxs;
+
+  .del-confirm-warning {
+    margin-bottom: $space-sm;
+    color: $black;
+  }
 
   #confirm-label {
+    margin: 0;
     color: $del-red !important;
-    margin-top: 1rem;
-    margin-bottom: 1rem;
+    font-weight: 600;
     cursor: pointer;
+  }
+}
+
+.del-confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-sm;
+  margin-top: $space-md;
+  padding-top: $space-md;
+  border-top: 1px solid $lighter-grey;
+
+  // Cancel (a link) and Delete (a button) share one shape so they match
+  #cancel-btn, #del-btn {
+    @extend .btn;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 37px;
+    min-width: 6.5rem;
+    padding: 0 $space-sm;
+    font-family: sans-serif;
+    font-size: 15px;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.045em;
   }
 
   #cancel-btn {
-    @extend .margin-right ;
-    @extend .btn;
-    height: 37px;
-    text-transform: uppercase;
-    letter-spacing: 0.045em;
-    font-size: 15px;
-  }
-
-  #del-btn:disabled {
-    background-color: silver;
-    cursor: not-allowed;
+    background-color: $white;
+    border-color: #24201e;
+    color: $black;
   }
 
   #del-btn {
     background-color: $del-red;
-  }
+    border-color: $del-red;
+    color: $white;
 
+    &:hover:not(:disabled), &:focus-visible:not(:disabled) {
+      background-color: darken($del-red, 8%);
+      border-color: darken($del-red, 8%);
+      color: $white;
+    }
+
+    &:disabled {
+      background-color: #d9d9d9;
+      border-color: #b3b3b3;
+      color: #4d4d4d;
+      cursor: not-allowed;
+    }
+  }
 }
 
 

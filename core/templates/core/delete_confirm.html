@@ -2,31 +2,33 @@
 
 {% block content %}
     <h1>Delete {{ name }}</h1>
-    <form method="post">
+    <form method="post" class="del-confirm-card">
         {% csrf_token %}
 
-        <h4>{{ name | capfirst }} to be deleted:</h4>
-        <div class="margin-bottom">
+        <section class="del-confirm-summary">
+            <h2 class="del-confirm-heading">{{ name | capfirst }} to be deleted</h2>
             {% for obj_desc in obj_desc_list %}
-                <div>
-                    {{ obj_desc }}
-                </div>
-
+                {% if forloop.first %}
+                    <p class="del-confirm-title">{{ obj_desc }}</p>
+                {% else %}
+                    <p class="del-confirm-detail">{{ obj_desc }}</p>
+                {% endif %}
             {% endfor %}
-        </div>
+        </section>
 
         <div class="del-confirm-div">
-            <h4>To delete, first tick the 'Confirm Deletion' checkbox then click the 'Delete' button. </h4>
+            <p class="del-confirm-warning">
+                This cannot be undone. To delete, first tick the 'Confirm Deletion' checkbox, then click the 'Delete' button.
+            </p>
             <input type="checkbox" id="confirm-box">
             <label id="confirm-label" for="confirm-box" class="control">
                 Tick to confirm deletion of this {{ name }}
             </label>
+        </div>
 
-            <div class="row-no-margin">
-                <a id="cancel-btn" class="margin-right btn" href="{{ cancel_url }}"> Cancel </a>
-                <button id="del-btn" disabled>Delete</button>
-            </div>
-
+        <div class="del-confirm-actions">
+            <a id="cancel-btn" href="{{ cancel_url }}">Cancel</a>
+            <button id="del-btn" type="submit" disabled>Delete</button>
         </div>
 
     </form>
