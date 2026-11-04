@@ -17,9 +17,9 @@ from core.models import Iso639LanguageCode, CofkUnionResource, CofkUnionSubject,
 from location import fixtures as location_fixtures
 from login.fixtures import create_test_user__a
 from manifestation import fixtures as manif_fixtures
-from manifestation.models import CofkUnionManifestation
+from manifestation.models import CofkUnionManifestation, CofkManifManifMap
 from person import fixtures as person_fixtures
-from work import fixtures as work_fixtures, work_serv
+from work import fixtures as work_fixtures, work_serv, subqueries
 from django.contrib.auth.models import AnonymousUser
 from django.test import TestCase, RequestFactory
 from django.urls import reverse
@@ -858,3 +858,44 @@ class WorkSearchToBeDeletedTests(TestCase):
         view.setup(req)
         self.assertNotIn('Show only works marked for deletion', view.simplified_query)
         self.assertNotIn('Exclude works marked for deletion', view.simplified_query)
+
+
+class WorkSearchManifEnclosureTests(TestCase):
+    """ The encloser is the `manif_to` and the enclosed letter is the `manif_from` of an 'enclosed_in' relationship """
+
+    def setUp(self):
+        self.work_encloser = CofkUnionWork.objects.create(work_id='w_encloser', iwork_id=9101)
+        self.work_enclosed = CofkUnionWork.objects.create(work_id='w_enclosed', iwork_id=9102)
+        self.work_unrelated = CofkUnionWork.objects.create(work_id='w_unrelated', iwork_id=9103)
+        encloser = CofkUnionManifestation.objects.create(manifestation_id='m_encloser', work=self.work_encloser,
+                                                         id_number_or_shelfmark='SM-OUTER')
+        enclosed = CofkUnionManifestation.objects.create(manifestation_id='m_enclosed', work=self.work_enclosed,
+                                                         id_number_or_shelfmark='SM-INNER')
+        CofkUnionManifestation.objects.create(manifestation_id='m_unrelated', work=self.work_unrelated,
+                                              id_number_or_shelfmark='SM-OTHER')
+        CofkManifManifMap.objects.create(manif_from=enclosed, manif_to=encloser,
+                                         relationship_type=constant.REL_TYPE_ENCLOSED_IN)
+
+    def _search(self, value):
+        condition = work_serv.lookup_manifestations_searchable(query_serv.choices_lookup_map['contains'],
+                                                               'manifestations_searchable', value)
+        return set(CofkUnionWork.objects.filter(condition))
+
+    def test_had_enclosure(self):
+        self.assertEqual(self._search('Had enclosure'), {self.work_encloser})
+
+    def test_was_enclosed_in(self):
+        self.assertEqual(self._search('Was enclosed in'), {self.work_enclosed})
+
+    def test_label_with_shelfmark(self):
+        self.assertEqual(self._search('Had enclosure: SM-INNER'), {self.work_encloser})
+        self.assertEqual(self._search('Was enclosed in: SM-OUTER'), {self.work_enclosed})
+
+    def test_label_with_own_shelfmark_does_not_match(self):
+        self.assertEqual(self._search('Had enclosure: SM-OUTER'), set())
+        self.assertEqual(self._search('Was enclosed in: SM-INNER'), set())
+
+    def test_searchable_annotation_labels(self):
+        works = CofkUnionWork.objects.annotate(manif_text=subqueries.create_joined_manif_ann_field())
+        self.assertIn('Had enclosure: SM-INNER', works.get(pk=self.work_encloser.pk).manif_text)
+        self.assertIn('Was enclosed in: SM-OUTER', works.get(pk=self.work_enclosed.pk).manif_text)
