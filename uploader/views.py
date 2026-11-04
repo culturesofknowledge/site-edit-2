@@ -165,7 +165,7 @@ def _upload_review_works(request, upload: CofkCollectUpload):
                'doc_types': list(doc_types),
                'catalogues': list(catalogues),
                'per_page': per_page,
-               'per_page_options': [1000, 2500, 5000]
+               'per_page_options': [1000, 2500, constant.MAX_UPLOAD_REVIEW_PER_PAGE]
                }
 
     for prop in ['work_id', 'accession_code', 'catalogue_code']:

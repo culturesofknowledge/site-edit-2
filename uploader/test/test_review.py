@@ -300,7 +300,7 @@ class TestReviewPagination(UploadIncludedFactoryTestCase):
     def test_per_page_is_capped_at_max(self):
         response = self.client.get(self.review_url, {'per_page': 99999})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['works_page'].paginator.per_page, 1000)
+        self.assertEqual(response.context['works_page'].paginator.per_page, 5000)
 
     def test_valid_per_page_is_respected(self):
         response = self.client.get(self.review_url, {'per_page': 50})
