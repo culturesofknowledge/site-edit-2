@@ -52,7 +52,7 @@ class CofkUnionWork(models.Model, RecordTracker):
                                            db_column='original_catalogue', blank=True, null=False,
                                            to_field='catalogue_code', default='', db_constraint=False,
                                            related_name='work')
-    accession_code = models.CharField(max_length=1000, blank=True, null=True)
+    accession_code = models.TextField(blank=True, null=True)
     work_to_be_deleted = models.SmallIntegerField(default=0)
     iwork_id = models.IntegerField(unique=True, )
     editors_notes = models.TextField(blank=True, null=True)
