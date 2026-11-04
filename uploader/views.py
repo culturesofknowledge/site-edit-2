@@ -92,7 +92,8 @@ class AddUploadView(TemplateView):
                 return self.get(self, request, *args, **kwargs)
 
             if settings.UPLOAD_ASYNCHRONOUS_FILESIZE_LIMIT == 0 or size > settings.UPLOAD_ASYNCHRONOUS_FILESIZE_LIMIT:
-                task = AsyncTask('core.helper.uploader_serv.handle_upload', upload, True, filename)
+                task = AsyncTask('core.helper.uploader_serv.handle_upload', upload, True, filename,
+                                 hook='core.helper.uploader_serv.notify_upload_failed')
                 task.run()
 
                 kwargs['report'] = {'async': True,
@@ -175,7 +176,8 @@ def _upload_review_works(request, upload: CofkCollectUpload):
     if 'confirm' in request.POST and 'action' in request.POST:
         if request.POST['action'] == 'accept':
             task = AsyncTask('uploader.review.accept_works', context, upload,
-                             email_addresses=request.user.email)
+                             email_addresses=request.user.email,
+                             hook='uploader.review.notify_accept_failed')
             task.run()
 
             msg = (f'The upload {upload.upload_name} is being processed. '
