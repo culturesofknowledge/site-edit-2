@@ -194,7 +194,8 @@ calendar_choices_person = [
 
 
 def decode_calendar(calendar_code, default='Unknown') -> str:
-    for code, name in calendar_choices:
+    # use the plain labels, the help text in calendar_choices is only for the forms
+    for code, name in calendar_choices_person:
         if code == calendar_code:
             return name
     return default
