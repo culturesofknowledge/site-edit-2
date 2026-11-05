@@ -293,7 +293,14 @@ CSRF_COOKIE_SECURE = False
 # export
 # root url for generate url in export
 EXPORT_ROOT_URL = 'http://localhost:8020'
-EXPORTER_SCHEDULE_TYPE = 'W'  # D: Daily, I: Minutes, H: Hourly, W: Weekly, M: Monthly, Q: Quarterly, Y: Yearly
+# scheduled exports for the front end, see "Export" in docs/admin_tasks.md
+# regular export (need_index=0), also the time an export requested from the dashboard runs
+EXPORTER_SCHEDULE_TYPE = 'D'  # D: Daily, I: Minutes, H: Hourly, W: Weekly, M: Monthly, Q: Quarterly, Y: Yearly
+EXPORTER_SCHEDULE_MINUTES = None  # interval in minutes, only used when EXPORTER_SCHEDULE_TYPE = 'I'
+EXPORTER_SCHEDULE_TIME = '00:00'  # HH:MM, 24 hour, server local time
+# weekly export (need_index=1)
+EXPORTER_INDEX_WEEKDAY = 6  # 0: Monday ... 6: Sunday
+EXPORTER_INDEX_TIME = '02:00'  # HH:MM, 24 hour, server local time
 
 # Test
 SELENIUM_CHROME_LOCAL_DRIVER = False

@@ -11,6 +11,12 @@ CSRF_TRUSTED_ORIGINS = ['http://192.168.56.10', ]
 # EXPORT_ROOT_URL = 'http://your-emlo-edit-hostname'
 # UPLOAD_ROOT_URL = 'http://your-emlo-edit-hostname'
 
+# # scheduled exports for the front end, see "Export" in docs/admin_tasks.md
+# EXPORTER_SCHEDULE_TYPE = 'D'
+# EXPORTER_SCHEDULE_TIME = '00:00'
+# EXPORTER_INDEX_WEEKDAY = 6  # 0: Monday ... 6: Sunday
+# EXPORTER_INDEX_TIME = '02:00'
+
 
 ##### Email
 # # Host for sending email.

@@ -99,7 +99,7 @@
             {% if is_exporting %}
                 <p>Exporter is pending...</p>
             {% else %}
-                <p>Click to start an export this evening</p>
+                <p>Click to schedule an export at the next export time</p>
                 <form action="{% url 'misc:trigger_export' %}" method="post">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-primary">Export</button>

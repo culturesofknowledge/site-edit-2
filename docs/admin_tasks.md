@@ -200,19 +200,75 @@ Run after the first deployment, and again whenever the role definitions change i
 
 ## Export
 
-Exporting produces a set of CSV files of the whole dataset. It is a long-running job, so the dashboard schedules it
-rather than running it immediately.
+Exporting produces a set of CSV files of the whole dataset for the EMLO front end. It is a long-running job, so it
+runs on a schedule in the background worker rather than immediately.
+
+### Scheduled exports and the `need_index` file
+
+Every export writes the CSV files into the export output directory (an `exporter` directory under the application
+home), and then a file called `need_index` in the same directory. It contains `1` if the front end needs to re-index
+the new files into SOLR, and `0` if not. It is written only after all the CSV files are complete, so whatever copies
+the files to the front end should copy `need_index` last.
+
+| Export | When | `need_index` |
+|---|---|---|
+| Regular | Every `EXPORTER_SCHEDULE_TYPE`, from `EXPORTER_SCHEDULE_TIME` (default: daily at 00:00) | `0` |
+| Weekly | Every week on `EXPORTER_INDEX_WEEKDAY` at `EXPORTER_INDEX_TIME` (default: Sunday at 02:00) | `1` |
+| Requested | At the next `EXPORTER_SCHEDULE_TIME` after a user selects **Export** on the dashboard | `1` |
+
+- A request is served by whichever export starts first after the click, so if the regular export runs first it
+  writes `need_index` `1` instead of `0`.
+- Only one export runs at a time. A regular export that finds another export running is skipped. A weekly or
+  requested export that finds one running is retried 30 minutes later.
+- If a weekly or requested export fails, the next export retries it with `need_index` `1`. A failed export leaves the
+  previous files and `need_index` in place.
+- `need_index` is rewritten by every export. The copy to the front end must therefore run after each export and
+  before the next one, or a `1` can be replaced by a `0` before it is picked up.
+
+### Change when the scheduled exports run
+
+1. Set any of these in the deployment's settings file (e.g. `siteedit2/settings/gunweb.py`). Times are 24-hour
+   `HH:MM` in the server's local time.
+   
+   ```python
+   # regular export, also the time a requested export runs
+   EXPORTER_SCHEDULE_TYPE = 'D'      # D: Daily, I: Minutes, H: Hourly, W: Weekly, M: Monthly, Q: Quarterly, Y: Yearly
+   EXPORTER_SCHEDULE_MINUTES = None  # interval in minutes, only used when EXPORTER_SCHEDULE_TYPE = 'I'
+   EXPORTER_SCHEDULE_TIME = '00:00'  # time of the first run; daily and longer schedules keep this time
+   
+   # weekly export with need_index 1
+   EXPORTER_INDEX_WEEKDAY = 6        # 0: Monday ... 6: Sunday
+   EXPORTER_INDEX_TIME = '02:00'
+   ```
+   
+   For example, to export every 6 hours starting at 01:00, and index every Saturday at 03:00:
+   
+   ```python
+   EXPORTER_SCHEDULE_TYPE = 'I'
+   EXPORTER_SCHEDULE_MINUTES = 6 * 60
+   EXPORTER_SCHEDULE_TIME = '01:00'
+   EXPORTER_INDEX_WEEKDAY = 5
+   EXPORTER_INDEX_TIME = '03:00'
+   ```
+
+2. Restart the web site and the background worker. The schedules are updated from the settings at startup, and an
+   invalid value stops the site from starting with an error naming the setting.
+
+3. Check the result in Django admin under **Django Q > Scheduled tasks**: `exporter_regular` and
+   `exporter_weekly_index` show the type and next run. A pending dashboard request shows as `exporter_requested`.
+   Do not edit these rows by hand; they are reset from the settings at the next restart.
 
 ### Trigger an export from the dashboard
 
 1. Log in as a Supervisor.
 2. Scroll to the **Export** section of the dashboard.
-3. Select **Export**. The export is queued and will run during the coming night.
+3. Select **Export**. The export is queued for the next `EXPORTER_SCHEDULE_TIME` (by default the coming midnight) and
+   will write `need_index` `1`.
 4. The section then shows "Exporter is pending...". While this message is displayed, a further request is not needed
    and the button is hidden.
-5. Check the dashboard the next day -- when the message is gone, the run has finished.
+5. Check the dashboard after the run -- when the message is gone, the run has finished.
 6. The scheduled background worker must be running for the job to start; if the message never clears, see
-   [Routine Checks](#routine-checks).
+   [Routine Checks](#routine-checks), and look for "Exporter" messages in `emlo.log` under the application home.
 
 ### Run an export manually
 
