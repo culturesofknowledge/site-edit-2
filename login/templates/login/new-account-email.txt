@@ -1,0 +1,13 @@
+An account has been created for you on the EMLO editing interface.
+
+Your username is: {{ user.username }}
+
+Please click the link below to set your password:
+
+http://{{ domain }}{% url 'login:password_reset_confirm' uidb64=uid token=token %}
+
+Once your password is set, you can log in here with your username:
+
+http://{{ domain }}{% url 'login:gate' %}
+
+You can also log in with your email address, unless another account uses the same email address.

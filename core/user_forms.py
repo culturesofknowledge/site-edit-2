@@ -1,10 +1,13 @@
 from django import forms
+from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.db import transaction
 from django.forms import ModelForm
 
 from core import constant
 from core.form_label_maps import field_label_map
 from core.helper import form_serv, widgets_serv, query_cache_serv
 from core.helper.form_serv import BasicSearchFieldset, SearchCharField
+from login import utils as login_utils
 from login.models import CofkUser
 
 
@@ -34,29 +37,40 @@ class UserForm(ModelForm):
         self.fields['groups'].choices = (
             (group_name_id_map[name], label)
             for name, label in constant.ROLE_DISPLAY_NAMES)
-        if not self.instance.pk:
+        # the username is generated on creation (see save()) and can only be
+        # changed afterwards
+        self.original_username = self.instance.pk or None
+        if not self.original_username:
             del self.fields['username']
 
-    def clean_email(self):
-        # the email becomes the username on creation (see save()), which is a
-        # CharField(max_length=254) primary key -- reject upfront rather than
-        # fail with a raw DB error or a silently truncated username
-        email = self.cleaned_data['email']
+    @property
+    def is_renamed(self) -> bool:
+        return bool(self.original_username) and self.cleaned_data.get('username') != self.original_username
+
+    def clean_username(self):
+        username = self.cleaned_data['username'].strip()
+        if username == self.original_username:
+            return username
+
         username_max_length = CofkUser._meta.get_field('username').max_length
-        if not self.instance.pk and len(email) > username_max_length:
-            raise forms.ValidationError(
-                f'Email is too long to use as a username '
-                f'(max {username_max_length} characters, got {len(email)}).'
-            )
-        return email
+        if len(username) > username_max_length:
+            raise forms.ValidationError(f'Username is too long (max {username_max_length} characters).')
+        UnicodeUsernameValidator()(username)
+        if CofkUser.objects.filter(username__iexact=username).exclude(pk=self.original_username).exists():
+            raise forms.ValidationError(f'The username "{username}" is already taken.')
+        return username
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        if not user.pk:
-            user.username = self.cleaned_data['email']
+        if not self.original_username:
+            user.username = login_utils.generate_username(user.forename, user.surname, user.email)
         if commit:
-            user.save()
-            self.save_m2m()
+            with transaction.atomic():
+                if self.is_renamed:
+                    CofkUser.rename(self.original_username, user.username)
+                user.save()
+                self.save_m2m()
+            query_cache_serv.clear_username_map()
         return user
 
 

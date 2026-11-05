@@ -18,6 +18,7 @@
 
             {% if reset_email_sent is not None %}
                 <div class="margin-bottom new-password-box">
+                    <p>New user created with the username <strong>{{ form.instance.username }}</strong>.</p>
                     {% if reset_email_sent %}
                         An email has been sent to <strong>{{ form.instance.email }}</strong> with a link for
                         <strong>{{ form.instance.username }}</strong> to set their own password. The password is
@@ -47,6 +48,8 @@
                         <label>Username</label>
                         {{ form.username }}
                         {{ form.username.errors }}
+                        <small>Used to log in. Changing it keeps the user's roles and saved queries; records
+                            they edited still show the old username in their history.</small>
                     </div>
                     {% endif %}
                     <div class="margin-bottom">

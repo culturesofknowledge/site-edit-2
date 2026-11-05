@@ -126,20 +126,27 @@ Used on development and staging environments only.
 1. Log in as a Supervisor.
 2. On the dashboard, open **Users**.
 3. Select **Add** to open the blank user form.
-4. Fill in the email address, forename and surname. The email address becomes the username, so it must be unique and
-   not longer than the username limit -- the form will tell you if it is too long.
+4. Fill in the email address, forename and surname. The username is generated from the names as `forename.surname`
+   (or from the part of the email before the `@` when there are no names), with a number added if it is already
+   taken, e.g. `ann.lee2`. Usernames are unique regardless of case. Several accounts may share an email address.
 5. Leave **Is active?** ticked so the person can log in.
 6. Under **Roles**, tick the roles the person should have. Give the Supervisor role only to administrators.
 7. Save the form.
-8. Check the confirmation message at the top of the form. The system generates a password that nobody sees and emails
-   the user a link to set their own. If the message says the email could not be sent, correct the email address and
-   then use [Reset a user's password](#reset-a-users-password).
+8. Check the confirmation message at the top of the form, which shows the generated username. The system generates a
+   password that nobody sees and emails the user their username and a link to set their own password. If the message
+   says the email could not be sent, correct the email address and then use
+   [Reset a user's password](#reset-a-users-password).
+
+Users log in with their username or their email address. An email address shared by several accounts cannot be used
+to log in; the login page asks for the username instead.
 
 ### Edit a user and change roles
 
 1. Open **Users** from the dashboard.
 2. Search by username, forename, surname, email or active status, and open the user from the results.
-3. Change the name, email, active flag or roles as needed.
+3. Change the username, name, email, active flag or roles as needed. A new username must not already be in use,
+   ignoring case. Renaming keeps the user's roles, saved queries and catalogues; records they created or edited, and
+   the audit log, still show the old username.
 4. Save the form. Role changes take effect the next time the user loads a page.
 
 ### Reset a user's password
