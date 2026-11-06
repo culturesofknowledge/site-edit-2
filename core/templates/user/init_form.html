@@ -43,15 +43,20 @@
                 {% include "core/component/form_descriptor.html" with descriptor=form_descriptor %}
                 <fieldset>
                     <legend id="header_user" class="toc-item">User</legend>
-                    {% if user_id %}
                     <div class="margin-bottom">
                         <label>Username</label>
                         {{ form.username }}
                         {{ form.username.errors }}
-                        <small>Used to log in. Changing it keeps the user's roles and saved queries; records
-                            they edited still show the old username in their history.</small>
+                        {% if not user_id %}
+                            <small>Optional. If left empty, the username is created automatically from the
+                                forename and surname (or from the email address).</small>
+                        {% elif form.username.field.disabled %}
+                            <small>The username cannot be changed.</small>
+                        {% else %}
+                            <small>Used to log in. Changing it keeps the user's roles and saved queries; records
+                                they edited still show the old username in their history.</small>
+                        {% endif %}
                     </div>
-                    {% endif %}
                     <div class="margin-bottom">
                         <label>Email</label>
                         {{ form.email }}

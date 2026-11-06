@@ -12,7 +12,12 @@ from login.models import CofkUser
 
 
 class UserForm(ModelForm):
-    username = form_serv.CharField(required=True)
+    # The username can't be changed on the edit form for now. The rename code
+    # below (clean_username/save, and the redirect in the view) is kept, so
+    # setting this to True is all it takes to allow renames.
+    allow_rename = False
+
+    username = form_serv.CharField(required=False)
     email = forms.EmailField(required=True, max_length=200)
     forename = forms.CharField(required=True, max_length=200)
     surname = forms.CharField(required=True, max_length=200)
@@ -37,32 +42,37 @@ class UserForm(ModelForm):
         self.fields['groups'].choices = (
             (group_name_id_map[name], label)
             for name, label in constant.ROLE_DISPLAY_NAMES)
-        # the username is generated on creation (see save()) and can only be
-        # changed afterwards
+        # on creation the username is optional -- left empty, it is generated
+        # (see save()); when editing it is required, and read-only unless
+        # allow_rename is set (a disabled field ignores the posted value)
         self.original_username = self.instance.pk or None
-        if not self.original_username:
-            del self.fields['username']
+        if self.original_username:
+            self.fields['username'].required = True
+            self.fields['username'].disabled = not self.allow_rename
 
     @property
     def is_renamed(self) -> bool:
         return bool(self.original_username) and self.cleaned_data.get('username') != self.original_username
 
     def clean_username(self):
-        username = self.cleaned_data['username'].strip()
-        if username == self.original_username:
+        username = (self.cleaned_data['username'] or '').strip()
+        if not username or username == self.original_username:
             return username
 
         username_max_length = CofkUser._meta.get_field('username').max_length
         if len(username) > username_max_length:
             raise forms.ValidationError(f'Username is too long (max {username_max_length} characters).')
         UnicodeUsernameValidator()(username)
-        if CofkUser.objects.filter(username__iexact=username).exclude(pk=self.original_username).exists():
+        users = CofkUser.objects.filter(username__iexact=username)
+        if self.original_username:
+            users = users.exclude(pk=self.original_username)
+        if users.exists():
             raise forms.ValidationError(f'The username "{username}" is already taken.')
         return username
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        if not self.original_username:
+        if not self.original_username and not user.username:
             user.username = login_utils.generate_username(user.forename, user.surname, user.email)
         if commit:
             with transaction.atomic():

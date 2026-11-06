@@ -1,3 +1,5 @@
+from unittest import mock
+
 from django.contrib.auth.models import Group
 from django.core import mail
 from django.core.cache import cache
@@ -6,6 +8,7 @@ from django.urls import reverse
 
 from core import constant
 from core.helper import perm_serv
+from core.user_forms import UserForm
 from login.fixtures import create_test_user
 from login.models import CofkUser
 
@@ -25,9 +28,9 @@ class TestUserForm(TestCase):
         self.supervisor.user_permissions.add(perm_serv.get_perm_by_full_name(constant.PM_CHANGE_USER))
         self.client.force_login(self.supervisor)
 
-    def create_user(self, email='ann@example.com', forename='Ann', surname='Lee'):
+    def create_user(self, email='ann@example.com', forename='Ann', surname='Lee', username=''):
         return self.client.post(reverse('user:init_form'), {
-            'email': email, 'forename': forename, 'surname': surname, 'is_active': '1',
+            'username': username, 'email': email, 'forename': forename, 'surname': surname, 'is_active': '1',
         }, follow=True)
 
     def edit_user(self, username, new_username, **kwargs):
@@ -56,6 +59,52 @@ class TestUserForm(TestCase):
 
         self.assertEqual(sorted(CofkUser.objects.filter(email='ann@example.com').values_list('pk', flat=True)),
                          ['ann.lee', 'ann.lee2'])
+
+    def test_create_with_chosen_username(self):
+        response = self.create_user(username=' annl ')
+
+        self.assertTrue(CofkUser.objects.filter(pk='annl').exists())
+        self.assertContains(response, 'New user created with the username <strong>annl</strong>')
+        self.assertIn('Your username is: annl', mail.outbox[0].body)
+
+    def test_create_with_taken_username_is_rejected(self):
+        create_test_user('AnnL')
+
+        response = self.create_user(username='annl')
+
+        self.assertContains(response, 'The username &quot;annl&quot; is already taken.')
+        self.assertFalse(CofkUser.objects.filter(email='ann@example.com').exists())
+
+    def test_create_with_invalid_username_is_rejected(self):
+        response = self.create_user(username='ann lee')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(CofkUser.objects.filter(email='ann@example.com').exists())
+
+    def test_create_page_shows_username_note(self):
+        response = self.client.get(reverse('user:init_form'))
+
+        self.assertContains(response, 'If left empty, the username is created automatically')
+
+    def test_edit_username_is_read_only(self):
+        self.create_user()
+
+        response = self.client.get(reverse('user:full_form', args=['ann.lee']))
+        self.assertTrue(response.context['form'].fields['username'].disabled)
+        self.assertContains(response, 'The username cannot be changed.')
+
+        # a username posted anyway is ignored, the other changes are saved
+        self.edit_user('ann.lee', 'alee', surname='Leigh')
+        self.assertFalse(CofkUser.objects.filter(pk='alee').exists())
+        self.assertEqual(CofkUser.objects.get(pk='ann.lee').surname, 'Leigh')
+
+
+@mock.patch.object(UserForm, 'allow_rename', True)
+class TestUserFormRename(TestUserForm):
+    """The rename code is kept for when renaming is allowed again."""
+
+    def test_edit_username_is_read_only(self):
+        pass
 
     def test_rename(self):
         self.create_user()

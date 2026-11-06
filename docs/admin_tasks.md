@@ -126,9 +126,10 @@ Used on development and staging environments only.
 1. Log in as a Supervisor.
 2. On the dashboard, open **Users**.
 3. Select **Add** to open the blank user form.
-4. Fill in the email address, forename and surname. The username is generated from the names as `forename.surname`
-   (or from the part of the email before the `@` when there are no names), with a number added if it is already
-   taken, e.g. `ann.lee2`. Usernames are unique regardless of case. Several accounts may share an email address.
+4. Fill in the email address, forename and surname, and optionally a username. If the username is left empty, it is
+   generated from the names as `forename.surname` (or from the part of the email before the `@` when there are no
+   names), with a number added if it is already taken, e.g. `ann.lee2`. Usernames are unique regardless of case and
+   cannot be changed after the user is created. Several accounts may share an email address.
 5. Leave **Is active?** ticked so the person can log in.
 6. Under **Roles**, tick the roles the person should have. Give the Supervisor role only to administrators.
 7. Save the form.
@@ -144,9 +145,7 @@ to log in; the login page asks for the username instead.
 
 1. Open **Users** from the dashboard.
 2. Search by username, forename, surname, email or active status, and open the user from the results.
-3. Change the username, name, email, active flag or roles as needed. A new username must not already be in use,
-   ignoring case. Renaming keeps the user's roles, saved queries and catalogues; records they created or edited, and
-   the audit log, still show the old username.
+3. Change the name, email, active flag or roles as needed. The username is shown but cannot be changed.
 4. Save the form. Role changes take effect the next time the user loads a page.
 
 ### Reset a user's password
