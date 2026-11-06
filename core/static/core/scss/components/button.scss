@@ -47,7 +47,7 @@
 }
 
 .btn-disabled {
-    background-color: gray;
+    opacity: 0.4;
     pointer-events: none;
 
     &:hover, &:focus, &:active {

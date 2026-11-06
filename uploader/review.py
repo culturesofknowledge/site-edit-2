@@ -8,6 +8,7 @@ from django.core.exceptions import FieldDoesNotExist
 from django.db import IntegrityError, models, transaction
 from django.db.models import QuerySet
 from django.urls import reverse
+from django_q.conf import Conf
 
 from cllib_django import email_utils
 from core.constant import REL_TYPE_STORED_IN, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, \
@@ -222,6 +223,26 @@ def accept_works(context: dict, upload: CofkCollectUpload, request=None, email_a
 
     except Exception as e:
         log.error(f'Upload {upload} failed.')
+        log.exception(e)
+        # Let the task count as failed, so that it's retried and then reported by notify_accept_failed
+        raise
+
+
+def notify_accept_failed(task):
+    """Task hook that emails the reviewer once accept_works has run out of attempts."""
+    if task.success or task.attempt_count < Conf.MAX_ATTEMPTS:
+        return
+
+    upload = task.args[1]
+
+    try:
+        email_utils.send_email(task.kwargs['email_addresses'],
+                               subject='EMLO Works Accepted Result',
+                               content=f'The upload "{upload.upload_name}" could not be accepted, and none of '
+                                       f'its works were saved. Please try again, and contact the EMLO team if '
+                                       f'it keeps failing.')
+    except Exception as e:
+        log.error('Sending email failed')
         log.exception(e)
 
 

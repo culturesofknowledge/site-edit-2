@@ -102,6 +102,9 @@ class CofkUnionSpeedEntryText(models.Model):
 
 
 class CofkUnionImage(models.Model, RecordTracker):
+    # older records store Y/N for can_be_displayed, ImageForm saves 1/0
+    NOT_DISPLAYED_VALUES = ('N', '0')
+
     image_id = models.AutoField(primary_key=True)
     image_filename = models.TextField(blank=True, null=True)
     creation_timestamp = models.DateTimeField(blank=True, null=True, default=model_serv.default_current_timestamp)

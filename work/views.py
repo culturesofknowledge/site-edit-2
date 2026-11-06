@@ -645,6 +645,9 @@ class DetailsFFH(BasicWorkFFH):
         super().load_data(pk, request_data=request_data, request=request)
 
         self.details_form = DetailsForm(request_data, instance=self.work)
+        # only a supervisor can change an existing source; disabled also makes Django ignore it in POST
+        if self.safe_work.accession_code and not request.user.is_supervisor:
+            self.details_form.fields['accession_code'].disabled = True
 
         # comment
         self.add_recref_formset_handler(WorkCommentFormsetHandler(
