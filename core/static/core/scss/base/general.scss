@@ -261,6 +261,13 @@ input[type="radio"] {
   }
 }
 
+// Help text below a checkbox, indented to line up with the label text rather than the box
+.checkbox-help-text {
+  display: block;
+  padding-left: $checkbox-size + $checkbox-gap;
+  margin-bottom: $space-xs;
+}
+
 // 🟦 Checkbox specific style (square with checkmark)
 input[type="checkbox"] {
   &:checked + label::before {

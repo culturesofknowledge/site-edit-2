@@ -11,18 +11,20 @@
 {{ lang_formset.management_form }}
 {% for form in lang_formset %}
     <div class="lang-item margin-top">
-        <label class="lang-label">{{ form.lang_name.value }}  </label>
+        <label class="lang-label">{{ form.lang_name.value }}</label>
         {{ form.lang_name }}
         {{ form.notes }}
         {{ form.lang_rec_id }}
-        &nbsp;{% include "core/component/common_delete_checkbox.html" with show_cond=True field=form.is_delete %}
+        {% include "core/component/common_delete_checkbox.html" with show_cond=True field=form.is_delete %}
     </div>
 {% endfor %}
 
-<div class="lang_div multi_rel_recref_container margin-top">
-    <label>New language:</label>
-    <div>
-        {% include "core/component/selectfilter.html" with datalist_field=new_lang_form.language_list %}
-        <div class="new_lang_div"></div>
+<div class="lang_div margin-top">
+    <div class="multi_rel_recref_container">
+        <label>New language:</label>
+        <div>
+            {% include "core/component/selectfilter.html" with datalist_field=new_lang_form.language_list %}
+        </div>
     </div>
+    <div class="new_lang_div"></div>
 </div>
