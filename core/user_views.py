@@ -6,6 +6,7 @@ from typing import Iterable
 
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import SESSION_KEY
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ValidationError
@@ -45,10 +46,12 @@ class UserFormDescriptor(FormDescriptor):
         return 'User'
 
 
-def send_password_reset_email(request, user: CofkUser) -> bool:
+def send_password_reset_email(request, user: CofkUser, is_new_account=False) -> bool:
     """Email the user a link to set their own password, reusing the same
     token-based flow as the self-service 'forgot password' page (see
-    login/urls.py). The supervisor never sees or sets the password."""
+    login/urls.py). The supervisor never sees or sets the password.
+    A new account gets a welcome email with its username instead of the
+    plain reset one."""
     reset_form = EmloPasswordResetForm({'username': user.username})
     if not reset_form.is_valid():
         log.warning(f'could not send password reset email to [{user.username}] -- {reset_form.errors}')
@@ -59,11 +62,19 @@ def send_password_reset_email(request, user: CofkUser) -> bool:
                     f'-- no matching active user with a usable password and email address')
         return False
 
+    template_kwargs = {
+        'email_template_name': 'login/password-reset-email.txt',
+    }
+    if is_new_account:
+        template_kwargs = {
+            'email_template_name': 'login/new-account-email.txt',
+            'subject_template_name': 'login/new-account-subject.txt',
+        }
     reset_form.save(
         request=request,
         use_https=request.is_secure(),
         from_email=settings.EMAIL_FROM_EMAIL,
-        email_template_name='login/password-reset-email.txt',
+        **template_kwargs,
     )
     log.info(f'password reset email sent to [{user.username}]')
     return True
@@ -97,12 +108,13 @@ def full_form(request, pk=None):
         ]):
             return _render_form()
 
+        is_renamed = form.is_renamed
         try:
             form.save()
         except ValidationError as e:
-            # e.g. CofkUser.save() rejecting a username (email) that's
-            # already taken -- report it on the form instead of a 500
-            form.add_error('email', e)
+            # e.g. CofkUser.save()/rename() rejecting a username that was
+            # taken in the meantime -- report it on the form instead of a 500
+            form.add_error(None, e)
             return _render_form()
 
         is_save_success = view_serv.mark_callback_save_success(request)
@@ -112,9 +124,17 @@ def full_form(request, pk=None):
             # supervisor) ever sees, then email the user a link to set their own
             form.instance.set_password(str_utils.create_random_str(32))
             form.instance.save()
-            email_sent = send_password_reset_email(request, form.instance)
+            email_sent = send_password_reset_email(request, form.instance, is_new_account=True)
             request.session[form.instance.pk + '_reset_email_sent'] = email_sent
             return redirect(reverse('user:full_form', kwargs={'pk': form.instance.pk}))
+
+        if is_renamed:
+            if request.user.pk == pk:
+                # the session stores the username, so a supervisor renaming
+                # themselves would otherwise be logged out on the next request
+                request.session[SESSION_KEY] = form.instance.pk
+            return redirect(view_serv.append_callback_save_success_parameter(
+                request, reverse('user:full_form', kwargs={'pk': form.instance.pk})))
 
     return _render_form()
 

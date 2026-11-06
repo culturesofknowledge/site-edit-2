@@ -9,6 +9,7 @@ class LoginConfig(AppConfig):
         from django.contrib.auth.signals import user_logged_in, user_login_failed
         from django.db.models import F
         from django.utils import timezone
+        from login import utils as login_utils
         from login.models import CofkUser
 
         def update_login_times(sender, request, user, **kwargs):
@@ -22,9 +23,11 @@ class LoginConfig(AppConfig):
             # the username may not even match a real account -- so update()
             # rather than fetch+save, which is a no-op for an unknown user
             # instead of raising DoesNotExist.
-            username = credentials.get('username')
-            if username:
-                CofkUser.objects.filter(pk=username).update(failed_logins=F('failed_logins') + 1)
+            # The login may also be an email address; only count it when it
+            # points at a single account.
+            users = login_utils.find_users_by_login(credentials.get('username'))
+            if len(users) == 1:
+                CofkUser.objects.filter(pk=users[0].pk).update(failed_logins=F('failed_logins') + 1)
 
         user_logged_in.connect(update_login_times, sender=CofkUser, weak=False)
         # user_login_failed is sent with sender=<module name>, not the user
