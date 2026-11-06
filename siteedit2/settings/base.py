@@ -128,11 +128,17 @@ CACHES = {
     }
 }
 
+# Longest the scheduled/requested exporter may run before django-q kills it.
+EXPORTER_TIMEOUT = 6 * 60 * 60
+
 Q_CLUSTER = {
     'name': 'DjangORM',
     'workers': 4,
     'timeout': 900,
-    'retry': 960,
+    # With the ORM broker, a task not acknowledged within `retry` seconds is handed to
+    # another worker even if the first is still running it, so this must exceed the
+    # longest per-task timeout (the exporter's) or long tasks get run several times at once.
+    'retry': EXPORTER_TIMEOUT + 15 * 60,
     'max_attempts': 3,
     'queue_limit': 50,
     'bulk': 10,

@@ -1,6 +1,10 @@
+import contextlib
 import datetime
+import fcntl
 import logging
 from pathlib import Path
+
+from django.conf import settings
 
 from core import exporter
 from siteedit2.settings import EMLO_APP_HOME
@@ -8,6 +12,7 @@ from siteedit2.settings import EMLO_APP_HOME
 PATH_EXPORTER_OUTPUT = Path(EMLO_APP_HOME).joinpath('exporter')
 PATH_EXPORTER_OUTPUT.mkdir(parents=True, exist_ok=True)
 PATH_EXPORTER_FLAG = Path(EMLO_APP_HOME) / 'exporter_flag'
+PATH_EXPORTER_LOCK = Path(EMLO_APP_HOME) / 'exporter.lock'
 
 log = logging.getLogger(__name__)
 
@@ -39,11 +44,28 @@ def mark_exporter_done():
     PATH_EXPORTER_FLAG.write_text(ST_DONE)
 
 
-def run_exporter():
-    if not is_exporter_pending():
-        log.info('Exporter not pending')
-        return
+def exporter_q_options() -> dict:
+    return {'timeout': settings.EXPORTER_TIMEOUT}
 
+
+@contextlib.contextmanager
+def exporter_lock():
+    """Non-blocking, cross-process lock so only one export runs at a time.
+    Yields True if acquired, False if another export already holds it. The OS
+    releases the lock if the holding process dies, so it can't get stuck."""
+    with open(PATH_EXPORTER_LOCK, 'a') as f:
+        try:
+            fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            yield False
+            return
+        try:
+            yield True
+        finally:
+            fcntl.flock(f, fcntl.LOCK_UN)
+
+
+def _run_export_locked():
     mark_exporter_running()
     log.info('Exporter triggered')
     try:
@@ -55,11 +77,25 @@ def run_exporter():
     mark_exporter_done()
 
 
+def run_exporter():
+    with exporter_lock() as acquired:
+        if not acquired:
+            log.info('Exporter already running, skipping')
+            return
+        if not is_exporter_pending():
+            log.info('Exporter not pending')
+            return
+        _run_export_locked()
+
+
 def run_scheduled_exporter():
     """Called by the recurring (e.g. weekly) schedule -- runs unconditionally,
     regardless of whether anyone has requested an export via the dashboard."""
-    mark_exporter_pending()
-    run_exporter()
+    with exporter_lock() as acquired:
+        if not acquired:
+            log.info('Exporter already running, skipping scheduled run')
+            return
+        _run_export_locked()
 
 
 def trigger_export_tonight():
@@ -73,6 +109,6 @@ def trigger_export_tonight():
     schedule(
         RUN_EXPORTER_FUNC,
         schedule_type=Schedule.ONCE,
-        q_options={'timeout': 24 * 60 * 60},
+        q_options=exporter_q_options(),
         next_run=next_midnight(),
     )
