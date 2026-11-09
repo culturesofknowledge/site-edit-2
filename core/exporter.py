@@ -58,7 +58,7 @@ def _send_request(url, timeout=20):
             resp = requests.get(url, headers={
                 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36'
             }, timeout=timeout, verify=False)
-        is_alive = resp.status_code >= 400
+        is_alive = resp.status_code < 400
     except Exception as e:
         log.debug(f'{type(e)} -- {str(e)}')
     return url, is_alive
