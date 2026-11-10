@@ -70,10 +70,10 @@ your own, and omit the parts in square brackets (`[...]`) if you do not need the
 
 Two different pages manage users, and they are not the same thing:
 
-- **Users page** (`/user/search`, reachable from the dashboard) -- the normal place to create, edit, deactivate and
-  reset passwords for editors. Requires the Supervisor role.
-- **Django admin page** (`/admin/`) -- the low-level Django interface. It is the only place where a user can be
-  **deleted** and where the superuser/staff flags can be changed. Requires a staff account.
+- **Users page** (`/user/search`, reachable from the dashboard) -- the normal place to create, edit, deactivate,
+  delete and reset passwords for editors. Requires the Supervisor role.
+- **Django admin page** (`/admin/`) -- the low-level Django interface. Users can also be **deleted** here, and it is
+  the only place where the superuser/staff flags can be changed. Requires a staff account.
 
 The roles available in EMLO are: *Supervisor*, *Can edit Union and Bodleian card index catalogues* (Editor),
 *Contributing Editor* and *Read-only access* (Viewer).
@@ -144,7 +144,8 @@ Used on development and staging environments only.
 
 ### Reset a user's password
 
-Administrators never see or set a user's password.
+On the Users page, administrators never see or set a user's password -- the user chooses it through an emailed link.
+This is the normal route:
 
 1. Open the user's record from the **Users** page.
 2. Select **Reset password** and confirm.
@@ -152,6 +153,10 @@ Administrators never see or set a user's password.
    password.
 4. If the email was not sent, check that the account has a valid email address and that the mail settings of the
    deployment are correct, then try again.
+
+The Django admin page is the exception: the user record there (`/admin/`, **Cofk users**) has a **Reset password**
+button that lets a staff account set a password directly. Use it only when the email route is not possible, and pass
+the new password to the user securely.
 
 ### Deactivate a user
 
@@ -165,14 +170,18 @@ Preferred over deletion, because it keeps the user's editing history intact.
 
 Delete only when the account was created in error and has no associated records. Deletion cannot be undone.
 
+A user can also be deleted without the Django admin: the edit form on the **Users** page has a **Delete this user?**
+section, which leads to its own confirm-and-delete page. The steps below cover the Django admin route.
+
 1. Confirm the account really has to be removed rather than deactivated.
 2. Log in to `/admin/` with a staff account.
-3. Open **Users** under the login section.
+3. Open **Cofk users** under the **LOGIN** section.
 4. Search for the account by username, surname, forename or email.
 5. Either open the record and use **Delete** at the bottom of the form, or tick the account in the list and choose the
    delete action from the action list.
-6. Read the confirmation page carefully -- it lists every related object that will be removed with the user. Stop and
-   deactivate the user instead if related records are listed.
+6. Read the confirmation page carefully -- it lists every related object that will be removed with the user. The
+   user's role group memberships are always listed and are expected. Stop and deactivate the user instead if anything
+   other than group relationships is listed.
 7. Confirm the deletion and verify the account no longer appears on the **Users** page.
 
 The same page is also where the **superuser** and **staff** flags are granted, which are required for access to the
@@ -263,10 +272,11 @@ catalogue until an administrator reviews and accepts it.
 ### Upload a spreadsheet
 
 1. Log in with an account that may work with uploads.
-2. Open the upload section of the site (`/upload`).
-3. Select **Add** to open the upload form.
-4. Choose the catalogue the works belong to and select the spreadsheet file.
-5. Submit the form. Large files are processed in the background: you are told the upload will continue after you leave
+2. In the top navigation, open the **Uploads** menu.
+3. Select **Add a new upload** to open the upload form (`/upload/add`). The upload list itself (`/upload`) has no Add
+   button.
+4. Use **Choose File** to select the spreadsheet file. There is nothing else to fill in.
+5. Select **UPLOAD** to submit the form. Large files are processed in the background: you are told the upload will continue after you leave
    the page, and an email is sent when it is done. Small files are processed immediately. The size threshold is a
    deployment setting.
 6. Return to the upload list and check the new entry appears. Its status will be *Awaiting review*.
@@ -278,13 +288,14 @@ catalogue until an administrator reviews and accepts it.
    been accepted and rejected so far.
 3. Work through each review area in turn:
    - **Works** -- the letters themselves.
-   - **People** -- new people found in the spreadsheet.
-   - **Locations** -- new places found in the spreadsheet.
-   - **Corrections** -- changes the spreadsheet proposes to existing records.
-4. In each area, check each row against the existing catalogue, especially for duplicates of people and locations that
+   - **People and groups** -- new people and groups found in the spreadsheet.
+   - **Places** -- new places found in the spreadsheet.
+4. In each area, check each row against the existing catalogue, especially for duplicates of people and places that
    already exist in EMLO.
-5. Accept the rows that should go into the main catalogue, or reject the ones that should not. Use **Accept all** or
-   **Reject all** only when you have checked the whole list.
+5. Accept the works that should go into the main catalogue, or reject the ones that should not. Accept and reject are
+   available for each work, and for the whole contribution with **ACCEPT ALL** or **REJECT ALL**; rows under People and
+   groups and under Places have no accept or reject of their own. Use **ACCEPT ALL** or **REJECT ALL** only when you
+   have checked the whole list.
 6. Confirm when prompted. Accepted items are written into the main catalogue and cannot be withdrawn from the review
    screen afterwards.
 7. Repeat until nothing is left for review; the upload then leaves the pending list.
