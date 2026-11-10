@@ -588,8 +588,8 @@ def lookup_manifestations_searchable(lookup_fn, field_name: str, value: str) -> 
     # Labels used for enclosure relationships – must stay in sync with
     # the prefixes produced by subqueries._prefixed_enclosure_field().
     _ENCLOSURE_LABELS = {
-        'had enclosure': 'manif_from_set__manif_to__id_number_or_shelfmark',
-        'was enclosed in': 'manif_to_set__manif_from__id_number_or_shelfmark',
+        'had enclosure': 'manif_to_set__manif_from__id_number_or_shelfmark',
+        'was enclosed in': 'manif_from_set__manif_to__id_number_or_shelfmark',
     }
 
     # All segments must match within the SAME manifestation for a work.
@@ -608,7 +608,7 @@ def lookup_manifestations_searchable(lookup_fn, field_name: str, value: str) -> 
                 # The segment is (part of) an enclosure label – match any
                 # manifestation that has the corresponding enclosure
                 # relationship.
-                enclosure_fk = shelfmark_field.rsplit('__', 2)[0]  # e.g. manif_from_set
+                enclosure_fk = shelfmark_field.rsplit('__', 2)[0]  # e.g. manif_to_set
                 enclosure_q = Q(**{f'{enclosure_fk}__relationship_type': REL_TYPE_ENCLOSED_IN})
                 # If the user typed more than just the label (e.g.
                 # "Had enclosure: MS 1234"), also filter on the shelfmark.
