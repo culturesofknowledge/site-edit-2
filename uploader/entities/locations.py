@@ -124,7 +124,7 @@ class CofkBulkLocations(CofkEntity, ABC):
                     if field == 'location_synonyms' and value:
                         loc_kwargs[field] = '\n'.join(split_list(value))
                     elif field in ('latitude', 'longitude'):
-                        loc_kwargs[field] = str(value)
+                        loc_kwargs[field] = str(value).strip()
                     else:
                         loc_kwargs[field] = value
 
