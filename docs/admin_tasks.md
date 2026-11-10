@@ -170,6 +170,8 @@ Preferred over deletion, because it keeps the user's editing history intact.
 
 Delete only when the account was created in error and has no associated records. Deletion cannot be undone.
 
+Any records created by the user will continue to have their username as the change user. Deleting the account will not have an effect on the audit trail.
+
 A user can also be deleted without the Django admin: the edit form on the **Users** page has a **Delete this user?**
 section, which leads to its own confirm-and-delete page. The steps below cover the Django admin route.
 
