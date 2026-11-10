@@ -607,6 +607,13 @@ def _val_handler_image_path(row: dict, conn) -> dict:
     return row
 
 
+def _val_handler_image_can_be_displayed(row: dict, conn) -> dict:
+    # the old system stores Y/N, ImageForm saves 1/0
+    can_be_displayed = row['can_be_displayed']
+    row['can_be_displayed'] = {'Y': '1', 'N': '0'}.get(can_be_displayed, can_be_displayed)
+    return row
+
+
 def clone_recref_simple(conn,
                         left_field: ForwardManyToOneDescriptor,
                         right_field: ForwardManyToOneDescriptor):
@@ -765,7 +772,8 @@ def data_migration(user, password, database, host, port):
     clone_rows_by_model_class(conn, CofkUnionResource)
     clone_rows_by_model_class(conn, CofkUnionComment)
     clone_rows_by_model_class(conn, CofkUnionImage,
-                              col_val_handler_fn_list=[_val_handler_image_path])
+                              col_val_handler_fn_list=[_val_handler_image_path,
+                                                       _val_handler_image_can_be_displayed])
     clone_rows_by_model_class(conn, CofkUnionSubject)
     clone_rows_by_model_class(conn, CofkUnionRoleCategory)
     clone_rows_by_model_class(conn, CofkUnionRelationshipType, seq_name=None)

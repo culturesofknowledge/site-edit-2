@@ -1,8 +1,8 @@
 function actionWork(btn)   {
-    $('#accept_all').prop('disabled', true);
-    $('#accept_all').addClass('btn-disabled');
-    $('#reject_all').prop('disabled', true);
-    $('#reject_all').addClass('btn-disabled');
+    const allButtons = $('#accept_all, #reject_all');
+    allButtons.prop('disabled', true);
+    allButtons.not(btn).addClass('btn-disabled');
+    allButtons.filter(btn).addClass('btn--primary');
 
     let action = btn.name.split('_')[0];
     let work_id = btn.name.split('_')[1];
@@ -26,8 +26,5 @@ function actionWork(btn)   {
 function cancelActionWork() {
     $('#confirm').hide(400);
     $('#review').show(400);
-    $('#accept_all').prop('disabled', false);
-    $('#accept_all').removeClass('btn-disabled');
-    $('#reject_all').prop('disabled', false);
-    $('#reject_all').removeClass('btn-disabled');
+    $('#accept_all, #reject_all').prop('disabled', false).removeClass('btn-disabled btn--primary');
 }

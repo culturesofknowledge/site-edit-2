@@ -58,7 +58,7 @@ def _send_request(url, timeout=20):
             resp = requests.get(url, headers={
                 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36'
             }, timeout=timeout, verify=False)
-        is_alive = resp.status_code >= 400
+        is_alive = resp.status_code < 400
     except Exception as e:
         log.debug(f'{type(e)} -- {str(e)}')
     return url, is_alive
@@ -158,7 +158,7 @@ class ImageFrontendCsv(HeaderValues):
 
     def _is_published(self, obj):
         check_list = [
-            ('can_be_displayed', lambda: obj.can_be_displayed != 'N'),
+            ('can_be_displayed', lambda: obj.can_be_displayed not in CofkUnionImage.NOT_DISPLAYED_VALUES),
             ('work', lambda: is_published_by_filter_work(obj, 'cofkmanifimagemap__manif__work')),
             ('url', lambda: is_url_for_published(obj.image_filename, self.url_alive_checker)),
         ]
