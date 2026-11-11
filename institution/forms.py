@@ -23,7 +23,11 @@ class InstitutionForm(ModelForm):
             'creation_user',
             'change_user',
             'resources',
-            'images'
+            'images',
+            # not on the form page, so saving the form would blank them
+            'address',
+            'latitude',
+            'longitude',
         )
 
 

@@ -9,6 +9,7 @@ from django.core.files.storage import default_storage
 
 from cllib_django import email_utils
 from django.urls import reverse
+from django_q.conf import Conf
 
 from uploader.models import CofkCollectUpload
 from uploader.spreadsheet import CofkUploadExcelFile, CofkExcelFileError
@@ -26,6 +27,23 @@ def file_path_and_size(upload: CofkCollectUpload) -> tuple[str, int]:
 
     size = os.path.getsize(file_path) >> 10  # Convert bytes to kilobytes
     return file_path, size
+
+
+def notify_upload_failed(task):
+    """Task hook that emails the uploader once handle_upload has run out of attempts."""
+    if task.success or task.attempt_count < Conf.MAX_ATTEMPTS:
+        return
+
+    upload, _, file_name = task.args
+
+    try:
+        email_utils.send_email(upload.uploader_email,
+                               subject='EMLO Uploader Result',
+                               content=f'The file "{file_name}" you uploaded could not be processed. Please try '
+                                       f'uploading it again, and contact the EMLO team if it keeps failing.')
+    except Exception as e:
+        log.error('Sending email failed')
+        log.exception(e)
 
 
 def handle_upload(upload: CofkCollectUpload, email_results: bool = False, file_name: str = None) -> dict:

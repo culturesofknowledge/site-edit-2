@@ -1,8 +1,14 @@
 import logging
 import re
+from unittest.mock import patch
 
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
+from django.utils import timezone
+from django_q.brokers import get_broker
+from django_q.conf import Conf
+from django_q.humanhash import uuid
+from django_q.monitor import save_task
 
 from core.constant import REL_TYPE_CREATED, REL_TYPE_COMMENT_REFERS_TO
 from location.models import CofkUnionLocation
@@ -300,7 +306,7 @@ class TestReviewPagination(UploadIncludedFactoryTestCase):
     def test_per_page_is_capped_at_max(self):
         response = self.client.get(self.review_url, {'per_page': 99999})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['works_page'].paginator.per_page, 1000)
+        self.assertEqual(response.context['works_page'].paginator.per_page, 5000)
 
     def test_valid_per_page_is_respected(self):
         response = self.client.get(self.review_url, {'per_page': 50})
@@ -316,6 +322,45 @@ class TestReviewPagination(UploadIncludedFactoryTestCase):
         response = self.client.get(self.review_url, {'per_page': -5})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['works_page'].paginator.per_page, 1000)
+
+
+class TestFailureEmails(UploadIncludedFactoryTestCase):
+    """A task's user is emailed once it has run out of attempts (see Q_CLUSTER's max_attempts)."""
+
+    def _fail_task(self, hook, args, kwargs=None):
+        task_id, task_name = uuid()[1], uuid()[0]
+        for _ in range(Conf.MAX_ATTEMPTS):
+            # sync stops save_task from closing the test's database connection
+            save_task({'id': task_id, 'name': task_name, 'func': 'math.copysign', 'hook': hook, 'sync': True,
+                       'args': args, 'kwargs': kwargs or {}, 'started': timezone.now(),
+                       'stopped': timezone.now(), 'success': False, 'result': 'failed'},
+                      get_broker())
+
+    @patch('uploader.review.email_utils.send_email')
+    def test_failed_accept_emails_reviewer_once(self, send_email):
+        self._fail_task('uploader.review.notify_accept_failed', ({}, self.new_upload),
+                        {'email_addresses': 'reviewer@example.com'})
+
+        send_email.assert_called_once()
+        self.assertEqual(send_email.call_args.args[0], 'reviewer@example.com')
+
+    @patch('core.helper.uploader_serv.email_utils.send_email')
+    def test_failed_upload_emails_uploader_once(self, send_email):
+        self._fail_task('core.helper.uploader_serv.notify_upload_failed',
+                        (self.new_upload, True, 'letters.xlsx'))
+
+        send_email.assert_called_once()
+        self.assertEqual(send_email.call_args.args[0], 'test@user.com')
+        self.assertIn('letters.xlsx', send_email.call_args.kwargs['content'])
+
+    @patch('uploader.review.create_works', side_effect=ValueError('bad data'))
+    def test_accept_works_raises_on_failure(self, _create_works):
+        CofkCollectWork.objects.create(upload=self.new_upload, iwork_id=1, upload_status_id=1)
+        works = Paginator(DisplayableCollectWork.objects.filter(upload=self.new_upload).order_by('pk'), 1000)
+        context = {'work_id': 'all', 'works_page': works.get_page(1), 'username': self.admin.username}
+
+        with self.assertRaises(ValueError):
+            accept_works(context, self.new_upload)
 
 
 class TestCreateUnionWork(UploadIncludedTestCase):
