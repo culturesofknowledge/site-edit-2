@@ -46,8 +46,21 @@ class TestValidation(TestCase):
         work = CofkEntity(self.new_upload, MockEntity('Work'))
         work.check_data_types({'date_of_work_std_is_range': 1})
 
-        msg = 'Column date_of_work_std_year not present but needed when date of work is a range.'
+        msg = 'Column date_of_work_std_year or date_of_work2_std_year needed when date of work is a range.'
         self.assertEqual(work.errors[1][0].message, msg)
+
+    def test_range_on_or_before(self):
+        work = CofkEntity(self.new_upload, MockEntity('Work'))
+        work.check_data_types({'date_of_work_std_is_range': 1, 'date_of_work2_std_year': 1663,
+                               'date_of_work2_std_month': 1, 'date_of_work2_std_day': 8})
+
+        self.assertEqual(work.errors, {})
+
+    def test_range_on_or_after(self):
+        work = CofkEntity(self.new_upload, MockEntity('Work'))
+        work.check_data_types({'date_of_work_std_is_range': 1, 'date_of_work_std_year': 1663})
+
+        self.assertEqual(work.errors, {})
 
     def test_ids(self):
         work = CofkEntity(self.new_upload, MockEntity('Work'))
