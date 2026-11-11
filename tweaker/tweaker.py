@@ -154,12 +154,12 @@ class DatabaseTweaker:
         self.connection: Optional[Connection] = None
         self.metadata: Optional[MetaData] = None
         self._tables: Dict[str, Table] = {}
+        self.user = "cofkbot"
 
         if connection_url:
             self.connect(connection_url)
 
         self._reset_audit()
-        self.user = "cofkbot"
 
     def _reset_audit(self):
         self.audit = {
@@ -186,6 +186,7 @@ class DatabaseTweaker:
                 pool_pre_ping=True
             )
             self.connection = self.engine.connect()
+            self._set_audit_user()
             self.metadata = MetaData()
             self._tables = {}
             if self.debug:
@@ -193,6 +194,15 @@ class DatabaseTweaker:
         except SQLAlchemyError as e:
             print(f"ERROR: Unable to connect to the database: {e}")
             raise
+
+    def _set_audit_user(self):
+        """
+        Set app.current_user for this DB session so the audit triggers record self.user
+        instead of __unknown_user. Committed straight away so a later rollback can't undo it.
+        """
+        self.connection.execute(text("SELECT set_config('app.current_user', :user, false)"),
+                                {"user": self.user})
+        self.connection.commit()
 
     # Backwards compatibility alias
     def connect_to_postgres(self, connection: str):
