@@ -309,7 +309,7 @@ EXPORTER_SCHEDULE_MINUTES = None  # interval in minutes, only used when EXPORTER
 EXPORTER_SCHEDULE_TIME = '08:45'  # HH:MM, 24 hour, in TIME_ZONE (not the machine's clock)
 # days the regular export runs, 0: Monday ... 6: Sunday; leave out the EXPORTER_INDEX_WEEKDAY day,
 # the weekly export already exports then
-EXPORTER_SCHEDULE_WEEKDAYS = [0, 1, 3, 4, 5]
+EXPORTER_SCHEDULE_WEEKDAYS = [0, 1, 2, 3, 4, 5]
 # weekly export (need_index=1)
 EXPORTER_INDEX_WEEKDAY = 6  # 0: Monday ... 6: Sunday
 EXPORTER_INDEX_TIME = '04:00'  # HH:MM, 24 hour, in TIME_ZONE (not the machine's clock)
