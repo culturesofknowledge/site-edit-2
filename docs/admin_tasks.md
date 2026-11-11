@@ -19,6 +19,9 @@ your own, and omit the parts in square brackets (`[...]`) if you do not need the
   - [Delete a user on the Django admin page](#delete-a-user-on-the-django-admin-page)
   - [Set up groups and permissions](#set-up-groups-and-permissions)
 - [Export](#export)
+  - [Where the export files are written](#where-the-export-files-are-written)
+  - [Scheduled exports and the `need_index` file](#scheduled-exports-and-the-need_index-file)
+  - [Change when the scheduled exports run](#change-when-the-scheduled-exports-run)
   - [Trigger an export from the dashboard](#trigger-an-export-from-the-dashboard)
   - [Run an export manually](#run-an-export-manually)
   - [Collect the export files](#collect-the-export-files)
@@ -214,10 +217,38 @@ Run after the first deployment, and again whenever the role definitions change i
 Exporting produces a set of CSV files of the whole dataset for the EMLO front end. It is a long-running job, so it
 runs on a schedule in the background worker rather than immediately.
 
+### Where the export files are written
+
+Scheduled exports and exports requested from the dashboard write their files into the `exporter` directory under the
+application home, `EMLO_APP_HOME`:
+
+| Setup | `EMLO_APP_HOME` | Export directory |
+|---|---|---|
+| Without Docker | The `EMLO_APP_HOME` environment variable; if it is not set, `emlo_home` in the home directory of the user running the site | `$EMLO_APP_HOME/exporter/`, by default `~/emlo_home/exporter/` |
+| Docker | `/emlo_home/` (set in `docker/site-edit-2/.env`, copied from `env.example`) | `/emlo_home/exporter/` in the `web` and `django-q` containers, mounted from `exporter_output/` at the root of the code checkout on the host |
+
+To find the directory on a running site, print the setting the exporter uses:
+
+```bash
+python3 manage.py shell -c "from core.helper.exporter_serv import PATH_EXPORTER_OUTPUT; print(PATH_EXPORTER_OUTPUT)"
+```
+
+After a full export the directory contains:
+
+- `comment.csv`, `image.csv`, `institution.csv`, `location.csv`, `manifestation.csv`, `person.csv`,
+  `relationship.csv`, `relationship_type.csv`, `resource.csv` and `work.csv`
+- `need_index` (see below)
+
+While an export is running, its files are built in a hidden `.staging` subdirectory and only moved into the export
+directory once they are all complete. The exporter's own state files (`exporter.lock`, `exporter_index_requested`,
+`exporter_index_in_progress`) and its log (`emlo.log`) are in `EMLO_APP_HOME` itself, not in the export directory.
+
+The `exporter` management command ([Run an export manually](#run-an-export-manually)) does not use this directory:
+it writes to the directory given with `-o`, or the current directory if `-o` is left out.
+
 ### Scheduled exports and the `need_index` file
 
-Every export writes the CSV files into the export output directory (an `exporter` directory under the application
-home), and then a file called `need_index` in the same directory. It contains `1` if the front end needs to re-index
+Every export writes the CSV files into the export directory, and then a file called `need_index` in the same directory. It contains `1` if the front end needs to re-index
 the new files into SOLR, and `0` if not. It is written only after all the CSV files are complete, so whatever copies
 the files to the front end should copy `need_index` last. Each scheduled export first deletes everything left in
 that directory by the previous export, so it only ever holds the latest export's files. This happens only after the
@@ -313,8 +344,9 @@ Use when the files are needed immediately rather than overnight.
 
 ### Collect the export files
 
-1. Look in the export output directory of the deployment (by default an `exporter` directory under the application
-   home) for the generated CSV files.
+1. Look in the export directory for the generated CSV files: `$EMLO_APP_HOME/exporter/` for scheduled and dashboard
+   exports, or the `-o` directory for a manual run. See
+   [Where the export files are written](#where-the-export-files-are-written).
 
 2. Copy the files off the server. If the site runs in Docker, copy them out of the container first:
    
