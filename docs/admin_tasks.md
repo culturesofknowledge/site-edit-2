@@ -208,13 +208,15 @@ runs on a schedule in the background worker rather than immediately.
 Every export writes the CSV files into the export output directory (an `exporter` directory under the application
 home), and then a file called `need_index` in the same directory. It contains `1` if the front end needs to re-index
 the new files into SOLR, and `0` if not. It is written only after all the CSV files are complete, so whatever copies
-the files to the front end should copy `need_index` last.
+the files to the front end should copy `need_index` last. Each scheduled export first deletes everything left in
+that directory by the previous export, so it only ever holds the latest export's files. This happens only after the
+new files have been generated, so a failed export leaves the previous files in place.
 
 | Export | When | `need_index` |
 |---|---|---|
-| Regular | Every `EXPORTER_SCHEDULE_TYPE`, from `EXPORTER_SCHEDULE_TIME` (default: daily at 00:00) | `0` |
-| Weekly | Every week on `EXPORTER_INDEX_WEEKDAY` at `EXPORTER_INDEX_TIME` (default: Sunday at 02:00) | `1` |
-| Requested | At the next `EXPORTER_SCHEDULE_TIME` after a user selects **Export** on the dashboard | `1` |
+| Regular | Every `EXPORTER_SCHEDULE_TYPE` on `EXPORTER_SCHEDULE_WEEKDAYS` (default: Monday to Saturday at `EXPORTER_SCHEDULE_TIME`, 00:00) | `0` |
+| Weekly | Every week on `EXPORTER_INDEX_WEEKDAY` at `EXPORTER_INDEX_TIME` (default: Sunday at 04:00) | `1` |
+| Requested | At the next regular export time after a user selects **Export** on the dashboard | `1` |
 
 - A request is served by whichever export starts first after the click, so if the regular export runs first it
   writes `need_index` `1` instead of `0`.
@@ -228,25 +230,31 @@ the files to the front end should copy `need_index` last.
 ### Change when the scheduled exports run
 
 1. Set any of these in the deployment's settings file (e.g. `siteedit2/settings/gunweb.py`). Times are 24-hour
-   `HH:MM` in the server's local time.
+   `HH:MM` in the site's `TIME_ZONE` setting (`Europe/London`, so GMT in winter and BST in summer), not the
+   server's own clock: Django sets every process it runs to that time zone.
    
    ```python
    # regular export, also the time a requested export runs
    EXPORTER_SCHEDULE_TYPE = 'D'      # D: Daily, I: Minutes, H: Hourly, W: Weekly, M: Monthly, Q: Quarterly, Y: Yearly
    EXPORTER_SCHEDULE_MINUTES = None  # interval in minutes, only used when EXPORTER_SCHEDULE_TYPE = 'I'
-   EXPORTER_SCHEDULE_TIME = '00:00'  # time of the first run; daily and longer schedules keep this time
+   EXPORTER_SCHEDULE_TIME = '00:00'  # time of day for daily and longer schedules; minutes and hourly
+                                     # schedules instead start one interval after the worker starts
+   EXPORTER_SCHEDULE_WEEKDAYS = [0, 1, 2, 3, 4, 5]  # days it runs, 0: Monday ... 6: Sunday; leave out
+                                                    # EXPORTER_INDEX_WEEKDAY, the weekly export runs then
    
    # weekly export with need_index 1
    EXPORTER_INDEX_WEEKDAY = 6        # 0: Monday ... 6: Sunday
-   EXPORTER_INDEX_TIME = '02:00'
+   EXPORTER_INDEX_TIME = '04:00'
+   
+   # True skips checking that image and resource URLs are alive, which makes the export much faster
+   EXPORTER_SKIP_URL_CHECK = False
    ```
    
-   For example, to export every 6 hours starting at 01:00, and index every Saturday at 03:00:
+   For example, to export every 6 hours, and index every Saturday at 03:00:
    
    ```python
    EXPORTER_SCHEDULE_TYPE = 'I'
    EXPORTER_SCHEDULE_MINUTES = 6 * 60
-   EXPORTER_SCHEDULE_TIME = '01:00'
    EXPORTER_INDEX_WEEKDAY = 5
    EXPORTER_INDEX_TIME = '03:00'
    ```
@@ -262,7 +270,7 @@ the files to the front end should copy `need_index` last.
 
 1. Log in as a Supervisor.
 2. Scroll to the **Export** section of the dashboard.
-3. Select **Export**. The export is queued for the next `EXPORTER_SCHEDULE_TIME` (by default the coming midnight) and
+3. Select **Export**. The export is queued for the next regular export time (by default the coming midnight) and
    will write `need_index` `1`.
 4. The section then shows "Exporter is pending...". While this message is displayed, a further request is not needed
    and the button is hidden.

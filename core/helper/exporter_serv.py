@@ -2,18 +2,16 @@
 Scheduled exports for the EMLO front end.
 
 Three kinds of run write the CSV files into PATH_EXPORTER_OUTPUT, followed by
-a `need_index` file (same name and "0"/"1" content as the legacy PHP
-export_cofk_union.sh) telling whoever copies the files to the front end
+a `need_index` file ("0" or "1") telling whoever copies the files to the front end
 whether the front end SOLR needs re-indexing:
 
-* regular   -- recurring, every EXPORTER_SCHEDULE_TYPE, need_index=0
-               (unless an indexing export has been requested, see below)
+* regular   -- recurring, every EXPORTER_SCHEDULE_TYPE on EXPORTER_SCHEDULE_WEEKDAYS,
+               need_index=0 (unless an indexing export has been requested, see below)
 * weekly    -- every week on EXPORTER_INDEX_WEEKDAY, need_index=1
-* requested -- one-off, queued when a user clicks Export on the dashboard,
-               need_index=1
+* requested -- one-off, queued for the next regular run time when a user
+               clicks Export on the dashboard, need_index=1
 
-A request is a marker file (PATH_INDEX_REQUESTED, like the legacy FORCE_INDEX
-file), so whichever run starts first after the click serves it and it is
+A request is a marker file (PATH_INDEX_REQUESTED), so whichever run starts first after the click serves it and it is
 never lost: it survives a busy or failed run. Only one export runs at a time
 (PATH_EXPORTER_LOCK); a run that finds another export in progress skips, and
 an indexing run that would be skipped is re-queued instead.
@@ -40,17 +38,12 @@ PATH_EXPORTER_LOCK = Path(EMLO_APP_HOME) / 'exporter.lock'
 PATH_INDEX_REQUESTED = Path(EMLO_APP_HOME) / 'exporter_index_requested'
 # an indexing export is running (left behind if that run was killed)
 PATH_INDEX_IN_PROGRESS = Path(EMLO_APP_HOME) / 'exporter_index_in_progress'
-# pending flag file used before need_index existed, '1' meant requested
-PATH_LEGACY_EXPORTER_FLAG = Path(EMLO_APP_HOME) / 'exporter_flag'
 
 log = logging.getLogger(__name__)
 
 RUN_REGULAR_EXPORT_FUNC = 'core.helper.exporter_serv.run_regular_export'
 RUN_WEEKLY_INDEX_EXPORT_FUNC = 'core.helper.exporter_serv.run_weekly_index_export'
-# kept as run_exporter so one-off schedules queued by older code still resolve
-RUN_REQUESTED_EXPORT_FUNC = 'core.helper.exporter_serv.run_exporter'
-# recurring func used before the regular/weekly split, migrated by sync_schedules()
-LEGACY_RUN_SCHEDULED_EXPORTER_FUNC = 'core.helper.exporter_serv.run_scheduled_exporter'
+RUN_REQUESTED_EXPORT_FUNC = 'core.helper.exporter_serv.run_requested_export'
 
 SCHEDULE_NAME_REGULAR = 'exporter_regular'
 SCHEDULE_NAME_WEEKLY_INDEX = 'exporter_weekly_index'
@@ -60,7 +53,8 @@ EXPORT_TASK_TIMEOUT = 24 * 60 * 60
 # how long a requested/weekly run waits before retrying when another export is running
 BUSY_RETRY_DELAY = datetime.timedelta(minutes=30)
 
-# schedule types whose runs keep the time of day (and weekday for weekly) of their first run
+# schedule types that start at EXPORTER_SCHEDULE_TIME and keep that time of day,
+# the others (minutes, hourly) start one interval after startup
 TIME_ANCHORED_SCHEDULE_TYPES = {'D', 'W', 'BW', 'M', 'BM', 'Q', 'Y'}
 
 
@@ -91,12 +85,22 @@ def get_schedule_type() -> str:
 def get_schedule_minutes() -> int | None:
     minutes = getattr(settings, 'EXPORTER_SCHEDULE_MINUTES', None)
     if get_schedule_type() == 'I' and not (isinstance(minutes, int) and minutes > 0):
-        raise ImproperlyConfigured('EXPORTER_SCHEDULE_MINUTES must be a positive int when EXPORTER_SCHEDULE_TYPE is "I"')
+        raise ImproperlyConfigured(
+            'EXPORTER_SCHEDULE_MINUTES must be a positive int when EXPORTER_SCHEDULE_TYPE is "I"')
     return minutes
 
 
 def get_schedule_time() -> datetime.time:
     return _parse_time('EXPORTER_SCHEDULE_TIME', '00:00')
+
+
+def get_schedule_weekdays() -> set[int]:
+    weekdays = getattr(settings, 'EXPORTER_SCHEDULE_WEEKDAYS', range(7))
+    if (isinstance(weekdays, str) or not hasattr(weekdays, '__iter__')
+            or not weekdays or any(d not in range(7) for d in weekdays)):
+        raise ImproperlyConfigured(
+            f'EXPORTER_SCHEDULE_WEEKDAYS must be a non-empty list of 0 (Monday) to 6 (Sunday), got {weekdays!r}')
+    return set(weekdays)
 
 
 def get_index_weekday() -> int:
@@ -107,7 +111,16 @@ def get_index_weekday() -> int:
 
 
 def get_index_time() -> datetime.time:
-    return _parse_time('EXPORTER_INDEX_TIME', '02:00')
+    return _parse_time('EXPORTER_INDEX_TIME', '04:00')
+
+
+def first_regular_run(schedule_type: str, minutes: int | None,
+                      now: datetime.datetime = None) -> datetime.datetime:
+    now = now or datetime.datetime.now()
+    schedule_time = get_schedule_time()  # validated for every type, request_export() may use it
+    if schedule_type in TIME_ANCHORED_SCHEDULE_TYPES:
+        return next_time_of_day(schedule_time, now)
+    return now + datetime.timedelta(minutes=minutes if schedule_type == 'I' else 60)
 
 
 def next_time_of_day(time_of_day: datetime.time, now: datetime.datetime = None) -> datetime.datetime:
@@ -188,7 +201,8 @@ def _export(needs_index: bool, only_if_requested: bool = False):
 
             log.info(f'Exporter triggered, need_index={int(needs_index)}')
             try:
-                exporter.export_all(output_dir=PATH_EXPORTER_OUTPUT, skip_url_check=False)
+                exporter.export_all(output_dir=PATH_EXPORTER_OUTPUT, clear_output_dir=True,
+                                    skip_url_check=getattr(settings, 'EXPORTER_SKIP_URL_CHECK', False))
                 write_need_index(needs_index)
             except Exception:
                 log.exception('Exporter failed')
@@ -210,7 +224,12 @@ def _export(needs_index: bool, only_if_requested: bool = False):
             schedule_requested_export(datetime.datetime.now() + BUSY_RETRY_DELAY)
 
 
-def run_regular_export():
+def run_regular_export(intended_date: str = None):
+    # the day of the scheduled run, not of when a worker picked it up
+    run_date = datetime.datetime.fromisoformat(intended_date) if intended_date else datetime.datetime.now()
+    if run_date.weekday() not in get_schedule_weekdays():
+        log.info(f'Regular export skipped, {run_date:%A} is not in EXPORTER_SCHEDULE_WEEKDAYS')
+        return
     _export(needs_index=False)
 
 
@@ -218,7 +237,7 @@ def run_weekly_index_export():
     _export(needs_index=True)
 
 
-def run_exporter():
+def run_requested_export():
     """The one-off run queued by request_export()."""
     _export(needs_index=True, only_if_requested=True)
 
@@ -245,17 +264,19 @@ def schedule_requested_export(next_run: datetime.datetime):
 
 def request_export():
     """Called when a user clicks Export on the dashboard: queue an indexing
-    export for the next EXPORTER_SCHEDULE_TIME."""
+    export for the next regular run time."""
+    from django_q.models import Schedule
     _request_index()
-    schedule_requested_export(next_time_of_day(get_schedule_time()))
+    regular = Schedule.objects.filter(name=SCHEDULE_NAME_REGULAR).first()
+    next_run = regular.next_run if regular else next_time_of_day(get_schedule_time())
+    schedule_requested_export(max(next_run, datetime.datetime.now()))
 
 
 def _sync_schedule(name: str, func: str, schedule_type: str, first_run: datetime.datetime,
-                   minutes: int | None = None, legacy_funcs: list[str] = ()):
+                   minutes: int | None = None, intended_date_kwarg: str = None):
     from django_q.models import Schedule
     from django_q.tasks import schedule
-    existing = (Schedule.objects.filter(name=name).first()
-                or Schedule.objects.filter(func__in=legacy_funcs).exclude(schedule_type=Schedule.ONCE).first())
+    existing = Schedule.objects.filter(name=name).first()
     if existing is None:
         schedule(
             func,
@@ -264,6 +285,7 @@ def _sync_schedule(name: str, func: str, schedule_type: str, first_run: datetime
             minutes=minutes,
             q_options={'timeout': EXPORT_TASK_TIMEOUT},
             next_run=first_run,
+            intended_date_kwarg=intended_date_kwarg,
         )
         return
 
@@ -273,15 +295,18 @@ def _sync_schedule(name: str, func: str, schedule_type: str, first_run: datetime
                or existing.minutes != minutes)
     if schedule_type in TIME_ANCHORED_SCHEDULE_TYPES:
         changed = changed or existing.next_run.time() != first_run.time()
+    else:
+        # first_run is one interval from now, a later next_run is stale
+        changed = changed or existing.next_run > first_run
     if schedule_type == Schedule.WEEKLY:
         changed = changed or existing.next_run.weekday() != first_run.weekday()
-    if changed or existing.name != name:
-        existing.name = name
+    if changed:
         existing.func = func
         existing.schedule_type = schedule_type
         existing.minutes = minutes
-        if changed:
-            existing.next_run = first_run
+        existing.next_run = first_run
+    if changed or existing.intended_date_kwarg != intended_date_kwarg:
+        existing.intended_date_kwarg = intended_date_kwarg
         existing.save()
 
 
@@ -289,18 +314,16 @@ def sync_schedules():
     """Create or update the recurring export schedules from settings; run on
     every startup so a settings change takes effect after a restart."""
     from django_q.models import Schedule
-    if PATH_LEGACY_EXPORTER_FLAG.is_file():
-        if PATH_LEGACY_EXPORTER_FLAG.read_text().strip() == '1':
-            _request_index()
-        PATH_LEGACY_EXPORTER_FLAG.unlink()
-
+    schedule_type = get_schedule_type()
+    minutes = get_schedule_minutes()
     _sync_schedule(
         SCHEDULE_NAME_REGULAR, RUN_REGULAR_EXPORT_FUNC,
-        schedule_type=get_schedule_type(),
-        minutes=get_schedule_minutes(),
-        first_run=next_time_of_day(get_schedule_time()),
-        legacy_funcs=[LEGACY_RUN_SCHEDULED_EXPORTER_FUNC, RUN_REQUESTED_EXPORT_FUNC],
+        schedule_type=schedule_type,
+        minutes=minutes,
+        first_run=first_regular_run(schedule_type, minutes),
+        intended_date_kwarg='intended_date',
     )
+    get_schedule_weekdays()  # check the setting at startup, it's read by run_regular_export()
     _sync_schedule(
         SCHEDULE_NAME_WEEKLY_INDEX, RUN_WEEKLY_INDEX_EXPORT_FUNC,
         schedule_type=Schedule.WEEKLY,

@@ -14,8 +14,10 @@ CSRF_TRUSTED_ORIGINS = ['http://192.168.56.10', ]
 # # scheduled exports for the front end, see "Export" in docs/admin_tasks.md
 # EXPORTER_SCHEDULE_TYPE = 'D'
 # EXPORTER_SCHEDULE_TIME = '00:00'
+# EXPORTER_SCHEDULE_WEEKDAYS = [0, 1, 2, 3, 4, 5]  # 0: Monday ... 6: Sunday
 # EXPORTER_INDEX_WEEKDAY = 6  # 0: Monday ... 6: Sunday
-# EXPORTER_INDEX_TIME = '02:00'
+# EXPORTER_INDEX_TIME = '04:00'
+# EXPORTER_SKIP_URL_CHECK = False
 
 
 ##### Email
