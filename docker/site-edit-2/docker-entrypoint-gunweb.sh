@@ -1,4 +1,6 @@
 #!/bin/bash
+# Stop if any step fails, so gunicorn never starts on a database that failed to migrate
+set -e
 
 
 test -d $EMLO_APP_HOME || mkdir -p $EMLO_APP_HOME
@@ -10,8 +12,6 @@ NAME="siteedit2"
 # Django project directory
 DJANGODIR=/code
 
-# we will communicte using this unix socket
-#SOCKFILE=$EMLO_APP_HOME/gunicorn.sock
 GUN_BIND=0.0.0.0:8000
 
 # the user to run as
@@ -27,9 +27,6 @@ DJANGO_WSGI_MODULE=siteedit2.wsgi
 echo "Starting $NAME as `whoami`"
 # Activate the virtual environment
 
-# Create the run directory if it doesn't exist
-RUNDIR=$(dirname $SOCKFILE)
-test -d $RUNDIR || mkdir -p $RUNDIR
 
 
 cd $DJANGODIR
@@ -38,10 +35,7 @@ python3 manage.py compilescss
 python3 manage.py collectstatic -c --no-input
 
 
-echo "Making migrations"
-python manage.py makemigrations
-
-# Make migrations
+# Migrations are created in development and committed, never generated here
 echo "Migrating"
 python manage.py migrate
 
