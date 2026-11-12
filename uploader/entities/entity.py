@@ -168,12 +168,12 @@ class CofkEntity:
         if 'ranges' in self.fields and 'date_of_work_std_is_range' in entity and \
                 entity['date_of_work_std_is_range'] == 1:
             for range_columns in self.fields['ranges'][0]['date_of_work_std_is_range']:
-                if range_columns[0] not in entity:
-                    self.add_error(f'Column {range_columns[0]} not present but needed when date of work is a range.')
-                elif range_columns[1] not in entity:
-                    self.add_error(f'Column {range_columns[1]} not present but needed when date of work is a range.')
-                elif isinstance(entity[range_columns[0]], int) and isinstance(entity[range_columns[1]], int) \
-                        and entity[range_columns[0]] > entity[range_columns[1]]:
+                # A range may be open-ended ("on or after" / "on or before"), so only one end is required
+                start, end = entity.get(range_columns[0]), entity.get(range_columns[1])
+                if start in (None, '') and end in (None, ''):
+                    self.add_error(f'Column {range_columns[0]} or {range_columns[1]} needed when date of work'
+                                   f' is a range.')
+                elif isinstance(start, int) and isinstance(end, int) and start > end:
                     self.add_error(f'Column {range_columns[0]} can not be greater than {range_columns[1]}.')
             self.check_date_range(entity)
 
