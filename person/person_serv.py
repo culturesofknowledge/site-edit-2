@@ -1,12 +1,10 @@
-import calendar
 import collections
 import logging
 from datetime import date
 
 from django.urls import reverse
 
-from core.constant import DEFAULT_MONTH
-from core.helper import recref_serv
+from core.helper import date_serv, recref_serv
 from location import location_serv
 from manifestation import manif_serv
 from person.models import CofkUnionPerson
@@ -15,26 +13,8 @@ log = logging.getLogger(__name__)
 
 
 def _compute_std_date(year, month, day, year2, month2, day2) -> date | None:
-    """Derive the sortable date a precomputed *_std-style DateField should hold
-    from its granular year/month/day (and, for a range, year2/month2/day2)
-    parts. Mirrors work_serv.compute_date_of_work_std's precedence (prefer the
-    "to" date of a range when present), adapted to build a real date object
-    (person's fields are DateFields, not CharFields with a string sentinel
-    default) so blank-day defaults must stay within the target month.
-    """
-    if year2:
-        y = int(year2)
-        m = int(month2 or 12)
-        d = int(day2 or calendar.monthrange(y, m)[1])
-        return date(y, m, d)
-
-    if not year:
-        return None
-
-    y = int(year)
-    m = int(month or DEFAULT_MONTH)
-    d = int(day or calendar.monthrange(y, m)[1])
-    return date(y, m, d)
+    """See date_serv.compute_std_date (shared with the tweaker)."""
+    return date_serv.compute_std_date(year, month, day, year2, month2, day2)
 
 
 def compute_date_of_birth(person: CofkUnionPerson) -> date | None:

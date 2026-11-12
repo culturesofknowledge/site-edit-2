@@ -1,3 +1,4 @@
+import calendar
 import datetime
 
 from core import constant
@@ -199,3 +200,121 @@ def decode_calendar(calendar_code, default='Unknown') -> str:
         if code == calendar_code:
             return name
     return default
+
+
+def compute_std_date_str(year, month, day, year2=None, month2=None, day2=None) -> str:
+    """The sortable YYYY-MM-DD "date for ordering" for a work date.
+
+    When there is a second date (a range), it is used, otherwise the first date.
+    Kept free of Django imports so the standalone tweaker can use it too.
+
+    >>> compute_std_date_str(None, None, None, 1637, 12, 1)
+    '1637-12-01'
+    >>> compute_std_date_str(1636, 11, 11, 1637, 2, None)
+    '1637-02-28'
+    >>> compute_std_date_str(1636, 11, 11)
+    '1636-11-11'
+    >>> compute_std_date_str(1636, 2, None)
+    '1636-02-29'
+    >>> compute_std_date_str(None, None, None)
+    '9999-12-31'
+    """
+    if year2:
+        year = int(year2)
+        # For "to" date, default blank month to 12 (end of year)
+        month = int(month2 or 12)
+        # Default blank day to last day of the month (handles leap years)
+        day = int(day2 or calendar.monthrange(year, month)[1])
+        return f"{year:04d}-{month:02d}-{day:02d}"
+
+    if not year:
+        return constant.DEFAULT_EMPTY_DATE_STR
+
+    year = int(year)
+    month = int(month or constant.DEFAULT_MONTH)
+    # Last day of the month, as the form's auto_date_calendar.js does (not a flat 31)
+    day = int(day or calendar.monthrange(year, month)[1])
+    return f"{year:04d}-{month:02d}-{day:02d}"
+
+
+def _julian_gregorian_day_offset(calendar_code: str, year: int, month: int, day: int) -> int:
+    """Direct port of cal_diff_days_by_calendar_code() in
+    core/static/core/js/auto_date_calendar.js - keep the two in sync if this rule
+    ever changes. Julian dates ran 10 days behind Gregorian, widening to 11 days
+    after February 1700 (a Julian leap year that Gregorian's century rule skips)."""
+    if calendar_code not in ('JM', 'JJ'):
+        return 0
+    if year > 1700:
+        return 11
+    if year == 1700 and month > 2:
+        return 11
+    if year == 1700 and month == 2 and day == 29:
+        return 11
+    return 10
+
+
+def convert_date_by_calendar_code(calendar_code: str, year: int, month: int, day: int) \
+        -> tuple[int, int, int]:
+    """Direct port of convert_date_by_calendar_code() in
+    core/static/core/js/auto_date_calendar.js - keep the two in sync."""
+    offset = _julian_gregorian_day_offset(calendar_code, year, month, day)
+    new_day = day + offset
+    new_month = month
+    new_year = year
+
+    max_day_of_month = calendar.monthrange(year, month)[1]
+    if new_day > max_day_of_month:
+        new_day -= max_day_of_month
+        new_month += 1
+        if new_month > 12:
+            new_month = 1
+            new_year += 1
+            if new_year > 9999:
+                new_year = 9999
+
+    return new_year, new_month, new_day
+
+
+def compute_std_gregorian_str(calendar_code, year, month, day, year2=None, month2=None, day2=None) -> str:
+    """compute_std_date_str converted to the Gregorian calendar.
+
+    >>> compute_std_gregorian_str('JJ', None, None, None, 1637, 12, 1)
+    '1637-12-11'
+    >>> compute_std_gregorian_str('G', 1636, 11, 11)
+    '1636-11-11'
+    """
+    std = compute_std_date_str(year, month, day, year2, month2, day2)
+    if std == constant.DEFAULT_EMPTY_DATE_STR:
+        return std
+
+    y, m, d = (int(v) for v in std.split('-'))
+    new_year, new_month, new_day = convert_date_by_calendar_code(calendar_code, y, m, d)
+    return f"{new_year:04d}-{new_month:02d}-{new_day:02d}"
+
+
+def compute_std_date(year, month, day, year2=None, month2=None, day2=None) -> datetime.date | None:
+    """The sortable date for a person's birth, death or flourished date: the
+    second date of a range if there is one, otherwise the first. Blank parts
+    default to the end of the period. Kept free of Django imports so the
+    standalone tweaker can use it too.
+
+    >>> compute_std_date(None, None, None, 1637, 2, None)
+    datetime.date(1637, 2, 28)
+    >>> compute_std_date(1600, None, None)
+    datetime.date(1600, 12, 31)
+    >>> compute_std_date(None, 5, None) is None
+    True
+    """
+    if year2:
+        y = int(year2)
+        m = int(month2 or 12)
+        d = int(day2 or calendar.monthrange(y, m)[1])
+        return datetime.date(y, m, d)
+
+    if not year:
+        return None
+
+    y = int(year)
+    m = int(month or constant.DEFAULT_MONTH)
+    d = int(day or calendar.monthrange(y, m)[1])
+    return datetime.date(y, m, d)

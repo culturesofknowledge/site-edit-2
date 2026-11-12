@@ -15,6 +15,7 @@ from sqlalchemy.engine import Engine, Connection
 from sqlalchemy.exc import SQLAlchemyError, ResourceClosedError
 
 # Import relationship type constants from core
+from core.helper import date_serv
 from core.constant import (
     REL_TYPE_COMMENT_REFERS_TO,
     REL_TYPE_COMMENT_AUTHOR,
@@ -1013,8 +1014,11 @@ class DatabaseTweaker:
         work_is_translation = self.get_int_value(work_is_translation, 0)
         work_to_be_deleted = self.get_int_value(work_to_be_deleted, 0)
 
-        date_of_work_std = self.get_date_string(date_of_work_std_year, date_of_work_std_month, date_of_work_std_day)
-        date_of_work_std_gregorian = date_of_work_std
+        # Same rules as the web app (prefer the second date of a range, convert to Gregorian)
+        date_parts = (date_of_work_std_year, date_of_work_std_month, date_of_work_std_day,
+                      date_of_work2_std_year, date_of_work2_std_month, date_of_work2_std_day)
+        date_of_work_std = date_serv.compute_std_date_str(*date_parts)
+        date_of_work_std_gregorian = date_serv.compute_std_gregorian_str(original_calendar, *date_parts)
 
         values = {
             "work_id": work_id,
@@ -1164,18 +1168,13 @@ class DatabaseTweaker:
         if org_type == '':
             org_type = None
 
-        # Build date strings
-        date_of_birth = None
-        if birth_year or birth_month or birth_day:
-            date_of_birth = self.get_date_string(birth_year, birth_month, birth_day)
-
-        date_of_death = None
-        if death_year or death_month or death_day:
-            date_of_death = self.get_date_string(death_year, death_month, death_day)
-
-        flourished = None
-        if flourished_year or flourished_month or flourished_day:
-            flourished = self.get_date_string(flourished_year, flourished_month, flourished_day)
+        # Build sortable dates with the same rules as the web app (prefer the second date of a range)
+        date_of_birth = date_serv.compute_std_date(birth_year, birth_month, birth_day,
+                                                   birth2_year, birth2_month, birth2_day)
+        date_of_death = date_serv.compute_std_date(death_year, death_month, death_day,
+                                                   death2_year, death2_month, death2_day)
+        flourished = date_serv.compute_std_date(flourished_year, flourished_month, flourished_day,
+                                                flourished2_year, flourished2_month, flourished2_day)
 
         # Handle synonyms and aliases
         if synonyms:

@@ -1,4 +1,3 @@
-import calendar
 import logging
 from datetime import date
 from typing import Any, List
@@ -11,8 +10,8 @@ from django.utils.safestring import mark_safe
 
 from core.constant import REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, \
     REL_TYPE_MENTION, REL_TYPE_MENTION_PLACE, REL_TYPE_WORK_IS_REPLY_TO, REL_TYPE_WORK_MATCHES
-from core.helper import data_serv,query_serv
-from core.constant import DEFAULT_MONTH, DEFAULT_DAY, DEFAULT_EMPTY_DATE_STR
+from core.helper import data_serv, date_serv, query_serv
+from core.constant import DEFAULT_EMPTY_DATE_STR
 from location import location_serv
 from person import person_serv
 from work.models import CofkUnionWork
@@ -44,61 +43,9 @@ def compute_date_of_work_std(work: CofkUnionWork) -> str:
     date-range-filters against directly at the SQL level - it is not derived
     automatically on save, so any code that changes the date fields (e.g. bulk
     corrections) must call this and persist the result, or search results will
-    reflect a stale date.
+    reflect a stale date. See date_serv.compute_std_date_str.
     """
-    if work.date_of_work2_std_year:
-        year = int(work.date_of_work2_std_year)
-        # For "to" date, default blank month to 12 (end of year)
-        month = int(work.date_of_work2_std_month or 12)
-        # Default blank day to last day of the month (handles leap years)
-        day = int(work.date_of_work2_std_day or calendar.monthrange(year, month)[1])
-        return f"{year:04d}-{month:02d}-{day:02d}"
-
-    if not work.date_of_work_std_year:
-        return DEFAULT_EMPTY_DATE_STR
-
-    year = int(work.date_of_work_std_year)
-    month = int(work.date_of_work_std_month or DEFAULT_MONTH)
-    day = int(work.date_of_work_std_day or DEFAULT_DAY)
-    return f"{year:04d}-{month:02d}-{day:02d}"
-
-
-def _julian_gregorian_day_offset(calendar_code: str, year: int, month: int, day: int) -> int:
-    """Direct port of cal_diff_days_by_calendar_code() in
-    core/static/core/js/auto_date_calendar.js - keep the two in sync if this rule
-    ever changes. Julian dates ran 10 days behind Gregorian, widening to 11 days
-    after February 1700 (a Julian leap year that Gregorian's century rule skips)."""
-    if calendar_code not in ('JM', 'JJ'):
-        return 0
-    if year > 1700:
-        return 11
-    if year == 1700 and month > 2:
-        return 11
-    if year == 1700 and month == 2 and day == 29:
-        return 11
-    return 10
-
-
-def _convert_date_by_calendar_code(calendar_code: str, year: int, month: int, day: int) \
-        -> tuple[int, int, int]:
-    """Direct port of convert_date_by_calendar_code() in
-    core/static/core/js/auto_date_calendar.js - keep the two in sync."""
-    offset = _julian_gregorian_day_offset(calendar_code, year, month, day)
-    new_day = day + offset
-    new_month = month
-    new_year = year
-
-    max_day_of_month = calendar.monthrange(year, month)[1]
-    if new_day > max_day_of_month:
-        new_day -= max_day_of_month
-        new_month += 1
-        if new_month > 12:
-            new_month = 1
-            new_year += 1
-            if new_year > 9999:
-                new_year = 9999
-
-    return new_year, new_month, new_day
+    return date_serv.compute_std_date_str(*_work_date_parts(work))
 
 
 def compute_date_of_work_std_gregorian(work: CofkUnionWork) -> str:
@@ -108,23 +55,14 @@ def compute_date_of_work_std_gregorian(work: CofkUnionWork) -> str:
     precomputed column normally only set by the manual-edit web form's JS
     (auto_date_calendar.js), so it must be explicitly resynced whenever the source
     date fields - or original_calendar itself - change outside that form (e.g. via
-    corrections).
+    corrections). See date_serv.compute_std_gregorian_str.
     """
-    if work.date_of_work2_std_year:
-        year = int(work.date_of_work2_std_year)
-        month = int(work.date_of_work2_std_month or 12)
-        day = int(work.date_of_work2_std_day or calendar.monthrange(year, month)[1])
-    elif work.date_of_work_std_year:
-        year = int(work.date_of_work_std_year)
-        month = int(work.date_of_work_std_month or DEFAULT_MONTH)
-        day = int(work.date_of_work_std_day or DEFAULT_DAY)
-    else:
-        return DEFAULT_EMPTY_DATE_STR
+    return date_serv.compute_std_gregorian_str(work.original_calendar, *_work_date_parts(work))
 
-    new_year, new_month, new_day = _convert_date_by_calendar_code(
-        work.original_calendar, year, month, day
-    )
-    return f"{new_year:04d}-{new_month:02d}-{new_day:02d}"
+
+def _work_date_parts(work: CofkUnionWork) -> tuple:
+    return (work.date_of_work_std_year, work.date_of_work_std_month, work.date_of_work_std_day,
+            work.date_of_work2_std_year, work.date_of_work2_std_month, work.date_of_work2_std_day)
 
 
 def get_recref_display_name(work: CofkUnionWork) -> str:
@@ -223,13 +161,7 @@ class DisplayableWork(CofkUnionWork):
     def date_for_ordering(self):
         # If there is a "to" date (range), use the "to" date for ordering
         if self.date_of_work2_std_year:
-            import calendar
-            year = int(self.date_of_work2_std_year)
-            # For "to" date, default blank month to 12 (end of year)
-            month = int(self.date_of_work2_std_month or 12)
-            # Default blank day to last day of the month (handles leap years)
-            day = int(self.date_of_work2_std_day or calendar.monthrange(year, month)[1])
-            return f"{year:04d}-{month:02d}-{day:02d}"
+            return compute_date_of_work_std(self)
 
         # None means the object was not saved; treat as no date
         if self.date_of_work_std is None:
@@ -240,13 +172,7 @@ class DisplayableWork(CofkUnionWork):
             return self.date_of_work_std
 
         # Sentinel stored: construct from individual year/month/day fields if available
-        if not self.date_of_work_std_year:
-            return DEFAULT_EMPTY_DATE_STR
-
-        year = int(self.date_of_work_std_year)
-        month = int(self.date_of_work_std_month or DEFAULT_MONTH)
-        day = int(self.date_of_work_std_day or DEFAULT_DAY)
-        return f"{year:04d}-{month:02d}-{day:02d}"
+        return compute_date_of_work_std(self)
 
     @property
     def creators_for_display(self):
