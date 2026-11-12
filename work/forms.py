@@ -125,7 +125,16 @@ class DatesForm(forms.ModelForm):
             return
 
         instance: CofkUnionWork | None = getattr(self, 'instance', None)
+
         std = getattr(instance, 'date_of_work_std', None) if instance else None
+
+        # When there is a second date, date_of_work_std is derived from it
+        # (see compute_date_of_work_std), so it says nothing about the start
+        # date. Copying it in would invent a start year for open-ended
+        # ("on or before") ranges.
+        if instance and instance.date_of_work2_std_year:
+            std = None
+
         if std and std != DEFAULT_EMPTY_DATE_STR:
             try:
                 # Expecting YYYY-MM-DD
