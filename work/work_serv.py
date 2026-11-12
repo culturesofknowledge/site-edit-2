@@ -506,6 +506,20 @@ def q_visible_works(prefix=None, check_hidden_date=True, check_published=False) 
     return q
 
 
+# editors flag records that should not be counted by starting editors_notes with one of these codes:
+# m4d (marked for deletion), xr (extra record), xr bio / xrbio (extra biographical listing card),
+# o2d (one to delete), o2d bio / o2dbio (one to delete bio)
+REMOVAL_NOTE_REGEX = r'^\s*(m4d|xr(\s*bio)?|o2d(\s*bio)?)\M'
+
+
+def q_removal_noted_works(prefix=None) -> Q:
+    if prefix:
+        prefix = prefix + '__'
+    else:
+        prefix = ''
+    return Q(**{prefix + 'editors_notes__iregex': REMOVAL_NOTE_REGEX})
+
+
 def is_hidden_work(work: CofkUnionWork, cached_catalogue_status: dict[Any, int] = None) -> bool:
     if work is None:
         return True

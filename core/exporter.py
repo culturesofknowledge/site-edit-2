@@ -16,10 +16,10 @@ from django.db.models import Count, Q, Exists, OuterRef
 from urllib3.exceptions import InsecureRequestWarning
 
 import person.subqueries
-import person.views
 from cllib import thread_utils
 from core import constant
-from core.constant import REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE_MENTION_PLACE
+from core.constant import REL_TYPE_WAS_SENT_FROM, REL_TYPE_WAS_SENT_TO, REL_TYPE_MENTION_PLACE, \
+    REL_TYPE_MENTION
 from core.helper import query_serv, recref_serv, date_serv, query_cache_serv, model_serv, media_serv
 from core.helper.view_components import HeaderValues, DownloadCsvHandler
 from core.models import CofkUnionImage, CofkUnionRelationshipType, CofkUnionComment, CofkUnionResource
@@ -30,6 +30,7 @@ from manifestation.models import CofkUnionManifestation
 from person import person_serv
 from person.models import CofkUnionPerson, CofkPersonPersonMap
 from work import work_serv
+from work.forms import AuthorRelationChoices, AddresseeRelationChoices
 from work.models import CofkUnionWork
 from work.work_serv import DisplayableWork
 
@@ -706,6 +707,17 @@ def create_location_queryset():
     return queryset
 
 
+def create_person_queryset():
+    # only count works the front end can show, and skip works editors noted as m4d, xr, o2d etc.
+    work_q = work_serv.q_visible_works() & ~work_serv.q_removal_noted_works()
+    annotate = {
+        'sent': person.subqueries.create_sql_count_work_by_person(AuthorRelationChoices.values, work_q=work_q),
+        'recd': person.subqueries.create_sql_count_work_by_person(AddresseeRelationChoices.values, work_q=work_q),
+        'mentioned': person.subqueries.create_sql_count_work_by_person([REL_TYPE_MENTION], work_q=work_q),
+    }
+    return query_serv.update_queryset(CofkUnionPerson.objects, CofkUnionPerson, annotate=annotate)
+
+
 def preloaded_csv_settings(objects_factory, target_csv_type_factory, model_class, skip_url_check=False):
     return (
         objects_factory,
@@ -786,7 +798,7 @@ def export_all(output_dir: str = '.', skip_url_check=False, module: str = None):
          LocationFrontendCsv, CofkUnionLocation),
         (lambda: CofkUnionManifestation.objects.iterator(),
          ManifFrontendCsv, CofkUnionManifestation),
-        (lambda: person.views.create_queryset_by_queries(CofkUnionPerson, ).iterator(chunk_size=2000),
+        (lambda: create_person_queryset().iterator(chunk_size=2000),
          PersonFrontendCsv, CofkUnionPerson),
         (lambda: CofkUnionRelationshipType.objects.iterator(),
          RelTypeFrontendCsv, CofkUnionRelationshipType),
