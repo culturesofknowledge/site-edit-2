@@ -748,7 +748,10 @@ def find_all_recrefs():
         }
 
 
-def export_all(output_dir: str = '.', skip_url_check=False, module: str = None):
+def export_all(output_dir: str = '.', skip_url_check=False, module: str = None,
+               clear_output_dir=False):
+    """clear_output_dir: delete everything else in output_dir once the new
+    files are generated, before publishing them, so only this run's files remain."""
     if skip_url_check:
         log.warning('skip_url_check is True, will not check if url is alive')
 
@@ -825,6 +828,16 @@ def export_all(output_dir: str = '.', skip_url_check=False, module: str = None):
             DownloadCsvHandler(target_csv_type_factory()).create_csv_file(
                 objects_factory(),
                 csv_path)
+
+        if clear_output_dir:
+            for old_path in output_dir.iterdir():
+                if old_path == staging_dir:
+                    continue
+                log.info(f'removing previous export file {old_path}')
+                if old_path.is_dir() and not old_path.is_symlink():
+                    shutil.rmtree(old_path)
+                else:
+                    old_path.unlink()
 
         # every file generated successfully -- publish them all atomically
         for tmp_file in staging_dir.iterdir():

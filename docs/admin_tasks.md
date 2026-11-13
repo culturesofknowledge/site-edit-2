@@ -19,6 +19,9 @@ your own, and omit the parts in square brackets (`[...]`) if you do not need the
   - [Delete a user on the Django admin page](#delete-a-user-on-the-django-admin-page)
   - [Set up groups and permissions](#set-up-groups-and-permissions)
 - [Export](#export)
+  - [Where the export files are written](#where-the-export-files-are-written)
+  - [Scheduled exports and the `need_index` file](#scheduled-exports-and-the-need_index-file)
+  - [Change when the scheduled exports run](#change-when-the-scheduled-exports-run)
   - [Trigger an export from the dashboard](#trigger-an-export-from-the-dashboard)
   - [Run an export manually](#run-an-export-manually)
   - [Collect the export files](#collect-the-export-files)
@@ -217,19 +220,111 @@ Run after the first deployment, and again whenever the role definitions change i
 
 ## Export
 
-Exporting produces a set of CSV files of the whole dataset. It is a long-running job, so the dashboard schedules it
-rather than running it immediately.
+Exporting produces a set of CSV files of the whole dataset for the EMLO front end. It is a long-running job, so it
+runs on a schedule in the background worker rather than immediately.
+
+### Where the export files are written
+
+Scheduled exports and exports requested from the dashboard write their files into the `exporter` directory under the
+application home, `EMLO_APP_HOME`:
+
+| Setup | `EMLO_APP_HOME` | Export directory |
+|---|---|---|
+| Without Docker | The `EMLO_APP_HOME` environment variable; if it is not set, `emlo_home` in the home directory of the user running the site | `$EMLO_APP_HOME/exporter/`, by default `~/emlo_home/exporter/` |
+| Docker | `/emlo_home/` (set in `docker/site-edit-2/.env`, copied from `env.example`) | `/emlo_home/exporter/` in the `web` and `django-q` containers, mounted from `exporter_output/` at the root of the code checkout on the host |
+
+To find the directory on a running site, print the setting the exporter uses:
+
+```bash
+python3 manage.py shell -c "from core.helper.exporter_serv import PATH_EXPORTER_OUTPUT; print(PATH_EXPORTER_OUTPUT)"
+```
+
+After a full export the directory contains:
+
+- `comment.csv`, `image.csv`, `institution.csv`, `location.csv`, `manifestation.csv`, `person.csv`,
+  `relationship.csv`, `relationship_type.csv`, `resource.csv` and `work.csv`
+- `need_index` (see below)
+
+While an export is running, its files are built in a hidden `.staging` subdirectory and only moved into the export
+directory once they are all complete. The exporter's own state files (`exporter.lock`, `exporter_index_requested`,
+`exporter_index_in_progress`) and its log (`emlo.log`) are in `EMLO_APP_HOME` itself, not in the export directory.
+
+The `exporter` management command ([Run an export manually](#run-an-export-manually)) does not use this directory:
+it writes to the directory given with `-o`, or the current directory if `-o` is left out.
+
+### Scheduled exports and the `need_index` file
+
+Every export writes the CSV files into the export directory, and then a file called `need_index` in the same directory. It contains `1` if the front end needs to re-index
+the new files into SOLR, and `0` if not. It is written only after all the CSV files are complete, so whatever copies
+the files to the front end should copy `need_index` last. Each scheduled export first deletes everything left in
+that directory by the previous export, so it only ever holds the latest export's files. This happens only after the
+new files have been generated, so a failed export leaves the previous files in place.
+
+| Export | When | `need_index` |
+|---|---|---|
+| Regular | Every `EXPORTER_SCHEDULE_TYPE` on `EXPORTER_SCHEDULE_WEEKDAYS` (default: Monday to Saturday at `EXPORTER_SCHEDULE_TIME`, 00:00) | `0` |
+| Weekly | Every week on `EXPORTER_INDEX_WEEKDAY` at `EXPORTER_INDEX_TIME` (default: Sunday at 04:00) | `1` |
+| Requested | At the next regular export time after a user selects **Export** on the dashboard | `1` |
+
+- A request is served by whichever export starts first after the click, so if the regular export runs first it
+  writes `need_index` `1` instead of `0`.
+- Only one export runs at a time. A regular export that finds another export running is skipped. A weekly or
+  requested export that finds one running is retried 30 minutes later.
+- If a weekly or requested export fails, the next export retries it with `need_index` `1`. A failed export leaves the
+  previous files and `need_index` in place.
+- `need_index` is rewritten by every export. The copy to the front end must therefore run after each export and
+  before the next one, or a `1` can be replaced by a `0` before it is picked up.
+
+### Change when the scheduled exports run
+
+1. Set any of these in the deployment's settings file (e.g. `siteedit2/settings/gunweb.py`). Times are 24-hour
+   `HH:MM` in the site's `TIME_ZONE` setting (`Europe/London`, so GMT in winter and BST in summer), not the
+   server's own clock: Django sets every process it runs to that time zone.
+   
+   ```python
+   # regular export, also the time a requested export runs
+   EXPORTER_SCHEDULE_TYPE = 'D'      # D: Daily, I: Minutes, H: Hourly, W: Weekly, M: Monthly, Q: Quarterly, Y: Yearly
+   EXPORTER_SCHEDULE_MINUTES = None  # interval in minutes, only used when EXPORTER_SCHEDULE_TYPE = 'I'
+   EXPORTER_SCHEDULE_TIME = '00:00'  # time of day for daily and longer schedules; minutes and hourly
+                                     # schedules instead start one interval after the worker starts
+   EXPORTER_SCHEDULE_WEEKDAYS = [0, 1, 2, 3, 4, 5]  # days it runs, 0: Monday ... 6: Sunday; leave out
+                                                    # EXPORTER_INDEX_WEEKDAY, the weekly export runs then
+   
+   # weekly export with need_index 1
+   EXPORTER_INDEX_WEEKDAY = 6        # 0: Monday ... 6: Sunday
+   EXPORTER_INDEX_TIME = '04:00'
+   
+   # True skips checking that image and resource URLs are alive, which makes the export much faster
+   EXPORTER_SKIP_URL_CHECK = False
+   ```
+   
+   For example, to export every 6 hours, and index every Saturday at 03:00:
+   
+   ```python
+   EXPORTER_SCHEDULE_TYPE = 'I'
+   EXPORTER_SCHEDULE_MINUTES = 6 * 60
+   EXPORTER_INDEX_WEEKDAY = 5
+   EXPORTER_INDEX_TIME = '03:00'
+   ```
+
+2. Restart the web site and the background worker. The schedules are updated from the settings at startup, and an
+   invalid value stops the site from starting with an error naming the setting.
+
+3. Check the result in Django admin under **Django Q > Scheduled tasks**: `exporter_regular` and
+   `exporter_weekly_index` show the type and next run. A pending dashboard request shows as `exporter_requested`.
+   Do not edit these rows by hand; they are reset from the settings at the next restart.
 
 ### Trigger an export from the dashboard
 
 1. Log in as a Supervisor.
 2. Scroll to the **Export** section of the dashboard.
-3. Select **Export**. The export is queued and will run during the coming night.
+3. Select **Export**. The export is queued for the next regular export time (by default the coming midnight) and
+   will write `need_index` `1`.
 4. The section then shows "Exporter is pending...". While this message is displayed, a further request is not needed
    and the button is hidden.
-5. Check the dashboard the next day -- when the message is gone, the run has finished.
+5. Check the dashboard after the run -- when the message is gone, the run has finished.
 6. The scheduled background worker must be running for the job to start; if the message never clears, see
-   [Routine Checks](#routine-checks).
+   [Routine Checks](#routine-checks), and look for "Exporter" messages in `emlo.log` under the application home.
 
 ### Run an export manually
 
@@ -255,8 +350,9 @@ Use when the files are needed immediately rather than overnight.
 
 ### Collect the export files
 
-1. Look in the export output directory of the deployment (by default an `exporter` directory under the application
-   home) for the generated CSV files.
+1. Look in the export directory for the generated CSV files: `$EMLO_APP_HOME/exporter/` for scheduled and dashboard
+   exports, or the `-o` directory for a manual run. See
+   [Where the export files are written](#where-the-export-files-are-written).
 
 2. Copy the files off the server. If the site runs in Docker, copy them out of the container first:
    
