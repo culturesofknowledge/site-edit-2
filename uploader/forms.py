@@ -98,7 +98,7 @@ class GeneralSearchFieldset(BasicSearchFieldset):
     notes_on_addressees = SearchCharField()
     notes_on_addressees_lookup = create_lookup_field(StrLookupChoices.choices)
 
-    upload_id = SearchIntField()
+    upload_id = SearchIntField(label=field_label_map['collect_work']['upload_id'])
     upload_id_lookup = create_lookup_field(IntLookupChoices.choices)
 
     destination = SearchCharField()
