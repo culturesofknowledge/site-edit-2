@@ -10,6 +10,7 @@ from django.db.models import QuerySet
 from django.urls import reverse
 from django_q.conf import Conf
 
+from audit.audit_user import set_audit_user
 from cllib_django import email_utils
 from core.constant import REL_TYPE_STORED_IN, REL_TYPE_CREATED, REL_TYPE_WAS_ADDRESSED_TO, \
     REL_TYPE_WAS_SENT_TO, REL_TYPE_WAS_SENT_FROM, REL_TYPE_IS_RELATED_TO, \
@@ -219,6 +220,8 @@ def accept_works(context: dict, upload: CofkCollectUpload, request=None, email_a
         # Wrap the creation of union objects inside a Django transaction to ensure
         # that if an exception is raised, the whole transaction is rolled back
         with transaction.atomic():
+            # Runs in a django-q worker, so AuditUserMiddleware has not set the audit user
+            set_audit_user(username)
             create_works(collect_works, username, union_work_dict, upload, request)
 
     except Exception as e:

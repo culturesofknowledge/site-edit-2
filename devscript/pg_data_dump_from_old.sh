@@ -16,7 +16,11 @@ fi
 #     the current date and time, then drop and recreate the database
 #  5. start web (runs migrate, createcachetable, add_groups_and_permissions)
 #  6. restore the legacy pg dump into db_old (skipped if already restored)
-#  7. run data_migration from db_old into db (takes hours, logged to logs/)
+#  7. export cofk_union_audit_literal and cofk_union_audit_relationship from
+#     db_old to db_dump/, run data_migration from db_old into db (takes hours,
+#     logged to logs/), then import the old audit rows into db and advance
+#     the audit sequences
+#     (data_migration disables triggers, so audit history must be copied)
 #  8. create a superuser (interactive)
 #
 # Run from the project home. data_migration takes ~5 hours, so run this
@@ -229,6 +233,12 @@ for _ in $(seq 1 180); do
   sleep 5
 done
 dc logs web 2>/dev/null | grep -q "Starting server" || die "web did not finish migrations in time, check: ${COMPOSE[*]} logs web"
+# entrypoint.sh carries on to runserver even when migrate fails,
+# so check that every migration was actually applied
+if ! dc exec -T web python3 manage.py migrate --check >/dev/null 2>&1; then
+  dc logs web 2>/dev/null | grep -E "Error|error:" | tail -n 20
+  die "migrations did not apply in web, check: ${COMPOSE[*]} logs web"
+fi
 log "Migrations done, starting django-q"
 dc up -d --force-recreate django-q
 
@@ -283,13 +293,58 @@ if [ "$SKIP_DATA_MIGRATION" = 0 ]; then
   fi
 
 #########
-# 7. data migration
+# 7. data migration, preserving the old audit trail
 #########
+  # export audit data BEFORE data_migration
+  AUDIT_TABLES=(cofk_union_audit_literal cofk_union_audit_relationship)
+  audit_file="$DUMP_DIR/old_audit_data_${TIMESTAMP}.sql"
+  log "Exporting ${AUDIT_TABLES[*]} from db_old to $audit_file"
+  dc exec -T db_old pg_dump -h localhost -U "$OLD_DB_USER" -d "$OLD_DB_NAME" \
+    --data-only "${AUDIT_TABLES[@]/#/--table=}" | cat > "$audit_file" \
+    || { rm -f "$audit_file"; die "pg_dump of ${AUDIT_TABLES[*]} failed"; }
+  [ -s "$audit_file" ] || die "audit export $audit_file is empty"
+
+  # migrate all entity data (triggers are disabled during this step)
   migration_log="$LOG_DIR/data_migration_${TIMESTAMP}.log"
   log "Running data_migration (takes hours), log: $migration_log"
   dc exec -T web python3 manage.py data_migration \
     -d "$OLD_DB_NAME" -u "$OLD_DB_USER" -p "$OLD_DB_PASSWORD" -o db_old -t 5432 \
     2>&1 | tee "$migration_log"
+
+  # import historical audit data with original usernames preserved.
+  # the file is piped in, not redirected: snap docker is not allowed to read
+  # a redirected file (apparmor file_inherit), psql then gets empty input and
+  # exits 0 without importing anything
+  audit_import_cmd="cat $audit_file | ${COMPOSE[*]} exec -T db psql -h localhost -U $DB_USER -d $DB_NAME -v ON_ERROR_STOP=1 --single-transaction"
+  n_audit=0
+  for table in "${AUDIT_TABLES[@]}"; do
+    n_audit=$((n_audit + $(pg_query db "$DB_USER" "$DB_NAME" "SELECT count(*) FROM $table")))
+  done
+  if [ "$n_audit" -gt 0 ]; then
+    echo "WARNING: ${AUDIT_TABLES[*]} in db already have $n_audit rows, skipping audit import" \
+      "(audit_id values would clash). Import manually with: $audit_import_cmd"
+  else
+    audit_log="$LOG_DIR/audit_import_${TIMESTAMP}.log"
+    log "Importing old audit data into db, log: $audit_log"
+    cat "$audit_file" | dc exec -T db psql -h localhost -U "$DB_USER" -d "$DB_NAME" \
+      -v ON_ERROR_STOP=1 --single-transaction 2>&1 | cat > "$audit_log" \
+      || die "audit import failed (rolled back), see $audit_log. Retry with: $audit_import_cmd"
+
+    for table in "${AUDIT_TABLES[@]}"; do
+      # psql exits 0 on empty input, so compare row counts with db_old
+      n_old="$(pg_query db_old "$OLD_DB_USER" "$OLD_DB_NAME" "SELECT count(*) FROM $table")"
+      n_new="$(pg_query db "$DB_USER" "$DB_NAME" "SELECT count(*) FROM $table")"
+      [ "$n_new" = "$n_old" ] \
+        || die "$table has $n_new rows in db but $n_old in db_old, see $audit_log. Retry with: $audit_import_cmd"
+      echo "$table: imported $n_new rows"
+
+      # advance the audit sequence past the highest imported audit_id
+      log "Advancing the $table audit_id sequence"
+      pg_query db "$DB_USER" "$DB_NAME" \
+        "SELECT setval(pg_get_serial_sequence('$table', 'audit_id'),
+           (SELECT COALESCE(max(audit_id), 0) FROM $table) + 100, true)"
+    done
+  fi
 fi
 
 #########

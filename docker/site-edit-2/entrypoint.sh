@@ -1,7 +1,7 @@
 #!/bin/bash
-echo "Making migrations"
-python manage.py makemigrations
-# Make migrations
+# Stop if any step fails, so the server never starts on a database that failed to migrate
+set -e
+# Create migrations yourself with `python manage.py makemigrations` and commit them
 echo "Migrating"
 python manage.py migrate
 # Create cache table

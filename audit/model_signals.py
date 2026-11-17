@@ -7,6 +7,7 @@ from django.db.models.base import ModelBase
 
 from audit import audit_recref_adapter
 from audit.audit_recref_adapter import AuditRecrefAdapter
+from audit.audit_user import get_audit_user
 from audit.models import CofkUnionAuditLiteral
 from core import constant
 from core.helper import model_serv
@@ -120,7 +121,7 @@ def handle_non_triggered_record(sender: ModelBase, instance: models.Model, is_cr
 
     CofkUnionAuditLiteral.objects.create(
         change_timestamp=model_serv.default_current_timestamp(),
-        change_user=parent_instance.change_user,
+        change_user=get_audit_user(parent_instance),
         change_type=constant.CHANGE_TYPE_CHANGE,
         table_name=table_name,
         key_value_text=audit_adapter.key_value_text(),
@@ -180,7 +181,7 @@ def save_audit_records(instance: Recref, old_instance: Recref = None, ):
     for column_name in columns:
         # handle date fields
         literal = CofkUnionAuditLiteral(
-            change_user=getattr(instance, 'change_user', constant.DEFAULT_CHANGE_USER),
+            change_user=get_audit_user(instance),
             change_type=constant.CHANGE_TYPE_NEW if old_instance is None else constant.CHANGE_TYPE_CHANGE,
             table_name=instance._meta.db_table,
             key_value_text=' '.join(adapter.key_value_text() for adapter in adapters),
@@ -256,7 +257,7 @@ def handle_update_recref_date(sender: ModelBase, instance: models.Model):
         # what would have been written had the row actually been recreated
         # rather than repointed in place.
         # Use the *current* user (from `instance`) for both the Del and New
-        current_user = getattr(instance, 'change_user', None)
+        current_user = get_audit_user(instance)
         _write_relation_audit_pair(sender, old_instance, constant.CHANGE_TYPE_DELETE,
                                    change_user_override=current_user)
         _write_relation_audit_pair(sender, instance, constant.CHANGE_TYPE_NEW)
@@ -317,7 +318,7 @@ def _write_relation_audit_pair(sender: ModelBase, instance: models.Model, change
             from_left_desc = f'{instance.relationship_type} < '
             from_right_desc = f'{instance.relationship_type} > '
 
-        audit_user = change_user_override or getattr(instance, 'change_user', constant.DEFAULT_CHANGE_USER)
+        audit_user = change_user_override or get_audit_user(instance)
 
         # save two (both ways) relation audit records
         for cur_left_rel, cur_right_rel, rel_desc in [

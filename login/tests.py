@@ -1,6 +1,7 @@
 from django.test import TestCase, RequestFactory
 from django.contrib.auth.models import Group
 from django.contrib.auth.signals import user_logged_in, user_login_failed
+from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.urls import reverse
 from django.utils import timezone
@@ -8,6 +9,7 @@ from django.utils import timezone
 from core import constant
 from core.helper import webdriver_actions, perm_serv
 from core.helper.test_serv import EmloSeleniumTestCase
+from core.models import CofkUserSavedQuery
 from login import utils as login_utils
 from login.fixtures import create_test_user, create_test_user__a
 from login.models import CofkUser
@@ -127,6 +129,116 @@ class CreateSuperuserFieldsTest(TestCase):
         self.assertEqual(user.surname, 'Lee')
         self.assertEqual(user.email, 'ann@example.com')
         self.assertTrue(user.is_superuser)
+
+
+def create_test_user_with_email(username, email) -> CofkUser:
+    user = create_test_user(username, is_save=False)
+    user.email = email
+    user.save()
+    return user
+
+
+class GenerateUsernameTest(TestCase):
+
+    def test_from_names(self):
+        self.assertEqual(login_utils.generate_username(' Anne Marie ', 'Dupré', 'x@example.com'), 'anne-marie.dupre')
+
+    def test_from_one_name(self):
+        self.assertEqual(login_utils.generate_username('', 'Lee', 'x@example.com'), 'lee')
+
+    def test_from_email_without_names(self):
+        self.assertEqual(login_utils.generate_username('', '  ', 'Ann.Lee@example.com'), 'ann.lee')
+
+    def test_number_added_when_taken_ignoring_case(self):
+        create_test_user('Ann.Lee')
+        create_test_user('ann.lee2')
+        self.assertEqual(login_utils.generate_username('Ann', 'Lee', None), 'ann.lee3')
+
+
+class CaseInsensitiveUsernameTest(TestCase):
+
+    def test_username_differing_only_by_case_is_rejected(self):
+        create_test_user('Bob')
+        with self.assertRaises(ValidationError):
+            create_test_user('bob')
+
+
+class RenameUserTest(TestCase):
+
+    def setUp(self):
+        self.user = create_test_user('old_name')
+        self.group, _ = Group.objects.get_or_create(name=constant.ROLE_EDITOR)
+        self.user.groups.add(self.group)
+        self.user.user_permissions.add(perm_serv.get_perm_by_full_name(constant.PM_VIEW_AUDIT))
+        self.query = CofkUserSavedQuery.objects.create(
+            username=self.user, query_class='work', query_method='search', query_title='',
+            query_order_by='iwork_id', query_sort_descending=0, query_entries_per_page=20,
+            query_record_layout='table')
+
+    def test_rename_moves_references(self):
+        CofkUser.rename('old_name', 'new_name')
+
+        self.assertFalse(CofkUser.objects.filter(pk='old_name').exists())
+        user = CofkUser.objects.get(pk='new_name')
+        self.assertEqual(list(user.groups.all()), [self.group])
+        self.assertTrue(user.has_perm(constant.PM_VIEW_AUDIT))
+        self.query.refresh_from_db()
+        self.assertEqual(self.query.username_id, 'new_name')
+
+    def test_rename_to_existing_username_is_rejected(self):
+        other = create_test_user('Other_Name')
+        with self.assertRaises(ValidationError):
+            CofkUser.rename('old_name', 'other_name')
+
+        self.assertTrue(CofkUser.objects.filter(pk='old_name').exists())
+        other.refresh_from_db()
+        self.assertEqual(other.username, 'Other_Name')
+
+    def test_case_only_rename_is_allowed(self):
+        CofkUser.rename('old_name', 'Old_Name')
+        self.assertTrue(CofkUser.objects.filter(pk='Old_Name').exists())
+
+
+class LoginWithUsernameOrEmailTest(TestCase):
+
+    def setUp(self):
+        self.user = create_test_user_with_email('ann.lee', 'ann@example.com')
+
+    def login(self, login, password='pass'):
+        return self.client.post(reverse('login:gate'), {'username': login, 'password': password})
+
+    def test_login_with_username(self):
+        self.assertRedirects(self.login('ann.lee'), reverse('login:dashboard'), fetch_redirect_response=False)
+
+    def test_login_with_username_ignores_case(self):
+        self.assertRedirects(self.login('Ann.Lee'), reverse('login:dashboard'), fetch_redirect_response=False)
+
+    def test_login_with_email(self):
+        self.assertRedirects(self.login('ANN@example.com'), reverse('login:dashboard'), fetch_redirect_response=False)
+
+    def test_username_wins_over_email(self):
+        # another user whose username is ann's email address
+        create_test_user_with_email('ann@example.com', 'other@example.com')
+        self.login('ann@example.com')
+        self.assertEqual(self.client.session['_auth_user_id'], 'ann@example.com')
+
+    def test_wrong_password(self):
+        response = self.login('ann@example.com', password='wrong')
+        self.assertContains(response, 'Incorrect username/email or password')
+
+    def test_shared_email_asks_for_username(self):
+        create_test_user_with_email('ann.lee2', 'ann@example.com')
+
+        response = self.login('ann@example.com')
+
+        self.assertContains(response, 'Please log in with your username instead')
+        self.assertNotIn('_auth_user_id', self.client.session)
+        self.assertRedirects(self.login('ann.lee2'), reverse('login:dashboard'), fetch_redirect_response=False)
+
+    def test_failed_login_with_email_increments_counter(self):
+        self.login('ann@example.com', password='wrong')
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.failed_logins, 1)
 
 
 class TestPermission(EmloSeleniumTestCase):

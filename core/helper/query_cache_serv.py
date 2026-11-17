@@ -1,4 +1,5 @@
 from django.contrib.auth.models import Group
+from django.core.cache import cache
 
 from cllib_django.query_utils import load_cache  # noqa
 from core.models import CofkLookupCatalogue, CofkLookupDocumentType
@@ -23,6 +24,10 @@ def create_username_map():
         return user_map
 
     return load_cache('username_map', _fn)
+
+
+def clear_username_map():
+    cache.delete('username_map')
 
 
 def create_catalogue_status_map():
