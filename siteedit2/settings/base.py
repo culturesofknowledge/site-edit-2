@@ -142,7 +142,9 @@ Q_CLUSTER = {
     'max_attempts': 3,
     'queue_limit': 50,
     'bulk': 10,
-    'orm': 'default'
+    'orm': 'default',
+    # a schedule missed while the worker was down runs once, not once per missed run
+    'catch_up': False,
 }
 
 # Password hashing
@@ -300,7 +302,19 @@ CSRF_COOKIE_SECURE = False
 # export
 # root url for generate url in export
 EXPORT_ROOT_URL = 'http://localhost:8020'
-EXPORTER_SCHEDULE_TYPE = 'W'  # D: Daily, I: Minutes, H: Hourly, W: Weekly, M: Monthly, Q: Quarterly, Y: Yearly
+# scheduled exports for the front end, see "Export" in docs/admin_tasks.md
+# regular export (need_index=0), also the time an export requested from the dashboard runs
+EXPORTER_SCHEDULE_TYPE = 'D'  # D: Daily, I: Minutes, H: Hourly, W: Weekly, M: Monthly, Q: Quarterly, Y: Yearly
+EXPORTER_SCHEDULE_MINUTES = None  # interval in minutes, only used when EXPORTER_SCHEDULE_TYPE = 'I'
+EXPORTER_SCHEDULE_TIME = '08:45'  # HH:MM, 24 hour, in TIME_ZONE (not the machine's clock)
+# days the regular export runs, 0: Monday ... 6: Sunday; leave out the EXPORTER_INDEX_WEEKDAY day,
+# the weekly export already exports then
+EXPORTER_SCHEDULE_WEEKDAYS = [0, 1, 2, 3, 4, 5]
+# weekly export (need_index=1)
+EXPORTER_INDEX_WEEKDAY = 6  # 0: Monday ... 6: Sunday
+EXPORTER_INDEX_TIME = '04:00'  # HH:MM, 24 hour, in TIME_ZONE (not the machine's clock)
+# True skips checking that image and resource URLs are alive, which is much faster
+EXPORTER_SKIP_URL_CHECK = False
 
 # Test
 SELENIUM_CHROME_LOCAL_DRIVER = False
