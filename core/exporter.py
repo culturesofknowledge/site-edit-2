@@ -708,8 +708,8 @@ def create_location_queryset():
 
 
 def create_person_queryset():
-    # only count works the front end can show, and skip works editors noted as m4d, xr, o2d etc.
-    work_q = work_serv.q_visible_works() & ~work_serv.q_removal_noted_works()
+    # skip works marked for deletion and works whose catalogue is not to be published
+    work_q = work_serv.q_visible_works(check_hidden_date=False, check_published=True)
     annotate = {
         'sent': person.subqueries.create_sql_count_work_by_person(AuthorRelationChoices.values, work_q=work_q),
         'recd': person.subqueries.create_sql_count_work_by_person(AddresseeRelationChoices.values, work_q=work_q),
