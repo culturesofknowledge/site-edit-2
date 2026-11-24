@@ -173,6 +173,9 @@ class CofkWorkCorrections(CofkEntity):
             if has_error:
                 continue
 
+            if not self._check_date_range(row_number, union_work, corrections_dict):
+                continue
+
             if not corrections_dict:
                 log.warning(f'Row {row_number}: iwork_id {iwork_id} — no correction columns found, skipping.')
                 continue
@@ -192,3 +195,33 @@ class CofkWorkCorrections(CofkEntity):
             f'{upload}: parsed {len(self.corrections)} corrections, '
             f'{sum(len(v) for v in self.errors.values())} errors.'
         )
+
+    def _check_date_range(self, row_number: int, union_work: CofkUnionWork, corrections_dict: dict) -> bool:
+        """Check the work's date range as it will be after the correction. Blank cells
+        mean "no change", so fields not in the correction keep the work's current value."""
+        range_fields = ('date_of_work_std_is_range',
+                        'date_of_work_std_year', 'date_of_work_std_month', 'date_of_work_std_day',
+                        'date_of_work2_std_year', 'date_of_work2_std_month', 'date_of_work2_std_day')
+
+        if not any(f in corrections_dict for f in range_fields):
+            return True
+
+        merged = {f: corrections_dict.get(f, getattr(union_work, f)) for f in range_fields}
+
+        if not merged['date_of_work_std_is_range']:
+            return True
+
+        year, year2 = merged['date_of_work_std_year'], merged['date_of_work2_std_year']
+
+        if year is None and year2 is None:
+            self.add_error(f'Row {row_number}: a date range needs at least a start year or an end year.')
+            return False
+
+        if year is not None and year2 is not None:
+            start = (year, merged['date_of_work_std_month'] or 0, merged['date_of_work_std_day'] or 0)
+            end = (year2, merged['date_of_work2_std_month'] or 0, merged['date_of_work2_std_day'] or 0)
+            if start > end:
+                self.add_error(f'Row {row_number}: the start date in a date range can not be after the end date.')
+                return False
+
+        return True

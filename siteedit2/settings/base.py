@@ -327,7 +327,7 @@ SESSION_SAVE_EVERY_REQUEST = True
 
 AUTHENTICATION_BACKENDS = [
     'axes.backends.AxesStandaloneBackend',
-    'django.contrib.auth.backends.ModelBackend',
+    'login.backends.UsernameOrEmailBackend',
 ]
 
 # django-axes: brute-force login protection
