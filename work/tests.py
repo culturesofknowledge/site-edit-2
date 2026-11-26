@@ -657,6 +657,47 @@ class WorkOverviewDateTests(TestCase):
         self.assertContains(response, '1650-03-11')
 
 
+class WorkOverviewMentionedFlagsTests(TestCase):
+    """ emlo-project#883: inferred/uncertain flags of people and places mentioned appear in the overview tab """
+
+    def setUp(self):
+        self.client.force_login(create_test_user__a())
+
+    def test_mentioned_flags(self):
+        from location.models import CofkUnionLocation
+        from work.models import CofkWorkLocationMap, CofkWorkPersonMap
+
+        work = CofkUnionWork.objects.create(work_id='overview_mentioned_flags', iwork_id=203)
+        person = person_fixtures.create_person_obj()
+        person.foaf_name = 'Mentioned, Person'
+        person.save()
+        CofkWorkPersonMap.objects.create(work=work, person=person, relationship_type=constant.REL_TYPE_MENTION,
+                                         person_mentioned_inferred=1, person_mentioned_uncertain=1)
+        location = CofkUnionLocation.objects.create(location_name='Mentioned Place')
+        CofkWorkLocationMap.objects.create(work=work, location=location,
+                                           relationship_type=constant.REL_TYPE_MENTION_PLACE,
+                                           place_mentioned_uncertain=1)
+
+        response = self.client.get(reverse('work:overview_form', args=[work.iwork_id]))
+
+        self.assertContains(response, '(INFERRED, UNCERTAIN)')
+        self.assertContains(response, '(UNCERTAIN)')
+
+    def test_no_flags(self):
+        from work.models import CofkWorkPersonMap
+
+        work = CofkUnionWork.objects.create(work_id='overview_mentioned_no_flags', iwork_id=204)
+        person = person_fixtures.create_person_obj()
+        person.save()
+        CofkWorkPersonMap.objects.create(work=work, person=person, relationship_type=constant.REL_TYPE_MENTION)
+
+        response = self.client.get(reverse('work:overview_form', args=[work.iwork_id]))
+
+        self.assertContains(response, 'People mentioned:')
+        self.assertNotContains(response, 'INFERRED')
+        self.assertNotContains(response, 'UNCERTAIN')
+
+
 class WorkSearchPrimaryNameTests(TestCase):
     """ emlo-project#873: starts/ends with on related people and places match the primary name """
 

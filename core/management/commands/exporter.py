@@ -1,7 +1,7 @@
 import logging
 from argparse import ArgumentParser
 
-from django.core.management import BaseCommand
+from django.core.management import BaseCommand, CommandError
 
 log = logging.getLogger(__name__)
 
@@ -18,6 +18,17 @@ class Command(BaseCommand):
                                  'relationship_type, relationship')
 
     def handle(self, *args, **options):
+        # the same lock as the scheduled exports, so a manual run can't overlap them
+        from core.helper import exporter_serv
+        try:
+            with exporter_serv.exporter_lock():
+                self._export(options)
+        except exporter_serv.ExporterBusy as exc:
+            raise CommandError(f'Another export is running (lock {exporter_serv.PATH_EXPORTER_LOCK} '
+                               f'is held), try again later') from exc
+
+    @staticmethod
+    def _export(options):
         if options['type'] == 'excel':
             from core.export_data import exporter_csv
             exporter_csv.export_all_excel_style(options['output_dir'])
