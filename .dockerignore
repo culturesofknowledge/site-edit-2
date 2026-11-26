@@ -2,3 +2,14 @@
 *.pg-dumpall
 data/
 files/
+
+# Not needed in the image: the compose services mount the checkout at /code.
+# Database dumps and backups (db_old mounts db_dump/ directly)
+db_dump/
+db_backups/
+# Export files written by the exporter
+exporter_output/
+*.csv
+# Local environment and repository history
+venv/
+.git/
