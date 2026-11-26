@@ -234,6 +234,10 @@ application home, `EMLO_APP_HOME`:
 | Without Docker | The `EMLO_APP_HOME` environment variable; if it is not set, `emlo_home` in the home directory of the user running the site | `$EMLO_APP_HOME/exporter/`, by default `~/emlo_home/exporter/` |
 | Docker | `/emlo_home/` (set in `docker/site-edit-2/.env`, copied from `env.example`) | `/emlo_home/exporter/` in the `web` and `django-q` containers, mounted from `exporter_output/` at the root of the code checkout on the host |
 
+In Docker the files are therefore on the host in `exporter_output/`, not in the `emlo_home` volume. Keep the trailing
+`/` on `EMLO_APP_HOME`: the compose files mount the directory at `${EMLO_APP_HOME}exporter`, so without it the mount
+lands on `/emlo_homeexporter` and the exports go into the volume instead.
+
 To find the directory on a running site, print the setting the exporter uses:
 
 ```bash
@@ -246,12 +250,15 @@ After a full export the directory contains:
   `relationship.csv`, `relationship_type.csv`, `resource.csv` and `work.csv`
 - `need_index` (see below)
 
-While an export is running, its files are built in a hidden `.staging` subdirectory and only moved into the export
-directory once they are all complete. The exporter's own state files (`exporter.lock`, `exporter_index_requested`,
+While an export is running, its files are built in a hidden `.staging-<random>` subdirectory and only moved into the
+export directory once they are all complete. If one is left behind, its export was killed, and it can be deleted
+when no export is running. The exporter's own state files (`exporter.lock`, `exporter_index_requested`,
 `exporter_index_in_progress`) and its log (`emlo.log`) are in `EMLO_APP_HOME` itself, not in the export directory.
 
 The `exporter` management command ([Run an export manually](#run-an-export-manually)) does not use this directory:
-it writes to the directory given with `-o`, or the current directory if `-o` is left out.
+it writes to the directory given with `-o`, or the current directory if `-o` is left out. Do not point `-o` at the
+export directory: a manual run does not write `need_index`, so the copy to the front end would pick up its files
+with the previous export's `need_index`.
 
 ### Scheduled exports and the `need_index` file
 
@@ -269,8 +276,8 @@ new files have been generated, so a failed export leaves the previous files in p
 
 - A request is served by whichever export starts first after the click, so if the regular export runs first it
   writes `need_index` `1` instead of `0`.
-- Only one export runs at a time. A regular export that finds another export running is skipped. A weekly or
-  requested export that finds one running is retried 30 minutes later.
+- Only one export runs at a time, including a manual `exporter` command. A regular export that finds another
+  export running is skipped. A weekly or requested export that finds one running is retried 30 minutes later.
 - If a weekly or requested export fails, the next export retries it with `need_index` `1`. A failed export leaves the
   previous files and `need_index` in place.
 - `need_index` is rewritten by every export. The copy to the front end must therefore run after each export and
@@ -348,6 +355,11 @@ Use when the files are needed immediately rather than overnight.
    ```
 
 3. Watch for errors in the output, and wait for the command to finish -- it can take a long time on a full dataset.
+
+   Only one export runs at a time. If a scheduled export is running, the command stops straight away with
+   `Another export is running ... try again later`; run it again once that export has finished. While the manual
+   export runs, a scheduled export that comes due is skipped or retried later as described in
+   [Scheduled exports and the `need_index` file](#scheduled-exports-and-the-need_index-file).
 
 ### Collect the export files
 

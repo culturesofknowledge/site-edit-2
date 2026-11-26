@@ -5,6 +5,7 @@ import csv
 import logging
 import re
 import shutil
+import tempfile
 import time
 import warnings
 from pathlib import Path
@@ -777,10 +778,10 @@ def export_all(output_dir: str = '.', skip_url_check=False, module: str = None,
     # and stale-from-a-previous-run files. Staging must live inside
     # output_dir (not just alongside it) so the final replace() is on the
     # same filesystem/mount and therefore atomic and cheap.
-    staging_dir = output_dir / '.staging'
-    if staging_dir.exists():
-        shutil.rmtree(staging_dir)
-    staging_dir.mkdir()
+    # The staging dir is unique per run, so a concurrent export into the same
+    # output_dir (another `manage.py exporter`, or the scheduled one) can't
+    # delete it from under us.
+    staging_dir = Path(tempfile.mkdtemp(prefix='.staging-', dir=output_dir))
 
     global cache_username_map
     cache_username_map = query_cache_serv.create_username_map()

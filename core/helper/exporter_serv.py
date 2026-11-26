@@ -13,8 +13,9 @@ whether the front end SOLR needs re-indexing:
 
 A request is a marker file (PATH_INDEX_REQUESTED), so whichever run starts first after the click serves it and it is
 never lost: it survives a busy or failed run. Only one export runs at a time
-(PATH_EXPORTER_LOCK); a run that finds another export in progress skips, and
-an indexing run that would be skipped is re-queued instead.
+(PATH_EXPORTER_LOCK, also taken by `manage.py exporter`); a run that finds
+another export in progress skips, and an indexing run that would be skipped is
+re-queued instead.
 """
 import datetime
 import fcntl
@@ -172,7 +173,10 @@ def write_need_index(needs_index: bool):
 
 
 @contextmanager
-def _exporter_lock():
+def exporter_lock():
+    """Hold the lock that lets only one export run at a time, across processes
+    (django-q workers and `manage.py exporter`). Raises ExporterBusy if another
+    export holds it."""
     # flock is released by the OS if the worker dies, so it never goes stale
     with open(PATH_EXPORTER_LOCK, 'a', encoding='utf-8') as lock_file:
         try:
@@ -190,7 +194,7 @@ def _exporter_lock():
 
 def _export(needs_index: bool, only_if_requested: bool = False):
     try:
-        with _exporter_lock():
+        with exporter_lock():
             requested = _claim_index_request()
             if only_if_requested and not requested:
                 log.info('Exporter skipped, requested export was already done by another run')

@@ -91,3 +91,7 @@ python manage.py exporter [-o <output_dir>] [-s] [-t <type>]
 - `-t`, `--type`: (Optional) Type of export. 
   - `flat`: (Default) Standard CSV export.
   - `excel`: Excel-style CSV export.
+
+Only one export runs at a time: the command takes the same lock as the scheduled exports
+(`$EMLO_APP_HOME/exporter.lock`). If another export is running, it stops with an error
+instead of starting; run it again once that export has finished.

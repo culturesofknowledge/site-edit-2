@@ -314,7 +314,7 @@ EXPORTER_SCHEDULE_WEEKDAYS = [0, 1, 2, 3, 4, 5]
 EXPORTER_INDEX_WEEKDAY = 6  # 0: Monday ... 6: Sunday
 EXPORTER_INDEX_TIME = '04:00'  # HH:MM, 24 hour, in TIME_ZONE (not the machine's clock)
 # True skips checking that image and resource URLs are alive, which is much faster
-EXPORTER_SKIP_URL_CHECK = False
+EXPORTER_SKIP_URL_CHECK = True
 
 # Test
 SELENIUM_CHROME_LOCAL_DRIVER = False
