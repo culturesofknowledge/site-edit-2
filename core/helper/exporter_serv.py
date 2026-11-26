@@ -49,7 +49,7 @@ SCHEDULE_NAME_REGULAR = 'exporter_regular'
 SCHEDULE_NAME_WEEKLY_INDEX = 'exporter_weekly_index'
 SCHEDULE_NAME_REQUESTED = 'exporter_requested'
 
-EXPORT_TASK_TIMEOUT = 24 * 60 * 60
+EXPORT_TASK_TIMEOUT = settings.EXPORTER_TIMEOUT
 # how long a requested/weekly run waits before retrying when another export is running
 BUSY_RETRY_DELAY = datetime.timedelta(minutes=30)
 

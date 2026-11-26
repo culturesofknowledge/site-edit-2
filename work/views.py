@@ -889,6 +889,9 @@ def get_overview_persons_names_by_rel_type(work: CofkUnionWork, rel_type):
 
 
 class LinkData:
+    # uncertainty flags of the relationship, e.g. ['inferred', 'uncertain'] for people/places mentioned
+    flags: list[str] = []
+
     @property
     def name(self):
         raise NotImplementedError()
@@ -956,12 +959,30 @@ def to_person_link_count(work, rel_type):
     return len(work.cofkworkpersonmap_set.filter(relationship_type=rel_type))
 
 
+def to_mentioned_flags(inferred, uncertain) -> list[str]:
+    return [name for name, val in (('inferred', inferred), ('uncertain', uncertain)) if val]
+
+
+def to_person_mentioned_link_list(work):
+    for r in work.cofkworkpersonmap_set.filter(relationship_type=constant.REL_TYPE_MENTION):
+        link_data = PersonLinkData(r.person)
+        link_data.flags = to_mentioned_flags(r.person_mentioned_inferred, r.person_mentioned_uncertain)
+        yield link_data
+
+
 def to_location_link_list(work, rel_type):
     return (LocationLinkData(r.location) for r in
             work.cofkworklocationmap_set.filter(relationship_type=rel_type))
 
 def to_location_link_count(work, rel_type):
     return len(work.cofkworklocationmap_set.filter(relationship_type=rel_type))
+
+
+def to_place_mentioned_link_list(work):
+    for r in work.cofkworklocationmap_set.filter(relationship_type=constant.REL_TYPE_MENTION_PLACE):
+        link_data = LocationLinkData(r.location)
+        link_data.flags = to_mentioned_flags(r.place_mentioned_inferred, r.place_mentioned_uncertain)
+        yield link_data
 
 
 def to_overview_manif(manif: CofkUnionManifestation):
@@ -1075,9 +1096,9 @@ class OverviewFFH(BasicWorkFFH):
             language=', '.join(map(_to_lang_str, work.language_set.iterator())),
             subjects=', '.join(w.subject.subject_desc for w in work.cofkworksubjectmap_set.iterator()),
 
-            people_link_list=to_person_link_list(work, constant.REL_TYPE_MENTION),
+            people_link_list=to_person_mentioned_link_list(work),
             people_link_count=to_person_link_count(work, constant.REL_TYPE_MENTION),
-            places_link_list=to_location_link_list(work, constant.REL_TYPE_MENTION_PLACE),
+            places_link_list=to_place_mentioned_link_list(work),
             places_link_count=to_location_link_count(work, constant.REL_TYPE_MENTION_PLACE),
             work_mention_link_list=(WorkLinkData(r.work_to) for r in
                                     work.work_from_set.filter(relationship_type=constant.REL_TYPE_MENTION_WORK)),
